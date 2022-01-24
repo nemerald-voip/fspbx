@@ -23,7 +23,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        header("Location: ".PROJECT_PATH."/fusionpbx_index.php");
+        header("Location: /fusionpbx_index.php");
 		exit;
     }
 }
