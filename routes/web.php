@@ -21,3 +21,6 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::get('/users', [App\Http\Controllers\UsersController::class, 'index'])->name('users');
+
+// Route used for submitting authnetication request from FusionPBX login
+Route::get('/users/manual_auth/{uuid}', [App\Http\Controllers\UsersController::class, 'manual_auth'])->name('manual_auth');
