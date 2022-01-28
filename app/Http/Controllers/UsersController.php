@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\Users;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Http\Kernel;
 
@@ -26,7 +26,7 @@ class UsersController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+        $users = Users::all();
 
 	Auth::loginUsingId('d90e1ed2-7fe8-4cb3-8e50-9b2dc0911feb');
 
@@ -54,7 +54,7 @@ $response = $kernel->handle(
 
 $kernel->terminate($request, $response);
 */
-	$users = User::all();
+	$users = Users::all();
 
 dd($users);
 
