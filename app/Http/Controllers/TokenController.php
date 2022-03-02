@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Users;
+use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +22,7 @@ class TokenController extends Controller
             'password' => 'required'
         ]);
 
-        $user= Users::where('user_email', $request->user_email)->first();
+        $user= User::where('user_email', $request->user_email)->first();
 
         if (!$user || !password_verify($request->password, $user->password)){
             return $this->sendError('Athentication failed.',[],401);
@@ -45,7 +45,7 @@ class TokenController extends Controller
             'password' => 'required'
         ]);
 
-        $user= Users::where('user_email', $request->user_email)->first();
+        $user= User::where('user_email', $request->user_email)->first();
 
         if (!$user || !password_verify($request->password, $user->password)){
             return $this->sendError('Athentication failed.',[],401);

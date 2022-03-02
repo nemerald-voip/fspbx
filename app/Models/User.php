@@ -8,7 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class Users extends Authenticatable
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid;
 
@@ -20,6 +20,8 @@ class Users extends Authenticatable
     protected $primaryKey = 'user_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    protected $rememberTokenName = false;
 
     /**
      * The attributes that are mass assignable.
@@ -50,4 +52,10 @@ class Users extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function getEmailAttribute()
+    {
+        return $this->user_email;
+    }
+
 }

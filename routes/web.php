@@ -1,7 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,13 +14,13 @@ use App\Http\Controllers\HomeController;
 |
 */
 
-Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::group(['middleware' => 'auth'], function(){
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+});
+
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
-Route::get('/users', [App\Http\Controllers\UsersController::class, 'index'])->name('users');
-
-// Route used for submitting authnetication request from FusionPBX login
-Route::get('/users/manual_auth/{uuid}', [App\Http\Controllers\UsersController::class, 'manual_auth'])->name('manual_auth');
+//Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');

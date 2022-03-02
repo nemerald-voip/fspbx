@@ -21,9 +21,12 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(Request $request)
     {
-        header("Location: /fusionpbx_index.php");
-		exit;
+        //dd($request);
+        return view('home');
+        //return redirect('/core/dashboard');
+        // header("Location: /fusionpbx_index.php");
+		// exit;
     }
 }
