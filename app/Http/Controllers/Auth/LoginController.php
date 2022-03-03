@@ -143,6 +143,10 @@ class LoginController extends Controller
     {
         // $user = Auth::user();
         // Log::info('User Logged Out. ', [$user]);
+        session_start();
+        session_unset();
+        session_destroy();
+
         Auth::logout();
         Session::flush();
 
