@@ -24,8 +24,8 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         //dd($request);
-        return view('home');
-        //return redirect('/core/dashboard');
+        //return view('home');
+        return redirect('/core/dashboard');
         // header("Location: /fusionpbx_index.php");
 		// exit;
     }
