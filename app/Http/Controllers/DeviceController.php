@@ -17,13 +17,15 @@ class DeviceController extends Controller
      */
     public function index()
     {
-        // $user = Auth::user();
+        //$user = Auth::user();
         // $domain = Domain::where('domain_uuid',$user->domain_uuid)->first();
 
-        // session_start();
-        // dd($_SESSION);
-
-        return view('layouts.devices.list');
+        if (userCheckPermission("device_view")){
+            return view('layouts.devices.list');
+        } else {
+            return redirect('/');
+        }
+        
     }
 
     /**

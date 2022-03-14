@@ -35,14 +35,14 @@ class SetUpUserSession
         Session::put('user.user_uuid', $event->user->user_uuid);
         Session::put('user.domain_uuid', $event->user->domain_uuid);
         $domain = Domain::where('domain_uuid',$event->user->domain_uuid)->first();
-        Session::put('domain_uuid', $domain->domain_uuid);
-        Session::put('domain_name', $domain->domain_name);
+        Session::put('user.domain_name', $domain->domain_name);
         
         //get the groups assigned to the user and then set the groups in $_SESSION["groups"]
         $groups = DB::table('v_user_groups')
             ->join('v_groups', 'v_user_groups.group_uuid', '=', 'v_groups.group_uuid')
                 ->where([
                     ['v_user_groups.user_uuid', '=', $event->user->user_uuid],
+                    //['v_user_groups.user_uuid', '=', "71d03aac-02e2-444f-90de-14a439892b0c"], //reseller
                     ['v_user_groups.domain_uuid', '=', $event->user->domain_uuid],
                 ])
                     ->get(['v_user_groups.group_uuid','v_user_groups.group_name','group_level']);
@@ -143,6 +143,91 @@ class SetUpUserSession
 
         // Add permissions to session variable
         Session::put('permissions', $permissions);
+
+
+        // Build domains.
+        // get the domains that the user is allowed to see and save in $_SESSION['domains']
+        session_start();
+        session_unset();
+
+        if (userCheckPermission("domain_select")){
+            Session::put('domain_select', true);
+
+            // Get domains
+            if (in_array('superadmin',$group_names)){
+                $domains = DB::table('v_domains')
+                    ->where ('domain_enabled','=', 't')
+                    ->orderBy('domain_name','asc')
+                    ->orderBy('domain_description', 'asc')
+                    ->get([
+                        'domain_uuid',
+                        'domain_parent_uuid',
+                        'domain_name',
+                        'domain_enabled',
+                        DB::Raw('coalesce(domain_description , domain_name) as domain_description')
+                    ]); 
+            }
+            elseif (in_array('reseller',$group_names)) {
+                $domains = DB::table('v_domains')
+                    ->join ('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
+                    ->where ('v_domains.domain_enabled','=', 't')
+                    ->where('user_uuid','=',$event->user->user_uuid)
+                    ->orderBy('v_domains.domain_name','asc')
+                    ->orderBy('v_domains.domain_description', 'asc')
+                    ->get([
+                        'v_domains.domain_uuid',
+                        'v_domains.domain_parent_uuid',
+                        'v_domains.domain_name',
+                        'v_domains.domain_enabled',
+                        DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
+                    ]); 
+            }
+
+            Session::put('domains', $domains);
+
+            // Pass domains array to FusionPBX
+            foreach(json_decode(json_encode($domains), true) as $row) {	
+                $_SESSION['domains'][$row['domain_uuid']] = $row;
+            }
+
+        }
+
+        // Assign additional variables
+        if (in_array('reseller',$group_names)) {
+            //if user is in the reseller group check if he is allowed to see his own domain
+            // print $domain->domain_uuid;
+            // print "<br><pre>";
+            // print_r($_SESSION['domains']);
+            // print "</pre>";
+            $self_domain=false;
+            foreach ($_SESSION['domains'] as $key=>$val){
+                if ($key == $domain->domain_uuid){
+                    $self_domain = true;
+                    break;
+                }
+            }
+            if($self_domain) {
+                Session::put('domain_uuid', $val['domain_uuid']);
+                Session::put('domain_name', $val['domain_name']);
+                $_SESSION["domain_name"] = $val['domain_name'];
+                $_SESSION["domain_uuid"] = $val['domain_uuid'];
+
+            } else {
+                // if not then grab first domain from the list of allowed domains
+                $first_domain = reset($_SESSION['domains']);
+                Session::put('domain_uuid', $first_domain['domain_uuid']);
+                Session::put('domain_name', $first_domain['domain_name']);
+                $_SESSION["domain_name"] = $first_domain['domain_name'];
+                $_SESSION["domain_uuid"] = $first_domain['domain_uuid'];
+            }
+
+        } else {
+            Session::put('domain_uuid', $domain->domain_uuid);
+            Session::put('domain_name', $domain->domain_name);
+            $_SESSION["domain_name"] = $domain->domain_name;
+            $_SESSION["domain_uuid"] = $domain->domain_uuid;
+        }
+
 
         //dd(Session::all());
     }

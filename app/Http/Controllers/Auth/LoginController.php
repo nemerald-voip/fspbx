@@ -108,17 +108,17 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
-
         $user= User::where('user_email', $request->user_email)->first();
         $domain = Domain::where('domain_uuid', $user->domain_uuid)->first();
 
-        if (session_status()!==PHP_SESSION_ACTIVE){
-            session_start();
-            $_SESSION['LARAVEL_UN'] = $user->username . "@" . $domain->domain_name;
+        //if (session_status()!==PHP_SESSION_ACTIVE){
+            //session_start();
+            $_SESSION['LARAVEL_UN'] = $user->username;// . "@" . $domain->domain_name;
             $_SESSION['LARAVEL_PW'] = $request->password;
-            // $_SESSION['LARAVEL_UN'] = "test@test.us.nemerald.net";
-            // $_SESSION['LARAVEL_PW'] = "Nemerald@2022";
-        }
+            $_SESSION['user']['domain_name'] = Session::get('user.domain_name');
+            $_SESSION['user']['domain_uuid'] = Session::get('user.domain_uuid');
+
+        //}
 
         return redirect('/core/dashboard');
 

@@ -32,7 +32,7 @@
             <div class="float-end" id="">
                 <ul class="navbar-nav float-end">
                     <li class="nav-item">
-                        <a class="nav-link end-bar-toggle" href="javascript: void(0);">
+                        <a class="nav-link @if (Session::get("domain_select")) end-bar-toggle @endif" href="javascript: void(0);">
                             <i class="uil uil-globe fs-4 me-1"></i>{{ Session::get("domain_name") }}
                         </a>
                     </li>
