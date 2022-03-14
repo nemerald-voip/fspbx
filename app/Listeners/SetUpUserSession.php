@@ -129,6 +129,7 @@ class SetUpUserSession
         $permissions = DB::table('v_permissions')
         -> join ('v_group_permissions', 'v_permissions.permission_name', '=', 'v_group_permissions.permission_name')
         -> whereIn('v_group_permissions.group_uuid', $group_uuids)
+        -> where ('v_group_permissions.permission_assigned', 'true')
         -> where (function ($permissions) use ($domain) {
             $permissions->where('v_group_permissions.domain_uuid', '=', $domain->domain_uuid)
                 -> orWhereNull('v_group_permissions.domain_uuid');
@@ -139,7 +140,7 @@ class SetUpUserSession
                     'v_permissions.permission_name',
                 ]); 
 
-        // dd($permissions);
+        //dd($permissions);
 
         // Add permissions to session variable
         Session::put('permissions', $permissions);
