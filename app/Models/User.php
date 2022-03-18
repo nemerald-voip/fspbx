@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -52,6 +54,25 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+
+    /**
+     * Get the extensions associated with the user.
+     */
+    public function extensions()
+    {
+        $extensions = DB::table('v_extensions')
+        -> join ('v_extension_users', 'v_extension_users.extension_uuid', '=', 'v_extensions.extension_uuid')
+            -> where ('v_extension_users.user_uuid', '=', $this->user_uuid)
+                -> get([
+                    'v_extensions.extension_uuid',
+                    'v_extensions.extension',
+                    'v_extensions.outbound_caller_id_number',
+                    'v_extensions.description',
+                ]);
+     
+        return $extensions;
+    }
 
     public function getEmailAttribute()
     {

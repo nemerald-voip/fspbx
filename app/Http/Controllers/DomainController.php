@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Domain;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDomainRequest;
 use App\Http\Requests\UpdateDomainRequest;
-use App\Models\Domain;
 
 class DomainController extends Controller
 {
@@ -16,6 +18,50 @@ class DomainController extends Controller
     public function index()
     {
         //
+    }
+
+    /**
+     * Switch domain. Called when domain search is performed and user requested 
+     * to switch domain
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function switchDomain(Request $request)
+    {
+        $domain = Domain::where('domain_uuid', $request->domain_uuid)->first();
+
+        // If current domain is not the same as requested domain proceed with the change
+        if (Session::get('domain_uuid') != $domain->uuid){
+            session_start();
+            Session::put('domain_uuid', $domain->domain_uuid);
+            Session::put('domain_name', $domain->domain_name);
+            $_SESSION["domain_name"] = $domain->domain_name;
+            $_SESSION["domain_uuid"] = $domain->domain_uuid;
+            return redirect()->back();
+        }
+        
+    }
+
+    /**
+     * Switch domain from FusionPBX. Called when domain search is performed and user requested 
+     * to switch domain
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function switchDomainFusionPBX($domain_uuid)
+    {
+        $domain = Domain::where('domain_uuid', $domain_uuid)->first();
+
+        // If current domain is not the same as requested domain proceed with the change
+        if (Session::get('domain_uuid') != $domain->uuid){
+            session_start();
+            Session::put('domain_uuid', $domain->domain_uuid);
+            Session::put('domain_name', $domain->domain_name);
+            $_SESSION["domain_name"] = $domain->domain_name;
+            $_SESSION["domain_uuid"] = $domain->domain_uuid;
+            return redirect()->back();
+        }
+        
     }
 
     /**

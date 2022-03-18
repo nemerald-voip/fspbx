@@ -18,7 +18,7 @@
                     </div>
                    <div class="text-center mb-12">
                       <h1 class="ls-tight font-bolder mt-6">Login</h1>
-                      <p class="mt-2">Nemerald Business Phone System Portal</p>
+                      <p class="mt-2">Business Phone System Portal</p>
                    </div>
                    <form method="POST" action="{{ route('login') }}">
                         @csrf

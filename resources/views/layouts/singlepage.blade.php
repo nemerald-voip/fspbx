@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
     <head>
         @include('layouts.shared/head')
     </head>
@@ -15,14 +15,12 @@
             <div class="content-page">
                 <div class="content">
                     
-                    @include('layouts.shared/horizontal-nav')
                     
                     @yield('content')
 
                 </div>
                 <!-- content -->
 
-                @include('layouts.shared/footer')
 
             </div>
 
@@ -34,7 +32,6 @@
         </div>
         <!-- END wrapper -->
 
-        @include('layouts.shared/right-sidebar')
 
         @include('layouts.shared/footer-script')
     </body>

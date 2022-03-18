@@ -4,7 +4,7 @@
         @include('layouts.shared/head')
     </head>
 
-    <body class="loading" data-layout="topnav" data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": true}' >
+    <body class="loading" data-layout="topnav" data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}' >
         <!-- Begin page -->
         <div class="wrapper">
 

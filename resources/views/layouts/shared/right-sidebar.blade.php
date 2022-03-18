@@ -11,30 +11,22 @@
     <div class="rightbar-content h-100" data-simplebar>
 
         <div class="p-3">
-            {{-- <div>{{ Session::get('domains') }} </div> --}}
-
-            {{-- <select class="form-control select2" id="domainSelector" data-toggle="select2">
-                <option>Select</option>
-                @foreach(session()->get('domains') as $domain)
-                    <option value="{{ $domain->domain_uuid }}"><strong>{{ $domain->domain_description }} ({{ $domain->domain_name }})</strong></option>
-                    {{-- <option value="{{ $domain->domain_uuid }}">{{ $domain->domain_name }}</></option> --}}
-                    {{-- <optgroup label="{{ $domain->domain_description }}">
-                        <option value="{{ $domain->domain_uuid }}">{{ $domain->domain_name }}</option>
-                    </optgroup>
-                @endforeach
-
-            </select> --}}
 
             <div class="input-group flex-nowrap mb-3">
                 <input type="text" class="form-control" placeholder="Search..." aria-label="domainSearchInput" id="domainSearchInput" aria-describedby="basic-addon1">
                 <span class="input-group-text" id="basic-addon1"> <i class="uil uil-search"></i></span>
             </div>
 
+            @if (Session::get("domains"))
             <div class="list-group" id ="domainSearchList">
                 @foreach(session()->get('domains') as $domain)
                     <div class="listgroup">
                         <a href="#" class="list-group-item list-group-item-action
-                            @if (Session::get("domain_uuid") === $domain->domain_uuid ) active @endif ">
+                            @if (Session::get("domain_uuid") === $domain->domain_uuid ) active @endif "
+                            onclick="event.preventDefault();
+                                document.getElementById('form_input_domain_uuid').value = '{{ $domain->domain_uuid }}';
+                                document.getElementById('domain-search-form').submit();">
+
                             <div class="d-flex w-100 justify-content-between text-break">
                                 <h5 class="mb-1">{{ $domain->domain_description }}</h5>
                             </div>
@@ -43,6 +35,12 @@
                     </div>
                 @endforeach
             </div>
+            @endif
+            
+            <form id="domain-search-form" action="{{ route('switchDomain') }}" method="POST" style="display: none;">
+                @csrf
+                <input type="hidden" name="domain_uuid" id="form_input_domain_uuid" value="">
+            </form>
             
         </div> <!-- end padding-->
 

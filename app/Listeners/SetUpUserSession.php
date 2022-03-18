@@ -196,10 +196,6 @@ class SetUpUserSession
         // Assign additional variables
         if (in_array('reseller',$group_names)) {
             //if user is in the reseller group check if he is allowed to see his own domain
-            // print $domain->domain_uuid;
-            // print "<br><pre>";
-            // print_r($_SESSION['domains']);
-            // print "</pre>";
             $self_domain=false;
             foreach ($_SESSION['domains'] as $key=>$val){
                 if ($key == $domain->domain_uuid){
