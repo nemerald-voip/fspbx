@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Extentions extends Model
+class Extensions extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 

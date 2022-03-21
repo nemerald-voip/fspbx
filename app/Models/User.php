@@ -58,6 +58,7 @@ class User extends Authenticatable
 
     /**
      * Get the extensions associated with the user.
+     *  returns Eloqeunt Collection
      */
     public function extensions()
     {

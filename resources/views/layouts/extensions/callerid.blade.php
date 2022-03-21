@@ -55,50 +55,29 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>California</td>
-                                            <td>336-508-2157</td>
-                                            <td>
-                                                <!-- Switch-->
-                                                <div>
-                                                    <input type="checkbox" id="switch1"  data-switch="success" />
-                                                    <label for="switch1" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Toll Free</td>
-                                            <td>646-473-2057</td>
-                                            <td>
-                                                <!-- Switch-->
-                                                <div>
-                                                    <input type="checkbox" id="switch2" checked data-switch="success" />
-                                                    <label for="switch2" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Oregon</td>
-                                            <td>281-308-0793</td>
-                                            <td>
-                                                <!-- Switch-->
-                                                <div>
-                                                    <input type="checkbox" id="switch3" data-switch="success" />
-                                                    <label for="switch3" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Nevada</td>
-                                            <td>606-253-1207</td>
-                                            <td>
-                                                <!-- Switch-->
-                                                <div>
-                                                    <input type="checkbox" id="switch4" data-switch="success" />
-                                                    <label for="switch4" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        @php
+                                            $i = 1;
+                                        @endphp
+                                        @foreach ($destinations as $destination)
+                                            <tr>
+                                                <td>{{ $destination['destination_description'] }}</td>
+                                                <td>{{ phone($destination['destination_number'],"US",$national_phone_number_format) }}</td>
+                                                <td>
+                                                    <!-- Switch-->
+                                                    <div>
+                                                        <input type="checkbox" id="@php print 'switch'.$i; @endphp" class="callerIdCheckbox"
+                                                            @if ($destination['isCallerID']) checked @endif 
+                                                            value="{{ $destination['destination_uuid'] }}"
+                                                            data-switch="success" />
+                                                        <label for="@php print 'switch'.$i; @endphp" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
+                                                        @php 
+                                                            $i++;
+                                                        @endphp
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                       
                                     </tbody>
                                 </table>
                             </div> <!-- end table-responsive-->

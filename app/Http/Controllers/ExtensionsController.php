@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Extentions;
+use App\Models\Extensions;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class ExtensionsController extends Controller
 {
@@ -35,17 +38,76 @@ class ExtensionsController extends Controller
                 'destination_uuid',
                 'destination_number',
                 'destination_enabled',
-                'destination_description'
+                'destination_description',
+                DB::Raw("coalesce(destination_description , 'n/a') as destination_description"),
             ])
+            ->sortBy('destination_description')
             ->toArray();
 
         // Get logged user model and extensions associated with it
-        // $user = User::where('user_uuid', Session::get('user.user_uuid'))->first();
-        // $extensions = $user->extensions();
+        $user = User::where('user_uuid', Session::get('user.user_uuid'))->first();
+        $extensions = $user->extensions();
 
-        
+        //check if any of the extentions already have caller IDs assigend to them
+        // if yes add TRUE column to the new array $phone_numbers
+        $phone_numbers = array();
+        foreach ($extensions as $extension){
+            foreach ($destinations as $destination){
+                if ($destination['destination_number'] == $extension->outbound_caller_id_number){
+                    $destination['isCallerID'] = true;
+                    $phone_numbers[] = $destination;
+                } else {
+                    $destination['isCallerID'] = false;
+                    $phone_numbers[] = $destination;
+                }
 
-        return view('layouts.extensions.callerid');
+            }
+        }
+
+        // $format = PhoneNumberFormat::NATIONAL;
+        // $phone_number = phone("6467052267","US",$format);
+        // dd($phone_numbers);
+
+        return view('layouts.extensions.callerid')
+            ->with('destinations',$phone_numbers)
+            ->with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
+    }
+
+    /**
+     * Update caller ID for user.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function updateCallerID($id)
+    {
+        $destination = Destinations::find($id);
+        if (!$destination){
+            return response()->json([
+                'error' => 401,
+                'message' => 'Invalid phone number ID submitted']);
+        }
+
+        $user = User::where('user_uuid', Session::get('user.user_uuid'))->first();
+        $extensions = $user->extensions();
+
+        foreach ($extensions as $extension){
+            $ext_model = Extensions::find($extension->extension_uuid);
+            $ext_model->outbound_caller_id_number = $destination->destination_number;
+            $ext_model->save();
+        }
+
+        if ($ext_model->outbound_caller_id_number = $destination->destination_number){
+            return response()->json([
+                'extension' => $ext_model->extension,
+                'callerID' => $destination->destination_number,
+                'message' => 'Caller ID sucesfully updated',
+            ]);
+        } else {
+            return response()->json([
+                'error' => 401,
+                'message' => 'Unable to update Caller ID']);
+        }
+
     }
 
     /**

@@ -117,7 +117,6 @@ class LoginController extends Controller
             $_SESSION['LARAVEL_PW'] = $request->password;
             $_SESSION['user']['domain_name'] = Session::get('user.domain_name');
             $_SESSION['user']['domain_uuid'] = Session::get('user.domain_uuid');
-
         //}
 
         return redirect('/core/dashboard');
