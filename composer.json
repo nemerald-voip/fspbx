@@ -30,7 +30,9 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files" : [
-            "app/helpers.php"
+            "app/helpers.php",
+            "public/resources/classes/cache.php",
+            "public/resources/classes/event_socket.php"
         ]
     },
     "autoload-dev": {

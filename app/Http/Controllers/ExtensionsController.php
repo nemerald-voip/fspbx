@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use cache;
 use App\Models\User;
 use App\Models\Extensions;
 use App\Models\Destinations;
@@ -87,21 +88,33 @@ class ExtensionsController extends Controller
                 'message' => 'Invalid phone number ID submitted']);
         }
 
+        //Get logged in user and all extensions that belong to him
         $user = User::where('user_uuid', Session::get('user.user_uuid'))->first();
         $extensions = $user->extensions();
 
+        // Update the caller ID field for each extension
+        // If succesful delete cache
+        if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+            session_start();
+        }
+
+        $cache = new cache;
         foreach ($extensions as $extension){
             $ext_model = Extensions::find($extension->extension_uuid);
             $ext_model->outbound_caller_id_number = $destination->destination_number;
             $ext_model->save();
+            // dd($extension);
+            $cache->delete("directory:".$extension->extension."@".$extension->user_context);
         }
 
+        // If succesful delete cache and return success status
         if ($ext_model->outbound_caller_id_number = $destination->destination_number){
             return response()->json([
                 'extension' => $ext_model->extension,
                 'callerID' => $destination->destination_number,
                 'message' => 'Caller ID sucesfully updated',
             ]);
+        // Otherwise return failed status
         } else {
             return response()->json([
                 'error' => 401,

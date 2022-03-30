@@ -69,6 +69,7 @@ class User extends Authenticatable
                     'v_extensions.extension_uuid',
                     'v_extensions.extension',
                     'v_extensions.outbound_caller_id_number',
+                    'v_extensions.user_context',
                     'v_extensions.description',
                 ]);
      
