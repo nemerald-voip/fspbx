@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Http;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,5 +27,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        Http::macro('ringotel', function () {
+            return Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('RINGOTEL_TOKEN'),
+            ])->baseUrl(env('RINGOTEL_URL'));
+        });
     }
 }

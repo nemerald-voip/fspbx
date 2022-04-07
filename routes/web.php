@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\DomainController;
-use App\Http\Controllers\ExtensionsController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AppsController;
+use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
+use App\Http\Controllers\ExtensionsController;
 
 
 /*
@@ -30,6 +31,12 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID']) ->name('callerID');
     Route::post('/extensions/callerid/update/{id}', [ExtensionsController::class, 'updateCallerID']) ->name('updateCallerID');
 
+    //Apps
+    Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');
+    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization']) ->name('appsCreateOrganization');
+    //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
+    Route::post('/apps/connection/create', [AppsController::class, 'createConnection']) ->name('appsCreateConnection');
+    Route::get('/apps/connection/update', [AppsController::class, 'updateConnection']) ->name('appsUpdateConnection');
 });
 
 // Route::group(['prefix' => '/'], function () {

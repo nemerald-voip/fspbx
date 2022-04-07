@@ -93,7 +93,7 @@ class ExtensionsController extends Controller
         $extensions = $user->extensions();
 
         // Update the caller ID field for each extension
-        // If succesful delete cache
+        // If successful delete cache
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
         }
@@ -107,7 +107,7 @@ class ExtensionsController extends Controller
             $cache->delete("directory:".$extension->extension."@".$extension->user_context);
         }
 
-        // If succesful delete cache and return success status
+        // If successful return success status
         if ($ext_model->outbound_caller_id_number = $destination->destination_number){
             return response()->json([
                 'extension' => $ext_model->extension,
@@ -150,7 +150,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function show(Extentions $extentions)
+    public function show(Extensions $extentions)
     {
         //
     }
@@ -161,7 +161,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function edit(Extentions $extentions)
+    public function edit(Extensions $extentions)
     {
         //
     }
@@ -173,7 +173,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Extentions $extentions)
+    public function update(Request $request, Extensions $extentions)
     {
         //
     }
@@ -184,7 +184,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Extentions $extentions)
+    public function destroy(Extensions $extentions)
     {
         //
     }

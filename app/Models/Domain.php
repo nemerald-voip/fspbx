@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Domain extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid;
+    use HasApiTokens, HasFactory, \App\Models\Traits\TraitUuid;
 
     protected $table = "v_domains";
 
@@ -29,6 +29,15 @@ class Domain extends Model
         'domain_enabled',
         'domain_description'
     ];
+
+    /**
+     * Get the settings for the domain.
+     */
+    public function settings()
+    {
+        return $this->hasMany(DomainSettings::class,'domain_uuid','domain_uuid');
+    }
+
 
     /**
      * The attributes that should be hidden for serialization.

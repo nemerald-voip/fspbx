@@ -21,8 +21,8 @@ class DomainController extends Controller
     }
 
     /**
-     * Switch domain. Called when domain search is performed and user requested 
-     * to switch domain
+     * Switch domain from one of the Laravel pages. 
+     * Called when domain search is performed and user requested to switch domain
      *
      * @return \Illuminate\Http\Response
      */
@@ -43,8 +43,8 @@ class DomainController extends Controller
     }
 
     /**
-     * Switch domain from FusionPBX. Called when domain search is performed and user requested 
-     * to switch domain
+     * Switch domain from FusionPBX pages. 
+     * Called when domain search is performed and user requested to switch domain
      *
      * @return \Illuminate\Http\Response
      */
