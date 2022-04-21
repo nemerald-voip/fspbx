@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class DomainSettings extends Model
+class SmsDestinations extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_domain_settings";
+    protected $table = "v_sms_destinations";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'domain_setting_uuid';
+    protected $primaryKey = 'sms_destination_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -23,15 +23,12 @@ class DomainSettings extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'domain_uuid',
-        'app_uuid',
-        'domain_setting_category',
-        'domain_setting_subcategory',
-        'domain_setting_name',
-        'domain_setting_value',
-        'domain_setting_order',
-        'domain_setting_enabled',
-        'domain_setting_description',
+        'destination',
+        'carrier',
+        'enabled',
+        'description',
+        'chatplan_detail_data',
+        'email'
     ];
 
     /**
@@ -44,10 +41,11 @@ class DomainSettings extends Model
     ];
 
     /**
-     * Get the domain that owns this setting.
+     * Get the domain that owns this sms destination.
      */
     public function domain()
     {
         return $this->belongsTo(Domain::class);
     }
+
 }

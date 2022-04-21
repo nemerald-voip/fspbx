@@ -6,6 +6,7 @@ use App\Http\Controllers\AppsController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\ExtensionsController;
+use App\Http\Controllers\SmsWebhookController;
 
 
 /*
@@ -37,6 +38,9 @@ Route::group(['middleware' => 'auth'], function(){
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection']) ->name('appsCreateConnection');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection']) ->name('appsUpdateConnection');
+
+    // SMS for testing
+    Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 });
 
 // Route::group(['prefix' => '/'], function () {

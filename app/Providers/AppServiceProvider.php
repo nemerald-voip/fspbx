@@ -28,10 +28,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
+        // Ringotel
         Http::macro('ringotel', function () {
             return Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('RINGOTEL_TOKEN'),
             ])->baseUrl(env('RINGOTEL_URL'));
         });
+
     }
 }

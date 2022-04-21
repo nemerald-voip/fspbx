@@ -46,7 +46,7 @@ class StatusUpdate extends Notification
                     ->line('The introduction to the notification.')
                     ->action('Notification Action', url('/'))
                     ->line('Thank you for using our application!')
-                    ->line($this->payload['message']);
+                    ->line($this->payload);
     }
 
     /**

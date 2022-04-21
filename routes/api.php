@@ -19,6 +19,7 @@ use App\Http\Controllers\SmsWebhookController;
 
 // Route::post('/tokens/create', [TokenController::class,"create"]);
 Route::post('/sms/webhook', [SmsWebhookController::class,"handle"]);
+Route::post('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
 //Route::post('/tokens', [TokenController::class,"index"]);
 
