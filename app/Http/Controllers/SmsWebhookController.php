@@ -194,6 +194,13 @@ class SmsWebhookController extends Controller
         $ext_model = Extensions::where('domain_uuid', $smsDestinationModel->domain_uuid)
         ->where('extension', $message['params']['from'])
         ->first();
+
+        //Get result
+        if ($response['status'] == 'error'){
+            $status = $response['data'];
+        } elseif ($response['status'] == 'success') {
+            $status = "success";
+        }
         
         // Store message in database
         $messageModel = new Messages;
@@ -204,7 +211,7 @@ class SmsWebhookController extends Controller
         $messageModel->message = $message['params']['content'];
         $messageModel->direction = 'out';
         $messageModel->type = 'sms';
-        $messageModel->status = $response['status'];
+        $messageModel->status = $status;
         $messageModel->save();
 
         // Notification::route('mail', 'dexter@stellarvoip.com')
