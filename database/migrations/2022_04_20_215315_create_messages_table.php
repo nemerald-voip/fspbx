@@ -16,8 +16,8 @@ class CreateMessagesTable extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->uuid('message_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
-            $table->uuid('extension_uuid');
-            $table->uuid('domain_uuid');
+            $table->uuid('extension_uuid')->nullable();
+            $table->uuid('domain_uuid')->nullable();
             $table->string('source');
             $table->string('destination');
             $table->text('message')->nullable();
