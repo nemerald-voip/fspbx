@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use App\Models\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\ServiceProvider;
+use App\Models\Sanctum\PersonalAccessToken;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
+        Paginator::useBootstrap();
+        
         // Ringotel
         Http::macro('ringotel', function () {
             return Http::withHeaders([

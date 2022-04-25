@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
+use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\SmsWebhookController;
 
@@ -40,7 +41,10 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection']) ->name('appsUpdateConnection');
 
     // SMS for testing
-    Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
+    // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
+
+    // Messages
+    Route::get('/messages', [MessagesController::class, 'index']) ->name('messagesStatus');
 });
 
 // Route::group(['prefix' => '/'], function () {

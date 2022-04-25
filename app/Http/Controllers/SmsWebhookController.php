@@ -49,8 +49,8 @@ class SmsWebhookController extends Controller
         if (is_null($smsDestinationModel)){
             $validation = false;
             $status = "Destination not found";
-            Notification::route('mail', 'dexter@stellarvoip.com')
-                ->notify(new StatusUpdate('destination not found'));
+            // Notification::route('mail', 'dexter@stellarvoip.com')
+            //     ->notify(new StatusUpdate('destination not found'));
         } else {
 
             //Find Domain to which destination number belongs
