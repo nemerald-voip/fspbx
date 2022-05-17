@@ -225,10 +225,14 @@ class SetUpUserSession
             $_SESSION["domain_uuid"] = $domain->domain_uuid;
         }
 
-        // Redirect FusionPBX to an intended URL
-        if (Session::get('url')['intended'] != ''){
+        // Redirect FusionPBX to an intended URL if it's not a logout page
+        if (Session::get('url')['intended'] != '' &&
+            !str_contains(Session::get('url')['intended'], '/logout')){
             $_SESSION['redirect_url'] = Session::get('url')['intended'];
         }
+
+        // Send session cookie name to FusionPBX
+        $_SESSION['cookie_name'] = config('session.cookie');
         //dd(Session::all());
     }
 }
