@@ -22,7 +22,17 @@ class ExtensionsController extends Controller
      */
     public function index()
     {
-        //
+        // Get all extensions
+        $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))
+        ->get()
+        ->sortBy('extension')
+        ->toArray();
+
+        //dd($extensions);
+        
+        return view('layouts.extensions.list')
+        ->with("extensions",$extensions);
+        // ->with("conn_params", $conn_params);
     }
 
     /**

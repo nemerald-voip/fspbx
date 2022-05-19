@@ -214,7 +214,7 @@ class AppsController extends Controller
                     'protocol' => $request->connection_protocol,
                     'noverify' => true,
                     'multitenant' => true,
-                    'nosrtp' => false,
+                    'nosrtp' => true,
                     'norec' => true,
                     'internal' => false,
                     'sms' => false,

@@ -80,4 +80,12 @@ class Extensions extends Model
         'absolute_codec_string',
         'force_ping',
     ];
+
+    /**
+     * Get the voicemail belongs to this extension.
+     */
+    public function voicemail()
+    {
+        return $this->hasOne(Voicemails::class,'voicemail_id','extension');
+    }
 }

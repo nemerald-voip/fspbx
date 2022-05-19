@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\MessagesController;
@@ -29,9 +30,14 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
 
+    //Users
+    Route::get('/users', [UsersController::class, 'index']) ->name('usersList');
+    Route::get('/users/create', [UsersController::class, 'createUser']) ->name('usersCreateUser');
+
     //Extensions
     Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID']) ->name('callerID');
     Route::post('/extensions/callerid/update/{id}', [ExtensionsController::class, 'updateCallerID']) ->name('updateCallerID');
+    Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 
     //Apps
     Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');
