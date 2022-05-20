@@ -20,7 +20,7 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing results for extensions</label>
+                            <label class="form-label">Showing {{ $extensions->count() ?? 0 }}  results for Extensions</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
@@ -67,24 +67,25 @@
                                             {{ $extension['effective_caller_id_name'] }} 
                                         </td>
                                         <td>
-                                            {{ $extension['effective_caller_id_name'] }} 
+                                            {{ $extension->voicemail()->voicemail_mail_to }} 
                                         </td>
                                         <td>
-                                            @if ($extension['effective_caller_id_name']) 
+                                            {{ $extension['outbound_caller_id_number'] }} 
+                                            {{-- @if ($extension['effective_caller_id_name']) 
                                                 <h5><span class="badge bg-success"></i>Provisioned</span></h5>
                                             @else 
                                                 <h5><span class="badge bg-warning">Inactive</span></h5>
-                                            @endif
+                                            @endif --}}
                                         </td>
                                         <td>
                                             <small class="text-muted">Coming Soon...</small>
                                         </td>
                                         <td>
-                                            <small class="text-muted">Coming Soon...</small>
+                                            {{ $extension['description'] }} 
                                         </td>
                                         <td>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-square-edit-outline"></i></a>
+                                            {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
+                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-lead-pencil"></i></a>
                                             <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-delete"></i></a>
                                         </td>
                                     </tr>

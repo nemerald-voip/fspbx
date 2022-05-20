@@ -22,14 +22,31 @@ class ExtensionsController extends Controller
      */
     public function index()
     {
+
+        // Check permissions
+        if (!userCheckPermission("extension_view")){
+            return redirect('/');
+        }
+
         // Get all extensions
         $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))
         ->get()
-        ->sortBy('extension')
-        ->toArray();
+        ->sortBy('extension');
+        // ->toArray();
 
-        //dd($extensions);
-        
+        //Get libphonenumber object
+        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+
+        foreach($extensions as $extension) {
+            if ($extension['outbound_caller_id_number']){
+                $phoneNumberObject = $phoneNumberUtil->parse($extension['outbound_caller_id_number'], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $extension->outbound_caller_id_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                }
+            }
+        }
+
         return view('layouts.extensions.list')
         ->with("extensions",$extensions);
         // ->with("conn_params", $conn_params);
