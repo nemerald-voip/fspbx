@@ -62,7 +62,7 @@
                                                 <label class="form-check-label" for="@php print 'extensionCheck'.$i; @endphp">&nbsp;</label>
                                             </div>
                                         </td>
-                                        <td><a href="" class="text-body fw-bold">{{ $extension['extension'] }}</a> </td>
+                                        <td><a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['extension'] }}</a> </td>
                                         <td>
                                             {{ $extension['effective_caller_id_name'] }} 
                                         </td>

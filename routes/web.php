@@ -37,7 +37,8 @@ Route::group(['middleware' => 'auth'], function(){
     //Extensions
     Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID']) ->name('callerID');
     Route::post('/extensions/callerid/update/{id}', [ExtensionsController::class, 'updateCallerID']) ->name('updateCallerID');
-    Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
+    // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
+    Route::resource('extensions', 'ExtensionsController');
 
     //Apps
     Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');
