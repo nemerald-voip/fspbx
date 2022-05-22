@@ -301,7 +301,7 @@
                                             <div class="col-lg-12">
                                                 <h4 class="mt-2">External Caller ID</h4>
 
-                                                <p class="text-muted mb-4">Define the External Caller ID that will be displayed on the recipeint's device when dialing outside the company.</p>
+                                                <p class="text-muted mb-3">Define the External Caller ID that will be displayed on the recipeint's device when dialing outside the company.</p>
 
                                                 <form>
                                                     
@@ -314,21 +314,7 @@
                                                                     <option value="AF">Afghanistan</option>
                                                                     <option value="AL">Albania</option>
                                                                     <option value="DZ">Algeria</option>
-                                                                    <option value="AS">American Samoa</option>
-                                                                    <option value="AD">Andorra</option>
-                                                                    <option value="AO">Angola</option>
-                                                                    <option value="AI">Anguilla</option>
-                                                                    <option value="AQ">Antarctica</option>
-                                                                    <option value="AR">Argentina</option>
-                                                                    <option value="AM">Armenia</option>
-                                                                    <option value="AW">Aruba</option>
-                                                                    <option value="AU">Australia</option>
-                                                                    <option value="AT">Austria</option>
-                                                                    <option value="AZ">Azerbaijan</option>
-                                                                    <option value="BS">Bahamas</option>
-                                                                    <option value="DK">Denmark</option>
-                        
-                
+                                                                    <option value="AS">American Samoa</option>                
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -337,11 +323,40 @@
                                                    
                                                 </form>
                                             </div>
+                                        
+                                            <div class="col-lg-12">
+                                                <h4 class="mt-4">Internal Caller ID</h4>
+
+                                                <p class="text-muted mb-3">Define the Internal Caller ID that will be displayed on the recipeint's device when dialing inside the company.</p>
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="billing-first-name" class="form-label">First Name</label>
+                                                            <input class="form-control" type="text" placeholder="Enter first name" disabled id="billing-first-name" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="billing-last-name" class="form-label">Last Name</label>
+                                                            <input class="form-control" type="text" placeholder="Enter last name" disabled id="billing-last-name" />
+                                                        </div>
+                                                    </div>
+                                                </div> <!-- end row -->
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="billing-extension" class="form-label">Extension number</label>
+                                                            <input class="form-control" type="text" placeholder="xxxx"  disabled id="billing-extension" />
+                                                        </div>
+                                                    </div>
+                                                </div> <!-- end row -->
+                                            </div>
 
                                             <div class="col-lg-12">
-                                                <h4 class="mt-2">Internal Caller ID</h4>
+                                                <h4 class="mt-4">Emergency Caller ID</h4>
 
-                                                <p class="text-muted mb-4">Define the Internal Caller ID that will be displayed on the recipeint's device when dialing inside the company.</p>
+                                                <p class="text-muted mb-3">Define the Emergency Caller ID that will be displayed when dialing emergency services.</p>
 
                                                 <form>
                                                     
@@ -354,21 +369,7 @@
                                                                     <option value="AF">Afghanistan</option>
                                                                     <option value="AL">Albania</option>
                                                                     <option value="DZ">Algeria</option>
-                                                                    <option value="AS">American Samoa</option>
-                                                                    <option value="AD">Andorra</option>
-                                                                    <option value="AO">Angola</option>
-                                                                    <option value="AI">Anguilla</option>
-                                                                    <option value="AQ">Antarctica</option>
-                                                                    <option value="AR">Argentina</option>
-                                                                    <option value="AM">Armenia</option>
-                                                                    <option value="AW">Aruba</option>
-                                                                    <option value="AU">Australia</option>
-                                                                    <option value="AT">Austria</option>
-                                                                    <option value="AZ">Azerbaijan</option>
-                                                                    <option value="BS">Bahamas</option>
-                                                                    <option value="DK">Denmark</option>
-                        
-                
+                                                                    <option value="AS">American Samoa</option>                
                                                                 </select>
                                                             </div>
                                                         </div>
