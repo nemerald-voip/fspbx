@@ -32,6 +32,11 @@
                                     <i class="mdi mdi-account-circle d-md-none d-block"></i>
                                     <span class="d-none d-md-block">Caller ID</span>
                                 </a>
+                                <a class="nav-link" id="v-pills-voicemail-tab" data-bs-toggle="pill" href="#v-pills-voicemail" role="tab" aria-controls="v-pills-voicemail"
+                                    aria-selected="false">
+                                    <i class="mdi mdi-account-circle d-md-none d-block"></i>
+                                    <span class="d-none d-md-block">Voicemail</span>
+                                </a>                               
                                 <a class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile"
                                     aria-selected="false">
                                     <i class="mdi mdi-account-circle d-md-none d-block"></i>
@@ -134,83 +139,8 @@
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="billing-town-city" class="form-label">Town / City</label>
-                                                                <input class="form-control" type="text" placeholder="Enter your city name" id="billing-town-city" />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="billing-state" class="form-label">State</label>
-                                                                <input class="form-control" type="text" placeholder="Enter your state" id="billing-state" />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="billing-zip-postal" class="form-label">Zip / Postal Code</label>
-                                                                <input class="form-control" type="text" placeholder="Enter your zip code" id="billing-zip-postal" />
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
-                                                    <div class="row">
-                                                        <div class="col-12">
-                                                            <div class="mb-3">
-                                                                <label class="form-label">Country</label>
-                                                                <select data-toggle="select2" title="Country">
-                                                                    <option value="0">Select Country</option>
-                                                                    <option value="AF">Afghanistan</option>
-                                                                    <option value="AL">Albania</option>
-                                                                    <option value="DZ">Algeria</option>
-                                                                    <option value="AS">American Samoa</option>
-                                                                    <option value="AD">Andorra</option>
-                                                                    <option value="AO">Angola</option>
-                                                                    <option value="AI">Anguilla</option>
-                                                                    <option value="AQ">Antarctica</option>
-                                                                    <option value="AR">Argentina</option>
-                                                                    <option value="AM">Armenia</option>
-                                                                    <option value="AW">Aruba</option>
-                                                                    <option value="AU">Australia</option>
-                                                                    <option value="AT">Austria</option>
-                                                                    <option value="AZ">Azerbaijan</option>
-                                                                    <option value="BS">Bahamas</option>
-                                                                    <option value="DK">Denmark</option>
-                        
-                
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
 
-                                                    <div class="row">
-                                                        <div class="col-12">
-                                                            <div class="mb-3">
-                                                                <div class="form-check">
-                                                                    <input type="checkbox" class="form-check-input" id="customCheck2">
-                                                                    <label class="form-check-label" for="customCheck2">Ship to different address ?</label>
-                                                                </div>
-                                                            </div>
 
-                                                            <div class="mb-3 mt-3">
-                                                                <label for="example-textarea" class="form-label">Order Notes:</label>
-                                                                <textarea class="form-control" id="example-textarea" rows="3" placeholder="Write some note.."></textarea>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
-
-                                                    <div class="row mt-4">
-                                                        <div class="col-sm-6">
-                                                            <a href="" class="btn text-muted d-none d-sm-inline-block btn-link fw-semibold">
-                                                                <i class="mdi mdi-arrow-left"></i> Back to Shopping Cart </a>
-                                                        </div> <!-- end col -->
-                                                        <div class="col-sm-6">
-                                                            <div class="text-sm-end">
-                                                                <a href="" class="btn btn-danger">
-                                                                    <i class="mdi mdi-truck-fast me-1"></i> Proceed to Shipping </a>
-                                                            </div>
-                                                        </div> <!-- end col -->
-                                                    </div> <!-- end row -->
                                                 </form>
                                             </div>
                                             {{-- <div class="col-lg-4">
@@ -382,6 +312,88 @@
                                         </div> <!-- end row-->
                                     </div>
                                     <!-- End Caller ID Content-->
+                                </div>
+                                <div class="tab-pane fade" id="v-pills-voicemail" role="tabpanel" aria-labelledby="v-pills-voicemail-tab">
+                                    <!-- Voicemail Content-->
+                                    <div class="tab-pane show active" id="basic-information">
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <h4 class="mt-2">Voicemail settings</h4>
+
+                                                <p class="text-muted mb-4">Voicemail settings allow you to update your voicemail access PIN, personalize, maintain and update your voicemail greeting to inform your friends, customers, or colleagues of your status.</p>
+
+                                                <form>
+                                                    <div class="row">
+                                                        <div class="col-4">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Voicemail enabled </label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <div class="mb-3 text-sm-end">
+                                                                <input type="checkbox" id="directory-name-switch" checked data-switch="primary"/>
+                                                                <label for="directory-name-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="voicmeail-pin" class="form-label">Set voicemail PIN <span class="text-danger">*</span></label>
+                                                                <div class="input-group input-group-merge">
+                                                                    <input type="password" id="password" class="form-control" placeholder="xxxx">
+                                                                    <div class="input-group-text" data-password="false">
+                                                                        <span class="password-eye"></span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Notification type</label>
+                                                                <select data-toggle="select2" title="Notification Type">
+                                                                    <option value="">Email with audio file attachment</option>
+                                                                    <option value="AF">Email with download link</option>
+                                                                    <option value="AL">Email with login link</option>             
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="billing-email-address" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                                                <input class="form-control" type="email" placeholder="Enter email" id="billing-email-address" />
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+
+                                                    <div class="row">
+                                                        <div class="col-4">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Delete voicemail after sending email </label>
+                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus" 
+                                                                    data-bs-content="This will delete the original voicemail from the cloud">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <div class="mb-3 text-sm-end">
+                                                                <input type="checkbox" id="directory-name-switch" data-switch="primary"/>
+                                                                <label for="directory-name-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+
+
+
+                                                </form>
+                                            </div>
+
+                                        </div> <!-- end row-->
+                                    </div>
+                                    <!-- End Voicemail Content-->
                                 </div>
                                 <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
                                     <p class="mb-0">...</p>
