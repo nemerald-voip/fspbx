@@ -27,6 +27,11 @@
                                     <i class="mdi mdi-home-variant d-md-none d-block"></i>
                                     <span class="d-none d-md-block">Basic Information</span>
                                 </a>
+                                <a class="nav-link" id="v-pills-callerid-tab" data-bs-toggle="pill" href="#v-pills-callerid" role="tab" aria-controls="v-pills-callerid"
+                                    aria-selected="false">
+                                    <i class="mdi mdi-account-circle d-md-none d-block"></i>
+                                    <span class="d-none d-md-block">Caller ID</span>
+                                </a>
                                 <a class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile"
                                     aria-selected="false">
                                     <i class="mdi mdi-account-circle d-md-none d-block"></i>
@@ -43,210 +48,339 @@
                         <div class="col-sm-10">
                             <div class="tab-content" id="v-pills-tabContent">
                                 <div class="tab-pane fade active show" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-                                                            <!-- Basic Info Content-->
-                        <div class="tab-pane show active" id="basic-information">
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <h4 class="mt-2">Basic information</h4>
+                                    <!-- Basic Info Content-->
+                                    <div class="tab-pane show active" id="basic-information">
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <h4 class="mt-2">Basic information</h4>
 
-                                    <p class="text-muted mb-4">Provide basic information about the user or extension</p>
+                                                <p class="text-muted mb-4">Provide basic information about the user or extension</p>
 
-                                    <form>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="billing-first-name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                                    <input class="form-control" type="text" placeholder="Enter first name" id="billing-first-name" />
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="billing-last-name" class="form-label">Last Name</label>
-                                                    <input class="form-control" type="text" placeholder="Enter last name" id="billing-last-name" />
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row -->
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="billing-email-address" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                                    <input class="form-control" type="email" placeholder="Enter email" id="billing-email-address" />
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="billing-phone" class="form-label">Extension number <span class="text-danger">*</span></label>
-                                                    <input class="form-control" type="text" placeholder="xxxx" id="billing-phone" />
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row -->
-                                        <div class="row">
-                                            <div class="col-12">
-                                                <div class="mb-3">
-                                                    <label for="billing-address" class="form-label">Address</label>
-                                                    <input class="form-control" type="text" placeholder="Enter address" id="billing-address">
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row -->
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="billing-town-city" class="form-label">Town / City</label>
-                                                    <input class="form-control" type="text" placeholder="Enter your city name" id="billing-town-city" />
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="billing-state" class="form-label">State</label>
-                                                    <input class="form-control" type="text" placeholder="Enter your state" id="billing-state" />
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="billing-zip-postal" class="form-label">Zip / Postal Code</label>
-                                                    <input class="form-control" type="text" placeholder="Enter your zip code" id="billing-zip-postal" />
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row -->
-                                        <div class="row">
-                                            <div class="col-12">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Country</label>
-                                                    <select data-toggle="select2" title="Country">
-                                                        <option value="0">Select Country</option>
-                                                        <option value="AF">Afghanistan</option>
-                                                        <option value="AL">Albania</option>
-                                                        <option value="DZ">Algeria</option>
-                                                        <option value="AS">American Samoa</option>
-                                                        <option value="AD">Andorra</option>
-                                                        <option value="AO">Angola</option>
-                                                        <option value="AI">Anguilla</option>
-                                                        <option value="AQ">Antarctica</option>
-                                                        <option value="AR">Argentina</option>
-                                                        <option value="AM">Armenia</option>
-                                                        <option value="AW">Aruba</option>
-                                                        <option value="AU">Australia</option>
-                                                        <option value="AT">Austria</option>
-                                                        <option value="AZ">Azerbaijan</option>
-                                                        <option value="BS">Bahamas</option>
-                                                        <option value="DK">Denmark</option>
-               
-     
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row -->
+                                                <form>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="billing-first-name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                                                <input class="form-control" type="text" placeholder="Enter first name" id="billing-first-name" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="billing-last-name" class="form-label">Last Name</label>
+                                                                <input class="form-control" type="text" placeholder="Enter last name" id="billing-last-name" />
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="billing-phone" class="form-label">Extension number <span class="text-danger">*</span></label>
+                                                                <input class="form-control" type="text" placeholder="xxxx" id="billing-phone" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="billing-email-address" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                                                <input class="form-control" type="email" placeholder="Enter email" id="billing-email-address" />
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="users-select" class="form-label">Users</label>
+                                                                <!-- Multiple Select -->
+                                                                <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                                    id="users-select">
+                                                                        <option value="AK">Alaska</option>
+                                                                        <option value="HI">Hawaii</option>
+                                                                        <option value="CA">California</option>
+                                                                        <option value="NV">Nevada</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-4">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Display contact in the company's dial by name directory </label>
+                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus" 
+                                                                    data-bs-content="This user will appear in the company's dial by name directory">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <div class="mb-3 text-sm-end">
+                                                                <input type="checkbox" id="directory-name-switch" checked data-switch="primary"/>
+                                                                <label for="directory-name-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-4">
+                                                            <div class="mb-3">
+                                                                <label  class="form-label">Announce extension in the the dial by name directory </label>
+                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus" 
+                                                                    data-bs-content="Announce user's extension when calling the dial by name directory">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <div class="mb-3 text-sm-end">
+                                                                <input type="checkbox" id="directory-extension-switch" checked data-switch="primary"/>
+                                                                <label for="directory-extension-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="billing-town-city" class="form-label">Town / City</label>
+                                                                <input class="form-control" type="text" placeholder="Enter your city name" id="billing-town-city" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="billing-state" class="form-label">State</label>
+                                                                <input class="form-control" type="text" placeholder="Enter your state" id="billing-state" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="billing-zip-postal" class="form-label">Zip / Postal Code</label>
+                                                                <input class="form-control" type="text" placeholder="Enter your zip code" id="billing-zip-postal" />
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Country</label>
+                                                                <select data-toggle="select2" title="Country">
+                                                                    <option value="0">Select Country</option>
+                                                                    <option value="AF">Afghanistan</option>
+                                                                    <option value="AL">Albania</option>
+                                                                    <option value="DZ">Algeria</option>
+                                                                    <option value="AS">American Samoa</option>
+                                                                    <option value="AD">Andorra</option>
+                                                                    <option value="AO">Angola</option>
+                                                                    <option value="AI">Anguilla</option>
+                                                                    <option value="AQ">Antarctica</option>
+                                                                    <option value="AR">Argentina</option>
+                                                                    <option value="AM">Armenia</option>
+                                                                    <option value="AW">Aruba</option>
+                                                                    <option value="AU">Australia</option>
+                                                                    <option value="AT">Austria</option>
+                                                                    <option value="AZ">Azerbaijan</option>
+                                                                    <option value="BS">Bahamas</option>
+                                                                    <option value="DK">Denmark</option>
+                        
+                
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
 
-                                        <div class="row">
-                                            <div class="col-12">
-                                                <div class="mb-3">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" class="form-check-input" id="customCheck2">
-                                                        <label class="form-check-label" for="customCheck2">Ship to different address ?</label>
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="mb-3">
+                                                                <div class="form-check">
+                                                                    <input type="checkbox" class="form-check-input" id="customCheck2">
+                                                                    <label class="form-check-label" for="customCheck2">Ship to different address ?</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="mb-3 mt-3">
+                                                                <label for="example-textarea" class="form-label">Order Notes:</label>
+                                                                <textarea class="form-control" id="example-textarea" rows="3" placeholder="Write some note.."></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+
+                                                    <div class="row mt-4">
+                                                        <div class="col-sm-6">
+                                                            <a href="" class="btn text-muted d-none d-sm-inline-block btn-link fw-semibold">
+                                                                <i class="mdi mdi-arrow-left"></i> Back to Shopping Cart </a>
+                                                        </div> <!-- end col -->
+                                                        <div class="col-sm-6">
+                                                            <div class="text-sm-end">
+                                                                <a href="" class="btn btn-danger">
+                                                                    <i class="mdi mdi-truck-fast me-1"></i> Proceed to Shipping </a>
+                                                            </div>
+                                                        </div> <!-- end col -->
+                                                    </div> <!-- end row -->
+                                                </form>
+                                            </div>
+                                            {{-- <div class="col-lg-4">
+                                                <div class="border p-3 mt-4 mt-lg-0 rounded">
+                                                    <h4 class="header-title mb-3">Order Summary</h4>
+
+                                                    <div class="table-responsive">
+                                                        <table class="table table-centered mb-0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>
+                                                                        <img src="{{asset('assets/images/products/product-1.jpg')}}" alt="contact-img" title="contact-img" class="rounded me-2" height="48" />
+                                                                        <p class="m-0 d-inline-block align-middle">
+                                                                            <a href="" class="text-body fw-semibold">Amazing Modern Chair</a>
+                                                                            <br>
+                                                                            <small>5 x $148.66</small>
+                                                                        </p>
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        $743.30
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <img src="{{asset('assets/images/products/product-2.jpg')}}" alt="contact-img" title="contact-img" class="rounded me-2" height="48" />
+                                                                        <p class="m-0 d-inline-block align-middle">
+                                                                            <a href="" class="text-body fw-semibold">Designer Awesome Chair</a>
+                                                                            <br>
+                                                                            <small>2 x $99.00</small>
+                                                                        </p>
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        $198.00
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <img src="{{asset('assets/images/products/product-3.jpg')}}" alt="contact-img" title="contact-img" class="rounded me-2" height="48" />
+                                                                        <p class="m-0 d-inline-block align-middle">
+                                                                            <a href="" class="text-body fw-semibold">Biblio Plastic Armchair</a>
+                                                                            <br>
+                                                                            <small>1 x $129.99</small>
+                                                                        </p>
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        $129.99
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="text-end">
+                                                                    <td>
+                                                                        <h6 class="m-0">Sub Total:</h6>
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        $1071.29
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="text-end">
+                                                                    <td>
+                                                                        <h6 class="m-0">Shipping:</h6>
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        FREE
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="text-end">
+                                                                    <td>
+                                                                        <h5 class="m-0">Total:</h5>
+                                                                    </td>
+                                                                    <td class="text-end fw-semibold">
+                                                                        $1071.29
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
-                                                </div>
+                                                    <!-- end table-responsive -->
+                                                </div> <!-- end .border-->
 
-                                                <div class="mb-3 mt-3">
-                                                    <label for="example-textarea" class="form-label">Order Notes:</label>
-                                                    <textarea class="form-control" id="example-textarea" rows="3" placeholder="Write some note.."></textarea>
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row -->
-
-                                        <div class="row mt-4">
-                                            <div class="col-sm-6">
-                                                <a href="" class="btn text-muted d-none d-sm-inline-block btn-link fw-semibold">
-                                                    <i class="mdi mdi-arrow-left"></i> Back to Shopping Cart </a>
-                                            </div> <!-- end col -->
-                                            <div class="col-sm-6">
-                                                <div class="text-sm-end">
-                                                    <a href="" class="btn btn-danger">
-                                                        <i class="mdi mdi-truck-fast me-1"></i> Proceed to Shipping </a>
-                                                </div>
-                                            </div> <!-- end col -->
-                                        </div> <!-- end row -->
-                                    </form>
+                                            </div> <!-- end col --> --}}
+                                        </div> <!-- end row-->
+                                    </div>
+                                    <!-- End Billing Information Content-->
                                 </div>
-                                {{-- <div class="col-lg-4">
-                                    <div class="border p-3 mt-4 mt-lg-0 rounded">
-                                        <h4 class="header-title mb-3">Order Summary</h4>
+                                <!-- Caller ID Content-->
+                                <div class="tab-pane fade" id="v-pills-callerid" role="tabpanel" aria-labelledby="v-pills-callerid-tab">
+                                    <div class="tab-pane show active" id="basic-information">
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <h4 class="mt-2">External Caller ID</h4>
 
-                                        <div class="table-responsive">
-                                            <table class="table table-centered mb-0">
-                                                <tbody>
-                                                    <tr>
-                                                        <td>
-                                                            <img src="{{asset('assets/images/products/product-1.jpg')}}" alt="contact-img" title="contact-img" class="rounded me-2" height="48" />
-                                                            <p class="m-0 d-inline-block align-middle">
-                                                                <a href="" class="text-body fw-semibold">Amazing Modern Chair</a>
-                                                                <br>
-                                                                <small>5 x $148.66</small>
-                                                            </p>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            $743.30
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <img src="{{asset('assets/images/products/product-2.jpg')}}" alt="contact-img" title="contact-img" class="rounded me-2" height="48" />
-                                                            <p class="m-0 d-inline-block align-middle">
-                                                                <a href="" class="text-body fw-semibold">Designer Awesome Chair</a>
-                                                                <br>
-                                                                <small>2 x $99.00</small>
-                                                            </p>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            $198.00
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <img src="{{asset('assets/images/products/product-3.jpg')}}" alt="contact-img" title="contact-img" class="rounded me-2" height="48" />
-                                                            <p class="m-0 d-inline-block align-middle">
-                                                                <a href="" class="text-body fw-semibold">Biblio Plastic Armchair</a>
-                                                                <br>
-                                                                <small>1 x $129.99</small>
-                                                            </p>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            $129.99
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="text-end">
-                                                        <td>
-                                                            <h6 class="m-0">Sub Total:</h6>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            $1071.29
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="text-end">
-                                                        <td>
-                                                            <h6 class="m-0">Shipping:</h6>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            FREE
-                                                        </td>
-                                                    </tr>
-                                                    <tr class="text-end">
-                                                        <td>
-                                                            <h5 class="m-0">Total:</h5>
-                                                        </td>
-                                                        <td class="text-end fw-semibold">
-                                                            $1071.29
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <!-- end table-responsive -->
-                                    </div> <!-- end .border-->
+                                                <p class="text-muted mb-4">Define the External Caller ID that will be displayed on the recipeint's device when dialing outside the company.</p>
 
-                                </div> <!-- end col --> --}}
-                            </div> <!-- end row-->
-                        </div>
-                        <!-- End Billing Information Content-->
+                                                <form>
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Phone Number</label>
+                                                                <select data-toggle="select2" title="Country">
+                                                                    <option value="">Main Company Number</option>
+                                                                    <option value="AF">Afghanistan</option>
+                                                                    <option value="AL">Albania</option>
+                                                                    <option value="DZ">Algeria</option>
+                                                                    <option value="AS">American Samoa</option>
+                                                                    <option value="AD">Andorra</option>
+                                                                    <option value="AO">Angola</option>
+                                                                    <option value="AI">Anguilla</option>
+                                                                    <option value="AQ">Antarctica</option>
+                                                                    <option value="AR">Argentina</option>
+                                                                    <option value="AM">Armenia</option>
+                                                                    <option value="AW">Aruba</option>
+                                                                    <option value="AU">Australia</option>
+                                                                    <option value="AT">Austria</option>
+                                                                    <option value="AZ">Azerbaijan</option>
+                                                                    <option value="BS">Bahamas</option>
+                                                                    <option value="DK">Denmark</option>
+                        
+                
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+
+                                                   
+                                                </form>
+                                            </div>
+
+                                            <div class="col-lg-12">
+                                                <h4 class="mt-2">Internal Caller ID</h4>
+
+                                                <p class="text-muted mb-4">Define the Internal Caller ID that will be displayed on the recipeint's device when dialing inside the company.</p>
+
+                                                <form>
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Phone Number</label>
+                                                                <select data-toggle="select2" title="Country">
+                                                                    <option value="">Main Company Number</option>
+                                                                    <option value="AF">Afghanistan</option>
+                                                                    <option value="AL">Albania</option>
+                                                                    <option value="DZ">Algeria</option>
+                                                                    <option value="AS">American Samoa</option>
+                                                                    <option value="AD">Andorra</option>
+                                                                    <option value="AO">Angola</option>
+                                                                    <option value="AI">Anguilla</option>
+                                                                    <option value="AQ">Antarctica</option>
+                                                                    <option value="AR">Argentina</option>
+                                                                    <option value="AM">Armenia</option>
+                                                                    <option value="AW">Aruba</option>
+                                                                    <option value="AU">Australia</option>
+                                                                    <option value="AT">Austria</option>
+                                                                    <option value="AZ">Azerbaijan</option>
+                                                                    <option value="BS">Bahamas</option>
+                                                                    <option value="DK">Denmark</option>
+                        
+                
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+
+                                                   
+                                                </form>
+                                            </div>
+                                           
+                                        </div> <!-- end row-->
+                                    </div>
+                                    <!-- End Caller ID Content-->
                                 </div>
                                 <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
                                     <p class="mb-0">...</p>
