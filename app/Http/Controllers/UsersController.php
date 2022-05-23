@@ -27,18 +27,25 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
-        // print "/users<br>";
-        // //$cookie = $request->cookie('laravel_session');
-        // $cookies = $request->cookie();
-        // print_r($cookies);
+ 
+        return view('layouts.users.list');
 
-        //dd(Auth::check());
-        if (Auth::check()) {
-            return ("User logged in");
-        } else {
-            return ("No session");
-        }
     }
 
+
+    /**
+     * Show the create user form.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function createUser(Request $request)
+    {
+ 
+        return view('layouts.users.createuser');
+
+    }
+
+
+    
 
 }

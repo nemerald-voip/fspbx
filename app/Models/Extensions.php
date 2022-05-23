@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Extensions extends Model
 {
@@ -80,4 +81,17 @@ class Extensions extends Model
         'absolute_codec_string',
         'force_ping',
     ];
+
+    /**
+     * Get the voicemail associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function voicemail()
+    {
+        $voicemail = DB::table('v_voicemails')
+            -> where ('v_voicemails.domain_uuid', '=', $this->domain_uuid)
+            -> where ('v_voicemails.voicemail_id','=', $this->extension)
+            ->first();
+        return $voicemail;
+    }
 }

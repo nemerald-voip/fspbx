@@ -22,7 +22,34 @@ class ExtensionsController extends Controller
      */
     public function index()
     {
-        //
+
+        // Check permissions
+        if (!userCheckPermission("extension_view")){
+            return redirect('/');
+        }
+
+        // Get all extensions
+        $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))
+        ->get()
+        ->sortBy('extension');
+        // ->toArray();
+
+        //Get libphonenumber object
+        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+
+        foreach($extensions as $extension) {
+            if ($extension['outbound_caller_id_number']){
+                $phoneNumberObject = $phoneNumberUtil->parse($extension['outbound_caller_id_number'], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $extension->outbound_caller_id_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                }
+            }
+        }
+
+        return view('layouts.extensions.list')
+        ->with("extensions",$extensions);
+        // ->with("conn_params", $conn_params);
     }
 
     /**
@@ -150,7 +177,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function show(Extensions $extentions)
+    public function show(Extensions $extensions)
     {
         //
     }
@@ -158,12 +185,23 @@ class ExtensionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Extentions  $extentions
+     * @param  guid  $extention
      * @return \Illuminate\Http\Response
      */
-    public function edit(Extensions $extentions)
+    public function edit($extension)
     {
-        //
+
+        //check permissions
+	    if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
+            return redirect('/');
+	    }
+
+        // get the extension
+        $extensionModel = Extensions::find($extension);
+	
+        // dd($extensionModel);
+        return view('layouts.extensions.edit')
+            -> with('extension',$extensionModel);
     }
 
     /**
@@ -173,7 +211,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Extensions $extentions)
+    public function update(Request $request, Extensions $extensions)
     {
         //
     }
@@ -184,7 +222,7 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Extensions $extentions)
+    public function destroy(Extensions $extensions)
     {
         //
     }
