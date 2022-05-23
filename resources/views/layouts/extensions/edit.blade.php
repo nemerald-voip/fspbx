@@ -387,8 +387,36 @@
                                                     </div> <!-- end row -->
 
 
-
                                                 </form>
+                                            </div>
+
+                                        </div> <!-- end row-->
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <h4 class="mt-2">Unavailable greeting</h4>
+
+                                                <p class="text-muted mb-2">This plays when you do not pick up the phone.</p>
+                                                <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
+                                                <p class="text-muted mb-1">File name: <strong>unavailable.wav</strong></p>
+                                                
+                                                <button type="button" class="btn btn-light"><i class="uil uil-play"></i> </button>
+                                                <button type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
+                                                <button type="button" class="btn btn-light"><i class="uil uil-down-arrow"></i> </button>
+                                                <button type="button" class="btn btn-light"><i class="uil uil-trash-alt"></i> </button>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <h4 class="mt-2">Name greeting</h4>
+
+                                                <p class="text-muted mb-2">This plays to identify your extension in the company's dial by name directory.</p>
+                                                <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
+                                                <p class="text-muted mb-1">File name: <strong>name.wav</strong></p>
+                                                
+                                                <button type="button" class="btn btn-light"><i class="uil uil-play"></i> </button>
+                                                <button type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
+                                                <button type="button" class="btn btn-light"><i class="uil uil-down-arrow"></i> </button>
+                                                <button type="button" class="btn btn-light"><i class="uil uil-trash-alt"></i> </button>
+
+
                                             </div>
 
                                         </div> <!-- end row-->
