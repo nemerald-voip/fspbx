@@ -37,7 +37,16 @@ class DomainController extends Controller
             Session::put('domain_name', $domain->domain_name);
             $_SESSION["domain_name"] = $domain->domain_name;
             $_SESSION["domain_uuid"] = $domain->domain_uuid;
-            return redirect()->back();
+
+            //set the context
+            Session::put('context', $_SESSION["domain_name"]);
+            $_SESSION["context"] = $_SESSION["domain_name"];
+
+            // unset destinations belonging to old domain
+            unset($_SESSION["destinations"]["array"]);
+
+            $url = getFusionPBXPreviousURL(url()->previous());
+            return redirect($url);
         }
         
     }
@@ -59,7 +68,16 @@ class DomainController extends Controller
             Session::put('domain_name', $domain->domain_name);
             $_SESSION["domain_name"] = $domain->domain_name;
             $_SESSION["domain_uuid"] = $domain->domain_uuid;
-            return redirect()->back();
+
+            //set the context
+            Session::put('context', $_SESSION["domain_name"]);
+			$_SESSION["context"] = $_SESSION["domain_name"];
+
+            // unset destinations belonging to old domain
+            unset($_SESSION["destinations"]["array"]);
+
+            $url = getFusionPBXPreviousURL(url()->previous());
+            return redirect($url);
         }
         
     }
