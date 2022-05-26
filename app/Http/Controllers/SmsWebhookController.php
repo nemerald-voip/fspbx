@@ -170,10 +170,13 @@ class SmsWebhookController extends Controller
     public function messageFromRingotel(Request $request){
         //$payload = json_decode(file_get_contents('php://input'));
         $rawdata = file_get_contents("php://input");
-        // $rawdata = '{"method":"message","api_key":"h8nabAAJKkKCyPTdd0haEbEIG5dK2Jfzp605AVdJJcCwKaoAweb2QsD2rcDhAc58",
-        //     "params":{"from":"140","to":"6467052267","type":1,"ownerid":"16276636335171355647",
-        //         "userid":"16493663769626583076","content":"message text here","orgid":"16505688776284785526"}}';
+        // $rawdata = '{"method":"message","api_key":"e9bS5f5WNBK4HZRK143Wb3VM1EIk48hDQFvL6MP16UA0VMTUV2QmVdtqFXmf6uKf",
+        //     "params":{"from":"300","to":"6467052267","type":1,"ownerid":"16276636335171355647","userid":"16481387548477672383",
+        //         "content":"5","orgid":"16467742064165946777"}}';
         $message = json_decode($rawdata,true);
+
+        // Notification::route('mail', 'dexter@stellarvoip.com')
+        // ->notify(new StatusUpdate($rawdata));
 
         // Set initial validation status
         $validation = true;
@@ -242,15 +245,42 @@ class SmsWebhookController extends Controller
                 "destination" => $phoneNumberObject->getNationalNumber(),
                 "message" => $message['params']['content']
             ]);
+
+            //Get result
+            if (isset($response) && $response['status'] == 'error'){
+                $status = $response['data'];
+            } elseif (isset($response) && $response['status'] == 'success') {
+                $status = "success";
+            }
         }
  
         // Send text message through Thinq API
         if ($validation && $message['method'] == "message" && $carrier == "thinq"){
-            $response = Http::asForm()->post('https://api.teleapi.net/sms/send?token='. env('TELI_TOKEN'), [
-                "source" => $sourcePhoneNumberObject->getNationalNumber(),
-                "destination" => $phoneNumberObject->getNationalNumber(),
-                "message" => $message['params']['content']
-            ]);
+            $data = array(
+                'from_did' => $sourcePhoneNumberObject->getNationalNumber(),
+                'to_did' => $phoneNumberObject->getNationalNumber(),
+                "message" => $message['params']['content'],
+            );
+            // dd(json_encode($data));
+            $response = Http::withHeaders([
+                    'Authorization' => 'Basic ' . base64_encode(env('THINQ_USERNAME') . ":" .env('THINQ_TOKEN')),
+                    'Content-Type' => 'application/json'
+                ])
+                ->withBody(json_encode($data),'application/json')
+                ->post('https://api.thinq.com/account/'. env('THINQ_ACCOUNT_ID') . '/product/origination/sms/send');
+
+                // Get result
+                if (isset($response)){
+                    $result = json_decode($response->body());
+                    // dd($result);
+                    if (isset($result->code) && ($result->code == 400 || $result->code == 401)){
+                        $status = $result->message;
+                    }
+                    if (isset($result->guid)){
+                        $status = "success";
+                    }
+
+                }
         }
 
         // if method is "read" send  
@@ -264,13 +294,6 @@ class SmsWebhookController extends Controller
         }
 
         //dd($response->body());
-
-        //Get result
-        if (isset($response) && $response['status'] == 'error'){
-            $status = $response['data'];
-        } elseif (isset($response) && $response['status'] == 'success') {
-            $status = "success";
-        }
         
         // Store message in database
         $messageModel = new Messages;
