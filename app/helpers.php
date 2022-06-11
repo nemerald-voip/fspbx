@@ -20,6 +20,20 @@ if (!function_exists('userCheckPermission')){
     }
 
 }
+if (!function_exists('getFusionPBXPreviousURL')){
+    function getFusionPBXPreviousURL($previous_url) {
+        if (strpos($previous_url, "time_condition_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "time_condition_edit.php")) . "time_conditions.php";}
+        elseif (strpos($previous_url, "destination_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "destination_edit.php")) . "destinations.php";}
+        elseif (strpos($previous_url, "extension_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "extension_edit.php")) . "extensions.php";}
+        elseif (strpos($previous_url, "ring_group_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "ring_group_edit.php")) . "ring_groups.php";}
+        elseif (strpos($previous_url, "device_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "device_edit.php")) . "devices.php";}
+        elseif (strpos($previous_url, "dialplan_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "dialplan_edit.php")) . "dialplans.php";}
+        elseif (strpos($previous_url, "ivr_menu_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";}
+        elseif (strpos($previous_url, "voicemail_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";}
+        else $url = $previous_url;
+        return $url;
+    }
+}
 
 if (!function_exists('appsStoreOrganizationDetails')){
     function appsStoreOrganizationDetails(Request $request) {

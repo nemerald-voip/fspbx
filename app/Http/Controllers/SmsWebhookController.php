@@ -26,22 +26,46 @@ class SmsWebhookController extends Controller
 
         //Check if the request has Unique ID. This will confirm that it 
         //came from the correct source
+
         // Example of the request that came from TELI:
         //POST /api/sms/webhook HTTP/1.1 Accept: / Content-Length: 120 Content-Type: 
         //application/x-www-form-urlencoded Host: freeswitchpbx.us.nemerald.net 
         //source=6467052267&destination=4243591155&message=2&type=sms
         //&cost=0.000000&unique_id=1c6327d2-a653-4a81-a0b6-8d2e313876d9
-        if (!$request->unique_id) {
+
+        //Example of the request that came from THINQ
+
+        // POST /api/sms/webhook HTTP/1.1 Accept: / Accept-Encoding: deflate, gzip 
+        // Content-Length: 59 Content-Type: application/x-www-form-urlencoded 
+        // Host: tx01.us.nemerald.net Referer: https://tx01.us.nemerald.net/api/sms/webhook 
+        // User-Agent: thinq-sms X-Sms-Guid: 4ed4cec6-dc4a-11ec-947c-174dda593dc8 
+        // from=6467052267&to=6578330000&type=sms&message=test+message
+
+        if (!$request->unique_id && $request->header('user-agent') != "thinq-sms") {
             return response()->json([
                 'error' => 401,
                 'message' => 'Unauthorized']);
         }
 
-        // Set initial validation status
-        $validation = true;
+        // Set the carrier variables and initial validation
+        if ($request->unique_id) {
+            $carrier = "Teli";
+            $destination = $request->destination;
+            $from = $request->source;
+            $message = $request->message;
+            $validation = true;
+        } elseif ($request->header('user-agent') == "thinq-sms") {
+            $carrier = "Thinq";
+            $destination = $request->to;
+            $from = $request->from;
+            $message = $request->message;
+            $validation = true;
+        } else {
+            $validation = false;
+        }
 
         // Get domain UUID using destination number from the request
-        $smsDestinationModel = SmsDestinations::where('destination', $request->destination)
+        $smsDestinationModel = SmsDestinations::where('destination', $destination)
             ->where('enabled','true')
             ->first();
 
@@ -80,10 +104,10 @@ class SmsWebhookController extends Controller
                     'method' => 'message',
                     'params' => array(
                         'orgid' => $setting->domain_setting_value,
-                        'from' => $request->source,
+                        'from' => $from,
                         'to' => $smsDestinationModel->chatplan_detail_data,
                         // 'content' => $domainModel->domain_uuid,
-                        'content' => $request->message,
+                        'content' => $message,
                     )
                 );
 
@@ -122,9 +146,9 @@ class SmsWebhookController extends Controller
         $messageModel = new Messages;
         $messageModel->extension_uuid = (isset($ext_model->extension_uuid)) ? $ext_model->extension_uuid : null;
         $messageModel->domain_uuid = (isset($smsDestinationModel->domain_uuid)) ? $smsDestinationModel->domain_uuid : null;
-        $messageModel->source = $request->source;
-        $messageModel->destination = $request->destination;
-        $messageModel->message = $request->message;
+        $messageModel->source = $from;
+        $messageModel->destination = $destination;
+        $messageModel->message = $message;
         $messageModel->direction = 'in';
         $messageModel->type = 'sms';
         $messageModel->status = $status;
@@ -146,10 +170,13 @@ class SmsWebhookController extends Controller
     public function messageFromRingotel(Request $request){
         //$payload = json_decode(file_get_contents('php://input'));
         $rawdata = file_get_contents("php://input");
-        // $rawdata = '{"method":"message","api_key":"h8nabAAJKkKCyPTdd0haEbEIG5dK2Jfzp605AVdJJcCwKaoAweb2QsD2rcDhAc58",
-        //     "params":{"from":"140","to":"6467052267","type":1,"ownerid":"16276636335171355647",
-        //         "userid":"16493663769626583076","content":"message text here","orgid":"16505688776284785526"}}';
+        // $rawdata = '{"method":"message","api_key":"e9bS5f5WNBK4HZRK143Wb3VM1EIk48hDQFvL6MP16UA0VMTUV2QmVdtqFXmf6uKf",
+        //     "params":{"from":"300","to":"6467052267","type":1,"ownerid":"16276636335171355647","userid":"16481387548477672383",
+        //         "content":"5","orgid":"16467742064165946777"}}';
         $message = json_decode($rawdata,true);
+
+        // Notification::route('mail', 'dexter@stellarvoip.com')
+        // ->notify(new StatusUpdate($rawdata));
 
         // Set initial validation status
         $validation = true;
@@ -193,9 +220,10 @@ class SmsWebhookController extends Controller
             $sourcePhoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
             $sourcePhoneNumberObject = $sourcePhoneNumberUtil->parse($smsDestinationModel->destination, 'US');
 
-            //Validate the destination number
+            //Validate the source number
             if (!$sourcePhoneNumberUtil->isValidNumber($sourcePhoneNumberObject)){
-                return response('Caller ID is not valid');
+                $validation = false;
+                $status = "Source number is not a valid US number";
             }
 
             //Get Extension model
@@ -207,13 +235,52 @@ class SmsWebhookController extends Controller
         }
         // dd($sourcePhoneNumberObject);
 
+        //Assign a provider
+        $carrier =  $smsDestinationModel->carrier;
+
         // Send text message through Teli API
-        if ($validation && $message['method'] == "message"){
+        if ($validation && $message['method'] == "message" && $carrier == "teli"){
             $response = Http::asForm()->post('https://api.teleapi.net/sms/send?token='. env('TELI_TOKEN'), [
                 "source" => $sourcePhoneNumberObject->getNationalNumber(),
                 "destination" => $phoneNumberObject->getNationalNumber(),
                 "message" => $message['params']['content']
             ]);
+
+            //Get result
+            if (isset($response) && $response['status'] == 'error'){
+                $status = $response['data'];
+            } elseif (isset($response) && $response['status'] == 'success') {
+                $status = "success";
+            }
+        }
+ 
+        // Send text message through Thinq API
+        if ($validation && $message['method'] == "message" && $carrier == "thinq"){
+            $data = array(
+                'from_did' => $sourcePhoneNumberObject->getNationalNumber(),
+                'to_did' => $phoneNumberObject->getNationalNumber(),
+                "message" => $message['params']['content'],
+            );
+            // dd(json_encode($data));
+            $response = Http::withHeaders([
+                    'Authorization' => 'Basic ' . base64_encode(env('THINQ_USERNAME') . ":" .env('THINQ_TOKEN')),
+                    'Content-Type' => 'application/json'
+                ])
+                ->withBody(json_encode($data),'application/json')
+                ->post('https://api.thinq.com/account/'. env('THINQ_ACCOUNT_ID') . '/product/origination/sms/send');
+
+                // Get result
+                if (isset($response)){
+                    $result = json_decode($response->body());
+                    // dd($result);
+                    if (isset($result->code) && ($result->code == 400 || $result->code == 401)){
+                        $status = $result->message;
+                    }
+                    if (isset($result->guid)){
+                        $status = "success";
+                    }
+
+                }
         }
 
         // if method is "read" send  
@@ -227,13 +294,6 @@ class SmsWebhookController extends Controller
         }
 
         //dd($response->body());
-
-        //Get result
-        if (isset($response) && $response['status'] == 'error'){
-            $status = $response['data'];
-        } elseif (isset($response) && $response['status'] == 'success') {
-            $status = "success";
-        }
         
         // Store message in database
         $messageModel = new Messages;
