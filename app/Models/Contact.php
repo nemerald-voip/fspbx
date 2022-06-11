@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Domain extends Model
+class Contact extends Model
 {
     use HasApiTokens, HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_domains";
+    protected $table = "v_contacts";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'domain_uuid';
+    protected $primaryKey = 'contact_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -24,20 +24,15 @@ class Domain extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'domain_name',
-        'domain_enabled',
-        'domain_description'
-    ];
+    // protected $fillable = [
+    //     'domain_name',
+    //     'domain_enabled',
+    //     'domain_description'
+    // ];
 
     /**
      * Get the settings for the domain.
      */
-    public function settings()
-    {
-        return $this->hasMany(DomainSettings::class,'domain_uuid','domain_uuid');
-    }
-
 
 
     /**
@@ -48,5 +43,11 @@ class Domain extends Model
     protected $hidden = [
 
     ];
+
+    public function user()
+    {
+        return $this->hasOne(User::class,'contact_uuid','contact_uuid');
+    }
+
 
 }

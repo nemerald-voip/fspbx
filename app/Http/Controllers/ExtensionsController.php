@@ -202,6 +202,7 @@ class ExtensionsController extends Controller
         // dd($extensionModel);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extensionModel);
+            // -> with ('voicemail',$extensionModel->voicemail())
     }
 
     /**

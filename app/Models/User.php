@@ -81,4 +81,27 @@ class User extends Authenticatable
         return $this->user_email;
     }
 
+    
+    public function contact()
+    {
+        return $this->belongsTo(Contact::class,'contact_uuid','contact_uuid');
+    }
+    
+    public function group()
+    {
+        return $this->hasOne(UserGroup::class,'user_uuid','user_uuid');
+    }
+    public function user_adv_fields()
+    {
+        return $this->hasOne(UserAdvFields::class,'user_uuid','user_uuid');
+    }
+     public function setting()
+    {
+        return $this->hasMany(UserSetting::class,'user_uuid','user_uuid');
+    }
+    public function user_domain()
+    {
+        return $this->hasMany(UserDomainPermission::class,'user_uuid','user_uuid');
+    }
+
 }

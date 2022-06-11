@@ -117,4 +117,9 @@ if (!function_exists('event_socket_request_cmd')){
         return $response;
     }
 }
+function pr($arr){
+    echo '<pre>';
+    print_r($arr);
+    echo '</pre>';
+}
 

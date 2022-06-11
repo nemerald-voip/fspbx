@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserGroup extends Model
+class UserDomainPermission extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_user_groups";
+    protected $table = "user_domain_permission";
 
-    public $timestamps = false;
+    public const CREATED_AT = 'created_at';
 
-    protected $primaryKey = 'user_group_uuid';
+    protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -23,10 +23,7 @@ class UserGroup extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_group_uuid',
         'domain_uuid',
-        'group_name',
-        'group_uuid',
         'user_uuid',
     ];
 

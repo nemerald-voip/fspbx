@@ -76,19 +76,24 @@
                                                     </div>
                                                 </div> <!-- end row -->
                                                 <div class="row">
+                                                    @if (userCheckPermission('extension_extension'))
                                                     <div class="col-md-6">
                                                         <div class="mb-3">
-                                                            <label for="billing-phone" class="form-label">Extension number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="xxxx" id="billing-phone" />
+                                                            <label for="extension" class="form-label">Extension number <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="text" placeholder="xxxx" id="extension" value="{{ $extension->extension }}"/>
                                                         </div>
                                                     </div>
+                                                    @endif
+                                                    @if (userCheckPermission('voicemail_edit'))
                                                     <div class="col-md-6">
                                                         <div class="mb-3">
-                                                            <label for="billing-email-address" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="email" placeholder="Enter email" id="billing-email-address" />
+                                                            <label for="voicemail-email-address" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="email" placeholder="Enter email" id="voicemail-email-address" value="{{ $extension->voicemail()->voicemail_mail_to }}"/>
                                                         </div>
                                                     </div>
+                                                    @endif
                                                 </div> <!-- end row -->
+                                                @if (userCheckPermission('extension_user_edit'))
                                                 <div class="row">
                                                     <div class="col-6">
                                                         <div class="mb-3">
@@ -104,6 +109,7 @@
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
+                                                @endif
                                                 <div class="row">
                                                     <div class="col-4">
                                                         <div class="mb-3">

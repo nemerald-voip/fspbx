@@ -5,17 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserGroup extends Model
+class UserAdvFields extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_user_groups";
+    protected $table = "users_adv_fields";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'user_group_uuid';
+    protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
+    public const CREATED_AT = 'created_at';
 
     /**
      * The attributes that are mass assignable.
@@ -23,11 +24,9 @@ class UserGroup extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_group_uuid',
-        'domain_uuid',
-        'group_name',
-        'group_uuid',
         'user_uuid',
+        'first_name',
+        'last_name',
     ];
 
     public function user()

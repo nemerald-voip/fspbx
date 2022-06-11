@@ -4,6 +4,7 @@
 <script src="{{asset('assets/js/app.min.js')}}"></script>
 @yield('script-bottom')
 
+
 <script>
     $(document).ready(function() {
 
