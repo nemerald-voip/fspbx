@@ -200,7 +200,7 @@ class ExtensionsController extends Controller
         $extensionModel = Extensions::find($extension);
 	
         // dd($extensionModel);
-        return view('layouts.extensions.edit')
+        return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extensionModel);
     }
 
@@ -213,7 +213,9 @@ class ExtensionsController extends Controller
      */
     public function update(Request $request, Extensions $extensions)
     {
-        //
+        dd("updating extension");
+
+        return back()->with("success", "Extension saved");
     }
 
     /**
