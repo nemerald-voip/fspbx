@@ -155,6 +155,31 @@
             });
         });
 
+        //Extension Page
+        // Copy email to voicmemail_email
+        $('#voicemail-email-address').change(function() {
+            $('#vm-email-address').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy first name to caller ID first name
+        $('#directory_first_name').change(function() {
+            $('#callerid-first-name').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy last name to caller ID last name
+        $('#directory_last_name').change(function() {
+            $('#callerid-last-name').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy extension to caller ID extension
+        $('#extension').change(function() {
+            $('#effective_caller_id_number').val($(this).val());
+        });
+
+
         // https://stackoverflow.com/a/43247613/10697374
         // $('#myModal').on('show.bs.modal', function(e) {  
         //     var getIdFromRow = $(e.relatedTarget).data('id');

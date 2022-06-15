@@ -25,6 +25,7 @@
                         <div class="col-xl-12">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 <a href="{{ Route('usersCreateUser') }}" class="btn btn-success mb-2 me-2">Add User</a>
+                                <a href="javascript:confirmDelete();" class="btn btn-danger mb-2 me-2">Delete Selected</a>
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->
@@ -40,7 +41,7 @@
                                             <label class="form-check-label" for="customCheck1">&nbsp;</label>
                                         </div>
                                     </th>
-                                    <th>Username</th>
+                                    <th>Name</th>
                                     <th>Email</th>
                                     <th>Enabled</th>
                                     <th style="width: 125px;">Action</th>
@@ -56,7 +57,15 @@
                                                 <label class="form-check-label" >&nbsp;</label>
                                             </div>
                                         </td>
-                                        <td><a href="javascript:;" class="text-body fw-bold">{{ $user['username'] }}</a> </td>
+                                        <td>
+                                            <a href="{{ route('editUser', base64_encode($user['user_uuid'])) }}" class="text-body fw-bold">
+                                                @if ($user->user_adv_fields) 
+                                                    {{ $user->user_adv_fields->first_name }} {{ $user->user_adv_fields->last_name }}
+                                                @else
+                                                    {{ $user->username }}
+                                                @endif
+                                            </a> 
+                                        </td>
                                         <td>
                                             {{ $user['user_email'] }} 
                                         </td>
@@ -71,7 +80,7 @@
                                             {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
                                             <a href="{{ route('editUser', base64_encode($user['user_uuid'])) }}" class="action-icon" title="Edit"> <i class="mdi mdi-square-edit-outline"></i></a>
                                             <a href="javascript:resetPassword('{{ $user['user_email'] }}');" class="action-icon"> <i class="mdi mdi-account-key-outline" title="Reset Password"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-delete" title="Delete"></i></a>
+                                            <a href="javascript:confirmDelete('{{ $user['user_uuid'] }}');" class="action-icon"> <i class="mdi mdi-delete" title="Delete"></i></a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -138,12 +147,32 @@
     $(document).ready(function() {
         $('#selectallCheckbox').on('change',function(){
             if($(this).is(':checked')){
-                $('.action_checkbox').attr('checked',true);
+                $('.action_checkbox').prop('checked',true);
             } else {
-                $('.action_checkbox').attr('checked',false);
+                $('.action_checkbox').prop('checked',false);
+            }
+        });
+
+        $('.action_checkbox').on('change',function(){
+            if(!$(this).is(':checked')){
+                $('#selectallCheckbox').prop('checked',false);
+            } else {
+                if(checkAllbox()){
+                    $('#selectallCheckbox').prop('checked',true);
+                }
             }
         });
     });
+
+    function checkAllbox(){
+        var checked=true;
+        $('.action_checkbox').each(function(key,val){
+            if(!$(this).is(':checked')){
+                checked=false;
+            }
+        });
+        return checked;
+    }
 
     function resetPassword(user_email){
 
@@ -201,6 +230,92 @@
                 });
             }
         });
+    }
+
+    function deleteUser(user_id){
+         $('.loading').show();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            url: "{{ Route('deleteUser') }}", // point to server-side PHP script
+            dataType: "json",
+            cache: false,
+            data: {
+                contact_id:user_id
+            },
+            type: 'post',
+            success: function(res) {
+                $('.loading').hide();
+                if (res.success) {
+                    toastr.success('Deleted Successfully!');
+                       setTimeout(function (){
+                        window.location.reload();
+                    }, 2000);
+                }
+            },
+            error: function(res){
+                $('.loading').hide();
+                toastr.error('Something went wrong!');
+            }
+        });
+    }
+    function checkSelectedBoxAvailable(){
+        var has=false;
+        $('.action_checkbox').each(function(key,val){
+        if($(this).is(':checked')){
+            has=true;
+        }});
+        return has;
+    }
+
+    function confirmDelete(user_id=''){
+        if(user_id==''){
+            var has=checkSelectedBoxAvailable();
+            
+            if(!has){
+                swal({
+                    title: "Users!",
+                    text: "No users selected!",
+                    icon: "error",
+                    button: "OK",
+                });
+                return false;
+            }
+        }
+        swal({
+            title: "Are you sure?",
+            text: "You want to delete these record!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: false,
+            cancel: {
+                text: "No, cancel it!",
+                value: false,
+                closeModal: true,
+            },
+            confirm: {
+                text: "Yes, I am sure!",
+                value: true,
+                closeModal: true
+            }
+            })
+            .then((willsend) => {
+            if (willsend) {
+
+                if(user_id==''){
+                    user_id=[];
+                    $('.action_checkbox').each(function(key,val){
+                        if($(this).is(':checked')){
+                            user_id.push($(this).val());
+                        }
+                    });
+                }
+                deleteUser(user_id);
+            }
+            }); 
     }
     
 </script>

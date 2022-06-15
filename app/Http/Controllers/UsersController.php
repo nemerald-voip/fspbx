@@ -4,16 +4,18 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
-use App\Models\Contact;
 use App\Models\Domain;
+use App\Models\Contact;
 use App\Models\UserGroup;
 use App\Models\UserSetting;
-use App\Models\UserDomainPermission;
-use App\Models\UserAdvFields;
 use Illuminate\Http\Request;
+use App\Models\UserAdvFields;
+use Illuminate\Support\Facades\DB;
+use App\Models\UserDomainPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\Http\Kernel;
-use Session;
+use Illuminate\Support\Facades\Session;
+
 class UsersController extends Controller
 {
     /**
@@ -34,9 +36,8 @@ class UsersController extends Controller
     public function index(Request $request)
     {
         $data=array();
-        $data['users']=User::orderBy('add_date','desc')->get();
-        // pr(\DB::table('v_menu_items')->get());
-        // exit;
+        $data['users']=User::orderBy('username','asc')->get();
+
         return view('layouts.users.list')->with($data);
     }
 
@@ -50,9 +51,9 @@ class UsersController extends Controller
     {
         $data=array();
         $data['domains']=Domain::get();
-        $data['user_group']=\DB::table('v_groups')->get();
+        $data['user_group']=DB::table('v_groups')->get();
         $data['user_domain_name']=Session::get("domain_name");
-        $data['languages']=\DB::table('v_languages')->get();
+        $data['languages']=DB::table('v_languages')->get();
         
         return view('layouts.users.create')->with($data);
 
@@ -85,9 +86,9 @@ class UsersController extends Controller
                 $contact=Contact::find($user['contact_uuid']);
                 $data=array();
                 $data['domains']=Domain::get();
-                $data['user_group']=\DB::table('v_groups')->get();
+                $data['user_group']=DB::table('v_groups')->get();
                 $data['user_domain_name']=Session::get("domain_name");
-                $data['languages']=\DB::table('v_languages')->get();
+                $data['languages']=DB::table('v_languages')->get();
                 $data['user']=$user;
                 $data['contact']=$contact;
                 $data['user_language']=$user_language;
@@ -139,7 +140,7 @@ class UsersController extends Controller
             $user_name_info->last_name=$input['last_name'];
             $user->user_adv_fields()->save($user_name_info);
 
-            $group_name=\DB::table('v_groups')->where('group_uuid',$input['group'])->pluck('group_name')->first();
+            $group_name=DB::table('v_groups')->where('group_uuid',$input['group'])->pluck('group_name')->first();
             $user_group=new UserGroup();
             $user_group->domain_uuid=$domain_uuid;
             $user_group->group_name=$group_name;
@@ -227,7 +228,7 @@ class UsersController extends Controller
             $user_name_info->last_name=$input['last_name'];
             $user->user_adv_fields()->save($user_name_info);
 
-            $group_name=\DB::table('v_groups')->where('group_uuid',$input['group'])->pluck('group_name')->first();
+            $group_name=DB::table('v_groups')->where('group_uuid',$input['group'])->pluck('group_name')->first();
             $user_group=$user->group;
             $user_group->domain_uuid=$domain_uuid;
             $user_group->group_name=$group_name;
@@ -286,6 +287,29 @@ class UsersController extends Controller
             return true;
         }
         return false;
+    }
+
+    function deleteUser(Request $request){
+        
+        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
+        $contact_id=$request->contact_id;
+        if(!is_array($contact_id)){
+            $contact_id=[$request->contact_id];
+        }
+        foreach($contact_id as $id){
+            $user=User::find($id);
+            if(!empty($user)){
+            $contact=Contact::find($user['contact_uuid']);
+            $user->delete();
+            if(!empty($contact)){
+                $contact->delete();
+            }
+            }
+        }
+        
+        $response=array('success'=>true,'data'=>'Deleted Successfully!'); 
+        echo json_encode($response);
+        exit();
     }
 
 

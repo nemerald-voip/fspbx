@@ -234,5 +234,6 @@ class SetUpUserSession
         // Send session cookie name to FusionPBX
         $_SESSION['cookie_name'] = config('session.cookie');
         //dd(Session::all());
+        //dd($_SESSION);
     }
 }

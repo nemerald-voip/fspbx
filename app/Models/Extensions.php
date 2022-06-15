@@ -88,10 +88,30 @@ class Extensions extends Model
      */
     public function voicemail()
     {
-        $voicemail = DB::table('v_voicemails')
-            -> where ('v_voicemails.domain_uuid', '=', $this->domain_uuid)
-            -> where ('v_voicemails.voicemail_id','=', $this->extension)
-            ->first();
-        return $voicemail;
+        return $this->hasOne(Voicemails::class,'voicemail_id','extension');
+    }
+
+    /**
+     * Get all of the users for the extension.
+     */
+    public function users()
+    {
+        $user_uuids = ExtensionUser::where('extension_uuid', $this->extension_uuid)->get();
+
+        $users = collect();
+        foreach ($user_uuids as $user_uuid) {
+            $users->push($user_uuid->user);
+        }
+
+        return $users;
+
+    }
+
+    /**
+     * Get the domain to which this extension belongs 
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
     }
 }

@@ -17,6 +17,21 @@ class ExtensionUser extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'extension_user_uuid',
+        'domain_uuid',
+        'extension_uuid',
+        'user_uuid',
+    ];
 
 
+    public function user()
+    {
+        return $this->belongsTo(User::class,'user_uuid','user_uuid');
+    }
 }

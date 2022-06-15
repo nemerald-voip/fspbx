@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
 class ExtensionsController extends Controller
@@ -188,7 +189,7 @@ class ExtensionsController extends Controller
      * @param  guid  $extention
      * @return \Illuminate\Http\Response
      */
-    public function edit($extension)
+    public function edit($extension_uuid)
     {
 
         //check permissions
@@ -197,12 +198,30 @@ class ExtensionsController extends Controller
 	    }
 
         // get the extension
-        $extensionModel = Extensions::find($extension);
-	
-        // dd($extensionModel);
+        $extension = Extensions::find($extension_uuid);
+
+        // Get all phone numbers
+        $destinations = Destinations::where('destination_enabled', 'true')
+        ->where ('domain_uuid', Session::get('domain_uuid'))
+        ->where ('destination_enabled', 'true')
+        ->get([
+            'destination_uuid',
+            'destination_number',
+            'destination_enabled',
+            'destination_description',
+            DB::Raw("coalesce(destination_description , '') as destination_description"),
+        ])
+        ->sortBy('destination_number');
+        // dd($destinations);
+
+        // dd($extension);
         return view('layouts.extensions.createOrUpdate')
-            -> with('extension',$extensionModel);
-            // -> with ('voicemail',$extensionModel->voicemail())
+            -> with('extension',$extension)
+            -> with('domain_users',$extension->domain->users)
+            -> with('extension_users',$extension->users())
+            -> with('destinations',$destinations)
+            -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
+            
     }
 
     /**
@@ -212,9 +231,72 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Extensions $extensions)
+    public function update(Request $request, Extensions $extension)
     {
-        dd("updating extension");
+
+        $attributes = [
+            'directory_first_name' => 'first name',
+            'directory_last_name' => 'last name',
+            'extension' =>'extension number',
+            'voicemail_mail_to' => 'email address',
+            'users' => 'users field',
+            'voicemail_password' => 'voicemail pin',
+            'outbound_caller_id_number' => 'external caller ID'
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'directory_first_name' => 'required|string',
+            'directory_last_name' => 'nullable|string',
+            'extension' =>'required|numeric',
+            'voicemail_mail_to' => 'required|email:rfc,dns',
+            'users' => 'nullable|array',
+            'directory_visible' => 'present',
+            'directory_exten_visible' => 'present',
+            'enabled' => 'present',
+            'description' => "string|max:100",
+            'outbound_caller_id_number' => "present",
+            'emergency_caller_id_number' => 'present',
+            
+            'voicemail_enabled' => "present",
+            'call_timeout' => "numeric",
+            'voicemail_password' => 'numeric|digits_between:3,10',
+            'voicemail_file' => "present",
+
+            
+
+        ], [], $attributes);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        // Retrieve the validated input assign all attributes
+        $attributes = $validator->validated();
+        $attributes['effective_caller_id_name'] = $attributes['directory_first_name'] . " " . $attributes['directory_last_name'];
+        $attributes['effective_caller_id_number'] = $attributes['extension'];
+        if ($attributes['directory_visible']== "on")  $attributes['directory_visible'] = "true";
+        if ($attributes['directory_exten_visible']== "on")  $attributes['directory_exten_visible'] = "true";
+        if ($attributes['enabled']== "on")  $attributes['enabled'] = "true";
+        if ($attributes['voicemail_enabled']== "on")  $attributes['voicemail_enabled'] = "true";
+        $attributes['voicemail_id'] = $attributes['extension'];
+
+
+        // Delete cache and update extension
+        if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+            session_start();
+        }
+        $cache = new cache;
+        $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+        $extension->voicemail->update($attributes);
+        $extension->update($attributes);
+        dd($extension->voicemail);
+
+        //clear the destinations session array
+        if (isset($_SESSION['destinations']['array'])) {
+            unset($_SESSION['destinations']['array']);
+        }
 
         return back()->with("success", "Extension saved");
     }
@@ -229,4 +311,5 @@ class ExtensionsController extends Controller
     {
         //
     }
+
 }
