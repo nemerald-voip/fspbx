@@ -530,7 +530,7 @@
                                                     <label class="form-label">Language <span class="text-danger">*</span></label>
                                                     <select  id="language"  name="language" class="formfld" style="">
                                                             @foreach ($languages as $language)
-                                                                <option value="{{ $language->code }}">{{ $language->language }}</option>
+                                                                <option value="{{ $language->code }}" {{ (trim($language->code)=='en-us')?'selected':'' }}>{{ $language->language }}</option>
                                                             @endforeach
                                                     </select>
                                                 </div>

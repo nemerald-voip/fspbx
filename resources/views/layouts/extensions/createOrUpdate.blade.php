@@ -353,122 +353,124 @@
 
                                                         <p class="text-muted mb-4">Voicemail settings allow you to update your voicemail access PIN, personalize, maintain and update your voicemail greeting to inform your friends, customers, or colleagues of your status.</p>
 
-                                                            <div class="row">
-                                                                <div class="col-4">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Voicemail enabled </label>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-2">
-                                                                    <div class="mb-3 text-sm-end">
-                                                                        <input type="hidden" name="voicemail_enabled" value="false">
-                                                                        <input type="checkbox" id="voicemail_enabled" name="voicemail_enabled"
-                                                                        @if ($extension->voicemail->voicemail_enabled == "true") checked @endif
-                                                                        data-switch="primary"/>
-                                                                        <label for="voicemail_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                                        @error('voicemail_enabled')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
-                                                                    </div>
-                                                                </div>
-                                                            </div> <!-- end row -->
+                                                        <input type="hidden" name="voicemail_id" value="{{ $extension->extension }}">
 
-                                                            <div class="row">
-                                                                <div class="col-6">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">If no answer, send to voicemail after</label>
-                                                                        <select data-toggle="select2" title="If no answer, send to voicemail after" name="call_timeout">
-                                                                            @for ($i = 1; $i < 21; $i++)
-                                                                                <option value="{{ $i * 5 }}" @if ($extension->call_timeout == $i*5) selected @endif>
-                                                                                    {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
-                                                                                </option>
-                                                                            @endfor
-                                                                        </select>
-                                                                    @error('call_timeout')
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Voicemail enabled </label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3 text-sm-end">
+                                                                    <input type="hidden" name="voicemail_enabled" value="false">
+                                                                    <input type="checkbox" id="voicemail_enabled" name="voicemail_enabled"
+                                                                    @if ($extension->voicemail->voicemail_enabled == "true") checked @endif
+                                                                    data-switch="primary"/>
+                                                                    <label for="voicemail_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                                    @error('voicemail_enabled')
                                                                         <div class="text-danger">{{ $message }}</div>
                                                                     @enderror
-                                                                    </div>
                                                                 </div>
-                                                            </div> <!-- end row -->
+                                                            </div>
+                                                        </div> <!-- end row -->
 
-                                                            <div class="row">
-                                                                <div class="col-md-6">
-                                                                    <div class="mb-3">
-                                                                        <label for="voicemail_password" class="form-label">Set voicemail PIN <span class="text-danger">*</span></label>
-                                                                        <div class="input-group input-group-merge">
-                                                                            <input type="password" id="voicemail_password" class="form-control" placeholder="xxxx"
-                                                                            value="{{ $extension->voicemail->voicemail_password }}" name="voicemail_password">
-                                                                            <div class="input-group-text" data-password="false">
-                                                                                <span class="password-eye"></span>
-                                                                            </div>
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">If no answer, send to voicemail after</label>
+                                                                    <select data-toggle="select2" title="If no answer, send to voicemail after" name="call_timeout">
+                                                                        @for ($i = 1; $i < 21; $i++)
+                                                                            <option value="{{ $i * 5 }}" @if ($extension->call_timeout == $i*5) selected @endif>
+                                                                                {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                            </option>
+                                                                        @endfor
+                                                                    </select>
+                                                                @error('call_timeout')
+                                                                    <div class="text-danger">{{ $message }}</div>
+                                                                @enderror
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="mb-3">
+                                                                    <label for="voicemail_password" class="form-label">Set voicemail PIN <span class="text-danger">*</span></label>
+                                                                    <div class="input-group input-group-merge">
+                                                                        <input type="password" id="voicemail_password" class="form-control" placeholder="xxxx"
+                                                                        value="{{ $extension->voicemail->voicemail_password }}" name="voicemail_password">
+                                                                        <div class="input-group-text" data-password="false">
+                                                                            <span class="password-eye"></span>
                                                                         </div>
-                                                                        @error('voicemail_password')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
                                                                     </div>
+                                                                    @error('voicemail_password')
+                                                                        <div class="text-danger">{{ $message }}</div>
+                                                                    @enderror
                                                                 </div>
-                                                            </div> <!-- end row -->
-                                                            <div class="row">
-                                                                <div class="col-6">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Notification type</label>
-                                                                        <select data-toggle="select2" title="Notification Type" name="voicemail_file">
-                                                                            <option value="attach" @if ($extension->voicemail->voicemail_file == "attach") selected @endif>
-                                                                                Email with audio file attachment
-                                                                            </option>
-                                                                            <option value="link" @if ($extension->voicemail->voicemail_file == "link") selected @endif>
-                                                                                Email with download link
-                                                                            </option>
-                                                                        </select>
-                                                                        @error('voicemail_file')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
-                                                                    </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Notification type</label>
+                                                                    <select data-toggle="select2" title="Notification Type" name="voicemail_file">
+                                                                        <option value="attach" @if ($extension->voicemail->voicemail_file == "attach") selected @endif>
+                                                                            Email with audio file attachment
+                                                                        </option>
+                                                                        <option value="link" @if ($extension->voicemail->voicemail_file == "link") selected @endif>
+                                                                            Email with download link
+                                                                        </option>
+                                                                    </select>
+                                                                    @error('voicemail_file')
+                                                                        <div class="text-danger">{{ $message }}</div>
+                                                                    @enderror
                                                                 </div>
-                                                                <div class="col-6">
-                                                                    <div class="mb-3">
-                                                                        <label for="vm-email-address" class="form-label">Email Address</span></label>
-                                                                        <input class="form-control" type="email" disabled placeholder="Enter email" id="vm-email-address" 
-                                                                        value="{{ $extension->voicemail->voicemail_mail_to }}"/>
-                                                                    </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="vm-email-address" class="form-label">Email Address</span></label>
+                                                                    <input class="form-control" type="email" disabled placeholder="Enter email" id="vm-email-address" 
+                                                                    value="{{ $extension->voicemail->voicemail_mail_to }}"/>
                                                                 </div>
-                                                            </div> <!-- end row -->
+                                                            </div>
+                                                        </div> <!-- end row -->
 
-                                                            <div class="row">
-                                                                <div class="col-4">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Enable voicemail transcription </label>
-                                                                        <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                            data-bs-content="Send a text trancsript. Accuracy may vary based on call quality, accents, vocabulary, etc. ">
-                                                                            <i class="dripicons-information"></i>
-                                                                        </a>
-                                                                    </div>
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Enable voicemail transcription </label>
+                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                        data-bs-content="Send a text trancsript. Accuracy may vary based on call quality, accents, vocabulary, etc. ">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
                                                                 </div>
-                                                                <div class="col-2">
-                                                                    <div class="mb-3 text-sm-end">
-                                                                        <input type="checkbox" id="transcription-switch" checked data-switch="primary"/>
-                                                                        <label for="transcription-switch" data-on-label="On" data-off-label="Off"></label>
-                                                                    </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3 text-sm-end">
+                                                                    <input type="checkbox" id="transcription-switch" checked data-switch="primary"/>
+                                                                    <label for="transcription-switch" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
-                                                            </div> <!-- end row -->
+                                                            </div>
+                                                        </div> <!-- end row -->
 
-                                                            <div class="row">
-                                                                <div class="col-4">
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Delete voicemail after sending email </label>
-                                                                        <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                            data-bs-content="Enables email-only voicemail. Disables storing of voicemail messages for this mailbox in the cloud.">
-                                                                            <i class="dripicons-information"></i>
-                                                                        </a>
-                                                                    </div>
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Delete voicemail after sending email </label>
+                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                        data-bs-content="Enables email-only voicemail. Disables storing of voicemail messages for this mailbox in the cloud.">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
                                                                 </div>
-                                                                <div class="col-2">
-                                                                    <div class="mb-3 text-sm-end">
-                                                                        <input type="checkbox" id="directory-name-switch" data-switch="primary"/>
-                                                                        <label for="directory-name-switch" data-on-label="On" data-off-label="Off"></label>
-                                                                    </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3 text-sm-end">
+                                                                    <input type="checkbox" id="directory-name-switch" data-switch="primary"/>
+                                                                    <label for="directory-name-switch" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
-                                                            </div> <!-- end row -->
+                                                            </div>
+                                                        </div> <!-- end row -->
 
                                                     </div>
 

@@ -89,7 +89,7 @@ class User extends Authenticatable
     
     public function group()
     {
-        return $this->hasOne(UserGroup::class,'user_uuid','user_uuid');
+        return $this->hasMany(UserGroup::class,'user_uuid','user_uuid');
     }
     public function user_adv_fields()
     {

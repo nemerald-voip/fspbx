@@ -37,6 +37,8 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('/saveUser', [UsersController::class, 'saveUser']) ->name('saveUser');
     Route::post('/updateUser', [UsersController::class, 'updateUser']) ->name('updateUser');
     Route::post('/deleteUser', [UsersController::class, 'deleteUser']) ->name('deleteUser');
+    Route::post('/addSetting', [UsersController::class, 'addSetting']) ->name('addSetting');
+    Route::post('/deleteSetting', [UsersController::class, 'deleteSetting']) ->name('deleteSetting');
 
     //Extensions
     Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID']) ->name('callerID');

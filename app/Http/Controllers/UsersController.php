@@ -83,6 +83,13 @@ class UsersController extends Controller
                         $domain_permission[]=$permission['domain_uuid'];
                     }
                 }
+
+                $group_permission=[];
+                if(!empty($user->group)){
+                    foreach($user->group as $group){
+                        $group_permission[]=$group['group_uuid'];
+                    }
+                }
                 $contact=Contact::find($user['contact_uuid']);
                 $data=array();
                 $data['domains']=Domain::get();
@@ -94,7 +101,10 @@ class UsersController extends Controller
                 $data['user_language']=$user_language;
                 $data['user_time_zone']=$user_time_zone;
                 $data['domain_permission']=$domain_permission;
+                $data['group_permission']=$group_permission;
+                $records=$user->setting()->where('user_setting_name','!=','system_default')->orderBy('user_setting_category')->get();
                 
+                $data['settings']=$records;
                 return view('layouts.users.update')->with($data);
             }
         }
@@ -159,7 +169,7 @@ class UsersController extends Controller
             $language->domain_uuid=$domain_uuid;
             $language->user_setting_category='domain';
             $language->user_setting_subcategory='language';
-            $language->user_setting_name='code';
+            $language->user_setting_name='system_default';
             $language->user_setting_value=$input['language'];
             $language->user_setting_enabled='t';
             
@@ -167,7 +177,7 @@ class UsersController extends Controller
             $time_zone->domain_uuid=$domain_uuid;
             $time_zone->user_setting_category='domain';
             $time_zone->user_setting_subcategory='time_zone';
-            $time_zone->user_setting_name='name';
+            $time_zone->user_setting_name='system_default';
             $time_zone->user_setting_value=$input['time_zone'];
             $time_zone->user_setting_enabled='t';
 
@@ -224,19 +234,30 @@ class UsersController extends Controller
             $contact->user()->save($user);
 
             $user_name_info=$user->user_adv_fields;
+            if(empty($user_name_info)){
+                $user_name_info=new UserAdvFields();
+            }
             $user_name_info->first_name=$input['first_name'];
             $user_name_info->last_name=$input['last_name'];
             $user->user_adv_fields()->save($user_name_info);
 
-            $group_name=DB::table('v_groups')->where('group_uuid',$input['group'])->pluck('group_name')->first();
-            $user_group=$user->group;
-            $user_group->domain_uuid=$domain_uuid;
-            $user_group->group_name=$group_name;
-            $user_group->group_uuid=$input['group'];
-            $user->group()->save($user_group);
-
+            if(!empty($input['group'])){
+            $user->group()->delete();
+                foreach($input['group'] as $group){
+                    $group_name=DB::table('v_groups')->where('group_uuid',$group)->pluck('group_name')->first();
+                    $user_group=new UserGroup();
+                    $user_group->domain_uuid=$domain_uuid;
+                    $user_group->group_name=$group_name;
+                    $user_group->group_uuid=$group;
+                    $user->group()->save($user_group);
+                }
+                
+            
+            }
+            
+            
             $user->user_domain()->delete();
-            if($input['group']=='191b8429-1d88-405a-8d64-7bbbe9ef84b2'){
+            if(in_array('191b8429-1d88-405a-8d64-7bbbe9ef84b2',$input['group'])){
                 foreach($input['reseller_domain'] as $res_domain){
                     $dom_per=new UserDomainPermission();
                     $dom_per->domain_uuid=$res_domain;
@@ -249,7 +270,7 @@ class UsersController extends Controller
             $language->domain_uuid=$domain_uuid;
             $language->user_setting_category='domain';
             $language->user_setting_subcategory='language';
-            $language->user_setting_name='code';
+            $language->user_setting_name='system_default';
             $language->user_setting_value=$input['language'];
             $language->user_setting_enabled='t';
             
@@ -257,7 +278,7 @@ class UsersController extends Controller
             $time_zone->domain_uuid=$domain_uuid;
             $time_zone->user_setting_category='domain';
             $time_zone->user_setting_subcategory='time_zone';
-            $time_zone->user_setting_name='name';
+            $time_zone->user_setting_name='system_default';
             $time_zone->user_setting_value=$input['time_zone'];
             $time_zone->user_setting_enabled='t';
 
@@ -310,6 +331,45 @@ class UsersController extends Controller
         $response=array('success'=>true,'data'=>'Deleted Successfully!'); 
         echo json_encode($response);
         exit();
+    }
+    function deleteSetting(Request $request){
+        
+        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
+        $setting_id=$request->setting_id;
+        if(!is_array($setting_id)){
+            $setting_id=[$request->setting_id];
+        }
+        foreach($setting_id as $id){
+            $setting=UserSetting::find($id);
+            if(!empty($setting)){
+            $setting->delete();
+            }
+        }
+        
+        $response=array('success'=>true,'data'=>'Deleted Successfully!'); 
+        echo json_encode($response);
+        exit();
+    }
+
+
+    public function addSetting(Request $request){
+        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
+        $input=$request->input();
+        $user_id=base64_decode($input['user_id']);
+        $user=User::find($user_id);
+        if(!empty($user)){
+            $setting=new UserSetting();
+            $setting->domain_uuid=$user->domain_uuid;
+            $setting->user_setting_category=$input['category'];
+            $setting->user_setting_subcategory=$input['subcategory'];
+            $setting->user_setting_name=$input['setting_type'];
+            $setting->user_setting_value=$input['setting_value'];
+            $setting->user_setting_description=$input['setting_description'];
+            $setting->user_setting_enabled=($input['status']=='on')?'t':'f';
+            $user->setting()->save($setting);
+            $response=array('success'=>true,'data'=>'Setting saved successfully');
+        }
+        return $response;
     }
 
 

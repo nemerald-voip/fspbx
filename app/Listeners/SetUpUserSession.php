@@ -2,8 +2,10 @@
 
 namespace App\Listeners;
 
+use App\Models\DefaultSettings;
 use App\Models\Domain;
 use App\Models\UserGroup;
+use default_settings;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -233,6 +235,14 @@ class SetUpUserSession
 
         // Send session cookie name to FusionPBX
         $_SESSION['cookie_name'] = config('session.cookie');
+
+        $default_settings = DefaultSettings::where('default_setting_enabled','true')
+            ->get()
+            ->toArray();
+        // foreach ($default_settings as $setting){
+        //     $array[$setting['default_setting_category']][$setting['default_setting_subcategory']][$setting['default_setting_name']] = $setting['default_setting_value'];
+        // }
+        Session::put('default_settings', $default_settings);
         //dd(Session::all());
         //dd($_SESSION);
     }

@@ -16,6 +16,27 @@
         <div class="col-12">
             <div class="card mt-3">
                 <div class="card-body">
+
+
+                    
+                    <ul class="nav nav-pills bg-nav-pills nav-justified mb-3">
+                        <li class="nav-item">
+                            <a href="#profile" data-bs-toggle="tab" aria-expanded="true" class="nav-link rounded-0  active">
+                                <i class="mdi mdi-account-circle d-md-none d-block"></i>
+                                <span class="d-none d-md-block">Profile</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#setting" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-0">
+                                 <i class="mdi mdi-settings-outline d-md-none d-block"></i>
+                                <span class="d-none d-md-block">Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane show  active" id="profile">
+                            
                         <!-- Body Content-->
                             <div class="row">
                                 <div class="col-lg-12">
@@ -547,9 +568,9 @@
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label for="group" class="form-label">Group <span class="text-danger">*</span></label>
-                                                    <select data-placeholder="Please select group"  id="group" name="group" class="formfld" style="">
+                                                    <select data-placeholder="Please select group" multiple  id="group" name="group[]" class="formfld" style="">
                                                     @foreach($user_group as $group)
-                                                        <option value="{{ $group->group_uuid }}" {{(isset($user->group['group_uuid']))?(($user->group['group_uuid']==$group->group_uuid)?'selected':''):''}}>{{ ucfirst($group->group_name) }}</option>
+                                                        <option value="{{ $group->group_uuid }}" {{(!empty($group_permission))?((in_array($group->group_uuid,$group_permission))?'selected':''):''}}>{{ ucfirst($group->group_name) }}</option>
                                                     @endforeach
                                                         </select>
                                                 </div>
@@ -572,7 +593,7 @@
 
 
                                         </div> <!-- end row -->
-                                        <div  id="domain_row" {{(isset($user->group['group_uuid']))?(($user->group['group_uuid']=='191b8429-1d88-405a-8d64-7bbbe9ef84b2')?'class="row"':'style=display:none'):'style=display:none'}}>
+                                        <div  id="domain_row" {{(!empty($group_permission))?((in_array('191b8429-1d88-405a-8d64-7bbbe9ef84b2',$group_permission))?'class="row"':'style=display:none;'):''}}>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label for="domain" class="form-label">Domain <span class="text-danger">*</span></label>
@@ -600,6 +621,85 @@
                                 </div>
                             </div> <!-- end row-->
 
+                        </div>
+                        <div class="tab-pane " id="setting">
+                            <div class="row">
+                                 <div class="col-xl-12">
+                                    <div class="text-xl-end mt-xl-0 mt-2">
+                                        <a href="javascript:openSettingModal();" class="btn btn-success mb-2 me-2">Add Setting</a>
+                                    <a href="javascript:confirmDelete();" class="btn btn-danger mb-2 me-2">Delete Selected</a>
+                                    {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
+                                    </div>
+                                </div><!-- end col-->
+                            </div>
+
+                              <div class="table-responsive">
+                        <table class="table table-centered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 20px;">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="selectallCheckbox">
+                                            <label class="form-check-label" for="customCheck1">&nbsp;</label>
+                                        </div>
+                                    </th>
+                                    <th>Category</th>
+                                    <th>Subcategory</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>Status</th>
+                                    <th>Description</th>
+                                    <th style="width: 125px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                @foreach ($settings as $key=>$setting)
+                                        <tr>
+                                        <td>
+                                            <div class="form-check">
+                                                <input type="checkbox" name="action_box[]" value="{{$setting['user_setting_uuid']}}" class="form-check-input action_checkbox">
+                                                <label class="form-check-label" >&nbsp;</label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ $setting['user_setting_category'] }} 
+                                        </td>
+                                        <td>
+                                            {{ $setting['user_setting_subcategory'] }} 
+                                        </td>
+                                        <td>
+                                            {{ $setting['user_setting_name'] }} 
+                                        </td>
+                                        <td>
+                                            {{ $setting['user_setting_value'] }} 
+                                        </td>
+                                        <td>
+                                            @if ($setting['user_setting_enabled']=='t') 
+                                                <h5><span class="badge bg-success"></i>Enabled</span></h5>
+                                            @else 
+                                                <h5><span class="badge bg-warning">Disabled</span></h5>
+                                            @endif
+                                        </td>
+                                        
+                                        <td>
+                                            {{ $setting['user_setting_description'] }} 
+                                        </td>
+                                        <td>
+                                            {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
+                                            <a href="javascript:confirmDelete('{{ $setting['user_setting_uuid'] }}');" class="action-icon"> <i class="mdi mdi-delete" title="Delete"></i></a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                            </tbody>
+                        </table>
+                    </div>
+                        </div>
+                    </div>
+
+
+
 
                 </div> <!-- end card-body-->
             </div> <!-- end card-->
@@ -609,13 +709,100 @@
 
 </div> <!-- container -->
 
+<div class="modal fade" id="settingModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myLargeModalLabel">Add Setting</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+            <div class="modal-body">
+                 <form  id="setting_form" method="post" action="javascript:void(0)">
+                                        @CSRF
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                                                    <input class="form-control"  type="text" value="" placeholder="Enter category" name="category" id="category" />
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="subcategory" class="form-label">Subcategory <span class="text-danger">*</span></label>
+                                                    <input class="form-control" value="" type="text" placeholder="Enter your subcategory" id="subcategory" name="subcategory"/>
+                                                </div>
+                                            </div>
+                                        </div> <!-- end row -->
+
+                                        <div class="row">
+                                          
+                                              <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="setting_type" class="form-label">Type<span class="text-danger">*</span></label>
+                                                    <input class="form-control" value="" type="text" placeholder="Enter type" id="setting_type" name="setting_type"/>
+                                                </div>
+                                            </div>
+                                              <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="setting_value" class="form-label">Value <span class="text-danger">*</span></label>
+                                                    <input class="form-control" value="" type="text" placeholder="Enter value" id="setting_value" name="setting_value"/>
+                                                </div>
+                                            </div>
+                                            
+                                        </div> <!-- end row -->
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="status_yes" class="form-label">Status <span class="text-danger">*</span></label>
+                                                        <div class="d-flex">
+                                                            <div class="form-check mx-3">
+                                                                <input type="radio" id="status_yes"  value="on" name="status" checked class="form-check-input">
+                                                                <label class="form-check-label" for="status_yes" >Enabled</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input type="radio" id="status_no"  value="off" name="status" class="form-check-input">
+                                                                <label class="form-check-label" for="status_no">Disabled</label>
+                                                            </div>
+                                                        </div> 
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <label for="setting_value" class="form-label">Description</label>
+                                                <textarea  class="form-control" name="setting_description" value="setting_description"></textarea>
+                                            </div>
+                                        </div>
+                                      
+
+                                        <div class="row mt-4">
+                                            <div class="col-sm-12">
+                                                <div class="text-sm-end">
+                                                <input type="hidden" name="user_id" value="{{base64_encode($user['user_uuid'])}}">
+                                                  <button type="button" class="btn btn-light" data-bs-dismiss="modal" aria-hidden="true">Close</button>
+                                                   <button class="btn btn-danger" type="submit">Save </button>
+                                                </div>
+                                            </div> <!-- end col -->
+                                        </div>
+
+                                    </form>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
 <script src="{{asset('assets/js/vendor.js')}}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 {{-- @yield('script') --}}
 {{-- @yield('script-bottom') --}}
 
 <script>
+    var setting_validation;
     $(document).ready(function() {
         $('#time_zone').val($('#time_zone_val').val());
         $('#time_zone,#language,#group,#domain,#user_site').select2();
@@ -653,7 +840,7 @@
                     language: {
                         required: true,
                     },
-                    group: {
+                    "group[]": {
                         required: true,
                     },
                     account_status: {
@@ -686,7 +873,7 @@
                     language: {
                         required: "Please enter language",
                     },
-                    group: {
+                    "group[]": {
                         required: "Please enter group",
                     },
                     account_status: {
@@ -699,14 +886,197 @@
                 });
 
 
+                
+               setting_validation=$("#setting_form").validate({
+                    rules: {
+                        category: {
+                            required: true,
+                        },
+                        subcategory: {
+                            required: true,
+                        },
+                        setting_type: {
+                            required: true,
+                        },
+                        setting_value: {
+                            required: true,
+                        },
+                    },
+                    messages: {
+                        category: {
+                            required: "Please enter category",
+                        },
+                        subcategory: {
+                            required: "Please enter subcategory",
+                        },
+                        setting_type: {
+                            required: "Please enter type",
+                        },
+                        setting_value: {
+                            required: "Please enter value",
+                        },
+                    },
+                    submitHandler: function(form) {
+                        saveSetting();
+                    }
+                });
+
+        var group_list=[];
         $('#group').on('change',function(){
-            if($(this).val()=='191b8429-1d88-405a-8d64-7bbbe9ef84b2'){
+            group_list=$(this).val();
+            if(group_list.includes('191b8429-1d88-405a-8d64-7bbbe9ef84b2')){
                 $('#domain_row').show();
             } else {
                 $('#domain_row').hide();
             }
-        });        
+        });  
+        
+           $('#selectallCheckbox').on('change',function(){
+            if($(this).is(':checked')){
+                $('.action_checkbox').prop('checked',true);
+            } else {
+                $('.action_checkbox').prop('checked',false);
+            }
+        });
+
+        $('.action_checkbox').on('change',function(){
+            if(!$(this).is(':checked')){
+                $('#selectallCheckbox').prop('checked',false);
+            } else {
+                if(checkAllbox()){
+                    $('#selectallCheckbox').prop('checked',true);
+                }
+            }
+        });
     });
+
+      function checkAllbox(){
+        var checked=true;
+        $('.action_checkbox').each(function(key,val){
+            if(!$(this).is(':checked')){
+                checked=false;
+            }
+        });
+        return checked;
+    }
+       function checkSelectedBoxAvailable(){
+        var has=false;
+        $('.action_checkbox').each(function(key,val){
+        if($(this).is(':checked')){
+            has=true;
+        }});
+        return has;
+    }
+    
+    function confirmDelete(setting_id=''){
+        if(setting_id==''){
+            var has=checkSelectedBoxAvailable();
+            
+            if(!has){
+                swal({
+                    title: "Users!",
+                    text: "No users selected!",
+                    icon: "error",
+                    button: "OK",
+                });
+                return false;
+            }
+        }
+        swal({
+            title: "Are you sure?",
+            text: "You want to delete these record!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: false,
+            cancel: {
+                text: "No, cancel it!",
+                value: false,
+                closeModal: true,
+            },
+            confirm: {
+                text: "Yes, I am sure!",
+                value: true,
+                closeModal: true
+            }
+            })
+            .then((willsend) => {
+            if (willsend) {
+
+                if(setting_id==''){
+                    setting_id=[];
+                    $('.action_checkbox').each(function(key,val){
+                        if($(this).is(':checked')){
+                            setting_id.push($(this).val());
+                        }
+                    });
+                }
+                deleteSetting(setting_id);
+            }
+            }); 
+    }
+
+    function deleteSetting(setting_id){
+         $('.loading').show();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            url: "{{ Route('deleteSetting') }}", // point to server-side PHP script
+            dataType: "json",
+            cache: false,
+            data: {
+                setting_id:setting_id
+            },
+            type: 'post',
+            success: function(res) {
+                $('.loading').hide();
+                if (res.success) {
+                    toastr.success('Deleted Successfully!');
+                       setTimeout(function (){
+                        window.location.reload();
+                    }, 2000);
+                }
+            },
+            error: function(res){
+                $('.loading').hide();
+                toastr.error('Something went wrong!');
+            }
+        });
+    }
+
+    function saveSetting(){
+        $('.loading').show();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            url: "{{ route('addSetting') }}", // point to server-side PHP script
+            dataType: "json",
+            cache: false,
+            data: $("#setting_form").serialize(),
+            type: 'post',
+            success: function(res) {
+                $('.loading').hide();
+                if (res.success) {
+                    toastr.success('Setting Added!');
+                    $('#settingModal').modal('hide');
+                    
+                    setTimeout(function (){
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    toastr.error(res.data.error);
+                }
+            },
+            error: function(){
+                $('.loading').hide();
+            }
+        });
+    }
 
     
     function saveUser() {
@@ -739,6 +1109,11 @@
             }
         });
 
+    }
+
+    function openSettingModal(){
+        setting_validation.resetForm();
+        $('#settingModal').modal('show');
     }
 </script>
 @endsection

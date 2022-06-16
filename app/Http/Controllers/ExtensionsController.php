@@ -257,6 +257,7 @@ class ExtensionsController extends Controller
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
             
+            'voicemail_id' => 'present',
             'voicemail_enabled' => "present",
             'call_timeout' => "numeric",
             'voicemail_password' => 'numeric|digits_between:3,10',
@@ -280,8 +281,18 @@ class ExtensionsController extends Controller
         if ($attributes['directory_exten_visible']== "on")  $attributes['directory_exten_visible'] = "true";
         if ($attributes['enabled']== "on")  $attributes['enabled'] = "true";
         if ($attributes['voicemail_enabled']== "on")  $attributes['voicemail_enabled'] = "true";
-        $attributes['voicemail_id'] = $attributes['extension'];
 
+        // Check if voicemail directory needs to be renamed 
+        if($attributes['voicemail_id'] != $attributes['extension']) {
+            if (file_exists(getDefaultSetting('switch','voicemail')."/default/".Session::get('domain_name')."/".$attributes['voicemail_id'])) {
+                rename(
+                    getDefaultSetting('switch','voicemail')."/default/".Session::get('domain_name')."/".$attributes['voicemail_id'],
+                    getDefaultSetting('switch','voicemail')."/default/".Session::get('domain_name')."/".$attributes['extension']
+                );
+            }
+            $attributes['voicemail_id'] = $attributes['extension'];
+
+        }
 
         // Delete cache and update extension
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
