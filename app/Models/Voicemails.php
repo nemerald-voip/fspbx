@@ -42,14 +42,6 @@ class Voicemails extends Model
         'voicemail_tutorial'
     ];
 
-    /**
-     * Get the extension voicemail belongs to.
-     */
-    public function extension()
-    {
-        return $this->hasOne(Extensions::class,'extension','voicemail_id');
-    }
-
 
     /**
      * The attributes that should be hidden for serialization.
@@ -59,4 +51,43 @@ class Voicemails extends Model
     protected $hidden = [
 
     ];
+
+    /**
+     * Get the extension voicemail belongs to.
+     */
+    public function extension()
+    {
+        return $this->hasOne(Extensions::class,'extension','voicemail_id');
+    }
+
+    /**
+     * Get the extension voicemail belongs to.
+     */
+    public function voicemail_destinations()
+    {
+        return $this->hasMany(VoicemailDestinations::class,'voicemail_uuid','voicemail_uuid');
+    }
+
+
+    /**
+     * Get all forward destinations for this voicemail
+     *      
+    */
+    public function forward_destinations()
+    {
+
+        $voicemail_destinations = VoicemailDestinations::where ('voicemail_uuid', $this->voicemail_uuid)
+        ->get([
+            'voicemail_uuid_copy',
+        ]);
+
+        $destinations = collect();
+        foreach ($voicemail_destinations as $voicemail_destination) {
+            $destinations->push($voicemail_destination->voicemail);
+        }
+
+        return $destinations;
+
+    }
+
 }

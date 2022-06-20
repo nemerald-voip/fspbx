@@ -47,6 +47,14 @@ class Domain extends Model
     }
 
     /**
+     * Get the voicemails that belong to the domain.
+     */
+    public function voicemails()
+    {
+        return $this->hasMany(Voicemails::class,'domain_uuid','domain_uuid');
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>

@@ -6,6 +6,8 @@ use cache;
 use App\Models\User;
 use App\Models\Extensions;
 use App\Models\Destinations;
+use App\Models\VoicemailDestinations;
+use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -203,7 +205,6 @@ class ExtensionsController extends Controller
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
         ->where ('domain_uuid', Session::get('domain_uuid'))
-        ->where ('destination_enabled', 'true')
         ->get([
             'destination_uuid',
             'destination_number',
@@ -212,12 +213,13 @@ class ExtensionsController extends Controller
             DB::Raw("coalesce(destination_description , '') as destination_description"),
         ])
         ->sortBy('destination_number');
-        // dd($destinations);
+
 
         // dd($extension);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extension)
             -> with('domain_users',$extension->domain->users)
+            -> with('domain_voicemails', $extension->domain->voicemails)
             -> with('extension_users',$extension->users())
             -> with('destinations',$destinations)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
@@ -241,19 +243,20 @@ class ExtensionsController extends Controller
             'voicemail_mail_to' => 'email address',
             'users' => 'users field',
             'voicemail_password' => 'voicemail pin',
-            'outbound_caller_id_number' => 'external caller ID'
+            'outbound_caller_id_number' => 'external caller ID',
+            'voicemail_description' => 'description'
         ];
 
         $validator = Validator::make($request->all(), [
             'directory_first_name' => 'required|string',
             'directory_last_name' => 'nullable|string',
             'extension' =>'required|numeric',
-            'voicemail_mail_to' => 'required|email:rfc,dns',
+            'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'users' => 'nullable|array',
             'directory_visible' => 'present',
             'directory_exten_visible' => 'present',
             'enabled' => 'present',
-            'description' => "string|max:100",
+            'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
             
@@ -262,8 +265,12 @@ class ExtensionsController extends Controller
             'call_timeout' => "numeric",
             'voicemail_password' => 'numeric|digits_between:3,10',
             'voicemail_file' => "present",
-
-            
+            'voicemail_transcription_enabled' => 'present',
+            'voicemail_local_after_email' => 'present',
+            'voicemail_description' => "nullable|string|max:100",
+            'voicemail_alternate_greet_id' => "nullable|numeric",   
+            'voicemail_tutorial' => "present",
+            'voicemail_destinations'  => 'nullable|array',
 
         ], [], $attributes);
 
@@ -281,6 +288,10 @@ class ExtensionsController extends Controller
         if ($attributes['directory_exten_visible']== "on")  $attributes['directory_exten_visible'] = "true";
         if ($attributes['enabled']== "on")  $attributes['enabled'] = "true";
         if ($attributes['voicemail_enabled']== "on")  $attributes['voicemail_enabled'] = "true";
+        if ($attributes['voicemail_transcription_enabled']== "on")  $attributes['voicemail_transcription_enabled'] = "true";
+        if ($attributes['voicemail_local_after_email']== "false")  $attributes['voicemail_local_after_email'] = "true";
+        if ($attributes['voicemail_local_after_email']== "on")  $attributes['voicemail_local_after_email'] = "false";
+        if ($attributes['voicemail_tutorial']== "on")  $attributes['voicemail_tutorial'] = "true";
 
         // Check if voicemail directory needs to be renamed 
         if($attributes['voicemail_id'] != $attributes['extension']) {
@@ -294,6 +305,14 @@ class ExtensionsController extends Controller
 
         }
 
+        // Update Voicemail Destinations table
+
+        // dd( $extension->voicemail->voicemail_destinations);
+        foreach($extension->voicemail->voicemail_destinations as $vm_destination) {
+            $vm_destination->delete();
+        }
+        
+dd($attributes);
         // Delete cache and update extension
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();

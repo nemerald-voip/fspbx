@@ -50,7 +50,8 @@
                                         aria-selected="false">
                                         <i class="mdi mdi-account-circle d-md-none d-block"></i>
                                         <span class="d-none d-md-block">Caller ID
-                                            @if( $errors->has('outbound_caller_id_number') )
+                                            @if( $errors->has('outbound_caller_id_number') ||
+                                                $errors->has('emergency_caller_id_number'))
                                                 <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
                                             @endif
                                         </span>
@@ -64,7 +65,11 @@
                                             @if( $errors->has('voicemail_enabled') || 
                                                 $errors->has('call_timeout') || 
                                                 $errors->has('voicemail_password') || 
-                                                $errors->has('voicemail_file'))
+                                                $errors->has('voicemail_file') ||
+                                                $errors->has('voicemail_transcription_enabled') ||
+                                                $errors->has('voicemail_local_after_email') ||
+                                                $errors->has('voicemail_description') ||
+                                                $errors->has('voicemail_tutorial'))
                                                 <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
                                             @endif                                        
                                         </span>
@@ -133,7 +138,7 @@
                                                             @if (userCheckPermission('voicemail_edit'))
                                                             <div class="col-md-6">
                                                                 <div class="mb-3">
-                                                                    <label for="voicemail-email-address" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                                                    <label for="voicemail-email-address" class="form-label">Email Address </label>
                                                                     <input class="form-control" type="email" placeholder="Enter email" id="voicemail-email-address"
                                                                         name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to }}"/>
                                                                     @error('voicemail_mail_to')
@@ -158,9 +163,9 @@
                                                                                     @endif>{{ $domain_user->username }}</option>
                                                                             @endforeach
                                                                     </select>
-                                                                @error('users')
-                                                                    <div class="text-danger">{{ $message }}</div>
-                                                                @enderror
+                                                                    @error('users')
+                                                                        <div class="text-danger">{{ $message }}</div>
+                                                                    @enderror
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -436,6 +441,7 @@
                                                             </div>
                                                         </div> <!-- end row -->
 
+                                                        @if (userCheckPermission('voicemail_transcription_edit'))
                                                         <div class="row">
                                                             <div class="col-4">
                                                                 <div class="mb-3">
@@ -448,12 +454,16 @@
                                                             </div>
                                                             <div class="col-2">
                                                                 <div class="mb-3 text-sm-end">
-                                                                    <input type="checkbox" id="transcription-switch" checked data-switch="primary"/>
-                                                                    <label for="transcription-switch" data-on-label="On" data-off-label="Off"></label>
+                                                                    <input type="hidden" name="voicemail_transcription_enabled" value="false">
+                                                                    <input type="checkbox" id="voicemail_transcription_enabled" data-switch="primary" name="voicemail_transcription_enabled"
+                                                                    @if ($extension->voicemail->voicemail_transcription_enabled == "true") checked @endif />
+                                                                    <label for="voicemail_transcription_enabled" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
+                                                        @endif
 
+                                                        @if (userCheckPermission('voicemail_local_after_email'))
                                                         <div class="row">
                                                             <div class="col-4">
                                                                 <div class="mb-3">
@@ -466,11 +476,14 @@
                                                             </div>
                                                             <div class="col-2">
                                                                 <div class="mb-3 text-sm-end">
-                                                                    <input type="checkbox" id="directory-name-switch" data-switch="primary"/>
-                                                                    <label for="directory-name-switch" data-on-label="On" data-off-label="Off"></label>
+                                                                    <input type="hidden" name="voicemail_local_after_email" value="false">
+                                                                    <input type="checkbox" id="voicemail_local_after_email" data-switch="primary" name="voicemail_local_after_email"
+                                                                    @if ($extension->voicemail->voicemail_local_after_email == "false") checked @endif />
+                                                                    <label for="voicemail_local_after_email" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
+                                                        @endif
 
                                                     </div>
 
@@ -508,9 +521,12 @@
                                                 <div class="row">
                                                     <div class="col-6">
                                                         <div class="mb-3">
-                                                            <label for="alternative-greeting" class="form-label">Alternative greet ID</label>
-                                                            <input class="form-control" type="email" placeholder="" id="alternative-greeting" />
+                                                            <label for="voicemail_alternate_greet_id" class="form-label">Alternative greet ID</label>
+                                                            <input class="form-control" type="text" placeholder="" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id"/>
                                                             <span class="help-block"><small>An alternative greet id used in the default greeting.</small></span>
+                                                            @error('voicemail_alternate_greet_id')
+                                                                <div class="text-danger">{{ $message }}</div>
+                                                            @enderror
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -518,11 +534,16 @@
                                                 <div class="row">
                                                     <div class="col-6">
                                                         <div class="mb-3">
-                                                            <label for="voicemail-description" class="form-label">Description</label>
-                                                            <input class="form-control" type="email" placeholder="" id="voicemail-description" />
+                                                            <label for="voicemail_description" class="form-label">Description</label>
+                                                            <input class="form-control" type="text" placeholder="" id="voicemail_description" name="voicemail_description"
+                                                            value="{{ $extension->voicemail->voicemail_description }}"/>
+                                                            @error('voicemail_description')
+                                                                <div class="text-danger">{{ $message }}</div>
+                                                            @enderror
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
+
 
                                                 <div class="row">
                                                     <div class="col-4">
@@ -536,27 +557,53 @@
                                                     </div>
                                                     <div class="col-2">
                                                         <div class="mb-3 text-sm-end">
-                                                            <input type="checkbox" id="voicemail-tutorial-switch" data-switch="primary"/>
-                                                            <label for="voicemail-tutorial-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            <input type="hidden" name="voicemail_tutorial" value="false">
+                                                            <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial"
+                                                            @if ($extension->voicemail->voicemail_tutorial == "true") checked @endif />
+                                                            <label for="voicemail_tutorial" data-on-label="On" data-off-label="Off"></label>
+                                                            @error('voicemail_tutorial')
+                                                                <div class="text-danger">{{ $message }}</div>
+                                                            @enderror
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
 
+                                                @if (userCheckPermission('voicemail_forward'))
                                                 <div class="row">
                                                     <div class="col-6">
                                                         <div class="mb-3">
                                                             <label for="additional-destinations-select" class="form-label">Forward voicemail messages to additional destinations.</label>
                                                             <!-- Multiple Select -->
                                                             <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
-                                                                id="additional-destinations-select">
-                                                                    <option value="AK">Alaska</option>
-                                                                    <option value="HI">Hawaii</option>
-                                                                    <option value="CA">California</option>
-                                                                    <option value="NV">Nevada</option>
-                                                            </select>
+                                                            id="additional-destinations-select" name="voicemail_destinations[]">
+                                                                @foreach ($domain_voicemails as $domain_voicemail)
+                                                                    <option value="{{ $domain_voicemail->voicemail_uuid }}"
+                                                                        @if($extension->voicemail->forward_destinations()->contains($domain_voicemail))
+                                                                            selected
+                                                                        @endif>
+                                                                        @if ($domain_voicemail->extension->directory_first_name || $domain_voicemail->extension->directory_last_name)
+                                                                            @if ($domain_voicemail->extension->directory_first_name)
+                                                                                {{ $domain_voicemail->extension->directory_first_name }} 
+                                                                            @endif
+                                                                            @if ($domain_voicemail->extension->directory_last_name)
+                                                                                {{ $domain_voicemail->extension->directory_last_name }} 
+                                                                            @endif
+                                                                            (ext {{ $domain_voicemail->voicemail_id }})
+                                                                        @elseif ($domain_voicemail->voicemail_description)
+                                                                            {{ $domain_voicemail->voicemail_description }} (ext {{ $domain_voicemail->voicemail_id }}) 
+                                                                        @else
+                                                                            Voicemail (ext {{ $domain_voicemail->voicemail_id }})
+                                                                        @endif
+                                                                    </option>
+                                                                @endforeach
+                                                        </select>
+                                                        @error('voicemail_destinations')
+                                                            <div class="text-danger">{{ $message }}</div>
+                                                        @enderror
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
+                                                @endif
 
                                                 <h4 class="mt-2">Exiting voicemail options</h4>
 
