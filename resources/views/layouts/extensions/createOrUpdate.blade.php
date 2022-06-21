@@ -156,11 +156,25 @@
                                                                     <!-- Multiple Select -->
                                                                     <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
                                                                         id="users-select" @if (!userCheckPermission('extension_user_edit')) disabled @endif name="users[]">
+
                                                                             @foreach ($domain_users as $domain_user)
                                                                                 <option value="{{ $domain_user->user_uuid }}"
                                                                                     @if($extension_users->contains($domain_user))
                                                                                         selected
-                                                                                    @endif>{{ $domain_user->username }}</option>
+                                                                                    @endif>
+                                                                                    @if (isset($domain_user->user_adv_fields->first_name) || isset($domain_user->user_adv_fields->last_name))
+                                                                                        @if ($domain_user->user_adv_fields->first_name)
+                                                                                            {{ $domain_user->user_adv_fields->first_name }} 
+                                                                                        @endif
+                                                                                        @if ($domain_user->user_adv_fields->last_name)
+                                                                                            {{ $domain_user->user_adv_fields->last_name }} 
+                                                                                        @endif
+                                                                                    @elseif ($domain_user->description)
+                                                                                        {{ $domain_user->description }} 
+                                                                                    @else
+                                                                                        {{ $domain_user->username }}
+                                                                                    @endif
+                                                                                </option>
                                                                             @endforeach
                                                                     </select>
                                                                     @error('users')

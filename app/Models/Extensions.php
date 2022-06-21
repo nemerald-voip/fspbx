@@ -92,6 +92,15 @@ class Extensions extends Model
     }
 
     /**
+     * Get the Extension User object associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function extension_users()
+    {
+        return $this->hasMany(ExtensionUser::class,'extension_uuid','extension_uuid');
+    }
+
+    /**
      * Get all of the users for the extension.
      */
     public function users()

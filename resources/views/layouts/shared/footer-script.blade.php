@@ -179,6 +179,18 @@
             $('#effective_caller_id_number').val($(this).val());
         });
 
+        // Extension Page
+        // Sort Select2 for users
+        $('#users-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        // Extension Page
+        // Sort Select2 for voicemail destinations
+        $('#additional-destinations-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
 
         // https://stackoverflow.com/a/43247613/10697374
         // $('#myModal').on('show.bs.modal', function(e) {  

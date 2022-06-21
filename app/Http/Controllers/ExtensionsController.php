@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use cache;
 use App\Models\User;
 use App\Models\Extensions;
-use App\Models\Destinations;
-use App\Models\VoicemailDestinations;
 use App\Models\Voicemails;
+use App\Models\Destinations;
 use Illuminate\Http\Request;
+use App\Models\ExtensionUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
@@ -306,13 +307,33 @@ class ExtensionsController extends Controller
         }
 
         // Update Voicemail Destinations table
-
-        // dd( $extension->voicemail->voicemail_destinations);
         foreach($extension->voicemail->voicemail_destinations as $vm_destination) {
             $vm_destination->delete();
         }
-        
-dd($attributes);
+        if (isset($attributes['voicemail_destinations'])) {
+            foreach($attributes['voicemail_destinations'] as $voicemail_destination){
+                $destination = new VoicemailDestinations();
+                $destination->voicemail_uuid_copy=$voicemail_destination;
+                $destination->domain_uuid = Session::get('domain_uuid');
+                $extension->voicemail->voicemail_destinations()->save($destination);
+            }
+        }
+
+        // Update Extension users table
+        foreach($extension->extension_users as $ext_user) {
+            $ext_user->delete();
+        }
+
+        if (isset($attributes['users'])) {
+            foreach($attributes['users'] as $ext_user){
+                $extension_users = new ExtensionUser();
+                $extension_users->user_uuid = $ext_user;
+                $extension_users->domain_uuid = Session::get('domain_uuid');
+                $extension->extension_users()->save($extension_users);
+            }
+        }
+
+
         // Delete cache and update extension
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
