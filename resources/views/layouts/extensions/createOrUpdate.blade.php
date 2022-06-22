@@ -514,6 +514,10 @@
                                                         <button type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
                                                         <button type="button" class="btn btn-light"><i class="uil uil-down-arrow"></i> </button>
                                                         <button type="button" class="btn btn-light"><i class="uil uil-trash-alt"></i> </button>
+
+                                                        <audio controls>
+                                                            <source src="/app/recordings/recordings.php?a=download&type=rec&id=4f1f7375-e591-42ac-b813-49284f2fbdd3" type="audio/mpeg"> 
+                                                            </audio>
                                                     </div>
                                                     <div class="col-lg-6">
                                                         <h4 class="mt-2">Name greeting</h4>
