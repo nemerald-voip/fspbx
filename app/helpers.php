@@ -157,3 +157,27 @@ if (!function_exists('pr')){
     }
 }
 
+if (!function_exists('setDefaultS3')){
+    function setDefaultS3($arr){
+       
+    }
+}
+
+if (!function_exists('getCredentialKey')){
+    function getCredentialKey($string){
+       switch($string){
+        case 'region':
+            return 'AWS_DEFAULT_REGION';
+        case 'secret_key':
+            return 'AWS_SECRET_ACCESS_KEY';
+        case 'bucket_name':
+            return 'AWS_BUCKET';
+        case 'access_key':
+            return 'AWS_ACCESS_KEY_ID';
+        default:
+            return $string;
+       }
+    }
+}
+
+

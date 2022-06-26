@@ -69,7 +69,8 @@
                                                 $errors->has('voicemail_transcription_enabled') ||
                                                 $errors->has('voicemail_local_after_email') ||
                                                 $errors->has('voicemail_description') ||
-                                                $errors->has('voicemail_tutorial'))
+                                                $errors->has('voicemail_tutorial') ||
+                                                $errors->has('voicemail_destinations'))
                                                 <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
                                             @endif                                        
                                         </span>
@@ -511,7 +512,8 @@
                                                         <p class="text-muted mb-1">File name: <strong>unavailable.wav</strong></p>
 
                                                         <button type="button" class="btn btn-light"><i class="uil uil-play"></i> </button>
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
+                                                        <button id="voicemail_unavailable_upload_file_button" type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
+                                                        <input id="voicemail_unavailable_upload_file" type="file" hidden data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}"/>
                                                         <button type="button" class="btn btn-light"><i class="uil uil-down-arrow"></i> </button>
                                                         <button type="button" class="btn btn-light"><i class="uil uil-trash-alt"></i> </button>
 
@@ -585,7 +587,7 @@
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
-
+{{ $errors }}
                                                 @if (userCheckPermission('voicemail_forward'))
                                                 <div class="row">
                                                     <div class="col-6">

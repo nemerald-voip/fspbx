@@ -19,6 +19,12 @@ use Propaganistas\LaravelPhone\PhoneNumber;
 
 class ExtensionsController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth')->except(['callerId','updateCallerID']);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -61,8 +67,9 @@ class ExtensionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function callerId()
+    public function callerId(Request $request)
     {
+        //dd($request->all());
         // Get all active phone numbers 
         $destinations = Destinations::where('destination_enabled', 'true')
             ->where ('domain_uuid', Session::get('domain_uuid'))
@@ -266,7 +273,7 @@ class ExtensionsController extends Controller
             'call_timeout' => "numeric",
             'voicemail_password' => 'numeric|digits_between:3,10',
             'voicemail_file' => "present",
-            'voicemail_transcription_enabled' => 'present',
+            'voicemail_transcription_enabled' => 'nullable',
             'voicemail_local_after_email' => 'present',
             'voicemail_description' => "nullable|string|max:100",
             'voicemail_alternate_greet_id' => "nullable|numeric",   
@@ -285,14 +292,14 @@ class ExtensionsController extends Controller
         $attributes = $validator->validated();
         $attributes['effective_caller_id_name'] = $attributes['directory_first_name'] . " " . $attributes['directory_last_name'];
         $attributes['effective_caller_id_number'] = $attributes['extension'];
-        if ($attributes['directory_visible']== "on")  $attributes['directory_visible'] = "true";
-        if ($attributes['directory_exten_visible']== "on")  $attributes['directory_exten_visible'] = "true";
-        if ($attributes['enabled']== "on")  $attributes['enabled'] = "true";
-        if ($attributes['voicemail_enabled']== "on")  $attributes['voicemail_enabled'] = "true";
-        if ($attributes['voicemail_transcription_enabled']== "on")  $attributes['voicemail_transcription_enabled'] = "true";
-        if ($attributes['voicemail_local_after_email']== "false")  $attributes['voicemail_local_after_email'] = "true";
-        if ($attributes['voicemail_local_after_email']== "on")  $attributes['voicemail_local_after_email'] = "false";
-        if ($attributes['voicemail_tutorial']== "on")  $attributes['voicemail_tutorial'] = "true";
+        if (isset($attributes['directory_visible']) && $attributes['directory_visible']== "on")  $attributes['directory_visible'] = "true";
+        if (isset($attributes['directory_exten_visible']) && $attributes['directory_exten_visible']== "on")  $attributes['directory_exten_visible'] = "true";
+        if (isset($attributes['enabled']) && $attributes['enabled']== "on")  $attributes['enabled'] = "true";
+        if (isset($attributes['voicemail_enabled']) && $attributes['voicemail_enabled']== "on")  $attributes['voicemail_enabled'] = "true";
+        if (isset($attributes['voicemail_transcription_enabled']) && $attributes['voicemail_transcription_enabled']== "on")  $attributes['voicemail_transcription_enabled'] = "true";
+        if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email']== "false")  $attributes['voicemail_local_after_email'] = "true";
+        if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email']== "on")  $attributes['voicemail_local_after_email'] = "false";
+        if (isset($attributes['voicemail_tutorial']) && $attributes['voicemail_tutorial']== "on")  $attributes['voicemail_tutorial'] = "true";
 
         // Check if voicemail directory needs to be renamed 
         if($attributes['voicemail_id'] != $attributes['extension']) {

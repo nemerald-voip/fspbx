@@ -86,9 +86,19 @@ class Extensions extends Model
      * Get the voicemail associated with this extension.
      *  returns Eloqeunt Object
      */
-    public function voicemail()
+    // public function voicemail()
+    // {
+    //     return $this->hasOne(Voicemails::class,'voicemail_id','extension');
+    // }
+
+    /**
+     * Get the voicemail associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function getVoicemail()
     {
-        return $this->hasOne(Voicemails::class,'voicemail_id','extension');
+        return $this->hasMany(Voicemails::class,'voicemail_id','extension')
+            -> where('domain_uuid', $this->domain_uuid);
     }
 
     /**
