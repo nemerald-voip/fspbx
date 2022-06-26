@@ -42,6 +42,11 @@ return [
             'visibility' => 'public',
         ],
 
+        'voicemail' => [
+            'driver' => 'local',
+            'root' => '/var/lib/freeswitch/storage/voicemail/default',
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

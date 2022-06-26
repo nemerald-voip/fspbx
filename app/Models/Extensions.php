@@ -86,12 +86,51 @@ class Extensions extends Model
      * Get the voicemail associated with this extension.
      *  returns Eloqeunt Object
      */
-    public function voicemail()
+    // public function voicemail()
+    // {
+    //     return $this->hasOne(Voicemails::class,'voicemail_id','extension');
+    // }
+
+    /**
+     * Get the voicemail associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function getVoicemail()
     {
-        $voicemail = DB::table('v_voicemails')
-            -> where ('v_voicemails.domain_uuid', '=', $this->domain_uuid)
-            -> where ('v_voicemails.voicemail_id','=', $this->extension)
-            ->first();
-        return $voicemail;
+        return $this->hasMany(Voicemails::class,'voicemail_id','extension')
+            -> where('domain_uuid', $this->domain_uuid);
+    }
+
+    /**
+     * Get the Extension User object associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function extension_users()
+    {
+        return $this->hasMany(ExtensionUser::class,'extension_uuid','extension_uuid');
+    }
+
+    /**
+     * Get all of the users for the extension.
+     */
+    public function users()
+    {
+        $user_uuids = ExtensionUser::where('extension_uuid', $this->extension_uuid)->get();
+
+        $users = collect();
+        foreach ($user_uuids as $user_uuid) {
+            $users->push($user_uuid->user);
+        }
+
+        return $users;
+
+    }
+
+    /**
+     * Get the domain to which this extension belongs 
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
     }
 }

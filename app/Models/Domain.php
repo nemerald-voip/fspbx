@@ -38,6 +38,21 @@ class Domain extends Model
         return $this->hasMany(DomainSettings::class,'domain_uuid','domain_uuid');
     }
 
+    /**
+     * Get the users that belong to the domain.
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class,'domain_uuid','domain_uuid');
+    }
+
+    /**
+     * Get the voicemails that belong to the domain.
+     */
+    public function voicemails()
+    {
+        return $this->hasMany(Voicemails::class,'domain_uuid','domain_uuid');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

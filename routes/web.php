@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
@@ -7,9 +8,10 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\SmsWebhookController;
-
+use App\Http\Middleware\Authenticate;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,10 +24,16 @@ use App\Http\Controllers\SmsWebhookController;
 |
 */
 
+Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
+Route::post('/extensions/callerid/update/{id}', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
+// Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
+Route::resource('extensions', 'ExtensionsController');
+
+
 Route::group(['middleware' => 'auth'], function(){
-    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-    Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+    Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
     Route::resource('devices', 'DeviceController');
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
@@ -33,12 +41,15 @@ Route::group(['middleware' => 'auth'], function(){
     //Users
     Route::get('/users', [UsersController::class, 'index']) ->name('usersList');
     Route::get('/users/create', [UsersController::class, 'createUser']) ->name('usersCreateUser');
+    Route::get('/users/edit/{id}', [UsersController::class, 'editUser']) ->name('editUser');
+    Route::post('/saveUser', [UsersController::class, 'saveUser']) ->name('saveUser');
+    Route::post('/updateUser', [UsersController::class, 'updateUser']) ->name('updateUser');
+    Route::post('/deleteUser', [UsersController::class, 'deleteUser']) ->name('deleteUser');
+    Route::post('/addSetting', [UsersController::class, 'addSetting']) ->name('addSetting');
+    Route::post('/deleteSetting', [UsersController::class, 'deleteSetting']) ->name('deleteSetting');
 
-    //Extensions
-    Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID']) ->name('callerID');
-    Route::post('/extensions/callerid/update/{id}', [ExtensionsController::class, 'updateCallerID']) ->name('updateCallerID');
-    // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
-    Route::resource('extensions', 'ExtensionsController');
+    //Voicemails
+    Route::post('/voicemails/greetings/upload/{voicemail}', [VoicemailController::class, 'uploadVoicemailGreeting']) ->name('uploadVoicemailGreeting');
 
     //Apps
     Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');

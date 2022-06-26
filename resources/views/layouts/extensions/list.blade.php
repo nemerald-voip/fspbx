@@ -67,7 +67,7 @@
                                             {{ $extension['effective_caller_id_name'] }} 
                                         </td>
                                         <td>
-                                            {{ $extension->voicemail()->voicemail_mail_to }} 
+                                            {{ $extension->voicemail->voicemail_mail_to }} 
                                         </td>
                                         <td>
                                             {{ $extension['outbound_caller_id_number'] }} 

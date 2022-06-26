@@ -20,6 +20,24 @@ if (!function_exists('userCheckPermission')){
     }
 
 }
+
+if (!function_exists('getDefaultSetting')){
+    function getDefaultSetting($category,$subcategory){
+        $settings = Session::get('default_settings', false);
+
+        if (!$settings) return null;
+        
+        foreach ($settings as $setting){
+            if ($setting['default_setting_category'] == $category &&
+                $setting['default_setting_subcategory'] == $subcategory){
+                return $setting ['default_setting_value'];
+            }
+        }
+        return null;
+    }
+
+}
+
 if (!function_exists('getFusionPBXPreviousURL')){
     function getFusionPBXPreviousURL($previous_url) {
         if (strpos($previous_url, "time_condition_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "time_condition_edit.php")) . "time_conditions.php";}
@@ -131,3 +149,35 @@ if (!function_exists('event_socket_request_cmd')){
         return $response;
     }
 }
+if (!function_exists('pr')){
+    function pr($arr){
+        echo '<pre>';
+        print_r($arr);
+        echo '</pre>';
+    }
+}
+
+if (!function_exists('setDefaultS3')){
+    function setDefaultS3($arr){
+       
+    }
+}
+
+if (!function_exists('getCredentialKey')){
+    function getCredentialKey($string){
+       switch($string){
+        case 'region':
+            return 'AWS_DEFAULT_REGION';
+        case 'secret_key':
+            return 'AWS_SECRET_ACCESS_KEY';
+        case 'bucket_name':
+            return 'AWS_BUCKET';
+        case 'access_key':
+            return 'AWS_ACCESS_KEY_ID';
+        default:
+            return $string;
+       }
+    }
+}
+
+

@@ -1,4 +1,6 @@
 <!-- Footer Start -->
+      @include('layouts.shared/loading')
+
 <footer class="footer">
     <div class="container-fluid">
         <div class="row">

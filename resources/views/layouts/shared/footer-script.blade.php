@@ -4,6 +4,7 @@
 <script src="{{asset('assets/js/app.min.js')}}"></script>
 @yield('script-bottom')
 
+
 <script>
     $(document).ready(function() {
 
@@ -154,37 +155,136 @@
             });
         });
 
-        // https://stackoverflow.com/a/43247613/10697374
-        // $('#myModal').on('show.bs.modal', function(e) {  
-        //     var getIdFromRow = $(e.relatedTarget).data('id');
-        //     $("#buyghc").val(getIdFromRow);
-        // });
+        //Extension Page
+        // Copy email to voicmemail_email
+        $('#voicemail-email-address').change(function() {
+            $('#vm-email-address').val($(this).val());
+        });
 
-        // $('input.callerIdCheckbox').on('change', function() {
-        //     var id = $(this).val();
-        //     var checkbox = $(this);
-        //     var url = '{{ route("updateCallerID", ":id") }}';
-        //     url = url.replace(':id', id);
-        //     $.ajax({
-        //         type : "POST",
-        //         url : url,
-        //         checkbox : $(this),
-        //         headers: {
-        //             'X-CSRF-Token': '{{ csrf_token() }}',
-        //         },
-        //     })
-        //     .done(function(response) { 
-        //         if (response.error){
-        //             checkbox.prop('checked', false);
-        //         } else {
-        //             $('input.callerIdCheckbox').not(checkbox).prop('checked', false);
-        //         }
-        //     })
-        //     .fail(function (response){
-        //         //
-        //     });
+        //Extension Page
+        // Copy first name to caller ID first name
+        $('#directory_first_name').change(function() {
+            $('#callerid-first-name').val($(this).val());
+        });
 
-        // });
+        //Extension Page
+        // Copy last name to caller ID last name
+        $('#directory_last_name').change(function() {
+            $('#callerid-last-name').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy extension to caller ID extension
+        $('#extension').change(function() {
+            $('#effective_caller_id_number').val($(this).val());
+        });
+
+        // Extension Page
+        // Sort Select2 for users
+        $('#users-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        // Extension Page
+        // Sort Select2 for voicemail destinations
+        $('#additional-destinations-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+
+        // Extension page
+        // Upload voicemail file
+        $('#voicemail_unavailable_upload_file_button').on('click', function() {
+            $('#voicemail_unavailable_upload_file').trigger('click');
+        });
+
+        $('#voicemail_unavailable_upload_file').on('change', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData();
+            formData.append('voicemail_unavailable_upload_file', $(this)[0].files[0]);
+            formData.append('greeting_type', 'unavailable');                
+
+            var url = $(this).data('url');
+            console.log (url);
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data : formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                console.log (response);
+                // remove the spinner and change button to default
+                $("#appProvisionNextButton").html('');
+                $("#appProvisionNextButton").append('Next');
+                $("#appProvisionNextButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appOrganizationError").find("ul").html('');
+                    $("#appOrganizationError").css('display','block');
+                    $("#appOrganizationError").find("ul").append('<li>'+response.message+'</li>');
+                    
+                 } else {
+                    //Switch to the next tab
+                    $('a[href*="connection-b2"] span').trigger("click");
+                    // Assign Org ID to a hidden input
+                    $("#org_id").val(response.org_id);
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+        {{-- $('#nonane').on('submit', function(e) {
+            e.preventDefault();
+            //Change button to spinner
+            $("#appProvisionNextButton").html('');
+            $("#appProvisionNextButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appProvisionNextButton").prop( "disabled", true );
+
+            //Hide error message
+            $("#appOrganizationError").find("ul").html('');
+            $("#appOrganizationError").css('display','none');
+
+            var url = '{{ route("appsCreateOrganization") }}';
+ 
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: $(this).serialize(),
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#appProvisionNextButton").html('');
+                $("#appProvisionNextButton").append('Next');
+                $("#appProvisionNextButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appOrganizationError").find("ul").html('');
+                    $("#appOrganizationError").css('display','block');
+                    $("#appOrganizationError").find("ul").append('<li>'+response.message+'</li>');
+                    
+                 } else {
+                    //Switch to the next tab
+                    $('a[href*="connection-b2"] span').trigger("click");
+                    // Assign Org ID to a hidden input
+                    $("#org_id").val(response.org_id);
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        }); --}}
 
     });
 </script>
