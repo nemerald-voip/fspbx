@@ -20,9 +20,9 @@ class SmsWebhookController extends Controller
     // Recieve SMS from the provider and send through Ringotel API
     public function handle(Request $request)
     {
-        // $payload = $request->all();
-        // Notification::route('mail', 'dexter@stellarvoip.com')
-        //      ->notify(new StatusUpdate($request));
+        $payload = $request->all();
+        Notification::route('mail', 'dexter@stellarvoip.com')
+             ->notify(new StatusUpdate($request));
 
         //Check if the request has Unique ID. This will confirm that it 
         //came from the correct source

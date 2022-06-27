@@ -25,7 +25,7 @@ use App\Http\Middleware\Authenticate;
 */
 
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
-Route::post('/extensions/callerid/update/{id}', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
+Route::post('/extensions/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 Route::resource('extensions', 'ExtensionsController');
 

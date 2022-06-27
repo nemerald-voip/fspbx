@@ -49,7 +49,7 @@
                                 <table class="table table-centered mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Location</th>
+                                            <th>Label</th>
                                             <th>Phone Number</th>
                                             <th>Active?</th>
                                         </tr>

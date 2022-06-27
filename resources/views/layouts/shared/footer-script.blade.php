@@ -21,17 +21,26 @@
         $('input.callerIdCheckbox').on('change', function() {
             var id = $(this).val();
             var checkbox = $(this);
-            var url = '{{ route("updateCallerID", ":id") }}';
-            url = url.replace(':id', id);
+            var url = '{{ route("updateCallerID") }}';
+            var extension_uuid = '{{ $extension->extension_uuid ?? ''}}'
+
+            var formData = new FormData();
+            formData.append('extension_uuid', extension_uuid);
+            formData.append('destination_uuid', id); 
+
             $.ajax({
                 type : "POST",
                 url : url,
+                data: formData,
+                processData: false,
+                contentType: false,
                 checkbox : $(this),
                 headers: {
                     'X-CSRF-Token': '{{ csrf_token() }}',
                 },
             })
             .done(function(response) { 
+                console.log(response);
                 if (response.error){
                     checkbox.prop('checked', false);
                 } else {
@@ -208,6 +217,9 @@
             var url = $(this).data('url');
             console.log (url);
 
+            // var url = '{{ route("updateCallerID", ":id") }}';
+            // url = url.replace(':id', id);
+
             $.ajax({
                 type : "POST",
                 url : url,
@@ -242,49 +254,49 @@
             });
         });
 
-        {{-- $('#nonane').on('submit', function(e) {
-            e.preventDefault();
-            //Change button to spinner
-            $("#appProvisionNextButton").html('');
-            $("#appProvisionNextButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
-            $("#appProvisionNextButton").prop( "disabled", true );
+        // $('#nonane').on('submit', function(e) {
+        //     e.preventDefault();
+        //     //Change button to spinner
+        //     $("#appProvisionNextButton").html('');
+        //     $("#appProvisionNextButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+        //     $("#appProvisionNextButton").prop( "disabled", true );
 
-            //Hide error message
-            $("#appOrganizationError").find("ul").html('');
-            $("#appOrganizationError").css('display','none');
+        //     //Hide error message
+        //     $("#appOrganizationError").find("ul").html('');
+        //     $("#appOrganizationError").css('display','none');
 
-            var url = '{{ route("appsCreateOrganization") }}';
+        //     var url = '{{ route("appsCreateOrganization") }}';
  
-            $.ajax({
-                type : "POST",
-                url : url,
-                data: $(this).serialize(),
-                headers: {
-                    'X-CSRF-Token': '{{ csrf_token() }}',
-                },
-            })
-            .done(function(response) {
-                // remove the spinner and change button to default
-                $("#appProvisionNextButton").html('');
-                $("#appProvisionNextButton").append('Next');
-                $("#appProvisionNextButton").prop( "disabled", false );
+        //     $.ajax({
+        //         type : "POST",
+        //         url : url,
+        //         data: $(this).serialize(),
+        //         headers: {
+        //             'X-CSRF-Token': '{{ csrf_token() }}',
+        //         },
+        //     })
+        //     .done(function(response) {
+        //         // remove the spinner and change button to default
+        //         $("#appProvisionNextButton").html('');
+        //         $("#appProvisionNextButton").append('Next');
+        //         $("#appProvisionNextButton").prop( "disabled", false );
 
-                if (response.error){
-                    $("#appOrganizationError").find("ul").html('');
-                    $("#appOrganizationError").css('display','block');
-                    $("#appOrganizationError").find("ul").append('<li>'+response.message+'</li>');
+        //         if (response.error){
+        //             $("#appOrganizationError").find("ul").html('');
+        //             $("#appOrganizationError").css('display','block');
+        //             $("#appOrganizationError").find("ul").append('<li>'+response.message+'</li>');
                     
-                 } else {
-                    //Switch to the next tab
-                    $('a[href*="connection-b2"] span').trigger("click");
-                    // Assign Org ID to a hidden input
-                    $("#org_id").val(response.org_id);
-                }
-            })
-            .fail(function (response){
-                //
-            });
-        }); --}}
+        //          } else {
+        //             //Switch to the next tab
+        //             $('a[href*="connection-b2"] span').trigger("click");
+        //             // Assign Org ID to a hidden input
+        //             $("#org_id").val(response.org_id);
+        //         }
+        //     })
+        //     .fail(function (response){
+        //         //
+        //     });
+        // });
 
     });
 </script>
