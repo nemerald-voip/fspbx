@@ -77,7 +77,7 @@ class ExtensionsController extends Controller
 
         // If user not found throw an error
         if (!isset($appUser)){
-            abort(403, 'Unauthorized action. Contact your administrator');
+            abort(403, 'Unauthorized user. Contact your administrator');
         }
 
         // Get all active phone numbers 
@@ -103,7 +103,7 @@ class ExtensionsController extends Controller
  
         // If extension not found throw an error
         if (!isset($extension)){
-            abort(403, 'Unauthorized action. Contact your administrator');
+            abort(403, 'Unauthorized extension. Contact your administrator');
         }
 
         //check if any of the extentions already have caller IDs assigend to them
