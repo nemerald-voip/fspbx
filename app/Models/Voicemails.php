@@ -57,7 +57,8 @@ class Voicemails extends Model
      */
     public function extension()
     {
-        return $this->hasOne(Extensions::class,'extension','voicemail_id');
+        return $this->hasOne(Extensions::class,'extension','voicemail_id')
+            ->where('domain_uuid', $this->domain_uuid);
     }
 
     /**
