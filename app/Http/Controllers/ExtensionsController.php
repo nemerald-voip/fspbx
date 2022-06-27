@@ -9,6 +9,7 @@ use App\Models\Voicemails;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\ExtensionUser;
+use App\Models\NemeraldAppUsers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\VoicemailDestinations;
@@ -16,6 +17,8 @@ use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use App\Models\DefaultSettings;
+use App\Models\FreeswitchSettings;
 
 class ExtensionsController extends Controller
 {
@@ -69,10 +72,17 @@ class ExtensionsController extends Controller
      */
     public function callerId(Request $request)
     {
-        //dd($request->all());
+        // Find user trying to access the page
+        $appUser = NemeraldAppUsers::where('user_id', $request->user)->first();
+
+        // If user not found throw an error
+        if (!isset($appUser)){
+            abort(403, 'Unauthorized action. Contact your administrator');
+        }
+
         // Get all active phone numbers 
         $destinations = Destinations::where('destination_enabled', 'true')
-            ->where ('domain_uuid', Session::get('domain_uuid'))
+            ->where ('domain_uuid', $appUser->domain_uuid)
             ->get([
                 'destination_uuid',
                 'destination_number',
@@ -83,14 +93,13 @@ class ExtensionsController extends Controller
             ->sortBy('destination_description')
             ->toArray();
 
-        // Get logged user model and extensions associated with it
-        $user = User::where('user_uuid', Session::get('user.user_uuid'))->first();
-        $extensions = $user->extensions();
+        // Get extension for user accessing the page
+        $extension = Extensions::find($appUser->extension_uuid);
 
         //check if any of the extentions already have caller IDs assigend to them
         // if yes add TRUE column to the new array $phone_numbers
         $phone_numbers = array();
-        foreach ($extensions as $extension){
+        // foreach ($extensions as $extension){
             foreach ($destinations as $destination){
                 if ($destination['destination_number'] == $extension->outbound_caller_id_number){
                     $destination['isCallerID'] = true;
@@ -101,7 +110,7 @@ class ExtensionsController extends Controller
                 }
 
             }
-        }
+        // }
 
         // $format = PhoneNumberFormat::NATIONAL;
         // $phone_number = phone("6467052267","US",$format);
@@ -109,7 +118,8 @@ class ExtensionsController extends Controller
 
         return view('layouts.extensions.callerid')
             ->with('destinations',$phone_numbers)
-            ->with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
+            ->with('national_phone_number_format',PhoneNumberFormat::NATIONAL)
+            ->with ('extension',$extension);
     }
 
     /**
@@ -117,38 +127,72 @@ class ExtensionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateCallerID($id)
+    public function updateCallerID(Request $request)
     {
-        $destination = Destinations::find($id);
+        // $request->destination_uuid = '4a40ab82-a9a8-4506-9f48-980cb902bcc4';
+        // $request->extension_uuid = 'a2c612cc-0b8e-4e21-a8d1-81d75e8333f9';
+
+        $destination = Destinations::find($request->destination_uuid);
         if (!$destination){
             return response()->json([
                 'error' => 401,
                 'message' => 'Invalid phone number ID submitted']);
         }
 
-        //Get logged in user and all extensions that belong to him
-        $user = User::where('user_uuid', Session::get('user.user_uuid'))->first();
-        $extensions = $user->extensions();
+        if (!isset($destination)){
+            return response()->json([
+                'error' => 401,
+                'message' => 'Unable to update Caller ID']);
+        }
 
-        // Update the caller ID field for each extension
+        // Get extension for user accessing the page
+        $extension = Extensions::find($request->extension_uuid);
+
+
+        if (!isset($extension)){
+            return response()->json([
+                'error' => 401,
+                'message' => 'Unable to update Caller ID']);
+        }
+
+        // Update the caller ID field for user's extension
         // If successful delete cache
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+            $method_setting = DefaultSettings::where('default_setting_enabled','true')
+            ->where('default_setting_category','cache')
+            ->where('default_setting_subcategory','method')
+            ->get()
+            ->first();
+
+            $location_setting = DefaultSettings::where('default_setting_enabled','true')
+            ->where('default_setting_category','cache')
+            ->where('default_setting_subcategory','location')
+            ->get()
+            ->first();
+
+            $freeswitch_settings = FreeswitchSettings::first();
+
             session_start();
+//  dd($freeswitch_settings);
+            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
+            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
+            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
+            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
+            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
         }
 
         $cache = new cache;
-        foreach ($extensions as $extension){
-            $ext_model = Extensions::find($extension->extension_uuid);
-            $ext_model->outbound_caller_id_number = $destination->destination_number;
-            $ext_model->save();
-            // dd($extension);
-            $cache->delete("directory:".$extension->extension."@".$extension->user_context);
-        }
+        $extension->outbound_caller_id_number = $destination->destination_number;
+        $extension->save();
+        // dd($extension);
+        $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
+        session_destroy();
 
         // If successful return success status
-        if ($ext_model->outbound_caller_id_number = $destination->destination_number){
+        if ($extension->outbound_caller_id_number = $destination->destination_number){
             return response()->json([
-                'extension' => $ext_model->extension,
+                'extension' => $extension->extension,
                 'callerID' => $destination->destination_number,
                 'message' => 'Caller ID sucesfully updated',
             ]);
