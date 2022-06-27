@@ -93,8 +93,18 @@ class ExtensionsController extends Controller
             ->sortBy('destination_description')
             ->toArray();
 
+        // If destinaions not found throw an error
+        if (!isset($destinations)){
+            abort(403, 'Unauthorized action. Contact your administrator1');
+        }
+
         // Get extension for user accessing the page
         $extension = Extensions::find($appUser->extension_uuid);
+ 
+        // If extension not found throw an error
+        if (!isset($extension)){
+            abort(403, 'Unauthorized action. Contact your administrator');
+        }
 
         //check if any of the extentions already have caller IDs assigend to them
         // if yes add TRUE column to the new array $phone_numbers
