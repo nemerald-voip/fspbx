@@ -509,30 +509,101 @@
 
                                                         <p class="text-muted mb-2">This plays when you do not pick up the phone.</p>
                                                         <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
-                                                        <p class="text-muted mb-1">File name: <strong>unavailable.wav</strong></p>
+                                                        
+                                                        <audio id="voicemail_unavailable_audio_file" 
+                                                            @if ($vm_unavailable_file_exists)
+                                                            src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
+                                                            @endif >   
+                                                        </audio>
+                                                        <p class="text-muted mb-1">File name: <span id='voicemailUnavailableFilename'>
+                                                            <strong>
+                                                                @if ($vm_unavailable_file_exists) greeting_1.wav
+                                                                @else generic greeting 
+                                                                @endif
+                                                            </strong></span></p>
+                                                        <button type="button" class="btn btn-light" id="voicemail_unavailable_play_button" 
+                                                            @if (!$vm_unavailable_file_exists) disabled @endif
+                                                            title="Play"><i class="uil uil-play"></i> 
+                                                        </button>
 
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-play"></i> </button>
-                                                        <button id="voicemail_unavailable_upload_file_button" type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
-                                                        <input id="voicemail_unavailable_upload_file" type="file" hidden data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}"/>
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-down-arrow"></i> </button>
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-trash-alt"></i> </button>
+                                                        <button type="button" class="btn btn-light" id="voicemail_unavailable_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
+                                                        
+                                                        <button id="voicemail_unavailable_upload_file_button" type="button" class="btn btn-light" title="Upload">
+                                                            <span id="voicemail_unavailable_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
+                                                            <span id="voicemail_unavailable_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        </button>
+                                                        <input id="voicemail_unavailable_upload_file" type="file" hidden/>
 
-                                                        <audio controls>
-                                                            <source src="/app/recordings/recordings.php?a=download&type=rec&id=4f1f7375-e591-42ac-b813-49284f2fbdd3" type="audio/mpeg"> 
-                                                            </audio>
+                                                        <a href="{{ route('downloadVoicemailGreeting', [
+                                                            'voicemail' => $extension->voicemail->voicemail_uuid,
+                                                            'filename' => 'greeting_1.wav'
+                                                            ] ) }}">
+                                                                <button id="voicemail_unavailable_download_file_button" type="button" class="btn btn-light" title="Download"
+                                                                @if (!$vm_unavailable_file_exists) disabled @endif>
+                                                                <i class="uil uil-down-arrow"></i> 
+                                                            </button>
+                                                        </a>
+
+                                                        <button id="voicemail_unavailable_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                            @if (!$vm_unavailable_file_exists) disabled @endif>
+                                                            <span id="voicemail_unavailable_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
+                                                            <span id="voicemail_unavailable_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        </button>
+                                                        
+
+                                                        <div class="text-danger" id="voicemailUnvaialableGreetingError"></div>
+
                                                     </div>
+
+
+
+
                                                     <div class="col-lg-6">
                                                         <h4 class="mt-2">Name greeting</h4>
 
                                                         <p class="text-muted mb-2">This plays to identify your extension in the company's dial by name directory.</p>
                                                         <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
-                                                        <p class="text-muted mb-1">File name: <strong>name.wav</strong></p>
+                                                        <audio id="voicemail_name_audio_file" 
+                                                            @if ($vm_name_file_exists)
+                                                            src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
+                                                            @endif >   
+                                                        </audio>
+                                                        <p class="text-muted mb-1">File name: <span id='voicemailNameFilename'>
+                                                            <strong>
+                                                                @if ($vm_name_file_exists) recorded_name.wav
+                                                                @else generic greeting 
+                                                                @endif
+                                                            </strong></span></p>
+                                                        <button type="button" class="btn btn-light" id="voicemail_name_play_button" 
+                                                            @if (!$vm_name_file_exists) disabled @endif
+                                                            title="Play"><i class="uil uil-play"></i> 
+                                                        </button>
 
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-play"></i> </button>
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-export"></i> </button>
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-down-arrow"></i> </button>
-                                                        <button type="button" class="btn btn-light"><i class="uil uil-trash-alt"></i> </button>
+                                                        <button type="button" class="btn btn-light" id="voicemail_name_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
+                                                        
+                                                        <button id="voicemail_name_upload_file_button" type="button" class="btn btn-light" title="Upload">
+                                                            <span id="voicemail_name_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
+                                                            <span id="voicemail_name_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        </button>
+                                                        <input id="voicemail_name_upload_file" type="file" hidden data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}"/>
 
+                                                        <a href="{{ route('downloadVoicemailGreeting', [
+                                                            'voicemail' => $extension->voicemail->voicemail_uuid,
+                                                            'filename' => 'recorded_name.wav'
+                                                            ] ) }}">
+                                                                <button id="voicemail_name_download_file_button" type="button" class="btn btn-light" title="Download"
+                                                                @if (!$vm_name_file_exists) disabled @endif>
+                                                                <i class="uil uil-down-arrow"></i> 
+                                                            </button>
+                                                        </a>
+
+                                                        <button id="voicemail_name_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                            @if (!$vm_name_file_exists) disabled @endif>
+                                                            <span id="voicemail_name_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
+                                                            <span id="voicemail_name_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                        </button>
+                                                        
+                                                        <div class="text-danger" id="voicemailNameGreetingError"></div>
 
                                                     </div>
 
@@ -587,7 +658,7 @@
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
-{{ $errors }}
+
                                                 @if (userCheckPermission('voicemail_forward'))
                                                 <div class="row">
                                                     <div class="col-6">
@@ -928,3 +999,308 @@
 
 </div> <!-- container -->
 @endsection
+
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+
+        //Extension Page
+        // Copy email to voicmemail_email
+        $('#voicemail-email-address').change(function() {
+            $('#vm-email-address').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy first name to caller ID first name
+        $('#directory_first_name').change(function() {
+            $('#callerid-first-name').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy last name to caller ID last name
+        $('#directory_last_name').change(function() {
+            $('#callerid-last-name').val($(this).val());
+        });
+
+        //Extension Page
+        // Copy extension to caller ID extension
+        $('#extension').change(function() {
+            $('#effective_caller_id_number').val($(this).val());
+        });
+
+        // Extension Page
+        // Sort Select2 for users
+        $('#users-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        // Extension Page
+        // Sort Select2 for voicemail destinations
+        $('#additional-destinations-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+
+        // Upload voicemail unavailable file
+        $('#voicemail_unavailable_upload_file_button').on('click', function() {
+            $('#voicemail_unavailable_upload_file').trigger('click');
+        });
+
+        $('#voicemail_unavailable_upload_file').on('change', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData();
+            formData.append('voicemail_unavailable_upload_file', $(this)[0].files[0]);
+            formData.append('greeting_type', 'unavailable');                
+
+            // Add spinner
+            $("#voicemail_unavailable_upload_file_button_icon").hide();
+            $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", false);
+
+            var url = '{{ route("uploadVoicemailGreeting", ":id") }}';
+            url = url.replace(':id', "{{ $extension->voicemail->voicemail_uuid }}");
+
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data : formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#voicemail_unavailable_upload_file_button_icon").show();
+                $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", true);
+
+                //Enable play button
+                $("#voicemail_unavailable_play_button").attr("disabled", false);
+                //Enable download button
+                $("#voicemail_unavailable_download_file_button").attr("disabled", false);
+                //Enable delete button
+                $("#voicemail_unavailable_delete_file_button").attr("disabled", false);
+
+                //Update audio file
+                $("#voicemail_unavailable_audio_file").attr("src", 
+                    "{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
+                );
+                $("#voicemail_unavailable_audio_file")[0].pause();
+                $("#voicemail_unavailable_audio_file")[0].load();
+
+                $("#voicemailUnavailableFilename").html('<strong>' + response.filename + '</strong>');
+
+                if (response.error){
+                    $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
+                    $("#voicemailUnvaialableGreetingError").text(response.message);  
+                } else {
+                    $.NotificationApp.send("Success","The greeeting has been uploaded successfully","top-right","#10c469","success")
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+
+        // Upload voicemail name file
+        $('#voicemail_name_upload_file_button').on('click', function() {
+            $('#voicemail_name_upload_file').trigger('click');
+        });
+
+        $('#voicemail_name_upload_file').on('change', function(e) {
+            e.preventDefault();
+
+            var formData = new FormData();
+            formData.append('voicemail_name_upload_file', $(this)[0].files[0]);
+            formData.append('greeting_type', 'name');                
+
+            // Add spinner
+            $("#voicemail_name_upload_file_button_icon").hide();
+            $("#voicemail_name_upload_file_button_spinner").attr("hidden", false);
+
+            var url = '{{ route("uploadVoicemailGreeting", ":id") }}';
+            url = url.replace(':id', "{{ $extension->voicemail->voicemail_uuid }}");
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data : formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#voicemail_name_upload_file_button_icon").show();
+                $("#voicemail_name_upload_file_button_spinner").attr("hidden", true);
+
+                //Enable play button
+                $("#voicemail_name_play_button").attr("disabled", false);
+                //Enable download button
+                $("#voicemail_name_download_file_button").attr("disabled", false);
+                //Enable delete button
+                $("#voicemail_name_delete_file_button").attr("disabled", false);
+
+                //Update audio file
+                $("#voicemail_name_audio_file").attr("src", 
+                    "{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
+                );
+                $("#voicemail_name_audio_file")[0].pause();
+                $("#voicemail_name_audio_file")[0].load();
+
+                $("#voicemailNameFilename").html('<strong>' + response.filename + '</strong>');
+
+                if (response.error){
+                    $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
+                    $("#voicemailNameGreetingError").text(response.message);  
+                } else {
+                    $.NotificationApp.send("Success","The greeeting has been uploaded successfully","top-right","#10c469","success")
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+
+        // Delete unavailable voicemail file
+        $('#voicemail_unavailable_delete_file_button').on('click', function(e) {
+            e.preventDefault();
+
+            var url = "{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
+
+            // Add spinner
+            $("#voicemail_unavailable_delete_file_button_icon").hide();
+            $("#voicemail_unavailable_delete_file_button_spinner").attr("hidden", false);
+
+            $.ajax({
+                type : "GET",
+                url : url,
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#voicemail_unavailable_delete_file_button_icon").show();
+                $("#voicemail_unavailable_delete_file_button_spinner").attr("hidden", true);
+
+                //Disable play button
+                $("#voicemail_unavailable_play_button").attr("disabled", true);
+                //Disable download button
+                $("#voicemail_unavailable_download_file_button").attr("disabled", true);
+                //Disable delete button
+                $("#voicemail_unavailable_delete_file_button").attr("disabled", true);
+
+                $("#voicemailUnavailableFilename").html('<strong>generic greeeting</strong>');
+
+                if (response.error){
+                    $.NotificationApp.send("Warning","There was a error deleting this greeting","top-right","#ff5b5b","error")
+                    $("#voicemailGreetingError").text(response.message);  
+                } else {
+                    $.NotificationApp.send("Success","The greeeting has been deleted successfully","top-right","#10c469","success")
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+        // Delete name voicemail file
+        $('#voicemail_name_delete_file_button').on('click', function(e) {
+            e.preventDefault();
+
+            var url = "{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
+
+            // Add spinner
+            $("#voicemail_name_delete_file_button_icon").hide();
+            $("#voicemail_name_delete_file_button_spinner").attr("hidden", false);
+
+            $.ajax({
+                type : "GET",
+                url : url,
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#voicemail_name_delete_file_button_icon").show();
+                $("#voicemail_name_delete_file_button_spinner").attr("hidden", true);
+
+                //Disable play button
+                $("#voicemail_name_play_button").attr("disabled", true);
+                //Disable download button
+                $("#voicemail_name_download_file_button").attr("disabled", true);
+                //Disable delete button
+                $("#voicemail_name_delete_file_button").attr("disabled", true);
+
+                $("#voicemailNameFilename").html('<strong>generic greeeting</strong>');
+
+                if (response.error){
+                    $.NotificationApp.send("Warning","There was a error deleting this greeting","top-right","#ff5b5b","error")
+                    $("#voicemailGreetingError").text(response.message);  
+                } else {
+                    $.NotificationApp.send("Success","The greeeting has been deleted successfully","top-right","#10c469","success")
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+        // hide pause button
+        $('#voicemail_unavailable_pause_button').hide();
+        $('#voicemail_name_pause_button').hide();
+
+        // Play unavailable audio file
+        $('#voicemail_unavailable_play_button').click(function(){
+            var audioElement = document.getElementById('voicemail_unavailable_audio_file');
+            $(this).hide();
+            $('#voicemail_unavailable_pause_button').show();
+            audioElement.play();
+            audioElement.addEventListener('ended', function() {
+                $('#voicemail_unavailable_pause_button').hide();
+                $('#voicemail_unavailable_play_button').show();
+            });
+        });
+
+         // Pause unavailable audio file
+         $('#voicemail_unavailable_pause_button').click(function(){
+            var audioElement = document.getElementById('voicemail_unavailable_audio_file');
+            $(this).hide();
+            $('#voicemail_unavailable_play_button').show();
+            audioElement.pause();
+        });
+
+        // Play name audio file
+        $('#voicemail_name_play_button').click(function(){
+            var audioElement = document.getElementById('voicemail_name_audio_file');
+            $(this).hide();
+            $('#voicemail_name_pause_button').show();
+            audioElement.play();
+            audioElement.addEventListener('ended', function() {
+                $('#voicemail_name_pause_button').hide();
+                $('#voicemail_name_play_button').show();
+            });
+        });
+
+         // Pause name audio file
+         $('#voicemail_name_pause_button').click(function(){
+            var audioElement = document.getElementById('voicemail_name_audio_file');
+            $(this).hide();
+            $('#voicemail_name_play_button').show();
+            audioElement.pause();
+        });
+
+
+    });
+
+</script>
+@endpush

@@ -9,16 +9,17 @@ use App\Models\Voicemails;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\ExtensionUser;
+use App\Models\DefaultSettings;
 use App\Models\NemeraldAppUsers;
+use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
-use App\Models\DefaultSettings;
-use App\Models\FreeswitchSettings;
 
 class ExtensionsController extends Controller
 {
@@ -276,14 +277,21 @@ class ExtensionsController extends Controller
         ])
         ->sortBy('destination_number');
 
+        $vm_unavailable_file_exists = Storage::disk('voicemail')
+            ->exists(Session::get('domain_name') .'/' . $extension->extension . '/greeting_1.wav');
 
-        // dd($extension);
+        $vm_name_file_exists = Storage::disk('voicemail')
+            ->exists(Session::get('domain_name') .'/' . $extension->extension . '/recorded_name.wav');
+
+        // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extension)
             -> with('domain_users',$extension->domain->users)
             -> with('domain_voicemails', $extension->domain->voicemails)
             -> with('extension_users',$extension->users())
             -> with('destinations',$destinations)
+            -> with('vm_unavailable_file_exists', $vm_unavailable_file_exists)
+            -> with('vm_name_file_exists', $vm_name_file_exists)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
             
     }

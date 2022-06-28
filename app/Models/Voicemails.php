@@ -62,7 +62,16 @@ class Voicemails extends Model
     }
 
     /**
-     * Get the extension voicemail belongs to.
+     * Get the voicemail destinations belongs to.
+     */
+    public function greetings()
+    {
+        return $this->hasMany(VoicemailGreetings::class,'voicemail_id','voicemail_id')
+            ->where('domain_uuid', $this->domain_uuid);
+    }
+
+    /**
+     * Get the voicemail destinations belongs to.
      */
     public function voicemail_destinations()
     {
