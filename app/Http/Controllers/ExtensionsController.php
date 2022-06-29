@@ -314,7 +314,14 @@ class ExtensionsController extends Controller
             'users' => 'users field',
             'voicemail_password' => 'voicemail pin',
             'outbound_caller_id_number' => 'external caller ID',
-            'voicemail_description' => 'description'
+            'voicemail_description' => 'description',
+            'domain_uuid' => 'domain',
+            'user_context' => 'context',
+            'max_registrations' => 'registrations',
+            'accountcode' => 'account code',
+            'limit_max' => 'total allowed outbound calls'
+            
+
         ];
 
         $validator = Validator::make($request->all(), [
@@ -342,6 +349,27 @@ class ExtensionsController extends Controller
             'voicemail_tutorial' => "present",
             'voicemail_destinations'  => 'nullable|array',
 
+            'domain_uuid' => 'required',
+            'user_context' => 'required|string',
+            'number_alias' => 'nullable',
+            'accountcode' => 'nullable',
+            'max_registrations' => 'nullable|numeric',
+            'limit_max' => 'nullable|numeric',
+            'limit_destination' => 'nullable|string',
+            'toll_allow' => 'nullable|string',
+            'call_group' => 'nullable|string',
+            'call_screen_enabled' => 'nullable',
+            'user_record' => 'nullable|string',
+            'auth_acl' => 'nullable|string',
+            'cidr' => 'nullable|string',
+            'sip_force_contact' => 'nullable|string',
+            'sip_force_expires' => 'nullable|numeric',
+            'mwi_account' => 'nullable|string',
+            'sip_bypass_media' => 'nullable|string',
+            'absolute_codec_string' => 'nullable|string',
+            'force_ping' => "nullable|string",
+            'dial_string' => 'nullable|string'
+
         ], [], $attributes);
 
         if ($validator->fails()) {
@@ -362,6 +390,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email']== "false")  $attributes['voicemail_local_after_email'] = "true";
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email']== "on")  $attributes['voicemail_local_after_email'] = "false";
         if (isset($attributes['voicemail_tutorial']) && $attributes['voicemail_tutorial']== "on")  $attributes['voicemail_tutorial'] = "true";
+        if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
 
         // Check if voicemail directory needs to be renamed 
         if($attributes['voicemail_id'] != $attributes['extension']) {
@@ -411,7 +440,7 @@ class ExtensionsController extends Controller
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
         $extension->voicemail->update($attributes);
         $extension->update($attributes);
-        dd($extension->voicemail);
+        dd($extension);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
