@@ -203,7 +203,7 @@
 
                                                                             @foreach ($domain_users as $domain_user)
                                                                                 <option value="{{ $domain_user->user_uuid }}"
-                                                                                    @if($extension_users->contains($domain_user))
+                                                                                    @if(isset($extension_users) && $extension_users->contains($domain_user))
                                                                                         selected
                                                                                     @endif>
                                                                                     @if (isset($domain_user->user_adv_fields->first_name) || isset($domain_user->user_adv_fields->last_name))
