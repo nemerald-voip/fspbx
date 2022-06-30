@@ -8,7 +8,21 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
-                <h4 class="page-title">Edit Extension ({{ $extension->extension }})</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{{ route('extensions.index') }}">Extensions</a></li>
+                        @if(isset($extension))
+                            <li class="breadcrumb-item active">Edit Extension</li>
+                        @else
+                            <li class="breadcrumb-item active">Create Extension</li>
+                        @endif
+                    </ol>
+                </div>
+                @if(isset($extension))
+                    <h4 class="page-title">Edit Extension ({{ $extension->extension }})</h4>
+                @else
+                    <h4 class="page-title">Create Extension</h4>
+                @endif
             </div>
         </div>
     </div>
@@ -20,10 +34,10 @@
                 <div class="card-body">
 
                     @if ($extension->exists)
-                        <form method="POST" action="{{ route('extensions.update',$extension) }}">
+                        <form method="POST" id="extensionForm" action="{{ route('extensions.update',$extension) }}">
                         @method('put')
                     @else
-                        <form method="POST" action="{{ route('extensions.create') }}">
+                        <form method="POST" id="extensionForm" action="{{ route('extensions.create') }}">
                     @endif
                     @csrf
                         <div class="row">
@@ -85,14 +99,43 @@
                                     <a class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings"
                                         aria-selected="false">
                                         <i class="mdi mdi-settings-outline d-md-none d-block"></i>
-                                        <span class="d-none d-md-block">Settings</span>
+                                        <span class="d-none d-md-block">Settings
+                                            @if( $errors->has('domain_uuid') || 
+                                                $errors->has('user_context') || 
+                                                $errors->has('number_alias') || 
+                                                $errors->has('accountcode') ||
+                                                $errors->has('max_registrations') ||
+                                                $errors->has('limit_max') ||
+                                                $errors->has('limit_destination') ||
+                                                $errors->has('toll_allow') ||
+                                                $errors->has('call_group') ||
+                                                $errors->has('call_screen_enabled') ||
+                                                $errors->has('user_record') ||
+                                                $errors->has('auth_acl') ||
+                                                $errors->has('cidr') ||
+                                                $errors->has('sip_force_contact') ||
+                                                $errors->has('sip_force_expires' ||
+                                                $errors->has('mwi_account') ||
+                                                $errors->has('sip_bypass_media') ||
+                                                $errors->has('absolute_codec_string') ||
+                                                $errors->has('force_ping') ||
+                                                $errors->has('dial_string') ||
+                                                $errors->has('hold_music') ))
+                                                <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
+
+                                            @endif   
+                                        </span>
                                     </a>
                                 </div>
-                                <button class="btn btn-primary" type="submit"><i class="uil uil-down-arrow"></i> Save </button>
+                                {{-- <button class="btn btn-primary" type="submit" id="submitFormButton"><i class="uil uil-down-arrow"></i> Save </button> --}}
                             </div> <!-- end col-->
 
                                 <div class="col-sm-10">
                                     <div class="tab-content" id="v-pills-tabContent">
+                                        <div class="text-sm-end">
+                                            <a href="{{ route('extensions.index') }}" class="btn btn-light me-2">Cancel</a>
+                                            <button class="btn btn-success" type="submit" id="submitFormButton"><i class="uil uil-down-arrow me-2"></i> Save </button>
+                                        </div>
                                         <div class="tab-pane fade active show" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
                                             <!-- Basic Info Content-->
                                             <div class="row">
@@ -141,7 +184,7 @@
                                                                 <div class="mb-3">
                                                                     <label for="voicemail-email-address" class="form-label">Email Address </label>
                                                                     <input class="form-control" type="email" placeholder="Enter email" id="voicemail-email-address"
-                                                                        name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to }}"/>
+                                                                        name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
                                                                     @error('voicemail_mail_to')
                                                                         <div class="text-danger">{{ $message }}</div>
                                                                     @enderror
@@ -901,6 +944,10 @@
                                                             <div class="col-4">
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Enable call screening</label>
+                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                        data-bs-content="You can use Call Screen to find out who’s calling and why before you pick up a call. ">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
                                                                 </div>
                                                             </div>
                                                             <div class="col-2">
@@ -955,20 +1002,43 @@
                                                         </div> <!-- end row -->
                                                         @endif
 
+                                                        @if (userCheckPermission('extension_hold_music'))
                                                         <div class="row">
                                                             <div class="col-6">
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Select custom music on hold</label>
-                                                                    <select data-toggle="select2" title="Select custom music on hold">
-                                                                        <option value=""></option>
-                                                                        <option value="AF">All</option>
-                                                                        <option value="AL">Local</option>
-                                                                        <option value="AL">Inbound</option>
-                                                                        <option value="AL">Outbound</option>
+                                                                    <select data-toggle="select2" title="Select custom music on hold" name="hold_music">
+                                                                        <option value="">Not selected</option>
+                                                                        @if (!$moh->isEmpty())
+                                                                        <optgroup label="Music on Hold">
+                                                                            @foreach ($moh as $music)
+                                                                            <option value="local_stream://{{ $music->music_on_hold_name }}"
+                                                                                @if("local_stream://" . $music->music_on_hold_name == $extension->hold_music)
+                                                                                selected
+                                                                                @endif>
+                                                                                {{ $music->music_on_hold_name }}
+                                                                            </option>
+                                                                            @endforeach
+                                                                        </optgroup>
+                                                                        @endif
+
+                                                                        @if (!$recordings->isEmpty())
+                                                                        <optgroup label="Recordings">
+                                                                            @foreach ($recordings as $recording)
+                                                                            <option value="{{ getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" . $recording->recording_filename }}"
+                                                                                @if(getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" . $recording->recording_filename == $extension->hold_music)
+                                                                                selected
+                                                                                @endif>
+                                                                                {{ $recording->recording_name }}
+                                                                            </option>
+                                                                            @endforeach
+                                                                        </optgroup>
+                                                                        @endif
                                                                     </select>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
+                                                        @endif
 
                                                         @if (userCheckPermission('extension_advanced'))
                                                             <div class="row">
@@ -1166,12 +1236,57 @@
     <!-- end row-->
 
 </div> <!-- container -->
+
+{{-- Modal --}}
+<div class="modal " id="loader" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            {{-- <div class="modal-header">
+                <h4 class="modal-title" id="myCenterModalLabel">Center modal</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div> --}}
+            <div class="modal-body text-center">
+                <div class="spinner-grow text-secondary" role="status"></div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 @endsection
 
 
 @push('scripts')
 <script>
     $(document).ready(function() {
+
+        $('#submitFormButton').on('click', function(e) {
+            e.preventDefault();
+            $('#loader').modal('toggle');
+
+            var url = $('#extensionForm').attr('action');
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data : $('#extensionForm').serialize(),
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                //console.log(response);
+                $('#loader').modal('toggle');
+
+                if (response.error){
+                    $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
+
+                } else {
+                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success")
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
 
         //Extension Page
         // Copy email to voicmemail_email

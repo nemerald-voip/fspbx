@@ -36,7 +36,8 @@ class UsersController extends Controller
     public function index(Request $request)
     {
         $data=array();
-        $data['users']=User::orderBy('username','asc')->get();
+        $domain_uuid=Session::get('domain_uuid');
+        $data['users']=User::where('domain_uuid',$domain_uuid)->orderBy('username','asc')->get();
 
         return view('layouts.users.list')->with($data);
     }
@@ -57,6 +58,9 @@ class UsersController extends Controller
         
         return view('layouts.users.create')->with($data);
 
+    }
+    public function getDomainID($domain_name){
+        return Domain::where('domain_name',$domain_name)->pluck('domain_uuid')->first();
     }
     public function editUser(Request $request)
     {
@@ -90,14 +94,14 @@ class UsersController extends Controller
                         $group_permission[]=$group['group_uuid'];
                     }
                 }
-                $contact=Contact::find($user['contact_uuid']);
+                // $contact=Contact::find($user['contact_uuid']);
                 $data=array();
                 $data['domains']=Domain::get();
                 $data['user_group']=DB::table('v_groups')->get();
                 $data['user_domain_name']=Session::get("domain_name");
                 $data['languages']=DB::table('v_languages')->get();
                 $data['user']=$user;
-                $data['contact']=$contact;
+                // $data['contact']=$contact;
                 $data['user_language']=$user_language;
                 $data['user_time_zone']=$user_time_zone;
                 $data['domain_permission']=$domain_permission;
@@ -116,15 +120,15 @@ class UsersController extends Controller
         $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
         $input=$request->input();
 
-        $domain_uuid=Auth::user()->domain_uuid;
+        $domain_uuid=Session::get('domain_uuid');
 
         if(!$this->checkEmailExist($input['email'])){
 
-            $contact=new Contact;
-            $contact->domain_uuid=$domain_uuid;
-            $contact->contact_name_given=$input['first_name'];
-            $contact->contact_name_family=$input['last_name'];
-            $contact->save();
+            // $contact=new Contact;
+            // $contact->domain_uuid=$domain_uuid;
+            // $contact->contact_name_given=$input['first_name'];
+            // $contact->contact_name_family=$input['last_name'];
+            // $contact->save();
 
             $user=new User;
             $user->domain_uuid=$domain_uuid;
@@ -139,11 +143,11 @@ class UsersController extends Controller
             $user->username=$user_name;
             $user->password=bcrypt($input['password']);
             $user->user_email=$input['email'];
-            $user->contact_uuid=$contact->contact_uuid;
+            // $user->contact_uuid=$contact->contact_uuid;
             $user->user_enabled=($input['account_status']=='on')?'true':'false';
             $user->add_user=Auth::user()->username;
-            
-            $contact->user()->save($user);
+            $user->save();
+            // $contact->user()->save($user);
 
             $user_name_info=new UserAdvFields();
             $user_name_info->first_name=$input['first_name'];
@@ -197,7 +201,7 @@ class UsersController extends Controller
     }
 
     function updateUser(Request $request){
-        $contact_id=base64_decode($request->contact_id);
+        // $contact_id=base64_decode($request->contact_id);
         $user_id=base64_decode($request->user_id);
 
 
@@ -209,13 +213,13 @@ class UsersController extends Controller
         if(!$this->checkEmailExist($input['email'],$user_id)){
             $domain_uuid=$input['user_site'];
 
-            $contact=Contact::find($contact_id);
-            $contact->domain_uuid=$domain_uuid;
-            $contact->contact_name_given=$input['first_name'];
-            $contact->contact_name_family=$input['last_name'];
-            $contact->save();
+            // $contact=Contact::find($contact_id);
+            // $contact->domain_uuid=$domain_uuid;
+            // $contact->contact_name_given=$input['first_name'];
+            // $contact->contact_name_family=$input['last_name'];
+            // $contact->save();
 
-            $user=$contact->user;
+            $user=User::find($user_id);
             $user->domain_uuid=$domain_uuid;
             $user_name=$input['first_name'];
             if(!empty($input['last_name'])){
@@ -227,11 +231,11 @@ class UsersController extends Controller
             
             $user->username=$user_name;
             $user->user_email=$input['email'];
-            $user->contact_uuid=$contact->contact_uuid;
+            // $user->contact_uuid=$contact->contact_uuid;
             $user->user_enabled=($input['account_status']=='on')?'true':'false';
             $user->add_user=Auth::user()->username;
-            
-            $contact->user()->save($user);
+            $user->save();
+            // $contact->user()->save($user);
 
             $user_name_info=$user->user_adv_fields;
             if(empty($user_name_info)){
@@ -320,11 +324,11 @@ class UsersController extends Controller
         foreach($contact_id as $id){
             $user=User::find($id);
             if(!empty($user)){
-            $contact=Contact::find($user['contact_uuid']);
+            // $contact=Contact::find($user['contact_uuid']);
             $user->delete();
-            if(!empty($contact)){
-                $contact->delete();
-            }
+            // if(!empty($contact)){
+            //     $contact->delete();
+            // }
             }
         }
         

@@ -88,7 +88,7 @@
                                                     <label for="site" class="form-label">Site <span class="text-danger">*</span></label>
                                                     <select data-placeholder="Please select site" id="user_site" name="user_site" class="formfld" style="">
                                                     @foreach($domains as $domain)
-                                                        <option value="{{ $domain->domain_uuid }}" {{(isset($contact['domain_uuid']))?(($domain->domain_uuid==$contact['domain_uuid'])?'selected':''):''}}>{{ (!empty($domain->domain_description))?$domain->domain_description:$domain->domain_name }}</option>
+                                                        <option value="{{ $domain->domain_uuid }}" {{(isset($user['domain_uuid']))?(($domain->domain_uuid==$user['domain_uuid'])?'selected':''):''}}>{{ (!empty($domain->domain_description))?$domain->domain_description:$domain->domain_name }}</option>
                                                     @endforeach
                                                         </select>
                                                 </div>
@@ -610,7 +610,7 @@
                                             <div class="col-sm-12">
                                                 <div class="text-sm-end">
                                                 <input type="hidden" name="user_id" value="{{base64_encode($user['user_uuid'])}}">
-                                                <input type="hidden" name="contact_id" value="{{base64_encode($contact['contact_uuid'])}}">
+                                                {{-- <input type="hidden" name="contact_id" value="{{base64_encode($contact['contact_uuid'])}}"> --}}
                                                     <a href="{{ Route('usersList') }}" class="btn btn-light">Cancel</a>
                                                     <button class="btn btn-danger" type="submit">Update </button>
                                                 </div>

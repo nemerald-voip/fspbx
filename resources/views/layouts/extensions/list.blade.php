@@ -24,7 +24,8 @@
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
-                                <button type="button" class="btn btn-success mb-2 me-2 ">Add New</button>
+                                <a href="{{ route('extensions.create') }}" class="btn btn-success"><i class="mdi mdi-plus-circle me-2"></i>Add Extension</a>
+                                
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->

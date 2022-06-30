@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Extensions extends Model
@@ -81,6 +82,12 @@ class Extensions extends Model
         'absolute_codec_string',
         'force_ping',
     ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+    }
 
     /**
      * Get the voicemail associated with this extension.
