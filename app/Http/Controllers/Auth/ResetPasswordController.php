@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\ResetsPasswords;
+use Illuminate\Validation\Rules;
 
 class ResetPasswordController extends Controller
 {
@@ -30,6 +31,20 @@ class ResetPasswordController extends Controller
 
     //protected $redirectTo = RouteServiceProvider::HOME;
     protected $redirectTo = "password/reset";
+
+    /**
+     * Get the password reset validation rules.
+     *
+     * @return array
+     */
+    protected function rules()
+    {
+        return [
+            'token' => 'required',
+            'user_email' => 'required|email',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ];
+    }
 
     protected function credentials(Request $request)
     {
