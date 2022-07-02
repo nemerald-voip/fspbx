@@ -12,6 +12,8 @@ use App\Models\ExtensionUser;
 use App\Models\DefaultSettings;
 use App\Models\NemeraldAppUsers;
 use App\Models\FreeswitchSettings;
+use App\Models\MusicOnHold;
+use App\Models\Recordings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\VoicemailDestinations;
@@ -223,7 +225,33 @@ class ExtensionsController extends Controller
      */
     public function create()
     {
-        //
+        //check permissions
+	    if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
+            return redirect('/');
+	    }
+
+        // Get all phone numbers
+        $destinations = Destinations::where('destination_enabled', 'true')
+        ->where ('domain_uuid', Session::get('domain_uuid'))
+        ->get([
+            'destination_uuid',
+            'destination_number',
+            'destination_enabled',
+            'destination_description',
+            DB::Raw("coalesce(destination_description , '') as destination_description"),
+        ])
+        ->sortBy('destination_number');
+
+        $extension = new Extensions();
+        //dd($extension->domain->users);
+        return view('layouts.extensions.createOrUpdate')
+            -> with('extension',$extension)
+            -> with('destinations',$destinations)
+            -> with('domain_users',$extension->domain->users)
+            -> with ('vm_unavailable_file_exists', false)
+            -> with ('vm_name_file_exists',false)
+            -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
+
     }
 
     /**
@@ -283,6 +311,18 @@ class ExtensionsController extends Controller
         $vm_name_file_exists = Storage::disk('voicemail')
             ->exists(Session::get('domain_name') .'/' . $extension->extension . '/recorded_name.wav');
 
+        // Get music on hold 
+        $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
+            ->orWhere('domain_uuid', null)
+            ->orderBy('music_on_hold_name', 'ASC')
+            ->get()
+            ->unique('music_on_hold_name');
+
+        $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('recording_name', 'ASC')
+            ->get();
+
+
         // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extension)
@@ -292,6 +332,8 @@ class ExtensionsController extends Controller
             -> with('destinations',$destinations)
             -> with('vm_unavailable_file_exists', $vm_unavailable_file_exists)
             -> with('vm_name_file_exists', $vm_name_file_exists)
+            -> with ('moh', $moh)
+            -> with ('recordings', $recordings)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
             
     }
@@ -368,14 +410,16 @@ class ExtensionsController extends Controller
             'sip_bypass_media' => 'nullable|string',
             'absolute_codec_string' => 'nullable|string',
             'force_ping' => "nullable|string",
-            'dial_string' => 'nullable|string'
+            'dial_string' => 'nullable|string',
+            'hold_music' => 'nullable',
 
         ], [], $attributes);
 
         if ($validator->fails()) {
-            return back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json(['error'=>$validator->errors()]);
+            // return back()
+            //     ->withErrors($validator)
+            //     ->withInput();
         }
 
         // Retrieve the validated input assign all attributes
@@ -430,8 +474,10 @@ class ExtensionsController extends Controller
                 $extension->extension_users()->save($extension_users);
             }
         }
-
-
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Extension has been saved'
+        ]);
         // Delete cache and update extension
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
@@ -440,14 +486,17 @@ class ExtensionsController extends Controller
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
         $extension->voicemail->update($attributes);
         $extension->update($attributes);
-        dd($extension);
+      
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
         }
 
-        return back()->with("success", "Extension saved");
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Extension has been saved'
+        ]);
     }
 
     /**
