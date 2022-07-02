@@ -6,6 +6,17 @@
 @stack('scripts')
 
 <script>
+
+    $(function() {
+        // Set the csrf token, and set dataType: 'json' for all ajax requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            dataType: 'json'
+        });
+    });
+
     $(document).ready(function() {
 
         // Domain search

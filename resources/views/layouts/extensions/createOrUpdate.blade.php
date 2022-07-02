@@ -46,18 +46,18 @@
                                     <a class="nav-link active show" id="v-pills-home-tab" data-bs-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home"
                                         aria-selected="true">
                                         <i class="mdi mdi-home-variant d-md-none d-block"></i>
-                                        <span class="d-none d-md-block">Basic Information
-                                            @if( $errors->has('directory_first_name') || 
-                                                $errors->has('directory_last_name') || 
-                                                $errors->has('extension') || 
-                                                $errors->has('voicemail_mail_to') ||
-                                                $errors->has('users') ||
-                                                $errors->has('directory_visible') ||
-                                                $errors->has('directory_exten_visible') ||
-                                                $errors->has('enabled') ||
-                                                $errors->has('description'))
-                                                <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
-                                            @endif    
+                                        <span class="d-none d-md-block">Basic Information   
+                                            <span class="float-end text-end 
+                                                directory_first_name_err_badge
+                                                directory_last_name_err_badge
+                                                extension_err_badge
+                                                voicemail_mail_to_err_badge
+                                                users_err_badge
+                                                directory_visible_err_badge
+                                                directory_exten_visible_err_badge
+                                                enabled_err_badge
+                                                description_err_badge
+                                                " hidden><span class="badge badge-danger-lighten">error</span></span>
                                         </span>
                                     </a>
                                     <a class="nav-link" id="v-pills-callerid-tab" data-bs-toggle="pill" href="#v-pills-callerid" role="tab" aria-controls="v-pills-callerid"
@@ -68,6 +68,10 @@
                                                 $errors->has('emergency_caller_id_number'))
                                                 <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
                                             @endif
+                                            <span class="float-end text-end 
+                                                outbound_caller_id_number_err_badge
+                                                emergency_caller_id_number_err_badge
+                                                " hidden><span class="badge badge-danger-lighten">error</span></span>
                                         </span>
                                     </a>
 
@@ -75,18 +79,16 @@
                                     <a class="nav-link" id="v-pills-voicemail-tab" data-bs-toggle="pill" href="#v-pills-voicemail" role="tab" aria-controls="v-pills-voicemail"
                                         aria-selected="false">
                                         <i class="mdi mdi-account-circle d-md-none d-block"></i>
-                                        <span class="d-none d-md-block">Voicemail
-                                            @if( $errors->has('voicemail_enabled') || 
-                                                $errors->has('call_timeout') || 
-                                                $errors->has('voicemail_password') || 
-                                                $errors->has('voicemail_file') ||
-                                                $errors->has('voicemail_transcription_enabled') ||
-                                                $errors->has('voicemail_local_after_email') ||
-                                                $errors->has('voicemail_description') ||
-                                                $errors->has('voicemail_tutorial') ||
-                                                $errors->has('voicemail_destinations'))
-                                                <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
-                                            @endif                                        
+                                        <span class="d-none d-md-block">Voicemail      
+                                            <span class="float-end text-end 
+                                                voicemail_enabled_err_badge
+                                                voicemail_password_err_badge
+                                                voicemail_transcription_enabled_err_badge
+                                                voicemail_local_after_email_err_badge
+                                                voicemail_description_err_badge
+                                                voicemail_tutorial_err_badge
+                                                voicemail_destinations_err_badge
+                                                " hidden><span class="badge badge-danger-lighten">error</span></span>                                 
                                         </span>
                                     </a>
                                     @endif
@@ -100,30 +102,26 @@
                                         aria-selected="false">
                                         <i class="mdi mdi-settings-outline d-md-none d-block"></i>
                                         <span class="d-none d-md-block">Settings
-                                            @if( $errors->has('domain_uuid') || 
-                                                $errors->has('user_context') || 
-                                                $errors->has('number_alias') || 
-                                                $errors->has('accountcode') ||
-                                                $errors->has('max_registrations') ||
-                                                $errors->has('limit_max') ||
-                                                $errors->has('limit_destination') ||
-                                                $errors->has('toll_allow') ||
-                                                $errors->has('call_group') ||
-                                                $errors->has('call_screen_enabled') ||
-                                                $errors->has('user_record') ||
-                                                $errors->has('auth_acl') ||
-                                                $errors->has('cidr') ||
-                                                $errors->has('sip_force_contact') ||
-                                                $errors->has('sip_force_expires' ||
-                                                $errors->has('mwi_account') ||
-                                                $errors->has('sip_bypass_media') ||
-                                                $errors->has('absolute_codec_string') ||
-                                                $errors->has('force_ping') ||
-                                                $errors->has('dial_string') ||
-                                                $errors->has('hold_music') ))
-                                                <span class="float-end text-end"><span class="badge badge-danger-lighten">error</span></span>
-
-                                            @endif   
+                                            <span class="float-end text-end 
+                                                domain_uuid_err_badge
+                                                user_context_err_badge
+                                                max_registrations_err_badge
+                                                limit_max_err_badge
+                                                limit_destination_err_badge
+                                                toll_allow_err_badge
+                                                call_group_err_badge
+                                                call_screen_enabled_err_badge
+                                                user_record_err_badge
+                                                auth_acl_err_badge
+                                                sip_force_contact_err_badge
+                                                sip_force_expires_err_badge
+                                                mwi_account_err_badge
+                                                sip_bypass_media_err_badge
+                                                absolute_codec_string_err_badge
+                                                force_ping_err_badge
+                                                dial_string_err_badge
+                                                hold_music_err_badge
+                                                " hidden><span class="badge badge-danger-lighten">error</span></span>
                                         </span>
                                     </a>
                                 </div>
@@ -150,9 +148,7 @@
                                                                     <label for="directory_first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                                                                     <input class="form-control" type="text" placeholder="Enter first name" id="directory_first_name"
                                                                         name="directory_first_name" value="{{ $extension->directory_first_name }}"/>
-                                                                    @error('directory_first_name')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger directory_first_name_err"></div>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
@@ -160,9 +156,7 @@
                                                                     <label for="directory_last_name" class="form-label">Last Name</label>
                                                                     <input class="form-control" type="text" placeholder="Enter last name" id="directory_last_name"
                                                                         name="directory_last_name" value="{{ $extension->directory_last_name }}"/>
-                                                                    @error('directory_last_name')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger directory_last_name_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -173,9 +167,7 @@
                                                                     <label for="extension" class="form-label">Extension number <span class="text-danger">*</span></label>
                                                                     <input class="form-control" type="text" placeholder="xxxx" id="extension"
                                                                         name="extension" value="{{ $extension->extension }}"/>
-                                                                    @error('extension')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger error-text extension_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -185,9 +177,7 @@
                                                                     <label for="voicemail-email-address" class="form-label">Email Address </label>
                                                                     <input class="form-control" type="email" placeholder="Enter email" id="voicemail-email-address"
                                                                         name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
-                                                                    @error('voicemail_mail_to')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger error-text voicemail_mail_to_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -221,9 +211,7 @@
                                                                                 </option>
                                                                             @endforeach
                                                                     </select>
-                                                                    @error('users')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger users_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -301,9 +289,7 @@
                                                                     <label for="description" class="form-label">Description</label>
                                                                     <input class="form-control" type="text" placeholder="" id="description" name="description"
                                                                         value="{{ $extension->description }}"/>
-                                                                    @error('description')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                        <div class="text-danger description_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -428,12 +414,10 @@
                                                                 <div class="mb-3 text-sm-end">
                                                                     <input type="hidden" name="voicemail_enabled" value="false">
                                                                     <input type="checkbox" id="voicemail_enabled" name="voicemail_enabled"
-                                                                    @if ($extension->voicemail->voicemail_enabled == "true") checked @endif
+                                                                    @if (!isset($extension->voicemail) || $extension->voicemail->voicemail_enabled == "true") checked @endif
                                                                     data-switch="primary"/>
                                                                     <label for="voicemail_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                                    @error('voicemail_enabled')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger voicemail_enabled_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -449,9 +433,7 @@
                                                                             </option>
                                                                         @endfor
                                                                     </select>
-                                                                @error('call_timeout')
-                                                                    <div class="text-danger">{{ $message }}</div>
-                                                                @enderror
+                                                                <div class="text-danger call_timeout_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -462,14 +444,12 @@
                                                                     <label for="voicemail_password" class="form-label">Set voicemail PIN <span class="text-danger">*</span></label>
                                                                     <div class="input-group input-group-merge">
                                                                         <input type="password" id="voicemail_password" class="form-control" placeholder="xxxx"
-                                                                        value="{{ $extension->voicemail->voicemail_password }}" name="voicemail_password">
+                                                                        value="{{ $extension->voicemail->voicemail_password ?? ''}}" name="voicemail_password">
                                                                         <div class="input-group-text" data-password="false">
                                                                             <span class="password-eye"></span>
                                                                         </div>
                                                                     </div>
-                                                                    @error('voicemail_password')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger voicemail_password_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -478,23 +458,21 @@
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Notification type</label>
                                                                     <select data-toggle="select2" title="Notification Type" name="voicemail_file">
-                                                                        <option value="attach" @if ($extension->voicemail->voicemail_file == "attach") selected @endif>
+                                                                        <option value="attach" @if (isset($extension->voicemail) && $extension->voicemail->voicemail_file == "attach") selected @endif>
                                                                             Email with audio file attachment
                                                                         </option>
-                                                                        <option value="link" @if ($extension->voicemail->voicemail_file == "link") selected @endif>
+                                                                        <option value="link" @if (isset($extension->voicemail) && $extension->voicemail->voicemail_file == "link") selected @endif>
                                                                             Email with download link
                                                                         </option>
                                                                     </select>
-                                                                    @error('voicemail_file')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger voicemail_file_err"></div>
                                                                 </div>
                                                             </div>
                                                             <div class="col-6">
                                                                 <div class="mb-3">
                                                                     <label for="vm-email-address" class="form-label">Email Address</span></label>
                                                                     <input class="form-control" type="email" disabled placeholder="Enter email" id="vm-email-address" 
-                                                                    value="{{ $extension->voicemail->voicemail_mail_to }}"/>
+                                                                    value="{{ $extension->voicemail->voicemail_mail_to ?? ''}}"/>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -536,7 +514,7 @@
                                                                 <div class="mb-3 text-sm-end">
                                                                     <input type="hidden" name="voicemail_local_after_email" value="false">
                                                                     <input type="checkbox" id="voicemail_local_after_email" data-switch="primary" name="voicemail_local_after_email"
-                                                                    @if ($extension->voicemail->voicemail_local_after_email == "false") checked @endif />
+                                                                    @if (isset($extension->voicemail) && $extension->voicemail->voicemail_local_after_email == "false") checked @endif />
                                                                     <label for="voicemail_local_after_email" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
                                                             </div>
@@ -658,9 +636,7 @@
                                                             <label for="voicemail_alternate_greet_id" class="form-label">Alternative greet ID</label>
                                                             <input class="form-control" type="text" placeholder="" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id"/>
                                                             <span class="help-block"><small>An alternative greet id used in the default greeting.</small></span>
-                                                            @error('voicemail_alternate_greet_id')
-                                                                <div class="text-danger">{{ $message }}</div>
-                                                            @enderror
+                                                            <div class="text-danger voicemail_alternate_greet_id_err"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -671,9 +647,7 @@
                                                             <label for="voicemail_description" class="form-label">Description</label>
                                                             <input class="form-control" type="text" placeholder="" id="voicemail_description" name="voicemail_description"
                                                             value="{{ $extension->voicemail->voicemail_description }}"/>
-                                                            @error('voicemail_description')
-                                                                <div class="text-danger">{{ $message }}</div>
-                                                            @enderror
+                                                            <div class="text-danger voicemail_description_err"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -695,9 +669,7 @@
                                                             <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial"
                                                             @if ($extension->voicemail->voicemail_tutorial == "true") checked @endif />
                                                             <label for="voicemail_tutorial" data-on-label="On" data-off-label="Off"></label>
-                                                            @error('voicemail_tutorial')
-                                                                <div class="text-danger">{{ $message }}</div>
-                                                            @enderror
+                                                            <div class="text-danger voicemail_tutorial_err"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -731,9 +703,7 @@
                                                                     </option>
                                                                 @endforeach
                                                         </select>
-                                                        @error('voicemail_destinations')
-                                                            <div class="text-danger">{{ $message }}</div>
-                                                        @enderror
+                                                        <div class="text-danger voicemail_destinations_err"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -811,9 +781,7 @@
                                                                         </option>
                                                                         @endforeach
                                                                     </select>
-                                                                    @error('domain_uuid')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger domain_uuid_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -824,9 +792,7 @@
                                                                     <label for="context" class="form-label">Context <span class="text-danger">*</span></label>
                                                                     <input class="form-control" type="text" placeholder="" id="user_context"
                                                                         name="user_context" value="{{ $extension->user_context}}"/>
-                                                                    @error('user_context')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger user_context_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -840,9 +806,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="number_alias" 
                                                                     name="number_alias" value="{{ $extension->number_alias}}"/>
                                                                     <span class="help-block"><small>If the extension is numeric then number alias is optional.</small></span>
-                                                                    @error('number_alias')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger number_alias_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -854,9 +818,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="accountcode" 
                                                                         name="accountcode" value="{{ $extension->accountcode}}"/>
                                                                     <span class="help-block"><small>Enter the account code here.</small></span>
-                                                                    @error('accountcode')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger accountcode_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -870,9 +832,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="max_registrations" 
                                                                         name="max_registrations"  value="{{ $extension->max_registrations}}"/>
                                                                     <span class="help-block"><small>Enter the maximum registration allowed for this user</small></span>
-                                                                    @error('max_registrations')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger error-text max_registrations_err"></div>
                                                                 </div>
                                                                
                                                             </div>
@@ -885,9 +845,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="toll_allow" 
                                                                         name="toll_allow" value="{{ $extension->toll_allow}}"/>
                                                                     <span class="help-block"><small>Enter the toll allow value here. (Examples: domestic,international,local)</small></span>
-                                                                    @error('toll_allow')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger toll_allow_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif    
@@ -901,9 +859,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="limit_destination" 
                                                                         name="limit_destination" value="{{ $extension->limit_destination}}"/>
                                                                     <span class="help-block"><small>Enter the destination to send the calls when the max number of outgoing calls has been reached.</small></span>
-                                                                    @error('limit_destination')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger limit_destination_err"></div>
                                                                 </div>
                                                             </div>
                                                             
@@ -913,9 +869,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="limit_max" 
                                                                         name="limit_max" value="{{ $extension->limit_max}}"/>
                                                                     <span class="help-block"><small>Enter the max number of outgoing calls for this user.</small></span>
-                                                                    @error('limit_max')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger limit_max_err"></div>
                                                                 </div>
                                                             </div>
                                                             
@@ -931,9 +885,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="call_group" 
                                                                         name="call_group" value="{{ $extension->call_group}}"/>
                                                                     <span class="help-block"><small>Enter the user call group here. Groups available by default: sales, support, billing.</small></span>
-                                                                    @error('call_group')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger call_group_err"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -957,9 +909,7 @@
                                                                     @if ($extension->call_screen_enabled == "true") checked @endif
                                                                     data-switch="primary"/>
                                                                     <label for="call_screen_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                                    @error('call_screen_enabled')
-                                                                        <div class="text-danger">{{ $message }}</div>
-                                                                    @enderror
+                                                                    <div class="text-danger call_screen_enabled_err"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -1048,9 +998,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="auth_acl" 
                                                                             name="auth_acl" value="{{ $extension->auth_acl}}"/>
                                                                         <span class="help-block"><small>Enter the Auth ACL here.</small></span>
-                                                                        @error('auth_acl')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger auth_acl_err"></div>
                                                                     </div>
                                                                 </div>
                                                                 @if (userCheckPermission('extension_cidr'))
@@ -1060,9 +1008,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="cidr" 
                                                                             name="cidr" value="{{ $extension->cidr}}"/>
                                                                         <span class="help-block"><small>Enter allowed address/ranges in CIDR notation (comma separated).</small></span>
-                                                                        @error('cidr')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger cidr_err"></div>
                                                                     </div>
                                                                 </div>
                                                                 @endif
@@ -1093,9 +1039,7 @@
                                                                                 Rewrite TLS Contact Port
                                                                             </option>
                                                                         </select>
-                                                                        @error('sip_force_contact')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger sip_force_contact_err"></div>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-6">
@@ -1104,9 +1048,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="sip_force_expires" 
                                                                             name="sip_force_expires" value="{{ $extension->sip_force_expires}}"/>
                                                                         <span class="help-block"><small>To prevent stale registrations SIP Force expires can override the client expire.</small></span>
-                                                                        @error('sip_force_expires')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger sip_force_expires_err"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1118,9 +1060,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="mwi_account" 
                                                                             name="mwi_account" value="{{ $extension->mwi_account}}"/>
                                                                         <span class="help-block"><small>MWI Account with user@domain of the voicemail to monitor.</small></span>
-                                                                        @error('mwi_account')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger mwi_account_err"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1150,9 +1090,7 @@
                                                                                 Proxy Media
                                                                             </option>
                                                                         </select>
-                                                                        @error('sip_bypass_media')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger sip_bypass_media_err"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1165,9 +1103,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="absolute_codec_string" 
                                                                             name="absolute_codec_string" value="{{ $extension->absolute_codec_string}}"/>
                                                                         <span class="help-block"><small>Absolute Codec String for the extension</small></span>
-                                                                        @error('absolute_codec_string')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger absolute_codec_string_err"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1191,9 +1127,7 @@
                                                                         @if ($extension->force_ping == "true") checked @endif
                                                                         data-switch="primary"/>
                                                                         <label for="force_ping" data-on-label="On" data-off-label="Off"></label>
-                                                                        @error('force_ping')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger force_ping_err"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1207,9 +1141,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="dial_string" 
                                                                             name="dial_string" value="{{ $extension->dial_string}}"/>
                                                                         <span class="help-block"><small>Location of the endpoint.</small></span>
-                                                                        @error('dial_string')
-                                                                            <div class="text-danger">{{ $message }}</div>
-                                                                        @enderror
+                                                                        <div class="text-danger dial_string_err"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1268,15 +1200,13 @@
                 type : "POST",
                 url : url,
                 data : $('#extensionForm').serialize(),
-                headers: {
-                    'X-CSRF-Token': '{{ csrf_token() }}',
-                },
             })
             .done(function(response) {
-                //console.log(response);
+                console.log(response);
                 $('#loader').modal('toggle');
 
                 if (response.error){
+                    printErrorMsg(response.error);
                     $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
 
                 } else {
@@ -1284,9 +1214,18 @@
                 }
             })
             .fail(function (response){
-                //
+                printErrorMsg(response.error);
             });
         });
+
+        // Add errors to the page
+        function printErrorMsg (msg) {
+            $.each( msg, function( key, value ) {
+            console.log(key);
+              $('.'+key+'_err').text(value);
+              $('.'+key+'_err_badge').attr("hidden", false);
+            });
+        }
 
         //Extension Page
         // Copy email to voicmemail_email
