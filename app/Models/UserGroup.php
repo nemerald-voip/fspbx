@@ -35,4 +35,9 @@ class UserGroup extends Model
         return $this->belongsTo(User::class,'user_uuid','user_uuid');
     }
 
+    public function group()
+    {
+        return $this->belongsTo(Groups::class,'group_uuid','group_uuid');
+    }
+
 }

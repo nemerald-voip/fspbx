@@ -21,10 +21,12 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
-
-                        <div class="col-xl-12">
+                        <div class="col-xl-4">
+                            <label class="form-label">Showing {{ $users->count() ?? 0 }}  results for Users</label>
+                        </div>
+                        <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
-                                <a href="{{ Route('usersCreateUser') }}" class="btn btn-success mb-2 me-2">Add User</a>
+                                <a href="{{ route('users.create') }}" class="btn btn-success mb-2 me-2">Add User</a>
                                 <a href="javascript:confirmDelete();" class="btn btn-danger mb-2 me-2">Delete Selected</a>
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
@@ -58,7 +60,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <a href="{{ route('editUser', base64_encode($user['user_uuid'])) }}" class="text-body fw-bold">
+                                            <a href="{{ route('users.edit',$user) }}" class="text-body fw-bold">
                                                 @if ($user->user_adv_fields) 
                                                     {{ $user->user_adv_fields->first_name }} {{ $user->user_adv_fields->last_name }}
                                                 @else
@@ -78,53 +80,13 @@
                                         </td>
                                         <td>
                                             {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
-                                            <a href="{{ route('editUser', base64_encode($user['user_uuid'])) }}" class="action-icon" title="Edit"> <i class="mdi mdi-square-edit-outline"></i></a>
+                                            <a href="{{ route('users.edit',$user) }}" class="action-icon" title="Edit"> <i class="mdi mdi-square-edit-outline"></i></a>
                                             <a href="javascript:resetPassword('{{ $user['user_email'] }}');" class="action-icon"> <i class="mdi mdi-account-key-outline" title="Reset Password"></i></a>
                                             <a href="javascript:confirmDelete('{{ $user['user_uuid'] }}');" class="action-icon"> <i class="mdi mdi-delete" title="Delete"></i></a>
                                         </td>
                                     </tr>
                                 @endforeach
 
-
-                                {{-- @php
-                                    $i = 1;
-                                @endphp
-                                @foreach ($companies as $company)
-                                    <tr>
-                                        <td>
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input appCompanyCheckbox" id="@php print 'companyCheck'.$i; @endphp" 
-                                                    value="{{ $company['domain_uuid'] }}">
-                                                <label class="form-check-label" for="@php print 'companyCheck'.$i; @endphp">&nbsp;</label>
-                                            </div>
-                                        </td>
-                                        <td><a href="" class="text-body fw-bold">{{ $company['name'] }}</a> </td>
-                                        <td>
-                                            {{ $company['domain'] }} 
-                                        </td>
-                                        <td>
-                                            @if ($company['status']) 
-                                                <h5><span class="badge bg-success"></i>Provisioned</span></h5>
-                                            @else 
-                                                <h5><span class="badge bg-warning">Inactive</span></h5>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">Coming Soon...</small>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">Coming Soon...</small>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-square-edit-outline"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-delete"></i></a>
-                                        </td>
-                                    </tr>
-                                    @php 
-                                        $i++;
-                                    @endphp
-                                @endforeach --}}
 
                             </tbody>
                         </table>

@@ -417,9 +417,6 @@ class ExtensionsController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['error'=>$validator->errors()]);
-            // return back()
-            //     ->withErrors($validator)
-            //     ->withInput();
         }
 
         // Retrieve the validated input assign all attributes

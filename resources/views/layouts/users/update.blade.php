@@ -1,23 +1,37 @@
 @extends('layouts.horizontal', ["page_title"=> "Checkout"])
 
 @section('content')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-<style>
-    .error{
-        color:red;
-    }
-</style>
-
 <!-- Start Content-->
 <div class="container-fluid">
+
+    <!-- start page title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+                        @if(isset($extension))
+                            <li class="breadcrumb-item active">Edit User</li>
+                        @else
+                            <li class="breadcrumb-item active">Create User</li>
+                        @endif
+                    </ol>
+                </div>
+                @if(isset($user))
+                    <h4 class="page-title">Edit User ({{ $user->user_adv_fields->first_name ?? ''}} {{ $user->user_adv_fields->last_name ?? ''}})</h4>
+                @else
+                    <h4 class="page-title">Create Extension</h4>
+                @endif
+            </div>
+        </div>
+    </div>
+    <!-- end page title -->
 
     <div class="row">
         <div class="col-12">
             <div class="card mt-3">
                 <div class="card-body">
-
-
                     
                     <ul class="nav nav-pills bg-nav-pills nav-justified mb-3">
                         <li class="nav-item">
@@ -26,12 +40,15 @@
                                 <span class="d-none d-md-block">Profile</span>
                             </a>
                         </li>
+
+                        @if (userCheckPermission('user_setting_view'))
                         <li class="nav-item">
                             <a href="#setting" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-0">
                                  <i class="mdi mdi-settings-outline d-md-none d-block"></i>
                                 <span class="d-none d-md-block">Settings</span>
                             </a>
                         </li>
+                        @endif
                     </ul>
 
                     <div class="tab-content">
@@ -43,64 +60,76 @@
                                     <h4 class="mt-2">Basic information</h4>
 
                                     <p class="text-muted mb-4">Provide the basic information about the user or contact.</p>
-                                    <form  id="user_form" method="post" action="javascript:void(0)">
+                                    <form  id="user_form" method="POST" action="{{ route('users.update',$user) }}">
+                                        @method('put')
                                         @CSRF
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                                    <input class="form-control"  type="text" value="{{(isset($user->user_adv_fields['first_name']))?$user->user_adv_fields['first_name']:''}}" placeholder="Enter your first name" id="first_name" name="first_name" />
+                                                    <input class="form-control"  type="text" value="{{(isset($user->user_adv_fields['first_name']))?$user->user_adv_fields['first_name']:''}}" 
+                                                        placeholder="Enter your first name" id="first_name" name="first_name" />
+                                                    <div class="text-danger error_message first_name_err"></div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                                    <label for="last_name" class="form-label">Last Name</label>
                                                     <input class="form-control" value="{{(isset($user->user_adv_fields['last_name']))?$user->user_adv_fields['last_name']:''}}" type="text" placeholder="Enter your last name" id="last_name" name="last_name"/>
+                                                    <div class="text-danger error_message last_name_err"></div>
                                                 </div>
                                             </div>
                                         </div> <!-- end row -->
-
-                                        {{-- <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                                    <input class="form-control"  type="password" placeholder="Enter your password" id="password" name="password"/>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="c_password" class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                                    <input class="form-control"  type="password" placeholder="Confirm your password" id="c_password" name="c_password"/>
-                                                </div>
-                                            </div>
-                                        </div> <!-- end row --> --}}
 
 
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                                    <input class="form-control" value="{{(isset($user['user_email']))?$user['user_email']:''}}"  type="email" placeholder="Enter your email" id="email" name="email"/>
+                                                    <input class="form-control" value="{{ $user->user_email ?? ''}}"  type="email" placeholder="Enter your email" id="user_email" name="user_email"/>
+                                                    <div class="text-danger error_message user_email_err"></div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="site" class="form-label">Site <span class="text-danger">*</span></label>
-                                                    <select data-placeholder="Please select site" id="user_site" name="user_site" class="formfld" style="">
-                                                    @foreach($domains as $domain)
-                                                        <option value="{{ $domain->domain_uuid }}" {{(isset($user['domain_uuid']))?(($domain->domain_uuid==$user['domain_uuid'])?'selected':''):''}}>{{ (!empty($domain->domain_description))?$domain->domain_description:$domain->domain_name }}</option>
+                                                {{-- <div class="mb-3">
+                                                    <label for="groups" class="form-label">Group <span class="text-danger">*</span></label>
+                                                    <select data-placeholder="Please select group" multiple  @if (!userCheckPermission('user_domain')) disabled @endif id="groups" name="groups[]" class="formfld" style="">
+                                                    @foreach($user_group as $group)
+                                                        <option value="{{ $group->group_uuid }}" {{(!empty($group_permission))?((in_array($group->group_uuid,$group_permission))?'selected':''):''}}>{{ ucfirst($group->group_name) }}</option>
                                                     @endforeach
                                                         </select>
+                                                </div> --}}
+
+                                                <div class="mb-3">
+                                                    <label for="groups-select" class="form-label">Settings and Permissions</label>
+                                                    <!-- Multiple Select -->
+                                                    <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                        id="groups-select" @if (!userCheckPermission('user_group_edit')) disabled @endif name="groups[]">
+
+                                                            @foreach ($all_groups as $group)
+                                                                <option value="{{ $group->group_uuid }}"
+                                                                    @if(isset($user_groups) && $user_groups->contains($group))
+                                                                        selected
+                                                                    @endif>
+                                                                    {{ ucfirst($group->group_name) }}
+                                                                    
+                                                                </option>
+                                                            @endforeach
+                                                    </select>
+                                                    <div class="text-danger error_message groups_err"></div>
                                                 </div>
                                             </div>
-                                            
                                         </div> <!-- end row -->
+                                        
+                                        <input class="form-control" value="{{ $user->domain->domain_uuid ?? ''}}"  type="text" placeholder="" id="user_domain" name="user_domain" hidden/>
+                                        
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label class="form-label">Time Zone <span class="text-danger">*</span></label>
                                                     <input type="hidden" id="time_zone_val" value="{{(isset($user_time_zone['user_setting_value']))?$user_time_zone['user_setting_value']:''}}">
-                                                    <select name="time_zone"  id="time_zone" class="formfld" style="">
+                                                    <select data-toggle="select2" title="Time Zone" name="time_zone" id="time_zone">
+                                                
                                                         <option value=""></option>
                                                         <optgroup label="Africa">
                                                             <option value="Africa/Abidjan">Africa/Abidjan</option>
@@ -554,7 +583,7 @@
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label class="form-label">Language <span class="text-danger">*</span></label>
-                                                    <select  id="language"  name="language" class="formfld" style="">
+                                                    <select data-toggle="select2" title="Language"  id="language"  name="language">
                                                             @foreach ($languages as $language)
                                                                 <option {{(isset($user_language['user_setting_value']))?(($language->code==$user_language['user_setting_value'])?'selected':''):''}} value="{{ $language->code }}">{{ $language->language }}</option>
                                                             @endforeach
@@ -564,43 +593,39 @@
                                         </div> <!-- end row -->
 
                                         
+                                        
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-4">
                                                 <div class="mb-3">
-                                                    <label for="group" class="form-label">Group <span class="text-danger">*</span></label>
-                                                    <select data-placeholder="Please select group" multiple  id="group" name="group[]" class="formfld" style="">
-                                                    @foreach($user_group as $group)
-                                                        <option value="{{ $group->group_uuid }}" {{(!empty($group_permission))?((in_array($group->group_uuid,$group_permission))?'selected':''):''}}>{{ ucfirst($group->group_name) }}</option>
-                                                    @endforeach
-                                                        </select>
+                                                    <label  class="form-label">Enabled </label>
+                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                        data-bs-content="This deactivates the user">
+                                                        <i class="dripicons-information"></i>
+                                                    </a>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="account_status_yes" class="form-label">Account Status <span class="text-danger">*</span></label>
-                                                        <div class="d-flex">
-                                                            <div class="form-check mx-3">
-                                                                <input type="radio" id="account_status_yes" name="account_status" value="on" {{(isset($user['user_enabled']))?(($user['user_enabled']=='true')?'checked':''):''}} class="form-check-input">
-                                                                <label class="form-check-label" for="account_status_yes" >Enabled</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input type="radio" id="account_status_no" name="account_status" value="off" class="form-check-input" {{(isset($user['user_enabled']))?(($user['user_enabled']=='false')?'checked':''):''}}>
-                                                                <label class="form-check-label" for="account_status_no">Disabled</label>
-                                                            </div>
-                                                        </div> 
+                                            <div class="col-2">
+                                                <div class="mb-3 text-sm-end">
+                                                    <input type="hidden" name="user_enabled" value="false">
+                                                    <input type="checkbox" id="user_enabled-switch" name="user_enabled"
+                                                    @if ($user->user_enabled == "true") checked @endif
+                                                    data-switch="primary"/>
+                                                    <label for="user_enabled-switch" data-on-label="On" data-off-label="Off"></label>
+                                                    <div class="text-danger error_message user_enabled_err"></div>
+
                                                 </div>
                                             </div>
-
-
                                         </div> <!-- end row -->
+
+
                                         <div  id="domain_row" {{(!empty($group_permission))?((in_array('191b8429-1d88-405a-8d64-7bbbe9ef84b2',$group_permission))?'class="row"':'style=display:none;'):''}}>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="domain" class="form-label">Domain <span class="text-danger">*</span></label>
+                                                    <label for="domain" class="form-label">Assign reseller admin privileges to clients <span class="text-danger">*</span></label>
                                                     <select data-placeholder="Please select domain" multiple  id="domain" name="reseller_domain[]" class="formfld" style="">
-                                                    @foreach($domains as $domain)
+                                                    {{-- @foreach($domains as $domain)
                                                         <option value="{{ $domain->domain_uuid }}" {{(!empty($domain_permission))?((in_array($domain->domain_uuid,$domain_permission))?'selected':''):''}}>{{ (!empty($domain->domain_description))?$domain->domain_description:$domain->domain_name }}</option>
-                                                    @endforeach
+                                                    @endforeach --}}
                                                         </select>
                                                 </div>
                                             </div>
@@ -609,10 +634,11 @@
                                         <div class="row mt-4">
                                             <div class="col-sm-12">
                                                 <div class="text-sm-end">
-                                                <input type="hidden" name="user_id" value="{{base64_encode($user['user_uuid'])}}">
+                                                <input type="hidden" name="user_uuid" value="{{ $user->user_uuid }}">
                                                 {{-- <input type="hidden" name="contact_id" value="{{base64_encode($contact['contact_uuid'])}}"> --}}
-                                                    <a href="{{ Route('usersList') }}" class="btn btn-light">Cancel</a>
-                                                    <button class="btn btn-danger" type="submit">Update </button>
+                                                    <a href="{{ Route('users.index') }}" class="btn btn-light me-2">Cancel</a>
+                                                    <button id="submitFormButton" class="btn btn-success" type="submit">Save</button>
+                                                    <button class="btn btn-success" type="submit">Save</button>
                                                 </div>
                                             </div> <!-- end col -->
                                         </div>
@@ -622,6 +648,7 @@
                             </div> <!-- end row-->
 
                         </div>
+                        @if (userCheckPermission('user_setting_view'))
                         <div class="tab-pane " id="setting">
                             <div class="row">
                                  <div class="col-xl-12">
@@ -696,6 +723,7 @@
                         </table>
                     </div>
                         </div>
+                        @endif
                     </div>
 
 
@@ -792,134 +820,17 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+@endsection
 
 
-<script src="{{asset('assets/js/vendor.js')}}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-{{-- @yield('script') --}}
-{{-- @yield('script-bottom') --}}
+@push('scripts')
 
 <script>
     var setting_validation;
     $(document).ready(function() {
+        //Assign a value to Langruage field
         $('#time_zone').val($('#time_zone_val').val());
-        $('#time_zone,#language,#group,#domain,#user_site').select2();
-        // $('#domain_row').hide();
-
-
-               $("#user_form").validate({
-                    rules: {
-                    first_name: {
-                        required: true,
-                        maxlength: 60
-                    },
-                    last_name: {
-                        required: true,
-                        maxlength: 60
-                    },
-                    // password: {
-                    //     required: true,
-                    //     minlength: 8
-                    // },
-                    // c_password: {
-                    //     required: true,
-                    //     minlength: 8,
-                    //     equalTo : "#password"
-                    // },
-                    email: {
-                        required: true,
-                    },
-                    site: {
-                        required: true,
-                    },
-                    time_zone: {
-                        required: true,
-                    },
-                    language: {
-                        required: true,
-                    },
-                    "group[]": {
-                        required: true,
-                    },
-                    account_status: {
-                        required: true,
-                    },
-                    },
-                    messages: {
-                    first_name: {
-                        required: "Please enter first name",
-                    },
-                    last_name: {
-                        required: "Please enter last name",
-                    },
-                    // password: {
-                    //     required: "Please enter password",
-                    // },
-                    // c_password: {
-                    //     required: "Please confirm your password",
-                    //     equalTo : "Your password doesn't match"
-                    // },
-                    email: {
-                        required: "Please enter email",
-                    },
-                    site: {
-                        required: "Please enter site",
-                    },
-                    time_zone: {
-                        required: "Please enter time zone",
-                    },
-                    language: {
-                        required: "Please enter language",
-                    },
-                    "group[]": {
-                        required: "Please enter group",
-                    },
-                    account_status: {
-                        required: "Please enter account status",
-                    },
-                    },
-                    submitHandler: function(form) {
-                        saveUser();
-                    }
-                });
-
-
-                
-               setting_validation=$("#setting_form").validate({
-                    rules: {
-                        category: {
-                            required: true,
-                        },
-                        subcategory: {
-                            required: true,
-                        },
-                        setting_type: {
-                            required: true,
-                        },
-                        setting_value: {
-                            required: true,
-                        },
-                    },
-                    messages: {
-                        category: {
-                            required: "Please enter category",
-                        },
-                        subcategory: {
-                            required: "Please enter subcategory",
-                        },
-                        setting_type: {
-                            required: "Please enter type",
-                        },
-                        setting_value: {
-                            required: "Please enter value",
-                        },
-                    },
-                    submitHandler: function(form) {
-                        saveSetting();
-                    }
-                });
+        $('#time_zone').trigger('change');
 
         var group_list=[];
         $('#group').on('change',function(){
@@ -1079,41 +990,43 @@
     }
 
     
-    function saveUser() {
+    $('#submitFormButton').on('click', function(e) {
+        e.preventDefault();
         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
+
+        //Reset error messages
+        $('.error_message').text("");
+
+        var url = '{{ route("users.update", ":id") }}';
+        url = url.replace(':id', "{{ $user->user_uuid }}");
+
         $.ajax({
-            url: "{{ route('updateUser') }}", // point to server-side PHP script
-            dataType: "json",
+            type : "PATCH",
+            url: url,
             cache: false,
             data: $("#user_form").serialize(),
-            type: 'post',
-            success: function(res) {
+        })
+        .done(function(response) {
+                console.log(response);
                 $('.loading').hide();
-                if (res.success) {
-                    toastr.success('User updated!');
-                    
-                    setTimeout(function (){
-                        window.location.reload();
-                    }, 2000);
+
+                if (response.error){
+                    printErrorMsg(response.error);
+
                 } else {
-                    toastr.error(res.data.error);
+                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success")
                 }
-            },
-            error: function(){
-                $('.loading').hide();
-            }
+            })
+        .fail(function (response){
+            $('.loading').hide();
+            printErrorMsg(response.error);
         });
 
-    }
+    })
 
     function openSettingModal(){
         setting_validation.resetForm();
         $('#settingModal').modal('show');
     }
 </script>
-@endsection
+@endpush

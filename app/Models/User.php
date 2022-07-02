@@ -34,6 +34,7 @@ class User extends Authenticatable
         'username',
         'user_email',
         'password',
+        'user_enabled'
     ];
 
     /**
@@ -87,21 +88,50 @@ class User extends Authenticatable
         return $this->belongsTo(Contact::class,'contact_uuid','contact_uuid');
     }
     
-    public function group()
+    /**
+     * Get the all group the user belongs to
+     *  returns Eloqeunt Object
+     */
+    public function user_groups()
     {
         return $this->hasMany(UserGroup::class,'user_uuid','user_uuid');
     }
+
+    /**
+     * Get all of the permission groups for the user.
+     */
+    public function groups()
+    {
+        $group_uuids = UserGroup::where('user_uuid', $this->user_uuid)->get();
+
+        $groups = collect();
+        foreach ($group_uuids as $group_uuid) {
+            $groups->push($group_uuid->group);
+        }
+
+        return $groups;
+
+    }
+
+    /**
+     * Get all of user's advanced fields such as first name and last name stored in a separate table.
+     */
     public function user_adv_fields()
     {
         return $this->hasOne(UserAdvFields::class,'user_uuid','user_uuid');
     }
+
      public function setting()
     {
         return $this->hasMany(UserSetting::class,'user_uuid','user_uuid');
     }
-    public function user_domain()
+
+    /**
+     * Get the domain to which this user belongs 
+     */
+    public function domain()
     {
-        return $this->hasMany(UserDomainPermission::class,'user_uuid','user_uuid');
+        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
     }
 
 }

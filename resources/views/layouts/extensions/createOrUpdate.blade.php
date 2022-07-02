@@ -1207,7 +1207,7 @@
 
                 if (response.error){
                     printErrorMsg(response.error);
-                    $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
+                    $.NotificationApp.send("Warning","There was a error updating this extension","top-right","#ff5b5b","error")
 
                 } else {
                     $.NotificationApp.send("Success",response.message,"top-right","#10c469","success")
@@ -1218,14 +1218,14 @@
             });
         });
 
-        // Add errors to the page
-        function printErrorMsg (msg) {
-            $.each( msg, function( key, value ) {
-            console.log(key);
-              $('.'+key+'_err').text(value);
-              $('.'+key+'_err_badge').attr("hidden", false);
-            });
-        }
+        // // Add errors to the page
+        // function printErrorMsg (msg) {
+        //     $.each( msg, function( key, value ) {
+        //     console.log(key);
+        //       $('.'+key+'_err').text(value);
+        //       $('.'+key+'_err_badge').attr("hidden", false);
+        //     });
+        // }
 
         //Extension Page
         // Copy email to voicmemail_email

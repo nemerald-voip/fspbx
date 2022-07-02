@@ -28,6 +28,7 @@ Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->w
 Route::post('/extensions/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 Route::resource('extensions', 'ExtensionsController');
+Route::resource('users','UsersController');
 
 
 Route::group(['middleware' => 'auth'], function(){
@@ -39,11 +40,11 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
 
     //Users
-    Route::get('/users', [UsersController::class, 'index']) ->name('usersList');
-    Route::get('/users/create', [UsersController::class, 'createUser']) ->name('usersCreateUser');
-    Route::get('/users/edit/{id}', [UsersController::class, 'editUser']) ->name('editUser');
-    Route::post('/saveUser', [UsersController::class, 'saveUser']) ->name('saveUser');
-    Route::post('/updateUser', [UsersController::class, 'updateUser']) ->name('updateUser');
+    // Route::get('/users', [UsersController::class, 'index']) ->name('usersList');
+    //Route::get('/users/create', [UsersController::class, 'createUser']) ->name('usersCreateUser');
+    //Route::get('/users/edit/{id}', [UsersController::class, 'editUser']) ->name('editUser');
+    // Route::post('/saveUser', [UsersController::class, 'saveUser']) ->name('saveUser');
+    // Route::post('/updateUser', [UsersController::class, 'updateUser']) ->name('updateUser');
     Route::post('/deleteUser', [UsersController::class, 'deleteUser']) ->name('deleteUser');
     Route::post('/addSetting', [UsersController::class, 'addSetting']) ->name('addSetting');
     Route::post('/deleteSetting', [UsersController::class, 'deleteSetting']) ->name('deleteSetting');
