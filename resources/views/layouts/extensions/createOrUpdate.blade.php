@@ -1218,14 +1218,7 @@
             });
         });
 
-        // // Add errors to the page
-        // function printErrorMsg (msg) {
-        //     $.each( msg, function( key, value ) {
-        //     console.log(key);
-        //       $('.'+key+'_err').text(value);
-        //       $('.'+key+'_err_badge').attr("hidden", false);
-        //     });
-        // }
+
 
         //Extension Page
         // Copy email to voicmemail_email

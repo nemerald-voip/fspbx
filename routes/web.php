@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\UsersController;
@@ -11,7 +12,7 @@ use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\SmsWebhookController;
-use App\Http\Middleware\Authenticate;
+use App\Http\Controllers\UserSettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +30,8 @@ Route::post('/extensions/callerid/update/', [ExtensionsController::class, 'updat
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 Route::resource('extensions', 'ExtensionsController');
 Route::resource('users','UsersController');
-
+Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
+Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 
 Route::group(['middleware' => 'auth'], function(){
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -47,7 +49,7 @@ Route::group(['middleware' => 'auth'], function(){
     // Route::post('/updateUser', [UsersController::class, 'updateUser']) ->name('updateUser');
     Route::post('/deleteUser', [UsersController::class, 'deleteUser']) ->name('deleteUser');
     Route::post('/addSetting', [UsersController::class, 'addSetting']) ->name('addSetting');
-    Route::post('/deleteSetting', [UsersController::class, 'deleteSetting']) ->name('deleteSetting');
+
 
     //Voicemails
     Route::post('/voicemails/greetings/upload/{voicemail}', [VoicemailController::class, 'uploadVoicemailGreeting']) ->name('uploadVoicemailGreeting');

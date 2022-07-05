@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Groups;
 use App\Models\Domain;
 use App\Models\Contact;
+use App\Models\GroupPermissions;
 use App\Models\UserGroup;
 use App\Models\UserSetting;
 use Illuminate\Http\Request;
@@ -18,6 +19,9 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+
+use function PHPUnit\Framework\isEmpty;
+use function PHPUnit\Framework\isNull;
 
 class UsersController extends Controller
 {
@@ -57,17 +61,53 @@ class UsersController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function createUser(Request $request)
+    public function create(Request $request)
     {
+
+	    if (!userCheckPermission('user_add') || !userCheckPermission('user_edit')) {
+            return redirect('/');
+	    }
+
+        $user = new User();
+
+        // Get all permission groups that are lower or equal to the logged in users level
+        $all_groups = Groups::where('group_level','<=', Session::get('user')['group_level'])
+        ->where (function($query) {
+            $query->where('domain_uuid',null)
+            ->orWhere('domain_uuid', Session::get('domain_uuid'));
+        })
+        ->get();
+
+        //get all active domains
+        $all_domains = Domain::where('domain_enabled','true')
+        ->get();
+
+        // Get groups that have domain_select permission
+        $domain_select_groups = array();
+        foreach($all_groups as $group){
+            $group_permission = GroupPermissions:: where ('group_uuid', $group->group_uuid)
+                -> where ('permission_name', 'domain_select')
+                -> get();
+            if (!$group_permission->isEmpty()) {
+                $domain_select_groups[] = $group->group_uuid;
+            }
+        }
+
         $data=array();
+        $data['user'] = $user;
+        $data['all_groups']=$all_groups;
+        $data['all_domains']=$all_domains;
+        $data['domain_select_groups']=json_encode($domain_select_groups);
         $data['domains']=Domain::get();
         $data['user_group']=DB::table('v_groups')->get();
         $data['user_domain_name']=Session::get("domain_name");
         $data['languages']=DB::table('v_languages')->get();
         
-        return view('layouts.users.create')->with($data);
+        return view('layouts.users.createOrUpdate')->with($data);
 
     }
+
+
     public function getDomainID($domain_name){
         return Domain::where('domain_name',$domain_name)->pluck('domain_uuid')->first();
     }
@@ -98,6 +138,7 @@ class UsersController extends Controller
             }
         }
         
+        // Get all permission groups that are lower or equal to the logged in users level
         $all_groups = Groups::where('group_level','<=', Session::get('user')['group_level'])
             ->where (function($query) {
                 $query->where('domain_uuid',null)
@@ -105,24 +146,46 @@ class UsersController extends Controller
             })
             ->get();
 
+        // Get groups that have domain_select permission
+        $domain_select_groups = array();
+        foreach($all_groups as $group){
+            $group_permission = GroupPermissions:: where ('group_uuid', $group->group_uuid)
+                -> where ('permission_name', 'domain_select')
+                -> get();
+            if (!$group_permission->isEmpty()) {
+                $domain_select_groups[] = $group->group_uuid;
+            }
+        }
+
+        //get all active domains
+        $all_domains = Domain::where('domain_enabled','true')
+            ->get();
 
         $data=array();
         $data['user_groups']=$user->groups();
         $data['all_groups']=$all_groups;
+        $data['all_domains']=$all_domains;
+        $data['domain_select_groups']=json_encode($domain_select_groups);
+        $data['reseller_domains']=$user->reseller_domains();
         $data['languages']=DB::table('v_languages')->get();
         $data['user']=$user;
         $data['user_language']=$user_language;
         $data['user_time_zone']=$user_time_zone;
-                $records=$user->setting()->where('user_setting_name','!=','system_default')->orderBy('user_setting_category')->get();
+        
+        $records = $user->setting()
+            -> where('user_setting_name','!=','system_default')
+            -> where('user_setting_subcategory','!=','language')
+            -> where('user_setting_subcategory','!=','time_zone')
+            -> orderBy('user_setting_category')->get();
                 
                 $data['settings']=$records;
                 
-        return view('layouts.users.update')->with($data);
+        return view('layouts.users.createOrUpdate')->with($data);
 
 
     }
 
-    public function create(Request $request, User $user){
+    public function store(Request $request, User $user){
         return response()->json([
             'status' => 'success',
             'message' => 'Extension has been saved'
@@ -237,7 +300,8 @@ class UsersController extends Controller
             'groups' => 'nullable|array',
             'time_zone' => 'nullable',
             'language' => 'nullable',
-            'user_enabled' => 'present',           
+            'user_enabled' => 'present', 
+            'reseller_domains' => 'nullable',          
   
         ], [], $attributes);
 
@@ -283,15 +347,17 @@ class UsersController extends Controller
         $user_name_info->last_name = $attributes['last_name'];
         $user->user_adv_fields()->save($user_name_info);
 
-          
-            // $user->user_domain()->delete();
-            // if(in_array('191b8429-1d88-405a-8d64-7bbbe9ef84b2',$input['group'])){
-            //     foreach($input['reseller_domain'] as $res_domain){
-            //         $dom_per=new UserDomainPermission();
-            //         $dom_per->domain_uuid=$res_domain;
-            //         $user->user_domain()->save($dom_per);
-            //     }
-            // }
+        
+        if (isSuperAdmin()){
+            $user->reseller_domain_permissions()->delete();
+            if (isset($attributes['reseller_domains'])) {
+                foreach($attributes['reseller_domains'] as $res_domain){
+                    $dom_per=new UserDomainPermission();
+                    $dom_per->domain_uuid=$res_domain;
+                    $user->reseller_domain_permissions()->save($dom_per);
+                }
+            }
+        }
 
         //Save user language and time zone
         $user->setting()->delete();
@@ -356,47 +422,6 @@ class UsersController extends Controller
         echo json_encode($response);
         exit();
     }
-    function deleteSetting(Request $request){
-        
-        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
-        $setting_id=$request->setting_id;
-        if(!is_array($setting_id)){
-            $setting_id=[$request->setting_id];
-        }
-        foreach($setting_id as $id){
-            $setting=UserSetting::find($id);
-            if(!empty($setting)){
-            $setting->delete();
-            }
-        }
-        
-        $response=array('success'=>true,'data'=>'Deleted Successfully!'); 
-        echo json_encode($response);
-        exit();
-    }
-
-
-    public function addSetting(Request $request){
-        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
-        $input=$request->input();
-        $user_id=base64_decode($input['user_id']);
-        $user=User::find($user_id);
-        if(!empty($user)){
-            $setting=new UserSetting();
-            $setting->domain_uuid=$user->domain_uuid;
-            $setting->user_setting_category=$input['category'];
-            $setting->user_setting_subcategory=$input['subcategory'];
-            $setting->user_setting_name=$input['setting_type'];
-            $setting->user_setting_value=$input['setting_value'];
-            $setting->user_setting_description=$input['setting_description'];
-            $setting->user_setting_enabled=($input['status']=='on')?'t':'f';
-            $user->setting()->save($setting);
-            $response=array('success'=>true,'data'=>'Setting saved successfully');
-        }
-        return $response;
-    }
-
-
     
 
 }

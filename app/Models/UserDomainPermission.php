@@ -32,4 +32,9 @@ class UserDomainPermission extends Model
         return $this->belongsTo(User::class,'user_uuid','user_uuid');
     }
 
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
+    }
+
 }

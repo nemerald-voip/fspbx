@@ -21,6 +21,19 @@ if (!function_exists('userCheckPermission')){
 
 }
 
+// Check if currenlty signed in user a superadmin
+if (!function_exists('isSuperAdmin')){
+    function isSuperAdmin(){
+        foreach (Session::get('user.groups') as $group) {
+            if ($group->group_name == "superadmin" && $group->group_level >= 80) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+}
+
 if (!function_exists('getDefaultSetting')){
     function getDefaultSetting($category,$subcategory){
         $settings = Session::get('default_settings', false);
@@ -167,13 +180,13 @@ if (!function_exists('getCredentialKey')){
     function getCredentialKey($string){
        switch($string){
         case 'region':
-            return 'AWS_DEFAULT_REGION';
+            return 'region';
         case 'secret_key':
-            return 'AWS_SECRET_ACCESS_KEY';
+            return 'secret';
         case 'bucket_name':
-            return 'AWS_BUCKET';
+            return 'bucket';
         case 'access_key':
-            return 'AWS_ACCESS_KEY_ID';
+            return 'key';
         default:
             return $string;
        }

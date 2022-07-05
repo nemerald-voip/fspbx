@@ -51,7 +51,7 @@ class SetUpUserSession
         
         Session::put('user.groups', $groups);
 
-       
+
         //get the users highest level group
         Session::put('user.group_level', 0);
 		foreach ($groups as $group) {
@@ -70,19 +70,17 @@ class SetUpUserSession
             ])
                 -> value('user_setting_value');
         // user_setting_value": "9c143165-fda6-4539-a607-4184eb05b065"
-        
+
         // If user doesn't have a custom menu assign the default one
         if (is_null($menu_uuid)) {
-            $menu_uuid = DB::table('v_menus')
-            -> where ([
-                ['menu_name', '=', 'default'],
-            ])
-                -> value('menu_uuid');
+            $menu_uuid = DefaultSettings::where ('default_setting_category', 'domain')
+                ->where ('default_setting_subcategory', 'menu')
+                -> value('default_setting_value');
         }
         if (!is_null($menu_uuid)) {
             Session::put('user.menu_uuid', $menu_uuid);
         }
-
+        
         // Build top level menu
         $main_menu = DB::table('v_menu_items')
         -> join ('v_menu_item_groups', 'v_menu_item_groups.menu_item_uuid', '=', 'v_menu_items.menu_item_uuid')
@@ -136,7 +134,7 @@ class SetUpUserSession
             $permissions->where('v_group_permissions.domain_uuid', '=', $domain->domain_uuid)
                 -> orWhereNull('v_group_permissions.domain_uuid');
             })
-                -> distinct()
+                //-> distinct()->toSql();
                 -> get([
                     'v_permissions.permission_uuid',
                     'v_permissions.permission_name',
@@ -146,7 +144,6 @@ class SetUpUserSession
 
         // Add permissions to session variable
         Session::put('permissions', $permissions);
-
 
         // Build domains.
         // get the domains that the user is allowed to see and save in $_SESSION['domains']
@@ -170,7 +167,7 @@ class SetUpUserSession
                         DB::Raw('coalesce(domain_description , domain_name) as domain_description')
                     ]); 
             }
-            elseif (in_array('reseller',$group_names)) {
+            elseif (userCheckPermission("domain_select")) {
                 $domains = DB::table('v_domains')
                     ->join ('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
                     ->where ('v_domains.domain_enabled','=', 't')
@@ -196,15 +193,18 @@ class SetUpUserSession
         }
 
         // Assign additional variables
-        if (in_array('reseller',$group_names)) {
+        if (userCheckPermission("domain_select")) {
             //if user is in the reseller group check if he is allowed to see his own domain
             $self_domain=false;
-            foreach ($_SESSION['domains'] as $key=>$val){
-                if ($key == $domain->domain_uuid){
-                    $self_domain = true;
-                    break;
+            if (Session::get('domains')->isNotEmpty()){
+                foreach ($_SESSION['domains'] as $key=>$val){
+                    if ($key == $domain->domain_uuid){
+                        $self_domain = true;
+                        break;
+                    }
                 }
             }
+
             if($self_domain) {
                 Session::put('domain_uuid', $val['domain_uuid']);
                 Session::put('domain_name', $val['domain_name']);
@@ -213,11 +213,13 @@ class SetUpUserSession
 
             } else {
                 // if not then grab first domain from the list of allowed domains
-                $first_domain = reset($_SESSION['domains']);
-                Session::put('domain_uuid', $first_domain['domain_uuid']);
-                Session::put('domain_name', $first_domain['domain_name']);
-                $_SESSION["domain_name"] = $first_domain['domain_name'];
-                $_SESSION["domain_uuid"] = $first_domain['domain_uuid'];
+                if (Session::get('domains')->isNotEmpty()){
+                    $first_domain = reset($_SESSION['domains']);
+                    Session::put('domain_uuid', $first_domain['domain_uuid']);
+                    Session::put('domain_name', $first_domain['domain_name']);
+                    $_SESSION["domain_name"] = $first_domain['domain_name'];
+                    $_SESSION["domain_uuid"] = $first_domain['domain_uuid'];
+                }
             }
 
         } else {
@@ -228,7 +230,8 @@ class SetUpUserSession
         }
 
         // Redirect FusionPBX to an intended URL if it's not a logout page
-        if (Session::get('url')['intended'] != '' &&
+        if (isset(Session::get('url')['intended']) &&
+            Session::get('url')['intended'] != '' &&
             !str_contains(Session::get('url')['intended'], '/logout')){
             $_SESSION['redirect_url'] = Session::get('url')['intended'];
         }

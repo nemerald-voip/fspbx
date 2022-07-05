@@ -11,14 +11,14 @@
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
-                        @if(isset($extension))
+                        @if($user->exists)
                             <li class="breadcrumb-item active">Edit User</li>
                         @else
                             <li class="breadcrumb-item active">Create User</li>
                         @endif
                     </ol>
                 </div>
-                @if(isset($user))
+                @if($user->exists)
                     <h4 class="page-title">Edit User ({{ $user->user_adv_fields->first_name ?? ''}} {{ $user->user_adv_fields->last_name ?? ''}})</h4>
                 @else
                     <h4 class="page-title">Create Extension</h4>
@@ -33,7 +33,7 @@
             <div class="card mt-3">
                 <div class="card-body">
                     
-                    <ul class="nav nav-pills bg-nav-pills nav-justified mb-3">
+                    <ul class="nav nav-pills bg-nav-pills nav-justified mb-3" id="userNavTabs">
                         <li class="nav-item">
                             <a href="#profile" data-bs-toggle="tab" aria-expanded="true" class="nav-link rounded-0  active">
                                 <i class="mdi mdi-account-circle d-md-none d-block"></i>
@@ -41,7 +41,7 @@
                             </a>
                         </li>
 
-                        @if (userCheckPermission('user_setting_view'))
+                        @if (userCheckPermission('user_setting_view') && $user->exists)
                         <li class="nav-item">
                             <a href="#setting" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-0">
                                  <i class="mdi mdi-settings-outline d-md-none d-block"></i>
@@ -60,9 +60,13 @@
                                     <h4 class="mt-2">Basic information</h4>
 
                                     <p class="text-muted mb-4">Provide the basic information about the user or contact.</p>
-                                    <form  id="user_form" method="POST" action="{{ route('users.update',$user) }}">
+                                    @if ($user->exists)
+                                        <form method="POST" id="user_form" action="{{ route('users.update',$user) }}">
                                         @method('put')
-                                        @CSRF
+                                    @else
+                                        <form method="POST" id="user_form" action="{{ route('users.create') }}">
+                                    @endif
+                                    @csrf
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -91,15 +95,6 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                {{-- <div class="mb-3">
-                                                    <label for="groups" class="form-label">Group <span class="text-danger">*</span></label>
-                                                    <select data-placeholder="Please select group" multiple  @if (!userCheckPermission('user_domain')) disabled @endif id="groups" name="groups[]" class="formfld" style="">
-                                                    @foreach($user_group as $group)
-                                                        <option value="{{ $group->group_uuid }}" {{(!empty($group_permission))?((in_array($group->group_uuid,$group_permission))?'selected':''):''}}>{{ ucfirst($group->group_name) }}</option>
-                                                    @endforeach
-                                                        </select>
-                                                </div> --}}
-
                                                 <div class="mb-3">
                                                     <label for="groups-select" class="form-label">Settings and Permissions</label>
                                                     <!-- Multiple Select -->
@@ -618,18 +613,33 @@
                                         </div> <!-- end row -->
 
 
-                                        <div  id="domain_row" {{(!empty($group_permission))?((in_array('191b8429-1d88-405a-8d64-7bbbe9ef84b2',$group_permission))?'class="row"':'style=display:none;'):''}}>
+                                        @if (isSuperAdmin())
+                                        <div class="row" id="reseller_domain_select_row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="domain" class="form-label">Assign reseller admin privileges to clients <span class="text-danger">*</span></label>
-                                                    <select data-placeholder="Please select domain" multiple  id="domain" name="reseller_domain[]" class="formfld" style="">
-                                                    {{-- @foreach($domains as $domain)
-                                                        <option value="{{ $domain->domain_uuid }}" {{(!empty($domain_permission))?((in_array($domain->domain_uuid,$domain_permission))?'selected':''):''}}>{{ (!empty($domain->domain_description))?$domain->domain_description:$domain->domain_name }}</option>
-                                                    @endforeach --}}
-                                                        </select>
+                                                    <label for="reseller_domain_select" class="form-label">Assign reseller admin privileges to clients <span class="text-danger">*</label>
+                                                    <!-- Multiple Select -->
+                                                    <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                        id="reseller_domain_select" name="reseller_domains[]">
+                                                            @foreach ($all_domains as $domain)
+                                                                <option value="{{ $domain->domain_uuid }}"
+                                                                    @if(isset($reseller_domains) && $reseller_domains->contains($domain))
+                                                                        selected
+                                                                    @endif>
+                                                                    @if (isset($domain->domain_description)) 
+                                                                        {{$domain->domain_description  }}
+                                                                    @else
+                                                                    {{ $domain->domain_name }}
+                                                                    @endif
+
+                                                                </option>
+                                                            @endforeach
+                                                    </select>
+                                                    <div class="text-danger error_message reseller_domain_err"></div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> <!-- end row -->
+                                        @endif
 
                                         <div class="row mt-4">
                                             <div class="col-sm-12">
@@ -648,80 +658,85 @@
                             </div> <!-- end row-->
 
                         </div>
-                        @if (userCheckPermission('user_setting_view'))
+                        @if (userCheckPermission('user_setting_view') && $user->exists)
                         <div class="tab-pane " id="setting">
                             <div class="row">
                                  <div class="col-xl-12">
                                     <div class="text-xl-end mt-xl-0 mt-2">
-                                        <a href="javascript:openSettingModal();" class="btn btn-success mb-2 me-2">Add Setting</a>
-                                    <a href="javascript:confirmDelete();" class="btn btn-danger mb-2 me-2">Delete Selected</a>
-                                    {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
+                                        <button class="btn btn-success mb-2 me-2" id="add_setting_button">Add Setting</button>
+                                        <a href="javascript:confirmDeleteAction('{{ route('users.settings.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">Delete Selected</a>
                                     </div>
                                 </div><!-- end col-->
                             </div>
 
-                              <div class="table-responsive">
-                        <table class="table table-centered mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 20px;">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="selectallCheckbox">
-                                            <label class="form-check-label" for="customCheck1">&nbsp;</label>
-                                        </div>
-                                    </th>
-                                    <th>Category</th>
-                                    <th>Subcategory</th>
-                                    <th>Type</th>
-                                    <th>Value</th>
-                                    <th>Status</th>
-                                    <th>Description</th>
-                                    <th style="width: 125px;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
 
-                                @foreach ($settings as $key=>$setting)
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead class="table-light">
                                         <tr>
-                                        <td>
-                                            <div class="form-check">
-                                                <input type="checkbox" name="action_box[]" value="{{$setting['user_setting_uuid']}}" class="form-check-input action_checkbox">
-                                                <label class="form-check-label" >&nbsp;</label>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            {{ $setting['user_setting_category'] }} 
-                                        </td>
-                                        <td>
-                                            {{ $setting['user_setting_subcategory'] }} 
-                                        </td>
-                                        <td>
-                                            {{ $setting['user_setting_name'] }} 
-                                        </td>
-                                        <td>
-                                            {{ $setting['user_setting_value'] }} 
-                                        </td>
-                                        <td>
-                                            @if ($setting['user_setting_enabled']=='t') 
-                                                <h5><span class="badge bg-success"></i>Enabled</span></h5>
-                                            @else 
-                                                <h5><span class="badge bg-warning">Disabled</span></h5>
-                                            @endif
-                                        </td>
-                                        
-                                        <td>
-                                            {{ $setting['user_setting_description'] }} 
-                                        </td>
-                                        <td>
-                                            {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
-                                            <a href="javascript:confirmDelete('{{ $setting['user_setting_uuid'] }}');" class="action-icon"> <i class="mdi mdi-delete" title="Delete"></i></a>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                            <th style="width: 20px;">
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="selectallCheckbox">
+                                                    <label class="form-check-label" for="customCheck1">&nbsp;</label>
+                                                </div>
+                                            </th>
+                                            <th>Category</th>
+                                            <th>Subcategory</th>
+                                            <th>Type</th>
+                                            <th>Value</th>
+                                            <th>Status</th>
+                                            <th>Description</th>
+                                            <th style="width: 125px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
 
-                            </tbody>
-                        </table>
-                    </div>
+                                        @foreach ($settings as $key=>$setting)
+                                                <tr id="id{{$setting->user_setting_uuid }}">
+                                                <td>
+                                                    <div class="form-check">
+                                                        <input type="checkbox" name="action_box[]" value="{{$setting->user_setting_uuid }}" class="form-check-input action_checkbox">
+                                                        <label class="form-check-label" >&nbsp;</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {{ $setting['user_setting_category'] }} 
+                                                </td>
+                                                <td>
+                                                    {{ $setting['user_setting_subcategory'] }} 
+                                                </td>
+                                                <td>
+                                                    {{ $setting['user_setting_name'] }} 
+                                                </td>
+                                                <td>
+                                                    {{ $setting['user_setting_value'] }} 
+                                                </td>
+                                                <td>
+                                                    @if ($setting['user_setting_enabled']=='t') 
+                                                        <h5><span class="badge bg-success"></i>Enabled</span></h5>
+                                                    @else 
+                                                        <h5><span class="badge bg-warning">Disabled</span></h5>
+                                                    @endif
+                                                </td>
+                                                
+                                                <td>
+                                                    {{ $setting['user_setting_description'] }} 
+                                                </td>
+                                                <td>
+                                                    {{-- Action Buttons --}}
+                                                    <div id="tooltip-container-actions">
+                                                        <a href="javascript:confirmDeleteAction('{{ route('users.settings.destroy', ':id') }}','{{ $setting->user_setting_uuid }}');" class="action-icon"> 
+                                                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                        </a>
+                                                    </div>
+                                                    {{-- End of action buttons --}}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         @endif
                     </div>
@@ -750,14 +765,16 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
-                                                    <input class="form-control"  type="text" value="" placeholder="Enter category" name="category" id="category" />
+                                                    <label for="user_setting_category" class="form-label">Category <span class="text-danger">*</span></label>
+                                                    <input class="form-control"  type="text" value="" placeholder="Enter category" name="user_setting_category" id="user_setting_category" />
+                                                    <div class="text-danger error_message user_setting_category_err"></div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="subcategory" class="form-label">Subcategory <span class="text-danger">*</span></label>
-                                                    <input class="form-control" value="" type="text" placeholder="Enter your subcategory" id="subcategory" name="subcategory"/>
+                                                    <label for="user_setting_subcategory" class="form-label">Subcategory <span class="text-danger">*</span></label>
+                                                    <input class="form-control" value="" type="text" placeholder="Enter your subcategory" id="user_setting_subcategory" name="user_setting_subcategory"/>
+                                                    <div class="text-danger error_message user_setting_subcategory_err"></div>
                                                 </div>
                                             </div>
                                         </div> <!-- end row -->
@@ -766,41 +783,49 @@
                                           
                                               <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="setting_type" class="form-label">Type<span class="text-danger">*</span></label>
-                                                    <input class="form-control" value="" type="text" placeholder="Enter type" id="setting_type" name="setting_type"/>
+                                                    <label for="user_setting_name" class="form-label">Type<span class="text-danger">*</span></label>
+                                                    <input class="form-control" value="" type="text" placeholder="Enter type" id="user_setting_name" name="user_setting_name"/>
+                                                    <div class="text-danger error_message user_setting_name_err"></div>
                                                 </div>
                                             </div>
                                               <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="setting_value" class="form-label">Value <span class="text-danger">*</span></label>
-                                                    <input class="form-control" value="" type="text" placeholder="Enter value" id="setting_value" name="setting_value"/>
+                                                    <label for="user_setting_value" class="form-label">Value <span class="text-danger">*</span></label>
+                                                    <input class="form-control" value="" type="text" placeholder="Enter value" id="user_setting_value" name="user_setting_value"/>
+                                                    <div class="text-danger error_message user_setting_value_err"></div>
                                                 </div>
                                             </div>
                                             
                                         </div> <!-- end row -->
 
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-4">
                                                 <div class="mb-3">
-                                                    <label for="status_yes" class="form-label">Status <span class="text-danger">*</span></label>
-                                                        <div class="d-flex">
-                                                            <div class="form-check mx-3">
-                                                                <input type="radio" id="status_yes"  value="on" name="status" checked class="form-check-input">
-                                                                <label class="form-check-label" for="status_yes" >Enabled</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input type="radio" id="status_no"  value="off" name="status" class="form-check-input">
-                                                                <label class="form-check-label" for="status_no">Disabled</label>
-                                                            </div>
-                                                        </div> 
+                                                    <label  class="form-label">Enabled <span class="text-danger">*</label>
+                                                    {{-- <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                        data-bs-content="This deactivates the user">
+                                                        <i class="dripicons-information"></i> --}}
+                                                    </a>
                                                 </div>
                                             </div>
-                                        </div>
+                                            <div class="col-2">
+                                                <div class="mb-3 text-sm-end">
+                                                    <input type="hidden" name="user_setting_enabled" value="f">
+                                                    <input type="checkbox" id="user_setting_enabled-switch" checked name="user_setting_enabled"
+                                                    data-switch="primary"/>
+                                                    <label for="user_setting_enabled-switch" data-on-label="On" data-off-label="Off"></label>
+                                                    <div class="text-danger error_message user_setting_enabled_err"></div>
+
+                                                </div>
+                                            </div>
+                                        </div> <!-- end row -->
+
 
                                         <div class="row">
                                             <div class="col-md-12">
-                                                <label for="setting_value" class="form-label">Description</label>
-                                                <textarea  class="form-control" name="setting_description" value="setting_description"></textarea>
+                                                <label for="user_setting_description" class="form-label">Description</label>
+                                                <textarea  class="form-control" name="user_setting_description"  id="user_setting_description"></textarea>
+                                                <div class="text-danger error_message user_setting_description_err"></div>
                                             </div>
                                         </div>
                                       
@@ -808,9 +833,9 @@
                                         <div class="row mt-4">
                                             <div class="col-sm-12">
                                                 <div class="text-sm-end">
-                                                <input type="hidden" name="user_id" value="{{base64_encode($user['user_uuid'])}}">
+                                                <input type="hidden" name="user_id" value="{{ $user->user_uuid}}">
                                                   <button type="button" class="btn btn-light" data-bs-dismiss="modal" aria-hidden="true">Close</button>
-                                                   <button class="btn btn-danger" type="submit">Save </button>
+                                                   <button id="submitSettingFormButton" class="btn btn-danger" type="submit">Save </button>
                                                 </div>
                                             </div> <!-- end col -->
                                         </div>
@@ -828,166 +853,79 @@
 <script>
     var setting_validation;
     $(document).ready(function() {
-        //Assign a value to Langruage field
+        //Assign a value to Language field
         $('#time_zone').val($('#time_zone_val').val());
         $('#time_zone').trigger('change');
+        $('#groups-select').trigger('change');
+        resellerDomainSelectUpdate();
 
-        var group_list=[];
-        $('#group').on('change',function(){
-            group_list=$(this).val();
-            if(group_list.includes('191b8429-1d88-405a-8d64-7bbbe9ef84b2')){
-                $('#domain_row').show();
-            } else {
-                $('#domain_row').hide();
-            }
-        });  
-        
-           $('#selectallCheckbox').on('change',function(){
-            if($(this).is(':checked')){
-                $('.action_checkbox').prop('checked',true);
-            } else {
-                $('.action_checkbox').prop('checked',false);
-            }
+        $('a[data-bs-toggle="tab"]').on('show.bs.tab', function(e) {
+            localStorage.setItem('activeTab', $(e.target).attr('href'));
         });
 
-        $('.action_checkbox').on('change',function(){
-            if(!$(this).is(':checked')){
-                $('#selectallCheckbox').prop('checked',false);
-            } else {
-                if(checkAllbox()){
-                    $('#selectallCheckbox').prop('checked',true);
+        var activeTab = localStorage.getItem('activeTab');
+        if(activeTab){
+            $('#userNavTabs a[href="' + activeTab + '"]').tab('show');
+        }
+
+        $('#groups-select').change(function() {
+            resellerDomainSelectUpdate();
+        });
+
+        function resellerDomainSelectUpdate(){
+            // Get all groups with domain select permission
+            var domain_select_groups = "{{ $domain_select_groups }}";
+            domain_select_groups = jQuery.parseJSON( domain_select_groups.replace( /&quot;/g, '"' ) );
+
+            var reseller_select_show = false;
+            $('#groups-select option:selected').each(function() {
+                if(domain_select_groups.includes($(this).val()) ) {
+                    reseller_select_show = true;
                 }
-            }
-        });
-    });
-
-      function checkAllbox(){
-        var checked=true;
-        $('.action_checkbox').each(function(key,val){
-            if(!$(this).is(':checked')){
-                checked=false;
-            }
-        });
-        return checked;
-    }
-       function checkSelectedBoxAvailable(){
-        var has=false;
-        $('.action_checkbox').each(function(key,val){
-        if($(this).is(':checked')){
-            has=true;
-        }});
-        return has;
-    }
-    
-    function confirmDelete(setting_id=''){
-        if(setting_id==''){
-            var has=checkSelectedBoxAvailable();
-            
-            if(!has){
-                swal({
-                    title: "Users!",
-                    text: "No users selected!",
-                    icon: "error",
-                    button: "OK",
-                });
-                return false;
+            });
+            if (reseller_select_show){
+                $('#reseller_domain_select_row').show();
+            } else {
+                $('#reseller_domain_select_row').hide();
             }
         }
-        swal({
-            title: "Are you sure?",
-            text: "You want to delete these record!",
-            icon: "warning",
-            buttons: true,
-            dangerMode: false,
-            cancel: {
-                text: "No, cancel it!",
-                value: false,
-                closeModal: true,
-            },
-            confirm: {
-                text: "Yes, I am sure!",
-                value: true,
-                closeModal: true
-            }
-            })
-            .then((willsend) => {
-            if (willsend) {
+        
+    });
 
-                if(setting_id==''){
-                    setting_id=[];
-                    $('.action_checkbox').each(function(key,val){
-                        if($(this).is(':checked')){
-                            setting_id.push($(this).val());
-                        }
-                    });
-                }
-                deleteSetting(setting_id);
-            }
-            }); 
-    }
-
-    function deleteSetting(setting_id){
-         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-        $.ajax({
-            url: "{{ Route('deleteSetting') }}", // point to server-side PHP script
-            dataType: "json",
-            cache: false,
-            data: {
-                setting_id:setting_id
-            },
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.success) {
-                    toastr.success('Deleted Successfully!');
-                       setTimeout(function (){
-                        window.location.reload();
-                    }, 2000);
-                }
-            },
-            error: function(res){
-                $('.loading').hide();
-                toastr.error('Something went wrong!');
-            }
-        });
-    }
-
-    function saveSetting(){
+    $('#submitSettingFormButton').on('click', function(e) {
+        e.preventDefault();
         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
+
+        var url = '{{ route("users.settings.store", ":id") }}';
+        url = url.replace(':id', "{{ $user->user_uuid }}");
+
         $.ajax({
-            url: "{{ route('addSetting') }}", // point to server-side PHP script
-            dataType: "json",
+            type: 'POST',
+            url: url,
             cache: false,
             data: $("#setting_form").serialize(),
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.success) {
-                    toastr.success('Setting Added!');
-                    $('#settingModal').modal('hide');
-                    
-                    setTimeout(function (){
+        })
+        .done(function(response) {
+            //console.log(response);
+            $('#settingModal').modal('hide');
+            // $('.loading').hide();
+
+            if (response.error){
+                printErrorMsg(response.error);
+
+            } else {
+                $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                setTimeout(function (){
                         window.location.reload();
-                    }, 2000);
-                } else {
-                    toastr.error(res.data.error);
-                }
-            },
-            error: function(){
-                $('.loading').hide();
+                    }, 1000);
             }
+        })
+        .fail(function (response){
+            $('#settingModal').modal('hide');
+            $('.loading').hide();
+            printErrorMsg(response.error);
         });
-    }
+    })
 
     
     $('#submitFormButton').on('click', function(e) {
@@ -1007,7 +945,7 @@
             data: $("#user_form").serialize(),
         })
         .done(function(response) {
-                console.log(response);
+                //console.log(response);
                 $('.loading').hide();
 
                 if (response.error){
@@ -1024,9 +962,10 @@
 
     })
 
-    function openSettingModal(){
-        setting_validation.resetForm();
+    $('#add_setting_button').on('click', function(e) {
+        //setting_validation.resetForm();
         $('#settingModal').modal('show');
-    }
+    });
+
 </script>
 @endpush
