@@ -48,12 +48,15 @@
                 var url = $("#confirmDeleteModal").data("url");
                 url = url.replace(':id', item );
                 $.ajax({
-                    type: 'DELETE',
+                    type: 'POST',
                     url: url,
+                    data: {
+                        '_method': 'DELETE',
+                    },
                     cache: false,
                 })
                 .done(function(response) {
-                    // console.log(response);
+                    //console.log(response);
                     //$('.loading').hide();
 
                     if (response.error){
@@ -66,7 +69,7 @@
                 })
                 .fail(function (response){
                     $('.loading').hide();
-                    $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
+                    printErrorMsg(response.error);
                 });
             });
 

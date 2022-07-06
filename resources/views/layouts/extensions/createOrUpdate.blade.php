@@ -11,14 +11,14 @@
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="{{ route('extensions.index') }}">Extensions</a></li>
-                        @if(isset($extension))
+                        @if($extension->exists)
                             <li class="breadcrumb-item active">Edit Extension</li>
                         @else
                             <li class="breadcrumb-item active">Create Extension</li>
                         @endif
                     </ol>
                 </div>
-                @if(isset($extension))
+                @if($extension->exists)
                     <h4 class="page-title">Edit Extension ({{ $extension->extension }})</h4>
                 @else
                     <h4 class="page-title">Create Extension</h4>
@@ -37,7 +37,7 @@
                         <form method="POST" id="extensionForm" action="{{ route('extensions.update',$extension) }}">
                         @method('put')
                     @else
-                        <form method="POST" id="extensionForm" action="{{ route('extensions.create') }}">
+                        <form method="POST" id="extensionForm" action="{{ route('extensions.store') }}">
                     @endif
                     @csrf
                         <div class="row">
@@ -75,7 +75,7 @@
                                         </span>
                                     </a>
 
-                                    @if (userCheckPermission('voicemail_option_edit'))
+                                    @if (userCheckPermission('voicemail_option_edit') && $extension->exists)
                                     <a class="nav-link" id="v-pills-voicemail-tab" data-bs-toggle="pill" href="#v-pills-voicemail" role="tab" aria-controls="v-pills-voicemail"
                                         aria-selected="false">
                                         <i class="mdi mdi-account-circle d-md-none d-block"></i>
@@ -93,11 +93,11 @@
                                     </a>
                                     @endif
 
-                                    <a class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile"
+                                    {{-- <a class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile"
                                         aria-selected="false">
                                         <i class="mdi mdi-account-circle d-md-none d-block"></i>
                                         <span class="d-none d-md-block">Devices</span>
-                                    </a>
+                                    </a> --}}
                                     <a class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings"
                                         aria-selected="false">
                                         <i class="mdi mdi-settings-outline d-md-none d-block"></i>
@@ -148,7 +148,7 @@
                                                                     <label for="directory_first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                                                                     <input class="form-control" type="text" placeholder="Enter first name" id="directory_first_name"
                                                                         name="directory_first_name" value="{{ $extension->directory_first_name }}"/>
-                                                                    <div class="text-danger directory_first_name_err"></div>
+                                                                    <div class="text-danger directory_first_name_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
@@ -156,7 +156,7 @@
                                                                     <label for="directory_last_name" class="form-label">Last Name</label>
                                                                     <input class="form-control" type="text" placeholder="Enter last name" id="directory_last_name"
                                                                         name="directory_last_name" value="{{ $extension->directory_last_name }}"/>
-                                                                    <div class="text-danger directory_last_name_err"></div>
+                                                                    <div class="text-danger directory_last_name_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -167,7 +167,7 @@
                                                                     <label for="extension" class="form-label">Extension number <span class="text-danger">*</span></label>
                                                                     <input class="form-control" type="text" placeholder="xxxx" id="extension"
                                                                         name="extension" value="{{ $extension->extension }}"/>
-                                                                    <div class="text-danger error-text extension_err"></div>
+                                                                    <div class="text-danger error-text extension_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -177,7 +177,7 @@
                                                                     <label for="voicemail-email-address" class="form-label">Email Address </label>
                                                                     <input class="form-control" type="email" placeholder="Enter email" id="voicemail-email-address"
                                                                         name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
-                                                                    <div class="text-danger error-text voicemail_mail_to_err"></div>
+                                                                    <div class="text-danger error-text voicemail_mail_to_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -211,7 +211,7 @@
                                                                                 </option>
                                                                             @endforeach
                                                                     </select>
-                                                                    <div class="text-danger users_err"></div>
+                                                                    <div class="text-danger users_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -258,6 +258,9 @@
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
+                                                        @else
+                                                            <input type="hidden" name="directory_visible" value="true">
+                                                            <input type="hidden" name="directory_exten_visible" value="true">
                                                         @endif
 
                                                         @if (userCheckPermission('extension_enabled'))
@@ -281,6 +284,8 @@
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
+                                                        @else
+                                                            <input type="hidden" name="enabled" value="false">
                                                         @endif
 
                                                         <div class="row">
@@ -289,7 +294,7 @@
                                                                     <label for="description" class="form-label">Description</label>
                                                                     <input class="form-control" type="text" placeholder="" id="description" name="description"
                                                                         value="{{ $extension->description }}"/>
-                                                                        <div class="text-danger description_err"></div>
+                                                                        <div class="text-danger description_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -392,7 +397,7 @@
                                                 </div> <!-- end row-->
                                             <!-- End Caller ID Content-->
                                         </div>
-                                        @if (userCheckPermission('voicemail_option_edit'))
+                                        @if (userCheckPermission('voicemail_option_edit') && $extension->exists)
                                         <div class="tab-pane fade" id="v-pills-voicemail" role="tabpanel" aria-labelledby="v-pills-voicemail-tab">
                                             <!-- Voicemail Content-->
                                             <div class="tab-pane show active">
@@ -414,10 +419,10 @@
                                                                 <div class="mb-3 text-sm-end">
                                                                     <input type="hidden" name="voicemail_enabled" value="false">
                                                                     <input type="checkbox" id="voicemail_enabled" name="voicemail_enabled"
-                                                                    @if (!isset($extension->voicemail) || $extension->voicemail->voicemail_enabled == "true") checked @endif
+                                                                    @if ($extension->voicemail->exists && $extension->voicemail->voicemail_enabled == "true") checked @endif
                                                                     data-switch="primary"/>
                                                                     <label for="voicemail_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                                    <div class="text-danger voicemail_enabled_err"></div>
+                                                                    <div class="text-danger voicemail_enabled_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -433,7 +438,7 @@
                                                                             </option>
                                                                         @endfor
                                                                     </select>
-                                                                <div class="text-danger call_timeout_err"></div>
+                                                                <div class="text-danger call_timeout_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -449,7 +454,7 @@
                                                                             <span class="password-eye"></span>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="text-danger voicemail_password_err"></div>
+                                                                    <div class="text-danger voicemail_password_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -465,7 +470,7 @@
                                                                             Email with download link
                                                                         </option>
                                                                     </select>
-                                                                    <div class="text-danger voicemail_file_err"></div>
+                                                                    <div class="text-danger voicemail_file_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             <div class="col-6">
@@ -524,6 +529,8 @@
                                                     </div>
 
                                                 </div> <!-- end row-->
+
+                                                @if ($extension->voicemail->exists)
                                                 <div class="row mb-4">
                                                     <div class="col-lg-6">
                                                         <h4 class="mt-2">Unavailable greeting</h4>
@@ -549,7 +556,7 @@
 
                                                         <button type="button" class="btn btn-light" id="voicemail_unavailable_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
                                                         
-                                                        <button id="voicemail_unavailable_upload_file_button" type="button" class="btn btn-light" title="Upload">
+                                                        <button id="voicemail_unavailable_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
                                                             <span id="voicemail_unavailable_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
                                                             <span id="voicemail_unavailable_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                         </button>
@@ -566,6 +573,7 @@
                                                         </a>
 
                                                         <button id="voicemail_unavailable_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                            data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
                                                             @if (!$vm_unavailable_file_exists) disabled @endif>
                                                             <span id="voicemail_unavailable_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
                                                             <span id="voicemail_unavailable_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -602,7 +610,7 @@
 
                                                         <button type="button" class="btn btn-light" id="voicemail_name_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
                                                         
-                                                        <button id="voicemail_name_upload_file_button" type="button" class="btn btn-light" title="Upload">
+                                                        <button id="voicemail_name_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
                                                             <span id="voicemail_name_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
                                                             <span id="voicemail_name_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                         </button>
@@ -619,6 +627,7 @@
                                                         </a>
 
                                                         <button id="voicemail_name_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                            data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
                                                             @if (!$vm_name_file_exists) disabled @endif>
                                                             <span id="voicemail_name_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
                                                             <span id="voicemail_name_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -629,6 +638,9 @@
                                                     </div>
 
                                                 </div> <!-- end row-->
+                                                @endif
+
+
 
                                                 <div class="row">
                                                     <div class="col-6">
@@ -636,7 +648,7 @@
                                                             <label for="voicemail_alternate_greet_id" class="form-label">Alternative greet ID</label>
                                                             <input class="form-control" type="text" placeholder="" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id"/>
                                                             <span class="help-block"><small>An alternative greet id used in the default greeting.</small></span>
-                                                            <div class="text-danger voicemail_alternate_greet_id_err"></div>
+                                                            <div class="text-danger voicemail_alternate_greet_id_err error_message"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -647,7 +659,7 @@
                                                             <label for="voicemail_description" class="form-label">Description</label>
                                                             <input class="form-control" type="text" placeholder="" id="voicemail_description" name="voicemail_description"
                                                             value="{{ $extension->voicemail->voicemail_description }}"/>
-                                                            <div class="text-danger voicemail_description_err"></div>
+                                                            <div class="text-danger voicemail_description_err error_message"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -669,7 +681,7 @@
                                                             <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial"
                                                             @if ($extension->voicemail->voicemail_tutorial == "true") checked @endif />
                                                             <label for="voicemail_tutorial" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger voicemail_tutorial_err"></div>
+                                                            <div class="text-danger voicemail_tutorial_err error_message"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -687,13 +699,11 @@
                                                                         @if($extension->voicemail->forward_destinations()->contains($domain_voicemail))
                                                                             selected
                                                                         @endif>
-                                                                        @if ($domain_voicemail->extension->directory_first_name || $domain_voicemail->extension->directory_last_name)
-                                                                            @if ($domain_voicemail->extension->directory_first_name)
-                                                                                {{ $domain_voicemail->extension->directory_first_name }} 
-                                                                            @endif
-                                                                            @if ($domain_voicemail->extension->directory_last_name)
-                                                                                {{ $domain_voicemail->extension->directory_last_name }} 
-                                                                            @endif
+                                                                        @if (isset($domain_voicemail->extension->directory_first_name) || 
+                                                                            isset($domain_voicemail->extension->directory_last_name))
+                                                                                {{ $domain_voicemail->extension->directory_first_name ?? ""}} 
+                                                                            
+                                                                                {{ $domain_voicemail->extension->directory_last_name ?? ""}} 
                                                                             (ext {{ $domain_voicemail->voicemail_id }})
                                                                         @elseif ($domain_voicemail->voicemail_description)
                                                                             {{ $domain_voicemail->voicemail_description }} (ext {{ $domain_voicemail->voicemail_id }}) 
@@ -703,7 +713,7 @@
                                                                     </option>
                                                                 @endforeach
                                                         </select>
-                                                        <div class="text-danger voicemail_destinations_err"></div>
+                                                        <div class="text-danger voicemail_destinations_err error_message"></div>
                                                         </div>
                                                     </div>
                                                 </div> <!-- end row -->
@@ -755,6 +765,8 @@
                                             </div>
                                             <!-- End Voicemail Content-->
                                         </div>
+                                        @else
+                                            <input type="hidden" name="call_timeout" value="25">
                                         @endif
                                         <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
                                             <p class="mb-0">...</p>
@@ -781,7 +793,7 @@
                                                                         </option>
                                                                         @endforeach
                                                                     </select>
-                                                                    <div class="text-danger domain_uuid_err"></div>
+                                                                    <div class="text-danger domain_uuid_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -792,9 +804,11 @@
                                                                     <label for="context" class="form-label">Context <span class="text-danger">*</span></label>
                                                                     <input class="form-control" type="text" placeholder="" id="user_context"
                                                                         name="user_context" value="{{ $extension->user_context}}"/>
-                                                                    <div class="text-danger user_context_err"></div>
+                                                                    <div class="text-danger user_context_err error_message"></div>
                                                                 </div>
                                                             </div>
+                                                            @else
+                                                                <input type="hidden" name="user_context" value="{{ Session::get('domain_name') }}">
                                                             @endif
                                                         </div> <!-- end row -->
 
@@ -806,7 +820,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="number_alias" 
                                                                     name="number_alias" value="{{ $extension->number_alias}}"/>
                                                                     <span class="help-block"><small>If the extension is numeric then number alias is optional.</small></span>
-                                                                    <div class="text-danger number_alias_err"></div>
+                                                                    <div class="text-danger number_alias_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -818,9 +832,11 @@
                                                                     <input class="form-control" type="text" placeholder="" id="accountcode" 
                                                                         name="accountcode" value="{{ $extension->accountcode}}"/>
                                                                     <span class="help-block"><small>Enter the account code here.</small></span>
-                                                                    <div class="text-danger accountcode_err"></div>
+                                                                    <div class="text-danger accountcode_err error_message"></div>
                                                                 </div>
                                                             </div>
+                                                            @else
+                                                                <input type="hidden" name="accountcode" value="{{ Session::get('domain_name') }}">
                                                             @endif
                                                         </div> <!-- end row -->
 
@@ -832,7 +848,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="max_registrations" 
                                                                         name="max_registrations"  value="{{ $extension->max_registrations}}"/>
                                                                     <span class="help-block"><small>Enter the maximum registration allowed for this user</small></span>
-                                                                    <div class="text-danger error-text max_registrations_err"></div>
+                                                                    <div class="text-danger error-text max_registrations_err error_message"></div>
                                                                 </div>
                                                                
                                                             </div>
@@ -845,7 +861,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="toll_allow" 
                                                                         name="toll_allow" value="{{ $extension->toll_allow}}"/>
                                                                     <span class="help-block"><small>Enter the toll allow value here. (Examples: domestic,international,local)</small></span>
-                                                                    <div class="text-danger toll_allow_err"></div>
+                                                                    <div class="text-danger toll_allow_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             @endif    
@@ -859,7 +875,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="limit_destination" 
                                                                         name="limit_destination" value="{{ $extension->limit_destination}}"/>
                                                                     <span class="help-block"><small>Enter the destination to send the calls when the max number of outgoing calls has been reached.</small></span>
-                                                                    <div class="text-danger limit_destination_err"></div>
+                                                                    <div class="text-danger limit_destination_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             
@@ -869,11 +885,14 @@
                                                                     <input class="form-control" type="text" placeholder="" id="limit_max" 
                                                                         name="limit_max" value="{{ $extension->limit_max}}"/>
                                                                     <span class="help-block"><small>Enter the max number of outgoing calls for this user.</small></span>
-                                                                    <div class="text-danger limit_max_err"></div>
+                                                                    <div class="text-danger limit_max_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             
                                                         </div> <!-- end row -->
+                                                        @else
+                                                            <input type="hidden" name="limit_destination" value="!USER_BUSY">
+                                                            <input type="hidden" name="limit_max" value="5">
                                                         @endif
 
                                                         
@@ -885,7 +904,7 @@
                                                                     <input class="form-control" type="text" placeholder="" id="call_group" 
                                                                         name="call_group" value="{{ $extension->call_group}}"/>
                                                                     <span class="help-block"><small>Enter the user call group here. Groups available by default: sales, support, billing.</small></span>
-                                                                    <div class="text-danger call_group_err"></div>
+                                                                    <div class="text-danger call_group_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                             @endif
@@ -909,7 +928,7 @@
                                                                     @if ($extension->call_screen_enabled == "true") checked @endif
                                                                     data-switch="primary"/>
                                                                     <label for="call_screen_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                                    <div class="text-danger call_screen_enabled_err"></div>
+                                                                    <div class="text-danger call_screen_enabled_err error_message"></div>
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
@@ -998,7 +1017,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="auth_acl" 
                                                                             name="auth_acl" value="{{ $extension->auth_acl}}"/>
                                                                         <span class="help-block"><small>Enter the Auth ACL here.</small></span>
-                                                                        <div class="text-danger auth_acl_err"></div>
+                                                                        <div class="text-danger auth_acl_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                                 @if (userCheckPermission('extension_cidr'))
@@ -1008,7 +1027,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="cidr" 
                                                                             name="cidr" value="{{ $extension->cidr}}"/>
                                                                         <span class="help-block"><small>Enter allowed address/ranges in CIDR notation (comma separated).</small></span>
-                                                                        <div class="text-danger cidr_err"></div>
+                                                                        <div class="text-danger cidr_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                                 @endif
@@ -1039,7 +1058,7 @@
                                                                                 Rewrite TLS Contact Port
                                                                             </option>
                                                                         </select>
-                                                                        <div class="text-danger sip_force_contact_err"></div>
+                                                                        <div class="text-danger sip_force_contact_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-6">
@@ -1048,7 +1067,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="sip_force_expires" 
                                                                             name="sip_force_expires" value="{{ $extension->sip_force_expires}}"/>
                                                                         <span class="help-block"><small>To prevent stale registrations SIP Force expires can override the client expire.</small></span>
-                                                                        <div class="text-danger sip_force_expires_err"></div>
+                                                                        <div class="text-danger sip_force_expires_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1060,7 +1079,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="mwi_account" 
                                                                             name="mwi_account" value="{{ $extension->mwi_account}}"/>
                                                                         <span class="help-block"><small>MWI Account with user@domain of the voicemail to monitor.</small></span>
-                                                                        <div class="text-danger mwi_account_err"></div>
+                                                                        <div class="text-danger mwi_account_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1090,7 +1109,7 @@
                                                                                 Proxy Media
                                                                             </option>
                                                                         </select>
-                                                                        <div class="text-danger sip_bypass_media_err"></div>
+                                                                        <div class="text-danger sip_bypass_media_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1103,7 +1122,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="absolute_codec_string" 
                                                                             name="absolute_codec_string" value="{{ $extension->absolute_codec_string}}"/>
                                                                         <span class="help-block"><small>Absolute Codec String for the extension</small></span>
-                                                                        <div class="text-danger absolute_codec_string_err"></div>
+                                                                        <div class="text-danger absolute_codec_string_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1127,7 +1146,7 @@
                                                                         @if ($extension->force_ping == "true") checked @endif
                                                                         data-switch="primary"/>
                                                                         <label for="force_ping" data-on-label="On" data-off-label="Off"></label>
-                                                                        <div class="text-danger force_ping_err"></div>
+                                                                        <div class="text-danger force_ping_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1141,7 +1160,7 @@
                                                                         <input class="form-control" type="text" placeholder="" id="dial_string" 
                                                                             name="dial_string" value="{{ $extension->dial_string}}"/>
                                                                         <span class="help-block"><small>Location of the endpoint.</small></span>
-                                                                        <div class="text-danger dial_string_err"></div>
+                                                                        <div class="text-danger dial_string_err error_message"></div>
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
@@ -1190,31 +1209,47 @@
 <script>
     $(document).ready(function() {
 
+        $('a[data-bs-toggle="tab"]').on('show.bs.tab', function(e) {
+            localStorage.setItem('activeTab', $(e.target).attr('href'));
+        });
+
+        var activeTab = localStorage.getItem('activeTab');
+        if(activeTab){
+            $('#userNavTabs a[href="' + activeTab + '"]').tab('show');
+        }
+
         $('#submitFormButton').on('click', function(e) {
             e.preventDefault();
-            $('#loader').modal('toggle');
+            $('.loading').show();
+        
+            //Reset error messages
+            $('.error_message').text("");
 
             var url = $('#extensionForm').attr('action');
 
             $.ajax({
                 type : "POST",
                 url : url,
+                cache: false,
                 data : $('#extensionForm').serialize(),
             })
             .done(function(response) {
                 console.log(response);
-                $('#loader').modal('toggle');
+                $('.loading').hide();
 
                 if (response.error){
                     printErrorMsg(response.error);
-                    $.NotificationApp.send("Warning","There was a error updating this extension","top-right","#ff5b5b","error")
 
                 } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success")
+                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                    // setTimeout(function (){
+                    //     window.location.href = "{{ route('extensions.index')}}";
+                    // }, 1000);
                 }
             })
             .fail(function (response){
-                printErrorMsg(response.error);
+                $('.loading').hide();
+                printErrorMsg(response.responseText);
             });
         });
 
@@ -1273,9 +1308,7 @@
             $("#voicemail_unavailable_upload_file_button_icon").hide();
             $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", false);
 
-            var url = '{{ route("uploadVoicemailGreeting", ":id") }}';
-            url = url.replace(':id', "{{ $extension->voicemail->voicemail_uuid }}");
-
+            var url = $('#voicemail_unavailable_upload_file_button').data('url');
 
             $.ajax({
                 type : "POST",
@@ -1299,10 +1332,13 @@
                 //Enable delete button
                 $("#voicemail_unavailable_delete_file_button").attr("disabled", false);
 
+                @if($extension->exists && $extension->voicemail->exists)
                 //Update audio file
                 $("#voicemail_unavailable_audio_file").attr("src", 
                     "{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
                 );
+                @endif
+
                 $("#voicemail_unavailable_audio_file")[0].pause();
                 $("#voicemail_unavailable_audio_file")[0].load();
 
@@ -1337,8 +1373,7 @@
             $("#voicemail_name_upload_file_button_icon").hide();
             $("#voicemail_name_upload_file_button_spinner").attr("hidden", false);
 
-            var url = '{{ route("uploadVoicemailGreeting", ":id") }}';
-            url = url.replace(':id', "{{ $extension->voicemail->voicemail_uuid }}");
+            var url = $('#voicemail_name_upload_file').data('url');
 
             $.ajax({
                 type : "POST",
@@ -1362,10 +1397,13 @@
                 //Enable delete button
                 $("#voicemail_name_delete_file_button").attr("disabled", false);
 
+                @if($extension->exists && $extension->voicemail->exists)
                 //Update audio file
                 $("#voicemail_name_audio_file").attr("src", 
                     "{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
                 );
+                @endif
+
                 $("#voicemail_name_audio_file")[0].pause();
                 $("#voicemail_name_audio_file")[0].load();
 
@@ -1388,7 +1426,7 @@
         $('#voicemail_unavailable_delete_file_button').on('click', function(e) {
             e.preventDefault();
 
-            var url = "{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
+            var url = $('#voicemail_unavailable_delete_file_button').data('url');
 
             // Add spinner
             $("#voicemail_unavailable_delete_file_button_icon").hide();
@@ -1431,7 +1469,7 @@
         $('#voicemail_name_delete_file_button').on('click', function(e) {
             e.preventDefault();
 
-            var url = "{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
+            var url = $('#voicemail_name_delete_file_button').data('url');
 
             // Add spinner
             $("#voicemail_name_delete_file_button_icon").hide();

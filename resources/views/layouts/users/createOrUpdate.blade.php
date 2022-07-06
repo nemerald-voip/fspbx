@@ -14,14 +14,14 @@
                         @if($user->exists)
                             <li class="breadcrumb-item active">Edit User</li>
                         @else
-                            <li class="breadcrumb-item active">Create User</li>
+                            <li class="breadcrumb-item active">Create New User</li>
                         @endif
                     </ol>
                 </div>
                 @if($user->exists)
                     <h4 class="page-title">Edit User ({{ $user->user_adv_fields->first_name ?? ''}} {{ $user->user_adv_fields->last_name ?? ''}})</h4>
                 @else
-                    <h4 class="page-title">Create Extension</h4>
+                    <h4 class="page-title">Create New User</h4>
                 @endif
             </div>
         </div>
@@ -64,7 +64,7 @@
                                         <form method="POST" id="user_form" action="{{ route('users.update',$user) }}">
                                         @method('put')
                                     @else
-                                        <form method="POST" id="user_form" action="{{ route('users.create') }}">
+                                        <form method="POST" id="user_form" action="{{ route('users.store') }}">
                                     @endif
                                     @csrf
                                         <div class="row">
@@ -116,13 +116,13 @@
                                             </div>
                                         </div> <!-- end row -->
                                         
-                                        <input class="form-control" value="{{ $user->domain->domain_uuid ?? ''}}"  type="text" placeholder="" id="user_domain" name="user_domain" hidden/>
+                                        <input class="form-control" value="{{ $user->domain->domain_uuid ?? Session::get('domain_uuid')}}"  type="text" placeholder="" id="domain_uuid" name="domain_uuid" hidden/>
                                         
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label class="form-label">Time Zone <span class="text-danger">*</span></label>
-                                                    <input type="hidden" id="time_zone_val" value="{{(isset($user_time_zone['user_setting_value']))?$user_time_zone['user_setting_value']:''}}">
+                                                    <input type="hidden" id="time_zone_val" value="{{(isset($user_time_zone->user_setting_value))?$user_time_zone->user_setting_value:''}}">
                                                     <select data-toggle="select2" title="Time Zone" name="time_zone" id="time_zone">
                                                 
                                                         <option value=""></option>
@@ -580,7 +580,8 @@
                                                     <label class="form-label">Language <span class="text-danger">*</span></label>
                                                     <select data-toggle="select2" title="Language"  id="language"  name="language">
                                                             @foreach ($languages as $language)
-                                                                <option {{(isset($user_language['user_setting_value']))?(($language->code==$user_language['user_setting_value'])?'selected':''):''}} value="{{ $language->code }}">{{ $language->language }}</option>
+                                                                <option {{(isset($user_language->user_setting_value))?(($language->code==$user_language->user_setting_value)?'selected':''):''}} 
+                                                                    value="{{ $language->code }}">{{ $language->language }}</option>
                                                             @endforeach
                                                     </select>
                                                 </div>
@@ -648,7 +649,7 @@
                                                 {{-- <input type="hidden" name="contact_id" value="{{base64_encode($contact['contact_uuid'])}}"> --}}
                                                     <a href="{{ Route('users.index') }}" class="btn btn-light me-2">Cancel</a>
                                                     <button id="submitFormButton" class="btn btn-success" type="submit">Save</button>
-                                                    <button class="btn btn-success" type="submit">Save</button>
+                                                    {{-- <button class="btn btn-success" type="submit">Save</button> --}}
                                                 </div>
                                             </div> <!-- end col -->
                                         </div>
@@ -931,16 +932,13 @@
     $('#submitFormButton').on('click', function(e) {
         e.preventDefault();
         $('.loading').show();
-
+        
         //Reset error messages
         $('.error_message').text("");
 
-        var url = '{{ route("users.update", ":id") }}';
-        url = url.replace(':id', "{{ $user->user_uuid }}");
-
         $.ajax({
-            type : "PATCH",
-            url: url,
+            type : "POST",
+            url: $('#user_form').attr('action'),
             cache: false,
             data: $("#user_form").serialize(),
         })
@@ -952,12 +950,16 @@
                     printErrorMsg(response.error);
 
                 } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success")
+                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                    setTimeout(function (){
+                        window.location.href = "{{ route('users.index')}}";
+                    }, 1000);
+
                 }
             })
         .fail(function (response){
             $('.loading').hide();
-            printErrorMsg(response.error);
+            printErrorMsg(response.responseText);
         });
 
     })

@@ -24,8 +24,8 @@
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
-                                <a href="{{ route('extensions.create') }}" class="btn btn-success"><i class="mdi mdi-plus-circle me-2"></i>Add Extension</a>
-                                
+                                <a href="{{ route('extensions.create') }}" class="btn btn-success mb-2 me-2"><i class="mdi mdi-plus-circle me-2"></i>Add New</a>
+                                <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">Delete Selected</a>
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->
@@ -37,8 +37,8 @@
                                 <tr>
                                     <th style="width: 20px;">
                                         <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="customCheck1">
-                                            <label class="form-check-label" for="customCheck1">&nbsp;</label>
+                                            <input type="checkbox" class="form-check-input" id="selectallCheckbox">
+                                            <label class="form-check-label" for="selectallCheckbox">&nbsp;</label>
                                         </div>
                                     </th>
                                     <th>Extension</th>
@@ -55,20 +55,23 @@
                                     $i = 1;
                                 @endphp
                                 @foreach ($extensions as $extension)
-                                    <tr>
+                                    <tr id="id{{ $extension->extension_uuid  }}">
                                         <td>
                                             <div class="form-check">
-                                                <input type="checkbox" class="form-check-input extensionCheckbox" id="@php print 'extensionCheck'.$i; @endphp" 
-                                                    value="{{ $extension['extension_uuid'] }}">
-                                                <label class="form-check-label" for="@php print 'extensionCheck'.$i; @endphp">&nbsp;</label>
+                                                <input type="checkbox" name="action_box[]" value="{{ $extension->extension_uuid }}" class="form-check-input action_checkbox">
+                                                <label class="form-check-label" >&nbsp;</label>
                                             </div>
                                         </td>
-                                        <td><a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['extension'] }}</a> </td>
                                         <td>
-                                            {{ $extension['effective_caller_id_name'] }} 
+                                            <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['extension'] }}</a> 
                                         </td>
                                         <td>
-                                            {{ $extension->voicemail->voicemail_mail_to }} 
+                                            <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['effective_caller_id_name'] }} </a>
+                                        </td>
+                                        <td>
+                                            {{-- @if ($extension->voicemail->exists) --}}
+                                                {{ $extension->voicemail->voicemail_mail_to ?? ""}} 
+                                            {{-- @endif --}}
                                         </td>
                                         <td>
                                             {{ $extension['outbound_caller_id_number'] }} 
@@ -85,9 +88,19 @@
                                             {{ $extension['description'] }} 
                                         </td>
                                         <td>
-                                            {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-lead-pencil"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-delete"></i></a>
+                                             {{-- Action Buttons --}}
+                                             <div id="tooltip-container-actions">
+
+                                                <a href="{{ route('extensions.edit',$extension) }}" class="action-icon" title="Edit"> 
+                                                    <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
+                                                </a>
+
+                                                <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}','{{ $extension->extension_uuid }}');" class="action-icon"> 
+                                                    <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                </a>
+                                            </div>
+                                            {{-- End of action buttons --}}
+
                                         </td>
                                     </tr>
                                     @php 

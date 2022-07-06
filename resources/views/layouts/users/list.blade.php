@@ -27,7 +27,7 @@
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 <a href="{{ route('users.create') }}" class="btn btn-success mb-2 me-2">Add User</a>
-                                <a href="javascript:confirmDelete();" class="btn btn-danger mb-2 me-2">Delete Selected</a>
+                                <a href="javascript:confirmDeleteAction('{{ route('users.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">Delete Selected</a>
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->
@@ -40,7 +40,7 @@
                                     <th style="width: 20px;">
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input" id="selectallCheckbox">
-                                            <label class="form-check-label" for="customCheck1">&nbsp;</label>
+                                            <label class="form-check-label" for="selectallCheckbox">&nbsp;</label>
                                         </div>
                                     </th>
                                     <th>Name</th>
@@ -52,10 +52,10 @@
                             <tbody>
 
                                 @foreach ($users as $key=>$user)
-                                        <tr>
+                                    <tr id="id{{ $user->user_uuid  }}">
                                         <td>
                                             <div class="form-check">
-                                                <input type="checkbox" name="action_box[]" value="{{$user['user_uuid']}}" class="form-check-input action_checkbox">
+                                                <input type="checkbox" name="action_box[]" value="{{ $user->user_uuid }}" class="form-check-input action_checkbox">
                                                 <label class="form-check-label" >&nbsp;</label>
                                             </div>
                                         </td>
@@ -79,10 +79,22 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{-- <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a> --}}
-                                            <a href="{{ route('users.edit',$user) }}" class="action-icon" title="Edit"> <i class="mdi mdi-square-edit-outline"></i></a>
-                                            <a href="javascript:resetPassword('{{ $user['user_email'] }}');" class="action-icon"> <i class="mdi mdi-account-key-outline" title="Reset Password"></i></a>
-                                            <a href="javascript:confirmDelete('{{ $user['user_uuid'] }}');" class="action-icon"> <i class="mdi mdi-delete" title="Delete"></i></a>
+                                            
+                                            {{-- Action Buttons --}}
+                                            <div id="tooltip-container-actions">
+
+                                                <a href="{{ route('users.edit',$user) }}" class="action-icon" title="Edit"> 
+                                                    <i class="mdi mdi-square-edit-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
+                                                </a>
+                                                <a href="javascript:resetPassword('{{ $user['user_email'] }}');" class="action-icon"> 
+                                                    <i class="mdi mdi-account-key-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset Password"></i>
+                                                </a>
+
+                                                <a href="javascript:confirmDeleteAction('{{ route('users.destroy', ':id') }}','{{ $user->user_uuid }}');" class="action-icon"> 
+                                                    <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                </a>
+                                            </div>
+                                            {{-- End of action buttons --}}
                                         </td>
                                     </tr>
                                 @endforeach

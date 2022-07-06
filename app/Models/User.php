@@ -34,7 +34,9 @@ class User extends Authenticatable
         'username',
         'user_email',
         'password',
-        'user_enabled'
+        'domain_uuid',
+        'user_enabled',
+        'add_user'
     ];
 
     /**

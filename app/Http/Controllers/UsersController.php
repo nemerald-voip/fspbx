@@ -19,6 +19,8 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 use function PHPUnit\Framework\isEmpty;
 use function PHPUnit\Framework\isNull;
@@ -69,6 +71,7 @@ class UsersController extends Controller
 	    }
 
         $user = new User();
+        $user->user_enabled = "true";
 
         // Get all permission groups that are lower or equal to the logged in users level
         $all_groups = Groups::where('group_level','<=', Session::get('user')['group_level'])
@@ -93,14 +96,19 @@ class UsersController extends Controller
             }
         }
 
+        //Set defaults
+        $user_language= new UserSetting();
+        $user_language->user_setting_value = "en-us";
+        $user_time_zone= new UserSetting();
+        $user_time_zone->user_setting_value = "America/Los_Angeles";
+
         $data=array();
         $data['user'] = $user;
         $data['all_groups']=$all_groups;
         $data['all_domains']=$all_domains;
         $data['domain_select_groups']=json_encode($domain_select_groups);
-        $data['domains']=Domain::get();
-        $data['user_group']=DB::table('v_groups')->get();
-        $data['user_domain_name']=Session::get("domain_name");
+        $data['user_language']=$user_language;
+        $data['user_time_zone']=$user_time_zone;
         $data['languages']=DB::table('v_languages')->get();
         
         return view('layouts.users.createOrUpdate')->with($data);
@@ -178,99 +186,120 @@ class UsersController extends Controller
             -> where('user_setting_subcategory','!=','time_zone')
             -> orderBy('user_setting_category')->get();
                 
-                $data['settings']=$records;
+        $data['settings']=$records;
                 
         return view('layouts.users.createOrUpdate')->with($data);
 
 
     }
 
-    public function store(Request $request, User $user){
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Extension has been saved'
-        ]);
-        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
-        $input=$request->input();
-
-        $domain_uuid=Session::get('domain_uuid');
-
-        if(!$this->checkEmailExist($input['email'])){
-
-            // $contact=new Contact;
-            // $contact->domain_uuid=$domain_uuid;
-            // $contact->contact_name_given=$input['first_name'];
-            // $contact->contact_name_family=$input['last_name'];
-            // $contact->save();
-
-            $user=new User;
-            $user->domain_uuid=$domain_uuid;
-            $user_name=$input['first_name'];
-            if(!empty($input['last_name'])){
-                if(!empty($input['first_name'])){
-                    $user_name.='_';    
-                }
-                $user_name.=$input['last_name'];
-            }
+    public function store(Request $request, User $user)
+    {
+        $attributes = [
+            'user_email' => 'email',
             
-            $user->username=$user_name;
-            $user->password=bcrypt($input['password']);
-            $user->user_email=$input['email'];
-            // $user->contact_uuid=$contact->contact_uuid;
-            $user->user_enabled=($input['account_status']=='on')?'true':'false';
-            $user->add_user=Auth::user()->username;
-            $user->save();
-            // $contact->user()->save($user);
+        ];
 
-            $user_name_info=new UserAdvFields();
-            $user_name_info->first_name=$input['first_name'];
-            $user_name_info->last_name=$input['last_name'];
-            $user->user_adv_fields()->save($user_name_info);
+        $validator = Validator::make($request->all(), [
+            'first_name' =>'required|string|max:40',
+            'last_name' => 'nullable|string|max:40',
+            'user_email' => [
+                'required',
+                Rule::unique('App\Models\User','user_email')->ignore($user->user_uuid,'user_uuid'),
+                'email:rfc,dns'
+            ],
+            'groups' => 'nullable|array',
+            'time_zone' => 'nullable',
+            'language' => 'nullable',
+            'user_enabled' => 'present', 
+            'reseller_domains' => 'nullable', 
+            'domain_uuid' => 'present',         
+  
+        ], [], $attributes);
 
-            $group_name=DB::table('v_groups')->where('group_uuid',$input['group'])->pluck('group_name')->first();
-            $user_group=new UserGroup();
-            $user_group->domain_uuid=$domain_uuid;
-            $user_group->group_name=$group_name;
-            $user_group->group_uuid=$input['group'];
-            $user->group()->save($user_group);
-
-            if($input['group']=='191b8429-1d88-405a-8d64-7bbbe9ef84b2'){
-                foreach($input['reseller_domain'] as $res_domain){
-                    $dom_per=new UserDomainPermission();
-                    $dom_per->domain_uuid=$res_domain;
-                    $user->user_domain()->save($dom_per);
-                }
-            }
-
-            $language=new UserSetting();
-            $language->domain_uuid=$domain_uuid;
-            $language->user_setting_category='domain';
-            $language->user_setting_subcategory='language';
-            $language->user_setting_name='system_default';
-            $language->user_setting_value=$input['language'];
-            $language->user_setting_enabled='t';
-            
-            $time_zone=new UserSetting();
-            $time_zone->domain_uuid=$domain_uuid;
-            $time_zone->user_setting_category='domain';
-            $time_zone->user_setting_subcategory='time_zone';
-            $time_zone->user_setting_name='system_default';
-            $time_zone->user_setting_value=$input['time_zone'];
-            $time_zone->user_setting_enabled='t';
-
-            $user->setting()->saveMany([$language,$time_zone]);
-
-            if(!empty($user)){
-                $response['success']=true;
-                $response['data']=$user;
-            }
-        } else {
-            $response['data']['error']='Email already exist!';
+        if ($validator->fails()) {
+            return response()->json(['error'=>$validator->errors()]);
         }
 
+        // Retrieve the validated input assign all attributes
+        $attributes = $validator->validated();
+        if (isset($attributes['user_enabled']) && $attributes['user_enabled']== "on")  $attributes['user_enabled'] = "true";
 
-        echo json_encode($response);
-        exit();
+        if (isset($attributes['groups'])) {
+            foreach($attributes['groups'] as $group){
+                $group_name = Groups::where('group_uuid',$group)->pluck('group_name')->first();
+                    $user_group=new UserGroup();
+                    $user_group->domain_uuid = Session::get('domain_uuid');
+                    $user_group->group_name = $group_name;
+                    $user_group->group_uuid = $group;
+                    $user->user_groups()->save($user_group);
+            }
+        }       
+ 
+        //Make username by combining first name and last name
+        $attributes['username'] = $attributes['first_name'];
+        if(!empty($attributes['last_name'])){
+            $attributes['username'] .= '_' . $attributes['last_name'];
+        }
+
+        // Generate a secure password 
+        $attributes['password'] = Hash::make(Str::random(25));
+
+        $attributes['add_user'] = Auth::user()->username;
+        $user->fill($attributes);    
+        $user->save();
+
+        $user_name_info=new UserAdvFields();
+        $user_name_info->first_name=$attributes['first_name'];
+        $user_name_info->last_name=$attributes['last_name'];
+        $user->user_adv_fields()->save($user_name_info);
+
+        // Save user groups 
+        if (isset($attributes['groups'])) {
+            foreach($attributes['groups'] as $group){
+                $group_name = Groups::where('group_uuid',$group)->pluck('group_name')->first();
+                    $user_group=new UserGroup();
+                    $user_group->domain_uuid = Session::get('domain_uuid');
+                    $user_group->group_name = $group_name;
+                    $user_group->group_uuid = $group;
+                    $user->user_groups()->save($user_group);
+            }
+        } 
+
+        if (isSuperAdmin()){
+            if (isset($attributes['reseller_domains'])) {
+                foreach($attributes['reseller_domains'] as $res_domain){
+                    $dom_per=new UserDomainPermission();
+                    $dom_per->domain_uuid=$res_domain;
+                    $user->reseller_domain_permissions()->save($dom_per);
+                }
+            }
+        }
+
+        $language=new UserSetting();
+        $language->domain_uuid=Session::get('domain_uuid');;
+        $language->user_setting_category='domain';
+        $language->user_setting_subcategory='language';
+        $language->user_setting_name='system_default';
+        $language->user_setting_value=$attributes['language'];
+        $language->user_setting_enabled='t';
+        
+        $time_zone=new UserSetting();
+        $time_zone->domain_uuid=Session::get('domain_uuid');;
+        $time_zone->user_setting_category='domain';
+        $time_zone->user_setting_subcategory='time_zone';
+        $time_zone->user_setting_name='system_default';
+        $time_zone->user_setting_value=$attributes['time_zone'];
+        $time_zone->user_setting_enabled='t';
+
+        $user->setting()->saveMany([$language,$time_zone]);
+
+        return response()->json([
+            'status' => 'success',
+            'user_uuid' => $user->user_uuid,
+            'message' => 'User has been saved'
+        ]);
+
     }
 
     /**
@@ -387,41 +416,49 @@ class UsersController extends Controller
     
     }
 
-    function checkEmailExist($email,$id=''){
-        $query=User::where('user_email',$email);
+    // function checkEmailExist($email,$id=''){
+    //     $query=User::where('user_email',$email);
 
-        if(!empty($id)){
-            $query=$query->where('user_uuid','!=',$id);
-        }
-        $query=$query->first();
-        if(!empty($query)){
-            return true;
-        }
-        return false;
-    }
+    //     if(!empty($id)){
+    //         $query=$query->where('user_uuid','!=',$id);
+    //     }
+    //     $query=$query->first();
+    //     if(!empty($query)){
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
-    function deleteUser(Request $request){
-        
-        $response=array('success'=>false,'data'=>['error'=>'Something went wrong!']);
-        $contact_id=$request->contact_id;
-        if(!is_array($contact_id)){
-            $contact_id=[$request->contact_id];
-        }
-        foreach($contact_id as $id){
-            $user=User::find($id);
-            if(!empty($user)){
-            // $contact=Contact::find($user['contact_uuid']);
-            $user->delete();
-            // if(!empty($contact)){
-            //     $contact->delete();
-            // }
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        if(isset($user)){
+            $deleted = $user->delete();
+
+            if ($deleted){
+                return response()->json([
+                    'status' => 'success',
+                    'id' => $id,
+                    'message' => 'Selected users have been deleted'
+                ]);
+            } else {
+                return response()->json([
+                    'error' => 401,
+                    'message' => 'There was an error deleting this user'
+                ]);
             }
         }
-        
-        $response=array('success'=>true,'data'=>'Deleted Successfully!'); 
-        echo json_encode($response);
-        exit();
     }
     
+    public function show ($id){
+        dd("here");
+    }
 
 }

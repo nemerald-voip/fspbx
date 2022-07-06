@@ -5,15 +5,16 @@ namespace App\Http\Controllers;
 use cache;
 use App\Models\User;
 use App\Models\Extensions;
+use App\Models\Recordings;
 use App\Models\Voicemails;
+use App\Models\MusicOnHold;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\ExtensionUser;
 use App\Models\DefaultSettings;
+use Illuminate\Validation\Rule;
 use App\Models\NemeraldAppUsers;
 use App\Models\FreeswitchSettings;
-use App\Models\MusicOnHold;
-use App\Models\Recordings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\VoicemailDestinations;
@@ -242,14 +243,34 @@ class ExtensionsController extends Controller
         ])
         ->sortBy('destination_number');
 
+        // Get music on hold 
+        $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
+        ->orWhere('domain_uuid', null)
+        ->orderBy('music_on_hold_name', 'ASC')
+        ->get()
+        ->unique('music_on_hold_name');
+
+        $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+        ->orderBy('recording_name', 'ASC')
+        ->get();
+
         $extension = new Extensions();
+        $extension->directory_visible = "true";
+        $extension->directory_exten_visible = "true";
+        $extension->enabled = "true";
+        $extension->user_context = Session::get('domain_name');
+        $extension->accountcode = Session::get('domain_name');
+        $extension->limit_destination = "!USER_BUSY";
+        $extension->limit_max = "5";
+        $extension->call_timeout = "25";
+
         //dd($extension->domain->users);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extension)
             -> with('destinations',$destinations)
             -> with('domain_users',$extension->domain->users)
-            -> with ('vm_unavailable_file_exists', false)
-            -> with ('vm_name_file_exists',false)
+            -> with ('moh', $moh)
+            -> with ('recordings', $recordings)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
 
     }
@@ -260,9 +281,106 @@ class ExtensionsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, Extensions $extension)
     {
-        //
+        $attributes = [
+            'directory_first_name' => 'first name',
+            'directory_last_name' => 'last name',
+            'extension' =>'extension number',
+            'voicemail_mail_to' => 'email address',
+            'users' => 'users field',
+            'voicemail_password' => 'voicemail pin',
+            'outbound_caller_id_number' => 'external caller ID',
+            'voicemail_description' => 'description',
+            'domain_uuid' => 'domain',
+            'user_context' => 'context',
+            'max_registrations' => 'registrations',
+            'accountcode' => 'account code',
+            'limit_max' => 'total allowed outbound calls'
+            
+
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'directory_first_name' => 'required|string',
+            'directory_last_name' => 'nullable|string',
+            'extension' =>[
+                'required',
+                'numeric',
+                Rule::unique('App\Models\Extensions','extension')->ignore($extension->extension_uuid,'extension_uuid'),
+                Rule::unique('App\Models\Voicemails','voicemail_id')
+            ],
+            'voicemail_mail_to' => 'nullable|email:rfc,dns',
+            'users' => 'nullable|array',
+            'directory_visible' => 'present',
+            'directory_exten_visible' => 'present',
+            'enabled' => 'present',
+            'description' => "nullable|string|max:100",
+            'outbound_caller_id_number' => "present",
+            'emergency_caller_id_number' => 'present',
+            
+            // 'voicemail_id' => 'present',
+            // 'voicemail_enabled' => "present",
+            // 'call_timeout' => "numeric",
+            // 'voicemail_password' => 'numeric|digits_between:3,10',
+            // 'voicemail_file' => "present",
+            // 'voicemail_transcription_enabled' => 'nullable',
+            // 'voicemail_local_after_email' => 'present',
+            // 'voicemail_description' => "nullable|string|max:100",
+            // 'voicemail_alternate_greet_id' => "nullable|numeric",   
+            // 'voicemail_tutorial' => "present",
+            // 'voicemail_destinations'  => 'nullable|array',
+
+            'domain_uuid' => 'required',
+            'user_context' => 'required|string',
+            'number_alias' => 'nullable',
+            'accountcode' => 'nullable',
+            'max_registrations' => 'nullable|numeric',
+            'limit_max' => 'nullable|numeric',
+            'limit_destination' => 'nullable|string',
+            'toll_allow' => 'nullable|string',
+            'call_group' => 'nullable|string',
+            'call_screen_enabled' => 'nullable',
+            'user_record' => 'nullable|string',
+            'auth_acl' => 'nullable|string',
+            'cidr' => 'nullable|string',
+            'sip_force_contact' => 'nullable|string',
+            'sip_force_expires' => 'nullable|numeric',
+            'mwi_account' => 'nullable|string',
+            'sip_bypass_media' => 'nullable|string',
+            'absolute_codec_string' => 'nullable|string',
+            'force_ping' => "nullable|string",
+            'dial_string' => 'nullable|string',
+            'hold_music' => 'nullable',
+
+        ], [], $attributes);
+
+        if ($validator->fails()) {
+            return response()->json(['error'=>$validator->errors()]);
+        }
+
+        // Retrieve the validated input assign all attributes
+        $attributes = $validator->validated();
+        $attributes['effective_caller_id_name'] = $attributes['directory_first_name'] . " " . $attributes['directory_last_name'];
+        $attributes['effective_caller_id_number'] = $attributes['extension'];
+        if (isset($attributes['directory_visible']) && $attributes['directory_visible']== "on")  $attributes['directory_visible'] = "true";
+        if (isset($attributes['directory_exten_visible']) && $attributes['directory_exten_visible']== "on")  $attributes['directory_exten_visible'] = "true";
+        if (isset($attributes['enabled']) && $attributes['enabled']== "on")  $attributes['enabled'] = "true";
+        $attributes['voicemail_enabled'] = "true";
+        $attributes['voicemail_transcription_enabled'] = "true";
+        $attributes['voicemail_local_after_email'] = "true";
+        $attributes['voicemail_tutorial'] = "true";
+        if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
+
+
+        $extension->fill($attributes);    
+        $extension->save();
+
+        return response()->json([
+            'extension' => $extension,
+            'status' => 'success',
+            'message' => 'User has been saved'
+        ]);
     }
 
     /**
@@ -322,6 +440,10 @@ class ExtensionsController extends Controller
             ->orderBy('recording_name', 'ASC')
             ->get();
 
+        //Check if there is voicemail for this extension
+        if (!isset($extension->voicemail)){
+            $extension->voicemail = new Voicemails();
+        }
 
         // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
@@ -369,7 +491,12 @@ class ExtensionsController extends Controller
         $validator = Validator::make($request->all(), [
             'directory_first_name' => 'required|string',
             'directory_last_name' => 'nullable|string',
-            'extension' =>'required|numeric',
+            'extension' =>[
+                'required',
+                'numeric',
+                Rule::unique('App\Models\Extensions','extension')->ignore($extension->extension_uuid,'extension_uuid'),
+                Rule::unique('App\Models\Voicemails','voicemail_id'),
+            ],
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'users' => 'nullable|array',
             'directory_visible' => 'present',
@@ -382,7 +509,7 @@ class ExtensionsController extends Controller
             'voicemail_id' => 'present',
             'voicemail_enabled' => "present",
             'call_timeout' => "numeric",
-            'voicemail_password' => 'numeric|digits_between:3,10',
+            'voicemail_password' => 'required_if:voicemail_enabled,==,on|numeric|digits_between:3,10',
             'voicemail_file' => "present",
             'voicemail_transcription_enabled' => 'nullable',
             'voicemail_local_after_email' => 'present',
