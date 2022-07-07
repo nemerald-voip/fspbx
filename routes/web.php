@@ -30,6 +30,7 @@ Route::post('/extensions/callerid/update/', [ExtensionsController::class, 'updat
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 Route::resource('extensions', 'ExtensionsController');
 Route::resource('users','UsersController');
+Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 

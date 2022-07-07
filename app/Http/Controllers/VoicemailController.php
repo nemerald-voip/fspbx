@@ -2,16 +2,101 @@
 
 namespace App\Http\Controllers;
 
+use cache;
 use App\Models\Domain;
+use App\Models\Extensions;
 use App\Models\Voicemails;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\VoicemailGreetings;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
 
 class VoicemailController extends Controller
 {
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request, Voicemails $voicemail)
+    {
+
+        if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
+            return redirect('/');
+        }
+
+        $attributes = [
+            'voicemail_id' => 'voicemail extension number',
+            'voicemail_password' => 'voicemail PIN',
+            'greeting_id' =>'extension number',
+            'voicemail_mail_to' => 'email address',
+            'voicemail_enabled' => 'enabled',
+            'voicemail_description' => 'description',
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'voicemail_id' =>[
+                'required',
+                'numeric',
+                Rule::unique('App\Models\Extensions','extension')
+                    ->ignore($request->extension,'extension_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+                Rule::unique('App\Models\Voicemails','voicemail_id')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+            ],
+            'voicemail_password' => 'numeric|digits_between:3,10',
+            'voicemail_mail_to' => 'nullable|email:rfc,dns',
+            'voicemail_enabled' => 'present',
+            'voicemail_enabled' => 'present',
+            'voicemail_description' => 'nullable|string|max:100',
+            'voicemail_transcription_enabled' => 'present',
+            'voicemail_attach_file' => 'present',
+            'voicemail_file' => 'present',
+            'voicemail_local_after_email' => 'present',
+            'extension' => "uuid",
+
+        ], [], $attributes);
+
+        if ($validator->fails()) {
+            return response()->json(['error'=>$validator->errors()]);
+        }
+
+        // Retrieve the validated input assign all attributes
+        $attributes = $validator->validated();
+        $attributes['domain_uuid'] = Session::get('domain_uuid');
+        // find extension with provided UUID
+        // $extension = Extensions::findOrFail($request->extension);
+
+        // // Delete cache and update extension
+        // if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+        //     session_start();
+        // }
+        // $cache = new cache;
+        // $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
+        $voicemail->fill($attributes);    
+        $voicemail->save();
+      
+
+        //clear the destinations session array
+        if (isset($_SESSION['destinations']['array'])) {
+            unset($_SESSION['destinations']['array']);
+        }
+
+        return response()->json([
+            'voicemail' => $voicemail->voicemail_id,
+            //'request' => $attributes,
+            'status' => 'success',
+            'message' => 'Voicemail has been created'
+        ]);
+
+    }
+
     /**
      * Upload a voicemail greeting.
      *

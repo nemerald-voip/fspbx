@@ -307,29 +307,22 @@ class ExtensionsController extends Controller
             'extension' =>[
                 'required',
                 'numeric',
-                Rule::unique('App\Models\Extensions','extension')->ignore($extension->extension_uuid,'extension_uuid'),
+                Rule::unique('App\Models\Extensions','extension')
+                    ->ignore($extension->extension_uuid,'extension_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
                 Rule::unique('App\Models\Voicemails','voicemail_id')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'users' => 'nullable|array',
             'directory_visible' => 'present',
             'directory_exten_visible' => 'present',
+            'call_timeout' => "numeric",
             'enabled' => 'present',
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
             
-            // 'voicemail_id' => 'present',
-            // 'voicemail_enabled' => "present",
-            // 'call_timeout' => "numeric",
-            // 'voicemail_password' => 'numeric|digits_between:3,10',
-            // 'voicemail_file' => "present",
-            // 'voicemail_transcription_enabled' => 'nullable',
-            // 'voicemail_local_after_email' => 'present',
-            // 'voicemail_description' => "nullable|string|max:100",
-            // 'voicemail_alternate_greet_id' => "nullable|numeric",   
-            // 'voicemail_tutorial' => "present",
-            // 'voicemail_destinations'  => 'nullable|array',
 
             'domain_uuid' => 'required',
             'user_context' => 'required|string',
@@ -370,14 +363,42 @@ class ExtensionsController extends Controller
         $attributes['voicemail_transcription_enabled'] = "true";
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";
+        $attributes['voicemail_id'] = $attributes['extension'];
+        $attributes['voicemail_password'] = $attributes['extension'];
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
 
 
         $extension->fill($attributes);    
         $extension->save();
 
+        if (isset($attributes['users'])) {
+            foreach($attributes['users'] as $ext_user){
+                $extension_users = new ExtensionUser();
+                $extension_users->user_uuid = $ext_user;
+                $extension_users->domain_uuid = Session::get('domain_uuid');
+                $extension->extension_users()->save($extension_users);
+            }
+        }
+
+        $extension->voicemail = new Voicemails();
+        $extension->voicemail->fill($attributes);
+        //dd($extension->voicemail);
+        $extension->voicemail->save();
+
+        if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+            session_start();
+        }
+        $cache = new cache;
+        $cache->delete("directory:".$extension->extension."@".$extension->user_context);      
+
+        //clear the destinations session array
+        if (isset($_SESSION['destinations']['array'])) {
+            unset($_SESSION['destinations']['array']);
+        }
+
         return response()->json([
-            'extension' => $extension,
+            'extension' => $extension->extension_uuid,
+            'redirect_url' => route('extensions.edit', $extension),
             'status' => 'success',
             'message' => 'User has been saved'
         ]);
@@ -494,8 +515,12 @@ class ExtensionsController extends Controller
             'extension' =>[
                 'required',
                 'numeric',
-                Rule::unique('App\Models\Extensions','extension')->ignore($extension->extension_uuid,'extension_uuid'),
-                Rule::unique('App\Models\Voicemails','voicemail_id'),
+                Rule::unique('App\Models\Extensions','extension')
+                    ->ignore($extension->extension_uuid,'extension_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+                Rule::unique('App\Models\Voicemails','voicemail_id')
+                    ->ignore($extension->voicemail->voicemail_uuid,'voicemail_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'users' => 'nullable|array',
@@ -598,10 +623,10 @@ class ExtensionsController extends Controller
                 $extension->extension_users()->save($extension_users);
             }
         }
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Extension has been saved'
-        ]);
+        // return response()->json([
+        //     'status' => 'success',
+        //     'message' => 'Extension has been saved'
+        // ]);
         // Delete cache and update extension
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
@@ -619,6 +644,7 @@ class ExtensionsController extends Controller
 
         return response()->json([
             'status' => 'success',
+            'extension' => $extension->extension_uuid,
             'message' => 'Extension has been saved'
         ]);
     }
@@ -629,9 +655,34 @@ class ExtensionsController extends Controller
      * @param  \App\Models\Extentions  $extentions
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Extensions $extensions)
+    public function destroy($id)
     {
-        //
+        $extension = Extensions::findOrFail($id);
+
+        if(isset($extension)){
+            if (isset($extension->voicemail)) {
+                $deletedvm = $extension->voicemail->delete();
+            }
+
+            if (isset($extension->extension_users)) {
+                $deleted = $extension->extension_users()->delete();
+            }   
+
+            $deleted = $extension->delete();
+
+            if ($deleted){
+                return response()->json([
+                    'status' => 'success',
+                    'id' => $id,
+                    'message' => 'Selected extensions have been deleted'
+                ]);
+            } else {
+                return response()->json([
+                    'error' => 401,
+                    'message' => 'There was an error deleting this extension'
+                ]);
+            }
+        }
     }
 
 }

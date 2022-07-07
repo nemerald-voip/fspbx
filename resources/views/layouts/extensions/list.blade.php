@@ -119,6 +119,15 @@
 
 </div> <!-- container -->
 
-
-
 @endsection
+
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+
+        localStorage.removeItem('activeTab');
+
+    });
+</script>
+@endpush

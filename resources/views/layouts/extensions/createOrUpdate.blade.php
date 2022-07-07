@@ -133,7 +133,7 @@
                                         <div class="text-sm-end">
                                             <a href="{{ route('extensions.index') }}" class="btn btn-light me-2">Cancel</a>
                                             <button class="btn btn-success" type="submit" id="submitFormButton"><i class="uil uil-down-arrow me-2"></i> Save </button>
-                                            <button class="btn btn-success" type="submit">Save</button>
+                                            {{-- <button class="btn btn-success" type="submit">Save</button> --}}
                                         </div>
                                         <div class="tab-pane fade active show" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
                                             <!-- Basic Info Content-->
@@ -175,8 +175,8 @@
                                                             @if (userCheckPermission('voicemail_edit'))
                                                             <div class="col-md-6">
                                                                 <div class="mb-3">
-                                                                    <label for="voicemail-email-address" class="form-label">Email Address </label>
-                                                                    <input class="form-control" type="email" placeholder="Enter email" id="voicemail-email-address"
+                                                                    <label for="voicemail_mail_to" class="form-label">Email Address </label>
+                                                                    <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to"
                                                                         name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
                                                                     <div class="text-danger error-text voicemail_mail_to_err error_message"></div>
                                                                 </div>
@@ -407,8 +407,11 @@
                                                         <h4 class="mt-2">Voicemail settings</h4>
 
                                                         <p class="text-muted mb-4">Voicemail settings allow you to update your voicemail access PIN, personalize, maintain and update your voicemail greeting to inform your friends, customers, or colleagues of your status.</p>
-
-                                                        <input type="hidden" name="voicemail_id" value="{{ $extension->extension }}">
+                                                       
+                                                        <input type="hidden" id="voicemail_id" name="voicemail_id" 
+                                                            data-uuid="{{ $extension->voicemail->voicemail_uuid ?? ''}}" 
+                                                            data-extensionuuid="{{ $extension->extension_uuid ?? ''}}"
+                                                            value="{{ $extension->extension }}">
 
                                                         <div class="row">
                                                             <div class="col-4">
@@ -429,6 +432,7 @@
                                                         </div> <!-- end row -->
 
                                                         @if ($extension->voicemail->exists)
+
                                                         <div class="row">
                                                             <div class="col-6">
                                                                 <div class="mb-3">
@@ -444,6 +448,7 @@
                                                                 </div>
                                                             </div>
                                                         </div> <!-- end row -->
+
 
                                                         <div class="row">
                                                             <div class="col-md-6">
@@ -1228,17 +1233,19 @@
                 data : $('#extensionForm').serialize(),
             })
             .done(function(response) {
-                console.log(response);
-                $('.loading').hide();
+                //console.log(response);
+                // $('.loading').hide();
 
                 if (response.error){
+                    $('.loading').hide();
                     printErrorMsg(response.error);
 
                 } else {
                     $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                    // setTimeout(function (){
-                    //     window.location.href = "{{ route('extensions.index')}}";
-                    // }, 1000);
+                    if(response.redirect_url){
+                        window.location=response.redirect_url; 
+                    }
+ 
                 }
             })
             .fail(function (response){
@@ -1546,6 +1553,55 @@
             audioElement.pause();
         });
 
+
+        $('#voicemail_enabled').change(function() {
+            if(this.checked == true){
+                //check if voicemail already exists. If not create it
+                if($('#voicemail_id').data('uuid') == ""){
+                    //Create voicemail box
+                    $('.loading').show();
+
+                    var url = '{{ route("voicemails.store") }}';
+
+                    $.ajax({
+                        type: 'POST',
+                        url: url,
+                        cache: false,
+                        data: {
+                            extension: $('#voicemail_id').data('extensionuuid'),
+                            voicemail_id: $('#voicemail_id').val(),
+                            voicemail_password: $('#voicemail_id').val(),
+                            voicemail_enabled: "true",
+                            voicemail_transcription_enabled: "true",
+                            voicemail_attach_file: "true",
+                            voicemail_file: "attach",
+                            voicemail_local_after_email: "true",
+                        },
+                    })
+                    .done(function(response) {
+                        //console.log(response);
+                        $('#settingModal').modal('hide');
+                        //$('.loading').hide();
+
+                        if (response.error){
+                            printErrorMsg(response.error);
+
+                        } else {
+                            $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                            setTimeout(function (){
+                                    window.location.reload();
+                                }, 1000);
+                        }
+                    })
+                    .fail(function (response){
+                        $('#settingModal').modal('hide');
+                        $('.loading').hide();
+                        printErrorMsg(response.error);
+                    });
+                }
+            }
+
+        });
 
     });
 
