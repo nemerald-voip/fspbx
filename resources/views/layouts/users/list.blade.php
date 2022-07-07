@@ -86,7 +86,7 @@
                                                 <a href="{{ route('users.edit',$user) }}" class="action-icon" title="Edit"> 
                                                     <i class="mdi mdi-square-edit-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
                                                 </a>
-                                                <a href="javascript:resetPassword('{{ $user['user_email'] }}');" class="action-icon"> 
+                                                <a href="javascript:confirmPasswordResetAction('{{ $user->user_email }}');" class="action-icon"> 
                                                     <i class="mdi mdi-account-key-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset Password"></i>
                                                 </a>
 
@@ -110,15 +110,15 @@
     <!-- end row -->
 
 </div> <!-- container -->
+@endsection
 
-<script src="{{asset('assets/js/vendor.js')}}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-{{-- @yield('script') --}}
-{{-- @yield('script-bottom') --}}
 
+@push('scripts')
 <script>
     $(document).ready(function() {
+
+        localStorage.removeItem('activeTab');
+
         $('#selectallCheckbox').on('change',function(){
             if($(this).is(':checked')){
                 $('.action_checkbox').prop('checked',true);
@@ -148,62 +148,37 @@
         return checked;
     }
 
-    function resetPassword(user_email){
-
-        swal({
-            title: "Are you sure?",
-            text: "You want to send reset password email!",
-            icon: "warning",
-            buttons: true,
-            dangerMode: false,
-            cancel: {
-                text: "No, cancel it!",
-                value: false,
-                closeModal: true,
-            },
-            confirm: {
-                text: "Yes, I am sure!",
-                value: true,
-                closeModal: true
-            }
-            })
-            .then((willsend) => {
-            if (willsend) {
-                sendResetEmail(user_email);
-            }
-            });
+    function confirmPasswordResetAction(user_email){
+        $('#confirmPasswordResetModal').data("user_email",user_email).modal('show');
 
     }
 
-    function sendResetEmail(user_email){
+    function performConfirmedPasswordResetAction(){
+        var user_email = $("#confirmPasswordResetModal").data("user_email");
+        $('#confirmPasswordResetModal').modal('hide');
 
-        $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
         $.ajax({
-            url: "{{ url('password/email') }}", // point to server-side PHP script
-            dataType: "json",
+            type: 'POST',
+            url: "{{ url('password/email') }}",
             cache: false,
             data: {
                 email:user_email
-            },
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.errors==undefined) {
-                    toastr.success('Email Sent Successfully!');
                 }
-            },
-            error: function(res){
-                $('.loading').hide();
-                  $.each(res.responseJSON.errors,function(key,error){
-                        toastr.error(error);
-                });
-            }
-        });
+            })
+            .done(function(response) {
+
+                if (response.error){
+                    $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
+
+                } else {
+                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                    //$(this).closest('tr').fadeOut("fast");
+                }
+            })
+            .fail(function (response){
+
+                $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
+            });
     }
 
     function deleteUser(user_id){
@@ -245,55 +220,7 @@
         return has;
     }
 
-    function confirmDelete(user_id=''){
-        if(user_id==''){
-            var has=checkSelectedBoxAvailable();
-            
-            if(!has){
-                swal({
-                    title: "Users!",
-                    text: "No users selected!",
-                    icon: "error",
-                    button: "OK",
-                });
-                return false;
-            }
-        }
-        swal({
-            title: "Are you sure?",
-            text: "You want to delete these record!",
-            icon: "warning",
-            buttons: true,
-            dangerMode: false,
-            cancel: {
-                text: "No, cancel it!",
-                value: false,
-                closeModal: true,
-            },
-            confirm: {
-                text: "Yes, I am sure!",
-                value: true,
-                closeModal: true
-            }
-            })
-            .then((willsend) => {
-            if (willsend) {
-
-                if(user_id==''){
-                    user_id=[];
-                    $('.action_checkbox').each(function(key,val){
-                        if($(this).is(':checked')){
-                            user_id.push($(this).val());
-                        }
-                    });
-                }
-                deleteUser(user_id);
-            }
-            }); 
-    }
+    
     
 </script>
-
-
-
-@endsection
+@endpush

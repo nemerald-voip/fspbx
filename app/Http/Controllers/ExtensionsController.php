@@ -487,7 +487,7 @@ class ExtensionsController extends Controller
             
 
         ];
-
+// dd($request->all());
         $validator = Validator::make($request->all(), [
             'directory_first_name' => 'required|string',
             'directory_last_name' => 'nullable|string',
@@ -509,7 +509,7 @@ class ExtensionsController extends Controller
             'voicemail_id' => 'present',
             'voicemail_enabled' => "present",
             'call_timeout' => "numeric",
-            'voicemail_password' => 'required_if:voicemail_enabled,==,on|numeric|digits_between:3,10',
+            'voicemail_password' => 'bail|required_if:voicemail_enabled,==,on|nullable|numeric|digits_between:3,10',
             'voicemail_file' => "present",
             'voicemail_transcription_enabled' => 'nullable',
             'voicemail_local_after_email' => 'present',

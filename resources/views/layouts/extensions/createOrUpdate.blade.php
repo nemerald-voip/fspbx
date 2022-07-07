@@ -42,7 +42,7 @@
                     @csrf
                         <div class="row">
                             <div class="col-sm-2 mb-2 mb-sm-0">
-                                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                <div class="nav flex-column nav-pills" id="extensionNavPills" role="tablist" aria-orientation="vertical">
                                     <a class="nav-link active show" id="v-pills-home-tab" data-bs-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home"
                                         aria-selected="true">
                                         <i class="mdi mdi-home-variant d-md-none d-block"></i>
@@ -133,6 +133,7 @@
                                         <div class="text-sm-end">
                                             <a href="{{ route('extensions.index') }}" class="btn btn-light me-2">Cancel</a>
                                             <button class="btn btn-success" type="submit" id="submitFormButton"><i class="uil uil-down-arrow me-2"></i> Save </button>
+                                            <button class="btn btn-success" type="submit">Save</button>
                                         </div>
                                         <div class="tab-pane fade active show" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
                                             <!-- Basic Info Content-->
@@ -427,6 +428,7 @@
                                                             </div>
                                                         </div> <!-- end row -->
 
+                                                        @if ($extension->voicemail->exists)
                                                         <div class="row">
                                                             <div class="col-6">
                                                                 <div class="mb-3">
@@ -526,242 +528,234 @@
                                                         </div> <!-- end row -->
                                                         @endif
 
-                                                    </div>
 
-                                                </div> <!-- end row-->
+                                                        <div class="row mb-4">
+                                                            <div class="col-lg-6">
+                                                                <h4 class="mt-2">Unavailable greeting</h4>
 
-                                                @if ($extension->voicemail->exists)
-                                                <div class="row mb-4">
-                                                    <div class="col-lg-6">
-                                                        <h4 class="mt-2">Unavailable greeting</h4>
-
-                                                        <p class="text-muted mb-2">This plays when you do not pick up the phone.</p>
-                                                        <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
-                                                        
-                                                        <audio id="voicemail_unavailable_audio_file" 
-                                                            @if ($vm_unavailable_file_exists)
-                                                            src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
-                                                            @endif >   
-                                                        </audio>
-                                                        <p class="text-muted mb-1">File name: <span id='voicemailUnavailableFilename'>
-                                                            <strong>
-                                                                @if ($vm_unavailable_file_exists) greeting_1.wav
-                                                                @else generic greeting 
-                                                                @endif
-                                                            </strong></span></p>
-                                                        <button type="button" class="btn btn-light" id="voicemail_unavailable_play_button" 
-                                                            @if (!$vm_unavailable_file_exists) disabled @endif
-                                                            title="Play"><i class="uil uil-play"></i> 
-                                                        </button>
-
-                                                        <button type="button" class="btn btn-light" id="voicemail_unavailable_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
-                                                        
-                                                        <button id="voicemail_unavailable_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
-                                                            <span id="voicemail_unavailable_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
-                                                            <span id="voicemail_unavailable_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                        </button>
-                                                        <input id="voicemail_unavailable_upload_file" type="file" hidden/>
-
-                                                        <a href="{{ route('downloadVoicemailGreeting', [
-                                                            'voicemail' => $extension->voicemail->voicemail_uuid,
-                                                            'filename' => 'greeting_1.wav'
-                                                            ] ) }}">
-                                                                <button id="voicemail_unavailable_download_file_button" type="button" class="btn btn-light" title="Download"
-                                                                @if (!$vm_unavailable_file_exists) disabled @endif>
-                                                                <i class="uil uil-down-arrow"></i> 
-                                                            </button>
-                                                        </a>
-
-                                                        <button id="voicemail_unavailable_delete_file_button" type="button" class="btn btn-light" title="Delete"
-                                                            data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
-                                                            @if (!$vm_unavailable_file_exists) disabled @endif>
-                                                            <span id="voicemail_unavailable_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
-                                                            <span id="voicemail_unavailable_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                        </button>
-                                                        
-
-                                                        <div class="text-danger" id="voicemailUnvaialableGreetingError"></div>
-
-                                                    </div>
-
-
-
-
-                                                    <div class="col-lg-6">
-                                                        <h4 class="mt-2">Name greeting</h4>
-
-                                                        <p class="text-muted mb-2">This plays to identify your extension in the company's dial by name directory.</p>
-                                                        <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
-                                                        <audio id="voicemail_name_audio_file" 
-                                                            @if ($vm_name_file_exists)
-                                                            src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
-                                                            @endif >   
-                                                        </audio>
-                                                        <p class="text-muted mb-1">File name: <span id='voicemailNameFilename'>
-                                                            <strong>
-                                                                @if ($vm_name_file_exists) recorded_name.wav
-                                                                @else generic greeting 
-                                                                @endif
-                                                            </strong></span></p>
-                                                        <button type="button" class="btn btn-light" id="voicemail_name_play_button" 
-                                                            @if (!$vm_name_file_exists) disabled @endif
-                                                            title="Play"><i class="uil uil-play"></i> 
-                                                        </button>
-
-                                                        <button type="button" class="btn btn-light" id="voicemail_name_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
-                                                        
-                                                        <button id="voicemail_name_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
-                                                            <span id="voicemail_name_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
-                                                            <span id="voicemail_name_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                        </button>
-                                                        <input id="voicemail_name_upload_file" type="file" hidden data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}"/>
-
-                                                        <a href="{{ route('downloadVoicemailGreeting', [
-                                                            'voicemail' => $extension->voicemail->voicemail_uuid,
-                                                            'filename' => 'recorded_name.wav'
-                                                            ] ) }}">
-                                                                <button id="voicemail_name_download_file_button" type="button" class="btn btn-light" title="Download"
-                                                                @if (!$vm_name_file_exists) disabled @endif>
-                                                                <i class="uil uil-down-arrow"></i> 
-                                                            </button>
-                                                        </a>
-
-                                                        <button id="voicemail_name_delete_file_button" type="button" class="btn btn-light" title="Delete"
-                                                            data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
-                                                            @if (!$vm_name_file_exists) disabled @endif>
-                                                            <span id="voicemail_name_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
-                                                            <span id="voicemail_name_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                        </button>
-                                                        
-                                                        <div class="text-danger" id="voicemailNameGreetingError"></div>
-
-                                                    </div>
-
-                                                </div> <!-- end row-->
-                                                @endif
-
-
-
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="voicemail_alternate_greet_id" class="form-label">Alternative greet ID</label>
-                                                            <input class="form-control" type="text" placeholder="" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id"/>
-                                                            <span class="help-block"><small>An alternative greet id used in the default greeting.</small></span>
-                                                            <div class="text-danger voicemail_alternate_greet_id_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="voicemail_description" class="form-label">Description</label>
-                                                            <input class="form-control" type="text" placeholder="" id="voicemail_description" name="voicemail_description"
-                                                            value="{{ $extension->voicemail->voicemail_description }}"/>
-                                                            <div class="text-danger voicemail_description_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-
-
-                                                <div class="row">
-                                                    <div class="col-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Play voicemail tutorial </label>
-                                                            <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                data-bs-content="Play the voicemail tutorial after the next voicemail login.">
-                                                                <i class="dripicons-information"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-2">
-                                                        <div class="mb-3 text-sm-end">
-                                                            <input type="hidden" name="voicemail_tutorial" value="false">
-                                                            <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial"
-                                                            @if ($extension->voicemail->voicemail_tutorial == "true") checked @endif />
-                                                            <label for="voicemail_tutorial" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger voicemail_tutorial_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-
-                                                @if (userCheckPermission('voicemail_forward'))
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="additional-destinations-select" class="form-label">Forward voicemail messages to additional destinations.</label>
-                                                            <!-- Multiple Select -->
-                                                            <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
-                                                            id="additional-destinations-select" name="voicemail_destinations[]">
-                                                                @foreach ($domain_voicemails as $domain_voicemail)
-                                                                    <option value="{{ $domain_voicemail->voicemail_uuid }}"
-                                                                        @if($extension->voicemail->forward_destinations()->contains($domain_voicemail))
-                                                                            selected
-                                                                        @endif>
-                                                                        @if (isset($domain_voicemail->extension->directory_first_name) || 
-                                                                            isset($domain_voicemail->extension->directory_last_name))
-                                                                                {{ $domain_voicemail->extension->directory_first_name ?? ""}} 
-                                                                            
-                                                                                {{ $domain_voicemail->extension->directory_last_name ?? ""}} 
-                                                                            (ext {{ $domain_voicemail->voicemail_id }})
-                                                                        @elseif ($domain_voicemail->voicemail_description)
-                                                                            {{ $domain_voicemail->voicemail_description }} (ext {{ $domain_voicemail->voicemail_id }}) 
-                                                                        @else
-                                                                            Voicemail (ext {{ $domain_voicemail->voicemail_id }})
+                                                                <p class="text-muted mb-2">This plays when you do not pick up the phone.</p>
+                                                                <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
+                                                                
+                                                                <audio id="voicemail_unavailable_audio_file" 
+                                                                    @if ($vm_unavailable_file_exists)
+                                                                    src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
+                                                                    @endif >   
+                                                                </audio>
+                                                                <p class="text-muted mb-1">File name: <span id='voicemailUnavailableFilename'>
+                                                                    <strong>
+                                                                        @if ($vm_unavailable_file_exists) greeting_1.wav
+                                                                        @else generic greeting 
                                                                         @endif
-                                                                    </option>
-                                                                @endforeach
-                                                        </select>
-                                                        <div class="text-danger voicemail_destinations_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-                                                @endif
+                                                                    </strong></span></p>
+                                                                <button type="button" class="btn btn-light" id="voicemail_unavailable_play_button" 
+                                                                    @if (!$vm_unavailable_file_exists) disabled @endif
+                                                                    title="Play"><i class="uil uil-play"></i> 
+                                                                </button>
 
-                                                <h4 class="mt-2">Exiting voicemail options</h4>
+                                                                <button type="button" class="btn btn-light" id="voicemail_unavailable_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
+                                                                
+                                                                <button id="voicemail_unavailable_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
+                                                                    <span id="voicemail_unavailable_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
+                                                                    <span id="voicemail_unavailable_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                </button>
+                                                                <input id="voicemail_unavailable_upload_file" type="file" hidden/>
 
-                                                <div class="row">
-                                                    <div class="col-1">
-                                                        <div class="mb-3">
-                                                            <label for="voicemail-option" class="form-label">Option</label>
-                                                            <input class="form-control" type="email" placeholder="" id="voicemail-option" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-2">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Destination type</label>
-                                                            <select data-toggle="select2" title="Destination Type">
-                                                                <option value=""></option>
-                                                                <option value="AF"></option>
-                                                                <option value="AL"></option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-2">
-                                                        <div class="mb-3">
-                                                            <label for="voicemail-option-destination" class="form-label">Destination</label>
-                                                            <input class="form-control" type="text" placeholder="" id="voicemail-option-destination" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-1">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Order</label>
-                                                            <select data-toggle="select2" title="Order">
-                                                                <option value=""></option>
-                                                                <option value="AF"></option>
-                                                                <option value="AL"></option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <div class="mb-3">
-                                                            <label for="voicemail-option-description" class="form-label">Description</label>
-                                                            <input class="form-control" type="email" placeholder="" id="voicemail-option-description" />
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
+                                                                <a href="{{ route('downloadVoicemailGreeting', [
+                                                                    'voicemail' => $extension->voicemail->voicemail_uuid,
+                                                                    'filename' => 'greeting_1.wav'
+                                                                    ] ) }}">
+                                                                        <button id="voicemail_unavailable_download_file_button" type="button" class="btn btn-light" title="Download"
+                                                                        @if (!$vm_unavailable_file_exists) disabled @endif>
+                                                                        <i class="uil uil-down-arrow"></i> 
+                                                                    </button>
+                                                                </a>
 
+                                                                <button id="voicemail_unavailable_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                                    data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
+                                                                    @if (!$vm_unavailable_file_exists) disabled @endif>
+                                                                    <span id="voicemail_unavailable_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
+                                                                    <span id="voicemail_unavailable_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                </button>
+                                                                
+
+                                                                <div class="text-danger" id="voicemailUnvaialableGreetingError"></div>
+
+                                                            </div>
+
+                                                            <div class="col-lg-6">
+                                                                <h4 class="mt-2">Name greeting</h4>
+
+                                                                <p class="text-muted mb-2">This plays to identify your extension in the company's dial by name directory.</p>
+                                                                <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
+                                                                <audio id="voicemail_name_audio_file" 
+                                                                    @if ($vm_name_file_exists)
+                                                                    src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
+                                                                    @endif >   
+                                                                </audio>
+                                                                <p class="text-muted mb-1">File name: <span id='voicemailNameFilename'>
+                                                                    <strong>
+                                                                        @if ($vm_name_file_exists) recorded_name.wav
+                                                                        @else generic greeting 
+                                                                        @endif
+                                                                    </strong></span></p>
+                                                                <button type="button" class="btn btn-light" id="voicemail_name_play_button" 
+                                                                    @if (!$vm_name_file_exists) disabled @endif
+                                                                    title="Play"><i class="uil uil-play"></i> 
+                                                                </button>
+
+                                                                <button type="button" class="btn btn-light" id="voicemail_name_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
+                                                                
+                                                                <button id="voicemail_name_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
+                                                                    <span id="voicemail_name_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
+                                                                    <span id="voicemail_name_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                </button>
+                                                                <input id="voicemail_name_upload_file" type="file" hidden data-url="{{ route("uploadVoicemailGreeting", $extension->voicemail->voicemail_uuid) }}"/>
+
+                                                                <a href="{{ route('downloadVoicemailGreeting', [
+                                                                    'voicemail' => $extension->voicemail->voicemail_uuid,
+                                                                    'filename' => 'recorded_name.wav'
+                                                                    ] ) }}">
+                                                                        <button id="voicemail_name_download_file_button" type="button" class="btn btn-light" title="Download"
+                                                                        @if (!$vm_name_file_exists) disabled @endif>
+                                                                        <i class="uil uil-down-arrow"></i> 
+                                                                    </button>
+                                                                </a>
+
+                                                                <button id="voicemail_name_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                                    data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
+                                                                    @if (!$vm_name_file_exists) disabled @endif>
+                                                                    <span id="voicemail_name_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
+                                                                    <span id="voicemail_name_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                </button>
+                                                                
+                                                                <div class="text-danger" id="voicemailNameGreetingError"></div>
+
+                                                            </div>
+
+                                                        </div> <!-- end row-->
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="voicemail_alternate_greet_id" class="form-label">Alternative greet ID</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id"/>
+                                                                    <span class="help-block"><small>An alternative greet id used in the default greeting.</small></span>
+                                                                    <div class="text-danger voicemail_alternate_greet_id_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="voicemail_description" class="form-label">Description</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="voicemail_description" name="voicemail_description"
+                                                                    value="{{ $extension->voicemail->voicemail_description }}"/>
+                                                                    <div class="text-danger voicemail_description_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Play voicemail tutorial </label>
+                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                        data-bs-content="Play the voicemail tutorial after the next voicemail login.">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3 text-sm-end">
+                                                                    <input type="hidden" name="voicemail_tutorial" value="false">
+                                                                    <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial"
+                                                                    @if ($extension->voicemail->voicemail_tutorial == "true") checked @endif />
+                                                                    <label for="voicemail_tutorial" data-on-label="On" data-off-label="Off"></label>
+                                                                    <div class="text-danger voicemail_tutorial_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+                                                        @if (userCheckPermission('voicemail_forward'))
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="additional-destinations-select" class="form-label">Forward voicemail messages to additional destinations.</label>
+                                                                    <!-- Multiple Select -->
+                                                                    <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                                    id="additional-destinations-select" name="voicemail_destinations[]">
+                                                                        @foreach ($domain_voicemails as $domain_voicemail)
+                                                                            <option value="{{ $domain_voicemail->voicemail_uuid }}"
+                                                                                @if($extension->voicemail->forward_destinations()->contains($domain_voicemail))
+                                                                                    selected
+                                                                                @endif>
+                                                                                @if (isset($domain_voicemail->extension->directory_first_name) || 
+                                                                                    isset($domain_voicemail->extension->directory_last_name))
+                                                                                        {{ $domain_voicemail->extension->directory_first_name ?? ""}} 
+                                                                                    
+                                                                                        {{ $domain_voicemail->extension->directory_last_name ?? ""}} 
+                                                                                    (ext {{ $domain_voicemail->voicemail_id }})
+                                                                                @elseif ($domain_voicemail->voicemail_description)
+                                                                                    {{ $domain_voicemail->voicemail_description }} (ext {{ $domain_voicemail->voicemail_id }}) 
+                                                                                @else
+                                                                                    Voicemail (ext {{ $domain_voicemail->voicemail_id }})
+                                                                                @endif
+                                                                            </option>
+                                                                        @endforeach
+                                                                </select>
+                                                                <div class="text-danger voicemail_destinations_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        @endif
+
+                                                        <h4 class="mt-2">Exiting voicemail options</h4>
+
+                                                        <div class="row">
+                                                            <div class="col-1">
+                                                                <div class="mb-3">
+                                                                    <label for="voicemail-option" class="form-label">Option</label>
+                                                                    <input class="form-control" type="email" placeholder="" id="voicemail-option" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Destination type</label>
+                                                                    <select data-toggle="select2" title="Destination Type">
+                                                                        <option value=""></option>
+                                                                        <option value="AF"></option>
+                                                                        <option value="AL"></option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3">
+                                                                    <label for="voicemail-option-destination" class="form-label">Destination</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="voicemail-option-destination" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-1">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Order</label>
+                                                                    <select data-toggle="select2" title="Order">
+                                                                        <option value=""></option>
+                                                                        <option value="AF"></option>
+                                                                        <option value="AL"></option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label for="voicemail-option-description" class="form-label">Description</label>
+                                                                    <input class="form-control" type="email" placeholder="" id="voicemail-option-description" />
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        @endif
+                                                    </div> <!-- end row-->
+                                                </div>
                                             </div>
                                             <!-- End Voicemail Content-->
                                         </div>
@@ -1209,13 +1203,13 @@
 <script>
     $(document).ready(function() {
 
-        $('a[data-bs-toggle="tab"]').on('show.bs.tab', function(e) {
+        $('a[data-bs-toggle="pill"]').on('show.bs.tab', function(e) {
             localStorage.setItem('activeTab', $(e.target).attr('href'));
         });
 
         var activeTab = localStorage.getItem('activeTab');
         if(activeTab){
-            $('#userNavTabs a[href="' + activeTab + '"]').tab('show');
+            $('#extensionNavPills a[href="' + activeTab + '"]').tab('show');
         }
 
         $('#submitFormButton').on('click', function(e) {
