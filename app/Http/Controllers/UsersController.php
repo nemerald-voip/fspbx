@@ -90,6 +90,7 @@ class UsersController extends Controller
         foreach($all_groups as $group){
             $group_permission = GroupPermissions:: where ('group_uuid', $group->group_uuid)
                 -> where ('permission_name', 'domain_select')
+                -> where ('permission_assigned', 'true')
                 -> get();
             if (!$group_permission->isEmpty()) {
                 $domain_select_groups[] = $group->group_uuid;
