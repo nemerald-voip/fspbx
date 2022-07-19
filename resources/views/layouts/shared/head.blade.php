@@ -1,8 +1,8 @@
 <meta charset="utf-8" />
-<title>{{ $page_title }} | Nemerald</title>
+<title>{{ $page_title }} | {{ config('app.name', 'Laravel') }}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta content="Nemerald Phone System Portal" name="description" />
-<meta content="Nemerald" name="author" />
+<meta content="{{ config('app.name', 'Laravel') }} Phone System Portal" name="description" />
+<meta content="{{ config('app.name', 'Laravel') }}" name="{{ config('app.name', 'Laravel') }}" />
 
 <!-- CSRF Token -->
 <meta name="csrf-token" content="{{ csrf_token() }}">
