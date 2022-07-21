@@ -232,15 +232,9 @@ class AppsController extends Controller
                     ),
                     'certificate' => '',
                     'tones' => array(
-                        'Ringback2' => [
-                            'Ringback 1'
-                        ],
-                        'Progress' => [
-                            'Progress 1'
-                        ],
-                        'Ringback' => [
-                            'United States'
-                        ],
+                        'Ringback2' => 'Ringback 1',
+                        'Progress' => 'Progress 1',
+                        'Ringback' => 'United States',
                     ),
 
                 )
