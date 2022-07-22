@@ -1244,6 +1244,8 @@
                     $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
                     if(response.redirect_url){
                         window.location=response.redirect_url; 
+                    } else {
+                        $('.loading').hide();
                     }
  
                 }
