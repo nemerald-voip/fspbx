@@ -57,18 +57,20 @@ class LoginController extends Controller
     {
         //Support for legacy authentication using domain user
         // Find the user in DB with submitted values and replace the username with the request 
-        if (str_contains($request->user_email,"nemerald.net")) {
+        //if (str_contains($request->user_email,"nemerald.net")) {
             $userid = explode("@",$request->user_email);
             $domain = Domain::where('domain_name', $userid[1])->first();
 
-            if ($domain){
+            if (isset($domain)){
                 $params = [
                     'domain_uuid' => $domain->domain_uuid, 
                     'username' => $userid[0],
                 ];
-                $user= User::where($params)->first();
+                $user= User::where('domain_uuid', $domain->domain_uuid)
+                    ->where ('username', 'ilike', '%' . $userid[0] . '%')
+                    ->first();
 
-                if($user){
+                if(isset($user)){
                     $request->merge([
                         'user_email' => $user->user_email,
                     ]);
@@ -76,8 +78,8 @@ class LoginController extends Controller
 
             }
 
-        }
-
+        //}
+ 
         $this->validateLogin($request);
 
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
