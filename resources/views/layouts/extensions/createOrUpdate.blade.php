@@ -125,7 +125,6 @@
                                         </span>
                                     </a>
                                 </div>
-                                {{-- <button class="btn btn-primary" type="submit" id="submitFormButton"><i class="uil uil-down-arrow"></i> Save </button> --}}
                             </div> <!-- end col-->
 
                                 <div class="col-sm-10">

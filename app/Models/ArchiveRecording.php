@@ -7,17 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class CallRecordings extends Model
+class ArchiveRecording extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_call_recordings";
-
-    public $timestamps = false;
-
-    protected $primaryKey = 'call_recording_uuid';
-    public $incrementing = false;
-    protected $keyType = 'string';
+    protected $table = "archive_recording";
+    protected $primaryKey = 'id';
 
     /**
      * The attributes that are mass assignable.
@@ -43,9 +38,8 @@ class CallRecordings extends Model
     protected $hidden = [
 
     ];
-    public function archive_recording()
+    public function call_recording()
     {
-        return $this->hasOne(ArchiveRecording::class,'call_recording_uuid','call_recording_uuid');
+        return $this->belongsTo(CDR::class,'xml_cdr_uuid','xml_cdr_uuid');
     }
 }
-

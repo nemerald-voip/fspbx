@@ -61,9 +61,11 @@ Route::group(['middleware' => 'auth'], function(){
     //Apps
     Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');
     Route::post('/apps/organization/create', [AppsController::class, 'createOrganization']) ->name('appsCreateOrganization');
+    Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings']) ->name('mobileAppUserSettings');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection']) ->name('appsCreateConnection');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection']) ->name('appsUpdateConnection');
+    Route::post('/apps/user/create', [AppsController::class, 'createUser']) ->name('appsCreateUser');
 
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);

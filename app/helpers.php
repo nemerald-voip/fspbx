@@ -93,6 +93,20 @@ if (!function_exists('appsStoreOrganizationDetails')){
     }
 }
 
+if (!function_exists('appsGetOrganizationDetails')){
+    function appsGetOrganizationDetails($domain_uuid) {
+        // Get Org ID
+        $domainSettingsModel = DomainSettings::where('domain_uuid',$domain_uuid)
+            ->where ('domain_setting_category', 'app shell')
+            ->where ('domain_setting_subcategory', 'org_id')
+            ->where ('domain_setting_enabled', true)
+            ->first();
+
+        return $domainSettingsModel->domain_setting_value;
+    }
+}
+
+
 if (!function_exists('appsStoreConnectionDetails')){
     function appsStoreConnectionDetails(Request $request) {
 
@@ -192,5 +206,65 @@ if (!function_exists('getCredentialKey')){
        }
     }
 }
+
+function Send_Email($data)
+{
+    try {
+        Mail::send($data['email_layout'], ['data' => $data], function ($mail) use ($data) {
+            $mail->to($data['user']->email, $data['user']->name)
+                ->subject($data['subject']);
+            $mail->from('noc@nemerald.com', 'Nemerald Support');
+        });
+        return '';
+    } catch (\Exception $e) {
+        return $e->getMessage();
+    }
+}
+
+function getS3Setting($domain_id){
+        $config=[];
+        $settings=\DB::table('v_domain_settings')->where('domain_uuid',$domain_id)->where('domain_setting_category','aws')->get();
+       
+        $config['driver']='s3';
+        $config['url']='';
+        $config['endpoint']='';
+        $config['region']='us-west-2';
+        $config['use_path_style_endpoint']=false;
+       
+        if(!blank($settings)){
+            foreach($settings as $conf){
+                $config[getCredentialKey($conf->domain_setting_subcategory)]=trim($conf->domain_setting_value);
+            }
+        } else {
+            $config=getDefaultS3Configuration();
+        }
+        
+
+        $setting['default']='s3';
+        $setting['disks']['s3']=$config;
+         
+        return $config;
+    }
+       function getDefaultS3Configuration(){
+        $default_credentials=\DB::table('v_default_settings')->where('default_setting_category','aws')->get();
+        $config=[];
+        foreach($default_credentials as $d_conf){
+            $config[getCredentialKey($d_conf->default_setting_subcategory)]=$d_conf->default_setting_value;
+        }
+        return $config;
+    }
+    function getSignedURL($s3Client,$bucket,$key){
+        //  $s3Client = new Aws\S3\S3Client($sharedConfig);
+
+        $cmd = $s3Client->getCommand('GetObject', [
+            'Bucket' => $bucket,
+            'Key'    => $key
+        ]);
+
+        $request = $s3Client->createPresignedRequest($cmd, '+20 minutes');
+        $presignedUrl = (string) $request->getUri();
+        return $presignedUrl;
+    }
+
 
 

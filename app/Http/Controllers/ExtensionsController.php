@@ -39,7 +39,6 @@ class ExtensionsController extends Controller
      */
     public function index()
     {
-
         // Check permissions
         if (!userCheckPermission("extension_view")){
             return redirect('/');
@@ -428,6 +427,12 @@ class ExtensionsController extends Controller
 	    if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
             return redirect('/');
 	    }
+
+        //Check FusionPBX login status
+        session_start();
+        if(session_status() === PHP_SESSION_NONE) {
+            return redirect()->route('logout');
+        }
 
         // get the extension
         $extension = Extensions::find($extension_uuid);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
+use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -480,6 +481,130 @@ class AppsController extends Controller
     }
 
 
+    /**
+     * Return Ringotel app user settings
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function mobileAppUserSettings(Request $request, Extensions $extension)
+    {
+
+
+        // If user doesn't exist create a new one
+        $org_id = appsGetOrganizationDetails($extension->domain_uuid);
+
+        // Get all connections for this organization
+        $data = array(
+            'method' => 'getBranches',
+            'params' => array(
+                'orgid' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'error' => 401,
+                    'message' => 'Unable to get organization']);
+                })
+            ->json();
+
+        // If successful continue 
+        if (isset($response['result'])){
+            $connections = $response['result'];
+            $app_domain = $response['result'][0]['domain'];
+
+        // Otherwise return failed status
+        } elseif (isset($response['error'])) {
+            return response()->json([
+                'error' => 401,
+                'message' => $response['error']['message']]);
+        } else {
+            return response()->json([
+                'error' => 401,
+                'message' => 'Unknown error']);
+        }
+
+        // If success return response with values
+        return response()->json([
+            'app_domain' => $app_domain,
+            'connections' => $connections,
+            'org_id' => $org_id,
+            'extension_uuid' => $extension->extension_uuid,
+            'status' => 'success',
+        ]);
+    }
+
+
+    /**
+     * Submit new user request to Ringotel API
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function createUser(Request $request)
+    {
+
+
+        // If user doesn't exist create a new one
+        $extension = Extensions::find($request->extension_uuid);
+
+        // Create a new user
+        $data = array(
+            'method' => 'createUser',
+            'params' => array(
+                'orgid' => $request->org_id,
+                'branchid' => $request->connection,
+                'name' => $extension->effective_caller_id_name,
+                'email' => $extension->voicemail->voicemail_mail_to,
+                'extension' => $extension->extension,
+                'username' => $extension->extension,
+                'domain' => $request->app_domain,
+                'authname' => $extension->extension,
+                'password' => $extension->password,
+                'status' => ($request->activate == 'on') ? 1 : 2,
+                )
+            );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'error' => 401,
+                    'message' => 'Unable to create a new user']);
+                })
+            ->json();
+
+        // If successful continue 
+        if (isset($response['result'])){
+            // $connections = $response['result'];
+            // $app_domain = $response['result'][0]['domain'];
+
+
+        //Otherwise return failed status
+        } elseif (isset($response['error'])) {
+            return response()->json([
+                'error' => 401,
+                'message' => $response['error']['message']]);
+        } else {
+            return response()->json([
+                'error' => 401,
+                'message' => 'Unknown error']);
+        }
+
+        // If success return response with values
+        return response()->json([
+            'request' => $request->all(),
+            'user' => $response,
+            'status' => 'success',
+        ]);
+    }
 
 
     /**

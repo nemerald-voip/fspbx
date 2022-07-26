@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class CallRecordings extends Model
+class CDR extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_call_recordings";
+    protected $table = "v_xml_cdr";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'call_recording_uuid';
+    protected $primaryKey = 'xml_cdr_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -45,7 +45,7 @@ class CallRecordings extends Model
     ];
     public function archive_recording()
     {
-        return $this->hasOne(ArchiveRecording::class,'call_recording_uuid','call_recording_uuid');
+        return $this->hasOne(ArchiveRecording::class,'xml_cdr_uuid','xml_cdr_uuid');
     }
 }
 
