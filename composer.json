@@ -15,7 +15,8 @@
         "laravel/ui": "^3.4",
         "league/flysystem-aws-s3-v3": "^1.0",
         "propaganistas/laravel-phone": "^4.3",
-        "simplesoftwareio/simple-qrcode": "~4"
+        "simplesoftwareio/simple-qrcode": "~4",
+        "wildbit/swiftmailer-postmark": "^3.3"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

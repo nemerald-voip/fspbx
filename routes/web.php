@@ -66,6 +66,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection']) ->name('appsCreateConnection');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection']) ->name('appsUpdateConnection');
     Route::post('/apps/user/create', [AppsController::class, 'createUser']) ->name('appsCreateUser');
+    Route::get('/apps/email', [AppsController::class, 'emailUser']) ->name('emailUser');
 
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);

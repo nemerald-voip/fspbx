@@ -51,6 +51,7 @@ class UploadArchiveFiles extends Command
         $start_date = date("Y-m-d", strtotime("-1 days"));
         $recordings=$this->getCallRecrordings($start_date);
 
+
       
         $failed=[];
         $success=[];
@@ -68,6 +69,7 @@ class UploadArchiveFiles extends Command
                     ]
                     ]);
                 try{
+                    if(!empty($call_recording->record_name)){
                     //S3 file location
                     $location=$call_recording->domain_name.'/'.date('Y',strtotime($call_recording->answer_stamp)).'/'.date('m',strtotime($call_recording->answer_stamp)).'/'.date('d',strtotime($call_recording->answer_stamp)).'/';
                     //S3 Object name
@@ -77,7 +79,7 @@ class UploadArchiveFiles extends Command
                     if(isset($ext[1])){
                         $file_ext=$ext[1];
                     }
-                    $object_key=$location . $call_recording->caller_destination.'-'.$call_recording->direction.'-'.$call_recording->caller_id_number.'-'.date('mdy',strtotime($call_recording->start_stamp)).'-'.date('hmi',strtotime($call_recording->start_stamp)).'.'.$file_ext;
+                    $object_key=$location . $call_recording->direction.'-' . $call_recording->caller_destination.'-'.$call_recording->caller_id_number.'-'.date('mdy',strtotime($call_recording->start_stamp)).'-'.date('hmi',strtotime($call_recording->start_stamp)).'.'.$file_ext;
                     $path=$s3->putObject(array(
                         'Bucket'     => $setting['bucket'],
                         'SourceFile' => $call_recording->record_path.'/'.$call_recording->record_name,
@@ -97,7 +99,8 @@ class UploadArchiveFiles extends Command
                     if(!empty($call_recording->record_name)){
                         array_push($success,$call_recording->record_name);
                     }
-
+                }
+                   
                 } catch(\Exception $ex){
                     if(!empty($call_recording->record_name)){
                         array_push($failed,$call_recording->record_name);
@@ -130,8 +133,7 @@ class UploadArchiveFiles extends Command
         // })->pluck('id')->toArray();
         // pr($rec);
         // exit;
-//   \DB::table('archive_recording')->truncate();
-//   exit;
+ 
             // return CDR::get();
         $calls=CDR::select('v_xml_cdr.*')
         ->leftJoin('archive_recording', function($join) {

@@ -7,6 +7,8 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AppCredentialsGenerated;
 
 class AppsController extends Controller
 {
@@ -661,5 +663,10 @@ class AppsController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function emailUser (){
+
+        Mail::to("info@nemerald.com")->send(new AppCredentialsGenerated());
     }
 }
