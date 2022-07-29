@@ -329,6 +329,8 @@
                                                                 </div>
                                                             </div> <!-- end row -->
                                                     </div>
+                                                    @else
+                                                        <input type="hidden" name="outbound_caller_id_number" value="">
                                                     @endif
 
                                                     @if (userCheckPermission('effective_caller_id_name') || userCheckPermission('effective_caller_id_number'))
@@ -370,6 +372,7 @@
                                                     </div>
                                                     @endif
 
+                                                    @if (userCheckPermission('emergency_caller_id_number'))
                                                     <div class="col-lg-12">
                                                         <h4 class="mt-4">Emergency Caller ID</h4>
 
@@ -391,8 +394,10 @@
                                                                     </div>
                                                                 </div>
                                                             </div> <!-- end row -->
-
                                                     </div>
+                                                    @else
+                                                        <input type="hidden" name="emergency_caller_id_number" value="">
+                                                    @endif
 
                                                 </div> <!-- end row-->
                                             <!-- End Caller ID Content-->
@@ -794,6 +799,8 @@
                                                                     <div class="text-danger domain_uuid_err error_message"></div>
                                                                 </div>
                                                             </div>
+                                                            @else
+                                                                <input type="hidden" name="domain_uuid" value="{{ Session::get('domain_uuid') }}">
                                                             @endif
 
                                                             @if (userCheckPermission('extension_user_context'))
