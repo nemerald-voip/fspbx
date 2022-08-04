@@ -649,9 +649,9 @@
                                         <div style="text-align:left;font-family:Helvetica,Arial,sans-serif;font-size:15px;margin-bottom:0;margin-top:3px;color:#5F5F5F;line-height:135%;">
                                           <ul>
 
-                                            {{-- @foreach ($failed as $rec)
+                                            @foreach ($failed as $rec)
                                             <li>{{ $rec }}</li>
-                                            @endforeach --}}
+                                            @endforeach
                                           </ul>
                                         </div>
                                       </td>

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
@@ -36,6 +37,14 @@ class AppServiceProvider extends ServiceProvider
             return Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('RINGOTEL_TOKEN'),
             ])->baseUrl(env('RINGOTEL_URL'));
+        });
+
+
+        Horizon::auth(function ($request) {
+            // Always show admin if local development
+            if (env('APP_ENV') == 'local') {
+                return true;
+            }
         });
 
     }

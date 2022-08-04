@@ -259,7 +259,7 @@
                                                 <div class="mb-3">        
                                                     <label for="connection_proxy_address" class="form-label">Address</label>
                                                     <input class="form-control" type="text" id="connection_proxy_address" name="connection_proxy_address" 
-                                                        value="{{ $conn_params['outbound_proxy'] }}" required="" placeholder="">
+                                                        value="{{ $conn_params['outbound_proxy'] ?? ''}}" placeholder="">
                                                     <span class="help-block"><small>e.g. pbx.example.com:5070</small></span>
                                                 </div>
                                             </div>

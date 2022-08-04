@@ -445,7 +445,7 @@
             <tr>
               <td class="email-masthead">
                 <a href="{{ $product_url ?? ''}}" class="f-fallback email-masthead_name">
-                {{ $product_name ?? ''}}
+                  {{ config('app.name', 'Laravel') }}
               </a>
               </td>
             </tr>
@@ -469,7 +469,7 @@
                 <table class="email-footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
                   <tr>
                     <td class="content-cell" align="center">
-                      <p class="f-fallback sub align-center">&copy; 2021 {{ $product_name ?? ''}}. All rights reserved.</p>
+                      <p class="f-fallback sub align-center">&copy; {{ config('app.name', 'Laravel') }}. {{ $address ?? ''}}</p>
                       <p class="f-fallback sub align-center">
                         {{ $company_name ?? ''}}
                         <br>{{ $company_address ?? ''}}

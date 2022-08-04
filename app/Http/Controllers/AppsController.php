@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendAppCredentials;
 use App\Models\Domain;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
+use Illuminate\Support\Facades\Session;
 
 class AppsController extends Controller
 {
@@ -600,7 +602,10 @@ class AppsController extends Controller
                 'message' => 'Unknown error']);
         }
 
-        // If success return response with values
+        // If success send user email with credentials 
+        SendAppCredentials::dispatch($response['result'])->onQueue('emails');
+        // Log::info('Dispatched email ');
+
         return response()->json([
             'request' => $request->all(),
             'user' => $response,
@@ -667,6 +672,10 @@ class AppsController extends Controller
 
     public function emailUser (){
 
-        Mail::to("info@nemerald.com")->send(new AppCredentialsGenerated());
+        //Mail::to("info@nemerald.com")->send(new AppCredentialsGenerated());
+        SendAppCredentials::dispatch()->onQueue('emails');
+
+        Log::info('Dispatched email ');
+        return 'Dispatched email ';
     }
 }

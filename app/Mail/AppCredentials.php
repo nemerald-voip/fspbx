@@ -7,18 +7,20 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class AppCredentialsGenerated extends Mailable
+class AppCredentials extends Mailable
 {
     use Queueable, SerializesModels;
+
+    public $attributes;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($attributes)
     {
-        //
+        $this->attributes = $attributes;
     }
 
     /**

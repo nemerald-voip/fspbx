@@ -16,8 +16,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-         $schedule->command('UploadArchiveFiles')
-                ->dailyAt('01:00')->timezone('America/Los_Angeles');;
+        $schedule->command('UploadArchiveFiles')
+                ->dailyAt('01:00')->timezone('America/Los_Angeles');
+
+        // you’d like to see graphs of how your queues are doing, run this
+        $schedule->command('horizon:snapshot')->everyFiveMinutes();
     }
 
     /**

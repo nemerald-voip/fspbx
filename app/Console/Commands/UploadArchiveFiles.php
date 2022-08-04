@@ -70,35 +70,38 @@ class UploadArchiveFiles extends Command
                     ]);
                 try{
                     if(!empty($call_recording->record_name)){
-                    //S3 file location
-                    $location=$call_recording->domain_name.'/'.date('Y',strtotime($call_recording->answer_stamp)).'/'.date('m',strtotime($call_recording->answer_stamp)).'/'.date('d',strtotime($call_recording->answer_stamp)).'/';
-                    //S3 Object name
-                    // $object_key=$location . $call_recording->call_recording_name;
-                    $ext=explode('.',$call_recording->record_name);
-                    $file_ext='wav';
-                    if(isset($ext[1])){
-                        $file_ext=$ext[1];
-                    }
-                    $object_key=$location . $call_recording->direction.'-' . $call_recording->caller_destination.'-'.$call_recording->caller_id_number.'-'.date('mdy',strtotime($call_recording->start_stamp)).'-'.date('hmi',strtotime($call_recording->start_stamp)).'.'.$file_ext;
-                    $path=$s3->putObject(array(
-                        'Bucket'     => $setting['bucket'],
-                        'SourceFile' => $call_recording->record_path.'/'.$call_recording->record_name,
-                        'Key'        => $object_key
-                    ));
+                        if(file_exists($call_recording->record_path.'/'.$call_recording->record_name)){
+                                //S3 file location
+                                $location=$call_recording->domain_name.'/'.date('Y',strtotime($call_recording->answer_stamp)).'/'.date('m',strtotime($call_recording->answer_stamp)).'/'.date('d',strtotime($call_recording->answer_stamp)).'/';
+                                //S3 Object name
+                                // $object_key=$location . $call_recording->call_recording_name;
+                                $ext=explode('.',$call_recording->record_name);
+                                $file_ext='wav';
+                                if(isset($ext[1])){
+                                    $file_ext=$ext[1];
+                                }
+                                $object_key=$location . $call_recording->direction.'-' . $call_recording->caller_id_number.'-'.$call_recording->caller_destination.'-'.date('mdy',strtotime($call_recording->start_stamp)).'-'.date('hmi',strtotime($call_recording->start_stamp)).'.'.$file_ext;
+                                $path=$s3->putObject(array(
+                                    'Bucket'     => $setting['bucket'],
+                                    'SourceFile' => $call_recording->record_path.'/'.$call_recording->record_name,
+                                    'Key'        => $object_key
+                                ));
 
-                   
-                    // $call_recording->call_recording_name
+                            
+                                // $call_recording->call_recording_name
+                                
+                                $archive=new ArchiveRecording();
+                                $archive->domain_uuid=$call_recording->domain_uuid;
+                                $archive->s3_path=$path['ObjectURL'];
+                                $archive->object_key=$object_key;
+                                $call_recording->archive_recording()->save($archive);
+                            
+                                unlink($call_recording->record_path.'/'.$call_recording->record_name);
+                                if(!empty($call_recording->record_name)){
+                                    array_push($success,$call_recording->record_name);
+                                }
+                        }
                     
-                    $archive=new ArchiveRecording();
-                    $archive->domain_uuid=$call_recording->domain_uuid;
-                    $archive->s3_path=$path['ObjectURL'];
-                    $archive->object_key=$object_key;
-                    $call_recording->archive_recording()->save($archive);
-                
-                    unlink($call_recording->record_path.'/'.$call_recording->record_name);
-                    if(!empty($call_recording->record_name)){
-                        array_push($success,$call_recording->record_name);
-                    }
                 }
                    
                 } catch(\Exception $ex){
@@ -117,7 +120,7 @@ class UploadArchiveFiles extends Command
     public function sendFailEmail($failed,$success){
         $view=view('emails.failed_upload')->with(['failed'=>$failed,'success'=>$success]);
         // sergei@nemerald.com
-        $mail = Send_Email(array('email_layout'=>'emails/content','content'=>$view,'subject'=>'Completed - failed uploads.','user'=>(object) array('name'=>'','email'=>'sergei@nemerald.com')));
+        $mail = sendEmail(array('email_layout'=>'emails/content','content'=>$view,'subject'=>'Completed - failed uploads.','user'=>(object) array('name'=>'','email'=>'sergei@nemerald.com')));
     }
 
   

@@ -207,7 +207,8 @@ if (!function_exists('getCredentialKey')){
     }
 }
 
-function Send_Email($data)
+if (!function_exists('sendEmail')){
+function sendEmail($data)
 {
     try {
         Mail::send($data['email_layout'], ['data' => $data], function ($mail) use ($data) {
@@ -220,7 +221,9 @@ function Send_Email($data)
         return $e->getMessage();
     }
 }
+}
 
+if (!function_exists('getS3Setting')){
 function getS3Setting($domain_id){
         $config=[];
         $settings=\DB::table('v_domain_settings')->where('domain_uuid',$domain_id)->where('domain_setting_category','aws')->get();
@@ -245,6 +248,9 @@ function getS3Setting($domain_id){
          
         return $config;
     }
+    }
+    
+if (!function_exists('getDefaultS3Configuration')){
        function getDefaultS3Configuration(){
         $default_credentials=\DB::table('v_default_settings')->where('default_setting_category','aws')->get();
         $config=[];
@@ -253,6 +259,9 @@ function getS3Setting($domain_id){
         }
         return $config;
     }
+    }
+
+if (!function_exists('getSignedURL')){
     function getSignedURL($s3Client,$bucket,$key){
         //  $s3Client = new Aws\S3\S3Client($sharedConfig);
 
@@ -264,6 +273,7 @@ function getS3Setting($domain_id){
         $request = $s3Client->createPresignedRequest($cmd, '+20 minutes');
         $presignedUrl = (string) $request->getUri();
         return $presignedUrl;
+    }
     }
 
 
