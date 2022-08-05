@@ -17,7 +17,7 @@
               <tr>
                 <td>
 
-                  <a href="https://play.google.com/store/apps/details?idsmile=.com.nemerald.mobile">
+                  <a href="{{ getDefaultSetting('mobile_apps', 'google_play_link') }}">
                     <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto 
                       !important;" width="189" alt="Download for Android" data-proportionally-constrained="true" data-responsive="true" 
                       src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/88af7fc9-c74b-43ec-a1e2-a712cd1d3052/646x250.png">
@@ -38,7 +38,7 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="https://apps.apple.com/app/nemerald/id1607586125"><img class="max-width" border="0" style="display:block; color:#000000; 
+                  <a href="{{ getDefaultSetting('mobile_apps', 'apple_store_link') }}"><img class="max-width" border="0" style="display:block; color:#000000; 
                     text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto !important;" width="174" alt="Download for iOS" data-proportionally-constrained="true" data-responsive="true" 
                     src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/bb2daef8-a40d-4eed-8fb4-b4407453fc94/320x95.png">
                   </a>
@@ -61,10 +61,7 @@
               <tr>
                 <td>
                   <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
-                  {{-- <a href="https://apps.nemerald.com/Windows" style="border-radius:6px; border-width:1px; display:inline-block; font-weight:normal; 
-                    letter-spacing:0px; padding:14px 14px 14px 14px; text-align:center; text-decoration:none; border-style:solid; font-size:16px; line-height:normal; 
-                    background-color:#ffffff; color:#333333; border:1px solid #333333; border-color:#333333;" target="_blank">Get it for <strong>Windows</strong>
-                  </a> --}}
+
 
                 </td>
               </tr>
@@ -81,10 +78,7 @@
               <tr>
                 <td>
                   <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
-                  {{-- <a href="https://apps.nemerald.com/Windows" style="border-radius:6px; border-width:1px; display:inline-block; font-weight:normal; 
-                    letter-spacing:0px; padding:14px 14px 14px 14px; text-align:center; text-decoration:none; border-style:solid; font-size:16px; line-height:normal; 
-                    background-color:#ffffff; color:#333333; border:1px solid #333333; border-color:#333333;" target="_blank">Download for <strong>Mac</strong>
-                  </a> --}}
+
                 </td>
               </tr>
             </table>
