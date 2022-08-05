@@ -285,7 +285,7 @@
                                                             </div>
                                                         </div> <!-- end row -->
                                                         @else
-                                                            <input type="hidden" name="enabled" value="false">
+                                                            <input type="hidden" name="enabled" value="{{ $extension->enabled }}">
                                                         @endif
 
                                                         <div class="row">
