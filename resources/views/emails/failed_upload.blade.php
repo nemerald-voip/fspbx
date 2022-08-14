@@ -650,7 +650,7 @@
                                           <ul>
 
                                             @foreach ($failed as $rec)
-                                            <li>{{ $rec }}</li>
+                                            <li>{{ $rec['name'] }} -- Reason :: {{ $rec['msg'] }}</li>
                                             @endforeach
                                           </ul>
                                         </div>

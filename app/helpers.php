@@ -227,7 +227,6 @@ if (!function_exists('getS3Setting')){
 function getS3Setting($domain_id){
         $config=[];
         $settings=\DB::table('v_domain_settings')->where('domain_uuid',$domain_id)->where('domain_setting_category','aws')->get();
-       
         $config['driver']='s3';
         $config['url']='';
         $config['endpoint']='';

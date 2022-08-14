@@ -50,13 +50,14 @@ class UploadArchiveFiles extends Command
     public function uploadRecordings(){
         $start_date = date("Y-m-d", strtotime("-1 days"));
         $recordings=$this->getCallRecrordings($start_date);
-
+    
 
       
         $failed=[];
         $success=[];
         foreach($recordings as $key=>$call_recording){
                     $setting=getS3Setting($call_recording->domain_uuid);
+                    
                     // $domain=$this->getDomainName($call_recording->domain_uuid);
             
 
@@ -71,6 +72,7 @@ class UploadArchiveFiles extends Command
                 try{
                     if(!empty($call_recording->record_name)){
                         if(file_exists($call_recording->record_path.'/'.$call_recording->record_name)){
+                            
                                 //S3 file location
                                 $location=$call_recording->domain_name.'/'.date('Y',strtotime($call_recording->answer_stamp)).'/'.date('m',strtotime($call_recording->answer_stamp)).'/'.date('d',strtotime($call_recording->answer_stamp)).'/';
                                 //S3 Object name
@@ -106,7 +108,8 @@ class UploadArchiveFiles extends Command
                    
                 } catch(\Exception $ex){
                     if(!empty($call_recording->record_name)){
-                        array_push($failed,$call_recording->record_name);
+                        
+                        array_push($failed,['msg'=>$ex->getMessage(),'name'=>$call_recording->record_name]);
                     }
                 }
 
@@ -120,7 +123,11 @@ class UploadArchiveFiles extends Command
     public function sendFailEmail($failed,$success){
         $view=view('emails.failed_upload')->with(['failed'=>$failed,'success'=>$success]);
         // sergei@nemerald.com
-        $mail = sendEmail(array('email_layout'=>'emails/content','content'=>$view,'subject'=>'Completed - failed uploads.','user'=>(object) array('name'=>'','email'=>'sergei@nemerald.com')));
+        // sergei@nemerald.com
+        $emails=['sergei@nemerald.com'];
+        foreach($emails as $email){
+            $mail = sendEmail(array('email_layout'=>'emails/content','content'=>$view,'subject'=>'Completed - failed uploads.','user'=>(object) array('name'=>'','email'=>$email)));
+        }
     }
 
   

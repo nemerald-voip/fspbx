@@ -34,6 +34,12 @@ Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 
+// Route::get('preview-email', function () {
+//     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));   
+//     $data = "Your data to be use in blade file";
+//     return $markdown->render("emails.app.credentials");
+//    });
+
 Route::group(['middleware' => 'auth'], function(){
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

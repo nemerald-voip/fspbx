@@ -194,6 +194,30 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
+
+<!-- createMobileAppSuccessModal -->
+<div id="createMobileAppSuccessModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppSuccessModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="createMobileAppSuccessModal">Create mobile app user</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+            <form class="ps-3 pe-3" action="" id="createUserForm">
+                <div class="modal-body">
+
+
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button id="appUserCreateSubmitButton" type="submit" class="btn btn-primary">Create user</button>
+                </div>
+            </form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 @endsection
 
 
@@ -279,8 +303,9 @@
                     $("#appUserError").css('display','block');
                     $("#appUserError").find("ul").append('<li>'+response.message+'</li>');
                     
-                 } else {
-                   console.log(response);
+                 } else if (response.success){
+                    $('#createMobileAppModal').modal("hide");
+                    console.log(response);
 
                 }
             })
