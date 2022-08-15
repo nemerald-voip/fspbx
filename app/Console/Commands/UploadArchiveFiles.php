@@ -132,7 +132,11 @@ class UploadArchiveFiles extends Command
         }
         //    if(!empty($failed)){
             // Send email report with upload status
-            $attributes['email'] = $setting['upload_notification_email'];
+            $upload_notification_email = DefaultSettings::where('default_setting_category', 'aws')
+                ->where('default_setting_subcategory', 'upload_notification_email')
+                ->value('default_setting_value');
+            // Log::info($upload_notification_email);
+            $attributes['email'] = $upload_notification_email;
             $attributes['failed'] = $failed;
             $attributes['success'] = $success;
             SendS3UploadReport::dispatch($attributes)->onQueue('emails');
