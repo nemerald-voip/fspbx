@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
@@ -226,7 +227,9 @@ function sendEmail($data)
 if (!function_exists('getS3Setting')){
 function getS3Setting($domain_id){
         $config=[];
-        $settings=\DB::table('v_domain_settings')->where('domain_uuid',$domain_id)->where('domain_setting_category','aws')->get();
+        $settings=DomainSettings::where('domain_uuid',$domain_id)
+            ->where('domain_setting_category','aws')
+            ->get();
         $config['driver']='s3';
         $config['url']='';
         $config['endpoint']='';
@@ -237,8 +240,10 @@ function getS3Setting($domain_id){
             foreach($settings as $conf){
                 $config[getCredentialKey($conf->domain_setting_subcategory)]=trim($conf->domain_setting_value);
             }
+            $config['type'] = 'custom';
         } else {
             $config=getDefaultS3Configuration();
+            $config['type'] = 'default';
         }
         
 
@@ -251,7 +256,7 @@ function getS3Setting($domain_id){
     
 if (!function_exists('getDefaultS3Configuration')){
        function getDefaultS3Configuration(){
-        $default_credentials=\DB::table('v_default_settings')->where('default_setting_category','aws')->get();
+        $default_credentials=DefaultSettings::where('default_setting_category','aws')->get();
         $config=[];
         foreach($default_credentials as $d_conf){
             $config[getCredentialKey($d_conf->default_setting_subcategory)]=$d_conf->default_setting_value;

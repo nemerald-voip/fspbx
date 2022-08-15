@@ -2,22 +2,21 @@
 
 namespace App\Jobs;
 
-use App\Mail\AppCredentials;
+use App\Mail\S3UploadReport;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use Illuminate\Support\Facades\Log;
 
-class SendAppCredentials implements ShouldQueue
+class SendS3UploadReport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
     public $attributes;
 
     /**
@@ -92,9 +91,8 @@ class SendAppCredentials implements ShouldQueue
         // Allow only 2 emails every 1 second
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
 
-            // $recipient = 'dimon.sm1@gmail.com';
-		    Mail::to($this->attributes['email'])->send(new AppCredentials($this->attributes));
-		    // Log::info('Emailed credentials');
+		    Mail::to($this->attributes['email'])->send(new S3UploadReport($this->attributes));
+		    //Log::info('S3 Upload report has been sent');
 
         }, function () {
             // Could not obtain lock; this job will be re-queued

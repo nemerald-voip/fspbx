@@ -24,15 +24,10 @@ class CDR extends Model
      *
      * @var array<int, string>
      */
-    // protected $fillable = [
-    //     'domain_name',
-    //     'domain_enabled',
-    //     'domain_description'
-    // ];
+    protected $fillable = [
+        'record_name',
+    ];
 
-    /**
-     * Get the settings for the domain.
-     */
 
 
     /**

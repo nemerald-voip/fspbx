@@ -2,12 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SendS3UploadReport;
 use Illuminate\Console\Command;
 use App\Models\DefaultSettings;
 use App\Models\Domain;
 use App\Models\DomainSettings;
 use App\Models\ArchiveRecording;
 use App\Models\CDR;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
  
@@ -48,19 +51,15 @@ class UploadArchiveFiles extends Command
         return 0;
     }
     public function uploadRecordings(){
-        $start_date = date("Y-m-d", strtotime("-1 days"));
-        $recordings=$this->getCallRecrordings($start_date);
-    
+        //$start_date = date("Y-m-d", strtotime("-1 days"));
+        //$recordings=$this->getCallRecordings($start_date);
+        $recordings=$this->getCallRecordings();
 
-      
         $failed=[];
         $success=[];
         foreach($recordings as $key=>$call_recording){
                     $setting=getS3Setting($call_recording->domain_uuid);
                     
-                    // $domain=$this->getDomainName($call_recording->domain_uuid);
-            
-
                     $s3 = new \Aws\S3\S3Client([
                     'region'  => $setting['region'],
                     'version' => 'latest',
@@ -70,41 +69,58 @@ class UploadArchiveFiles extends Command
                     ]
                     ]);
                 try{
-                    if(!empty($call_recording->record_name)){
-                        if(file_exists($call_recording->record_path.'/'.$call_recording->record_name)){
-                            
-                                //S3 file location
-                                $location=$call_recording->domain_name.'/'.date('Y',strtotime($call_recording->answer_stamp)).'/'.date('m',strtotime($call_recording->answer_stamp)).'/'.date('d',strtotime($call_recording->answer_stamp)).'/';
-                                //S3 Object name
-                                // $object_key=$location . $call_recording->call_recording_name;
-                                $ext=explode('.',$call_recording->record_name);
-                                $file_ext='wav';
-                                if(isset($ext[1])){
-                                    $file_ext=$ext[1];
-                                }
-                                $object_key=$location . $call_recording->direction.'-' . $call_recording->caller_id_number.'-'.$call_recording->caller_destination.'-'.date('mdy',strtotime($call_recording->start_stamp)).'-'.date('hmi',strtotime($call_recording->start_stamp)).'.'.$file_ext;
-                                $path=$s3->putObject(array(
-                                    'Bucket'     => $setting['bucket'],
-                                    'SourceFile' => $call_recording->record_path.'/'.$call_recording->record_name,
-                                    'Key'        => $object_key
-                                ));
 
-                            
-                                // $call_recording->call_recording_name
-                                
-                                $archive=new ArchiveRecording();
-                                $archive->domain_uuid=$call_recording->domain_uuid;
-                                $archive->s3_path=$path['ObjectURL'];
-                                $archive->object_key=$object_key;
-                                $call_recording->archive_recording()->save($archive);
-                            
-                                unlink($call_recording->record_path.'/'.$call_recording->record_name);
-                                if(!empty($call_recording->record_name)){
-                                    array_push($success,$call_recording->record_name);
-                                }
+                        if(file_exists($call_recording->record_path.'/'.$call_recording->record_name)){
+
+                            Log::info("Uploading File : " .$call_recording->record_path.'/'.$call_recording->record_name);
+                            //exit();
+
+                            // Set default time zone for this script
+                            date_default_timezone_set('America/Los_Angeles');
+
+                            //S3 file location
+                            if ($setting['type'] == "default") {
+                                $location=$call_recording->domain_name.'/'.date('Y',strtotime($call_recording->start_stamp)).'/'.date('m',strtotime($call_recording->start_stamp)).'/'.date('d',strtotime($call_recording->start_stamp)).'/';
+                            } elseif ($setting['type'] == "custom") {
+                                $location='recordings'.'/'.date('Y',strtotime($call_recording->start_stamp)).'/'.date('m',strtotime($call_recording->start_stamp)).'/'.date('d',strtotime($call_recording->start_stamp)).'/';
+                            }
+
+                            //S3 Object name
+                            $ext=explode('.',$call_recording->record_name);
+                            $file_ext='wav';
+                            if(isset($ext[1])){
+                                $file_ext=$ext[1];
+                            }
+
+                            $object_key=$location . $call_recording->direction.'-' . $call_recording->caller_id_number.'-'.$call_recording->caller_destination.'-'.date('m.d.y',strtotime($call_recording->start_stamp)).'-'.date('h:i:sA',strtotime($call_recording->start_stamp)).'.'.$file_ext;
+                            $path=$s3->putObject(array(
+                                'Bucket'     => $setting['bucket'],
+                                'SourceFile' => $call_recording->record_path.'/'.$call_recording->record_name,
+                                'Key'        => $object_key
+                            ));
+
+                            //Add uploaded recording to the database    
+                            $archive=new ArchiveRecording();
+                            $archive->domain_uuid=$call_recording->domain_uuid;
+                            $archive->s3_path=$path['ObjectURL'];
+                            $archive->object_key=$object_key;
+                            $call_recording->archive_recording()->save($archive);
+                        
+                            unlink($call_recording->record_path.'/'.$call_recording->record_name);
+
+                            array_push($success,$call_recording->record_name);
+
+                        } else {
+                            // If file doesn't exist empty the database record file name
+                            Log::info("File doesn't exist: " .$call_recording->record_name);
+                            $cdr = CDR::find($call_recording->xml_cdr_uuid);
+                            $call_recording->record_name = '';
+                            $cdr->update([
+                                'record_name' => $call_recording->record_name
+                            ]);
+
                         }
                     
-                }
                    
                 } catch(\Exception $ex){
                     if(!empty($call_recording->record_name)){
@@ -112,11 +128,16 @@ class UploadArchiveFiles extends Command
                         array_push($failed,['msg'=>$ex->getMessage(),'name'=>$call_recording->record_name]);
                     }
                 }
-
-                     
+        
         }
         //    if(!empty($failed)){
-                $this->sendFailEmail($failed,$success);
+            // Send email report with upload status
+            $attributes['email'] = $setting['upload_notification_email'];
+            $attributes['failed'] = $failed;
+            $attributes['success'] = $success;
+            SendS3UploadReport::dispatch($attributes)->onQueue('emails');
+
+                // $this->sendFailEmail($failed,$success);
             // }
     
     }
@@ -136,23 +157,28 @@ class UploadArchiveFiles extends Command
         return Domain::where('domain_uuid',$domain_id)->first();
     }
     
-    public function getCallRecrordings($date){
-        // return CallRecordings::whereRaw("DATE(call_recording_date) = '2022-06-28'")->get();
-        // return CallRecordings::get();
-        // $rec = CallRecordings::whereHas('ArchiveRecording', function($q) {
-        // })->pluck('id')->toArray();
-        // pr($rec);
-        // exit;
+    public function getCallRecordings(){
  
-            // return CDR::get();
-        $calls=CDR::select('v_xml_cdr.*')
-        ->leftJoin('archive_recording', function($join) {
-            $join->on('v_xml_cdr.xml_cdr_uuid','archive_recording.xml_cdr_uuid');
-        })
-        ->whereRaw("DATE(start_stamp) < '$date'")
-        ->whereRaw('archive_recording.id IS NULL')
-        ->get();
+        // Get all calls that have call recordings
+        $calls=CDR::select([
+            'xml_cdr_uuid',
+            'domain_uuid',
+            'domain_name',
+            'direction',
+            'caller_id_number',
+            'caller_destination',
+            'start_stamp',
+            'record_path',
+            'record_name'
+        ])
 
+        ->where ('record_name','<>','')
+        ->whereDate('start_stamp', '<', Carbon::yesterday()->toDateTimeString())
+        ->take (2000)
+        // ->toSql();
+        ->get();
+        // Log::info($calls);
+        // exit();
         return $calls; 
 
     }
