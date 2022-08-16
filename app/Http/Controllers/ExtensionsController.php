@@ -43,6 +43,8 @@ class ExtensionsController extends Controller
         if (!userCheckPermission("extension_view")){
             return redirect('/');
         }
+        // Get all registered devices for this domain
+        $registrations = get_registrations();
 
         // Get all extensions
         $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))
@@ -60,6 +62,17 @@ class ExtensionsController extends Controller
                     $extension->outbound_caller_id_number = $phoneNumberUtil
                         ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
                 }
+            }
+            //check againts registations and add them to array
+            $all_regs =[];
+            foreach ($registrations as $registration) {
+                if ($registration['sip-auth-user'] == $extension['extension']) {
+                    array_push($all_regs,$registration);
+                }
+            }
+            if (count($all_regs)>0) {
+                $extension->setAttribute("registrations",$all_regs);
+                unset($all_regs);
             }
         }
 
@@ -413,6 +426,26 @@ class ExtensionsController extends Controller
     {
         //
     }
+
+
+    /**
+     * Display SIP Credentials for specified resource.
+     *
+     * @param  \App\Models\Extentions  $extention
+     * @return \Illuminate\Http\Response
+     */
+    public function sipShow(Request $request, Extensions $extension)
+    {
+        
+        return response()->json([
+            'request' => $request->all(),
+            'username' => $extension->extension,
+            'password' => $extension->password,
+            'domain' => $extension->domain->domain_name,
+            // 'user' => $response,
+            'status' => 'success',
+        ]);
+    }  
 
     /**
      * Show the form for editing the specified resource.

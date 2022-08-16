@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
+use App\Models\SipProfiles;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
@@ -62,6 +63,7 @@ if (!function_exists('getFusionPBXPreviousURL')){
         elseif (strpos($previous_url, "dialplan_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "dialplan_edit.php")) . "dialplans.php";}
         elseif (strpos($previous_url, "ivr_menu_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";}
         elseif (strpos($previous_url, "voicemail_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";}
+        elseif (strpos($previous_url, "/extensions/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/extensions/")) . "/extensions";}
         else $url = $previous_url;
         return $url;
     }
@@ -177,6 +179,127 @@ if (!function_exists('event_socket_request_cmd')){
         return $response;
     }
 }
+
+if (!function_exists('get_registrations')){
+    function get_registrations ($show=null) {
+        //Check FusionPBX login status
+        session_start();
+        if(session_status() === PHP_SESSION_NONE) {
+            return redirect()->route('logout');
+        }
+
+        //create the event socket connection
+		$fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
+
+        $sip_profiles = SipProfiles::where('sip_profile_enabled','true')
+            ->get();
+
+        $id=0;
+        foreach ($sip_profiles as $sip_profile) {
+            $cmd = "api sofia xmlstatus profile '".$sip_profile['sip_profile_name']."' reg";
+			$xml_response = trim(event_socket_request($fp, $cmd));
+            if (function_exists('iconv')) { $xml_response = iconv("utf-8", "utf-8//IGNORE", $xml_response); }
+            $xml_response = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml_response);
+            if ($xml_response == "Invalid Profile!") { $xml_response = "<error_msg>".'Error'."</error_msg>"; }
+            $xml_response = str_replace("<profile-info>", "<profile_info>", $xml_response);
+            $xml_response = str_replace("</profile-info>", "</profile_info>", $xml_response);
+            $xml_response = str_replace("&lt;", "", $xml_response);
+            $xml_response = str_replace("&gt;", "", $xml_response);
+            if (strlen($xml_response) > 101) {
+                try {
+                    $xml = new SimpleXMLElement($xml_response);
+                }
+                catch(Exception $e) {
+                    echo basename(__FILE__)."<br />\n";
+                    echo "line: ".__line__."<br />\n";
+                    echo "error: ".$e->getMessage()."<br />\n";
+                    //echo $xml_response;
+                    exit;
+                }
+                $array = json_decode(json_encode($xml), true);
+            }
+
+            //normalize the array
+            if (is_array($array) && !is_array($array['registrations']['registration'][0])) {
+                $row = $array['registrations']['registration'];
+                unset($array['registrations']['registration']);
+                $array['registrations']['registration'][0] = $row;
+            }
+
+            //set the registrations array
+            if (is_array($array)) {
+                foreach ($array['registrations']['registration'] as $row) {
+
+                    //build the registrations array
+                        //$registrations[0] = $row;
+                        $user_array = explode('@', $row['user']);
+                        $registrations[$id]['user'] = $row['user'] ?: '';
+                        $registrations[$id]['call-id'] = $row['call-id'] ?: '';
+                        $registrations[$id]['contact'] = $row['contact'] ?: '';
+                        $registrations[$id]['sip-auth-user'] = $row['sip-auth-user'] ?: '';
+                        $registrations[$id]['agent'] = $row['agent'] ?: '';
+                        $registrations[$id]['host'] = $row['host'] ?: '';
+                        $registrations[$id]['network-port'] = $row['network-port'] ?: '';
+                        $registrations[$id]['sip-auth-realm'] = $row['sip-auth-realm'] ?: '';
+                        $registrations[$id]['mwi-account'] = $row['mwi-account'] ?: '';
+                        $registrations[$id]['status'] = $row['status'] ?: '';
+                        $registrations[$id]['ping-time'] = $row['ping-time'] ?: '';
+                        $registrations[$id]['sip_profile_name'] = $sip_profile['sip_profile_name'];
+
+                    //get network-ip to url or blank
+                        if (isset($row['network-ip'])) {
+                            $registrations[$id]['network-ip'] = $row['network-ip'];
+                        }
+                        else {
+                            $registrations[$id]['network-ip'] = '';
+                        }
+
+                    //get the LAN IP address if it exists replace the external ip
+                        $call_id_array = explode('@', $row['call-id']);
+                        if (isset($call_id_array[1])) {
+                            $agent = $row['agent'];
+                            $lan_ip = $call_id_array[1];
+                            if (false !== stripos($agent, 'grandstream')) {
+                                $lan_ip = str_ireplace(
+                                    array('A','B','C','D','E','F','G','H','I','J'),
+                                    array('0','1','2','3','4','5','6','7','8','9'),
+                                    $lan_ip);
+                            }
+                            elseif (1 === preg_match('/\ACL750A/', $agent)) {
+                                //required for GIGASET Sculpture CL750A puts _ in it's lan ip account
+                                $lan_ip = preg_replace('/_/', '.', $lan_ip);
+                            }
+                            $registrations[$id]['lan-ip'] = $lan_ip;
+                        }
+                        else if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $row['contact'], $ip_match)) {
+                            $lan_ip = preg_replace('/_/', '.', $ip_match[0]);
+                            $registrations[$id]['lan-ip'] = "$lan_ip";
+                        }
+                        else {
+                            $registrations[$id]['lan-ip'] = '';
+                        }
+
+                    //remove unrelated domains
+                        if (!userCheckPermission('registration_all') || $show != 'all') {
+                            if ($registrations[$id]['sip-auth-realm'] == $_SESSION['domain_name']) {}
+                            else if ($user_array[1] == $_SESSION['domain_name']) {}
+                            else {
+                                unset($registrations[$id]);
+                            }
+                        }
+
+                    //increment the array id
+                        $id++;
+                }
+                
+                unset($array);
+            }
+        }
+        return $registrations;
+
+    }
+}
+
 if (!function_exists('pr')){
     function pr($arr){
         echo '<pre>';

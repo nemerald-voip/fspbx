@@ -41,13 +41,14 @@
                                             <label class="form-check-label" for="selectallCheckbox">&nbsp;</label>
                                         </div>
                                     </th>
+                                    <th style="width: 20px;"></th>
                                     <th>Extension</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Outbound Caller ID</th>
-                                    <th>Status</th>
+                                    {{-- <th>Status</th> --}}
                                     <th>Desctiption</th>
-                                    <th style="width: 125px;">Action</th>
+                                    <th style="width: 140px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,6 +64,22 @@
                                             </div>
                                         </td>
                                         <td>
+                                            @if ($extension['registrations'])
+                                                {{-- <h6><span class="badge bg-success rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">&nbsp;&nbsp;&nbsp;</span></h6> --}}
+                                                <a class="badge bg-success rounded-pill dropdown-toggle text-success" href="#"  data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span></span></a>
+                                                <div class="dropdown-menu p-3 text-muted" style="max-width: 200px;">
+                                                    <p>
+                                                        Some example text that's free-flowing within the dropdown menu.
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        And this is more example text.
+                                                    </p>
+                                                </div>
+                                            @else 
+                                                <h6><span class="badge bg-light rounded-pill">&nbsp;&nbsp;&nbsp;</span></h6>
+                                            @endif
+                                        </td>
+                                        <td>
                                             <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['extension'] }}</a> 
                                         </td>
                                         <td>
@@ -75,14 +92,7 @@
                                         </td>
                                         <td>
                                             {{ $extension['outbound_caller_id_number'] }} 
-                                            {{-- @if ($extension['effective_caller_id_name']) 
-                                                <h5><span class="badge bg-success"></i>Provisioned</span></h5>
-                                            @else 
-                                                <h5><span class="badge bg-warning">Inactive</span></h5>
-                                            @endif --}}
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">Coming Soon...</small>
+                                            
                                         </td>
                                         <td>
                                             {{ $extension['description'] }} 
@@ -95,7 +105,7 @@
                                                     <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
                                                 </a>
                                                 
-                                                <a data-toggle="modal" data-target="#mobileAppModal"
+                                                <a href="#"
                                                     data-attr="{{ route('mobileAppUserSettings',$extension) }}" class="action-icon mobileAppButton" title="Mobile App Settings"> 
                                                     <i class="mdi mdi-cellphone-cog" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Mobile App Settings"></i>
                                                 </a>
@@ -103,6 +113,20 @@
                                                 <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}','{{ $extension->extension_uuid }}');" class="action-icon"> 
                                                     <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                 </a>
+
+                                                @if (userCheckPermission('extension_advanced'))
+                                                    {{-- <div class="dropdown"> --}}
+                                                        <a class="dropdown-toggle arrow-none card-drop" href="#" id="dropdownAdvancedOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="mdi mdi-dots-vertical"></i>
+                                                        </a>
+                                                        
+                                                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownAdvancedOptions">
+                                                            <a href="#" data-attr="{{ route('extensions.sip.show',$extension) }}" class="dropdown-item sipCredentialsButton">SIP Credentials</a>
+                                                            
+                                                        </div>
+                                                    {{-- </div> --}}
+                                                    
+                                                @endif
                                             </div>
                                             {{-- End of action buttons --}}
 
@@ -203,7 +227,7 @@
                 <h4 class="modal-title" id="createMobileAppSuccessModal">Create mobile app user</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
             </div>
-            <form class="ps-3 pe-3" action="" id="createUserForm">
+            <form class="ps-3 pe-3" action="" id="createUserSuccessForm">
                 <div class="modal-body">
 
 
@@ -211,9 +235,57 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    <button id="appUserCreateSubmitButton" type="submit" class="btn btn-primary">Create user</button>
+                    <button id="" type="submit" class="btn btn-primary">Create user</button>
                 </div>
             </form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- Sip Credentials modal -->
+<div id="sipCredentialsModal"  class="modal fade" id="bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="sipCredentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="sipCredentialsModalLabel">User SIP Credentials</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="sip_username" class="form-label">Username</label>
+                    <div class="input-group input-group-merge">
+                        <input type="username" id="sip_username" name="sip_username" class="form-control" readonly="" placeholder="">
+                        <div class="input-group-text" id="copyUsernameToClipboardButton">
+                            <span class="dripicons-copy" data-bs-container="#copyUsernameToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group input-group-merge">
+                        <input type="password" id="sip_password" class="form-control" placeholder="" readonly="" name="sip_password">
+                        <div class="input-group-text" data-password="false" id="showPasswordButton">
+                            <span class="password-eye" data-bs-container="#showPasswordButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Show Password"></span>
+                        </div>
+                        <div class="input-group-text" id="copyPasswordToClipboardButton">
+                            <span class="dripicons-copy" data-bs-container="#copyPasswordToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="sip_domain" class="form-label">Domain</label>
+                    <div class="input-group input-group-merge">
+                        <input type="domain" id="sip_domain" name="sip_domain" class="form-control" readonly="" placeholder="">
+                        <div class="input-group-text" id="copyDomainToClipboardButton">
+                            <span class="dripicons-copy" data-bs-container="#copyDomainToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
+                        </div>
+                    </div>
+                </div>
+                  <p>*Do not share these credenatils with anyone</p>
+            </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
@@ -271,6 +343,84 @@
             });
         });
 
+
+        // Open Modal to show SIP credentials
+        $('.sipCredentialsButton').on('click', function(e) {
+            e.preventDefault();
+            let href = $(this).attr('data-attr');
+            $('.loading').show();
+
+            $.ajax({
+                type : "GET",
+                url : href,
+                cache: false,
+            })
+            .done(function(response) {
+                //console.log(response);
+                if (response.error){
+                    $('.loading').hide();
+                    printErrorMsg(response.error);
+                } else {
+                    $('#sipCredentialsModal').modal("show");
+
+                    $('#sip_username').val(response.username);
+                    $('#sip_password').val(response.password);
+                    $('#sip_domain').val(response.domain);
+
+                    $('.loading').hide();
+ 
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    $('#loader').hide();
+                    printErrorMsg(error);
+                    
+
+            });
+        });
+
+        // Copy to clipboard
+        $('#copyUsernameToClipboardButton').on('click', function(e) {
+            e.preventDefault();
+            navigator.clipboard.writeText($('#sip_username').val()).then(
+                function() {
+                    /* clipboard successfully set */
+                    $.NotificationApp.send("Success","The username was copied to your clipboard","top-right","#10c469","success");
+                }, 
+                function() {
+                    /* clipboard write failed */
+                    $.NotificationApp.send("Warning",'Opps! Your browser does not support the Clipboard API',"top-right","#ff5b5b","error");
+            });
+        });
+
+        // Copy to clipboard
+        $('#copyDomainToClipboardButton').on('click', function(e) {
+            e.preventDefault();
+            navigator.clipboard.writeText($('#sip_domain').val()).then(
+                function() {
+                    /* clipboard successfully set */
+                    $.NotificationApp.send("Success","The domain was copied to your clipboard","top-right","#10c469","success");
+                }, 
+                function() {
+                    /* clipboard write failed */
+                    $.NotificationApp.send("Warning",'Opps! Your browser does not support the Clipboard API',"top-right","#ff5b5b","error");
+            });
+        });
+
+        // Copy to clipboard
+        $('#copyPasswordToClipboardButton').on('click', function(e) {
+            e.preventDefault();
+            navigator.clipboard.writeText($('#sip_password').val()).then(
+                function() {
+                    /* clipboard successfully set */
+                    $.NotificationApp.send("Success","The password was copied to your clipboard","top-right","#10c469","success");
+                }, 
+                function() {
+                    /* clipboard write failed */
+                    $.NotificationApp.send("Warning",'Opps! Your browser does not support the Clipboard API',"top-right","#ff5b5b","error");
+            });
+        });
 
 
         // Submit form to create a new user

@@ -28,7 +28,13 @@ use App\Http\Controllers\UserSettingsController;
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
 Route::post('/extensions/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
+
+// Extensions
 Route::resource('extensions', 'ExtensionsController');
+
+// SIP Credentials
+Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow']) ->name('extensions.sip.show');
+
 Route::resource('users','UsersController');
 Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
