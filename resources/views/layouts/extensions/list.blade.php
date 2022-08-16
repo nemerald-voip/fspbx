@@ -73,7 +73,14 @@
                                                             <h5 class="card-title text-primary">Registered devices</h5>
                                                             @foreach ($extension['registrations'] as $registration)
                                                                 <p class="card-text">
-                                                                    <i class="uil uil-phone">&nbsp;{{ $registration['agent'] }}</i>
+                                                                    {{-- Check if this is a mobile app --}}
+                                                                    @if (preg_match('/Bria|Push/i', $registration['agent'])>0)
+                                                                        <i class="mdi mdi-cellphone-link"><span class="ms-2">Bria Mobile App</span></i>
+                                                                    @elseif (preg_match('/Ringotel/i', $registration['agent'])>0)
+                                                                        <i class="mdi mdi-cellphone-link"><span class="ms-2">Mobile App</span></i>
+                                                                    @else 
+                                                                        <i class="uil uil-phone"><span class="ms-2">{{ $registration['agent'] }}</span></i>
+                                                                    @endif
                                                                 </p>
                                                             @endforeach
                                                         </div> <!-- end card-body-->
