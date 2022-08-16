@@ -66,7 +66,8 @@ class ExtensionsController extends Controller
             //check againts registations and add them to array
             $all_regs =[];
             foreach ($registrations as $registration) {
-                if ($registration['sip-auth-user'] == $extension['extension']) {
+                if ($registration['sip-auth-user'] 
+                == $extension['extension']) {
                     array_push($all_regs,$registration);
                 }
             }

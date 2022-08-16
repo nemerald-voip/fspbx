@@ -183,7 +183,7 @@ if (!function_exists('event_socket_request_cmd')){
 if (!function_exists('get_registrations')){
     function get_registrations ($show=null) {
         //Check FusionPBX login status
-        session_start();
+        // session_start();
         if(session_status() === PHP_SESSION_NONE) {
             return redirect()->route('logout');
         }
@@ -220,14 +220,14 @@ if (!function_exists('get_registrations')){
             }
 
             //normalize the array
-            if (is_array($array) && !is_array($array['registrations']['registration'][0])) {
+            if (isset($array) && !is_array($array['registrations']['registration'][0])) {
                 $row = $array['registrations']['registration'];
                 unset($array['registrations']['registration']);
                 $array['registrations']['registration'][0] = $row;
             }
 
             //set the registrations array
-            if (is_array($array)) {
+            if (isset($array)) {
                 foreach ($array['registrations']['registration'] as $row) {
 
                     //build the registrations array
