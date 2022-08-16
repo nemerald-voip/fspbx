@@ -67,13 +67,18 @@
                                             @if ($extension['registrations'])
                                                 {{-- <h6><span class="badge bg-success rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">&nbsp;&nbsp;&nbsp;</span></h6> --}}
                                                 <a class="badge bg-success rounded-pill dropdown-toggle text-success" href="#"  data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span></span></a>
-                                                <div class="dropdown-menu p-3 text-muted" style="max-width: 200px;">
-                                                    <p>
-                                                        Some example text that's free-flowing within the dropdown menu.
-                                                    </p>
-                                                    <p class="mb-0">
-                                                        And this is more example text.
-                                                    </p>
+                                                <div class="dropdown-menu p-3" >
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title text-primary">Registered devices</h5>
+                                                            @foreach ($extension['registrations'] as $registration)
+                                                                <p class="card-text">
+                                                                    <i class="uil uil-phone">&nbsp;{{ $registration['agent'] }}</i>
+                                                                </p>
+                                                            @endforeach
+                                                        </div> <!-- end card-body-->
+                                                    </div>
+                                                    
                                                 </div>
                                             @else 
                                                 <h6><span class="badge bg-light rounded-pill">&nbsp;&nbsp;&nbsp;</span></h6>
