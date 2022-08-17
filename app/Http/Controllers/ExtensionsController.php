@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use Illuminate\Support\Str;
+
 
 class ExtensionsController extends Controller
 {
@@ -378,7 +380,7 @@ class ExtensionsController extends Controller
         $attributes['voicemail_id'] = $attributes['extension'];
         $attributes['voicemail_password'] = $attributes['extension'];
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
-
+        $attributes['password'] = Str::random(25);
 
         $extension->fill($attributes);    
         $extension->save();
