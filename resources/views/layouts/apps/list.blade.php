@@ -30,12 +30,8 @@
                                         <label for="status-select" class="me-2">Status</label>
                                         <select class="form-select" id="status-select">
                                             <option selected>Choose...</option>
-                                            <option value="1">Paid</option>
-                                            <option value="2">Awaiting Authorization</option>
-                                            <option value="3">Payment failed</option>
-                                            <option value="4">Cash On Delivery</option>
-                                            <option value="5">Fulfilled</option>
-                                            <option value="6">Unfulfilled</option>
+                                            <option value="1">Inactive</option>
+                                            <option value="2">Provisioned</option>
                                         </select>
                                     </div>
                                 </div>
@@ -55,10 +51,6 @@
                             <thead class="table-light">
                                 <tr>
                                     <th style="width: 20px;">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="customCheck1">
-                                            <label class="form-check-label" for="customCheck1">&nbsp;</label>
-                                        </div>
                                     </th>
                                     <th>Company</th>
                                     <th>Domain</th>
@@ -72,21 +64,27 @@
                                 @php
                                     $i = 1;
                                 @endphp
-                                @foreach ($companies as $company)
+                                @foreach ($domains as $domain)
                                     <tr>
-                                        <td>
+                                        {{-- <td>
                                             <div class="form-check">
                                                 <input type="checkbox" class="form-check-input appCompanyCheckbox" id="@php print 'companyCheck'.$i; @endphp" 
                                                     value="{{ $company['domain_uuid'] }}">
                                                 <label class="form-check-label" for="@php print 'companyCheck'.$i; @endphp">&nbsp;</label>
                                             </div>
-                                        </td>
-                                        <td><a href="" class="text-body fw-bold">{{ $company['name'] }}</a> </td>
+                                        </td> --}}
                                         <td>
-                                            {{ $company['domain'] }} 
+                                            <div class="form-check">
+                                                <input type="checkbox" name="action_box[]" value="{{ $domain->domain_uuid }}" class="form-check-input action_company_checkbox">
+                                                <label class="form-check-label" >&nbsp;</label>
+                                            </div>
+                                        </td>
+                                        <td><a href="" class="text-body fw-bold">{{ $domain->domain_description ?? $domain->domain_name}}</a> </td>
+                                        <td>
+                                            {{ $domain->domain_name }} 
                                         </td>
                                         <td>
-                                            @if ($company['status']) 
+                                            @if ($domain->status == 'true') 
                                                 <h5><span class="badge bg-success"></i>Provisioned</span></h5>
                                             @else 
                                                 <h5><span class="badge bg-warning">Inactive</span></h5>
@@ -99,9 +97,33 @@
                                             <small class="text-muted">Coming Soon...</small>
                                         </td>
                                         <td>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-square-edit-outline"></i></a>
-                                            <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-delete"></i></a>
+                                             {{-- Action Buttons --}}
+                                             <div id="tooltip-container-actions">
+
+                                                {{-- <a href="{{ route('extensions.edit',$company) }}" class="action-icon" title="Edit"> 
+                                                    <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
+                                                </a> --}}
+                                                
+                                                {{-- <a href="#"
+                                                    data-attr="{{ route('mobileAppUserSettings',$company) }}" class="action-icon mobileAppButton" title="Mobile App Settings"> 
+                                                    <i class="mdi mdi-cellphone-cog" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Mobile App Settings"></i>
+                                                </a> --}}
+
+                                                <a href="javascript:confirmAppDeleteAction('{{ route('appsDestroyOrganization', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon"> 
+                                                    <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                </a>
+
+                                                {{-- <a class="dropdown-toggle arrow-none card-drop" href="#" id="dropdownAdvancedOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="mdi mdi-dots-vertical"></i>
+                                                </a>
+                                                
+                                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownAdvancedOptions">
+                                                    <a href="#" data-attr="{{ route('extensions.sip.show',$extension) }}" class="dropdown-item sipCredentialsButton">SIP Credentials</a>
+                                                    
+                                                </div> --}}
+                                                    
+                                            </div>
+                                            {{-- End of action buttons --}}
                                         </td>
                                     </tr>
                                     @php 
@@ -394,4 +416,191 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
+
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal fade" id="confirmAppDeleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body p-4">
+                    <div class="text-center">
+                        {{-- <i class=" dripicons-question h1 text-danger"></i> --}}
+                        <i class="uil uil-times-circle h1 text-danger"></i>
+                        <h3 class="mt-3">Are you sure?</h3>
+                        <p class="mt-3">Do you really want to remove this provisioning profile? It will delete all data associated with this profile from the cloud. This process cannot be undone.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                    <a href="javascript:performConfirmedAppDeleteAction();" class="btn btn-danger me-2">Delete</a>
+                </div> <!-- end modal footer -->
+            </div> <!-- end modal content-->
+        </div> <!-- end modal dialog-->
+    </div> <!-- end modal-->
+
+
 @endsection
+@push('scripts')
+<script>
+    $(document).ready(function() {
+
+        // Change Provision button status to enabled when at least one organization is selected
+        $('.action_company_checkbox').on('change', function() {
+            //Uncheck other checkboxes
+            $('.action_company_checkbox').not($(this)).prop('checked', false);
+
+            //Toggle the status of Provision button
+            var checkBoxes = $('.action_company_checkbox');
+            $('#appProvisionButton').toggleClass('disabled', checkBoxes.filter(':checked').length < 1);
+
+            //Prefill the form in the modal with selected values
+            $('#organization_name').val($.trim($(this).closest("tr").find('td:eq(1)').text()));
+            $('#organization_domain').val($.trim($(this).closest("tr").find('td:eq(1)').text()).toLowerCase().replace(/ /g,'').replace(/[^\w-]+/g,''));
+            $('#organization_uuid').val($.trim($(this).val()));
+            $('#connection_domain').val($.trim($(this).closest("tr").find('td:eq(2)').text()));
+            $('#connection_name').val($.trim($(this).closest("tr").find('td:eq(1)').text()));
+            $('#connection_organization_uuid').val($.trim($(this).val()));
+        });
+
+        // Provision new organization
+        $('#createOrganizationForm').on('submit', function(e) {
+            e.preventDefault();
+            //Change button to spinner
+            $("#appProvisionNextButton").html('');
+            $("#appProvisionNextButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appProvisionNextButton").prop( "disabled", true );
+
+            //Hide error message
+            $("#appOrganizationError").find("ul").html('');
+            $("#appOrganizationError").css('display','none');
+
+            var url = '{{ route("appsCreateOrganization") }}';
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: $(this).serialize(),
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#appProvisionNextButton").html('');
+                $("#appProvisionNextButton").append('Next');
+                $("#appProvisionNextButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appOrganizationError").find("ul").html('');
+                    $("#appOrganizationError").css('display','block');
+                    $("#appOrganizationError").find("ul").append('<li>'+response.message+'</li>');
+                    
+                } else {
+                    //Switch to the next tab
+                    $('a[href*="connection-b2"] span').trigger("click");
+                    // Assign Org ID to a hidden input
+                    $("#org_id").val(response.org_id);
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+
+        // App Provisioning page
+        // Provision new Connection
+        $('#createConnectionForm').on('submit', function(e) {
+            e.preventDefault();
+            //Change button to spinner
+            $("#appConnectionNextButton").html('');
+            $("#appConnectionNextButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appConnectionNextButton").prop( "disabled", true );
+
+            //Hide error message
+            $("#appConnectionError").find("ul").html('');
+            $("#appConnectionError").css('display','none');
+
+            var url = '{{ route("appsCreateConnection") }}';
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: $(this).serialize(),
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+            })
+            .done(function(response) {
+                // remove the spinner and change button to default
+                $("#appConnectionNextButton").html('');
+                $("#appConnectionNextButton").append('Next');
+                $("#appConnectionNextButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appConnectionError").find("ul").html('');
+                    $("#appConnectionError").css('display','block');
+                    $("#appConnectionError").find("ul").append('<li>'+response.message+'</li>');
+                    
+                } else {
+                    //Switch to the next tab
+                    $('a[href*="result-b2"] span').trigger("click");
+
+                }
+            })
+            .fail(function (response){
+                //
+            });
+        });
+
+    });
+
+    // This function receives IDs and URL for items to be deleted and passes them to the Confirm Delete Modal
+    function confirmAppDeleteAction(url,setting_id=''){
+
+        dataObj = new Object();
+        dataObj.url = url;
+
+        dataObj.setting_id = setting_id;
+        $('#confirmAppDeleteModal').data(dataObj).modal('show');
+
+    }
+
+    //This function sends AJAX request to delete selected items from list pages
+    function performConfirmedDeleteAction(){
+        var setting_id = $("#confirmAppDeleteModal").data("setting_id");
+        $('#confirmAppDeleteModal').modal('hide');
+        //$('.loading').show();
+
+
+        var url = $("#confirmDeleteModal").data("url");
+        url = url.replace(':id', setting_id );
+        $.ajax({
+                type: 'POST',
+                url: url,
+                cache: false,
+                data: {
+                    '_method': 'DELETE',
+                }
+        })
+        .done(function(response) {
+            //$('.loading').hide();
+
+            if (response.error){
+                $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
+
+            } else {
+                $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                $("#id" + setting_id).fadeOut("slow");
+                //$(this).closest('tr').fadeOut("fast");
+            }
+        })
+        .fail(function (response){
+            $('.loading').hide();
+            $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
+        });
+
+}
+
+</script>
+@endpush

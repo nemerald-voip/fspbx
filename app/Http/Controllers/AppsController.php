@@ -22,26 +22,23 @@ class AppsController extends Controller
     public function index()
     {
         // Check all domains for registration in Ringotel Shell
-        foreach (Session::get('domains') as $domain) {
-            $domain_model = Domain::find($domain->domain_uuid);
 
-            $items['name'] = $domain->domain_description;
-            $items['domain'] = $domain->domain_name;
-            $items['domain_uuid'] = $domain->domain_uuid;
+        $domains = Domain::where('domain_enabled','true')
+            ->orderBy('domain_description')
+            ->get();
 
-            // dd($domain_model->settings()->get());
-            $settings = $domain_model->settings()
-                ->where('domain_setting_category', 'app shell')
-                ->where('domain_setting_subcategory', 'org_id')
-                ->get();
+        foreach($domains as $domain) {
+            $settings = $domain->settings()
+            ->where('domain_setting_category', 'app shell')
+            ->where('domain_setting_subcategory', 'org_id')
+            ->get();
 
             if ($settings->count() > 0) {
-                $items['status'] = true;
+                $domain->setAttribute('status', 'true');
             } else {
-                $items['status'] = false;
+                $domain->setAttribute('status', 'false');
             }
 
-            $companies[]= $items;
         }
 
         $conn_params = [
@@ -50,7 +47,7 @@ class AppsController extends Controller
         ];
 
         return view('layouts.apps.list')
-            ->with("companies",$companies)
+            ->with("domains",$domains)
             ->with("conn_params", $conn_params);
     }
 

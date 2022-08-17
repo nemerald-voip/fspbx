@@ -73,6 +73,7 @@ Route::group(['middleware' => 'auth'], function(){
     //Apps
     Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');
     Route::post('/apps/organization/create', [AppsController::class, 'createOrganization']) ->name('appsCreateOrganization');
+    Route::delete('/apps/organization/{domain}', [AppsController::class, 'destroyOrganization']) ->name('appsDestroyOrganization');
     Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings']) ->name('mobileAppUserSettings');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection']) ->name('appsCreateConnection');

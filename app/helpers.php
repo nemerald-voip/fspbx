@@ -220,7 +220,7 @@ if (!function_exists('get_registrations')){
             }
 
             //normalize the array
-            if (isset($array) && !is_array($array['registrations']['registration'][0])) {
+            if (isset($array) && !isset($array['registrations']['registration'][0])) {
                 $row = $array['registrations']['registration'];
                 unset($array['registrations']['registration']);
                 $array['registrations']['registration'][0] = $row;
