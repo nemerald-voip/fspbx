@@ -132,7 +132,7 @@
                                         <div class="text-sm-end">
                                             <a href="{{ route('extensions.index') }}" class="btn btn-light me-2">Cancel</a>
                                             <button class="btn btn-success" type="submit" id="submitFormButton"><i class="uil uil-down-arrow me-2"></i> Save </button>
-                                            <button class="btn btn-success" type="submit">Save</button>
+                                            {{-- <button class="btn btn-success" type="submit">Save</button> --}}
                                         </div>
                                         <div class="tab-pane fade active show" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
                                             <!-- Basic Info Content-->
