@@ -182,11 +182,11 @@ if (!function_exists('event_socket_request_cmd')){
 
 if (!function_exists('get_registrations')){
     function get_registrations ($show=null) {
-        //Check FusionPBX login status
-        session_start();
-        if(session_status() === PHP_SESSION_NONE) {
-            return redirect()->route('logout');
-        }
+        // //Check FusionPBX login status
+        // session_start();
+        // if(session_status() === PHP_SESSION_NONE) {
+        //     return redirect()->route('logout');
+        // }
 
         //create the event socket connection
 		$fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);

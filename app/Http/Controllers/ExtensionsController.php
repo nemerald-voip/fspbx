@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 
 class ExtensionsController extends Controller
@@ -45,6 +46,13 @@ class ExtensionsController extends Controller
         if (!userCheckPermission("extension_view")){
             return redirect('/');
         }
+
+        //Check FusionPBX login status
+        session_start();
+        if(!isset($_SESSION['user'])) {
+            return redirect()->route('logout');
+        }
+
         // Get all registered devices for this domain
         $registrations = get_registrations();
 
