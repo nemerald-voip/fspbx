@@ -118,6 +118,15 @@ class Extensions extends Model
     }
 
     /**
+     * Get the Mobile App object associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function mobile_app()
+    {
+        return $this->hasOne(MobileAppUsers::class,'extension_uuid','extension_uuid');
+    }
+
+    /**
      * Get all of the users for the extension.
      */
     public function users()

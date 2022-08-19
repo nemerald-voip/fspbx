@@ -1,11 +1,15 @@
 <?php
 
+use App\Models\SipProfiles;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
-use App\Models\SipProfiles;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+
+use function PHPUnit\Framework\isEmpty;
 
 if (!function_exists('userCheckPermission')){
     function userCheckPermission($permission){
@@ -128,6 +132,105 @@ if (!function_exists('appsStoreConnectionDetails')){
         } else {
             return false;
         }
+    }
+}
+
+// Get a list of connections that belong to requested organization via Ringotel API call 
+if (!function_exists('appsGetConnections')){
+    function appsGetConnections($org_id) {
+        $data = array(
+            'method' => 'getBranches',
+            'params' => array(
+                'orgid' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to retrive connections",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        return $response;
+    }
+}
+
+// Delete connection that belong to requested organization via Ringotel API call 
+if (!function_exists('appsDeleteConnection')){
+    function appsDeleteConnection($org_id, $conn_id) {
+        $data = array(
+            'method' => 'deleteBranch',
+            'params' => array(
+                'id' => $conn_id,
+                'orgid' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to delete connection",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        
+        return $response;
+    }
+}
+
+// Delete organizaion via Ringotel API call 
+if (!function_exists('appsDeleteOrganization')){
+    function appsDeleteOrganization($org_id) {
+        $data = array(
+            'method' => 'deleteOrganization',
+            'params' => array(
+                'id' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to delete organization",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+ 
+            Log::info($response);
+
+            if (!isset($array) || empty($array)){
+                Log::info("here");
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Organization not found",
+                    ],
+                ])->getData(true);
+            }
+
+        return $response;
     }
 }
 

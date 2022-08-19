@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class NemeraldAppUsers extends Model
+class MobileAppUsers extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "nemerald_app_users";
+    protected $table = "mobile_app_users";
 
-    public $timestamps = false;
+    public $timestamps = true;
 
-    protected $primaryKey = 'nemerald_app_user_uuid';
+    protected $primaryKey = 'mobile_app_user_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 

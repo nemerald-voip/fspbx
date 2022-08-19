@@ -231,25 +231,214 @@
 </div><!-- /.modal -->
 
 
-<!-- createMobileAppSuccessModal -->
-<div id="createMobileAppSuccessModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppSuccessModal" aria-hidden="true">
+<!-- MobileAppModal -->
+<div id="MobileAppModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="MobileAppModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="createMobileAppSuccessModal">Create mobile app user</h4>
+                <h4 class="modal-title" id="MobileAppModalLabel">Mobile App Settings</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
             </div>
-            <form class="ps-3 pe-3" action="" id="createUserSuccessForm">
                 <div class="modal-body">
 
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="dropdown float-end">
+                                {{-- <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="mdi mdi-dots-horizontal"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end" style="">
+                                    <!-- item-->
+                                    <a href="javascript:void(0);" class="dropdown-item">View Profile</a>
+                                    <!-- item-->
+                                    <a href="javascript:void(0);" class="dropdown-item">Project Info</a>
+                                </div> --}}
+                            </div>
 
+                            <div class="text-center">
+                                {{-- <img src="assets/images/users/avatar-1.jpg" class="rounded-circle avatar-md img-thumbnail" alt="friend"> --}}
+                                <h3 class="mt-3 my-1"><span id="mobileAppName"></span> </h3>
+                                <p class="mb-0 text-muted"></i>Ext: <span id="mobileAppExtension"></span></p>
+                                <hr class="bg-dark-lighten my-3">
+                                <h5 class="mt-3 mb-3 fw-semibold text-muted">Select an action below</h5>
+                            
+                                <button id="appDeactivateButton" type="button" class="btn btn-warning me-2" hidden><i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span> </button>
+                                <button id="appActivateButton" type="button" class="btn btn-success me-2" hidden><i class="mdi mdi-power-plug me-1"></i> <span>Activate</span> </button>
+                                {{-- <a href="javascript:void(0);" class="btn w-100 btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Message" aria-label="Message"><i class="mdi mdi-message-processing-outline"></i></a> --}}
+
+                                <button type="button" class="btn btn-primary me-2"><i class="uil-lock-alt me-1"></i> <span>Reset password</span> </button>
+
+                                <button id="appUserDeleteButton" type="button" class="btn btn-danger"><i class="uil uil-multiply"></i> <span>Delete</span> </button>
+
+                                <div class="alert alert-danger" id="appMobileAppError" style="display:none">
+                                    <ul></ul>
+                                </div>
+
+                                <div class="alert alert-success" id="appMobileAppSuccess" style="display:none">
+                                    <ul></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                </div>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- createMobileAppSuccessModal -->
+<div id="createMobileAppSuccessModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="createMobileAppSuccessModalLabel">Create mobile app user</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+                <div class="modal-body">
+
+                    <h3 class="text-success">New mobile app was user sucessfully created.</h3>
+                    <p>You have successfully created mobile app credentials. Please use the generated password to login. 
+                        You will not be able to view the password again. However, you can reset the password at any time.</p>
+                    <table class="attributes" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td class="attributes_content">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td class="attributes_item"><strong>Domain:</strong><span class="ms-1" id="domainSpan"></span></td>
+                            </tr>
+                            <tr>
+                              <td class="attributes_item"><strong>Extension:</strong><span class="ms-1" id="extensionSpan"></span></td>
+                            </tr>
+                            <tr>
+                                <td class="attributes_item"><strong>Username:</strong><span class="ms-1" id="usernameSpan"></span></td>
+                            </tr>
+                            <tr>
+                            <td class="attributes_item"><strong>Password:</strong><span class="ms-1" id="passwordSpan"></span></td>
+                            </tr>  
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p class="mt-2">If the user has an email address on file, we will email a copy of the credentials.</p>
+                    
+                    <h3 class="mt-3">Next steps</h3>
+                    <p>Use the links below to download {{ config('app.name', 'Laravel') }} apps. Then log in using the credentials shown above or scan a QR code via the mobile app interface.</p>
+                    
+                    <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center">
+                            <!-- Border based button https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td align="center">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                      
+                                        <a href="{{ getDefaultSetting('mobile_apps', 'google_play_link') }}">
+                                          <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto 
+                                            !important;" width="189" alt="Download for Android" data-proportionally-constrained="true" data-responsive="true" 
+                                            src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/88af7fc9-c74b-43ec-a1e2-a712cd1d3052/646x250.png">
+                                        </a>
+                      
+                      
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                          <td>
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td align="center">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <a href="{{ getDefaultSetting('mobile_apps', 'apple_store_link') }}"><img class="max-width" border="0" style="display:block; color:#000000; 
+                                          text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto !important;" width="174" alt="Download for iOS" data-proportionally-constrained="true" data-responsive="true" 
+                                          src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/bb2daef8-a40d-4eed-8fb4-b4407453fc94/320x95.png">
+                                        </a>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                      
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center">
+                            <!-- Border based button https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td align="center">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
+                      
+                      
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                          <td>
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td align="center">
+                                  <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
+                      
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                      
+                          </td>
+                        </tr>
+                      </table>
                     
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    <button id="" type="submit" class="btn btn-primary">Create user</button>
+
                 </div>
-            </form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- createMobileAppSuccessModal -->
+<div id="createMobileAppDeactivatedSuccessModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppDeactivatedSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="createMobileAppDeactivatedSuccessModalLabel">Create mobile app user</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+                <div class="modal-body">
+
+                    <h3 class="text-success">Success</h3>
+                    <p class="mb-3">You successfully created an unactivated user. To register with {{ config('app.name', 'Laravel') }} apps, please activate the user. 
+                        Unactivated users are visible in the contacts list in {{ config('app.name', 'Laravel') }} apps.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+
+                </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
@@ -332,19 +521,32 @@
                     $('.loading').hide();
                     printErrorMsg(response.error);
                 } else {
-                    $('#createMobileAppModal').modal("show");
-
-                    response.connections.forEach(function(connection) {
-                        var newOption = new Option(connection.name, connection.id, false, false);
-                        $('#connectionSelect2').append(newOption).trigger('change');
-                    });
-
-                    $('#org_id').val(response.org_id);
-                    $('#app_domain').val(response.app_domain);
-                    $('#extension_uuid').val(response.extension_uuid);
-
                     $('.loading').hide();
- 
+                    if (response.mobile_app){
+                        if (!response.mobile_app.status || response.mobile_app.status==2) {
+                            $('#appActivateButton').attr("hidden", false);
+                        } else if (response.mobile_app.status==1){
+                            $('#appDeactivateButton').attr("hidden", false);
+                        }
+                        dataObj = new Object();
+                        dataObj.mobile_app = response.mobile_app;
+                        $('#MobileAppModal').data(dataObj).modal("show");
+                        $('#mobileAppName').text(response.name);
+                        $('#mobileAppExtension').text(response.extension);
+
+                    } else {
+                        $('#createMobileAppModal').modal("show");
+
+                        response.connections.forEach(function(connection) {
+                            var newOption = new Option(connection.name, connection.id, false, false);
+                            $('#connectionSelect2').append(newOption).trigger('change');
+                        });
+
+                        $('#org_id').val(response.org_id);
+                        $('#app_domain').val(response.app_domain);
+                        $('#extension_uuid').val(response.extension_uuid);
+
+                    } 
                 }
             })
             .fail(function (jqXHR, testStatus, error) {
@@ -352,6 +554,52 @@
                     printErrorMsg(error);
                     $('#loader').hide();
 
+            });
+        });
+
+
+        // Submit request to delete mobile user
+        $('#appUserDeleteButton').on('click', function(e) {
+            e.preventDefault();
+            var mobile_app = $("#MobileAppModal").data("mobile_app");
+            console.log(mobile_app);
+            //Change button to spinner
+            $("#appUserDeleteButton").html('');
+            $("#appUserDeleteButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appUserDeleteButton").prop( "disabled", true );
+
+            // //Hide error message
+            $("#appMobileAppError").find("ul").html('');
+            $("#appMobileAppError").css('display','none');
+
+            var url = '{{ route("appsDeleteUser") }}';
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: $(this).serialize(),
+            })
+            .done(function(response) {
+                console.log(response);
+                // remove the spinner and change button to default
+                $("#appUserDeleteButton").html('');
+                $("#appUserDeleteButton").append('<i class="uil uil-multiply"></i> <span>Delete</span>');
+                $("#appUserDeleteButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appMobileAppError").find("ul").html('');
+                    $("#appMobileAppError").css('display','block');
+                    $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
+                    
+                 } else {
+                    $('#MobileAppModal').modal("hide");
+                    
+
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    printErrorMsg(error);
             });
         });
 
@@ -387,8 +635,6 @@
                     // console.log(error);
                     $('#loader').hide();
                     printErrorMsg(error);
-                    
-
             });
         });
 
@@ -455,6 +701,7 @@
                 data: $(this).serialize(),
             })
             .done(function(response) {
+                //console.log(response);
                 // remove the spinner and change button to default
                 $("#appUserCreateSubmitButton").html('');
                 $("#appUserCreateSubmitButton").append('Create User');
@@ -463,16 +710,26 @@
                 if (response.error){
                     $("#appUserError").find("ul").html('');
                     $("#appUserError").css('display','block');
-                    $("#appUserError").find("ul").append('<li>'+response.message+'</li>');
+                    $("#appUserError").find("ul").append('<li>'+response.error.message+'</li>');
                     
-                 } else if (response.success){
+                 } else {
                     $('#createMobileAppModal').modal("hide");
-                    console.log(response);
+                    if (response.user.status == 1) {
+                        $('#createMobileAppSuccessModal').modal("show");
+
+                        $('#usernameSpan').text(response.user.username);
+                        $('#extensionSpan').text(response.user.username);
+                        $('#passwordSpan').text(response.user.password);
+                        $('#domainSpan').text(response.user.domain);
+                    } else if(response.user.status == 2) {
+                        $('#createMobileAppDeactivatedSuccessModal').modal("show");
+                    }
 
                 }
             })
-            .fail(function (response){
-                //
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    printErrorMsg(error);
             });
         });
 

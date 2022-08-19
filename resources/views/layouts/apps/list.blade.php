@@ -508,7 +508,6 @@
         });
 
 
-        // App Provisioning page
         // Provision new Connection
         $('#createConnectionForm').on('submit', function(e) {
             e.preventDefault();
@@ -567,13 +566,13 @@
     }
 
     //This function sends AJAX request to delete selected items from list pages
-    function performConfirmedDeleteAction(){
+    function performConfirmedAppDeleteAction(){
         var setting_id = $("#confirmAppDeleteModal").data("setting_id");
         $('#confirmAppDeleteModal').modal('hide');
-        //$('.loading').show();
+        $('.loading').show();
 
 
-        var url = $("#confirmDeleteModal").data("url");
+        var url = $("#confirmAppDeleteModal").data("url");
         url = url.replace(':id', setting_id );
         $.ajax({
                 type: 'POST',
@@ -584,20 +583,25 @@
                 }
         })
         .done(function(response) {
-            //$('.loading').hide();
-
+            console.log(response);
             if (response.error){
-                $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
-
+                $('.loading').hide();
+                printErrorMsg(response.error);
             } else {
+                $('.loading').hide();
+                // $('#sipCredentialsModal').modal("show");
+
+                // $('#sip_username').val(response.username);
+                // $('#sip_password').val(response.password);
+                // $('#sip_domain').val(response.domain);
                 $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                $("#id" + setting_id).fadeOut("slow");
-                //$(this).closest('tr').fadeOut("fast");
             }
         })
-        .fail(function (response){
-            $('.loading').hide();
-            $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
+        .fail(function (jqXHR, testStatus, error) {
+                // console.log(error);
+                $('#loader').hide();
+                printErrorMsg(error);
+            
         });
 
 }

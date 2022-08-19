@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use App\Models\ExtensionUser;
 use App\Models\DefaultSettings;
 use Illuminate\Validation\Rule;
-use App\Models\NemeraldAppUsers;
+use App\Models\MobileAppUsers;
 use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -99,7 +99,7 @@ class ExtensionsController extends Controller
     public function callerId(Request $request)
     {
         // Find user trying to access the page
-        $appUser = NemeraldAppUsers::where('user_id', $request->user)->first();
+        $appUser = MobileAppUsers::where('user_id', $request->user)->first();
 
         // If user not found throw an error
         if (!isset($appUser)){
