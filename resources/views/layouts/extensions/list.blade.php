@@ -262,22 +262,27 @@
                                 <hr class="bg-dark-lighten my-3">
                                 <h5 class="mt-3 mb-3 fw-semibold text-muted">Select an action below</h5>
                             
-                                <button id="appDeactivateButton" type="button" class="btn btn-warning me-2" hidden><i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span> </button>
-                                <button id="appActivateButton" type="button" class="btn btn-success me-2" hidden><i class="mdi mdi-power-plug me-1"></i> <span>Activate</span> </button>
+                                <button id="appDeactivateButton" type="button" class="btn btn-warning me-2 btn-sm" hidden><i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span> </button>
+                                <button id="appActivateButton" type="button" class="btn btn-success me-2 btn-sm" hidden><i class="mdi mdi-power-plug me-1"></i> <span>Activate</span> </button>
                                 {{-- <a href="javascript:void(0);" class="btn w-100 btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Message" aria-label="Message"><i class="mdi mdi-message-processing-outline"></i></a> --}}
 
-                                <button type="button" class="btn btn-primary me-2"><i class="uil-lock-alt me-1"></i> <span>Reset password</span> </button>
+                                <button type="button" class="btn btn-primary me-2 btn-sm"><i class="uil-lock-alt me-1"></i> <span>Reset password</span> </button>
 
-                                <button id="appUserDeleteButton" type="button" class="btn btn-danger"><i class="uil uil-multiply"></i> <span>Delete</span> </button>
+                                {{-- <button id="appUserDeleteButton" type="button" class="btn btn-danger"><i class="uil uil-multiply"></i> <span>Delete</span> </button> --}}
 
-                                <div class="alert alert-danger" id="appMobileAppError" style="display:none">
-                                    <ul></ul>
-                                </div>
-
-                                <div class="alert alert-success" id="appMobileAppSuccess" style="display:none">
-                                    <ul></ul>
-                                </div>
+                                <a href="javascript:appUserDeleteAction('{{ route('appsDeleteUser', ':id') }}');" id="appUserDeleteButton" class="btn btn-danger btn-sm">
+                                    <i class="uil uil-multiply me-1"></i><span>Delete</span>
+                                </a>
                             </div>
+
+                            <div class="alert alert-danger mt-3" id="appMobileAppError" style="display:none">
+                                <ul></ul>
+                            </div>
+
+                            <div class="alert alert-success mt-3" id="appMobileAppSuccess" style="display:none">
+                                <ul></ul>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -508,6 +513,9 @@
         $('.mobileAppButton').on('click', function(e) {
             e.preventDefault();
             let href = $(this).attr('data-attr');
+            //Hide error message
+            $("#appUserError").find("ul").html('');
+            $("#appUserError").css('display','none');
             $('.loading').show();
 
             $.ajax({
@@ -554,52 +562,6 @@
                     printErrorMsg(error);
                     $('#loader').hide();
 
-            });
-        });
-
-
-        // Submit request to delete mobile user
-        $('#appUserDeleteButton').on('click', function(e) {
-            e.preventDefault();
-            var mobile_app = $("#MobileAppModal").data("mobile_app");
-            console.log(mobile_app);
-            //Change button to spinner
-            $("#appUserDeleteButton").html('');
-            $("#appUserDeleteButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
-            $("#appUserDeleteButton").prop( "disabled", true );
-
-            // //Hide error message
-            $("#appMobileAppError").find("ul").html('');
-            $("#appMobileAppError").css('display','none');
-
-            var url = '{{ route("appsDeleteUser") }}';
-
-            $.ajax({
-                type : "POST",
-                url : url,
-                data: $(this).serialize(),
-            })
-            .done(function(response) {
-                console.log(response);
-                // remove the spinner and change button to default
-                $("#appUserDeleteButton").html('');
-                $("#appUserDeleteButton").append('<i class="uil uil-multiply"></i> <span>Delete</span>');
-                $("#appUserDeleteButton").prop( "disabled", false );
-
-                if (response.error){
-                    $("#appMobileAppError").find("ul").html('');
-                    $("#appMobileAppError").css('display','block');
-                    $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
-                    
-                 } else {
-                    $('#MobileAppModal').modal("hide");
-                    
-
-                }
-            })
-            .fail(function (jqXHR, testStatus, error) {
-                    // console.log(error);
-                    printErrorMsg(error);
             });
         });
 
@@ -734,5 +696,56 @@
         });
 
     });
+
+
+    // Submit request to delete mobile user
+    function appUserDeleteAction(url,id=''){
+            var mobile_app = $("#MobileAppModal").data("mobile_app");
+            url = url.replace(':id', mobile_app.extension_uuid );
+
+            //Change button to spinner
+            $("#appUserDeleteButton").html('');
+            $("#appUserDeleteButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appUserDeleteButton").prop( "disabled", true );
+
+            // //Hide error message
+            $("#appMobileAppError").find("ul").html('');
+            $("#appMobileAppError").css('display','none');
+            $("#appMobileAppSuccess").find("ul").html('');
+            $("#appMobileAppSuccess").css('display','none');
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: {
+                        'mobile_app' : mobile_app,
+                        '_method': 'DELETE',
+                    },
+            })
+            .done(function(response) {
+                // console.log(response);
+                // remove the spinner and change button to default
+                $("#appUserDeleteButton").html('');
+                $("#appUserDeleteButton").append('<i class="uil uil-multiply"></i> <span>Delete</span>');
+                $("#appUserDeleteButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appMobileAppError").find("ul").html('');
+                    $("#appMobileAppError").css('display','block');
+                    $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
+                    
+                 } else {
+                    $('#MobileAppModal').modal("hide");
+                    $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
+
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    printErrorMsg(error);
+            });
+        };
+
+
 </script>
 @endpush

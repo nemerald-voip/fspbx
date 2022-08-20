@@ -193,6 +193,36 @@ if (!function_exists('appsDeleteConnection')){
     }
 }
 
+// Delete connection that belong to requested organization via Ringotel API call 
+if (!function_exists('appsDeleteUser')){
+    function appsDeleteUser($org_id, $user_id) {
+        $data = array(
+            'method' => 'deleteUser',
+            'params' => array(
+                'id' => $user_id,
+                'orgid' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to delete user",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        
+        return $response;
+    }
+}
+
 // Delete organizaion via Ringotel API call 
 if (!function_exists('appsDeleteOrganization')){
     function appsDeleteOrganization($org_id) {

@@ -7,15 +7,18 @@ use App\Models\User;
 use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\Voicemails;
+use App\Jobs\DeleteAppUser;
 use App\Models\MusicOnHold;
+use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\ExtensionUser;
+use App\Models\MobileAppUsers;
 use App\Models\DefaultSettings;
 use Illuminate\Validation\Rule;
-use App\Models\MobileAppUsers;
 use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
@@ -23,8 +26,6 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
 
 class ExtensionsController extends Controller
@@ -719,6 +720,8 @@ class ExtensionsController extends Controller
             $deleted = $extension->delete();
 
             if ($deleted){
+                // dispatch the job to remove app user
+                DeleteAppUser::dispatch($extension->mobile_app)->onQueue('default');
                 return response()->json([
                     'status' => 'success',
                     'id' => $id,

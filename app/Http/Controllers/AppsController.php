@@ -549,37 +549,12 @@ class AppsController extends Controller
      */
     public function deleteUser(Request $request, Extensions $extension)
     {
-        $extension = Extensions::find($request->extension_uuid);
 
-        // Create a new user
-        $data = array(
-            'method' => 'createUser',
-            'params' => array(
-                'orgid' => $request->org_id,
-                'branchid' => $request->connection,
-                'name' => $extension->effective_caller_id_name,
-                'email' => $extension->voicemail->voicemail_mail_to,
-                'extension' => $extension->extension,
-                'username' => $extension->extension,
-                'domain' => $request->app_domain,
-                'authname' => $extension->extension,
-                'password' => $extension->password,
-                'status' => ($request->activate == 'on') ? 1 : 2,
-                )
-            );
+        $mobile_app = $request->mobile_app;
 
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create a new user']);
-                })
-            ->json();
-
+        // Send request to delеte user
+        $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
+ 
         //If there is an error return failed status
         if (isset($response['error'])) {
             return response()->json([
@@ -597,29 +572,17 @@ class AppsController extends Controller
             ])->getData(true);
         }
 
-        // If success and user is activated send user email with credentials 
-        if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
-            SendAppCredentials::dispatch($response['result'])->onQueue('emails');
-        }
 
         // Delete any prior info from database
-        $appUser = MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
-
-        // Save returned user info in database
-        $appUser = new MobileAppUsers();
-        $appUser->extension_uuid = $extension->extension_uuid;
-        $appUser->domain_uuid = $extension->domain_uuid;
-        $appUser->org_id = $request->org_id;
-        $appUser->conn_id = $request->connection;
-        $appUser->user_id = $response['result']['id'];
-        $appUser->status = $response['result']['status'];
-        $appUser->save();
-        // Log::info($response);
+        $appUser = $extension->mobile_app;
+        if ($appUser) $appUser->delete();
 
         return response()->json([
             'user' => $response['result'],
-            'status' => 'success',
-            'message' => 'The user has been successfully created'
+            'status' => 200,
+            'success' => [
+                'message' => 'The user has been successfully deleted'
+            ]
         ]);
     }
 
@@ -685,7 +648,7 @@ class AppsController extends Controller
         //Mail::to("info@nemerald.com")->send(new AppCredentialsGenerated());
         SendAppCredentials::dispatch()->onQueue('emails');
 
-        Log::info('Dispatched email ');
+        //Log::info('Dispatched email ');
         return 'Dispatched email ';
     }
 }
