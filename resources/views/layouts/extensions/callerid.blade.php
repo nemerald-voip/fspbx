@@ -55,24 +55,23 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-                                            $i = 1;
-                                        @endphp
                                         @foreach ($destinations as $destination)
                                             <tr>
-                                                <td>{{ $destination['destination_description'] }}</td>
-                                                <td>{{ phone($destination['destination_number'],"US",$national_phone_number_format) }}</td>
+                                                <td>{{ $destination->destination_description }}</td>
+                                                <td>{{ phone($destination->destination_number,"US",$national_phone_number_format) }}</td>
                                                 <td>
                                                     <!-- Switch-->
                                                     <div>
-                                                        <input type="checkbox" id="@php print 'switch'.$i; @endphp" class="callerIdCheckbox"
+                                                        {{-- <input type="checkbox" id="@php print 'switch'.$i; @endphp" class="callerIdCheckbox"
                                                             @if ($destination['isCallerID']) checked @endif 
                                                             value="{{ $destination['destination_uuid'] }}"
-                                                            data-switch="success" />
-                                                        <label for="@php print 'switch'.$i; @endphp" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
-                                                        @php 
-                                                            $i++;
-                                                        @endphp
+                                                            data-switch="success" /> --}}
+
+                                                        <input type="checkbox" id="checkbox{{ $destination->destination_uuid }}" data-switch="success" class="callerIdCheckbox" 
+                                                            onclick="javascript:changeCallerId('{{ route('updateCallerID', $extension )}}','{{ $destination->destination_uuid }}', this);"
+                                                            @if ($destination->isCallerID) checked @endif >
+                                                        <label for="checkbox{{ $destination->destination_uuid }}" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
+
                                                     </div>
                                                 </td>
                                             </tr>
@@ -97,3 +96,75 @@
 
 </div> <!-- container -->
 @endsection
+
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        //CallerID single page. 
+        //uncheck all of the checkboxes, apart from the one checked
+        // $('input.callerIdCheckbox').on('change', function() {
+        //     var id = $(this).val();
+        //     var checkbox = $(this);
+
+
+        //     var formData = new FormData();
+        //     formData.append('extension_uuid', extension_uuid);
+        //     formData.append('destination_uuid', id); 
+
+        //     $.ajax({
+        //         type : "POST",
+        //         url : url,
+        //         data: formData,
+        //         processData: false,
+        //         contentType: false,
+        //         checkbox : $(this),
+        //     })
+        //     .done(function(response) { 
+        //         console.log(response);
+        //         if (response.error){
+        //             checkbox.prop('checked', false);
+        //         } else {
+        //             $('input.callerIdCheckbox').not(checkbox).prop('checked', false);
+        //         }
+        //     })
+        //     .fail(function (response){
+        //         //
+        //     });
+
+        // });
+    });
+
+    // Send request to change Caller ID
+    function changeCallerId(url, destination, checkbox){
+        var checked = $("#"+checkbox.id).is(":checked");
+        $.ajax({
+                type : "POST",
+                url : url,
+                data: {
+                        'destination_uuid' : destination,
+                        'set' : checked,
+                    },
+            })
+            .done(function(response) {
+                // console.log(response);
+                
+                if (response.error) {
+                    checkbox.prop('checked', false);
+                    printErrorMsg(response.error.message);
+                }
+
+                if (response.success) {
+                    $('input.callerIdCheckbox').not(checkbox).prop('checked', false);
+                    $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
+                }
+                
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    printErrorMsg(error);
+            });
+    }   
+
+</script>
+@endpush

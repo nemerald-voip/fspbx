@@ -182,42 +182,6 @@
             }
         });
 
-        //CallerID single page. 
-        //uncheck all of the checkboxes, apart from the one checked
-        $('input.callerIdCheckbox').on('change', function() {
-            var id = $(this).val();
-            var checkbox = $(this);
-            var url = '{{ route("updateCallerID") }}';
-            var extension_uuid = '{{ $extension->extension_uuid ?? ''}}'
-
-            var formData = new FormData();
-            formData.append('extension_uuid', extension_uuid);
-            formData.append('destination_uuid', id); 
-
-            $.ajax({
-                type : "POST",
-                url : url,
-                data: formData,
-                processData: false,
-                contentType: false,
-                checkbox : $(this),
-                headers: {
-                    'X-CSRF-Token': '{{ csrf_token() }}',
-                },
-            })
-            .done(function(response) { 
-                console.log(response);
-                if (response.error){
-                    checkbox.prop('checked', false);
-                } else {
-                    $('input.callerIdCheckbox').not(checkbox).prop('checked', false);
-                }
-            })
-            .fail(function (response){
-                //
-            });
-
-        });
 
 
     });

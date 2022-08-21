@@ -26,7 +26,7 @@ use App\Http\Controllers\UserSettingsController;
 */
 
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
-Route::post('/extensions/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
+Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 
 // Extensions

@@ -117,8 +117,7 @@ class ExtensionsController extends Controller
                 'destination_description',
                 DB::Raw("coalesce(destination_description , 'n/a') as destination_description"),
             ])
-            ->sortBy('destination_description')
-            ->toArray();
+            ->sortBy('destination_description');
 
         // If destinaions not found throw an error
         if (!isset($destinations)){
@@ -133,28 +132,28 @@ class ExtensionsController extends Controller
             abort(403, 'Unauthorized extension. Contact your administrator');
         }
 
-        //check if any of the extentions already have caller IDs assigend to them
-        // if yes add TRUE column to the new array $phone_numbers
+        //check if this extension already have caller IDs assigend to it
+        // if yes, add TRUE column to the new array $phone_numbers
         $phone_numbers = array();
-        // foreach ($extensions as $extension){
             foreach ($destinations as $destination){
-                if ($destination['destination_number'] == $extension->outbound_caller_id_number){
-                    $destination['isCallerID'] = true;
-                    $phone_numbers[] = $destination;
+                if (isset($extension->outbound_caller_id_number) && $extension->outbound_caller_id_number <> "") {
+                    if (PhoneNumber::make($destination->destination_number, "US")->formatE164() == PhoneNumber::make($extension->outbound_caller_id_number, "US")->formatE164()){
+                        $destination->isCallerID = true;
+                    } else {
+                        $destination->isCallerID = false;
+                    }
                 } else {
-                    $destination['isCallerID'] = false;
-                    $phone_numbers[] = $destination;
+                    $destination->isCallerID = false;
                 }
 
             }
-        // }
 
         // $format = PhoneNumberFormat::NATIONAL;
         // $phone_number = phone("6467052267","US",$format);
         // dd($phone_numbers);
 
         return view('layouts.extensions.callerid')
-            ->with('destinations',$phone_numbers)
+            ->with('destinations',$destinations)
             ->with('national_phone_number_format',PhoneNumberFormat::NATIONAL)
             ->with ('extension',$extension);
     }
@@ -164,7 +163,7 @@ class ExtensionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateCallerID(Request $request)
+    public function updateCallerID(Request $request, $extension_uuid)
     {
         // $request->destination_uuid = '4a40ab82-a9a8-4506-9f48-980cb902bcc4';
         // $request->extension_uuid = 'a2c612cc-0b8e-4e21-a8d1-81d75e8333f9';
@@ -172,24 +171,21 @@ class ExtensionsController extends Controller
         $destination = Destinations::find($request->destination_uuid);
         if (!$destination){
             return response()->json([
-                'error' => 401,
-                'message' => 'Invalid phone number ID submitted']);
+                'status' => 401,
+                'error' => [
+                    'message' => 'Invalid phone number ID submitted. Please, contact your administrator'
+                ]
+            ]);     
         }
 
-        if (!isset($destination)){
+        $extension = Extensions::find ($extension_uuid);
+        if (!$extension){
             return response()->json([
-                'error' => 401,
-                'message' => 'Unable to update Caller ID']);
-        }
-
-        // Get extension for user accessing the page
-        $extension = Extensions::find($request->extension_uuid);
-
-
-        if (!isset($extension)){
-            return response()->json([
-                'error' => 401,
-                'message' => 'Unable to update Caller ID']);
+                'status' => 401,
+                'error' => [
+                    'message' => 'Invalid extension. Please, contact administrator'
+                ]
+            ]);
         }
 
         // Update the caller ID field for user's extension
@@ -219,7 +215,11 @@ class ExtensionsController extends Controller
         }
 
         $cache = new cache;
-        $extension->outbound_caller_id_number = $destination->destination_number;
+        if ($request->set == "true") {
+            $extension->outbound_caller_id_number = PhoneNumber::make($destination->destination_number, "US")->formatE164();
+        } else {
+            $extension->outbound_caller_id_number = null;
+        }
         $extension->save();
         // dd($extension);
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
@@ -227,18 +227,12 @@ class ExtensionsController extends Controller
         session_destroy();
 
         // If successful return success status
-        if ($extension->outbound_caller_id_number = $destination->destination_number){
-            return response()->json([
-                'extension' => $extension->extension,
-                'callerID' => $destination->destination_number,
-                'message' => 'Caller ID sucesfully updated',
-            ]);
-        // Otherwise return failed status
-        } else {
-            return response()->json([
-                'error' => 401,
-                'message' => 'Unable to update Caller ID']);
-        }
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'The caller ID was successfully updated'
+            ]
+        ]);
 
     }
 
