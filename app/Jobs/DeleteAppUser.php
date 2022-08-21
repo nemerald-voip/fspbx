@@ -90,32 +90,21 @@ class DeleteAppUser implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('ringotel')->allow(2)->every(1)->then(function () {
 
-            Log::info("scheduled deleting app");
-            Log::info($this->mobile_app);
+            // Log::info("scheduled deleting app");
+            //If there is no app then just return
+            if(!isset($this->mobile_app)) return;
 
             // Send request to delеte user
             $response = appsDeleteUser($this->mobile_app['org_id'], $this->mobile_app['user_id']);
-            Log::info($response);
-            //If there is an error return failed status
+
+            //If there is an error return failed status and requeue the job
             if (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ])->getData(true);
+                return $this->release(5);
             } elseif (!isset($response['result'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "An unknown error has occured",
-                    ],
-                ])->getData(true);
+                return $this->release(5);
             }
 
-
             // Delete app info from database
-            Log::info($this->mobile_app->mobile_app_user_uuid);
             $appUser = MobileAppUsers::where('mobile_app_user_uuid', $this->mobile_app->mobile_app_user_uuid);
             if ($appUser) $appUser->delete();
 

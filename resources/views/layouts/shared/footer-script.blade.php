@@ -127,13 +127,17 @@
 
     // Add errors to the page and send alert
     function printErrorMsg (msg) {
-        var error_message = "<ul>"
-        $.each( msg, function( key, value ) {
-            //console.log(key);
-            $('.'+key+'_err').text(value);
-            $('.'+key+'_err_badge').attr("hidden", false);
-            error_message = error_message + '<li>'+value+'</li>';
-        });
+        var error_message = "<ul>";
+        if (Array.isArray(msg)) {
+            $.each( msg, function( key, value ) {
+                //console.log(key);
+                $('.'+key+'_err').text(value);
+                $('.'+key+'_err_badge').attr("hidden", false);
+                error_message = error_message + '<li>'+value+'</li>';
+            });
+        } else {
+            error_message = msg;
+        }
         error_message = error_message + "</ul>";
         $.NotificationApp.send("Warning",error_message,"top-right","#ff5b5b","error")
 

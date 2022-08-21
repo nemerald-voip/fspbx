@@ -262,13 +262,16 @@
                                 <hr class="bg-dark-lighten my-3">
                                 <h5 class="mt-3 mb-3 fw-semibold text-muted">Select an action below</h5>
                             
-                                <button id="appDeactivateButton" type="button" class="btn btn-warning me-2 btn-sm" hidden><i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span> </button>
-                                <button id="appActivateButton" type="button" class="btn btn-success me-2 btn-sm" hidden><i class="mdi mdi-power-plug me-1"></i> <span>Activate</span> </button>
-                                {{-- <a href="javascript:void(0);" class="btn w-100 btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Message" aria-label="Message"><i class="mdi mdi-message-processing-outline"></i></a> --}}
+                                {{-- <button id="appDeactivateButton" type="button" class="btn btn-warning me-2 btn-sm" hidden><i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span> </button>
+                                <button id="appActivateButton" type="button" class="btn btn-success me-2 btn-sm" hidden><i class="mdi mdi-power-plug me-1"></i> <span>Activate</span> </button> --}}
 
-                                <button type="button" class="btn btn-primary me-2 btn-sm"><i class="uil-lock-alt me-1"></i> <span>Reset password</span> </button>
-
-                                {{-- <button id="appUserDeleteButton" type="button" class="btn btn-danger"><i class="uil uil-multiply"></i> <span>Delete</span> </button> --}}
+                                <a href="javascript:appUserSestStatusAction('{{ route('appsSetStatus', ':id') }}');" id="appUserSetStatusButton" class="btn btn-warning me-2 btn-sm">
+                                    <i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>
+                                </a>
+                                
+                                <a href="javascript:appUserResetPasswordAction('{{ route('appsResetPassword', ':id') }}');" id="appUserResetPasswordButton" class="btn btn-primary me-2 btn-sm">
+                                    <i class="uil-lock-alt me-1"></i> <span>Reset password</span>
+                                </a>
 
                                 <a href="javascript:appUserDeleteAction('{{ route('appsDeleteUser', ':id') }}');" id="appUserDeleteButton" class="btn btn-danger btn-sm">
                                     <i class="uil uil-multiply me-1"></i><span>Delete</span>
@@ -304,7 +307,7 @@
             </div>
                 <div class="modal-body">
 
-                    <h3 class="text-success">New mobile app was user sucessfully created.</h3>
+                    <h3 class="text-success" id="createMobileAppSuccessModalTitle">New mobile app was user sucessfully created.</h3>
                     <p>You have successfully created mobile app credentials. Please use the generated password to login. 
                         You will not be able to view the password again. However, you can reset the password at any time.</p>
                     <table class="attributes" width="100%" cellpadding="0" cellspacing="0">
@@ -328,7 +331,7 @@
                       </tr>
                     </table>
 
-                    <p class="mt-2">If the user has an email address on file, we will email a copy of the credentials.</p>
+                    <p class="mt-2">if the user has an email on file credentials will be sent to that address.</p>
                     
                     <h3 class="mt-3">Next steps</h3>
                     <p>Use the links below to download {{ config('app.name', 'Laravel') }} apps. Then log in using the credentials shown above or scan a QR code via the mobile app interface.</p>
@@ -509,14 +512,24 @@
 
         localStorage.removeItem('activeTab');
 
-        // Open Modal with new user settings
+        // Open Modal with mobile app settings
         $('.mobileAppButton').on('click', function(e) {
             e.preventDefault();
             let href = $(this).attr('data-attr');
             //Hide error message
-            $("#appUserError").find("ul").html('');
-            $("#appUserError").css('display','none');
+            $("#appMobileAppError").find("ul").html('');
+            $("#appMobileAppError").css('display','none');
+            //Hide success message
+            $("#appMobileAppSuccess").find("ul").html('');
+            $("#appMobileAppSuccess").css('display','none');
             $('.loading').show();
+            //Reset buttons to default
+            $("#appUserDeleteButton").html('');
+            $("#appUserDeleteButton").append('<i class="uil uil-multiply"></i> <span>Delete</span>');
+            $("#appUserDeleteButton").prop( "disabled", false );
+            $("#appUserResetPasswordButton").html('');
+            $("#appUserResetPasswordButton").append('<i class="uil-lock-alt me-1"></i> <span>Reset password</span>');
+            $("#appUserResetPasswordButton").prop( "disabled", false );
 
             $.ajax({
                 type : "POST",
@@ -533,8 +546,22 @@
                     if (response.mobile_app){
                         if (!response.mobile_app.status || response.mobile_app.status==2) {
                             $('#appActivateButton').attr("hidden", false);
+                            $('#appDeactivateButton').attr("hidden", true);
+                            $("#appUserSetStatusButton").html('');
+                            $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Activate</span>');
+                            $("#appUserSetStatusButton").addClass('btn-success');
+                            $("#appUserSetStatusButton").removeClass('btn-warning');
+                            $("#appUserSetStatusButton").prop( "disabled", false );
+                            $('#appUserResetPasswordButton').hide();
                         } else if (response.mobile_app.status==1){
                             $('#appDeactivateButton').attr("hidden", false);
+                            $('#appActivateButton').attr("hidden", true);
+                            $("#appUserSetStatusButton").html('');
+                            $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>');
+                            $("#appUserSetStatusButton").addClass('btn-warning');
+                            $("#appUserSetStatusButton").removeClass('btn-success');
+                            $("#appUserSetStatusButton").prop( "disabled", false );
+                            $('#appUserResetPasswordButton').show();
                         }
                         dataObj = new Object();
                         dataObj.mobile_app = response.mobile_app;
@@ -678,7 +705,8 @@
                     $('#createMobileAppModal').modal("hide");
                     if (response.user.status == 1) {
                         $('#createMobileAppSuccessModal').modal("show");
-
+                        $('#createMobileAppSuccessModalLabel').text("Create mobile app user");
+                        $('#createMobileAppSuccessModalTitle').text('New mobile app was user sucessfully created.');
                         $('#usernameSpan').text(response.user.username);
                         $('#extensionSpan').text(response.user.username);
                         $('#passwordSpan').text(response.user.password);
@@ -746,6 +774,121 @@
             });
         };
 
+
+        // Submit request to reset password for mobile user
+        function appUserResetPasswordAction(url,id=''){
+            var mobile_app = $("#MobileAppModal").data("mobile_app");
+            url = url.replace(':id', mobile_app.extension_uuid );
+
+            //Change button to spinner
+            $("#appUserResetPasswordButton").html('');
+            $("#appUserResetPasswordButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appUserResetPasswordButton").prop( "disabled", true );
+
+            // //Hide error message
+            $("#appMobileAppError").find("ul").html('');
+            $("#appMobileAppError").css('display','none');
+            $("#appMobileAppSuccess").find("ul").html('');
+            $("#appMobileAppSuccess").css('display','none');
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: {
+                        'mobile_app' : mobile_app,
+                    },
+            })
+            .done(function(response) {
+                //console.log(response);
+                // remove the spinner and change button to default
+                $("#appUserResetPasswordButton").html('');
+                $("#appUserResetPasswordButton").append('<i class="uil-lock-alt me-1"></i> <span>Reset password</span>');
+                $("#appUserResetPasswordButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appMobileAppError").find("ul").html('');
+                    $("#appMobileAppError").css('display','block');
+                    $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
+                    
+                } else {
+                    $('#MobileAppModal').modal("hide");
+                    // $("#appMobileAppSuccess").find("ul").html('');
+                    // $("#appMobileAppSuccess").css('display','block');
+                    // $("#appMobileAppSuccess").find("ul").append('<li>'+response.success.message+'</li>');
+                    $('#createMobileAppSuccessModal').modal("show");
+                    $('#createMobileAppSuccessModalLabel').text("Reset Password");
+                    $('#createMobileAppSuccessModalTitle').text('Success');
+
+                    $('#usernameSpan').text(response.user.username);
+                    $('#extensionSpan').text(response.user.username);
+                    $('#passwordSpan').text(response.user.password);
+                    $('#domainSpan').text(response.user.domain);
+
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    printErrorMsg(error);
+            });
+        };
+
+
+        // Submit request to reset password for mobile user
+        function appUserSestStatusAction(url,id=''){
+            var mobile_app = $("#MobileAppModal").data("mobile_app");
+            url = url.replace(':id', mobile_app.extension_uuid );
+
+            // Set new status
+            if (!mobile_app.status || mobile_app.status==2) {
+                mobile_app.status = 1;
+            } else {
+                mobile_app.status = 2
+            }
+
+            //Change button to spinner
+            $("#appUserSetStatusButton").html('');
+            $("#appUserSetStatusButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appUserSetStatusButton").prop( "disabled", true );
+
+            // //Hide error message
+            $("#appMobileAppError").find("ul").html('');
+            $("#appMobileAppError").css('display','none');
+            $("#appMobileAppSuccess").find("ul").html('');
+            $("#appMobileAppSuccess").css('display','none');
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                data: {
+                        'mobile_app' : mobile_app,
+                    },
+            })
+            .done(function(response) {
+                // console.log(response);
+                // remove the spinner and change button to default
+                $("#appUserSetStatusButton").html('');
+                $("#appUserSetStatusButton").append('<i class="uil-lock-alt me-1"></i> <span>Reset password</span>');
+                $("#appUserSetStatusButton").prop( "disabled", false );
+
+                if (response.error){
+                    $("#appMobileAppError").find("ul").html('');
+                    $("#appMobileAppError").css('display','block');
+                    $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
+                    
+                } else {
+
+                    $("#appMobileAppSuccess").find("ul").html('');
+                    $("#appMobileAppSuccess").css('display','block');
+                    $("#appMobileAppSuccess").find("ul").append('<li>'+response.success.message+'</li>');
+
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    // console.log(error);
+                    printErrorMsg(error);
+            });
+
+        };
 
 </script>
 @endpush

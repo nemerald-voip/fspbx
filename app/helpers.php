@@ -193,7 +193,7 @@ if (!function_exists('appsDeleteConnection')){
     }
 }
 
-// Delete connection that belong to requested organization via Ringotel API call 
+// Delete mobile app user via Ringotel API call 
 if (!function_exists('appsDeleteUser')){
     function appsDeleteUser($org_id, $user_id) {
         $data = array(
@@ -221,6 +221,67 @@ if (!function_exists('appsDeleteUser')){
         
         return $response;
     }
+}
+
+// Reset password for mobile app user via Ringotel API call 
+if (!function_exists('appsResetPassword')){
+    function appsResetPassword($org_id, $user_id) {
+        $data = array(
+            'method' => 'resetUserPassword',
+            'params' => array(
+                'id' => $user_id,
+                'orgid' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to reset password",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        
+        return $response;
+    }
+}
+
+// Set Status for mobile app user via Ringotel API call 
+if (!function_exists('appsSetStatus')){
+    function appsSetStatus($org_id, $user_id, $status) {
+        $data = array(
+            'method' => 'setUserStatus',
+            'params' => array(
+                'id' => $user_id,
+                'orgid' => $org_id,
+                'status' => $status,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to set new status",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        
+        return $response;
+    }    
 }
 
 // Delete organizaion via Ringotel API call 
@@ -508,7 +569,7 @@ function getS3Setting($domain_id){
          
         return $config;
     }
-    }
+}
     
 if (!function_exists('getDefaultS3Configuration')){
        function getDefaultS3Configuration(){
@@ -519,7 +580,7 @@ if (!function_exists('getDefaultS3Configuration')){
         }
         return $config;
     }
-    }
+}
 
 if (!function_exists('getSignedURL')){
     function getSignedURL($s3Client,$bucket,$key){
@@ -534,7 +595,5 @@ if (!function_exists('getSignedURL')){
         $presignedUrl = (string) $request->getUri();
         return $presignedUrl;
     }
-    }
-
-
+}
 

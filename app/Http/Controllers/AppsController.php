@@ -581,7 +581,101 @@ class AppsController extends Controller
             'user' => $response['result'],
             'status' => 200,
             'success' => [
-                'message' => 'The user has been successfully deleted'
+                'message' => 'The mobile app user has been successfully deleted'
+            ]
+        ]);
+    }
+
+
+    /**
+     * Submit password reset request to Ringotel API
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function resetPassword(Request $request, Extensions $extension)
+    {
+
+        $mobile_app = $request->mobile_app;
+
+        // Send request to reset password
+        $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id']);
+ 
+        //If there is an error return failed status
+        if (isset($response['error'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => $response['error']['message'],
+                ],
+            ])->getData(true);
+        } elseif (!isset($response['result'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => "An unknown error has occured",
+                ],
+            ])->getData(true);
+        }
+
+        // If success and user is activated send user email with credentials 
+        if (isset($extension->voicemail->voicemail_mail_to)){
+            SendAppCredentials::dispatch($response['result'])->onQueue('emails');
+        }
+
+        return response()->json([
+            'user' => $response['result'],
+            'status' => 200,
+            'success' => [
+                'message' => 'The mobile app password was succesfully reset'
+            ]
+        ]);
+    }
+
+
+    /**
+     * Submit set status request to Ringotel API
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function setStatus(Request $request, Extensions $extension)
+    {
+
+        $mobile_app = $request->mobile_app;
+
+        // Send request to reset password
+        $response = appsSetStatus($mobile_app['org_id'], $mobile_app['user_id'],(int)$mobile_app['status']);
+ 
+        //If there is an error return failed status
+        if (isset($response['error'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => $response['error']['message'],
+                ],
+            ])->getData(true);
+        } elseif (!isset($response['result'])) {
+            return response()->json([
+                'status' => 401,
+                'result' => $response,
+                'error' => [
+                    'message' => "An unknown error has occured",
+                ],
+            ])->getData(true);
+        }
+
+        // Update user info in database
+        $appUser = $extension->app_user;
+        if ($appUser) {
+            $appUser->status = $response['result']['status'];
+            $appUser->save();
+        } 
+
+
+        return response()->json([
+            'user' => $response['result'],
+            'status' => 200,
+            'success' => [
+                'message' => 'The mobile app status has been updated'
             ]
         ]);
     }

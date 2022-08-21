@@ -80,6 +80,8 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection']) ->name('appsUpdateConnection');
     Route::post('/apps/user/create', [AppsController::class, 'createUser']) ->name('appsCreateUser');
     Route::delete('/apps/users/{extension}', [AppsController::class, 'deleteUser']) ->name('appsDeleteUser');
+    Route::post('/apps/users/{extension}/resetpassword', [AppsController::class, 'ResetPassword']) ->name('appsResetPassword');
+    Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus']) ->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser']) ->name('emailUser');
 
     // SMS for testing
