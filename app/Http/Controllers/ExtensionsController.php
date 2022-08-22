@@ -384,6 +384,8 @@ class ExtensionsController extends Controller
         $attributes['voicemail_password'] = $attributes['extension'];
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
         $attributes['password'] = Str::random(25);
+        if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
+        if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
 
         $extension->fill($attributes);    
         $extension->save();
@@ -443,7 +445,6 @@ class ExtensionsController extends Controller
     {
         
         return response()->json([
-            'request' => $request->all(),
             'username' => $extension->extension,
             'password' => $extension->password,
             'domain' => $extension->domain->domain_name,
@@ -627,6 +628,8 @@ class ExtensionsController extends Controller
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email']== "on")  $attributes['voicemail_local_after_email'] = "false";
         if (isset($attributes['voicemail_tutorial']) && $attributes['voicemail_tutorial']== "on")  $attributes['voicemail_tutorial'] = "true";
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
+        if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
+        if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
 
         // Check if voicemail directory needs to be renamed 
         if($attributes['voicemail_id'] != $attributes['extension']) {
