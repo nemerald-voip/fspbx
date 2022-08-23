@@ -328,6 +328,9 @@
                             </tr>  
                           </table>
                         </td>
+                        <td>
+                            {{-- {!! QrCode::format('png')->size(100)->generate('{"domain":"apidomain","username":"501","password":"Vf6zkGdXr2DA"}') !!} --}}
+                        </td>
                       </tr>
                     </table>
 

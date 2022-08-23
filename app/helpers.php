@@ -223,6 +223,42 @@ if (!function_exists('appsDeleteUser')){
     }
 }
 
+// Update mobile app user via Ringotel API call 
+if (!function_exists('appsUpdateUser')){
+    function appsUpdateUser($mobile_app) {
+        $data = array(
+            'method' => 'updateUser',
+            'params' => array(
+                'id' => $mobile_app['user_id'],
+                'orgid' => $mobile_app['org_id'],
+                'name' => $mobile_app['name'],
+                'email' => $mobile_app['email'],
+                'extension' => $mobile_app['ext'],
+                'username' => $mobile_app['ext'],
+                'authname' => $mobile_app['ext'],
+                'password' => $mobile_app['password'],
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to update user",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        
+        return $response;
+    }
+}
+
 // Reset password for mobile app user via Ringotel API call 
 if (!function_exists('appsResetPassword')){
     function appsResetPassword($org_id, $user_id) {

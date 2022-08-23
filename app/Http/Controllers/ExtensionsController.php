@@ -8,6 +8,7 @@ use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\Voicemails;
 use App\Jobs\DeleteAppUser;
+use App\Jobs\UpdateAppSettings;
 use App\Models\MusicOnHold;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
@@ -686,6 +687,16 @@ class ExtensionsController extends Controller
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
+        }
+
+        // dispatch the job to update app user
+        $mobile_app = $extension->mobile_app;
+        if(isset($mobile_app)) {
+            $mobile_app->name = $attributes['effective_caller_id_name'];
+            $mobile_app->email = ($attributes['voicemail_mail_to']) ? $attributes['voicemail_mail_to'] : "";
+            $mobile_app->ext = $attributes['extension'];
+            $mobile_app->password = $extension->password;
+            UpdateAppSettings::dispatch($mobile_app->attributesToArray())->onQueue('default');
         }
 
         return response()->json([
