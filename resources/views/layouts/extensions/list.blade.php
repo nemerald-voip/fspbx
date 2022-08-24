@@ -262,10 +262,7 @@
                                 <hr class="bg-dark-lighten my-3">
                                 <h5 class="mt-3 mb-3 fw-semibold text-muted">Select an action below</h5>
                             
-                                {{-- <button id="appDeactivateButton" type="button" class="btn btn-warning me-2 btn-sm" hidden><i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span> </button>
-                                <button id="appActivateButton" type="button" class="btn btn-success me-2 btn-sm" hidden><i class="mdi mdi-power-plug me-1"></i> <span>Activate</span> </button> --}}
-
-                                <a href="javascript:appUserSestStatusAction('{{ route('appsSetStatus', ':id') }}');" id="appUserSetStatusButton" class="btn btn-warning me-2 btn-sm">
+                                <a href="javascript:appUserSetStatusAction('{{ route('appsSetStatus', ':id') }}');" id="appUserSetStatusButton" class="btn btn-warning me-2 btn-sm">
                                     <i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>
                                 </a>
                                 
@@ -548,8 +545,6 @@
                     $('.loading').hide();
                     if (response.mobile_app){
                         if (!response.mobile_app.status || response.mobile_app.status==2) {
-                            $('#appActivateButton').attr("hidden", false);
-                            $('#appDeactivateButton').attr("hidden", true);
                             $("#appUserSetStatusButton").html('');
                             $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Activate</span>');
                             $("#appUserSetStatusButton").addClass('btn-success');
@@ -557,8 +552,6 @@
                             $("#appUserSetStatusButton").prop( "disabled", false );
                             $('#appUserResetPasswordButton').hide();
                         } else if (response.mobile_app.status==1){
-                            $('#appDeactivateButton').attr("hidden", false);
-                            $('#appActivateButton').attr("hidden", true);
                             $("#appUserSetStatusButton").html('');
                             $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>');
                             $("#appUserSetStatusButton").addClass('btn-warning');
@@ -837,7 +830,7 @@
 
 
         // Submit request to reset password for mobile user
-        function appUserSestStatusAction(url,id=''){
+        function appUserSetStatusAction(url,id=''){
             var mobile_app = $("#MobileAppModal").data("mobile_app");
             url = url.replace(':id', mobile_app.extension_uuid );
 
@@ -868,18 +861,28 @@
             })
             .done(function(response) {
                 // console.log(response);
-                // remove the spinner and change button to default
-                $("#appUserSetStatusButton").html('');
-                $("#appUserSetStatusButton").append('<i class="uil-lock-alt me-1"></i> <span>Reset password</span>');
-                $("#appUserSetStatusButton").prop( "disabled", false );
-
                 if (response.error){
                     $("#appMobileAppError").find("ul").html('');
                     $("#appMobileAppError").css('display','block');
                     $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
                     
                 } else {
-
+                    // remove the spinner and change button to default
+                    if (mobile_app.status == 1){
+                        $("#appUserSetStatusButton").html('');
+                        $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>');
+                        $("#appUserSetStatusButton").addClass('btn-warning');
+                        $("#appUserSetStatusButton").removeClass('btn-success');
+                        $("#appUserSetStatusButton").prop( "disabled", false );
+                        $('#appUserResetPasswordButton').show();
+                    }
+                    if (mobile_app.status == 2){
+                        $("#appUserSetStatusButton").html('');
+                        $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Activate</span>');
+                        $("#appUserSetStatusButton").addClass('btn-success');
+                        $("#appUserSetStatusButton").removeClass('btn-warning');
+                        $("#appUserSetStatusButton").prop( "disabled", false );
+                    }
                     $("#appMobileAppSuccess").find("ul").html('');
                     $("#appMobileAppSuccess").css('display','block');
                     $("#appMobileAppSuccess").find("ul").append('<li>'+response.success.message+'</li>');

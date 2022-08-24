@@ -641,9 +641,15 @@ class AppsController extends Controller
     {
 
         $mobile_app = $request->mobile_app;
+        $mobile_app['status'] = (int)$mobile_app['status'];
 
-        // Send request to reset password
-        $response = appsSetStatus($mobile_app['org_id'], $mobile_app['user_id'],(int)$mobile_app['status']);
+        $mobile_app['name'] = $extension['effective_caller_id_name'];
+        $mobile_app['email'] = ($extension['voicemail_mail_to']) ? $extension['voicemail_mail_to'] : "";
+        $mobile_app['ext'] = $extension['extension'];
+        $mobile_app['password'] = $extension->password;
+
+        // Send request to update user settings
+        $response = appsUpdateUser($mobile_app);
  
         //If there is an error return failed status
         if (isset($response['error'])) {
@@ -664,18 +670,18 @@ class AppsController extends Controller
         }
 
         // Update user info in database
-        $appUser = $extension->app_user;
+        $appUser = $extension->mobile_app;
         if ($appUser) {
-            $appUser->status = $response['result']['status'];
+            $appUser->status = $mobile_app['status'];
             $appUser->save();
         } 
 
-
+        $message = ($mobile_app['status'] == 1) ? 'The mobile app has been activated successfully' : "The mobile app has been deactivated";
         return response()->json([
             'user' => $response['result'],
             'status' => 200,
             'success' => [
-                'message' => 'The mobile app status has been updated'
+                'message' => $message,
             ]
         ]);
     }
