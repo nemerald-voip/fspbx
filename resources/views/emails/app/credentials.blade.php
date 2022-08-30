@@ -60,7 +60,7 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
+                  <a href="{{ getDefaultSetting('mobile_apps', 'windows_link') }}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
 
 
                 </td>
@@ -77,7 +77,7 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
+                  <a href="{{ getDefaultSetting('mobile_apps', 'mac_link') }}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
 
                 </td>
               </tr>
