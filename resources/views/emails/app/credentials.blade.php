@@ -17,7 +17,7 @@
               <tr>
                 <td>
 
-                  <a href="{{ getDefaultSetting('mobile_apps', 'google_play_link') }}">
+                  <a href="{{ $attributes['google_play_link'] ?? '' }}">
                     <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto 
                       !important;" width="189" alt="Download for Android" data-proportionally-constrained="true" data-responsive="true" 
                       src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/88af7fc9-c74b-43ec-a1e2-a712cd1d3052/646x250.png">
@@ -38,7 +38,7 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ getDefaultSetting('mobile_apps', 'apple_store_link') }}"><img class="max-width" border="0" style="display:block; color:#000000; 
+                  <a href="{{ $attributes['apple_store_link'] ?? '' }}"><img class="max-width" border="0" style="display:block; color:#000000; 
                     text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto !important;" width="174" alt="Download for iOS" data-proportionally-constrained="true" data-responsive="true" 
                     src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/bb2daef8-a40d-4eed-8fb4-b4407453fc94/320x95.png">
                   </a>
@@ -60,7 +60,7 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ getDefaultSetting('mobile_apps', 'windows_link') }}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
+                  <a href="{{ $attributes['windows_link'] ?? '' }}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
 
 
                 </td>
@@ -77,7 +77,7 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ getDefaultSetting('mobile_apps', 'mac_link') }}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
+                  <a href="{{ $attributes['mac_link'] ?? '' }}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
 
                 </td>
               </tr>
