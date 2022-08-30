@@ -319,8 +319,11 @@
                                                                         <select data-toggle="select2" title="Outbound Caller ID" name="outbound_caller_id_number">
                                                                             <option value="">Main Company Number</option>
                                                                             @foreach ($destinations as $destination)
-                                                                                <option value="1{{ $destination->destination_number }}"
-                                                                                    @if (strpos(' '.$extension->outbound_caller_id_number,$destination->destination_number)) selected @endif>
+                                                                                <option value="{{ phone($destination->destination_number, "US")->formatE164() }}"
+                                                                                    @if (($extension->outbound_caller_id_number &&
+                                                                                        phone($extension->outbound_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
+                                                                                        selected 
+                                                                                    @endif>
                                                                                     {{ phone($destination->destination_number,"US",$national_phone_number_format) }}
                                                                                 </option>
                                                                             @endforeach
@@ -385,8 +388,11 @@
                                                                         <select data-toggle="select2" title="Emergency Caller ID" name="emergency_caller_id_number">
                                                                             <option value="">Main Company Number</option>
                                                                             @foreach ($destinations as $destination)
-                                                                                <option value="1{{ $destination->destination_number }}"
-                                                                                    @if (strpos(' '.$extension->emergency_caller_id_number,$destination->destination_number)) selected @endif>
+                                                                                <option value="{{ phone($destination->destination_number, "US")->formatE164() }}"
+                                                                                    @if ($extension->emergency_caller_id_number &&
+                                                                                        (phone($extension->emergency_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
+                                                                                        selected 
+                                                                                    @endif>
                                                                                     {{ phone($destination->destination_number,"US",$national_phone_number_format) }}
                                                                                 </option>
                                                                             @endforeach
