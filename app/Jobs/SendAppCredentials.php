@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\AppCredentials;
+use App\Models\DefaultSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -69,6 +70,23 @@ class SendAppCredentials implements ShouldQueue
      */
     public function __construct($attributes)
     {
+        $settings = DefaultSettings::where('default_setting_category','mobile_apps')->get();
+        if ($settings) {
+            foreach ($settings as $setting) {
+                if ($setting->default_setting_subcategory == "apple_store_link") {
+                    $attributes['apple_store_link'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "windows_link") {
+                    $attributes['windows_link'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "google_play_link") {
+                    $attributes['google_play_link'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "mac_link") {
+                    $attributes['mac_link'] = $setting->default_setting_value;
+                }
+            }
+        }
         $this->attributes = $attributes;
     }
 
