@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Domain;
 use App\Models\Extensions;
+use Aws\Mobile\MobileClient;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Models\MobileAppUsers;
 use App\Jobs\SendAppCredentials;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
-use App\Models\MobileAppUsers;
-use Aws\Mobile\MobileClient;
 use Illuminate\Support\Facades\Session;
 
 class AppsController extends Controller
@@ -242,6 +243,8 @@ class AppsController extends Controller
 
 
 
+
+
     /**
      * Submit request to update organization to Ringotel
      *
@@ -401,6 +404,115 @@ class AppsController extends Controller
     public function updateConnection(Request $request)
     {
  
+    }
+
+
+    /**
+     * Submit getOrganizations request to Ringotel API
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getOrganizations(Request $request)
+    {
+
+        // Send request to get all Organizations
+        $response = appsGetOrganizations();
+ 
+        //If there is an error return failed status
+        if (isset($response['error'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => $response['error']['message'],
+                ],
+            ])->getData(true);
+        } elseif (!isset($response['result'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => "An unknown error has occured",
+                ],
+            ])->getData(true);
+        }
+
+        $orgs = DB::table('v_domain_settings')
+        -> join('v_domains', 'v_domains.domain_uuid', '=', 'v_domain_settings.domain_uuid')
+        -> where('domain_setting_category', 'app shell')
+        -> where ('domain_setting_subcategory', 'org_id')
+        -> get([
+            'v_domain_settings.domain_uuid',
+            'domain_setting_value AS org_id',
+            'domain_name',
+            'domain_description',
+        ]);
+
+        $domains = Session::get('domains');
+
+
+        $org_array = array();
+        foreach ($response['result'] as $organization) {
+            foreach ($orgs as $org) {
+                if ($organization['id'] == $org->org_id) {
+                    $organization['domain_uuid'] = $org->domain_uuid;
+                    $organization['domain_name'] = $org->domain_name;
+                    $organization['domain_description'] = $org->domain_description;
+                }
+            }
+            $org_array[] = $organization;
+        }
+
+        // Log::alert($org_array);
+
+        return response()->json([
+            'cloud_orgs' => $org_array,
+            'local_orgs' => $domains,
+            'status' => 200,
+            'success' => [
+                'message' => 'The request processed successfully'
+            ]
+        ]);
+    }
+
+
+    /**
+     * Return Ringotel app user settings
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function syncOrganizations(Request $request)
+    {
+
+        $app_array = $request->get('app_array');
+
+        foreach ($app_array as $id=>$domain_uuid) {
+             // Store new record
+            $domainSettings = DomainSettings::create([
+                'domain_uuid' => $domain_uuid,
+                'domain_setting_category' => 'app shell',
+                'domain_setting_subcategory' => 'org_id',
+                'domain_setting_name' => 'text',
+                'domain_setting_value' => $id,
+                'domain_setting_enabled' => true,
+            ]);
+
+            $saved = $domainSettings->save();
+            if (!$saved){
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'There was an error saving some records',
+                    ],
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'All organizations were succeddfully synced'
+            ]
+        ]);
+
     }
 
 

@@ -40,7 +40,14 @@
                         <div class="col-xl-4">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 <button type="button" class="btn btn-success mb-2 me-2 disabled" id="appProvisionButton"
-                                    data-bs-toggle="modal" data-bs-target="#app-provision-modal">Provision</button>
+                                    data-bs-toggle="modal" data-bs-target="#app-provision-modal">Provision
+                                </button>
+
+                                <a href="#"
+                                    data-attr="{{ route('appsGetOrganizations') }}" class="btn btn-success mb-2 me-2 orgSyncButton" title="Sync"> 
+                                    <i class="mdi mdi-cloud me-1" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sync"></i>Sync
+                                </a>
+
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->
@@ -99,15 +106,6 @@
                                         <td>
                                              {{-- Action Buttons --}}
                                              <div id="tooltip-container-actions">
-
-                                                {{-- <a href="{{ route('extensions.edit',$company) }}" class="action-icon" title="Edit"> 
-                                                    <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
-                                                </a> --}}
-                                                
-                                                {{-- <a href="#"
-                                                    data-attr="{{ route('mobileAppUserSettings',$company) }}" class="action-icon mobileAppButton" title="Mobile App Settings"> 
-                                                    <i class="mdi mdi-cellphone-cog" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Mobile App Settings"></i>
-                                                </a> --}}
 
                                                 <a href="javascript:confirmAppDeleteAction('{{ route('appsDestroyOrganization', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon"> 
                                                     <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
@@ -416,6 +414,39 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
+    {{-- Sync Modal --}}
+    <div class="modal fade" id="appSyncModal" tabindex="-1" role="dialog" aria-labelledby="app-sync-modal_title" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal_title">Sync existing organizations from the cloud</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card-body">
+ 
+                        <div class="table-responsive">
+                            <table id="appsTable" class="table table-centered table-nowrap table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Cloud</th>
+                                        <th>Local</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div> <!-- end table-responsive-->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button href="#" data-attr="{{ route('appsSyncOrganizations') }}" type="button" class="btn btn-primary" id="appSyncSaveButton">Save changes</button>
+                    {{-- <button type="button" class="btn btn-primary" id="appSyncSaveButton">Save changes</button> --}}
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
 
     <!-- Confirm Delete Modal -->
@@ -443,6 +474,131 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
+
+        $(".appDomainSelect2").select2({
+            dropdownParent: $("#appSyncModal")
+        });
+        $("#someSelect2").select2({
+            dropdownParent: $("#appSyncModal")
+        });
+
+        // Open Organization Sync Modal
+        $('.orgSyncButton').on('click', function(e) {
+            e.preventDefault();
+            let href = $(this).attr('data-attr');
+
+            $('.loading').show();
+
+            $.ajax({
+                type : "GET",
+                url : href,
+                cache: false,
+            })
+            .done(function(response) {
+                // console.log(response);
+                if (response.error){
+                    $('.loading').hide();
+                    printErrorMsg(response.error);
+                } else {
+                    $('.loading').hide();
+                    if (response.cloud_orgs){
+                        $('#appSyncModal').modal("show");
+
+                        var newRows = "";
+                        // for (var i = 0; i < response.cloud_orgs.length; i++) {
+                        jQuery.each (response.cloud_orgs , function( index, cloud_org ) {
+                            newRows += '<tr id="' + cloud_org.id + '">' +
+                                            '<td>' +
+                                                '<h5 class="font-14 my-1 fw-normal">' + cloud_org.name + '</h5>' +
+                                                '<span class="text-muted font-13">id: ' + cloud_org.id + ' </span>' +
+                                            '</td>' +
+                                            '<td>' +
+                                                // '<h5 class="font-14 my-1 fw-normal">$79.49</h5>' + 
+                                                // '<span class="text-muted font-13">Price</span>' +
+                                                '<select class="select2 appDomainSelect2" data-toggle="select2" title="AppDomain" name="AppDomain">';
+                            if (cloud_org.domain_uuid) {
+                                newRows += '<option selected value="' + cloud_org.domain_uuid + '">' + cloud_org.name + ' </option>';
+                            } else {
+                                newRows += '<option selected> Select domain </option>';
+                            }
+                                                    
+                            newRows +=           '</select>' +
+                                            '</td>' +
+                                        '</tr>';
+                        });
+                        $("#appsTable").append(newRows);
+
+                        $('.appDomainSelect2').select2({
+                            dropdownParent: $("#appSyncModal"),
+                            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+                        });
+
+                        response.local_orgs.forEach (function(local_org) {
+                            if (!$('.appDomainSelect2').find("option[value='" + local_org.domain_uuid + "']").length) {
+                                var newOption = new Option(local_org.domain_description, local_org.domain_uuid, false, false);
+                                $('.appDomainSelect2').append(newOption).trigger('change');
+                            }
+                        });
+
+
+                    }
+
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    //console.log(error);
+                    printErrorMsg(error);
+                    $('#loader').hide();
+
+            });
+        });
+
+
+        // Save changes
+        $('#appSyncSaveButton').on('click', function(e) {
+            e.preventDefault();
+
+            //Change button to spinner
+            $("#appSyncSaveButton").html('');
+            $("#appSyncSaveButton").append('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+            $("#appSyncSaveButton").prop( "disabled", true );
+
+            let href = $(this).attr('data-attr');
+            $.ajax({
+                type : "post",
+                url : href,
+                data : {
+                    'app_array' : app_array,
+                },
+                cache: false,
+            })
+            .done(function(response) {
+                // console.log(response);
+
+                // remove the spinner and change button to default
+                $("#appSyncSaveButton").html('');
+                $("#appSyncSaveButton").append('Save Changes');
+                $("#appSyncSaveButton").prop( "disabled", false );
+
+                if (response.error){
+                    printErrorMsg(response.error.message);
+                } else {
+                    $('#appSyncModal').modal("hide");
+                    $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
+                    var app_array = {};
+                    setTimeout(function (){
+                        window.location.reload();
+                    }, 2000);
+                }
+            })
+            .fail(function (jqXHR, testStatus, error) {
+                    //console.log(error);
+                    printErrorMsg(error);
+                    $('#loader').hide();
+
+            });
+        });
+
 
         // Change Provision button status to enabled when at least one organization is selected
         $('.action_company_checkbox').on('change', function() {
@@ -551,6 +707,14 @@
                 //
             });
         });
+
+    });
+
+    // Save all changes to the array on Select2 change
+    var app_array = {};
+    $(document).on("select2:select",".appDomainSelect2", function() { 
+        var name = "name";
+        app_array[$.trim($(this).closest("tr").attr('id'))] = $(this).val();
 
     });
 

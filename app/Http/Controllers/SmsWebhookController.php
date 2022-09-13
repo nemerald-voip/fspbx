@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use domain_settings;
 use App\Models\Domain;
 use App\Models\Messages;
 use App\Models\Extensions;
@@ -9,7 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
 use App\Notifications\StatusUpdate;
-use domain_settings;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Illuminate\Support\Facades\Notification;
@@ -111,7 +112,7 @@ class SmsWebhookController extends Controller
                     )
                 );
 
-                $response = Http::ringotel()
+                $response = Http::ringotel_api()
                     //->dd()
                     ->timeout(5)
                     ->withBody(json_encode($data),'application/json')
@@ -127,7 +128,7 @@ class SmsWebhookController extends Controller
                 
                 //Example of succesfull message
                 //{"result":{"sessionid":"1649368248560-f92a642d026618b5fe"}}
-
+                // Log::alert($response);
                 //If message sucesfully sent assign success status
                 if (isset($response['result'])){
                     $status = "success";

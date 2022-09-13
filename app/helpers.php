@@ -135,6 +135,31 @@ if (!function_exists('appsStoreConnectionDetails')){
     }
 }
 
+// Get a list of all organizations via Ringotel API call 
+if (!function_exists('appsGetOrganizations')){
+    function appsGetOrganizations() {
+        $data = array(
+            'method' => 'getOrganizations',
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to retrive organizations",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        return $response;
+    }
+}
+
 // Get a list of connections that belong to requested organization via Ringotel API call 
 if (!function_exists('appsGetConnections')){
     function appsGetConnections($org_id) {

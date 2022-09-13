@@ -13,6 +13,7 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,8 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
 
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
     //Users
     // Route::get('/users', [UsersController::class, 'index']) ->name('usersList');
     //Route::get('/users/create', [UsersController::class, 'createUser']) ->name('usersCreateUser');
@@ -74,6 +77,8 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/apps', [AppsController::class, 'index']) ->name('appsStatus');
     Route::post('/apps/organization/create', [AppsController::class, 'createOrganization']) ->name('appsCreateOrganization');
     Route::delete('/apps/organization/{domain}', [AppsController::class, 'destroyOrganization']) ->name('appsDestroyOrganization');
+    Route::get('/apps/organization/', [AppsController::class, 'getOrganizations']) ->name('appsGetOrganizations');
+    Route::post('/apps/organization/sync', [AppsController::class, 'syncOrganizations']) ->name('appsSyncOrganizations');
     Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings']) ->name('mobileAppUserSettings');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection']) ->name('appsCreateConnection');

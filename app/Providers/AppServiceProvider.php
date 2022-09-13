@@ -39,6 +39,13 @@ class AppServiceProvider extends ServiceProvider
             ])->baseUrl(env('RINGOTEL_URL'));
         });
 
+        // Ringotel API
+        Http::macro('ringotel_api', function () {
+            return Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('RINGOTEL_TOKEN'),
+            ])->baseUrl(env('RINGOTEL_API_URL'));
+        });
+
 
         Horizon::auth(function ($request) {
             // Always show admin if local development
