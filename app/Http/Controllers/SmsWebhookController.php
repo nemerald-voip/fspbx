@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Illuminate\Support\Facades\Notification;
-
+use message;
 
 class SmsWebhookController extends Controller
 {
@@ -190,16 +190,23 @@ class SmsWebhookController extends Controller
             $status = "Wrong API Key";
         }
 
-        //Create libphonenumber object for destination number
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-        $phoneNumberObject = $phoneNumberUtil->parse($message['params']['to'], 'US');
+        // if method is "typing"  
+        if ($message['method'] == "typing"){
+            return;
+        }
 
-        //Validate the destination number
-        if (!$phoneNumberUtil->isValidNumber($phoneNumberObject)){
-                //     Notification::route('mail', 'dexter@stellarvoip.com')
-                //   ->notify(new StatusUpdate("number is not valid"));
-            $validation = false;
-            $status = "Destination number is not a valid US number";
+        if (isset($message['params']['to'])){
+            //Create libphonenumber object for destination number
+            $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+            $phoneNumberObject = $phoneNumberUtil->parse($message['params']['to'], 'US');
+
+            //Validate the destination number
+            if (!$phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    //     Notification::route('mail', 'dexter@stellarvoip.com')
+                    //   ->notify(new StatusUpdate("number is not valid"));
+                $validation = false;
+                $status = "Destination number is not a valid US number";
+            }
         }
 
         //Get user's domain settings
