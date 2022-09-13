@@ -128,20 +128,34 @@
     // Add errors to the page and send alert
     function printErrorMsg (msg) {
         var error_message = "<ul>";
-        if (Array.isArray(msg)) {
+        if (Array.isArray(msg) || typeof msg === 'object') {
             $.each( msg, function( key, value ) {
                 //console.log(key);
                 $('.'+key+'_err').text(value);
                 $('.'+key+'_err_badge').attr("hidden", false);
                 error_message = error_message + '<li>'+value+'</li>';
             });
-        } else {
+        }else {
             error_message = msg;
         }
         error_message = error_message + "</ul>";
         $.NotificationApp.send("Warning",error_message,"top-right","#ff5b5b","error")
 
     }
+
+    // Test if variable is JSON
+    function testJSON(text){
+        if (typeof text!=="string"){
+            return false;
+        }
+        try{
+            var json = JSON.parse(text);
+            return (typeof json === 'object');
+        }
+        catch (error){
+            return false;
+        }
+}
 
     $(document).ready(function() {
 

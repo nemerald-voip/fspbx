@@ -481,6 +481,7 @@ if (!function_exists('get_registrations')){
                 $array['registrations']['registration'][0] = $row;
             }
 
+            $registrations = array();
             //set the registrations array
             if (isset($array)) {
                 foreach ($array['registrations']['registration'] as $row) {

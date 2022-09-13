@@ -1245,7 +1245,7 @@
                 data : $('#extensionForm').serialize(),
             })
             .done(function(response) {
-                //console.log(response);
+                // console.log(response);
                 // $('.loading').hide();
 
                 if (response.error){
@@ -1262,9 +1262,10 @@
  
                 }
             })
-            .fail(function (response){
+            .fail(function (jqXHR, testStatus, error) {
+                // console.log(error);
                 $('.loading').hide();
-                printErrorMsg(response.responseText);
+                printErrorMsg(error);
             });
         });
 
