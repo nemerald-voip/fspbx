@@ -449,6 +449,7 @@ if (!function_exists('get_registrations')){
         $sip_profiles = SipProfiles::where('sip_profile_enabled','true')
             ->get();
 
+        $registrations = array();
         $id=0;
         foreach ($sip_profiles as $sip_profile) {
             $cmd = "api sofia xmlstatus profile '".$sip_profile['sip_profile_name']."' reg";
@@ -473,7 +474,7 @@ if (!function_exists('get_registrations')){
                 }
                 $array = json_decode(json_encode($xml), true);
             }
-
+            //Log::alert($array);
             //normalize the array
             if (isset($array) && !isset($array['registrations']['registration'][0])) {
                 $row = $array['registrations']['registration'];
@@ -481,7 +482,6 @@ if (!function_exists('get_registrations')){
                 $array['registrations']['registration'][0] = $row;
             }
 
-            $registrations = array();
             //set the registrations array
             if (isset($array)) {
                 foreach ($array['registrations']['registration'] as $row) {
