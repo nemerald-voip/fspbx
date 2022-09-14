@@ -107,19 +107,14 @@
                                              {{-- Action Buttons --}}
                                              <div id="tooltip-container-actions">
 
+                                                <a href="javascript:syncAppUsers('{{ route('appsSyncUsers', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon" title="Sync Users"> 
+                                                    <i class="uil uil-sync" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sync Users"></i>
+                                                </a>
+
                                                 <a href="javascript:confirmAppDeleteAction('{{ route('appsDestroyOrganization', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon"> 
                                                     <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                 </a>
 
-                                                {{-- <a class="dropdown-toggle arrow-none card-drop" href="#" id="dropdownAdvancedOptions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="mdi mdi-dots-vertical"></i>
-                                                </a>
-                                                
-                                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownAdvancedOptions">
-                                                    <a href="#" data-attr="{{ route('extensions.sip.show',$extension) }}" class="dropdown-item sipCredentialsButton">SIP Credentials</a>
-                                                    
-                                                </div> --}}
-                                                    
                                             </div>
                                             {{-- End of action buttons --}}
                                         </td>
@@ -747,7 +742,7 @@
                 }
         })
         .done(function(response) {
-            console.log(response);
+            // console.log(response);
             if (response.error){
                 $('.loading').hide();
                 printErrorMsg(response.error);
@@ -767,8 +762,39 @@
                 printErrorMsg(error);
             
         });
+    }
 
-}
+    //This function sends AJAX request to delete selected items from list pages
+    function syncAppUsers(url,domain){
+        $('.loading').show();
+
+        url = url.replace(':id', domain );
+
+        $.ajax({
+                type: 'POST',
+                url: url,
+                cache: false,
+        })
+        .done(function(response) {
+            console.log(response);
+            if (response.error){
+                $('.loading').hide();
+                printErrorMsg(response.error);
+            } else {
+                $('.loading').hide();
+
+                $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
+            }
+        })
+        .fail(function (jqXHR, testStatus, error) {
+                // console.log(error);
+                $('.loading').hide();
+                printErrorMsg(error);
+            
+        });
+
+    }
+
 
 </script>
 @endpush

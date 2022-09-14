@@ -515,6 +515,108 @@ class AppsController extends Controller
 
     }
 
+    /**
+     * Sync Ringotel app users from the cloud
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function syncUsers(Request $request, Domain $domain)
+    {
+
+        // Get Org ID from database
+        $org_id = appsGetOrganizationDetails($domain->domain_uuid);
+
+        //Get all connections
+        $response = appsGetConnections($org_id);
+
+        if (isset($response['error'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => $response['error']['message'],
+                ],
+                'domain' => $domain->domain_name,
+            ]);
+        }
+
+        // If successful continue 
+        if (isset($response['result'])){
+            $connections = $response['result'];
+            $app_domain = $response['result'][0]['domain'];
+
+        // Otherwise return failed status
+        } elseif (isset($response['error'])) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => $response['error']['message'],
+                ],
+            ]);
+        } else {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => 'Unknown error',
+                ],
+            ]);
+        }
+
+        foreach ($connections as $connection){
+            //Get all users for this connection
+            $response = appsGetUsers($org_id, $connection['id']);
+
+            // If successful continue 
+            if (isset($response['result'])){
+                $users = $response['result'];
+
+            // Otherwise return failed status
+            } elseif (isset($response['error'])) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => $response['error']['message'],
+                    ],
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'Unknown error',
+                    ],
+                ]);
+            }
+
+            foreach ($users as $user){
+                // Get each user's extension
+                $extension = Extensions::where('extension', $user['extension'])
+                    ->where ('domain_uuid', $domain->domain_uuid)
+                    ->first();
+
+                // Delete any prior info from database
+                $appUser = MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
+
+                // Save returned user info in database
+                $appUser = new MobileAppUsers();
+                $appUser->extension_uuid = $extension->extension_uuid;
+                $appUser->domain_uuid = $extension->domain_uuid;
+                $appUser->org_id = $org_id;
+                $appUser->conn_id = $user['branchid'];
+                $appUser->user_id = $user['id'];
+                $appUser->status = ($user['status'] == -1 || $user['status'] == 2) ? 2 : 1;
+
+                $appUser->save();
+            }
+
+        }
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Apps have been synced successfully'
+            ]
+        ]);
+
+    }
 
     /**
      * Return Ringotel app user settings
