@@ -218,6 +218,35 @@ if (!function_exists('appsDeleteConnection')){
     }
 }
 
+// Get a list of all user for this organizaion and connection
+if (!function_exists('appsGetUsers')){
+    function appsGetUsers($org_id, $conn_id) {
+        $data = array(
+            'method' => 'getUsers',
+            'params' => array(
+                'orgid' => $org_id,
+                'branchid' => $conn_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to retrive connections",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        return $response;
+    }
+}
+
 // Delete mobile app user via Ringotel API call 
 if (!function_exists('appsDeleteUser')){
     function appsDeleteUser($org_id, $user_id) {
