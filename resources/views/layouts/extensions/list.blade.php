@@ -312,26 +312,27 @@
                         <td class="attributes_content">
                           <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
-                              <td class="attributes_item"><strong>Domain:</strong><span class="ms-1" id="domainSpan"></span></td>
+                              <td class="attributes_item"><strong>Domain:&nbsp;</strong><span class="ms-1" id="domainSpan"></span></td>
                             </tr>
                             <tr>
-                              <td class="attributes_item"><strong>Extension:</strong><span class="ms-1" id="extensionSpan"></span></td>
+                              <td class="attributes_item"><strong>Extension:&nbsp;</strong><span class="ms-1" id="extensionSpan"></span></td>
                             </tr>
                             <tr>
-                                <td class="attributes_item"><strong>Username:</strong><span class="ms-1" id="usernameSpan"></span></td>
+                                <td class="attributes_item"><strong>Username:&nbsp;</strong><span class="ms-1" id="usernameSpan"></span></td>
                             </tr>
                             <tr>
-                            <td class="attributes_item"><strong>Password:</strong><span class="ms-1" id="passwordSpan"></span></td>
+                            <td class="attributes_item"><strong>Password:&nbsp;</strong><span class="ms-1" id="passwordSpan"></span></td>
                             </tr>  
                           </table>
                         </td>
-                        <td>
-                            {{-- {!! QrCode::format('png')->size(100)->generate('{"domain":"apidomain","username":"501","password":"Vf6zkGdXr2DA"}') !!} --}}
+                        <td id="qrCode">
+                            {{-- <img src="data:image/png;base64,{!! QrCode::format('png')->size(100)->generate('{"domain":"apidomain","username":"501","password":"Vf6zkGdXr2DA"}') !!}" /> --}}
+                            {{-- <img src="data:image/png;base64, {!! base64_encode(QrCode::format('png')->size(100)->generate('{"domain":"apidomain","username":"501","password":"Vf6zkGdXr2DA"}')) !!}" /> --}}
                         </td>
                       </tr>
                     </table>
 
-                    <p class="mt-2">if the user has an email on file credentials will be sent to that address.</p>
+                    <p class="mt-2">If the user has an email on file, credentials will be sent to that address.</p>
                     
                     <h3 class="mt-3">Next steps</h3>
                     <p>Use the links below to download {{ config('app.name', 'Laravel') }} apps. Then log in using the credentials shown above or scan a QR code via the mobile app interface.</p>
@@ -819,6 +820,9 @@
                     $('#extensionSpan').text(response.user.username);
                     $('#passwordSpan').text(response.user.password);
                     $('#domainSpan').text(response.user.domain);
+                    let qrcode = '{"domain":"' + response.user.domain + '","username":"' + response.user.username + '","password":"' + response.user.password + '"}';
+                    // console.log ('base64_encode(QrCode::format("png")->size(100)->generate(\'' + qrcode + '\'))');
+                    // $('#qrCode').html('<img src="data:image/png;base64, {!! base64_encode(QrCode::format("png")->size(100)->generate(' + qrcode + ')) !!}" />');
 
                 }
             })
