@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
 use Illuminate\Support\Facades\Session;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppsController extends Controller
 {
@@ -749,8 +750,13 @@ class AppsController extends Controller
         $appUser->save();
         // Log::info($response);
 
+        // Generate QR code
+        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] . 
+            '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        
         return response()->json([
             'user' => $response['result'],
+            'qrcode' => base64_encode($qrcode),
             'status' => 'success',
             'message' => 'The user has been successfully created'
         ]);
@@ -836,8 +842,13 @@ class AppsController extends Controller
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
+        // Generate QR code
+        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] . 
+            '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+
         return response()->json([
             'user' => $response['result'],
+            'qrcode' => base64_encode($qrcode),
             'status' => 200,
             'success' => [
                 'message' => 'The mobile app password was succesfully reset'
