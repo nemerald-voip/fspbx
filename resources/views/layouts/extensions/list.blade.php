@@ -326,8 +326,6 @@
                           </table>
                         </td>
                         <td id="qrCode">
-                            {{-- <img src="data:image/png;base64,{!! QrCode::format('png')->size(100)->generate('{"domain":"apidomain","username":"501","password":"Vf6zkGdXr2DA"}') !!}" /> --}}
-                            {{-- <img src="data:image/png;base64, {!! base64_encode(QrCode::format('png')->size(100)->generate('{"domain":"apidomain","username":"501","password":"Vf6zkGdXr2DA"}')) !!}" /> --}}
                         </td>
                       </tr>
                     </table>
@@ -687,7 +685,7 @@
                 data: $(this).serialize(),
             })
             .done(function(response) {
-                //console.log(response);
+                // console.log(response);
                 // remove the spinner and change button to default
                 $("#appUserCreateSubmitButton").html('');
                 $("#appUserCreateSubmitButton").append('Create User');
@@ -708,6 +706,7 @@
                         $('#extensionSpan').text(response.user.username);
                         $('#passwordSpan').text(response.user.password);
                         $('#domainSpan').text(response.user.domain);
+                        $('#qrCode').html('<img src="data:image/png;base64, ' + response.qrcode + '" />');
                     } else if(response.user.status == 2) {
                         $('#createMobileAppDeactivatedSuccessModal').modal("show");
                     }
@@ -820,9 +819,7 @@
                     $('#extensionSpan').text(response.user.username);
                     $('#passwordSpan').text(response.user.password);
                     $('#domainSpan').text(response.user.domain);
-                    let qrcode = '{"domain":"' + response.user.domain + '","username":"' + response.user.username + '","password":"' + response.user.password + '"}';
-                    // console.log ('base64_encode(QrCode::format("png")->size(100)->generate(\'' + qrcode + '\'))');
-                    // $('#qrCode').html('<img src="data:image/png;base64, {!! base64_encode(QrCode::format("png")->size(100)->generate(' + qrcode + ')) !!}" />');
+                    $('#qrCode').html('<img src="data:image/png;base64, ' + response.qrcode + '" />');
 
                 }
             })
