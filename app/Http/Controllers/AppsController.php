@@ -595,17 +595,18 @@ class AppsController extends Controller
                 $extension = Extensions::where('extension', $user['extension'])
                     ->where ('domain_uuid', $domain->domain_uuid)
                     ->first();
+                if ($extension) {
+                    // Save returned user info in database
+                    $appUser = new MobileAppUsers();
+                    $appUser->extension_uuid = $extension->extension_uuid;
+                    $appUser->domain_uuid = $extension->domain_uuid;
+                    $appUser->org_id = $org_id;
+                    $appUser->conn_id = $user['branchid'];
+                    $appUser->user_id = $user['id'];
+                    $appUser->status = $user['status'];
 
-                // Save returned user info in database
-                $appUser = new MobileAppUsers();
-                $appUser->extension_uuid = $extension->extension_uuid;
-                $appUser->domain_uuid = $extension->domain_uuid;
-                $appUser->org_id = $org_id;
-                $appUser->conn_id = $user['branchid'];
-                $appUser->user_id = $user['id'];
-                $appUser->status = $user['status'];
-
-                $appUser->save();
+                    $appUser->save();                    
+                }
             }
 
         }
@@ -979,7 +980,7 @@ class AppsController extends Controller
 
         $message = ($mobile_app['status'] == 1) ? 'The mobile app has been activated successfully' : "The mobile app has been deactivated";
         return response()->json([
-            'user' => $response['result'],
+            //'user' => $response['result'],
             'status' => 200,
             'success' => [
                 'message' => $message,
