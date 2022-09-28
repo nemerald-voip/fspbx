@@ -529,6 +529,7 @@
             $("#appUserResetPasswordButton").html('');
             $("#appUserResetPasswordButton").append('<i class="uil-lock-alt me-1"></i> <span>Reset password</span>');
             $("#appUserResetPasswordButton").prop( "disabled", false );
+            $("#activate").prop('checked', true);
 
             $.ajax({
                 type : "POST",
@@ -543,7 +544,7 @@
                 } else {
                     $('.loading').hide();
                     if (response.mobile_app){
-                        if (!response.mobile_app.status || response.mobile_app.status==2) {
+                        if (!response.mobile_app.status || response.mobile_app.status==2 || response.mobile_app.status==-1) {
                             $("#appUserSetStatusButton").html('');
                             $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Activate</span>');
                             $("#appUserSetStatusButton").addClass('btn-success');
@@ -707,7 +708,7 @@
                         $('#passwordSpan').text(response.user.password);
                         $('#domainSpan').text(response.user.domain);
                         $('#qrCode').html('<img src="data:image/png;base64, ' + response.qrcode + '" />');
-                    } else if(response.user.status == 2) {
+                    } else if(response.user.status == -1) {
                         $('#createMobileAppDeactivatedSuccessModal').modal("show");
                     }
 
@@ -834,12 +835,12 @@
         function appUserSetStatusAction(url,id=''){
             var mobile_app = $("#MobileAppModal").data("mobile_app");
             url = url.replace(':id', mobile_app.extension_uuid );
-
+            console.log (mobile_app.status);
             // Set new status
-            if (!mobile_app.status || mobile_app.status==2) {
+            if (!mobile_app.status || mobile_app.status==-1 ) {
                 mobile_app.status = 1;
             } else {
-                mobile_app.status = 2
+                mobile_app.status = -1
             }
 
             //Change button to spinner
@@ -863,6 +864,30 @@
             .done(function(response) {
                 // console.log(response);
                 if (response.error){
+
+                    // remove the spinner and change button to default
+                    if (mobile_app.status == -1){
+                        $("#appUserSetStatusButton").html('');
+                        $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>');
+                        $("#appUserSetStatusButton").addClass('btn-warning');
+                        $("#appUserSetStatusButton").removeClass('btn-success');
+                        $("#appUserSetStatusButton").prop( "disabled", false );
+                        $('#appUserResetPasswordButton').show();
+                        mobile_app.status = 1;
+                    }
+                    if (mobile_app.status == 1){
+                        $("#appUserSetStatusButton").html('');
+                        $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Activate</span>');
+                        $("#appUserSetStatusButton").addClass('btn-success');
+                        $("#appUserSetStatusButton").removeClass('btn-warning');
+                        $("#appUserSetStatusButton").prop( "disabled", false );
+                        $('#appUserResetPasswordButton').hide();
+                        mobile_app.status = -1;
+                    }
+                    dataObj = new Object();
+                    dataObj.mobile_app = mobile_app;
+                    $('#MobileAppModal').data(dataObj);
+
                     $("#appMobileAppError").find("ul").html('');
                     $("#appMobileAppError").css('display','block');
                     $("#appMobileAppError").find("ul").append('<li>'+response.error.message+'</li>');
@@ -877,13 +902,15 @@
                         $("#appUserSetStatusButton").prop( "disabled", false );
                         $('#appUserResetPasswordButton').show();
                     }
-                    if (mobile_app.status == 2){
+                    if (mobile_app.status == -1){
                         $("#appUserSetStatusButton").html('');
                         $("#appUserSetStatusButton").append('<i class="mdi mdi-power-plug-off me-1"></i> <span>Activate</span>');
                         $("#appUserSetStatusButton").addClass('btn-success');
                         $("#appUserSetStatusButton").removeClass('btn-warning');
                         $("#appUserSetStatusButton").prop( "disabled", false );
+                        $('#appUserResetPasswordButton').hide();
                     }
+
                     $("#appMobileAppSuccess").find("ul").html('');
                     $("#appMobileAppSuccess").css('display','block');
                     $("#appMobileAppSuccess").find("ul").append('<li>'+response.success.message+'</li>');

@@ -527,6 +527,9 @@ class AppsController extends Controller
         // Get Org ID from database
         $org_id = appsGetOrganizationDetails($domain->domain_uuid);
 
+        // Delete any prior info from database
+        $deleted = MobileAppUsers::where('org_id', $org_id)->delete();
+
         //Get all connections
         $response = appsGetConnections($org_id);
 
@@ -593,9 +596,6 @@ class AppsController extends Controller
                     ->where ('domain_uuid', $domain->domain_uuid)
                     ->first();
 
-                // Delete any prior info from database
-                $appUser = MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
-
                 // Save returned user info in database
                 $appUser = new MobileAppUsers();
                 $appUser->extension_uuid = $extension->extension_uuid;
@@ -603,7 +603,7 @@ class AppsController extends Controller
                 $appUser->org_id = $org_id;
                 $appUser->conn_id = $user['branchid'];
                 $appUser->user_id = $user['id'];
-                $appUser->status = ($user['status'] == -1 || $user['status'] == 2) ? 2 : 1;
+                $appUser->status = $user['status'];
 
                 $appUser->save();
             }
@@ -685,34 +685,21 @@ class AppsController extends Controller
     {
         $extension = Extensions::find($request->extension_uuid);
 
-        // Create a new user
-        $data = array(
-            'method' => 'createUser',
-            'params' => array(
-                'orgid' => $request->org_id,
-                'branchid' => $request->connection,
-                'name' => $extension->effective_caller_id_name,
-                'email' => $extension->voicemail->voicemail_mail_to,
-                'extension' => $extension->extension,
-                'username' => $extension->extension,
-                'domain' => $request->app_domain,
-                'authname' => $extension->extension,
-                'password' => $extension->password,
-                'status' => ($request->activate == 'on') ? 1 : 2,
-                )
-            );
+        $mobile_app = [
+            'org_id' => $request->org_id,
+            'conn_id' => $request->connection,
+            'name' => $extension->effective_caller_id_name,
+            'email' => $extension->voicemail->voicemail_mail_to,
+            'ext' => $extension->extension,
+            'username' => $extension->extension,
+            'domain' => $request->app_domain,
+            'authname' => $extension->extension,
+            'password' => $extension->password,
+            'status' => ($request->activate == 'on') ? 1 : -1,
+        ];
 
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create a new user']);
-                })
-            ->json();
+        // Send request to create user
+        $response = appsCreateUser($mobile_app);
 
         //If there is an error return failed status
         if (isset($response['error'])) {
@@ -750,9 +737,12 @@ class AppsController extends Controller
         $appUser->save();
         // Log::info($response);
 
-        // Generate QR code
-        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] . 
-            '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        $qrcode = "";
+        if ($request->activate == 'on'){
+            // Generate QR code
+            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] . 
+                '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        }
         
         return response()->json([
             'user' => $response['result'],
@@ -873,33 +863,119 @@ class AppsController extends Controller
         $mobile_app['ext'] = $extension['extension'];
         $mobile_app['password'] = $extension->password;
 
-        // Send request to update user settings
-        $response = appsUpdateUser($mobile_app);
- 
-        //If there is an error return failed status
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ])->getData(true);
-        } elseif (!isset($response['result'])) {
-            return response()->json([
-                'status' => 401,
-                'result' => $response,
-                'error' => [
-                    'message' => "An unknown error has occured",
-                ],
-            ])->getData(true);
+        $appUser = $extension->mobile_app;
+
+        if ($mobile_app['status']==1) {
+            // Send request to update user settings
+            $response = appsUpdateUser($mobile_app);
+
+            //If there is an error return failed status
+            if (isset($response['error'])) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => $response['error']['message'],
+                    ],
+                ])->getData(true);
+            } elseif (!isset($response['result'])) {
+                return response()->json([
+                    'status' => 401,
+                    'result' => $response,
+                    'error' => [
+                        'message' => "An unknown error has occured",
+                    ],
+                ])->getData(true);
+            }
+
+            // Update user info in database
+            if ($appUser) {
+                $appUser->status = $mobile_app['status'];
+                $appUser->save();
+            } 
+
+        } else if ($mobile_app['status']==-1) {
+
+            // Send request to delete user first and then recreate it
+            $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
+    
+            //If there is an error return failed status
+            if (isset($response['error'])) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => $response['error']['message'],
+                    ],
+                ])->getData(true);
+            } elseif (!isset($response['result'])) {
+                return response()->json([
+                    'status' => 401,
+                    'result' => $response,
+                    'error' => [
+                        'message' => "An unknown error has occured",
+                    ],
+                ])->getData(true);
+            }
+
+            // Delete any prior info from database
+            if ($appUser) $appUser->delete();
+
+            // Send request to get org details
+            $response = appsGetOrganization($mobile_app['org_id']);
+
+            //If there is an error return failed status
+            if (isset($response['error'])) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => $response['error']['message'],
+                    ],
+                ])->getData(true);
+            } elseif (!isset($response['result'])) {
+                return response()->json([
+                    'status' => 401,
+                    'result' => $response,
+                    'error' => [
+                        'message' => "An unknown error has occured",
+                    ],
+                ])->getData(true);
+            }
+
+            // Send request to create a new deactivated user
+            $mobile_app['username'] = $extension->extension;
+            $mobile_app['authname'] = $extension->extension;
+            $mobile_app['domain'] = $response['result']['domain'];
+            $response = appsCreateUser($mobile_app);
+    
+            //If there is an error return failed status
+            if (isset($response['error'])) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => $response['error']['message'],
+                    ],
+                ])->getData(true);
+            } elseif (!isset($response['result'])) {
+                return response()->json([
+                    'status' => 401,
+                    'result' => $response,
+                    'error' => [
+                        'message' => "An unknown error has occured",
+                    ],
+                ])->getData(true);
+            }
+
+            // Save returned user info in database
+            $appUser = new MobileAppUsers();
+            $appUser->extension_uuid = $extension->extension_uuid;
+            $appUser->domain_uuid = $extension->domain_uuid;
+            $appUser->org_id = $mobile_app['org_id'];
+            $appUser->conn_id = $mobile_app['conn_id'];
+            $appUser->user_id = $response['result']['id'];
+            $appUser->status = $response['result']['status'];
+            $appUser->save();
+
         }
 
-        // Update user info in database
-        $appUser = $extension->mobile_app;
-        if ($appUser) {
-            $appUser->status = $mobile_app['status'];
-            $appUser->save();
-        } 
 
         $message = ($mobile_app['status'] == 1) ? 'The mobile app has been activated successfully' : "The mobile app has been deactivated";
         return response()->json([

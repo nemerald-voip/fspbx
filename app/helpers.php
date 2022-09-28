@@ -113,6 +113,33 @@ if (!function_exists('appsGetOrganizationDetails')){
     }
 }
 
+if (!function_exists('appsGetOrganization')){
+    function appsGetOrganization($org_id) {
+        $data = array(
+            'method' => 'getOrganization',
+            'params' => array(
+                'id' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to retrive organization",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+        return $response;
+    }
+}
+
 
 if (!function_exists('appsStoreConnectionDetails')){
     function appsStoreConnectionDetails(Request $request) {
@@ -247,6 +274,44 @@ if (!function_exists('appsGetUsers')){
     }
 }
 
+
+// Create mobile app user via Ringotel API call 
+if (!function_exists('appsCreateUser')){
+    function appsCreateUser($mobile_app) {
+
+        $data = array(
+            'method' => 'createUser',
+            'params' => array(
+                'orgid' => $mobile_app['org_id'],
+                'branchid' => $mobile_app['conn_id'],
+                'name' => $mobile_app['name'],
+                'email' => $mobile_app['email'],
+                'extension' => $mobile_app['ext'],
+                'username' => $mobile_app['username'],
+                'domain' => $mobile_app['domain'],
+                'authname' => $mobile_app['authname'],
+                'password' => $mobile_app['password'],
+                'status' => $mobile_app['status'],
+                )
+            );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode($data),'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'error' => 401,
+                    'message' => 'Unable to create a new user']);
+                })
+            ->json();
+        
+        return $response;
+    }
+}
+
+
 // Delete mobile app user via Ringotel API call 
 if (!function_exists('appsDeleteUser')){
     function appsDeleteUser($org_id, $user_id) {
@@ -291,6 +356,7 @@ if (!function_exists('appsUpdateUser')){
                 'username' => $mobile_app['ext'],
                 'authname' => $mobile_app['ext'],
                 'password' => $mobile_app['password'],
+                'status' => $mobile_app['status'],
             )
         );
 
