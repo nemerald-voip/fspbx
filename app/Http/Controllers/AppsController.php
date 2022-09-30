@@ -763,6 +763,10 @@ class AppsController extends Controller
 
         $mobile_app = $request->mobile_app;
 
+        // Delete any prior info from database
+        $appUser = $extension->mobile_app;
+        if ($appUser) $appUser->delete();
+
         // Send request to delеte user
         $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
  
@@ -782,11 +786,6 @@ class AppsController extends Controller
                 ],
             ])->getData(true);
         }
-
-
-        // Delete any prior info from database
-        $appUser = $extension->mobile_app;
-        if ($appUser) $appUser->delete();
 
         return response()->json([
             'user' => $response['result'],
