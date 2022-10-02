@@ -75,7 +75,7 @@ class ExtensionsController extends Controller
                         ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
                 }
             }
-            //check againts registations and add them to array
+            //check against registrations and add them to array
             $all_regs =[];
             foreach ($registrations as $registration) {
                 if ($registration['sip-auth-user'] == $extension['extension']) {
