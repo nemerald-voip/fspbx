@@ -6,6 +6,7 @@ use default_settings;
 use App\Models\Domain;
 use App\Models\UserGroup;
 use App\Models\DefaultSettings;
+use App\Models\DomainSettings;
 use dashboard;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +74,17 @@ class SetUpUserSession
                 -> value('user_setting_value');
         // user_setting_value": "9c143165-fda6-4539-a607-4184eb05b065"
 
-        // If user doesn't have a custom menu assign the default one
+        // If user doesn't have a custom menu check if there is one set on the domain level
+        if (is_null($menu_uuid)) {
+
+            $menu_uuid = DomainSettings::where ('domain_setting_category', 'domain')
+            ->where ('domain_setting_subcategory', 'menu')
+            -> where ('domain_uuid',$domain->domain_uuid)
+            -> where ('domain_setting_enabled', true)
+            -> value('domain_setting_value');
+        }
+
+        // If domain doesn't have a custom menu assign a default one
         if (is_null($menu_uuid)) {
             $menu_uuid = DefaultSettings::where ('default_setting_category', 'domain')
                 ->where ('default_setting_subcategory', 'menu')
