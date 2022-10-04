@@ -85,6 +85,12 @@ class SendAppCredentials implements ShouldQueue
                 if ($setting->default_setting_subcategory == "mac_link") {
                     $attributes['mac_link'] = $setting->default_setting_value;
                 }
+                if ($setting->default_setting_subcategory == "email_company_address") {
+                    $attributes['company_address'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "email_company_name") {
+                    $attributes['company_name'] = $setting->default_setting_value;
+                }
             }
         }
         $this->attributes = $attributes;

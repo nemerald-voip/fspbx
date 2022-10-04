@@ -469,10 +469,10 @@
                 <table class="email-footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
                   <tr>
                     <td class="content-cell" align="center">
-                      <p class="f-fallback sub align-center">&copy; {{ config('app.name', 'Laravel') }}. {{ $address ?? ''}}</p>
-                      <p class="f-fallback sub align-center">
-                        {{ $company_name ?? ''}}
+                      <p class="f-fallback sub align-center">&copy; {{ $company_name ?? ''}}, {{ $company_address ?? ''}}</p>
+                      <p class="f-fallback sub align-center"> 
                         <br>{{ $company_address ?? ''}}
+                        <a href="{{{ pm:unsubscribe }}}">Unsubscribe from this list</a>
                       </p>
                     </td>
                   </tr>

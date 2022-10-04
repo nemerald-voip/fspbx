@@ -123,7 +123,7 @@
       </table>
     </td>
     <td>
-      <img src="{!!$message->embedData(QrCode::format('png')
+      <img alt="QR Code" src="{!!$message->embedData(QrCode::format('png')
         ->generate('{"domain":"' . $attributes["domain"] . '","username":"' . $attributes["username"] . '","password":"' . $attributes["password"] . '"}'), 'QrCode.png', 'image/png')!!}">
     </td>
   </tr>
