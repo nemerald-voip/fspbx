@@ -131,9 +131,9 @@
 
 <p>3. Once you have logged in, start communicating with the users within your organization. You can make and receive phone calls through your extension, put calls on hold, transfer calls, park calls, and much more.</p>
 
-<p>If you have any questions, feel free to <a href="mailto:{{ $support_email ?? ''}}">email our customer success team</a>. (We're lightning quick at replying.)</p>
+<p>If you have any questions, <a href="mailto:{{ $attributes["support_email"] ?? ''}}">email our customer success team</a>. (We're lightning quick at replying.)</p>
 <p>Thanks,
   <br>{{ config('app.name', 'Laravel') }} Team</p>
-<p><strong>P.S.</strong> Need immediate help getting started? Check out our <a href="{{ $help_url ?? ''}}">help documentation</a>. Or, just reply to this email, the {{ config('app.name', 'Laravel') }} support team is always ready to help!</p>
+<p><strong>P.S.</strong> Need immediate help getting started? The {{ config('app.name', 'Laravel') }} support team is always ready to help! Check out our <a href="{{ $help_url ?? ''}}">help documentation</a>. Or, just reply to this email.</p>
 
 @endsection

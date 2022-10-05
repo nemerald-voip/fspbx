@@ -471,7 +471,7 @@
                     <td class="content-cell" align="center">
                       <p class="f-fallback sub align-center">&copy; {{ $attributes['company_name'] ?? ''}}, {{ $attributes['company_address'] ?? ''}}</p>
                       <p class="f-fallback sub align-center"> 
-                        <a href="mailto:noc@nemerald.com">Unsubscribe from this list</a>
+                        <a href="mailto:{{ $attributes['support_email'] ?? '' }}">Unsubscribe from this list</a>
                       </p>
                     </td>
                   </tr>

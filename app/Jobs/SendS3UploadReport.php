@@ -4,15 +4,16 @@ namespace App\Jobs;
 
 use App\Mail\S3UploadReport;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Models\DefaultSettings;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
-use Illuminate\Support\Facades\Log;
 
 class SendS3UploadReport implements ShouldQueue
 {
@@ -68,6 +69,20 @@ class SendS3UploadReport implements ShouldQueue
      */
     public function __construct($attributes)
     {
+        $settings = DefaultSettings::where('default_setting_category','email')->get();
+        if ($settings) {
+            foreach ($settings as $setting) {
+                if ($setting->default_setting_subcategory == "smtp_from") {
+                    $attributes['support_email'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "email_company_address") {
+                    $attributes['company_address'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "email_company_name") {
+                    $attributes['company_name'] = $setting->default_setting_value;
+                }
+            }
+        }
         $this->attributes = $attributes;
     }
 
