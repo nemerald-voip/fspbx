@@ -47,7 +47,7 @@
                                     <th>Email</th>
                                     <th>Outbound Caller ID</th>
                                     {{-- <th>Status</th> --}}
-                                    <th>Desctiption</th>
+                                    <th>Description</th>
                                     <th style="width: 140px;">Action</th>
                                 </tr>
                             </thead>

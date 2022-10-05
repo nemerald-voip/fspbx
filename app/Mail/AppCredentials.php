@@ -30,6 +30,9 @@ class AppCredentials extends Mailable
      */
     public function build()
     {
+        $this->withSwiftMessage(function ($message) {
+            $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:noc@nemerald.com');
+        });
         return $this->view('emails.app.credentials');
     }
 }
