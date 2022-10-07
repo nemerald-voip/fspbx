@@ -167,6 +167,11 @@
             });
         });
 
+        // Fire an event when right side bar is toggled 
+        $('#right-modal').on('shown.bs.modal', function (e) {
+            $('#domainSearchInput').focus();
+        });
+
         // Action checkboxes on list pages
         $('#selectallCheckbox').on('change',function(){
             if($(this).is(':checked')){

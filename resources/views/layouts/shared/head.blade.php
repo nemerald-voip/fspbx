@@ -29,3 +29,11 @@
 
 <!-- Styles -->
 {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
+
+{{-- This style is added to fix a bug with modals shifting the page --}}
+<style>
+.modal-open {
+    padding-right: 0px!important;
+    padding-left: 0px!important;
+}
+</style>

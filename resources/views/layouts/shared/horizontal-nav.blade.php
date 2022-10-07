@@ -38,7 +38,7 @@
                 {{-- <ul class="navbar-nav"> --}}
                     <span class="navbar-nav">
                         <span class="nav-item text-nowrap" >
-                        <a class="nav-link @if (Session::get("domain_select")) end-bar-toggle @endif" href="javascript: void(0);">
+                        <a class="nav-link " @if (Session::get("domain_select")) data-bs-toggle="modal" data-bs-target="#right-modal" @endif href="javascript: void(0);">
                             <i class="uil uil-globe  me-1"></i>{{ Session::get("domain_name") }}
                         </a>
                         </span>
