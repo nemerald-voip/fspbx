@@ -47,6 +47,11 @@ return [
             'root' => '/var/lib/freeswitch/storage/voicemail/default',
         ],
 
+        'polycom_log_directory' => [
+            'driver' => 'local',
+            'root' => env('POLYCOM_LOG_DIRECTORY'),
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

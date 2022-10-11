@@ -9,11 +9,12 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
+use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
-use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,10 @@ use App\Http\Controllers\DashboardController;
 
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
 Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
+
+//Polycom log handling
+Route::put('/polycom/log/{name}', [PolycomLogController::class, 'store'])->withoutMiddleware(['auth','web']) ->name('log.store');
+Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withoutMiddleware(['auth','web']) ->name('log.get');
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 
 // Extensions
