@@ -209,6 +209,18 @@ class SmsWebhookController extends Controller
             }
         }
 
+        // if method is "read" send  
+        if ($message['method'] == "read"){
+            // Process read response
+            exit();
+        }
+
+        // if method is "delivered" send  
+        if ($message['method'] == "delivered"){
+            // Process delivered response
+            exit();
+        }
+
         //Get user's domain settings
         $domainSetting = DomainSettings::where('domain_setting_subcategory', 'org_id')
             ->where('domain_setting_value',$message['params']['orgid'])
@@ -289,16 +301,6 @@ class SmsWebhookController extends Controller
                     }
 
                 }
-        }
-
-        // if method is "read" send  
-        if ($message['method'] == "read"){
-            // Process read response
-        }
-
-        // if method is "delivered" send  
-        if ($message['method'] == "delivered"){
-            // Process delivered response
         }
 
         //dd($response->body());
