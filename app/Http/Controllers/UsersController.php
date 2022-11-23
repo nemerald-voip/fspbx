@@ -199,7 +199,7 @@ class UsersController extends Controller
     {
         $attributes = [
             'user_email' => 'email',
-            
+            'groups' => 'settings and permissions'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -210,7 +210,7 @@ class UsersController extends Controller
                 Rule::unique('App\Models\User','user_email')->ignore($user->user_uuid,'user_uuid'),
                 'email:rfc,dns'
             ],
-            'groups' => 'nullable|array',
+            'groups' => 'required|array',
             'time_zone' => 'nullable',
             'language' => 'nullable',
             'user_enabled' => 'present', 
@@ -317,6 +317,7 @@ class UsersController extends Controller
 
         $attributes = [
             'user_email' => 'email',
+            'groups' => 'settings and permissions'
             
         ];
 
@@ -328,7 +329,7 @@ class UsersController extends Controller
                 Rule::unique('App\Models\User','user_email')->ignore($user->user_uuid,'user_uuid'),
                 'email:rfc,dns'
             ],
-            'groups' => 'nullable|array',
+            'groups' => 'required|array',
             'time_zone' => 'nullable',
             'language' => 'nullable',
             'user_enabled' => 'present', 
