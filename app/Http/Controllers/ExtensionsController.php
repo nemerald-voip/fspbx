@@ -387,6 +387,8 @@ class ExtensionsController extends Controller
         $attributes['password'] = Str::random(25);
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+        $attributes['insert_date'] = date("Y-m-d H:i:s");
+        $attributes['insert_user'] = Session::get('user_uuid');
 
         $extension->fill($attributes);    
         $extension->save();
@@ -631,6 +633,8 @@ class ExtensionsController extends Controller
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+        $attributes['update_date'] = date("Y-m-d H:i:s");
+        $attributes['update_user'] = Session::get('user_uuid');
 
         // Check if voicemail directory needs to be renamed 
         if($attributes['voicemail_id'] != $attributes['extension']) {
@@ -682,7 +686,6 @@ class ExtensionsController extends Controller
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
         $extension->voicemail->update($attributes);
         $extension->update($attributes);
-      
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
