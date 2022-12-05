@@ -96,7 +96,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="groups-select" class="form-label">Roles <span class="text-danger">*</span></label>
+                                                    <label for="groups-select" class="form-label">Settings and Permissions</label>
                                                     <!-- Multiple Select -->
                                                     <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
                                                         id="groups-select" @if (!userCheckPermission('user_group_edit')) disabled @endif name="groups[]">
@@ -615,16 +615,16 @@
 
 
                                         @if (isSuperAdmin())
-                                        <div class="row" id="domain_select_row">
+                                        <div class="row" id="reseller_domain_select_row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="domain_select" class="form-label">Select Domains that user is allowed to manage <span class="text-danger">*</label>
+                                                    <label for="reseller_domain_select" class="form-label">Assign reseller admin privileges to clients <span class="text-danger">*</label>
                                                     <!-- Multiple Select -->
                                                     <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
-                                                        id="domain_select" name="domains[]">
+                                                        id="reseller_domain_select" name="reseller_domains[]">
                                                             @foreach ($all_domains as $domain)
                                                                 <option value="{{ $domain->domain_uuid }}"
-                                                                    @if(isset($assigned_domains) && $assigned_domains->contains($domain))
+                                                                    @if(isset($reseller_domains) && $reseller_domains->contains($domain))
                                                                         selected
                                                                     @endif>
                                                                     @if (isset($domain->domain_description)) 
@@ -632,26 +632,6 @@
                                                                     @else
                                                                     {{ $domain->domain_name }}
                                                                     @endif
-
-                                                                </option>
-                                                            @endforeach
-                                                    </select>
-                                                    <div class="text-danger error_message reseller_domain_err"></div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="domain_groups_select" class="form-label">Select Domain Groups that user is allowed to manage <span class="text-danger">*</label>
-                                                    <!-- Multiple Select -->
-                                                    <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
-                                                        id="domain_groups_select" name="domain_groups[]">
-                                                            @foreach ($all_domain_groups as $domain_group)
-                                                                <option value="{{ $domain_group->domain_group_uuid }}"
-                                                                    @if(isset($assigned_domain_groups) && $assigned_domain_groups->contains($domain_group))
-                                                                        selected
-                                                                    @endif>
-                                                                    {{ $domain_group->group_name }}
 
                                                                 </option>
                                                             @endforeach
@@ -905,9 +885,9 @@
                 }
             });
             if (reseller_select_show){
-                $('#domain_select_row').show();
+                $('#reseller_domain_select_row').show();
             } else {
-                $('#domain_select_row').hide();
+                $('#reseller_domain_select_row').hide();
             }
         }
         

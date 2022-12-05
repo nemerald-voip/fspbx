@@ -10,6 +10,7 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
@@ -37,6 +38,12 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 
 // Extensions
 Route::resource('extensions', 'ExtensionsController');
+
+// Groups
+Route::resource('groups', 'GroupsController');
+
+// Domain Groups
+Route::resource('domaingroups', 'DomainGroupsController');
 
 // SIP Credentials
 Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow']) ->name('extensions.sip.show');

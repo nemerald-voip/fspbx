@@ -510,7 +510,7 @@ class AppsController extends Controller
         return response()->json([
             'status' => 200,
             'success' => [
-                'message' => 'All organizations were succeddfully synced'
+                'message' => 'All organizations were successfully synced'
             ]
         ]);
 

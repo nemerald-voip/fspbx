@@ -4,26 +4,29 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
-use App\Models\Groups;
 use App\Models\Domain;
+use App\Models\Groups;
 use App\Models\Contact;
-use App\Models\GroupPermissions;
+use App\Models\DomainGroups;
 use App\Models\UserGroup;
 use App\Models\UserSetting;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\UserAdvFields;
+use Illuminate\Validation\Rule;
+use App\Models\GroupPermissions;
+use App\Models\UserDomainGroupPermissions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\UserDomainPermission;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Contracts\Http\Kernel;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Contracts\Http\Kernel;
+use function PHPUnit\Framework\isNull;
 
 use function PHPUnit\Framework\isEmpty;
-use function PHPUnit\Framework\isNull;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 
 class UsersController extends Controller
 {
@@ -54,7 +57,14 @@ class UsersController extends Controller
         $domain_uuid=Session::get('domain_uuid');
         $data['users']=User::where('domain_uuid',$domain_uuid)->orderBy('username','asc')->get();
 
-        return view('layouts.users.list')->with($data);
+        //assign permissions
+        $permissions['add_new'] = userCheckPermission('user_add');
+        $permissions['edit'] = userCheckPermission('user_edit');
+        $permissions['delete'] = userCheckPermission('user_delete');
+
+        return view('layouts.users.list')
+            ->with($data)
+            ->with('permissions',$permissions);
     }
 
 
@@ -85,6 +95,9 @@ class UsersController extends Controller
         $all_domains = Domain::where('domain_enabled','true')
         ->get();
 
+        //get all domain groups
+        $all_domain_groups = DomainGroups::get();
+
         // Get groups that have domain_select permission
         $domain_select_groups = array();
         foreach($all_groups as $group){
@@ -107,6 +120,7 @@ class UsersController extends Controller
         $data['user'] = $user;
         $data['all_groups']=$all_groups;
         $data['all_domains']=$all_domains;
+        $data['all_domain_groups']=$all_domain_groups;
         $data['domain_select_groups']=json_encode($domain_select_groups);
         $data['user_language']=$user_language;
         $data['user_time_zone']=$user_time_zone;
@@ -171,12 +185,26 @@ class UsersController extends Controller
         $all_domains = Domain::where('domain_enabled','true')
             ->get();
 
+        //get all domain groups
+        $all_domain_groups = DomainGroups::get();
+
         $data=array();
         $data['user_groups']=$user->groups();
         $data['all_groups']=$all_groups;
         $data['all_domains']=$all_domains;
+        $data['all_domain_groups']=$all_domain_groups;
         $data['domain_select_groups']=json_encode($domain_select_groups);
-        $data['reseller_domains']=$user->reseller_domains();
+        
+        $data['assigned_domains'] = collect();
+        foreach ($user->domain_permissions as $domain_permission) {
+            $data['assigned_domains'] ->push($domain_permission->domain);
+        }
+
+        $data['assigned_domain_groups'] = collect();
+        foreach ($user->domain_group_permissions as $domain_group_permission) {
+            $data['assigned_domain_groups'] ->push($domain_group_permission->domain_group);
+        }
+
         $data['languages']=DB::table('v_languages')->get();
         $data['user']=$user;
         $data['user_language']=$user_language;
@@ -199,7 +227,7 @@ class UsersController extends Controller
     {
         $attributes = [
             'user_email' => 'email',
-            'groups' => 'settings and permissions'
+            'groups' => 'roles'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -214,7 +242,8 @@ class UsersController extends Controller
             'time_zone' => 'nullable',
             'language' => 'nullable',
             'user_enabled' => 'present', 
-            'reseller_domains' => 'nullable', 
+            'domains' => 'nullable', 
+            'domain_groups' => 'nullable',
             'domain_uuid' => 'present',         
   
         ], [], $attributes);
@@ -225,18 +254,7 @@ class UsersController extends Controller
 
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
-        if (isset($attributes['user_enabled']) && $attributes['user_enabled']== "on")  $attributes['user_enabled'] = "true";
-
-        if (isset($attributes['groups'])) {
-            foreach($attributes['groups'] as $group){
-                $group_name = Groups::where('group_uuid',$group)->pluck('group_name')->first();
-                    $user_group=new UserGroup();
-                    $user_group->domain_uuid = Session::get('domain_uuid');
-                    $user_group->group_name = $group_name;
-                    $user_group->group_uuid = $group;
-                    $user->user_groups()->save($user_group);
-            }
-        }       
+        if (isset($attributes['user_enabled']) && $attributes['user_enabled']== "on")  $attributes['user_enabled'] = "true";    
  
         //Make username by combining first name and last name
         $attributes['username'] = $attributes['first_name'];
@@ -248,7 +266,7 @@ class UsersController extends Controller
         $attributes['password'] = Hash::make(Str::random(25));
 
         $attributes['add_user'] = Auth::user()->username;
-        $user->fill($attributes);    
+        $user->fill($attributes);   
         $user->save();
 
         $user_name_info=new UserAdvFields();
@@ -264,18 +282,29 @@ class UsersController extends Controller
                     $user_group->domain_uuid = Session::get('domain_uuid');
                     $user_group->group_name = $group_name;
                     $user_group->group_uuid = $group;
+                    $user_group->insert_date = date('Y-m-d H:i:s');
+                    $user_group->insert_user = Session::get('user_uuid');
                     $user->user_groups()->save($user_group);
             }
         } 
 
         if (isSuperAdmin()){
-            if (isset($attributes['reseller_domains'])) {
-                foreach($attributes['reseller_domains'] as $res_domain){
+            if (isset($attributes['domains'])) {
+                foreach($attributes['domains'] as $res_domain){
                     $dom_per=new UserDomainPermission();
                     $dom_per->domain_uuid=$res_domain;
-                    $user->reseller_domain_permissions()->save($dom_per);
+                    $user->domain_permissions()->save($dom_per);
                 }
             }
+
+            if (isset($attributes['domain_groups'])) {
+                foreach($attributes['domain_groups'] as $domain_group){
+                    $dom_per = new UserDomainGroupPermissions();
+                    $dom_per->domain_group_uuid = $domain_group;
+                    $user->domain_group_permissions()->save($dom_per);
+                }
+            }
+
         }
 
         $language=new UserSetting();
@@ -317,7 +346,7 @@ class UsersController extends Controller
 
         $attributes = [
             'user_email' => 'email',
-            'groups' => 'settings and permissions'
+            'groups' => 'roles'
             
         ];
 
@@ -333,7 +362,8 @@ class UsersController extends Controller
             'time_zone' => 'nullable',
             'language' => 'nullable',
             'user_enabled' => 'present', 
-            'reseller_domains' => 'nullable',          
+            'domains' => 'nullable',
+            'domain_groups' => 'nullable'
   
         ], [], $attributes);
 
@@ -357,6 +387,8 @@ class UsersController extends Controller
                     $user_group->domain_uuid = Session::get('domain_uuid');
                     $user_group->group_name = $group_name;
                     $user_group->group_uuid = $group;
+                    $user_group->update_date = date('Y-m-d H:i:s');
+                    $user_group->update_user = Session::get('user_uuid');
                     $user->user_groups()->save($user_group);
             }
         }       
@@ -381,12 +413,21 @@ class UsersController extends Controller
 
         
         if (isSuperAdmin()){
-            $user->reseller_domain_permissions()->delete();
-            if (isset($attributes['reseller_domains'])) {
-                foreach($attributes['reseller_domains'] as $res_domain){
+            $user->domain_permissions()->delete();
+            if (isset($attributes['domains'])) {
+                foreach($attributes['domains'] as $res_domain){
                     $dom_per=new UserDomainPermission();
                     $dom_per->domain_uuid=$res_domain;
-                    $user->reseller_domain_permissions()->save($dom_per);
+                    $user->domain_permissions()->save($dom_per);
+                }
+            }
+
+            $user->domain_group_permissions()->delete();
+            if (isset($attributes['domain_groups'])) {
+                foreach($attributes['domain_groups'] as $domain_group){
+                    $dom_per = new UserDomainGroupPermissions();
+                    $dom_per->domain_group_uuid = $domain_group;
+                    $user->domain_group_permissions()->save($dom_per);
                 }
             }
         }
@@ -419,18 +460,6 @@ class UsersController extends Controller
     
     }
 
-    // function checkEmailExist($email,$id=''){
-    //     $query=User::where('user_email',$email);
-
-    //     if(!empty($id)){
-    //         $query=$query->where('user_uuid','!=',$id);
-    //     }
-    //     $query=$query->first();
-    //     if(!empty($query)){
-    //         return true;
-    //     }
-    //     return false;
-    // }
 
     /**
      * Remove the specified resource from storage.
@@ -447,14 +476,17 @@ class UsersController extends Controller
 
             if ($deleted){
                 return response()->json([
-                    'status' => 'success',
-                    'id' => $id,
-                    'message' => 'Selected users have been deleted'
+                    'status' => 200,
+                    'success' => [
+                        'message' => 'Selected users have been deleted'
+                    ]
                 ]);
             } else {
                 return response()->json([
-                    'error' => 401,
-                    'message' => 'There was an error deleting this user'
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'There was an error deleting this user'
+                    ]
                 ]);
             }
         }

@@ -23,6 +23,25 @@ class VoicemailController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
+    public function index(Request $request){
+        // Check permissions
+        if (!userCheckPermission("voicemail_view")){
+            return redirect('/');
+        }
+        $data=array();
+        $domain_uuid=Session::get('domain_uuid');
+        $data['voicemails']=Voicemails::where('domain_uuid',$domain_uuid)->orderBy('voicemail_id','asc')->get();
+
+        //assign permissions
+        $permissions['add_new'] = userCheckPermission('voicemail_add');
+        $permissions['edit'] = userCheckPermission('voicemail_edit');
+        $permissions['delete'] = userCheckPermission('voicemail_delete');
+
+        return view('layouts.voicemails.list')
+            ->with($data)
+            ->with('permissions',$permissions);     
+    } 
     public function store(Request $request, Voicemails $voicemail)
     {
 
@@ -242,6 +261,38 @@ class VoicemailController extends Controller
             'message' => 'Greeting deleted successfully'
         ]);
 
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $voicemail = Voicemails::findOrFail($id);
+
+        if(isset($voicemail)){
+            $deleted = $voicemail->delete();
+
+            if ($deleted){
+                return response()->json([
+                    'status' => 200,
+                    'success' => [
+                        'message' => 'Selected vocemail extensions have been deleted'
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'There was an error deleting selected voicemail extensions'
+                    ]
+                ]);
+            }
+        }
     }
 
 }

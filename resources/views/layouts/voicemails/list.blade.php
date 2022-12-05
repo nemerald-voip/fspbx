@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Users"])
+@extends('layouts.horizontal', ["page_title"=> "Voicemails"])
 
 @section('content')
 
@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
-                <h4 class="page-title">Users</h4>
+                <h4 class="page-title">Voicemails</h4>
             </div>
         </div>
     </div>
@@ -21,7 +21,7 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $users->count() ?? 0 }}  results for Users</label>
+                            <label class="form-label">Showing {{ $voicemails->count() ?? 0 }}  results for Voicemails</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
@@ -42,7 +42,7 @@
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-centered mb-0" id="user_list">
+                        <table class="table table-centered mb-0" id="voicemail_list">
                             <thead class="table-light">
                                 <tr>
                                     <th style="width: 20px;">
@@ -53,73 +53,68 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th>Name</th>
-                                    <th>Email</th>
+                                    <th>Voicemail ID</th>
+                                    <th>Mail to</th>
+                                    <th>Attached</th>
+                                    <th>Keep local</th>
+                                    <th>Tools</th>
+                                    <th></th>
                                     <th>Enabled</th>
-                                    <th style="width: 125px;">Action</th>
+                                    <th>Description</th>
                                 </tr>
                             </thead>
                             <tbody>
 
-                                @foreach ($users as $key=>$user)
-                                    <tr id="id{{ $user->user_uuid  }}">
+                                @foreach ($voicemails as $key=>$voicemail)
+                                    <tr id="id{{ $voicemail->voicemail_uuid  }}">
                                         <td>
                                             @if ($permissions['delete'])
                                                 <div class="form-check">
-                                                    <input type="checkbox" name="action_box[]" value="{{ $user->user_uuid }}" class="form-check-input action_checkbox">
+                                                    <input type="checkbox" name="action_box[]" value="{{ $voicemail->voicemail_uuid }}" class="form-check-input action_checkbox">
                                                     <label class="form-check-label" >&nbsp;</label>
                                                 </div>
                                             @endif
                                         </td>
                                         <td>
                                             @if ($permissions['edit']) 
-                                                <a href="{{ route('users.edit',$user) }}" class="text-body fw-bold">
-                                                    @if ($user->user_adv_fields) 
-                                                        {{ $user->user_adv_fields->first_name }} {{ $user->user_adv_fields->last_name }}
-                                                    @else
-                                                        {{ $user->username }}
-                                                    @endif
+                                                <a href="{{ route('users.edit',$voicemail) }}" class="text-body fw-bold">
+                                                    {{ $voicemail->voicemail_id }}
                                                 </a>                                             
                                             @else
                                                 <span class="text-body fw-bold">
-                                                    @if ($user->user_adv_fields) 
-                                                        {{ $user->user_adv_fields->first_name }} {{ $user->user_adv_fields->last_name }}
-                                                    @else
-                                                        {{ $user->username }}
-                                                    @endif
+                                                    {{ $voicemail->voicemail_id }}
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $user['user_email'] }} 
+                                            {{ $voicemail['voicemail_mail_to'] }} 
+                                        </td>
+                                        
+                                        <td>
+                                            @if($voicemail['voicemail_file']=='attach')
+                                            True
+                                            @else
+                                            False 
+                                            @endif
                                         </td>
                                         <td>
-                                            @if ($user['user_enabled']=='true') 
+                                            {{ ucfirst($voicemail['voicemail_local_after_email']) }}
+                                        </td>
+                                        <td>
+                                            {{-- {{ $voicemail['voicemail_local_after_email'] }} --}}
+                                        </td>
+                                        <td>
+                                        </td>
+                                        <td>
+                                            @if ($voicemail['voicemail_enabled']=='true') 
                                                 <h5><span class="badge bg-success"></i>Enabled</span></h5>
                                             @else 
                                                 <h5><span class="badge bg-warning">Disabled</span></h5>
                                             @endif
                                         </td>
+                                        
                                         <td>
-                                            
-                                            {{-- Action Buttons --}}
-                                            <div id="tooltip-container-actions">
-                                                @if ($permissions['edit'])
-                                                    <a href="{{ route('users.edit',$user) }}" class="action-icon" title="Edit"> 
-                                                        <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit user"></i>
-                                                    </a>
-                                                @endif
-
-                                                <a href="javascript:confirmPasswordResetAction('{{ $user->user_email }}');" class="action-icon"> 
-                                                    <i class="mdi mdi-account-key-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset Password"></i>
-                                                </a>
-                                                @if ($permissions['delete'])
-                                                    <a href="javascript:confirmDeleteAction('{{ route('users.destroy', ':id') }}','{{ $user->user_uuid }}');" class="action-icon"> 
-                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                                                    </a>
-                                                @endif
-                                            </div>
-                                            {{-- End of action buttons --}}
+                                            {{ $voicemail['voicemail_description'] }}
                                         </td>
                                     </tr>
                                 @endforeach

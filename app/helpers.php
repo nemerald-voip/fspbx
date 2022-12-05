@@ -14,7 +14,6 @@ use function PHPUnit\Framework\isEmpty;
 if (!function_exists('userCheckPermission')){
     function userCheckPermission($permission){
         $list = Session::get('permissions', false);
-
         if (!$list) return false;
         
         foreach ($list as $item){

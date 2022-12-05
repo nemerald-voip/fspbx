@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Groups;
-use App\Models\UserGroup;
+use App\Models\DomainGroupRelation;
 use Illuminate\Http\Request;
 
-class UserGroupController extends Controller
+class DomainGroupRelationController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -42,10 +41,10 @@ class UserGroupController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\UserGroup  $userGroup
+     * @param  \App\Models\DomainGroupRelation  $domainGroupRelation
      * @return \Illuminate\Http\Response
      */
-    public function show(UserGroup $userGroup)
+    public function show(DomainGroupRelation $domainGroupRelation)
     {
         //
     }
@@ -53,10 +52,10 @@ class UserGroupController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\UserGroup  $userGroup
+     * @param  \App\Models\DomainGroupRelation  $domainGroupRelation
      * @return \Illuminate\Http\Response
      */
-    public function edit(UserGroup $userGroup)
+    public function edit(DomainGroupRelation $domainGroupRelation)
     {
         //
     }
@@ -65,10 +64,10 @@ class UserGroupController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\UserGroup  $userGroup
+     * @param  \App\Models\DomainGroupRelation  $domainGroupRelation
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, UserGroup $userGroup)
+    public function update(Request $request, DomainGroupRelation $domainGroupRelation)
     {
         //
     }
@@ -76,10 +75,10 @@ class UserGroupController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\UserGroup  $userGroup
+     * @param  \App\Models\DomainGroupRelation  $domainGroupRelation
      * @return \Illuminate\Http\Response
      */
-    public function destroy(UserGroup $userGroup)
+    public function destroy(DomainGroupRelation $domainGroupRelation)
     {
         //
     }

@@ -115,21 +115,21 @@ class User extends Authenticatable
 
     }
 
-    /**
-     * Get a collection of all domains for reseller
-     */
-    public function reseller_domains()
-    {
-        $domain_uuids = UserDomainPermission::where('user_uuid', $this->user_uuid)->get();
+    // /**
+    //  * Get a collection of all domains for reseller
+    //  */
+    // public function reseller_domains()
+    // {
+    //     $domain_uuids = UserDomainPermission::where('user_uuid', $this->user_uuid)->get();
 
-        $domains = collect();
-        foreach ($domain_uuids as $domain_uuid) {
-            $domains->push($domain_uuid->domain);
-        }
+    //     $domains = collect();
+    //     foreach ($domain_uuids as $domain_uuid) {
+    //         $domains->push($domain_uuid->domain);
+    //     }
 
-        return $domains;
+    //     return $domains;
 
-    }
+    // }
 
     /**
      * Get all of user's advanced fields such as first name and last name stored in a separate table.
@@ -155,9 +155,17 @@ class User extends Authenticatable
     /**
      * Get all domain to which the user has reseller permissions
      */
-    public function reseller_domain_permissions()
+    public function domain_permissions()
     {
         return $this->hasMany(UserDomainPermission::class,'user_uuid','user_uuid');
+    }
+
+    /**
+     * Get all domain groups to which the user has permissions
+     */
+    public function domain_group_permissions()
+    {
+        return $this->hasMany(UserDomainGroupPermissions::class,'user_uuid','user_uuid');
     }
 
 }

@@ -18,4 +18,22 @@ class Groups extends Model
     protected $keyType = 'string';
 
 
+    /**
+     * Get all group permissions
+     */
+    public function permissions()
+    {
+        return $this->hasMany(GroupPermissions::class,'group_uuid','group_uuid');
+    }
+
+
+    /**
+     * Get all users that belong to the group
+     */
+    public function user_groups()
+    {
+        return $this->hasMany(UserGroup::class,'group_uuid','group_uuid');
+    }
+
 }
+

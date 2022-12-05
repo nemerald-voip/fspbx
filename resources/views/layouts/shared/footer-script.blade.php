@@ -88,10 +88,21 @@
                 //$('.loading').hide();
 
                 if (response.error){
-                    $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
+                    if (response.message) {
+                        $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
+                    }
+                    if (response.error.message) {
+                        $.NotificationApp.send("Warning",response.error.message,"top-right","#ff5b5b","error");
+                    }
 
                 } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                    if (response.message) {
+                        $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                    }
+
+                    if (response.success && response.success.message) {
+                        $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
+                    }
                     $("#id" + setting_id).fadeOut("slow");
                     //$(this).closest('tr').fadeOut("fast");
                 }
