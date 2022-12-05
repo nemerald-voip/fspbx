@@ -81,6 +81,10 @@ class Extensions extends Model
         'description',
         'absolute_codec_string',
         'force_ping',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user',
     ];
 
     public function __construct()
