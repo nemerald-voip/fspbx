@@ -9,6 +9,7 @@ use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\VoicemailGreetings;
+use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -42,6 +43,79 @@ class VoicemailController extends Controller
             ->with($data)
             ->with('permissions',$permissions);     
     } 
+
+    /**
+     * Show the create voicemail form.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+
+    public function create(){
+        if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
+            return redirect('/');
+	    }
+
+        $voicemail = new Voicemails();
+        $voicemail->voicemail_enabled = "true";
+
+        //Check FusionPBX login status
+        session_start();
+        if(session_status() === PHP_SESSION_NONE) {
+            return redirect()->route('logout');
+        }
+
+        $vm_unavailable_file_exists = Storage::disk('voicemail')
+            ->exists(Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/greeting_1.wav');
+
+        $vm_name_file_exists = Storage::disk('voicemail')
+            ->exists(Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/recorded_name.wav');
+
+
+        $data=[];
+        $data['voicemail']= $voicemail;
+        $data['vm_unavailable_file_exists']=$vm_unavailable_file_exists;
+        $data['vm_name_file_exists']=$vm_name_file_exists;
+
+
+        return view('layouts.voicemails.createOrUpdate')->with($data);
+
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  guid  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Voicemails $voicemail)
+    {
+        //check permissions
+	    if (!userCheckPermission('voicemail_edit')) {
+            return redirect('/');
+	    }
+
+        //Check FusionPBX login status
+        session_start();
+        if(session_status() === PHP_SESSION_NONE) {
+            return redirect()->route('logout');
+        }
+
+        $vm_unavailable_file_exists = Storage::disk('voicemail')
+            ->exists(Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/greeting_1.wav');
+
+        $vm_name_file_exists = Storage::disk('voicemail')
+            ->exists(Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/recorded_name.wav');
+
+        $data=array();
+        $data['voicemail']=$voicemail;
+        $data['vm_unavailable_file_exists']=$vm_unavailable_file_exists;
+        $data['vm_name_file_exists']=$vm_name_file_exists;
+        $data['domain_voicemails'] = $voicemail->domain->voicemails;
+        $data['voicemail_desinations']=$voicemail->voicemail_destinations;
+
+        return view('layouts.voicemails.createOrUpdate')->with($data);
+    }
+
     public function store(Request $request, Voicemails $voicemail)
     {
 
@@ -71,10 +145,11 @@ class VoicemailController extends Controller
             'voicemail_password' => 'numeric|digits_between:3,10',
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'voicemail_enabled' => 'present',
-            'voicemail_enabled' => 'present',
+            'voicemail_tutorial' => 'present',
+            'voicemail_alternate_greet_id' => 'present|numeric',
             'voicemail_description' => 'nullable|string|max:100',
-            'voicemail_transcription_enabled' => 'present',
-            'voicemail_attach_file' => 'present',
+            // 'voicemail_transcription_enabled' => 'present',
+            // 'voicemail_attach_file' => 'present',
             'voicemail_file' => 'present',
             'voicemail_local_after_email' => 'present',
             'extension' => "uuid",
@@ -88,6 +163,25 @@ class VoicemailController extends Controller
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
         $attributes['domain_uuid'] = Session::get('domain_uuid');
+
+        if(strtolower($attributes['voicemail_enabled'])=='on'){
+            $attributes['voicemail_enabled']='true';
+        } else{
+            $attributes['voicemail_enabled']='false';
+        }
+
+        if(strtolower($attributes['voicemail_local_after_email'])=='on'){
+            $attributes['voicemail_local_after_email']='true';
+        } else{
+            $attributes['voicemail_local_after_email']='false';
+        }
+
+        if(strtolower($attributes['voicemail_tutorial'])=='on'){
+            $attributes['voicemail_tutorial']='true';
+        } else{
+            $attributes['voicemail_tutorial']='false';
+        }
+
         // find extension with provided UUID
         // $extension = Extensions::findOrFail($request->extension);
 
@@ -102,16 +196,114 @@ class VoicemailController extends Controller
         $voicemail->save();
       
 
-        //clear the destinations session array
-        if (isset($_SESSION['destinations']['array'])) {
-            unset($_SESSION['destinations']['array']);
+     
+
+        return response()->json([
+            'voicemail' => $voicemail->voicemail_uuid,
+            'redirect_url' =>route('voicemails.edit',['voicemail'=>$voicemail->voicemail_uuid]),
+            'status' => 'success',
+            'message' => 'Voicemail has been created'
+        ]);
+
+    }
+
+    function update(Request $request, Voicemails $voicemail)
+    {
+
+        if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
+            return redirect('/');
         }
+
+        $attributes = [
+            'voicemail_id' => 'voicemail extension number',
+            'voicemail_password' => 'voicemail PIN',
+            'greeting_id' =>'extension number',
+            'voicemail_mail_to' => 'email address',
+            'voicemail_enabled' => 'enabled',
+            'voicemail_description' => 'description',
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'voicemail_id' =>[
+                'required',
+                'numeric',
+                Rule::unique('App\Models\Voicemails','voicemail_id')
+                    ->ignore($request->voicemail_id,'voicemail_id')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+            ],
+            'voicemail_password' => 'numeric|digits_between:3,10',
+            'voicemail_mail_to' => 'nullable|email:rfc,dns',
+            'voicemail_enabled' => 'present',
+            'voicemail_tutorial' => 'present',
+            'voicemail_alternate_greet_id' => 'present|numeric',
+            'voicemail_description' => 'nullable|string|max:100',
+            // 'voicemail_transcription_enabled' => 'present',
+            // 'voicemail_attach_file' => 'present',
+            'voicemail_file' => 'present',
+            'voicemail_local_after_email' => 'present',
+            'extension' => "uuid",
+
+        ], [], $attributes);
+
+        if ($validator->fails()) {
+            return response()->json(['error'=>$validator->errors()]);
+        }
+
+        // Retrieve the validated input assign all attributes
+        $attributes = $validator->validated();
+        // $attributes['domain_uuid'] = Session::get('domain_uuid');
+
+        if(strtolower($attributes['voicemail_enabled'])=='on'){
+            $attributes['voicemail_enabled']='true';
+        } else{
+            $attributes['voicemail_enabled']='false';
+        }
+
+        if(strtolower($attributes['voicemail_local_after_email'])=='on'){
+            $attributes['voicemail_local_after_email']='true';
+        } else{
+            $attributes['voicemail_local_after_email']='false';
+        }
+
+        if(strtolower($attributes['voicemail_tutorial'])=='on'){
+            $attributes['voicemail_tutorial']='true';
+        } else{
+            $attributes['voicemail_tutorial']='false';
+        }
+        
+        $voicemail->update($attributes);  
+
+        // find extension with provided UUID
+        // $extension = Extensions::findOrFail($request->extension);
+
+        // // Delete cache and update extension
+        // if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+        //     session_start();
+        // }
+        // $cache = new cache;
+        // $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
+       if($request->has('voicemail_destinations')){
+        $voicemail_destinations=$request->voicemail_destinations;
+        //delete destinations before updating
+        $voicemail->voicemail_destinations()->delete();
+        //updating destinations
+        foreach($voicemail_destinations as $des){
+            $vm_des=new VoicemailDestinations();
+            $vm_des->domain_uuid=Session::get('domain_uuid');
+            // $vm_des->voicemail_destination_uuid=$des;
+            $vm_des->voicemail_uuid_copy=$des;
+            $voicemail->voicemail_destinations()->save($vm_des);
+        }
+       }
+
+      
 
         return response()->json([
             'voicemail' => $voicemail->voicemail_id,
             //'request' => $attributes,
             'status' => 'success',
-            'message' => 'Voicemail has been created'
+            'message' => 'Voicemail has been updated'
         ]);
 
     }
@@ -129,14 +321,14 @@ class VoicemailController extends Controller
         if ($request->greeting_type == "unavailable") {
             $filename = "greeting_1.wav";
             $path = $request->voicemail_unavailable_upload_file->storeAs(
-                $domain->domain_name .'/' . $voicemail->extension->extension,
+                $domain->domain_name .'/' . $voicemail->voicemail_id,
                 $filename,
                 'voicemail'
             );
         } elseif ($request->greeting_type == "name") {
             $filename = "recorded_name.wav";
             $path = $request->voicemail_name_upload_file->storeAs(
-                $domain->domain_name .'/' . $voicemail->extension->extension,
+                $domain->domain_name .'/' . $voicemail->voicemail_id,
                 $filename,
                 'voicemail'
             );
@@ -187,7 +379,6 @@ class VoicemailController extends Controller
      */
     public function getVoicemailGreeting(Voicemails $voicemail, string $filename)
     {
-
         $path = Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/' . $filename;
 
         if(!Storage::disk('voicemail')->exists($path)) abort(404);

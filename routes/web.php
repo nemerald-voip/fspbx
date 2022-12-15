@@ -48,6 +48,9 @@ Route::resource('domaingroups', 'DomainGroupsController');
 // SIP Credentials
 Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow']) ->name('extensions.sip.show');
 
+// Webhooks
+Route::webhooks('webhook/postmark','postmark');
+
 Route::resource('users','UsersController');
 Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');

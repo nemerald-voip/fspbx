@@ -13,6 +13,7 @@
         "laravel/framework": "^8.75",
         "laravel/horizon": "^5.9",
         "laravel/sanctum": "^2.11",
+        "laravel/slack-notification-channel": "^2.4",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.4",
         "league/flysystem-aws-s3-v3": "^1.0",
@@ -20,6 +21,7 @@
         "predis/predis": "^2.0",
         "propaganistas/laravel-phone": "^4.3",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-webhook-client": "^2.8",
         "wildbit/swiftmailer-postmark": "^3.3"
     },
     "require-dev": {

@@ -22,6 +22,17 @@ class AppCredentials extends Mailable
      */
     public function __construct($attributes)
     {
+        $settings = DefaultSettings::where('default_setting_category','email')->get();
+        if ($settings) {
+            foreach ($settings as $setting) {
+                if ($setting->default_setting_subcategory == "smtp_from") {
+                    $attributes['support_email'] = $setting->default_setting_value;
+                    $attributes['unsubscribe_email'] = $setting->default_setting_value;
+                } else {
+                    $attributes['unsubscribe_email'] = "";
+                }
+            }
+        }
         $this->attributes = $attributes;
     }
 
@@ -33,8 +44,8 @@ class AppCredentials extends Mailable
     public function build()
     {
         $this->withSwiftMessage(function ($message) {
-            $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:noc@nemerald.com');
+            $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->view('emails.app.credentials');
+        return $this->subject('Nemerald App Credentials')->view('emails.app.credentials');
     }
 }

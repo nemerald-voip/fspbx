@@ -26,13 +26,13 @@
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 @if ($permissions['add_new'])
-                                    <a href="{{ route('users.create') }}" class="btn btn-success mb-2 me-2">
+                                    <a href="{{ route('voicemails.create') }}" class="btn btn-success mb-2 me-2">
                                         <i class="mdi mdi-plus-circle me-1"></i>
                                         Add New
                                     </a>
                                 @endif
                                 @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('users.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                         Delete Selected
                                     </a>
                                 @endif
@@ -57,10 +57,11 @@
                                     <th>Mail to</th>
                                     <th>Attached</th>
                                     <th>Keep local</th>
-                                    <th>Tools</th>
-                                    <th></th>
+                                    <th>Messages</th>
+                                    <th>Greetings</th>
                                     <th>Enabled</th>
                                     <th>Description</th>
+                                    <th style="width: 125px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -77,7 +78,7 @@
                                         </td>
                                         <td>
                                             @if ($permissions['edit']) 
-                                                <a href="{{ route('users.edit',$voicemail) }}" class="text-body fw-bold">
+                                                <a href="{{ route('voicemails.edit',$voicemail) }}" class="text-body fw-bold">
                                                     {{ $voicemail->voicemail_id }}
                                                 </a>                                             
                                             @else
@@ -101,9 +102,10 @@
                                             {{ ucfirst($voicemail['voicemail_local_after_email']) }}
                                         </td>
                                         <td>
-                                            {{-- {{ $voicemail['voicemail_local_after_email'] }} --}}
+                                            {{ $voicemail->messages()->count() }}
                                         </td>
                                         <td>
+                                            {{ $voicemail->messages()->count() }}
                                         </td>
                                         <td>
                                             @if ($voicemail['voicemail_enabled']=='true') 
@@ -115,6 +117,25 @@
                                         
                                         <td>
                                             {{ $voicemail['voicemail_description'] }}
+                                        </td>
+
+
+                                        <td>
+                                            {{-- Action Buttons --}}
+                                            <div id="tooltip-container-actions">
+                                                @if ($permissions['edit'])
+                                                    <a href="{{ route('voicemails.edit',$voicemail) }}" class="action-icon" title="Edit"> 
+                                                        <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit voicemail"></i>
+                                                    </a>
+                                                @endif
+
+                                                @if ($permissions['delete'])
+                                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.destroy', ':id') }}','{{ $voicemail->voicemail_uuid }}');" class="action-icon"> 
+                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                    </a>
+                                                @endif
+                                            </div>
+                                            {{-- End of action buttons --}}
                                         </td>
                                     </tr>
                                 @endforeach

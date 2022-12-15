@@ -5,10 +5,11 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use App\Models\DefaultSettings;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class S3UploadReport extends Mailable
+class FaxInvalidDestination extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -30,9 +31,17 @@ class S3UploadReport extends Mailable
                 } else {
                     $attributes['unsubscribe_email'] = "";
                 }
+
+                if ($setting->default_setting_subcategory == "email_company_address") {
+                    $attributes['company_address'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "email_company_name") {
+                    $attributes['company_name'] = $setting->default_setting_value;
+                }
             }
         }
         $this->attributes = $attributes;
+
     }
 
     /**
@@ -45,6 +54,7 @@ class S3UploadReport extends Mailable
         $this->withSwiftMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->view('emails.s3.report');
+        return $this->subject('Fax to ' . $this->attributes['invalid_number'] . ' Failed - Invalid Fax Destination Number')
+            ->view('emails.fax.invalidDestinationNumber');
     }
 }
