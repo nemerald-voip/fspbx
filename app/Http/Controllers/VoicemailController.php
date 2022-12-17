@@ -182,21 +182,9 @@ class VoicemailController extends Controller
             $attributes['voicemail_tutorial']='false';
         }
 
-        // find extension with provided UUID
-        // $extension = Extensions::findOrFail($request->extension);
-
-        // // Delete cache and update extension
-        // if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
-        //     session_start();
-        // }
-        // $cache = new cache;
-        // $cache->delete("directory:".$extension->extension."@".$extension->user_context);
-
         $voicemail->fill($attributes);    
         $voicemail->save();
-      
 
-     
 
         return response()->json([
             'voicemail' => $voicemail->voicemail_uuid,
@@ -273,16 +261,7 @@ class VoicemailController extends Controller
         
         $voicemail->update($attributes);  
 
-        // find extension with provided UUID
-        // $extension = Extensions::findOrFail($request->extension);
-
-        // // Delete cache and update extension
-        // if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
-        //     session_start();
-        // }
-        // $cache = new cache;
-        // $cache->delete("directory:".$extension->extension."@".$extension->user_context);
-
+    
        if($request->has('voicemail_destinations')){
         $voicemail_destinations=$request->voicemail_destinations;
         //delete destinations before updating

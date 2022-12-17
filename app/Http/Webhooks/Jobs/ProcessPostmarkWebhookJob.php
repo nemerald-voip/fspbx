@@ -2,6 +2,9 @@
 
 namespace App\Http\Webhooks\Jobs;
 
+use App\Models\DefaultSettings;
+use App\Models\Domain;
+use App\Models\Faxes;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Models\WebhookCall;
@@ -77,14 +80,14 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            // perform the work here
-            Log::alert($this->webhookCall->payload['FromName']);
-            Log::alert($this->webhookCall->payload['domain_uuid']);
+        // perform the work here
+        Log::alert("----------Webhook Job starts-----------");
+        // Log::alert($this->webhookCall->payload);
 
-            // Get email subject and make sure it's valid
-            $subject = $this->webhookCall->payload['Subject'];
+        $fax = new Faxes();
+        $result = $fax->EmailToFaxInit($this->webhookCall->payload);
 
-            return "ok";
+        return "ok";
 
 
 

@@ -47,6 +47,11 @@ return [
             'root' => '/var/lib/freeswitch/storage/voicemail/default',
         ],
 
+        'fax' => [
+            'driver' => 'local',
+            'root' => '/var/lib/freeswitch/storage/fax',
+        ],
+
         'polycom_log_directory' => [
             'driver' => 'local',
             'root' => env('POLYCOM_LOG_DIRECTORY'),

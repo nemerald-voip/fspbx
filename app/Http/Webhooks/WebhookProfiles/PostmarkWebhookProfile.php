@@ -17,15 +17,17 @@ class PostmarkWebhookProfile implements WebhookProfile
     {
 
         // Get destination fax number and check if it's valid
-        $phone_number = strstr($request['To'], '@', true);
+        $phone_number = strstr($request['ToFull'][0]['Email'], '@', true);
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-        $phoneNumberObject = $phoneNumberUtil->parse($phone_number, 'US');
-        if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
-            $destination_number_valid = true;
-            $request['fax_destination'] = $phoneNumberUtil
-                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
-        } else {
+        try {
+            $phoneNumberObject = $phoneNumberUtil->parse($phone_number, 'US');
+            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                $destination_number_valid = true;
+                $request['fax_destination'] = $phoneNumberUtil
+                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
+            }
+        } catch (Throwable $e) {
             $destination_number_valid = false;
         }
 

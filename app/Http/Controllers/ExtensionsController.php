@@ -566,7 +566,7 @@ class ExtensionsController extends Controller
                     ->ignore($extension->extension_uuid,'extension_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid')),
                 Rule::unique('App\Models\Voicemails','voicemail_id')
-                    ->ignore($extension->voicemail->voicemail_uuid,'voicemail_uuid')
+                    ->ignore($extension->voicemail->voicemail_uuid ?? 0,'voicemail_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
@@ -582,12 +582,12 @@ class ExtensionsController extends Controller
             'voicemail_enabled' => "present",
             'call_timeout' => "numeric",
             'voicemail_password' => 'bail|required_if:voicemail_enabled,==,on|nullable|numeric|digits_between:3,10',
-            'voicemail_file' => "present",
+            'voicemail_file' => "nullable",
             'voicemail_transcription_enabled' => 'nullable',
-            'voicemail_local_after_email' => 'present',
+            'voicemail_local_after_email' => 'nullable',
             'voicemail_description' => "nullable|string|max:100",
             'voicemail_alternate_greet_id' => "nullable|numeric",   
-            'voicemail_tutorial' => "present",
+            'voicemail_tutorial' => "nullable",
             'voicemail_destinations'  => 'nullable|array',
 
             'domain_uuid' => 'required',
@@ -649,9 +649,12 @@ class ExtensionsController extends Controller
         }
 
         // Update Voicemail Destinations table
-        foreach($extension->voicemail->voicemail_destinations as $vm_destination) {
-            $vm_destination->delete();
+        if (isset($extension->voicemail)) {
+            foreach($extension->voicemail->voicemail_destinations as $vm_destination) {
+                $vm_destination->delete();
+            }
         }
+
         if (isset($attributes['voicemail_destinations'])) {
             foreach($attributes['voicemail_destinations'] as $voicemail_destination){
                 $destination = new VoicemailDestinations();
@@ -684,7 +687,11 @@ class ExtensionsController extends Controller
         }
         $cache = new cache;
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
-        $extension->voicemail->update($attributes);
+    
+        if (isset($extension->voicemail)) {
+            $extension->voicemail->update($attributes);
+        }
+        
         $extension->update($attributes);
 
         //clear the destinations session array

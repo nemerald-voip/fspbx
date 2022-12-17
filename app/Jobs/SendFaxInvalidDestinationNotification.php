@@ -94,12 +94,12 @@ class SendFaxInvalidDestinationNotification implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            $this->request['slack_message'] = 'Someone with the email ' . $this->request['From'] . ' tried sending a fax to ' .  $this->request['invalid_number'] .  ' which is not a valid US number.';
+            $this->request['slack_message'] = 'Someone with the email ' . $this->request['FromFull']['Email'] . ' tried sending a fax to ' .  $this->request['invalid_number'] .  ' which is not a valid US number.';
             
             Notification::route('slack', env('SLACK_FAX_HOOK'))
                 ->notify(new SendSlackFaxNotification($this->request));
 
-            Mail::to($this->request['From'])->send(new FaxInvalidDestination($this->request));
+            Mail::to($this->request['FromFull']['Email'])->send(new FaxInvalidDestination($this->request));
 
 
         }, function () {

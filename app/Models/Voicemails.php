@@ -70,6 +70,16 @@ class Voicemails extends Model
             ->where('domain_uuid', $this->domain_uuid);
     }
 
+    
+    /**
+     * Get the voicemail messages belongs to.
+     */
+    public function messages()
+    {
+        return $this->hasMany(VoicemailMessages::class,'voicemail_uuid','voicemail_uuid')
+            ->where('domain_uuid', $this->domain_uuid);
+    }
+
     /**
      * Get the voicemail destinations belongs to.
      */
@@ -98,6 +108,14 @@ class Voicemails extends Model
 
         return $destinations;
 
+    }
+
+    /**
+     * Get the domain to which this voicemail belongs 
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
     }
 
 }

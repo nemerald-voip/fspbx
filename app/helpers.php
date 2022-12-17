@@ -753,3 +753,15 @@ if (!function_exists('getSignedURL')){
     }
 }
 
+if (!function_exists('arr_to_map')){
+    function arr_to_map(&$arr){
+        if(is_array($arr)){
+            $map = Array();
+            foreach($arr as &$val){
+                $map[$val] = true;
+            }
+            return $map;
+        }
+        return false;
+    }
+}
