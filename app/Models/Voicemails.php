@@ -72,7 +72,7 @@ class Voicemails extends Model
 
     
     /**
-     * Get the voicemail messages belongs to.
+     * Get all messages for this voicemail.
      */
     public function messages()
     {

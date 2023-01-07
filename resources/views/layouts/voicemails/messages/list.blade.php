@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Voicemails"])
+@extends('layouts.horizontal', ["page_title"=> "Voicemail Messages"])
 
 @section('content')
 
@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
-                <h4 class="page-title">Voicemails</h4>
+                <h4 class="page-title">Voicemail Messages ({{ $voicemail->voicemail_id ?? '' }})</h4>
             </div>
         </div>
     </div>
@@ -21,7 +21,7 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $voicemails->count() ?? 0 }}  results for Voicemails</label>
+                            <label class="form-label">Showing {{ $messages->count() ?? 0 }}  results for Voicemail Messages</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
@@ -53,75 +53,51 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th>Voicemail ID</th>
-                                    <th>Email Address</th>
-                                    <th>Messages</th>
-                                    <th>Enabled</th>
-                                    <th>Description</th>
+                                    <th>Caller ID</th>
+                                    <th>Play</th>
+                                    <th>Date</th>
                                     <th style="width: 125px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
 
-                                @foreach ($voicemails as $key=>$voicemail)
-                                    <tr id="id{{ $voicemail->voicemail_uuid  }}">
+                                @foreach ($messages as $key=>$message)
+                                    <tr id="id{{ $message->voicemail_message_uuid  }}">
                                         <td>
                                             @if ($permissions['delete'])
                                                 <div class="form-check">
-                                                    <input type="checkbox" name="action_box[]" value="{{ $voicemail->voicemail_uuid }}" class="form-check-input action_checkbox">
+                                                    <input type="checkbox" name="action_box[]" value="{{ $message->voicemail_message_uuid }}" class="form-check-input action_checkbox">
                                                     <label class="form-check-label" >&nbsp;</label>
                                                 </div>
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($permissions['edit']) 
-                                                <a href="{{ route('voicemails.edit',$voicemail) }}" class="text-body fw-bold">
-                                                    {{ $voicemail->voicemail_id }}
-                                                </a>                                             
-                                            @else
-                                                <span class="text-body fw-bold">
-                                                    {{ $voicemail->voicemail_id }}
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            {{ $voicemail['voicemail_mail_to'] }} 
-                                        </td>
-                                        
-                                        <td>
-                                            @if ($permissions['voicemail_message_view']) 
-                                                <a href="{{ route('voicemails.messages.index',$voicemail) }}" class="text-body fw-bold">
-                                                    {{ $voicemail->messages()->count() }}
-                                                </a>                                             
-                                            @else
-                                                {{ $voicemail->messages()->count() }}
-                                            @endif
+                                            <span class="text-body @if ($message->message_status == '') fw-bold @endif">
+                                                {{ $message->caller_id_name ?? ''}}
+                                            </span>
+                                            <br>
+                                            <span class="text-body @if ($message->message_status == '') fw-bold @endif">
+                                                {{ $message->caller_id_number ?? '' }}
+                                            </span>
                                         </td>
 
                                         <td>
-                                            @if ($voicemail['voicemail_enabled']=='true') 
-                                                <h5><span class="badge bg-success"></i>Enabled</span></h5>
-                                            @else 
-                                                <h5><span class="badge bg-warning">Disabled</span></h5>
-                                            @endif
+                                            <span class="text-body fw-bold">
+                                                {{ $message->message_length ?? ''}}
+                                            </span>
                                         </td>
                                         
                                         <td>
-                                            {{ $voicemail['voicemail_description'] }}
+                                            @php echo date('Y-m-d H:i:s', $message->created_epoch); @endphp
                                         </td>
 
 
                                         <td>
                                             {{-- Action Buttons --}}
                                             <div id="tooltip-container-actions">
-                                                @if ($permissions['edit'])
-                                                    <a href="{{ route('voicemails.edit',$voicemail) }}" class="action-icon" title="Edit"> 
-                                                        <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit voicemail"></i>
-                                                    </a>
-                                                @endif
 
                                                 @if ($permissions['delete'])
-                                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.destroy', ':id') }}','{{ $voicemail->voicemail_uuid }}');" class="action-icon"> 
+                                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.messages.destroy', ':id') }}','{{ $message->voicemail_message_uuid }}');" class="action-icon"> 
                                                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                     </a>
                                                 @endif

@@ -93,10 +93,14 @@
                                             </div>
                                                 <div class="col-md-4">
                                                     <div class="mb-3">
-                                                        <label for="alternate_greet_id" class="form-label">Alternate Greet ID <span class="text-danger">*</span></label>
+                                                        <label for="alternate_greet_id" class="form-label">Alternate Greet ID </label>
+                                                        <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                            data-bs-content="The parameter allows you to override the default extension or phone number spoken by the system in the voicemail greeting. This controls system greetings that read back a phone number, not user recorded greetings.">
+                                                            <i class="dripicons-information"></i>
+                                                        </a>
                                                         <input class="form-control"  type="text" value="{{ $voicemail->voicemail_alternate_greet_id ?? ''}}" 
                                                             placeholder="Enter your Alternate Greet ID" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id" />
-                                                        <div class="text-danger error_message alternate_greet_id_err"></div>
+                                                        <div class="text-danger error_message voicemail_alternate_greet_id_err"></div>
                                                     </div>
                                                 </div>
                                         </div> <!-- end row -->
@@ -359,7 +363,7 @@
                                                 <div class="col-sm-12">
                                                     <div class="text-sm-end">
                                                     <input type="hidden" name="voicemail_uuid" value="{{ $voicemail->voicemail_uuid}}">
-                                                      <button type="button" class="btn btn-light" data-bs-dismiss="modal" aria-hidden="true">Close</button>
+                                                      <a href="{{ Route('voicemails.index') }}" class="btn btn-light">Close</a>
                                                        <button id="submitFormButton" class="btn btn-danger" type="submit">Save </button>
                                                     </div>
                                                 </div> <!-- end col -->

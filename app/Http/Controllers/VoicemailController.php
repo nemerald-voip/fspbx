@@ -38,6 +38,7 @@ class VoicemailController extends Controller
         $permissions['add_new'] = userCheckPermission('voicemail_add');
         $permissions['edit'] = userCheckPermission('voicemail_edit');
         $permissions['delete'] = userCheckPermission('voicemail_delete');
+        $permissions['voicemail_message_view'] = userCheckPermission('voicemail_message_view');
 
         return view('layouts.voicemails.list')
             ->with($data)
@@ -146,7 +147,7 @@ class VoicemailController extends Controller
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'voicemail_enabled' => 'present',
             'voicemail_tutorial' => 'present',
-            'voicemail_alternate_greet_id' => 'present|numeric',
+            'voicemail_alternate_greet_id' => 'nullable|numeric',
             'voicemail_description' => 'nullable|string|max:100',
             // 'voicemail_transcription_enabled' => 'present',
             // 'voicemail_attach_file' => 'present',
@@ -184,6 +185,11 @@ class VoicemailController extends Controller
 
         $voicemail->fill($attributes);    
         $voicemail->save();
+
+        //clear the destinations session array
+        if (isset($_SESSION['destinations']['array'])) {
+            unset($_SESSION['destinations']['array']);
+        }
 
 
         return response()->json([
@@ -223,7 +229,7 @@ class VoicemailController extends Controller
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
             'voicemail_enabled' => 'present',
             'voicemail_tutorial' => 'present',
-            'voicemail_alternate_greet_id' => 'present|numeric',
+            'voicemail_alternate_greet_id' => 'nullable|numeric',
             'voicemail_description' => 'nullable|string|max:100',
             // 'voicemail_transcription_enabled' => 'present',
             // 'voicemail_attach_file' => 'present',
@@ -276,6 +282,10 @@ class VoicemailController extends Controller
         }
        }
 
+       	//clear the destinations session array
+        if (isset($_SESSION['destinations']['array'])) {
+            unset($_SESSION['destinations']['array']);
+        }
       
 
         return response()->json([

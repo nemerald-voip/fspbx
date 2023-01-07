@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Voicemails"])
+@extends('layouts.horizontal', ["page_title"=> "faxes"])
 
 @section('content')
 
@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
-                <h4 class="page-title">Voicemails</h4>
+                <h4 class="page-title">Fax</h4>
             </div>
         </div>
     </div>
@@ -21,18 +21,18 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $voicemails->count() ?? 0 }}  results for Voicemails</label>
+                            <label class="form-label">Showing {{ $faxes->count() ?? 0 }}  results for faxes</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 @if ($permissions['add_new'])
-                                    <a href="{{ route('voicemails.create') }}" class="btn btn-success mb-2 me-2">
+                                    <a href="{{ route('fax.create') }}" class="btn btn-success mb-2 me-2">
                                         <i class="mdi mdi-plus-circle me-1"></i>
                                         Add New
                                     </a>
                                 @endif
                                 @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                    <a href="javascript:confirmDeleteAction('{{ route('fax.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                         Delete Selected
                                     </a>
                                 @endif
@@ -53,75 +53,85 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th>Voicemail ID</th>
-                                    <th>Email Address</th>
-                                    <th>Messages</th>
-                                    <th>Enabled</th>
-                                    <th>Description</th>
+                                    <th>Name</th>
+                                    <th>Extension</th>
+                                    <th>Email</th>
+                                    <th class="text-center">Tools</th>
                                     <th style="width: 125px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
 
-                                @foreach ($voicemails as $key=>$voicemail)
-                                    <tr id="id{{ $voicemail->voicemail_uuid  }}">
+                                @foreach ($faxes as $key=>$fax)
+                                    <tr id="id{{ $fax->fax_uuid  }}">
                                         <td>
                                             @if ($permissions['delete'])
                                                 <div class="form-check">
-                                                    <input type="checkbox" name="action_box[]" value="{{ $voicemail->voicemail_uuid }}" class="form-check-input action_checkbox">
+                                                    <input type="checkbox" name="action_box[]" value="{{ $fax->fax_uuid }}" class="form-check-input action_checkbox">
                                                     <label class="form-check-label" >&nbsp;</label>
                                                 </div>
                                             @endif
                                         </td>
                                         <td>
                                             @if ($permissions['edit']) 
-                                                <a href="{{ route('voicemails.edit',$voicemail) }}" class="text-body fw-bold">
-                                                    {{ $voicemail->voicemail_id }}
+                                                <a href="{{ route('fax.edit',$fax) }}" class="text-body fw-bold">
+                                                    {{ $fax->fax_name }}
                                                 </a>                                             
                                             @else
                                                 <span class="text-body fw-bold">
-                                                    {{ $voicemail->voicemail_id }}
+                                                    {{ $fax->fax_name }}
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $voicemail['voicemail_mail_to'] }} 
+                                            {{ $fax->fax_extension }} 
                                         </td>
-                                        
                                         <td>
-                                            @if ($permissions['voicemail_message_view']) 
-                                                <a href="{{ route('voicemails.messages.index',$voicemail) }}" class="text-body fw-bold">
-                                                    {{ $voicemail->messages()->count() }}
-                                                </a>                                             
-                                            @else
-                                                {{ $voicemail->messages()->count() }}
-                                            @endif
+                                            {{ $fax->fax_email }}
                                         </td>
 
-                                        <td>
-                                            @if ($voicemail['voicemail_enabled']=='true') 
-                                                <h5><span class="badge bg-success"></i>Enabled</span></h5>
-                                            @else 
-                                                <h5><span class="badge bg-warning">Disabled</span></h5>
-                                            @endif
-                                        </td>
-                                        
-                                        <td>
-                                            {{ $voicemail['voicemail_description'] }}
-                                        </td>
+                                        <td  class="text-center">
+
+                                            <div id="tooltip-container-actions text-center">
+                                                @if ($permissions['edit'])
+                                                    <a href="" class="action-icon" title="New"> 
+                                                        <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="New"></i>
+                                                    </a>
+                                                    @endif
+                                                    
+                                                    @if ($permissions['delete'])
+                                                    <a href="" class="action-icon"> 
+                                                        <i class="mdi mdi-inbox" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inbox"></i>
+                                                    </a>
+                                                    @endif
+                                                    <a href="" class="action-icon" title="Sent"> 
+                                                        <i class="mdi mdi-send-check" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sent"></i>
+                                                    </a>
+                                                    <a href="" class="action-icon" title="Logs"> 
+                                                        <i class="mdi mdi-fax" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Logs"></i>
+                                                    </a>
+                                                    <a href="" class="action-icon" title="Active"> 
+                                                        <i class="mdi mdi-check" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Active"></i>
+                                                    </a>
+                                            </div>
 
 
+                                            {{-- <i class="mdi mdi-plus"></i>
+                                            <i class="mdi mdi-inbox"></i>
+                                            <i class="mdi mdi-send-check"></i>
+                                            <i class="mdi mdi-fax"></i> --}}
+                                        </td>
                                         <td>
                                             {{-- Action Buttons --}}
                                             <div id="tooltip-container-actions">
                                                 @if ($permissions['edit'])
-                                                    <a href="{{ route('voicemails.edit',$voicemail) }}" class="action-icon" title="Edit"> 
+                                                    <a href="{{ route('fax.edit',$fax) }}" class="action-icon" title="Edit"> 
                                                         <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit voicemail"></i>
                                                     </a>
                                                 @endif
 
                                                 @if ($permissions['delete'])
-                                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.destroy', ':id') }}','{{ $voicemail->voicemail_uuid }}');" class="action-icon"> 
+                                                    <a href="javascript:confirmDeleteAction('{{ route('fax.destroy', ':id') }}','{{ $fax->fax_uuid }}');" class="action-icon"> 
                                                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                     </a>
                                                 @endif
