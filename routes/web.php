@@ -16,6 +16,7 @@ use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\VoicemailMessagesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,8 +43,16 @@ Route::resource('extensions', 'ExtensionsController');
 // Groups
 Route::resource('groups', 'GroupsController');
 
+//Fax
+Route::resource('fax', 'FaxesController');
+
 // Domain Groups
 Route::resource('domaingroups', 'DomainGroupsController');
+
+// Voicemail Messages
+Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index']) ->name('voicemails.messages.index');
+Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy']) ->name('voicemails.messages.destroy');
+
 
 // SIP Credentials
 Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow']) ->name('extensions.sip.show');

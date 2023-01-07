@@ -2,8 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 
+use cache;
+use App\Models\Domain;
+use App\Models\Extensions;
+use App\Models\Voicemails;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Faxes;
 class FaxesController extends Controller
 {
     /**
@@ -13,7 +23,24 @@ class FaxesController extends Controller
      */
     public function index()
     {
-        //
+        // Check permissions
+        if (!userCheckPermission("fax_view")){
+            return redirect('/');
+        }
+        // $list = Session::get('permissions', false);
+        // pr($list);exit;
+        $domain_uuid=Session::get('domain_uuid');
+        $data['faxes']=Faxes::where('domain_uuid',$domain_uuid)->get();
+        // pr($data);exit;
+        $permissions['add_new'] = userCheckPermission('fax_add');
+        $permissions['edit'] = userCheckPermission('fax_edit');
+        $permissions['delete'] = userCheckPermission('fax_delete');
+        $permissions['view'] = userCheckPermission('fax_view');
+        $permissions['send'] = userCheckPermission('fax_send');
+        
+        return view('layouts.fax.list')
+            ->with($data)
+            ->with('permissions',$permissions);  
     }
 
     /**

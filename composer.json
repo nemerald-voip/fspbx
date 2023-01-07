@@ -43,7 +43,8 @@
             "public/resources/classes/cache.php",
             "public/resources/classes/event_socket.php",
             "public/resources/classes/text.php",
-            "public/resources/classes/database.php"
+            "public/resources/classes/database.php",
+            "public/resources/classes/permissions.php"
         ]
     },
     "autoload-dev": {

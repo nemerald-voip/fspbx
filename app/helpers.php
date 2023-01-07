@@ -1,15 +1,17 @@
 <?php
 
+use App\Models\Settings;
 use App\Models\SipProfiles;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
+use App\Models\Dialplans;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 
 use function PHPUnit\Framework\isEmpty;
+use Illuminate\Support\Facades\Session;
 
 if (!function_exists('userCheckPermission')){
     function userCheckPermission($permission){
@@ -501,31 +503,146 @@ if (!function_exists('event_socket_request')){
 
 if (!function_exists('event_socket_request_cmd')){
     function event_socket_request_cmd($cmd) {
-        //get the database connection
-        require_once "resources/classes/database.php";
-        $database = new database;
-        $database->connect();
-        $db = $database->db;
 
-        if (file_exists($_SERVER["PROJECT_ROOT"]."/app/settings/app_config.php")) {
-            $sql = "select * from v_settings ";
-            $database = new database;
-            $row = $database->select($sql, null, 'row');
-            if (is_array($row) && @sizeof($row) != 0) {
-                $event_socket_ip_address = $row["event_socket_ip_address"];
-                $event_socket_port = $row["event_socket_port"];
-                $event_socket_password = $row["event_socket_password"];
-            }
-            unset($sql, $row);
-        }
+        // Get event socket credentials
+        $settings = Settings::first();
 
         $esl = new event_socket;
-        if (!$esl->connect($event_socket_ip_address, $event_socket_port, $event_socket_password)) {
+        if (!$esl->connect($settings->event_socket_ip_address, $settings->event_socket_port, $settings->event_socket_password)) {
             return false;
         }
         $response = $esl->request($cmd);
+
         $esl->close();
         return $response;
+    }
+}
+if (!function_exists('outbound_route_to_bridge')){
+    function outbound_route_to_bridge($domain_uuid, $destination_number, array $channel_variables=null) {
+
+        $destination_number = trim($destination_number);
+        preg_match('/^[\*\+0-9]*$/', $destination_number, $matches, PREG_OFFSET_CAPTURE);
+        if (count($matches) > 0) {
+            //not found, continue to process the function
+        }
+        else {
+            //not a number, brige_array and exit the function
+            $bridge_array[0] = $destination_number;
+            return $bridge_array;
+        }
+
+        //get the hostname
+        $hostname = trim(event_socket_request_cmd('api switchname'));
+        if (strlen($hostname) == 0) {
+            $hostname = 'unknown';
+        }
+
+        $dialplans = Dialplans::where('dialplan_enabled','true')
+            ->where ('app_uuid', '8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3')
+            ->where(function($q) use ($domain_uuid) {
+                $q->where('domain_uuid', $domain_uuid)
+                  ->orWhere('domain_uuid', null);
+            })
+            ->where(function($q) use ($hostname) {
+                $q->where('hostname', $hostname)
+                  ->orWhere('hostname', null);
+            })
+            ->get([
+                'dialplan_uuid',
+                'dialplan_continue',
+                'dialplan_name'
+            ]);
+
+
+        // if (is_array($result) && @sizeof($result) != 0) {
+        //     foreach ($result as &$row) {
+        //         $dialplan_uuid = $row["dialplan_uuid"];
+        //         $dialplan_detail_uuid = $row["dialplan_detail_uuid"];
+        //         $outbound_routes[$dialplan_uuid][$dialplan_detail_uuid]["dialplan_detail_tag"] = $row["dialplan_detail_tag"];
+        //         $outbound_routes[$dialplan_uuid][$dialplan_detail_uuid]["dialplan_detail_type"] = $row["dialplan_detail_type"];
+        //         $outbound_routes[$dialplan_uuid][$dialplan_detail_uuid]["dialplan_detail_data"] = $row["dialplan_detail_data"];
+        //         $outbound_routes[$dialplan_uuid]["dialplan_continue"] = $row["dialplan_continue"];
+        //     }
+        // }
+
+        if ($dialplans->isEmpty()) {return;}
+
+        $x = 0;
+        foreach($dialplans as $dialplan){
+            $condition_match = false;
+            foreach($dialplan->dialplan_details as $dialplan_detail){
+                if ($dialplan_detail['dialplan_detail_tag'] == "condition") {
+
+                    if ($dialplan_detail['dialplan_detail_type'] == "destination_number"){
+                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
+                        preg_match($pattern, $destination_number, $matches, PREG_OFFSET_CAPTURE);
+                        if (count($matches) == 0) {
+                            $condition_match = 'false';
+                        }
+                        else {
+                            $condition_match = 'true';
+                            if (isset($matches[1])){
+                                $regex_match_1 = $matches[1][0];
+                            }
+                            if (isset($matches[2])){
+                                $regex_match_2 = $matches[2][0];
+                            }
+                            if (isset($matches[3])){
+                                $regex_match_3 = $matches[1][0];
+                            }
+                            if (isset($matches[4])){
+                                $regex_match_4 = $matches[4][0];
+                            }
+                            if (isset($matches[5])){
+                                $regex_match_5 = $matches[5][0];
+                            }
+                        } 
+
+                    } elseif ($dialplan_detail['dialplan_detail_type'] == "\${toll_allow}") {
+                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
+                        preg_match($pattern, $channel_variables['toll_allow'], $matches, PREG_OFFSET_CAPTURE);
+                        if (count($matches) == 0) {
+                            $condition_match = 'false';
+                        } 
+                        else {
+                            $condition_match = 'true';
+                        }
+                    }
+                }
+            }
+
+            if ($condition_match == 'true') {
+                foreach ($dialplan->dialplan_details as $dialplan_detail) {
+                    // log::alert($dialplan_detail);
+                        $dialplan_detail_data = $dialplan_detail['dialplan_detail_data'];
+                        if ($dialplan_detail['dialplan_detail_tag'] == "action" && $dialplan_detail['dialplan_detail_type'] == "bridge" && $dialplan_detail_data != "\${enum_auto_route}") {
+                            if (isset($regex_match_1)){
+                                $dialplan_detail_data = str_replace("\$1", $regex_match_1, $dialplan_detail_data);
+                            }
+                            if (isset($regex_match_2)){
+                                $dialplan_detail_data = str_replace("\$2", $regex_match_2, $dialplan_detail_data);
+                            }
+                            if (isset($regex_match_3)){
+                                $dialplan_detail_data = str_replace("\$3", $regex_match_3, $dialplan_detail_data);
+                            }
+                            if (isset($regex_match_4)){
+                                $dialplan_detail_data = str_replace("\$4", $regex_match_4, $dialplan_detail_data);
+                            }
+                            if (isset($regex_match_5)){
+                                $dialplan_detail_data = str_replace("\$5", $regex_match_5, $dialplan_detail_data);
+                            }
+                            $bridge_array[$x] = $dialplan_detail_data;
+                            $x++;
+                        }
+                }
+                
+                if ($dialplan["dialplan_continue"] == "false") {
+                    break;
+                }
+            }
+        }
+        
+        return $bridge_array;
     }
 }
 
