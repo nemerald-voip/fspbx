@@ -882,3 +882,35 @@ if (!function_exists('arr_to_map')){
         return false;
     }
 }
+
+if (!function_exists('get_local_time_zone')){
+    /**
+     * Get tenant's local time zone or return the system default setting
+     *
+     * @return string
+     */
+    function get_local_time_zone($domain_uuid){
+        $local_time_zone_setting = DomainSettings::where('domain_uuid',$domain_uuid)
+            ->where('domain_setting_category', 'domain')
+            ->where('domain_setting_subcategory', 'time_zone')
+            ->where('domain_setting_enabled', 'true')
+            ->first();
+
+        if(!$local_time_zone_setting) {
+            $system_time_zone_setting = DefaultSettings::where('default_setting_category', 'domain')
+            ->where('default_setting_subcategory', 'time_zone')
+            ->where('default_setting_enabled', 'true')
+            ->first();
+
+            if($system_time_zone_setting) {
+                $local_time_zone = $system_time_zone_setting->default_setting_value;
+            } else {
+                $local_time_zone = "UTC";
+            }
+        } else {
+            $local_time_zone = $local_time_zone_setting->domain_setting_value;
+        }
+        
+        return $local_time_zone;
+    }
+}

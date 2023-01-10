@@ -456,6 +456,12 @@ class VoicemailController extends Controller
 
         if(isset($voicemail)){
             $deleted = $voicemail->delete();
+            $filename = "recorded_name.wav";
+            $path = Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/' . $filename;
+            $file = Storage::disk('voicemail')->delete($path);
+            $filename = "greeting_1.wav";
+            $path = Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/' . $filename;
+            $file = Storage::disk('voicemail')->delete($path);
 
             if ($deleted){
                 return response()->json([

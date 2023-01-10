@@ -52,6 +52,9 @@ Route::resource('domaingroups', 'DomainGroupsController');
 // Voicemail Messages
 Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index']) ->name('voicemails.messages.index');
 Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy']) ->name('voicemails.messages.destroy');
+Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage']) ->name('getVoicemailMessage');
+Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage']) ->name('downloadVoicemailMessage');
+Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage']) ->name('deleteVoicemailMessage');
 
 
 // SIP Credentials

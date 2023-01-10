@@ -18,4 +18,11 @@ class VoicemailMessages extends Model
     protected $keyType = 'string';
 
 
+    /**
+     * Get the voicemial this message belongs to.
+     */
+    public function voicemail()
+    {
+        return $this->hasOne(Voicemails::class,'voicemail_uuid','voicemail_uuid');
+    }
 }

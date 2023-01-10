@@ -54,9 +54,8 @@
                                         @endif
                                     </th>
                                     <th>Caller ID</th>
-                                    <th>Play</th>
                                     <th>Date</th>
-                                    <th style="width: 125px;">Action</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -82,28 +81,45 @@
                                         </td>
 
                                         <td>
-                                            <span class="text-body fw-bold">
-                                                {{ $message->message_length ?? ''}}
-                                            </span>
+                                            {{ $message->date }}
                                         </td>
+
+                                        <td>
+                                            <audio id="{{ $message->voicemail_message_uuid  }}_audio_file"
+                                                src="{{ route('getVoicemailMessage', $message ) }}">
+                                            </audio>
+
+                                            <a href="javascript:playVmMessage('{{ $message->voicemail_message_uuid  }}');" 
+                                                id="{{ $message->voicemail_message_uuid  }}_play_button" class="btn btn-light" title="Play">
+                                                <i class="uil uil-play"></i>                                            
+                                            </a>
+
+                                            <a href="javascript:pauseVmMessage('{{ $message->voicemail_message_uuid  }}');" class="btn btn-light"
+                                                id="{{ $message->voicemail_message_uuid  }}_pause_button" title="Pause" style="display: none">
+                                                <i class="uil uil-pause"></i>
+                                            </a>
+                                            
+                                            <a href="{{ route('downloadVoicemailMessage', $message->voicemail_message_uuid ) }}">
+                                                    <button type="button" class="btn btn-light" title="Download">
+                                                        <i class="uil uil-down-arrow"></i> 
+                                                    </button>
+                                            </a>
+{{-- 
+                                            <button id="voicemail_unavailable_delete_file_button" type="button" class="btn btn-light" title="Delete"
+                                                data-url="{{ route('deleteVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}">
+                                                <span id="voicemail_unavailable_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
+                                                <span id="voicemail_unavailable_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            </button> --}}
+
+                                            <a href="javascript:confirmDeleteAction('{{ route('voicemails.messages.destroy', ':id') }}','{{ $message->voicemail_message_uuid }}');" class="btn btn-light"> 
+                                                <i class="uil uil-trash-alt" title="Delete"></i>
+                                            </a>
+               
+                                        </td>
+                                    
+
+
                                         
-                                        <td>
-                                            @php echo date('Y-m-d H:i:s', $message->created_epoch); @endphp
-                                        </td>
-
-
-                                        <td>
-                                            {{-- Action Buttons --}}
-                                            <div id="tooltip-container-actions">
-
-                                                @if ($permissions['delete'])
-                                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.messages.destroy', ':id') }}','{{ $message->voicemail_message_uuid }}');" class="action-icon"> 
-                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                                                    </a>
-                                                @endif
-                                            </div>
-                                            {{-- End of action buttons --}}
-                                        </td>
                                     </tr>
                                 @endforeach
 
@@ -124,9 +140,6 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-
-        localStorage.removeItem('activeTab');
-
         $('#selectallCheckbox').on('change',function(){
             if($(this).is(':checked')){
                 $('.action_checkbox').prop('checked',true);
@@ -146,6 +159,24 @@
         });
     });
 
+    //This function plays the VM message
+    function playVmMessage(message_uuid){
+        $('#' + message_uuid + '_play_button').hide();
+        $('#' + message_uuid + '_pause_button').show();
+        var audioElement = document.getElementById(message_uuid + '_audio_file');
+        audioElement.play();
+    }
+
+    //This function pauses playing VM message
+    function pauseVmMessage(message_uuid){
+        $('#' + message_uuid + '_pause_button').hide();
+        $('#' + message_uuid + '_play_button').show();
+        var audioElement = document.getElementById(message_uuid + '_audio_file');
+        audioElement.pause();
+    }
+
+    
+
     function checkAllbox(){
         var checked=true;
         $('.action_checkbox').each(function(key,val){
@@ -156,77 +187,7 @@
         return checked;
     }
 
-    function confirmPasswordResetAction(user_email){
-        $('#confirmPasswordResetModal').data("user_email",user_email).modal('show');
 
-    }
-
-    function performConfirmedPasswordResetAction(){
-        var user_email = $("#confirmPasswordResetModal").data("user_email");
-        $('#confirmPasswordResetModal').modal('hide');
-
-        $.ajax({
-            type: 'POST',
-            url: "{{ url('password/email') }}",
-            cache: false,
-            data: {
-                email:user_email
-                }
-            })
-            .done(function(response) {
-
-                if (response.error){
-                    $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
-
-                } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                    //$(this).closest('tr').fadeOut("fast");
-                }
-            })
-            .fail(function (response){
-
-                $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
-            });
-    }
-
-    function deleteUser(user_id){
-         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-        $.ajax({
-            url: "{{ Route('deleteUser') }}", // point to server-side PHP script
-            dataType: "json",
-            cache: false,
-            data: {
-                contact_id:user_id
-            },
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.success) {
-                    toastr.success('Deleted Successfully!');
-                       setTimeout(function (){
-                        window.location.reload();
-                    }, 2000);
-                }
-            },
-            error: function(res){
-                $('.loading').hide();
-                toastr.error('Something went wrong!');
-            }
-        });
-    }
-    function checkSelectedBoxAvailable(){
-        var has=false;
-        $('.action_checkbox').each(function(key,val){
-        if($(this).is(':checked')){
-            has=true;
-        }});
-        return has;
-    }
 
     
     
