@@ -7,6 +7,12 @@
 <!-- CSRF Token -->
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
+
+<!--  If your homepage contains a login form, or a modal with login, then when the session ends (by default, after 2 hours) 
+    then the csrf token is no longer valid and the user sees a page expired warning after they have filled out their login details.
+We can work around this with a simple addition to the <head> of the main layout template. -->
+<meta http-equiv="refresh" content="{{ config('session.lifetime') * 60 }}">
+
 <!-- App favicon -->
 <link rel="shortcut icon" href="{{asset('/assets/images/favicon.png')}}">
 

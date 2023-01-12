@@ -17,7 +17,7 @@ use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
-
+use App\Http\Controllers\FaxesController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -45,6 +45,12 @@ Route::resource('groups', 'GroupsController');
 
 //Fax
 Route::resource('fax', 'FaxesController');
+Route::get('/fax/inbox/{id}', [FaxesController::class, 'inbox']) ->name('fax.inbox.list');
+Route::get('/fax/sent/{id}', [FaxesController::class, 'sent']) ->name('fax.sent.list');
+Route::get('/fax/active/{id}', [FaxesController::class, 'active']) ->name('fax.active.list');
+Route::get('/fax/log/{id}', [FaxesController::class, 'log']) ->name('fax.log.list');
+Route::delete('/fax/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFile']) ->name('fax.file.deleteFaxFile');
+Route::delete('/fax/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('fax.file.deleteFaxLog');
 
 // Domain Groups
 Route::resource('domaingroups', 'DomainGroupsController');
@@ -80,6 +86,9 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
     Route::resource('devices', 'DeviceController');
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
+    Route::get('/domains/switch', function () {
+        return redirect('/dashboard');
+    });
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
