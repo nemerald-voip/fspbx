@@ -167,7 +167,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'emails', 'faxes', 'slack'],
+            'queue' => ['default', 'emails', 'faxes', 'slack', 'mesasges'],
             'balance' => 'auto',
             'minProcesses' => 1,
             'maxProcesses' => 100,
@@ -191,7 +191,7 @@ return [
 
         'local' => [
             'supervisor-1' => [
-                'queue' => ['default', 'emails', 'faxes', 'slack'],
+                'queue' => ['default', 'emails', 'faxes', 'slack', 'messages'],
                 'balance' => 'auto',
                 'processes' => 8,
                 'tries' => 3,

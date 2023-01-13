@@ -8,12 +8,15 @@ use Exception;
 use Throwable;
 use permisssions;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
+use App\Jobs\SendFaxFailedNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendFaxNotificationToSlack;
 use libphonenumber\NumberParseException;
+use App\Jobs\SendFaxInTransitNotification;
 use Illuminate\Support\ItemNotFoundException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Symfony\Component\Process\Exception\ProcessFailedException;
@@ -30,7 +33,21 @@ class Faxes extends Model
     protected $primaryKey = 'fax_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
-
+    protected $fillable = [
+        'domain_uuid',
+        'fax_name',
+        'fax_extension',
+        'accountcode',
+        'fax_destination_number',
+        'fax_prefix',
+        'fax_email',
+        'fax_caller_id_name',
+        'fax_caller_id_number',
+        'fax_forward_number',
+        'fax_toll_allow',
+        'fax_send_channels',
+        'fax_description'
+    ];
 
     // private $domain
 
@@ -40,6 +57,8 @@ class Faxes extends Model
         $this->message = "*EmailToFax* From: " . $payload['FromFull']['Email'] . ", To:" . $payload['fax_destination'] ."\n";
         // Get email subject and make sure it's valid
         // $subject = $this->webhookCall->payload['Subject'];
+
+        $this->payload = $payload;
 
         $this->domain = Domain::find($payload['domain_uuid']);
 
@@ -63,6 +82,7 @@ class Faxes extends Model
             $this->fax_extension = $this->domain->faxes->firstOrFail();
         } catch (Throwable $e) {
             $this->message .= "No faxes found for domain - " . $this->domain->domain_description ;
+            Log::alert($this->message);
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "abort(404). No fax is set up for this domain";
         }
@@ -80,12 +100,14 @@ class Faxes extends Model
                             ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
             } else {
                 $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number ;
+                Log::alert($this->message);
                 SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
                 return "abort(404). Invalid caller ID";
             }
         } catch (NumberParseException $e) {
             // Process invalid Fax Caller ID
             $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number ;
+            Log::alert($this->message);
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "abort(404). Invalid caller ID";
         }
@@ -186,7 +208,9 @@ class Faxes extends Model
         // If email has attachents convert them to TIF files for faxing
         if (sizeof($payload['Attachments']) > 0) {
             $this->attachments = $payload['Attachments'];
-            $this->convertAttachmentsToTif();
+            if (!$this->convertAttachmentsToTif()) {
+                return "Failed to convert";
+            }
         } else {
             // Abort
             $this->message .= "Email has no attachments. Aborting";
@@ -196,7 +220,8 @@ class Faxes extends Model
         }
 
 
-
+        // Send notification to user that fax is in transit
+        SendFaxInTransitNotification::dispatch(new Request($payload))->onQueue('emails');
 
         // Set fax subject
         $this->fax_subject = $payload['Subject'];
@@ -234,7 +259,7 @@ class Faxes extends Model
 
 
 
-        Log::alert("----------Webhook Job ends-----------");
+        // Log::alert("----------Webhook Job ends-----------");
 
         return "ok";
 
@@ -447,28 +472,6 @@ class Faxes extends Model
                 }
             }
 
-            // //Count pages
-            // $process = new Process([
-            //     "tiffinfo",
-            //     "{$uuid_filename}.tif",
-            // ], 
-            // null, [
-            //     'HOME' => '/tmp'
-            // ]);
-
-            // try {
-            //     $process->setWorkingDirectory($this->dir_fax_temp);
-            //     $process->mustRun();
-
-            //     log::alert($process->getOutput());
-
-
-            // } catch (ProcessFailedException $e) {
-            //     log::alert($e->getMessage());
-            //     $slack_message = $e->getMessage();
-            //     SendFaxNotificationToSlack::dispatch($this->message . ' ' . $slack_message)->onQueue('faxes');
-            // }
-
             //add file to array
             $tif_files[] = $uuid_filename.'.tif';
 
@@ -476,10 +479,13 @@ class Faxes extends Model
 
         // Check if email had allowed attachments
         if (sizeof($tif_files) == 0) {
-            $this->message .= "Couldn't proccess any of the attached files. Please refer to the list of allowed extensions";
+            $this->message .= "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions);
+            $this->payload = array_merge($this->payload, ['slack_message' => $this->message]);
+            $this->payload = array_merge($this->payload, ['email_message' => "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions)]);
             Log::alert($this->message);
-            SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
-            return "No allowed attachments";
+            SendFaxFailedNotification::dispatch(new Request($this->payload))->onQueue('emails');
+            // SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+            return false;
         }
 
         //Generate cover page
@@ -562,6 +568,7 @@ class Faxes extends Model
             $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $tif_file);
         }
 
+        return true;
 
     }
 }

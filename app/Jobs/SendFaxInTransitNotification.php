@@ -1,18 +1,25 @@
 <?php
 
-namespace App\Http\Webhooks\Jobs;
+namespace App\Jobs;
 
-use App\Models\DefaultSettings;
-use App\Models\Domain;
-use App\Models\Faxes;
+use App\Mail\FaxInTransit;
+use Illuminate\Http\Request;
+use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
-use Spatie\WebhookClient\Models\WebhookCall;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use App\Notifications\SendSlackFaxNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
-use Spatie\WebhookClient\ProcessWebhookJob as SpatieProcessWebhookJob;
 
-class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
+class SendFaxInTransitNotification implements ShouldQueue
 {
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * The number of times the job may be attempted.
@@ -56,6 +63,17 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
      */
     public $deleteWhenMissingModels = true;
 
+    private $request;
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct(Request $request)
+    {
+        $this->request = $request->all();
+    }
+
     /**
      * Get the middleware the job should pass through.
      *
@@ -66,28 +84,22 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
         return [(new RateLimitedWithRedis('fax'))];
     }
 
-    public function __construct(WebhookCall $webhookCall)
-    {
-        $this->queue = 'faxes';
-        $this->webhookCall = $webhookCall;
-    }
-
-
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
     public function handle()
     {
-        // $this->webhookCall // contains an instance of `WebhookCall`
-
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            // perform the work here
-            // Log::alert("----------Webhook Job starts-----------");
-            // Log::alert($this->webhookCall->payload);
+            $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['FromFull']['Email'] . ", To:" . $this->request['fax_destination'] ." is in progress\n";
+            
+            Notification::route('slack', env('SLACK_FAX_HOOK'))
+                ->notify(new SendSlackFaxNotification($this->request));
 
-            $fax = new Faxes();
-            $result = $fax->EmailToFax($this->webhookCall->payload);
-
-            return "ok";
+            Mail::to($this->request['FromFull']['Email'])->send(new FaxInTransit($this->request));
 
 
         }, function () {
@@ -97,4 +109,3 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
 
     }
 }
-
