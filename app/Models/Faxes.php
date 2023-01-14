@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use text;
-use database;
+use tcdpf;
+use fpdi;
 use Exception;
 use Throwable;
 use permisssions;
@@ -55,8 +55,15 @@ class Faxes extends Model
 
     public function EmailToFax ($payload){
         $this->message = "*EmailToFax* From: " . $payload['FromFull']['Email'] . ", To:" . $payload['fax_destination'] ."\n";
+        
         // Get email subject and make sure it's valid
-        // $subject = $this->webhookCall->payload['Subject'];
+        // If subject contains word "body" we will add a cover page to this fax
+        $subject = $payload['Subject'];
+        if (preg_match("/body/i", $subject)) {
+            $this->fax_cover = true;
+        } else {
+            $this->fax_cover = false;
+        }
 
         $this->payload = $payload;
 
@@ -118,12 +125,16 @@ class Faxes extends Model
         $this->fax_send_greeting = $this->fax_extension->fax_send_greeting;
         $this->fax_uuid = $this->fax_extension->fax_uuid;
         $this->fax_caller_id_name = $this->fax_extension->fax_caller_id_name;
+        //Set fax destination
+        $this->fax_destination = $payload['fax_destination'];
+        // Set fax from 
+        $this->fax_from = $payload['FromFull']['Email'];
 
         //get email body (if any) for cover page. 
-		$fax_message = $payload['TextBody'];
-        $fax_message = strip_tags($fax_message);
-        $fax_message = html_entity_decode($fax_message);
-        $fax_message = str_replace("\r\n\r\n", "\r\n", $fax_message);
+		$this->fax_message = $payload['TextBody'];
+        $this->fax_message = strip_tags($this->fax_message);
+        $this->fax_message = html_entity_decode($this->fax_message);
+        $this->fax_message = str_replace("\r\n\r\n", "\r\n", $this->fax_message);
 
         //Set default allowed extensions 
         $this->fax_allowed_extensions = DefaultSettings::where('default_setting_category','fax')
@@ -137,6 +148,7 @@ class Faxes extends Model
         }
 
         $settings= DefaultSettings::where('default_setting_category','fax')
+        ->where('default_setting_enabled','true')
         ->get([
             'default_setting_subcategory',
             'default_setting_name',
@@ -225,12 +237,6 @@ class Faxes extends Model
 
         // Set fax subject
         $this->fax_subject = $payload['Subject'];
-
-        //Set fax destination
-        $this->fax_destination = $payload['fax_destination'];
-
-        // Set fax from 
-        $this->fax_from = $payload['FromFull']['Email'];
 
         $this->dial_string = $this->getDialstring();
 
@@ -488,16 +494,190 @@ class Faxes extends Model
             return false;
         }
 
+        $this->fax_instance_uuid = Str::uuid()->toString();
+
         //Generate cover page
         if ($this->fax_cover){
-        // Create cover here
-        
+            // Create cover here
+
+			// initialize pdf
+			$pdf = new FPDI('P', 'in');
+			$pdf->SetAutoPageBreak(false);
+			$pdf->setPrintHeader(false);
+			$pdf->setPrintFooter(false);
+			$pdf->SetMargins(0, 0, 0, true);
+
+			if (strlen($this->fax_cover_font) > 0) {
+				if (substr($this->fax_cover_font, -4) == '.ttf') {
+					$this->pdf_font = TCPDF_FONTS::addTTFfont($this->fax_cover_font);
+				}
+				else {
+					$this->pdf_font = $fax_cover_font;
+				}
+			}
+
+			if (!$this->pdf_font) {
+				$this->pdf_font = 'times';
+			}
+            
+            //add blank page
+			$pdf->AddPage('P', array($this->page_width, $this->page_height));
+
+			// content offset, if necessary
+			$x = 0;
+			$y = 0;
+
+            //set position for header text, if enabled
+			$pdf->SetXY($x + 0.5, $y + 0.4);
+
+            //header
+			if ($this->fax_header != '') {
+				$pdf->SetLeftMargin(0.5);
+				$pdf->SetFont($this->pdf_font, "", 10);
+				$pdf->Write(0.3, $this->fax_header);
+			}
+			
+            //fax, cover sheet
+			$pdf->SetTextColor(0,0,0);
+			$pdf->SetFont($this->pdf_font, "B", 55);
+			$pdf->SetXY($x + 4.55, $y + 0.25);
+			$pdf->Cell($x + 3.50, $y + 0.4, "Fax", 0, 0, 'R', false, null, 0, false, 'T', 'T');
+			$pdf->SetFont($this->pdf_font, "", 12);
+			$pdf->SetFontSpacing(0.0425);
+			$pdf->SetXY($x + 4.55, $y + 1.0);
+			$pdf->Cell($x + 3.50, $y + 0.4, "Cover Page", 0, 0, 'R', false, null, 0, false, 'T', 'T');
+			$pdf->SetFontSpacing(0);
+
+            //field labels
+			$pdf->SetFont($this->pdf_font, "B", 12);
+			if ($this->fax_destination != '') {
+				$pdf->Text($x + 0.5, $y + 2.0, "To".":");
+			}
+			if ($this->fax_caller_id_number != '') {
+				$pdf->Text($x + 0.5, $y + 2.3, "From".":");
+			}
+			// if ($fax_page_count > 0) {
+			// 	$pdf->Text($x + 0.5, $y + 2.6, strtoupper($text['label-fax-attached']).":");
+			// }
+
+
+            //field values
+			$pdf->SetFont($this->pdf_font, "", 12);
+			$pdf->SetXY($x + 2.0, $y + 1.95);
+			if ($this->fax_destination != '') {
+				$pdf->Write(0.3, $this->fax_destination);
+			}
+
+			$pdf->SetXY($x + 2.0, $y + 2.25);
+			if ($this->fax_caller_id_number != '') {
+				$pdf->Write(0.3, $this->fax_caller_id_number);
+			}
+
+			// if ($fax_page_count > 0) {
+			// 	$pdf->Text($x + 2.0, $y + 2.6, $fax_page_count.' '.$text['label-fax-page'.(($fax_page_count > 1) ? 's' : null)]);
+			// }
+
+            //message
+            $pdf->SetAutoPageBreak(true, 0.6);
+            $pdf->SetTopMargin(0.6);
+            $pdf->SetFont($this->pdf_font, "", 12);
+            $pdf->SetXY($x + 0.75, $y + 3.65);
+            $pdf->MultiCell(7, 5.40, $this->fax_message . " ", 0, 'L', false);
+
+            $pages = $pdf->getNumPages();
+
+            if ($pages > 1) {
+				//save ynew for last page
+				$yn = $pdf->GetY();
+
+				//first page
+				$pdf->setPage(1, 0);
+				$pdf->Rect($x + 0.5, $y + 3.4, 7.5, $this->page_height - 3.9, 'D');
+
+				//2nd to n-th page
+				for ($n = 2; $n < $pages; $n++) {
+					$pdf->setPage($n, 0);
+					$pdf->Rect($x + 0.5, $y + 0.5, 7.5, $this->page_height - 1, 'D');
+				}
+
+				//last page
+				$pdf->setPage($pages, 0);
+				$pdf->Rect($x + 0.5, 0.5, 7.5, $yn, 'D');
+				$y = $yn;
+				unset($yn);
+			}
+			else {
+				$pdf->Rect($x + 0.5, $y + 3.4, 7.5, 6.25, 'D');
+				$y = $pdf->GetY();
+			}
+
+            //footer
+            if ($this->fax_footer != '') {
+                $pdf->SetAutoPageBreak(true, 0.6);
+                $pdf->SetTopMargin(0.6);
+                $pdf->SetFont("helvetica", "", 8);
+                $pdf->SetXY($x + 0.5, $y + 0.6);
+                $pdf->MultiCell(7.5, 0.75, $this->fax_footer, 0, 'C', false);
+            }
+            $pdf->SetAutoPageBreak(false);
+            $pdf->SetTopMargin(0);
+
+            //save cover pdf
+			$pdf->Output($this->dir_fax_temp.'/'.$this->fax_instance_uuid.'_cover.pdf', "F");	// Display [I]nline, Save to [F]ile, [D]ownload
+
+            //convert pdf to tif, add to array of pages, delete pdf
+            if (file_exists($this->dir_fax_temp.'/'.$this->fax_instance_uuid.'_cover.pdf')) {
+                $process = new Process([
+                    "gs",
+                    "-q",
+                    "-r{$this->gs_r}",
+                    "-g{$this->gs_g}",
+                    "-dBATCH",
+                    "-dPDFFitPage",
+                    "-dNOSAFER",
+                    "-dNOPAUSE",
+                    "-sOutputFile={$this->fax_instance_uuid}_cover.tif",
+                    "-sDEVICE=tiffg4",
+                    "-Ilib",
+                    "stocht.ps",
+                    "-c",
+                    "{ .75 gt { 1 } { 0 } ifelse} settransfer",
+                    "--",
+                    "{$this->fax_instance_uuid}_cover.pdf",
+                    "-c",
+                    "quit"
+                ], 
+                null, [
+                    'HOME' => '/tmp'
+                ]);
+
+                try {
+                    $process->setWorkingDirectory($this->dir_fax_temp);
+                    $process->mustRun();
+
+                    // log::alert($process->getOutput());
+
+                    if (is_array($tif_files) && sizeof($tif_files) > 0) {
+                        array_unshift($tif_files, $this->fax_instance_uuid.'_cover.tif');
+                    }
+                    else {
+                        $tif_files[] = $this->fax_instance_uuid.'_cover.tif';
+                    }
+
+                    //remove the original file
+                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $this->fax_instance_uuid.'_cover.pdf');
+
+                } catch (ProcessFailedException $e) {
+                    $this->message .= $e->getMessage();
+                    Log::alert($e->getMessage());
+                    SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+                }
+            }
+
         }
 
         //combine tif files into single multi-page tif
         if (is_array($tif_files) && sizeof($tif_files) > 0) {
-
-            $this->fax_instance_uuid = Str::uuid()->toString();
 
             $file_names = '';
             $parameters = array("tiffcp", "-c","none");
