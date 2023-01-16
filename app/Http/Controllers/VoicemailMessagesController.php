@@ -34,7 +34,7 @@ class VoicemailMessagesController extends Controller
 
         $data=array();
         $data['voicemail'] = $voicemail;
-        $messages = VoicemailMessages::where('voicemail_uuid',$voicemail->voicemail_uuid)->orderBy('created_epoch','asc')->get();
+        $messages = VoicemailMessages::where('voicemail_uuid',$voicemail->voicemail_uuid)->orderBy('created_epoch','desc')->get();
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
