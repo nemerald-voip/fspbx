@@ -512,7 +512,7 @@ class Faxes extends Model
 					$this->pdf_font = TCPDF_FONTS::addTTFfont($this->fax_cover_font);
 				}
 				else {
-					$this->pdf_font = $fax_cover_font;
+					$this->pdf_font = $this->fax_cover_font;
 				}
 			}
 

@@ -26,9 +26,12 @@ class PostmarkWebhookProfile implements WebhookProfile
                 $destination_number_valid = true;
                 $request['fax_destination'] = $phoneNumberUtil
                             ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
+            } else {
+                $request['fax_destination'] = $phone_number;
             }
         } catch (Throwable $e) {
             $destination_number_valid = false;
+            $request['fax_destination'] = $phone_number;
         }
 
         // Get FROM email subject and check if it's authorized
