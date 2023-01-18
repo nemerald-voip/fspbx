@@ -43,7 +43,7 @@ class PostmarkWebhookProfile implements WebhookProfile
 
         } catch (Throwable $e) {
             // if user with this email doesn't exist check if there is an extension with this email
-            // Extension's emails are stored in Voicmeail table
+            // Extension's emails are stored in Voicemail table
             try {
                 $voicemail = Voicemails::where('voicemail_mail_to', $from_email)->firstOrFail();
                 $request['domain_uuid'] = $voicemail->domain_uuid; 

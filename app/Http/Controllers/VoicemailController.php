@@ -112,7 +112,7 @@ class VoicemailController extends Controller
         $data['vm_unavailable_file_exists']=$vm_unavailable_file_exists;
         $data['vm_name_file_exists']=$vm_name_file_exists;
         $data['domain_voicemails'] = $voicemail->domain->voicemails;
-        $data['voicemail_desinations']=$voicemail->voicemail_destinations;
+        $data['voicemail_destinations']=$voicemail->voicemail_destinations;
 
         return view('layouts.voicemails.createOrUpdate')->with($data);
     }

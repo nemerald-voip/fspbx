@@ -331,7 +331,7 @@
                                                         <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
                                                         id="additional-destinations-select" name="voicemail_destinations[]">
                                                             @foreach ($domain_voicemails as $domain_voicemail)
-                                                                <option  @if(isset($voicemail_desinations) && $voicemail_desinations->contains($domain_voicemail->voicemail_uuid))
+                                                                <option  @if(isset($voicemail_destinations) && $voicemail_destinations->contains($domain_voicemail->voicemail_uuid))
                                                                     selected
                                                                 @endif value="{{ $domain_voicemail->voicemail_uuid }}"
                                                                     @if($voicemail->forward_destinations()->contains($domain_voicemail))

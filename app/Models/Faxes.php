@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-use tcdpf;
 use fpdi;
+use tcdpf;
 use Exception;
 use Throwable;
 use permisssions;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\FaxAllowedEmails;
 use Illuminate\Support\Facades\Log;
+use App\Models\FaxAllowedDomainNames;
 use Symfony\Component\Process\Process;
 use App\Jobs\SendFaxFailedNotification;
 use Illuminate\Database\Eloquent\Model;
@@ -750,5 +752,23 @@ class Faxes extends Model
 
         return true;
 
+    }
+
+    /**
+     * Get allowed email addresses associated with this fax.
+     *  returns Eloqeunt Object
+     */
+    public function allowed_emails()
+    {
+        return $this->hasMany(FaxAllowedEmails::class,'fax_uuid','fax_uuid');
+    }
+
+    /**
+     * Get allowed email addresses associated with this fax.
+     *  returns Eloqeunt Object
+     */
+    public function allowed_domain_names()
+    {
+        return $this->hasMany(FaxAllowedDomainNames::class,'fax_uuid','fax_uuid');
     }
 }

@@ -42,9 +42,8 @@
             "app/helpers.php",
             "public/resources/classes/cache.php",
             "public/resources/classes/event_socket.php",
-            "public/resources/classes/text.php",
-            "public/resources/classes/database.php",
-            "public/resources/classes/permissions.php"
+            "public/resources/tcpdf/tcpdf.php",
+            "public/resources/fpdi/fpdi.php"
         ]
     },
     "autoload-dev": {

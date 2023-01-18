@@ -26,13 +26,13 @@
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 @if ($permissions['add_new'])
-                                    <a href="{{ route('fax.create') }}" class="btn btn-success mb-2 me-2">
+                                    <a href="{{ route('faxes.create') }}" class="btn btn-success mb-2 me-2">
                                         <i class="mdi mdi-plus-circle me-1"></i>
                                         Add New
                                     </a>
                                 @endif
                                 @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('fax.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                         Delete Selected
                                     </a>
                                 @endif
@@ -74,7 +74,7 @@
                                         </td>
                                         <td>
                                             @if ($permissions['edit']) 
-                                                <a href="{{ route('fax.edit',$fax) }}" class="text-body fw-bold">
+                                                <a href="{{ route('faxes.edit',$fax) }}" class="text-body fw-bold">
                                                     {{ $fax->fax_name }}
                                                 </a>                                             
                                             @else
@@ -93,26 +93,32 @@
                                         <td  class="text-center">
 
                                             <div id="tooltip-container-actions text-center">
-                                                @if ($permissions['edit'])
-                                                    <a href="" class="action-icon" title="New"> 
+                                                @if ($permissions['fax_send'])
+                                                    <a href="{{ url('faxes/new/').'/'.$fax->fax_uuid }}" class="action-icon" title="New"> 
                                                         <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="New"></i>
                                                     </a>
                                                     @endif
                                                     
-                                                    @if ($permissions['delete'])
-                                                    <a href="" class="action-icon"> 
+                                                    @if ($permissions['fax_inbox_view'])
+                                                    <a href="{{ url('faxes/inbox/').'/'.$fax->fax_uuid }}" class="action-icon"> 
                                                         <i class="mdi mdi-inbox" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inbox"></i>
                                                     </a>
                                                     @endif
-                                                    <a href="" class="action-icon" title="Sent"> 
+                                                    @if ($permissions['fax_sent_view'])
+                                                    <a href="{{ url('faxes/sent/').'/'.$fax->fax_uuid }}" class="action-icon" title="Sent"> 
                                                         <i class="mdi mdi-send-check" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sent"></i>
                                                     </a>
-                                                    <a href="" class="action-icon" title="Logs"> 
+                                                    @endif
+                                                    @if ($permissions['fax_log_view'])
+                                                    <a href="{{ url('faxes/log/').'/'.$fax->fax_uuid }}" class="action-icon" title="Logs"> 
                                                         <i class="mdi mdi-fax" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Logs"></i>
                                                     </a>
+                                                    @endif
+                                                    {{-- @if ($permissions['fax_active_view'])
                                                     <a href="" class="action-icon" title="Active"> 
                                                         <i class="mdi mdi-check" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Active"></i>
                                                     </a>
+                                                    @endif --}}
                                             </div>
 
 
@@ -125,13 +131,13 @@
                                             {{-- Action Buttons --}}
                                             <div id="tooltip-container-actions">
                                                 @if ($permissions['edit'])
-                                                    <a href="{{ route('fax.edit',$fax) }}" class="action-icon" title="Edit"> 
-                                                        <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit voicemail"></i>
+                                                    <a href="{{ route('faxes.edit',$fax) }}" class="action-icon" title="Edit"> 
+                                                        <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i>
                                                     </a>
                                                 @endif
 
                                                 @if ($permissions['delete'])
-                                                    <a href="javascript:confirmDeleteAction('{{ route('fax.destroy', ':id') }}','{{ $fax->fax_uuid }}');" class="action-icon"> 
+                                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.destroy', ':id') }}','{{ $fax->fax_uuid }}');" class="action-icon"> 
                                                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                     </a>
                                                 @endif

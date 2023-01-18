@@ -44,13 +44,16 @@ Route::resource('extensions', 'ExtensionsController');
 Route::resource('groups', 'GroupsController');
 
 //Fax
-Route::resource('fax', 'FaxesController');
-Route::get('/fax/inbox/{id}', [FaxesController::class, 'inbox']) ->name('fax.inbox.list');
-Route::get('/fax/sent/{id}', [FaxesController::class, 'sent']) ->name('fax.sent.list');
-Route::get('/fax/active/{id}', [FaxesController::class, 'active']) ->name('fax.active.list');
-Route::get('/fax/log/{id}', [FaxesController::class, 'log']) ->name('fax.log.list');
-Route::delete('/fax/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFile']) ->name('fax.file.deleteFaxFile');
-Route::delete('/fax/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('fax.file.deleteFaxLog');
+Route::resource('faxes', 'FaxesController');
+Route::get('/faxes/new/{id}', [FaxesController::class, 'new']) ->name('faxes.new.createOrUpdate');
+Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes.inbox.list');
+Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
+Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
+Route::get('/faxes/log/{id}', [FaxesController::class, 'log']) ->name('faxes.log.list');
+Route::delete('/faxes/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFile']) ->name('faxes.file.deleteFaxFile');
+Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
+Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
+Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');
 
 // Domain Groups
 Route::resource('domaingroups', 'DomainGroupsController');
