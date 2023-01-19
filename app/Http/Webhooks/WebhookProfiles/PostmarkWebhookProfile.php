@@ -51,7 +51,6 @@ class PostmarkWebhookProfile implements WebhookProfile
             try {
                 $users = User::where('user_email', '=', $from_email)->get();
                 foreach ($users as $user) {
-                    Log::alert($user->domain->faxes);
                     if (!$user->domain->faxes->isEmpty()) {
                         $request['fax_uuid'] = $user->domain->faxes->first()->fax_uuid;
                         break;
@@ -72,7 +71,6 @@ class PostmarkWebhookProfile implements WebhookProfile
                 }
 
                 $email = FaxAllowedEmails::where('email', $from_email)->firstOrFail();
-                Log::alert($email);
                 $request['fax_uuid'] = $email->fax_uuid;
     
             } catch (Throwable $e) {
