@@ -51,7 +51,8 @@ class PostmarkWebhookProfile implements WebhookProfile
             try {
                 $users = User::where('user_email', '=', $from_email)->get();
                 foreach ($users as $user) {
-                    if (isset($user->domain->faxes)) {
+                    Log::alert($user->domain->faxes);
+                    if (!$user->domain->faxes->isEmpty()) {
                         $request['fax_uuid'] = $user->domain->faxes->first()->fax_uuid;
                         break;
                     }
@@ -63,7 +64,7 @@ class PostmarkWebhookProfile implements WebhookProfile
                     $voicemails = Voicemails::where('voicemail_mail_to', $from_email)->get();
                     foreach ($voicemails as $voicemail) {
 
-                        if (isset($voicemail->domain->faxes)) {
+                        if (!$voicemail->domain->faxes->isEmpty()) {
                             $request['fax_uuid'] = $voicemail->domain->faxes->first()->fax_uuid;
                             break;
                         }
@@ -71,9 +72,11 @@ class PostmarkWebhookProfile implements WebhookProfile
                 }
 
                 $email = FaxAllowedEmails::where('email', $from_email)->firstOrFail();
+                Log::alert($email);
                 $request['fax_uuid'] = $email->fax_uuid;
     
             } catch (Throwable $e) {
+                    Log::alert($e->getMessage());
                     // Send notification that email was not authorized
                     SendFaxInvalidEmailNotification::dispatch($request)->onQueue('faxes');
     
