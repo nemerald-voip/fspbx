@@ -258,7 +258,6 @@ class FaxesController extends Controller
 
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
-        Log::alert($attributes);
         $attributes['domain_uuid'] = Session::get('domain_uuid');
         $attributes['accountcode']=Session::get('domain_name');
         $attributes['fax_prefix']=9999;
