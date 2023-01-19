@@ -57,49 +57,57 @@ class Faxes extends Model
 
     public function EmailToFax ($payload){
         $this->message = "*EmailToFax* From: " . $payload['FromFull']['Email'] . ", To:" . $payload['fax_destination'] ."\n";
-        
-        // Get email subject and make sure it's valid
-        // If subject contains word "body" we will add a cover page to this fax
-        $subject = $payload['Subject'];
-        if (preg_match("/body/i", $subject)) {
-            $this->fax_cover = true;
-        } else {
-            $this->fax_cover = false;
-        }
-
         $this->payload = $payload;
 
-        $this->domain = Domain::find($payload['domain_uuid']);
+        // Get email subject and make sure it's valid
+        // Test if there is a phone number in the subject line
+        $subject = $payload['Subject'];
+        $re = '/1?\d{10}/m';
+        if (preg_match($re, $subject, $matches)){
+            // if string of digits that may represent a phone number is found then check if it's a valid phone number
+            $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($matches[0], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $this->fax_caller_id_number = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
+                    // Try to find fax extension by requested caller ID
+                    if (isset($this->fax_caller_id_number)){
+                        $this->fax_extension = Faxes::where('fax_caller_id_number', $this->fax_caller_id_number)->first();
+                    }
+                } else {
+                    $this->message .= "Invalid Caller ID is submitted in the subject line: " . $matches[0] ;
+                    Log::alert($this->message);
+                    SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+                }
+            } catch (NumberParseException $e) {
+                // Process invalid Fax Caller ID
+                $this->message .= "Invalid Caller ID is submitted in the subject line: " . $matches[0] ;
+                Log::alert($this->message);
+                SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+            }
 
-        $settings= DefaultSettings::where('default_setting_category','switch')
-        ->get([
-            'default_setting_subcategory',
-            'default_setting_name',
-            'default_setting_value',
-        ]);
+        } 
 
-        foreach ($settings as $setting) {
-            if ($setting->default_setting_subcategory == 'storage') {
-                $this->fax_dir = $setting->default_setting_value . '/fax/' . $this->domain->domain_name;
-                $this->stor_dir = $setting->default_setting_value;
-            }            
+        // If the subject line didn't have a valid Fax number we are going to use the first match by email
+        if (!isset($this->fax_extension)) {
+            if (isset($this->payload['fax_uuid'])){
+                $this->fax_extension = Faxes::find($this->payload['fax_uuid']);
+
+            }
         }
 
-        // Pick the first fax that belongs to this domain
-        // This needs to be fixed in the future
-        try {
-            $this->fax_extension = $this->domain->faxes->firstOrFail();
-        } catch (Throwable $e) {
-            $this->message .= "No faxes found for domain - " . $this->domain->domain_description ;
+        // if we stil don't have a fax extension then email doesn't have any associated faxes
+        if (!isset($this->fax_extension)) {
+            $this->message .= "No fax servers found associated for " . $payload['FromFull']['Email']  ;
             Log::alert($this->message);
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
-            return "abort(404). No fax is set up for this domain";
+            return "abort(404). No fax servers found";
         }
 
-        // Create all fax directories 
-        $this->CreateFaxDirectories();
 
-        // $fax_sender = '';
+        $this->domain = $this->fax_extension->domain;
+
         $this->fax_caller_id_number = $this->fax_extension->fax_caller_id_number;
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
         try {
@@ -120,6 +128,30 @@ class Faxes extends Model
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "abort(404). Invalid caller ID";
         }
+
+        // If subject contains word "body" we will add a cover page to this fax
+        if (preg_match("/body/i", $subject)) {
+            $this->fax_cover = true;
+        } else {
+            $this->fax_cover = false;
+        }
+
+        $settings= DefaultSettings::where('default_setting_category','switch')
+        ->get([
+            'default_setting_subcategory',
+            'default_setting_name',
+            'default_setting_value',
+        ]);
+
+        foreach ($settings as $setting) {
+            if ($setting->default_setting_subcategory == 'storage') {
+                $this->fax_dir = $setting->default_setting_value . '/fax/' . $this->domain->domain_name;
+                $this->stor_dir = $setting->default_setting_value;
+            }            
+        }
+
+        // Create all fax directories 
+        $this->CreateFaxDirectories();
 
 
         $this->fax_toll_allow = $this->fax_extension->fax_toll_allow;
@@ -770,5 +802,14 @@ class Faxes extends Model
     public function allowed_domain_names()
     {
         return $this->hasMany(FaxAllowedDomainNames::class,'fax_uuid','fax_uuid');
+    }
+
+    /**
+     * Get domain associated with this fax.
+     *  returns Eloqeunt Object
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
     }
 }

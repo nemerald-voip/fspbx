@@ -14,4 +14,13 @@ class FaxAllowedDomainNames extends Model
     protected $primaryKey = 'uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+
+
+    /**
+     * Get the fax for this domain name
+     */
+    public function fax()
+    {
+        return $this->belongsTo(Faxes::class);
+    }
 }

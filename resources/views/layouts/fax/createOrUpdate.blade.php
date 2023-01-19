@@ -190,7 +190,7 @@
                                             </div>
                                         </div>
                                       
-                                        <div class="row">
+                                        <div class="row" style="display: none">
 
                                             <select class="select2 emailListSelect2 select2-multiple" data-toggle="select2" multiple="multiple" title="EmailList" name="email_list[]">
                                                 @foreach ($allowed_emails as $email)

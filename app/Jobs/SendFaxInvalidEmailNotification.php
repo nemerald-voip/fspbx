@@ -96,6 +96,8 @@ class SendFaxInvalidEmailNotification implements ShouldQueue
 
             $this->request['slack_message'] = 'Someone with the email ' . $this->request['FromFull']['Email'] . ' tried sending a fax and was not authorized.';
             
+            Log::alert($this->request['slack_message']);
+
             Notification::route('slack', env('SLACK_FAX_HOOK'))
                 ->notify(new SendSlackFaxNotification($this->request));
 

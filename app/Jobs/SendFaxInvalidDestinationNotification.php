@@ -96,6 +96,8 @@ class SendFaxInvalidDestinationNotification implements ShouldQueue
 
             $this->request['slack_message'] = 'Someone with the email ' . $this->request['FromFull']['Email'] . ' tried sending a fax to ' .  $this->request['invalid_number'] .  ' which is not a valid US number.';
             
+            Log::alert($this->request['slack_message']);
+
             Notification::route('slack', env('SLACK_FAX_HOOK'))
                 ->notify(new SendSlackFaxNotification($this->request));
 
