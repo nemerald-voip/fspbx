@@ -17,6 +17,17 @@ class Dialplans extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $fillable = [
+        'domain_uuid',
+        'dialplan_name',
+        'dialplan_number',
+        'dialplan_context',
+        'dialplan_continue',
+        'dialplan_xml',
+        'dialplan_order',
+        'dialplan_enabled',
+        'dialplan_description'
+    ];
 
     /**
      * Get the dialplan details this Dialplan object associated with.
@@ -26,4 +37,10 @@ class Dialplans extends Model
     {
         return $this->hasMany(DialplanDetails::class,'dialplan_uuid','dialplan_uuid');
     }
+
+    public function fax()
+    {
+        return $this->hasOne(Faxes::class,'dialplan_uuid','dialplan_uuid');
+    }
+
 }

@@ -914,3 +914,46 @@ if (!function_exists('get_local_time_zone')){
         return $local_time_zone;
     }
 }
+
+
+if (!function_exists('get_fax_dial_plan')){
+    /**
+     * takes fax as input and return dialplan
+     *
+     * @return string
+     */
+    
+     function get_fax_dial_plan($fax,$dialplan){
+        $last_fax = "last_fax=\${caller_id_number}-\${strftime(%Y-%m-%d-%H-%M-%S)}";
+        $rxfax_data=Storage::disk('fax')->path($fax->accountcode . '/' . $fax->fax_extension .  "/inbox/" . $fax->forward_prefix . '${last_fax}.tif');
+        //build the xml dialplan
+            $dialplan_xml = "<extension name=\"".$fax->fax_name ."\" continue=\"false\" uuid=\"".$dialplan->dialplan_uuid."\">\n";
+            $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^".$fax->fax_destination_number."$\">\n";
+            $dialplan_xml .= "		<action application=\"answer\" data=\"\"/>\n";
+            $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=".$fax->fax_uuid."\"/>\n";
+            $dialplan_xml .= "		<action application=\"set\" data=\"api_hangup_hook=lua app/fax/resources/scripts/hangup_rx.lua\"/>\n";
+            $settings=\DB::table('v_default_settings')
+            ->where('default_setting_category','fax')
+            ->where('default_setting_subcategory','variable')
+            ->where('default_setting_enabled','true')
+            ->get();
+            
+            foreach($settings as $data) {
+                if (substr($data->default_setting_value,0,8) == "inbound:") {
+                    $dialplan_xml .= "		<action application=\"set\" data=\"".substr($data->default_setting_value,8,strlen($data->default_setting_value))."\"/>\n";
+                }
+                elseif (substr($data->default_setting_value,0,9) == "outbound:") {}
+                else {
+                    $dialplan_xml .= "		<action application=\"set\" data=\"".$data->default_setting_value."\"/>\n";
+                }
+            }
+            $dialplan_xml .= "		<action application=\"set\" data=\"".$last_fax."\"/>\n";
+            $dialplan_xml .= "		<action application=\"rxfax\" data=\"$rxfax_data\"/>\n";
+            $dialplan_xml .= "		<action application=\"hangup\" data=\"\"/>\n";
+            $dialplan_xml .= "	</condition>\n";
+            $dialplan_xml .= "</extension>\n";
+                return $dialplan_xml;
+
+
+    }
+}

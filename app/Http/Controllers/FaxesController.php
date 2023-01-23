@@ -12,6 +12,7 @@ use App\Models\FaxFiles;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Models\Destinations;
+use App\Models\Dialplans;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\FaxAllowedEmails;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use App\Models\DefaultSettings;
+use App\Models\FreeswitchSettings;
 
 class FaxesController extends Controller
 {
@@ -201,6 +204,7 @@ class FaxesController extends Controller
         $data['national_phone_number_format']=PhoneNumberFormat::NATIONAL;
         $data['allowed_emails'] = $fax->allowed_emails;
         $data['allowed_domain_names'] = $fax->allowed_domain_names;
+
         
         return view('layouts.fax.createOrUpdate')->with($data);;
     }
@@ -218,7 +222,12 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
+        //Setting variables to use 
+        $domain_id=Session::get('domain_uuid');
+        $domain_name=Session::get('domain_name');
 
+
+        //Validation check
         $attributes = [
             'fax_name' => 'Fax Name',
             'fax_extension' => 'Fax Extension',
@@ -241,7 +250,7 @@ class FaxesController extends Controller
             // 'accountcode' => 'nullable',
             // 'fax_destination_number' => 'nullable',
             // 'fax_prefix' => 'nullable',
-            'fax_email' => 'nullable|email:rfc,dns',
+            'fax_email' => 'nullable|array',
             'fax_caller_id_name' => 'nullable',
             'fax_caller_id_number' => 'nullable',
             'fax_forward_number' => 'nullable',
@@ -258,12 +267,36 @@ class FaxesController extends Controller
 
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
-        $attributes['domain_uuid'] = Session::get('domain_uuid');
-        $attributes['accountcode']=Session::get('domain_name');
+        $attributes['domain_uuid'] = $domain_id;
+        $attributes['accountcode']=$domain_name;
         $attributes['fax_prefix']=9999;
         $attributes['fax_destination_number']=$attributes['fax_extension'];
+        $fax_email='';
+        if(isset($attributes['fax_email'])){
+            $fax_email=implode(',',$attributes['fax_email']);
+        }
+        $attributes['fax_email']=$fax_email;
         $fax->fill($attributes);    
         $fax->save();
+
+        $dialplan=new Dialplans;
+        $dialplan->domain_uuid=$domain_id;
+        $dialplan->app_uuid = "24108154-4ac3-1db6-1551-4731703a4440";
+        $dialplan->dialplan_name=$attributes['fax_name'];
+        $dialplan->dialplan_number=$attributes['fax_extension'];
+        $dialplan->dialplan_context=$domain_name;
+        $dialplan->dialplan_continue='false';
+        $dialplan->dialplan_order='310';
+        $dialplan->dialplan_enabled='true';
+        $dialplan->dialplan_description=$attributes['fax_description'];
+        $dialplan->save();
+        $dialplan->dialplan_xml=get_fax_dial_plan($fax,$dialplan);
+        $dialplan->save();
+        $fax->dialplan_uuid=$dialplan->dialplan_uuid;
+        $fax->save();
+
+        
+        
 
         // If allowed email list is submitted save it to database
         if (isset($attributes['email_list'])) {
@@ -284,7 +317,30 @@ class FaxesController extends Controller
                 $allowed_domain->save();
             }
         } 
+        if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+            $method_setting = DefaultSettings::where('default_setting_enabled','true')
+            ->where('default_setting_category','cache')
+            ->where('default_setting_subcategory','method')
+            ->get()
+            ->first();
 
+            $location_setting = DefaultSettings::where('default_setting_enabled','true')
+            ->where('default_setting_category','cache')
+            ->where('default_setting_subcategory','location')
+            ->get()
+            ->first();
+
+            $freeswitch_settings = FreeswitchSettings::first();
+
+            session_start();
+            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
+            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
+            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
+            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
+            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
+        }
+        $cache = new cache;
+        $cache->delete("dialplan:".$domain_name);
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
@@ -340,6 +396,11 @@ class FaxesController extends Controller
             DB::Raw("coalesce(destination_description , '') as destination_description"),
         ])
         ->sortBy('destination_number');
+        if(isset($fax->fax_email)){
+            if(!empty($fax->fax_email)){
+                $fax->fax_email=explode(',',$fax->fax_email);
+            }
+        }
 
 
         $data=array();
@@ -389,7 +450,7 @@ class FaxesController extends Controller
             // 'accountcode' => 'nullable',
             // 'fax_destination_number' => 'nullable',
             // 'fax_prefix' => 'nullable',
-            'fax_email' => 'nullable|email:rfc,dns',
+            'fax_email' => 'nullable|array',
             'fax_caller_id_name' => 'nullable',
             'fax_caller_id_number' => 'nullable',
             'fax_forward_number' => 'nullable',
@@ -408,8 +469,39 @@ class FaxesController extends Controller
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
         $attributes['fax_destination_number']=$attributes['fax_extension'];
+        $fax_email='';
+        if(isset($attributes['fax_email'])){
+            $fax_email=implode(',',$attributes['fax_email']);
+        }
+        $attributes['fax_email']=$fax_email;
         $fax->fill($attributes);  
         $fax->update($attributes);  
+
+
+        //Setting variables to use 
+        $domain_id=Session::get('domain_uuid');
+        $domain_name=Session::get('domain_name');
+        
+        $old_dialplan=Dialplans::where('dialplan_uuid',$fax->dialplan_uuid)->first();
+        if(!empty($old_dialplan)){
+            $old_dialplan->delete();
+        }
+
+        $dialplan=new Dialplans;
+        $dialplan->domain_uuid=$domain_id;
+        $dialplan->app_uuid = "24108154-4ac3-1db6-1551-4731703a4440";
+        $dialplan->dialplan_name=$attributes['fax_name'];
+        $dialplan->dialplan_number=$attributes['fax_extension'];
+        $dialplan->dialplan_context=$domain_name;
+        $dialplan->dialplan_continue='false';
+        $dialplan->dialplan_order='310';
+        $dialplan->dialplan_enabled='true';
+        $dialplan->dialplan_description=$attributes['fax_description'];
+        $dialplan->save();
+        $dialplan->dialplan_xml=get_fax_dial_plan($fax,$dialplan);
+        $dialplan->save();
+        $fax->dialplan_uuid=$dialplan->dialplan_uuid;
+        $fax->save();
  
 
         // Remove current allowed emails from the database
@@ -446,6 +538,30 @@ class FaxesController extends Controller
             }
         } 
          
+        if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
+            $method_setting = DefaultSettings::where('default_setting_enabled','true')
+            ->where('default_setting_category','cache')
+            ->where('default_setting_subcategory','method')
+            ->get()
+            ->first();
+
+            $location_setting = DefaultSettings::where('default_setting_enabled','true')
+            ->where('default_setting_category','cache')
+            ->where('default_setting_subcategory','location')
+            ->get()
+            ->first();
+
+            $freeswitch_settings = FreeswitchSettings::first();
+
+            session_start();
+            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
+            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
+            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
+            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
+            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
+        }
+        $cache = new cache;
+        $cache->delete("dialplan:".$domain_name);
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);

@@ -71,6 +71,7 @@ Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'si
 
 // Webhooks
 Route::webhooks('webhook/postmark','postmark');
+Route::webhooks('webhook/commio/sms','commio');
 
 Route::resource('users','UsersController');
 Route::resource('voicemails','VoicemailController');

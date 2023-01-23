@@ -52,7 +52,10 @@ class Faxes extends Model
     ];
 
     // private $domain
-
+    public function dialplans()
+    {
+        return $this->belongsTo(Dialplans::class,'dialplan_uuid','dialplan_uuid');
+    }
 
 
     public function EmailToFax ($payload){

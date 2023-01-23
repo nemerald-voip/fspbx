@@ -100,11 +100,27 @@
                                             </div> --}}
 
                                             <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="fax_email" class="form-label">Email </label>
-                                                    <input class="form-control"  type="text" value="{{ $fax->fax_email ?? ''}}" 
-                                                        placeholder="Enter email" id="fax_email" name="fax_email" />
-                                                    <div class="text-danger error_message fax_email_err"></div>
+                                                {{-- <div class="mb-3"> --}}
+                                                    {{-- <label for="fax_email" class="form-label">Email </label> --}}
+                                                    {{-- <input class="form-control"  type="text" value="{{ $fax->fax_email ?? ''}}" 
+                                                        placeholder="Enter email" id="fax_email" name="fax_email[]" /> --}}
+                                                            <div class="row">
+                                                                <label for="fax_email_input" class="form-label">Email</label>
+                                                                <div class="mb-3 col-10">
+                                                                    <input type="email" id="fax_email_input" class="form-control" placeholder="Email">
+                                                                </div>
+                                                                <div class="mb-3 col-2">
+                                                                    <button type="button" id="faxEmailButton" class="btn btn-primary ms-2">Add</button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-danger error_message fax_email_err"></div>
+                                                        {{-- </div> --}}
+                                                <div id="faxEmailDiv" class="d-flex">
+                                                    @if(is_array($fax->fax_email))
+                                                    @foreach ($fax->fax_email as $email)
+                                                    <span class="mr-2 btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton"><input type="hidden" name="fax_email[]" value="{{ $email }}">{{ $email }}<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>
+                                                    @endforeach
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -325,6 +341,7 @@
 
 <script>
     $(document).ready(function() {
+        $('#faxEmailButton').attr('disabled',true);
     });
 
     $("#listOfEmails").on("click", ".emailButton", function(){
@@ -348,6 +365,31 @@
 
         }
     });
+
+    $('#faxEmailButton').on('click',function(){
+        var emailAddress = $('#fax_email_input').val();
+        if(isEmail(emailAddress)){
+            $('#faxEmailDiv').append('<span class="mr-2 btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton"><input type="hidden" name="fax_email[]" value="' + emailAddress + '">' + emailAddress + '<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>');
+            $('#fax_email_input').val('');
+            $('#faxEmailButton').attr('disabled',true);
+        }
+    });
+    $('#fax_email_input').on('keyup',function(){
+        if(isEmail($(this).val())){
+            $('#faxEmailButton').attr('disabled',false);
+        } else {
+            $('#faxEmailButton').attr('disabled',true);
+
+        }
+    });
+    function isEmail(email) {
+    var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    return regex.test(email);
+    }
+
+    function removeEmail(e){
+        $(e).parent().remove();
+    }
 
     
     $('#domainNamesForm').submit(function(e){
@@ -399,6 +441,10 @@
 
         });
     });
+
+    function addFaxEmail(){
+        var email=$('#fax_email_input').val();
+    }
 
 </script>
 @endpush
