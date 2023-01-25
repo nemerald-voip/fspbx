@@ -690,7 +690,7 @@ class AppsController extends Controller
             'org_id' => $request->org_id,
             'conn_id' => $request->connection,
             'name' => $extension->effective_caller_id_name,
-            'email' => $extension->voicemail->voicemail_mail_to,
+            'email' => ($extension->voicemail) ? $extension->voicemail->voicemail_mail_to : "",
             'ext' => $extension->extension,
             'username' => $extension->extension,
             'domain' => $request->app_domain,
