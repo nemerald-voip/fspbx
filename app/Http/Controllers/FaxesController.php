@@ -55,6 +55,14 @@ class FaxesController extends Controller
         $permissions['fax_active_view'] = userCheckPermission('fax_active_view');
         $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
         $permissions['fax_send'] = userCheckPermission('fax_send');
+
+        foreach($data['faxes'] as $fax){
+            if(!empty($fax->fax_email)){
+                $fax->fax_email=explode(',',$fax->fax_email);
+            } else {
+                $fax->fax_email=[];
+            }
+        }
         
         return view('layouts.fax.list')
             ->with($data)

@@ -115,12 +115,14 @@
                                                             </div>
                                                             <div class="text-danger error_message fax_email_err"></div>
                                                         {{-- </div> --}}
-                                                <div id="faxEmailDiv" class="d-flex">
+                                                <div  class="row">
+                                                    <div class="col-md-12" id="faxEmailDiv">
                                                     @if(is_array($fax->fax_email))
                                                     @foreach ($fax->fax_email as $email)
-                                                    <span class="mr-2 btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton"><input type="hidden" name="fax_email[]" value="{{ $email }}">{{ $email }}<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>
+                                                    <span class="m-1 mt-0 mb-2 btn btn-outline-primary rounded-pill btn-sm emailButton"><input class="fax_email" type="hidden" name="fax_email[]" value="{{ $email }}">{{ $email }}<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>
                                                     @endforeach
                                                     @endif
+                                                </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -369,9 +371,12 @@
     $('#faxEmailButton').on('click',function(){
         var emailAddress = $('#fax_email_input').val();
         if(isEmail(emailAddress)){
-            $('#faxEmailDiv').append('<span class="mr-2 btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton"><input type="hidden" name="fax_email[]" value="' + emailAddress + '">' + emailAddress + '<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>');
-            $('#fax_email_input').val('');
-            $('#faxEmailButton').attr('disabled',true);
+            var email_exists=checkEmailExists(emailAddress);
+            if(!email_exists){
+                $('#faxEmailDiv').append('<span class="btn btn-outline-primary rounded-pill btn-sm m-1 mt-0 mb-2 emailButton"><input type="hidden" class="fax_email" name="fax_email[]" value="' + emailAddress + '">' + emailAddress + '<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>');
+                $('#fax_email_input').val('');
+                $('#faxEmailButton').attr('disabled',true);
+            }
         }
     });
     $('#fax_email_input').on('keyup',function(){
@@ -385,6 +390,16 @@
     function isEmail(email) {
     var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
     return regex.test(email);
+    }
+
+    function checkEmailExists(email){
+        var email_exists=false;
+        $('.fax_email').each(function(key,selector){
+            if($(selector).val()==email){
+                email_exists=true;
+            }
+        });
+        return email_exists;
     }
 
     function removeEmail(e){

@@ -55,7 +55,7 @@
                                     </th>
                                     <th>Name</th>
                                     <th>Extension</th>
-                                    <th>Email</th>
+                                    <th style="width: 425px;">Email</th>
                                     <th class="text-center">Tools</th>
                                     <th style="width: 125px;">Action</th>
                                 </tr>
@@ -87,7 +87,9 @@
                                             {{ $fax->fax_extension }} 
                                         </td>
                                         <td>
-                                            {{ $fax->fax_email }}
+                                            @foreach ($fax->fax_email as $email)
+                                            <span class="m-1 mt-0 mb-2 btn btn-outline-primary rounded-pill btn-sm emailButton">{{ $email }}</span>
+                                            @endforeach
                                         </td>
 
                                         <td  class="text-center">
