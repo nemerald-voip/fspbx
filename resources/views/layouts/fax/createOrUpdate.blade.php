@@ -81,50 +81,6 @@
 
                                         
                                         <div class="row">
-                                            {{-- <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="fax_destination_number" class="form-label">Destination Number </label>
-                                                    <input class="form-control"  type="text" value="{{ $fax->fax_destination_number ?? ''}}" 
-                                                        placeholder="Enter fax name" id="fax_destination_number" name="fax_destination_number" />
-                                                    <div class="text-danger error_message fax_destination_number_err"></div>
-                                                </div>
-                                            </div> --}}
-
-                                            {{-- <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="fax_prefix" class="form-label">Prefix </label>
-                                                    <input class="form-control"  type="text" value="{{ $fax->fax_prefix ?? ''}}" 
-                                                        placeholder="Enter fax name" id="fax_prefix" name="fax_prefix" />
-                                                    <div class="text-danger error_message fax_prefix_err"></div>
-                                                </div>
-                                            </div> --}}
-
-                                            <div class="col-md-6">
-                                                {{-- <div class="mb-3"> --}}
-                                                    {{-- <label for="fax_email" class="form-label">Email </label> --}}
-                                                    {{-- <input class="form-control"  type="text" value="{{ $fax->fax_email ?? ''}}" 
-                                                        placeholder="Enter email" id="fax_email" name="fax_email[]" /> --}}
-                                                            <div class="row">
-                                                                <label for="fax_email_input" class="form-label">Email</label>
-                                                                <div class="mb-3 col-10">
-                                                                    <input type="email" id="fax_email_input" class="form-control" placeholder="Email">
-                                                                </div>
-                                                                <div class="mb-3 col-2">
-                                                                    <button type="button" id="faxEmailButton" class="btn btn-primary ms-2">Add</button>
-                                                                </div>
-                                                            </div>
-                                                            <div class="text-danger error_message fax_email_err"></div>
-                                                        {{-- </div> --}}
-                                                <div  class="row">
-                                                    <div class="col-md-12" id="faxEmailDiv">
-                                                    @if(is_array($fax->fax_email))
-                                                    @foreach ($fax->fax_email as $email)
-                                                    <span class="m-1 mt-0 mb-2 btn btn-outline-primary rounded-pill btn-sm emailButton"><input class="fax_email" type="hidden" name="fax_email[]" value="{{ $email }}">{{ $email }}<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>
-                                                    @endforeach
-                                                    @endif
-                                                </div>
-                                                </div>
-                                            </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label for="fax_caller_id_name" class="form-label">Caller ID Name </label>
@@ -209,7 +165,7 @@
                                             </div>
                                         </div>
                                       
-                                        <div class="row" style="display: none">
+                                        <div class="row" style="display:none">
 
                                             <select class="select2 emailListSelect2 select2-multiple" data-toggle="select2" multiple="multiple" title="EmailList" name="email_list[]">
                                                 @foreach ($allowed_emails as $email)
@@ -224,6 +180,16 @@
                                                         {{ $domain_name->domain }}
                                                     </option>
                                                 @endforeach
+                                            </select>
+
+                                            <select class="select2 faxListSelect2 select2-multiple" data-toggle="select2" multiple="multiple" title="FaxList" name="fax_email[]">
+                                                @if(is_array($fax->fax_email))
+                                                @foreach ($fax->fax_email as $email)
+                                                    <option selected value="{{ $email }}">
+                                                        {{ $email }}
+                                                    </option>
+                                                @endforeach
+                                                @endif
                                             </select>
                                         </div>
                             
@@ -254,7 +220,51 @@
     <!-- end row-->
 
     <div class="row">
-        <div class="col-6">
+
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="header-title">Fax Recipients</h4>
+                </div>
+
+                <div class="card-body pt-0">
+                    <div class="row align-items-center">
+                        
+                        <form id="faxAdrressForm">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Info - </strong>Enter email addresses that will receive all incoming faxes. You can add up to 5 email addresses.
+                            </div>
+                            <div class="row">
+                                <label for="fax_email_input" class="form-label">Fax email address</label>
+                                <div class="mb-3 col-10">
+                                    <input type="email" id="fax_email_input" class="form-control" placeholder="Email">
+                                </div>
+                                <div class="mb-3 col-2">
+                                    <button type="button" id="faxEmailButton" class="btn btn-primary ms-2">Add</button>
+                                </div>
+                            </div>
+                            <div class="text-danger error_message fax_email_err"></div>
+                        </form>
+
+                        <div id="faxToEmails">
+                            @if(is_array($fax->fax_email))
+                                @foreach ($fax->fax_email as $email)
+                                    {{-- <span class="m-1 mt-0 mb-2 btn btn-outline-primary rounded-pill btn-sm emailButton"><input class="fax_email" type="hidden" name="fax_email[]" value="{{ $email }}">{{ $email }}<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span> --}}
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <button type="button" class="btn btn-outline-primary rounded-pill btn-sm mb-2 faxToButton"><input class="fax_email" type="hidden" name="fax_email[]" value="{{ $email }}">{{ $email }}<i class="mdi mdi-close ms-2"></i></button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="header-title">Additional users allowed to use email-to-fax</h4>
@@ -273,7 +283,7 @@
                                     <input type="email" id="emailAddress" name="example-email" class="form-control" placeholder="Email">
                                 </div>
                                 <div class="mb-3 col-3">
-                                    <button type="submit" class="btn btn-primary ms-2">Add</button>
+                                    <button type="submit" id="faxAllowedEmailButton" class="btn btn-primary ms-2">Add</button>
 
                                 </div>
                             </div>
@@ -294,7 +304,7 @@
             </div>
         </div>
 
-        <div class="col-6">
+        <div class="col-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="header-title">Domains allowed to use email-to-fax</h4>
@@ -313,7 +323,7 @@
                                     <input type="text" id="domainName" class="form-control" placeholder="Domain">
                                 </div>
                                 <div class="mb-3 col-3">
-                                    <button type="submit" class="btn btn-primary ms-2">Add</button>
+                                    <button type="submit" id="faxAllowedDomainButton" class="btn btn-primary ms-2">Add</button>
 
                                 </div>
                             </div>
@@ -345,10 +355,17 @@
 <script>
     $(document).ready(function() {
         $('#faxEmailButton').attr('disabled',true);
+        $('#faxAllowedEmailButton').attr('disabled',true);
+        $('#faxAllowedDomainButton').attr('disabled',true);
     });
-
+    
     $("#listOfEmails").on("click", ".emailButton", function(){
             $(".emailListSelect2 option[value='" + $(this).text() + "']").remove();
+            $(this).remove();
+    });
+
+    $("#faxToEmails").on("click", ".faxToButton", function(){
+            $(".faxListSelect2 option[value='" + $(this).text() + "']").remove();
             $(this).remove();
     });
 
@@ -357,29 +374,47 @@
             $(this).remove();
     });
 
+    $('#faxAdrressForm').submit(function(e){
+        var emailAddress = $(this).find('#fax_email_input').val().toLowerCase();
+        e.preventDefault();
+
+        if (!$('.faxListSelect2').find("option[value='" + emailAddress + "']").length) {
+            var newOption = new Option(emailAddress, emailAddress, true, true);
+            $('.faxListSelect2').append(newOption).trigger('change');
+            $('#listOfEmails').append('<div class="row"><div class="col-12"><button type="button" class="btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton">' + emailAddress + '<i class="mdi mdi-close ms-2"></i></button></div></div>');
+            $('#fax_email_input').val('');
+            $('#faxEmailButton').attr('disabled',true);
+        }
+
+    });
+
     $('#emailAdrressForm').submit(function(e){
-        var emailAddress = $(this).find('#emailAddress').val();
+        var emailAddress = $(this).find('#emailAddress').val().toLowerCase();
         e.preventDefault();
 
         if (!$('.emailListSelect2').find("option[value='" + emailAddress + "']").length) {
             var newOption = new Option(emailAddress, emailAddress, true, true);
             $('.emailListSelect2').append(newOption).trigger('change');
             $('#listOfEmails').append('<div class="row"><div class="col-12"><button type="button" class="btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton">' + emailAddress + '<i class="mdi mdi-close ms-2"></i></button></div></div>');
-
+            $('#emailAddress').val('');
+            $('#faxAllowedEmailButton').attr('disabled',true);
         }
+
     });
 
     $('#faxEmailButton').on('click',function(){
-        var emailAddress = $('#fax_email_input').val();
-        if(isEmail(emailAddress)){
-            var email_exists=checkEmailExists(emailAddress);
-            if(!email_exists){
-                $('#faxEmailDiv').append('<span class="btn btn-outline-primary rounded-pill btn-sm m-1 mt-0 mb-2 emailButton"><input type="hidden" class="fax_email" name="fax_email[]" value="' + emailAddress + '">' + emailAddress + '<i onclick="removeEmail(this)" class="mdi mdi-close ms-2"></i></span>');
+        var emailAddress = $('#fax_email_input').val().toLowerCase();
+        if(isEmail(emailAddress.toLowerCase())){
+            if (!$('.faxListSelect2').find("option[value='" + emailAddress + "']").length) {
+                var newOption = new Option(emailAddress, emailAddress, true, true);
+                $('.faxListSelect2').append(newOption).trigger('change');
+                $('#faxToEmails').append('<div class="row"><div class="col-12"><button type="button" class="btn btn-outline-primary rounded-pill btn-sm mb-2 emailButton">' + emailAddress + '<i class="mdi mdi-close ms-2"></i></button></div></div>');
                 $('#fax_email_input').val('');
                 $('#faxEmailButton').attr('disabled',true);
             }
         }
     });
+
     $('#fax_email_input').on('keyup',function(){
         if(isEmail($(this).val())){
             $('#faxEmailButton').attr('disabled',false);
@@ -388,9 +423,33 @@
 
         }
     });
+
+    $('#emailAddress').on('keyup',function(){
+        if(isEmail($(this).val())){
+            $('#faxAllowedEmailButton').attr('disabled',false);
+        } else {
+            $('#faxAllowedEmailButton').attr('disabled',true);
+
+        }
+    });
+
+    $('#domainName').on('keyup',function(){
+        if(isDomain($(this).val())){
+            $('#faxAllowedDomainButton').attr('disabled',false);
+        } else {
+            $('#faxAllowedDomainButton').attr('disabled',true);
+
+        }
+    });
+
     function isEmail(email) {
-    var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
-    return regex.test(email);
+        var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        return regex.test(email);
+    }
+
+    function isDomain(domain) {
+        var regex = /^(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        return regex.test(domain);
     }
 
     function checkEmailExists(email){
@@ -409,14 +468,15 @@
 
     
     $('#domainNamesForm').submit(function(e){
-        var domainName = $(this).find('#domainName').val();
+        var domainName = $(this).find('#domainName').val().toLowerCase();
         e.preventDefault();
 
         if (!$('.domainListSelect2').find("option[value='" + domainName + "']").length) {
             var newOption = new Option(domainName, domainName, true, true);
             $('.domainListSelect2').append(newOption).trigger('change');
             $('#listOfDomains').append('<div class="row"><div class="col-12"><button type="button" class="btn btn-outline-primary rounded-pill btn-sm mb-2 domainNameButton">' + domainName + '<i class="mdi mdi-close ms-2"></i></button></div></div>');
-
+            $('#domainName').val('');
+            $('#faxAllowedDomainButton').attr('disabled',true);
         }
     });
     

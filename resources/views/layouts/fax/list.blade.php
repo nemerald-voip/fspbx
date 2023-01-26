@@ -55,7 +55,7 @@
                                     </th>
                                     <th>Name</th>
                                     <th>Extension</th>
-                                    <th style="width: 425px;">Email</th>
+                                    <th style="width: 425px;">Fax Email Address</th>
                                     <th class="text-center">Tools</th>
                                     <th style="width: 125px;">Action</th>
                                 </tr>
