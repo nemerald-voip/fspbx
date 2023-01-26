@@ -335,7 +335,7 @@
         @if($permissions['voicemails'])
         <div class="col-md-4 col-lg-3 col-sm-6">
             <div class="card">
-                <a href="/app/voicemails/voicemails.php">
+                <a href="/voicemails">
                     <div class="card-body pt-2">
                     <div class="d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #f1f3fa;">
                         <h6 class="m-0" style="color: #6c757d;font-size:20px">Voicemails</h6>
@@ -363,6 +363,25 @@
                     <h2 class="my-2 text-success">{{ $call_flows }}</h2>
                     <p class="mb-0 text-muted">
                         <span class="text-nowrap">Total Call Flows</span>  
+                    </p>
+                </div> <!-- end card-body-->
+            </a>
+            </div>
+        </div>
+        @endif
+
+        @if($permissions['fax_view'])
+        <div class="col-md-4 col-lg-3 col-sm-6">
+            <div class="card">
+                <a href="/faxes">
+                <div class="card-body pt-2">
+                    <div class="d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #f1f3fa;">
+                        <h6 class="m-0" style="color: #6c757d;font-size:20px">Virtual Faxes</h6>
+                        <i class="mdi mdi-account-group text-danger" style="font-size: 2rem;"></i>
+                    </div>
+                    <h2 class="my-2 text-danger">{{ $faxes }}</h2>
+                    <p class="mb-0 text-muted">
+                        <span class="text-nowrap">Total Virtual Faxes</span>  
                     </p>
                 </div> <!-- end card-body-->
             </a>

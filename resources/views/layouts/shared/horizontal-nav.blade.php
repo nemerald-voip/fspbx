@@ -5,7 +5,7 @@
         <nav class="navbar navbar-dark navbar-expand-xxl topnav-menu">
 
             <!-- LOGO -->
-            <a href="" class="topnav-logo me-3">
+            <a href="/dashboard" class="topnav-logo me-3">
                 <span class="topnav-logo-sm">
                     <img src="{{asset('/themes/default/logo.png')}}" alt="" height="40">
                 </span>

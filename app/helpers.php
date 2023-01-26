@@ -69,6 +69,8 @@ if (!function_exists('getFusionPBXPreviousURL')){
         elseif (strpos($previous_url, "ivr_menu_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";}
         elseif (strpos($previous_url, "voicemail_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";}
         elseif (strpos($previous_url, "/extensions/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/extensions/")) . "/extensions";}
+        elseif (strpos($previous_url, "/faxes/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/faxes/")) . "/faxes";}
+        elseif (strpos($previous_url, "/voicemails/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/voicemails/")) . "/voicemails";}
         else $url = $previous_url;
         return $url;
     }

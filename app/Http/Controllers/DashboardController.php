@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Auth;
 use Linfo\Linfo;
 use Carbon\Carbon;
+use App\Models\Faxes;
 use App\Models\Domain;
 use App\Models\Extensions;
 use Aws\Mobile\MobileClient;
@@ -43,6 +44,7 @@ class DashboardController extends Controller
         $data['permissions']['voicemails']=userCheckPermission("voicemail_view");
         $data['permissions']['phone_number']=userCheckPermission("destination_view");
         $data['permissions']['call_flow_view']=userCheckPermission("call_flow_view");
+        $data['permissions']['fax_view']=userCheckPermission("fax_view");
 
         //Users Count
         $data['users'] = DB::table('v_users')->where('domain_uuid', $domain_id)->where('user_enabled', 'true')->count();
@@ -99,6 +101,9 @@ class DashboardController extends Controller
             ->where('call_flow_enabled', 'true')
             ->count();
 
+        //Call Faxes
+        $data['faxes'] = Faxes::where('domain_uuid', $domain_id)
+        ->count();
 
         // $free = shell_exec('free');
         // $free = (string)trim($free);
