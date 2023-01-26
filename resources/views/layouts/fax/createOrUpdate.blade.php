@@ -175,7 +175,7 @@
 
 
                                         
-                                        
+                                        @if (isSuperAdmin())
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -196,6 +196,7 @@
                                             </div>
 
                                         </div> <!-- end row -->
+                                        @endif
 
                                         <div class="row">
                                             <div class="col-md-12">

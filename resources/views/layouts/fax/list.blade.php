@@ -96,24 +96,24 @@
 
                                             <div id="tooltip-container-actions text-center">
                                                 @if ($permissions['fax_send'])
-                                                    <a href="{{ url('faxes/new/').'/'.$fax->fax_uuid }}" class="action-icon" title="New"> 
-                                                        <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="New"></i>
+                                                    <a href="{{ url('faxes/new/').'/'.$fax->fax_uuid }}" class="btn btn-sm btn-link text-muted ps-2" title="New"> 
+                                                        <i class="mdi mdi-plus me-1" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="New">New Fax</i>
                                                     </a>
                                                     @endif
                                                     
                                                     @if ($permissions['fax_inbox_view'])
-                                                    <a href="{{ url('faxes/inbox/').'/'.$fax->fax_uuid }}" class="action-icon"> 
-                                                        <i class="mdi mdi-inbox" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inbox"></i>
+                                                    <a href="{{ url('faxes/inbox/').'/'.$fax->fax_uuid }}" class="btn btn-sm btn-link text-muted ps-2"> 
+                                                        <i class="mdi mdi-inbox me-1" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inbox">Inbox</i>
                                                     </a>
                                                     @endif
                                                     @if ($permissions['fax_sent_view'])
-                                                    <a href="{{ url('faxes/sent/').'/'.$fax->fax_uuid }}" class="action-icon" title="Sent"> 
-                                                        <i class="mdi mdi-send-check" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sent"></i>
+                                                    <a href="{{ url('faxes/sent/').'/'.$fax->fax_uuid }}" class="btn btn-sm btn-link text-muted ps-2" title="Sent"> 
+                                                        <i class="mdi mdi-send-check" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sent">Sent</i>
                                                     </a>
                                                     @endif
                                                     @if ($permissions['fax_log_view'])
-                                                    <a href="{{ url('faxes/log/').'/'.$fax->fax_uuid }}" class="action-icon" title="Logs"> 
-                                                        <i class="mdi mdi-fax" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Logs"></i>
+                                                    <a href="{{ url('faxes/log/').'/'.$fax->fax_uuid }}" class="btn btn-sm btn-link text-muted ps-2" title="Logs"> 
+                                                        <i class="mdi mdi-fax" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Logs">Logs</i>
                                                     </a>
                                                     @endif
                                                     {{-- @if ($permissions['fax_active_view'])
