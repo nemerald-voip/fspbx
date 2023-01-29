@@ -11,7 +11,7 @@
             <div class="page-title-box">
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="{{ route('faxes.index') }}">Fax</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('faxes.index') }}">Virtual Fax Machines</a></li>
                         <li class="breadcrumb-item active">Fax Log</li>
                     </ol>
                 </div>
@@ -27,7 +27,7 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $logs->count() ?? 0 }}  results for logs</label>
+                            <label class="form-label">Showing {{ $logs->count() ?? 0 }}  results for fax logs</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
@@ -80,7 +80,7 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td>{{ date('M d,Y H:i',strtotime($log->fax_date)) }}</td>
+                                        <td>{{ $log->fax_date }}</td>
                                         <td>{{ $log->fax_success }}</td>
                                         <td>{{ $log->fax_result_code }}</td>
                                         <td>{{ $log->fax_result_text }}</td>
@@ -90,7 +90,7 @@
                                         <td>{{ $log->fax_bad_rows }}</td>
                                         <td>{{ $log->fax_transfer_rate }}</td>
                                         <td>{{ $log->fax_retry_attempts }}</td>
-                                        <td>{{ basename($log->fax_uri) }}</td>
+                                        <td>{{ $log->fax_uri }}</td>
                                         
                                         <td>
                                             

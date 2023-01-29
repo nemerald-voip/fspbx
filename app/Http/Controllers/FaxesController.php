@@ -9,13 +9,15 @@ use App\Models\Faxes;
 use App\Models\Domain;
 use App\Models\FaxLogs;
 use App\Models\FaxFiles;
+use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Models\Destinations;
-use App\Models\Dialplans;
 use Illuminate\Http\Request;
+use App\Models\DefaultSettings;
 use Illuminate\Validation\Rule;
 use App\Models\FaxAllowedEmails;
+use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\FaxAllowedDomainNames;
@@ -23,10 +25,9 @@ use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
-use App\Models\DefaultSettings;
-use App\Models\FreeswitchSettings;
 
 class FaxesController extends Controller
 {
@@ -77,6 +78,9 @@ class FaxesController extends Controller
         }
         $domain_uuid=Session::get('domain_uuid');
         
+        //Get libphonenumber object
+        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+
         $files=FaxFiles::where('fax_uuid',$request->id)->where('fax_mode','rx')->where('domain_uuid',$domain_uuid)->orderBy('fax_date','desc')->get();
         $data['files']=$files;
         $time_zone = get_local_time_zone($domain_uuid);
@@ -84,6 +88,19 @@ class FaxesController extends Controller
             if (Storage::disk('fax')->exists($file->domain->domain_name . '/' . $file->fax->fax_extension .  "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.'.$file->fax_file_type)){
                 $file->fax_file_path = Storage::disk('fax')->path($file->domain->domain_name . '/' . $file->fax->fax_extension .  "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.'.$file->fax_file_type);
             }
+
+            // Try to convert caller ID number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $file->fax_caller_id_number = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                } 
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            // Try to convert the date to human redable format
             $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone)->toDayDateTimeString();
         }
         $permissions['delete'] = userCheckPermission('fax_inbox_delete');
@@ -141,10 +158,38 @@ class FaxesController extends Controller
         if (!userCheckPermission("fax_sent_view")){
             return redirect('/');
         }
+
+        //Get libphonenumber object
+        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+
         $domain_uuid=Session::get('domain_uuid');
         $files=FaxFiles::where('fax_uuid',$request->id)->where('fax_mode','tx')->where('domain_uuid',$domain_uuid)->orderBy('fax_date','desc')->get();
         $time_zone = get_local_time_zone($domain_uuid);
         foreach($files as $file){
+
+            // Try to convert caller ID number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $file->fax_caller_id_number = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                } 
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            // Try to convert destination number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_destination, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $file->fax_destination = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                } 
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            // Try to convert the date to human redable format
             $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone)->toDayDateTimeString();
         }
         $data['files']=$files;
@@ -162,10 +207,39 @@ class FaxesController extends Controller
         if (!userCheckPermission("fax_log_view")){
             return redirect('/');
         }
+
+        //Get libphonenumber object
+        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+
+
         $domain_uuid=Session::get('domain_uuid');
         $logs=FaxLogs::where('fax_uuid',$request->id)->where('domain_uuid',$domain_uuid)->orderBy('fax_date','desc')->get();
         $time_zone = get_local_time_zone($domain_uuid);
         foreach($logs as $log){
+
+            // Try to convert caller ID number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($log->fax_local_station_id, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $log->fax_local_station_id = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                } 
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            // Try to convert destination number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse(basename($log->fax_uri), 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $log->fax_uri = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                } 
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            // Try to convert the date to human redable format
             $log->fax_date = Carbon::createFromTimestamp($log->fax_epoch, $time_zone)->toDayDateTimeString();
         }
 

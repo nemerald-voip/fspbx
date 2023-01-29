@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Fax Sent"])
+@extends('layouts.horizontal', ["page_title"=> "Sent Faxes"])
 
 @section('content')
 
@@ -11,11 +11,11 @@
             <div class="page-title-box">
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="{{ route('faxes.index') }}">Fax</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('faxes.index') }}">Virtual Fax Machines</a></li>
                         <li class="breadcrumb-item active">Fax Sent</li>
                     </ol>
                 </div>
-                <h4 class="page-title">Fax Sent</h4>
+                <h4 class="page-title">Sent Faxes</h4>
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $files->count() ?? 0 }}  results for sent</label>
+                            <label class="form-label">Showing {{ $files->count() ?? 0 }}  results for sent faxes</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
@@ -54,8 +54,8 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th>Caller ID</th>
-                                    <th>Destination</th>
+                                    <th>From</th>
+                                    <th>To</th>
                                     {{-- <th>View</th> --}}
                                     <th>Date</th>
                                     <th>Actions</th>
@@ -91,7 +91,7 @@
                                             {{ $file->fax_file_type }}
                                     </td> --}}
                                         
-                                        <td>{{ date('M d,Y H:i',strtotime($file->fax_date)) }}</td>
+                                        <td>{{ $file->fax_date }}</td>
 
                                         
                                         <td>
