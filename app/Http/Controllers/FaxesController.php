@@ -662,23 +662,140 @@ class FaxesController extends Controller
         }
     }
 
-    public function new(Request $request)
+
+    /**
+     * Display new fax page
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+
+    public function new(Faxes $fax)
     {
         // Check permissions
         if (!userCheckPermission("fax_send")){
             return redirect('/');
         }
+
+        // Get all phone numbers
+        $destinations = Destinations::where('destination_enabled', 'true')
+        ->where ('domain_uuid', Session::get('domain_uuid'))
+        ->get([
+            'destination_uuid',
+            'destination_number',
+            'destination_enabled',
+            'destination_description',
+            DB::Raw("coalesce(destination_description , '') as destination_description"),
+        ])
+        ->sortBy('destination_number');
+
+
         $data=[];
-        $data['id']= $request->id;
         $data['domain']=Session::get('domain_name');
-        $data['destinations']=[];
-        $data['fax']=new Faxes;
+        $data['destinations'] = $destinations;
+        $data['fax'] = $fax;
         $data['national_phone_number_format']=PhoneNumberFormat::NATIONAL;
+
+        //Set default allowed extensions 
+        $fax_allowed_extensions = DefaultSettings::where('default_setting_category','fax')
+            ->where('default_setting_subcategory','allowed_extension')
+            ->where('default_setting_enabled','true')
+            ->pluck('default_setting_value')
+            ->toArray();
+
+        if (empty($fax_allowed_extensions)) {
+            $fax_allowed_extensions = array('.pdf', '.tiff', '.tif');
+        }
+
+        $fax_allowed_extensions = implode(',', $fax_allowed_extensions);
+
+        $data['fax_allowed_extensions'] = $fax_allowed_extensions;
         
-        return view('layouts.fax.new.createOrUpdate')->with($data);;
+        return view('layouts.fax.new.sendFax')->with($data);
     }
 
-    public function sendFax(Request $request){
+    /**
+     *  This function accespt a request to send new fax
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\Response
+     */
 
+    public function sendFax(Request $request){
+        // Log::alert($request->all());
+        $data = $request->all();
+
+        // If files attached
+        if (isset($data['files'])) {
+            $files = $data['files'];
+        }
+
+        // Convert form fields to associative array 
+        parse_str($data['data'], $data);
+
+
+        // Validate the input
+        $attributes = [
+            'recipient' => 'fax recipient',
+        ];
+
+        $validator = Validator::make($data, [
+            'recipient' => 'numeric|required|phone:US',
+
+        ], [], $attributes);
+
+        if ($validator->fails()) {
+            return response()->json(['error'=>$validator->errors()]);
+        }
+
+        if (!isset($files) || sizeof($files) == 0){
+            return response()->json(['error'=>['files'=>['At least one file must be uploaded']]]);
+        }
+        // Start creating the payload variable that will be passed to next step
+        $payload = array (
+            'From' => Session::get('user.user_email'),
+            'FromFull' => array (
+                'Email' => Session::get('user.user_email'),
+            ),
+            'To' => $data['recipient'] . '@fax.nemerald.com',
+            'Subject' => $data['fax_subject'],
+            'TextBody' => $data['fax_message'],
+            'HtmlBody' => $data['fax_message'],
+            'fax_destination' => $data['recipient'],
+            'fax_uuid' => $data['fax_uuid'],
+        );
+
+        $payload['Attachments'] = array();
+
+        // Parse files
+        foreach ($files as $file){
+            $splited = explode(',', substr( $file['data'] , 5 ) , 2);
+            $mime=$splited[0];
+            $data=$splited[1];
+            $mime_split_without_base64=explode(';', $mime,2);
+            $mime = $mime_split_without_base64[0];
+            // $mime_split=explode('/', $mime_split_without_base64[0],2);
+
+            array_push ($payload['Attachments'], 
+                array (
+                    'Content' => $data,
+                    'ContentType' => $mime,
+                    'Name' => $file['name'],
+                )
+            );
+
+        }
+
+        $fax = new Faxes();
+        // $result = $fax->EmailToFax($payload);
+
+
+        return response()->json([
+            'request' => $request->all(),
+            'status' => 200,
+            'success' => [
+                'message' => 'Fax is scheduled for delivery'
+            ]
+        ]);
     }
 }

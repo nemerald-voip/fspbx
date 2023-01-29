@@ -89,12 +89,6 @@
                                                     <div class="text-danger error_message fax_caller_id_name_err"></div>
                                                 </div>
                                             </div>
-                                        </div> <!-- end row -->
-
-
-                                        
-                                        
-                                        <div class="row">
 
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -118,6 +112,14 @@
                                                     <div class="text-danger error_message fax_caller_id_number_err"></div>
                                                 </div>
                                             </div>
+                                        </div> <!-- end row -->
+
+
+                                        
+                                        
+                                        <div class="row">
+
+                                            
 
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -125,6 +127,7 @@
                                                     <input class="form-control"  type="text" value="{{ $fax->fax_forward_number ?? ''}}" 
                                                         placeholder="Enter Forward Number" id="fax_forward_number" name="fax_forward_number" />
                                                     <div class="text-danger error_message fax_forward_number_err"></div>
+                                                    <span class="help-block"><small>Enter the forward number here. Used to forward the fax to a registered extension or external number.</small></span>
                                                 </div>
                                             </div>
                                         </div> <!-- end row -->
@@ -139,6 +142,7 @@
                                                     <input class="form-control"  type="text" value="{{ $fax->fax_toll_allow ?? ''}}" 
                                                         placeholder="Enter Toll Allowed" id="fax_toll_allow" name="fax_toll_allow" />
                                                     <div class="text-danger error_message fax_toll_allow_err"></div>
+                                                    <span class="help-block"><small>Enter the toll allow value here. (Examples: domestic,international,local)</small></span>
                                                 </div>
                                             </div>
 
@@ -148,6 +152,7 @@
                                                     <input class="form-control"  type="text" value="{{ $fax->fax_send_channels ?? 10}}" 
                                                         placeholder="Enter Number of channels" id="fax_send_channels" name="fax_send_channels" />
                                                     <div class="text-danger error_message fax_send_channels_err"></div>
+                                                    <span class="help-block"><small>Enter the maximum number of channels to use.</small></span>
                                                 </div>
                                             </div>
 

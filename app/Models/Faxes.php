@@ -300,11 +300,14 @@ class Faxes extends Model
         }
         
 
-
-
         // Log::alert("----------Webhook Job ends-----------");
 
-        return "ok";
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Fax is scheduled for delivery'
+            ]
+        ]);
 
     }
 

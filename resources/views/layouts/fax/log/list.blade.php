@@ -90,7 +90,7 @@
                                         <td>{{ $log->fax_bad_rows }}</td>
                                         <td>{{ $log->fax_transfer_rate }}</td>
                                         <td>{{ $log->fax_retry_attempts }}</td>
-                                        <td>{{ $log->fax_duration }}</td>
+                                        <td>{{ basename($log->fax_uri) }}</td>
                                         
                                         <td>
                                             

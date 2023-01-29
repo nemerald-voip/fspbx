@@ -45,7 +45,7 @@ Route::resource('groups', 'GroupsController');
 
 //Fax
 Route::resource('faxes', 'FaxesController');
-Route::get('/faxes/new/{id}', [FaxesController::class, 'new']) ->name('faxes.new.createOrUpdate');
+Route::get('/faxes/new/{fax}', [FaxesController::class, 'new']) ->name('faxes.new');
 Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes.inbox.list');
 Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
 Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
@@ -54,6 +54,7 @@ Route::delete('/faxes/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFi
 Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
 Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
 Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');
+Route::post('/faxes/send', [FaxesController::class, 'sendFax']) -> name ('faxes.sendFax');
 
 // Domain Groups
 Route::resource('domaingroups', 'DomainGroupsController');

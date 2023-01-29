@@ -38,6 +38,7 @@ class SetUpUserSession
         //Push variable to Session
         Session::put('user_uuid', $event->user->user_uuid);
         Session::put('user.user_uuid', $event->user->user_uuid);
+        Session::put('user.user_email', $event->user->user_email);
         Session::put('user.domain_uuid', $event->user->domain_uuid);
         $domain = Domain::where('domain_uuid',$event->user->domain_uuid)->first();
         Session::put('user.domain_name', $domain->domain_name);

@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "faxes"])
+@extends('layouts.horizontal', ["page_title"=> "Vertual Fax Machines"])
 
 @section('content')
 
@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
-                <h4 class="page-title">Fax</h4>
+                <h4 class="page-title">Virtual Fax Machines</h4>
             </div>
         </div>
     </div>
@@ -21,7 +21,7 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $faxes->count() ?? 0 }}  results for faxes</label>
+                            <label class="form-label">Showing {{ $faxes->count() ?? 0 }}  results for virtual fax machines</label>
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
