@@ -55,6 +55,7 @@
                                     </th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Roles</th>
                                     <th>Enabled</th>
                                     <th style="width: 125px;">Action</th>
                                 </tr>
@@ -92,6 +93,12 @@
                                         </td>
                                         <td>
                                             {{ $user['user_email'] }} 
+                                        </td>
+
+                                        <td>
+                                            @foreach ($user->groups() as $group)
+                                                <span class="badge bg-primary"></i>{{ ucfirst($group->group_name) }}</span>
+                                            @endforeach
                                         </td>
                                         <td>
                                             @if ($user['user_enabled']=='true') 
@@ -206,36 +213,7 @@
             });
     }
 
-    function deleteUser(user_id){
-         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-        $.ajax({
-            url: "{{ Route('deleteUser') }}", // point to server-side PHP script
-            dataType: "json",
-            cache: false,
-            data: {
-                contact_id:user_id
-            },
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.success) {
-                    toastr.success('Deleted Successfully!');
-                       setTimeout(function (){
-                        window.location.reload();
-                    }, 2000);
-                }
-            },
-            error: function(res){
-                $('.loading').hide();
-                toastr.error('Something went wrong!');
-            }
-        });
-    }
+    
     function checkSelectedBoxAvailable(){
         var has=false;
         $('.action_checkbox').each(function(key,val){

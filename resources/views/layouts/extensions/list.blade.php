@@ -90,12 +90,20 @@
                                             @else 
                                                 <h6><span class="badge bg-light rounded-pill">&nbsp;&nbsp;&nbsp;</span></h6>
                                             @endif
+
                                         </td>
                                         <td>
-                                            <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['extension'] }}</a> 
+                                            <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold me-2">{{ $extension['extension'] }}</a> 
                                         </td>
                                         <td>
-                                            <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold">{{ $extension['effective_caller_id_name'] }} </a>
+                                            <a href="{{ route('extensions.edit',$extension) }}" class="text-body fw-bold me-1">{{ $extension['effective_caller_id_name'] }}  </a>
+                                            @if ($extension['do_not_disturb'] == "true") 
+                                                <small><span class="badge badge-outline-danger">DND</span></small>
+                                            @endif
+                                            @if ($extension['forward_all_enabled'] == "true") 
+                                                <small><span class="badge badge-outline-primary">FWD</span></small>
+                                            @endif
+                                            
                                         </td>
                                         <td>
                                             {{-- @if ($extension->voicemail->exists) --}}
