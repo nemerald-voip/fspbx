@@ -43,12 +43,13 @@
                         </div>
                         <div class="col-xl-4">
                             <div class="text-xl-end mt-xl-0 mt-2">
-                                <button type="button" class="btn btn-success mb-2 me-2 disabled" id="appProvisionButton"
-                                    data-bs-toggle="modal" data-bs-target="#app-provision-modal">Provision</button>
+                                {{-- <button type="button" class="btn btn-success mb-2 me-2 disabled" id="appProvisionButton"
+                                    data-bs-toggle="modal" data-bs-target="#app-provision-modal">Provision</button> --}}
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->
                     </div>
+                    <div class="col-auto">{{ $messages->links() }}</div>
 
                     <div class="table-responsive">
                         <table class="table table-centered mb-0">
