@@ -100,6 +100,17 @@ class FaxesController extends Controller
                 // Do nothing and leave the numner as is
             }
 
+            // Try to convert destination number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->fax->fax_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                    $file->fax_destination = $phoneNumberUtil
+                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                } 
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
             // Try to convert the date to human redable format
             $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone)->toDayDateTimeString();
         }
@@ -113,7 +124,8 @@ class FaxesController extends Controller
     public function downloadInboxFaxFile(FaxFiles $file)
     {
 
-        $path = $file->domain->domain_name . '/' . $file->fax->fax_extension .  "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.'.$file->fax_file_type;
+        $path = $file->domain->domain_name . '/' . $file->fax->fax_extension .  "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.pdf';
+        // $path = $file->domain->domain_name . '/' . $file->fax->fax_extension .  "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.'.$file->fax_file_type;
 
         if(!Storage::disk('fax')->exists($path)) {
                 abort (404);
@@ -133,7 +145,8 @@ class FaxesController extends Controller
     public function downloadSentFaxFile(FaxFiles $file)
     {
 
-        $path = $file->domain->domain_name . '/' . $file->fax->fax_extension .  "/sent/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.'.$file->fax_file_type;
+        // $path = $file->domain->domain_name . '/' . $file->fax->fax_extension .  "/sent/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.'.$file->fax_file_type;
+        $path = $file->domain->domain_name . '/' . $file->fax->fax_extension .  "/sent/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) -4)) . '.pdf';
 
         if(!Storage::disk('fax')->exists($path)) {
                 abort (404);

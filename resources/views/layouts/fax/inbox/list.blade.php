@@ -55,9 +55,9 @@
                                         @endif
                                     </th>
                                     <th>From</th>
-                                    {{-- <th>View</th> --}}
+                                    <th>To</th>
                                     <th>Date</th>
-                                    <th>Actions</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -82,25 +82,27 @@
                                             </span>
                                         </td>
                                         {{-- <td>{{ $file->fax_file_type }}</td> --}}
+
+                                        <td>
+                                            {{ $file->fax_destination ?? '' }}
+                                        </td>
                                         
                                         <td>{{ $file->fax_date }}</td>
 
-                                        <td>
+                                        <td class="text-end">
+                                            <a href="{{ route('downloadInboxFaxFile', $file->fax_file_uuid ) }}">
+                                                <button type="button" class="btn btn-light" title="Download">
+                                                    <i class="uil uil-down-arrow me-1"></i> Download
+                                                </button>
+                                            </a>
 
-                                    <a href="{{ route('downloadInboxFaxFile', $file->fax_file_uuid ) }}">
-                                        <button type="button" class="btn btn-light" title="Download">
-                                            <i class="uil uil-down-arrow"></i> 
-                                        </button>
-                                    </a>
+                                            @if ($permissions['delete'])
+                                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="btn btn-light"> 
+                                                <i class="uil uil-trash-alt" title="Delete"></i>
+                                            </a>
+                                            @endif
 
-                                    @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="btn btn-light"> 
-                                        <i class="uil uil-trash-alt" title="Delete"></i>
-                                    </a>
-                                    @endif
-
-
-                                    </td>
+                                        </td>
                                     </tr>
                                 @endforeach
 
@@ -153,69 +155,7 @@
         return checked;
     }
 
-    function confirmPasswordResetAction(user_email){
-        $('#confirmPasswordResetModal').data("user_email",user_email).modal('show');
 
-    }
-
-    function performConfirmedPasswordResetAction(){
-        var user_email = $("#confirmPasswordResetModal").data("user_email");
-        $('#confirmPasswordResetModal').modal('hide');
-
-        $.ajax({
-            type: 'POST',
-            url: "{{ url('password/email') }}",
-            cache: false,
-            data: {
-                email:user_email
-                }
-            })
-            .done(function(response) {
-
-                if (response.error){
-                    $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
-
-                } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                    //$(this).closest('tr').fadeOut("fast");
-                }
-            })
-            .fail(function (response){
-
-                $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
-            });
-    }
-
-    function deleteUser(user_id){
-         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-        $.ajax({
-            url: "{{ Route('deleteUser') }}", // point to server-side PHP script
-            dataType: "json",
-            cache: false,
-            data: {
-                contact_id:user_id
-            },
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.success) {
-                    toastr.success('Deleted Successfully!');
-                       setTimeout(function (){
-                        window.location.reload();
-                    }, 2000);
-                }
-            },
-            error: function(res){
-                $('.loading').hide();
-                toastr.error('Something went wrong!');
-            }
-        });
-    }
     function checkSelectedBoxAvailable(){
         var has=false;
         $('.action_checkbox').each(function(key,val){
