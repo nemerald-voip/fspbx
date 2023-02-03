@@ -49,27 +49,14 @@
                             </div>
                         </div><!-- end col-->
                     </div>
-                    <div class="dataTables_paginate paging_simple_numbers" id="products-datatable_paginate">
-                        <ul class="pagination pagination-rounded">
-                            <li class="paginate_button page-item previous disabled" id="products-datatable_previous">
-                                <a href="#" aria-controls="products-datatable" data-dt-idx="0" tabindex="0" class="page-link">
-                                    <i class="mdi mdi-chevron-left"></i>
-                                </a>
-                            </li>
-                            <li class="paginate_button page-item active">
-                                <a href="#" aria-controls="products-datatable" data-dt-idx="1" tabindex="0" class="page-link">1</a>
-                            </li>
-                            <li class="paginate_button page-item ">
-                                <a href="#" aria-controls="products-datatable" data-dt-idx="2" tabindex="0" class="page-link">2</a>
-                            </li>
-                            <li class="paginate_button page-item next" id="products-datatable_next">
-                                <a href="#" aria-controls="products-datatable" data-dt-idx="3" tabindex="0" class="page-link">
-                                    <i class="mdi mdi-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="float-end">
+                                {{ $messages->links() }}
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-auto">{{ $messages->links() }}</div>
 
                     <div class="table-responsive">
                         <table class="table table-centered mb-0">

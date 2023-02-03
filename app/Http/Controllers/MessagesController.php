@@ -15,7 +15,7 @@ class MessagesController extends Controller
      */
     public function index()
     {
-        $messages = Messages::latest()->paginate(5);
+        $messages = Messages::latest()->paginate(50)->onEachSide(1);
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
