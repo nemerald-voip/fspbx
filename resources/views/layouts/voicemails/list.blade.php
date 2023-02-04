@@ -20,9 +20,6 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
-                        <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $voicemails->count() ?? 0 }}  results for Voicemails</label>
-                        </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 @if ($permissions['add_new'])

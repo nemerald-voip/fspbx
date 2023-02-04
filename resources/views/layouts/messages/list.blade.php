@@ -50,8 +50,11 @@
                         </div><!-- end col-->
                     </div>
 
-                    <div class="row">
-                        <div class="col-12">
+                    <div class="row mt-3">
+                        <div class="col-4">
+                            <label class="form-label">Showing {{ $messages->firstItem() }} - {{ $messages->lastItem() }} of {{ $messages->total() }} results for Messages</label>
+                        </div>
+                        <div class="col-8">
                             <div class="float-end">
                                 {{ $messages->links() }}
                             </div>
@@ -91,7 +94,12 @@
                                                 <label class="form-check-label" for="@php print 'messageCheck'.$i; @endphp">&nbsp;</label>
                                             </div>
                                         </td>
-                                        <td><a href="" class="text-body fw-bold">{{ \Carbon\Carbon::parse($message['created_at'])->format('m/d/Y, h:i:s A') }}</a> </td>
+                                        {{-- <td><a href="" class="text-body fw-bold">{{ \Carbon\Carbon::parse($message['created_at'])->format('m/d/Y, h:i:s A') }}</a> </td> --}}
+                                        <td>
+                                            <a href="" class="text-body fw-bold text-nowrap">{{ $message->date->format('D, M d, Y ')}}</a> 
+                                            <a href="" class="text-body fw-bold text-nowrap">{{ $message->date->format('h:i:s A') }}</a>
+                                        </td>
+
                                         <td>
                                             {{ $message['direction'] }} 
                                         </td>
