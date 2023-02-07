@@ -105,6 +105,7 @@
                         </div>
                     </div> <!-- end card-body-->
                 </div> <!-- end card-->
+                {{ $emailQueues->links() }}
             </div> <!-- end col -->
         </div>
         <!-- end row -->
