@@ -3,28 +3,32 @@
 namespace App\Http\Controllers;
 
 use cache;
+use Throwable;
 use App\Models\User;
 use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\Voicemails;
 use App\Jobs\DeleteAppUser;
-use App\Jobs\UpdateAppSettings;
 use App\Models\MusicOnHold;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\ExtensionUser;
 use App\Models\MobileAppUsers;
+use App\Jobs\UpdateAppSettings;
 use App\Models\DefaultSettings;
 use Illuminate\Validation\Rule;
+use App\Imports\ExtensionsImport;
 use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\HeadingRowImport;
 use Illuminate\Support\Facades\Validator;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
@@ -60,9 +64,9 @@ class ExtensionsController extends Controller
 
         // Get all extensions
         $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))
-        ->get()
-        ->sortBy('extension');
-        // ->toArray();
+        ->orderBy('extension')
+        ->paginate(50)->onEachSide(1);
+
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
@@ -88,8 +92,20 @@ class ExtensionsController extends Controller
             }
         }
 
+        $data=array();
+        // $domain_uuid=Session::get('domain_uuid');
+        $data['extensions'] = $extensions;
+
+        //assign permissions
+        $permissions['add_new'] = userCheckPermission('extension_add');
+        // $permissions['edit'] = userCheckPermission('voicemail_edit');
+        $permissions['delete'] = userCheckPermission('extension_delete');
+        $permissions['import'] = isSuperAdmin();
+
+        $data['permissions'] = $permissions;
+
         return view('layouts.extensions.list')
-        ->with("extensions",$extensions);
+        ->with($data);
         // ->with("conn_params", $conn_params);
     }
 
@@ -715,6 +731,50 @@ class ExtensionsController extends Controller
             'message' => 'Extension has been saved'
         ]);
     }
+
+
+    /**
+     * Import the specified resource
+     *
+     * @param  Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function import(Request $request)
+    {
+
+        // $request->validate([
+        //     'file' => 'required|file|mimes:xls,xlsx,csv',
+        // ]);
+
+        try {
+            // Log::alert($request->all());
+            // $file = $request->file('file');
+            $headings = (new HeadingRowImport)->toArray(request()->file('file'));
+            
+            // Excel::import(new ExtensionsImport, request()->file('file'));
+
+            $import = new ExtensionsImport;
+            $import->import(request()->file('file'));
+            // Log::alert($import->failures());
+
+        } catch (Throwable $e) {
+            Log::alert($e);
+            // Send response in format that Dropzone understands
+            return response()->json([
+                'error' => $e->getMessage(),
+            ],400);
+        }
+
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Extensions were successfully uploaded'
+            ]
+        ]);
+
+    }
+
 
     /**
      * Remove the specified resource from storage.

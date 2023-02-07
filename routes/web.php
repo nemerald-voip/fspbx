@@ -40,6 +40,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 
 // Extensions
 Route::resource('extensions', 'ExtensionsController');
+Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
 
 // Groups
 Route::resource('groups', 'GroupsController');
