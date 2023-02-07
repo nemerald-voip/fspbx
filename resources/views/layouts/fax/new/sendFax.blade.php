@@ -247,12 +247,6 @@
 <script>
 
     Dropzone.autoDiscover = false;
-  
-    // var dropzone = new Dropzone('#fileUploadDropzone', {
-    //     thumbnailWidth: 200,
-    //     maxFilesize: 1,
-    //     acceptedFiles: ".jpeg,.jpg,.png,.gif"
-    // });
 
     // set the dropzone container id
     const id = "#file_dropzone";
