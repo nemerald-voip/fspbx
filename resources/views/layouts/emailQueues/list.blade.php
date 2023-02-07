@@ -82,7 +82,6 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>{{ $emailQueue->email_date }}</td>
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>{{ $emailQueue->email_to }}</td>
