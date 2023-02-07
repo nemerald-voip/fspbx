@@ -18,6 +18,7 @@ use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\FaxesController;
+use App\Http\Controllers\FaxQueueController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -80,7 +81,7 @@ Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->n
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 
 // Route::get('preview-email', function () {
-//     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));   
+//     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
 //     $data = "Your data to be use in blade file";
 //     return $markdown->render("emails.app.credentials");
 //    });
@@ -136,6 +137,9 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Messages
     Route::get('/messages', [MessagesController::class, 'index']) ->name('messagesStatus');
+
+    // Fax Queue
+    Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');
 });
 
 // Route::group(['prefix' => '/'], function () {
