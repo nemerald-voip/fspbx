@@ -48,12 +48,14 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th style="width: 425px;">Hostname</th>
+                                    <th>Date Time</th>
+                                    <th>Hostname</th>
                                     <th class="text-center">From</th>
-                                    <th style="width: 125px;">To</th>
-                                    <th style="width: 125px;">Subject</th>
+                                    <th>To</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                    <th>Retry</th>
+                                    <th>After Email</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -80,21 +82,14 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>
-                                            {{ $emailQueue->email_date }}
-                                        </td>
-                                        <td>
-                                            {{ $emailQueue->hostname }}
-                                        </td>
-                                        <td class="text-center">
-                                            {{ $emailQueue->email_from }}
-                                        </td>
-                                        <td>
-                                            {{ $emailQueue->email_to }}
-                                        </td>
-                                        <td>
-                                            {{ $emailQueue->email_subject }}
-                                        </td>
+                                        <td>{{ $emailQueue->email_date }}</td>
+                                        <td>{{ $emailQueue->hostname }}</td>
+                                        <td class="text-center">{{ $emailQueue->email_from }}</td>
+                                        <td>{{ $emailQueue->email_to }}</td>
+                                        <td>{{ $emailQueue->email_subject }}</td>
+                                        <td>{{ $emailQueue->email_status }}</td>
+                                        <td>{{ $emailQueue->email_retry_count }}</td>
+                                        <td>{{ $emailQueue->email_action_after }}</td>
                                     </tr>
                                 @endforeach
 
