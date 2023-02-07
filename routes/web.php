@@ -141,6 +141,8 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Fax Queue
     Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');
+    Route::delete('faxqueue/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
+
 });
 
 // Route::group(['prefix' => '/'], function () {

@@ -21,7 +21,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 
 class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, SkipsOnError, SkipsOnFailure, WithValidation
 {
-    use Importable, SkipsErrors;
+    use Importable, SkipsErrors, SkipsFailures;
 
     public function rules(): array
     {
@@ -83,16 +83,4 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
     }
 
-
-    /**
-     * @param Failure[] $failures
-     */
-    public function onFailure(Failure ...$failures)
-    {
-        Log::alert("HERE");
-        Log::alert($failures);
-        return response()->json([
-            'error' => "ERROR",
-        ],400);
-    }
 }

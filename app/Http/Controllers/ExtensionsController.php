@@ -755,7 +755,7 @@ class ExtensionsController extends Controller
 
             $import = new ExtensionsImport;
             $import->import(request()->file('file'));
-            // Log::alert($import->failures());
+            Log::alert($import->failures());
 
         } catch (Throwable $e) {
             Log::alert($e);
