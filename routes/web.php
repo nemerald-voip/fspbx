@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\EmailQueueController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
@@ -140,6 +141,13 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Messages
     Route::get('/messages', [MessagesController::class, 'index']) ->name('messagesStatus');
+
+    // Email Queues
+    Route::get('email_queues', [EmailQueueController::class, 'index']);
+    Route::delete('email_queues/{id}', [EmailQueueController::class, 'delete'])->name('emailqueues.destroy');
+
+    // Fax Queue
+    Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');
 });
 
 // Route::group(['prefix' => '/'], function () {
