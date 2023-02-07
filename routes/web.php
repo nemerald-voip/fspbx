@@ -142,6 +142,7 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Email Queues
     Route::get('email_queues', [EmailQueueController::class, 'index']);
+    Route::delete('email_queues/{id}', [EmailQueueController::class, 'delete'])->name('emailqueues.destroy');
 
     // Fax Queue
     Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');

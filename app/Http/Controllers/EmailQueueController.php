@@ -17,4 +17,16 @@ class EmailQueueController extends Controller
 
         return view('layouts.emailQueues.list', compact('emailQueues'));
     }
+
+    public function delete($id)
+    {
+        EmailQueue::query()->where('email_queue_uuid', $id)->delete();
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Selected email queue has been deleted'
+            ]
+        ]);
+    }
 }
