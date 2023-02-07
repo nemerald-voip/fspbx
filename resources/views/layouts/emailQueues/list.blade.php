@@ -85,16 +85,16 @@
                                             {{ $emailQueue->email_date }}
                                         </td>
                                         <td>
-                                            $emailQueue->hostname
+                                            {{ $emailQueue->hostname }}
                                         </td>
                                         <td class="text-center">
-                                            $emailQueue->email_from
+                                            {{ $emailQueue->email_from }}
                                         </td>
                                         <td>
-                                            $emailQueue->email_to
+                                            {{ $emailQueue->email_to }}
                                         </td>
                                         <td>
-                                            $emailQueue->email_subject
+                                            {{ $emailQueue->email_subject }}
                                         </td>
                                     </tr>
                                 @endforeach
