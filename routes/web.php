@@ -80,6 +80,8 @@ Route::resource('users','UsersController');
 Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
+// Fax Queue
+Route::resource('/faxqueue','FaxQueueController');
 
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
@@ -138,9 +140,6 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Messages
     Route::get('/messages', [MessagesController::class, 'index']) ->name('messagesStatus');
-
-    // Fax Queue
-    Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');
 });
 
 // Route::group(['prefix' => '/'], function () {
