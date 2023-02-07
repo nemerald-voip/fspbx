@@ -21,8 +21,7 @@
                     <div class="card-body">
                         <div class="row mb-2">
                             <div class="col-xl-4">
-                                <label class="form-label">Showing {{ $emailQueues->total() ?? 0 }} results for email
-                                    queues</label>
+                                <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Extensions</label>
                             </div>
                             <div class="col-xl-8">
                                 <div class="text-xl-end mt-xl-0 mt-2">
