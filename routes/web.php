@@ -19,6 +19,7 @@ use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\FaxesController;
+use App\Http\Controllers\FaxQueueController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -40,6 +41,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 
 // Extensions
 Route::resource('extensions', 'ExtensionsController');
+Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
 
 // Groups
 Route::resource('groups', 'GroupsController');
@@ -81,7 +83,7 @@ Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->n
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 
 // Route::get('preview-email', function () {
-//     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));   
+//     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
 //     $data = "Your data to be use in blade file";
 //     return $markdown->render("emails.app.credentials");
 //    });
@@ -140,6 +142,9 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Email Queues
     Route::get('email_queues', [EmailQueueController::class, 'index']);
+
+    // Fax Queue
+    Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');
 });
 
 // Route::group(['prefix' => '/'], function () {

@@ -87,10 +87,13 @@ class Extensions extends Model
         'update_user',
     ];
 
-    public function __construct()
+    public function __construct(array $attributes = [])
     {
         parent::__construct();
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+        $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->fill($attributes);
     }
 
     /**

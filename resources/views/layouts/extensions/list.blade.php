@@ -20,12 +20,28 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $extensions->count() ?? 0 }}  results for Extensions</label>
+                            <label class="form-label">Showing {{ $extensions->firstItem() }} - {{ $extensions->lastItem() }} of {{ $extensions->total() }} results for Extensions</label>
                         </div>
                         <div class="col-xl-8">
-                            <div class="text-xl-end mt-xl-0 mt-2">
-                                <a href="{{ route('extensions.create') }}" class="btn btn-success mb-2 me-2"><i class="mdi mdi-plus-circle me-2"></i>Add New</a>
-                                <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">Delete Selected</a>
+                            <div class="text-xl-end">
+                                @if ($permissions['import'])
+                                    <button type="button" class="btn btn-sm btn-outline-info mb-2 me-2" data-bs-toggle="modal" data-bs-target="#extension-upload-modal"><i class="uil uil-upload me-1"></i>Import</button>
+                                @endif
+                                {{-- <div class="btn-group btn-group-sm mb-2 me-2">
+                                    <a href="{{ route('extensions.create') }}" class="btn btn-success"><i class="uil uil-plus me-1"></i>New Extension</a>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#extension-upload-modal">Import</a>
+                                        </div>
+                                    </div>
+                                </div> --}}
+                                @if ($permissions['add_new'])
+                                    <a href="{{ route('extensions.create') }}" class="btn btn-sm btn-success mb-2 me-2"><i class="uil uil-plus me-1"></i>New Extension</a>
+                                @endif
+                                @if ($permissions['delete'])
+                                    <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger btn-sm mb-2 me-2 disabled">Delete Selected</a>
+                                @endif
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                             </div>
                         </div><!-- end col-->
@@ -103,7 +119,9 @@
                                             @if ($extension['forward_all_enabled'] == "true") 
                                                 <small><span class="badge badge-outline-primary">FWD</span></small>
                                             @endif
-                                            
+                                            @if ($extension['follow_me_enabled'] == "true") 
+                                                <small><span class="badge badge-outline-primary">Sequence</span></small>
+                                            @endif
                                         </td>
                                         <td>
                                             {{-- @if ($extension->voicemail->exists) --}}
@@ -169,348 +187,110 @@
 </div> <!-- container -->
 
 
-<!-- createMobileAppModal -->
-<div id="createMobileAppModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="createMobileAppModalLabel">Create mobile app user</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-            </div>
-            <form class="ps-3 pe-3" action="" id="createUserForm">
-                <div class="modal-body">
-
-                    <div class="row mb-3">
-                        <div class="col-8">
-                            <div class="mb-1">
-                                <label class="form-label">Activate and generate app credentials</label>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="mb-1 text-sm-end">
-                                <input type="hidden" name="activate" value="false">
-                                <input type="checkbox" id="activate" name="activate" checked
-                                    data-switch="primary"/>
-                                <label for="activate" data-on-label="On" data-off-label="Off"></label>
-                                <div class="text-danger activate_err error_message"></div>
-                            </div>
-                        </div>
-                        <span class="help-block"><small>Turn this setting off if you need to create contact only and don't need to generate user's app credentials at this time</small></span>
-                    </div> <!-- end row -->
-
-                    <div class="alert alert-danger" id="appUserError" style="display:none">
-                        <ul></ul>
-                    </div>
-
-                    <input type="hidden" name="org_id" id="org_id" value="">
-                    <input type="hidden" name="app_domain" id="app_domain" value="">
-                    <input type="hidden" name="extension_uuid" id="extension_uuid" value="">
-
-                    <div class="row mb-1">
-                        <div class="col-12 text-center">
-                            <a class="btn btn-link" data-bs-toggle="collapse"
-                                href="#advancedOptions" aria-expanded="false"
-                                aria-controls="advancedOptions">
-                                Advanced
-                                <i class="uil uil-angle-down"></i>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="collapse" id="advancedOptions">
-                        <div class="col-12">
-                            <div class="mb-1">
-                                <label class="form-label">Choose Connection</label>
-                                <select id="connectionSelect2" data-toggle="select2" title="Connection" name="connection">
-                                
-                                </select>
-                                <div class="text-danger connection_err error_message"></div>
-                            </div>
-                        </div>
-                        <span class="help-block"><small>In most cases the default setting will work. Consult with your administrator if you need to change it</small></span>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    <button id="appUserCreateSubmitButton" type="submit" class="btn btn-primary">Create user</button>
-                </div>
-            </form>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-
-<!-- MobileAppModal -->
-<div id="MobileAppModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="MobileAppModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="MobileAppModalLabel">Mobile App Settings</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-            </div>
-                <div class="modal-body">
-
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="dropdown float-end">
-                                {{-- <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="mdi mdi-dots-horizontal"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end" style="">
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item">View Profile</a>
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item">Project Info</a>
-                                </div> --}}
-                            </div>
-
-                            <div class="text-center">
-                                {{-- <img src="assets/images/users/avatar-1.jpg" class="rounded-circle avatar-md img-thumbnail" alt="friend"> --}}
-                                <h3 class="mt-3 my-1"><span id="mobileAppName"></span> </h3>
-                                <p class="mb-0 text-muted"></i>Ext: <span id="mobileAppExtension"></span></p>
-                                <hr class="bg-dark-lighten my-3">
-                                <h5 class="mt-3 mb-3 fw-semibold text-muted">Select an action below</h5>
-                            
-                                <a href="javascript:appUserSetStatusAction('{{ route('appsSetStatus', ':id') }}');" id="appUserSetStatusButton" class="btn btn-warning me-2 btn-sm">
-                                    <i class="mdi mdi-power-plug-off me-1"></i> <span>Deactivate</span>
-                                </a>
-                                
-                                <a href="javascript:appUserResetPasswordAction('{{ route('appsResetPassword', ':id') }}');" id="appUserResetPasswordButton" class="btn btn-primary me-2 btn-sm">
-                                    <i class="uil-lock-alt me-1"></i> <span>Reset password</span>
-                                </a>
-
-                                <a href="javascript:appUserDeleteAction('{{ route('appsDeleteUser', ':id') }}');" id="appUserDeleteButton" class="btn btn-danger btn-sm">
-                                    <i class="uil uil-multiply me-1"></i><span>Delete</span>
-                                </a>
-                            </div>
-
-                            <div class="alert alert-danger mt-3" id="appMobileAppError" style="display:none">
-                                <ul></ul>
-                            </div>
-
-                            <div class="alert alert-success mt-3" id="appMobileAppSuccess" style="display:none">
-                                <ul></ul>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                </div>
-
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-<!-- createMobileAppSuccessModal -->
-<div id="createMobileAppSuccessModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppSuccessModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="createMobileAppSuccessModalLabel">Create mobile app user</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-            </div>
-                <div class="modal-body">
-
-                    <h3 class="text-success" id="createMobileAppSuccessModalTitle">New mobile app was user sucessfully created.</h3>
-                    <p>You have successfully created mobile app credentials. Please use the generated password to login. 
-                        You will not be able to view the password again. However, you can reset the password at any time.</p>
-                    <table class="attributes" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td class="attributes_content">
-                          <table width="100%" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td class="attributes_item"><strong>Domain:&nbsp;</strong><span class="ms-1" id="domainSpan"></span></td>
-                            </tr>
-                            <tr>
-                              <td class="attributes_item"><strong>Extension:&nbsp;</strong><span class="ms-1" id="extensionSpan"></span></td>
-                            </tr>
-                            <tr>
-                                <td class="attributes_item"><strong>Username:&nbsp;</strong><span class="ms-1" id="usernameSpan"></span></td>
-                            </tr>
-                            <tr>
-                            <td class="attributes_item"><strong>Password:&nbsp;</strong><span class="ms-1" id="passwordSpan"></span></td>
-                            </tr>  
-                          </table>
-                        </td>
-                        <td id="qrCode">
-                        </td>
-                      </tr>
-                    </table>
-
-                    <p class="mt-2">If the user has an email on file, credentials will be sent to that address.</p>
-                    
-                    <h3 class="mt-3">Next steps</h3>
-                    <p>Use the links below to download {{ config('app.name', 'Laravel') }} apps. Then log in using the credentials shown above or scan a QR code via the mobile app interface.</p>
-                    
-                    <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td align="center">
-                            <!-- Border based button https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                              <tr>
-                                <td align="center">
-                                  <table border="0" cellspacing="0" cellpadding="0">
-                                    <tr>
-                                      <td>
-                      
-                                        <a href="{{ getDefaultSetting('mobile_apps', 'google_play_link') }}">
-                                          <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto 
-                                            !important;" width="189" alt="Download for Android" data-proportionally-constrained="true" data-responsive="true" 
-                                            src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/88af7fc9-c74b-43ec-a1e2-a712cd1d3052/646x250.png">
-                                        </a>
-                      
-                      
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                          <td>
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                              <tr>
-                                <td align="center">
-                                  <table border="0" cellspacing="0" cellpadding="0">
-                                    <tr>
-                                      <td>
-                                        <a href="{{ getDefaultSetting('mobile_apps', 'apple_store_link') }}"><img class="max-width" border="0" style="display:block; color:#000000; 
-                                          text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto !important;" width="174" alt="Download for iOS" data-proportionally-constrained="true" data-responsive="true" 
-                                          src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/bb2daef8-a40d-4eed-8fb4-b4407453fc94/320x95.png">
-                                        </a>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </td>
-                              </tr>
-                            </table>
-                      
-                          </td>
-                        </tr>
-                        <tr>
-                          <td align="center">
-                            <!-- Border based button https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                              <tr>
-                                <td align="center">
-                                  <table border="0" cellspacing="0" cellpadding="0">
-                                    <tr>
-                                      <td>
-                                        <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
-                      
-                      
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                          <td>
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                              <tr>
-                                <td align="center">
-                                  <table border="0" cellspacing="0" cellpadding="0">
-                                    <tr>
-                                      <td>
-                                        <a href="{{ $action_url ?? ''}}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
-                      
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </td>
-                              </tr>
-                            </table>
-                      
-                          </td>
-                        </tr>
-                      </table>
-                    
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-
-                </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-<!-- createMobileAppSuccessModal -->
-<div id="createMobileAppDeactivatedSuccessModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="createMobileAppDeactivatedSuccessModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="createMobileAppDeactivatedSuccessModalLabel">Create mobile app user</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-            </div>
-                <div class="modal-body">
-
-                    <h3 class="text-success">Success</h3>
-                    <p class="mb-3">You successfully created an unactivated user. To register with {{ config('app.name', 'Laravel') }} apps, please activate the user. 
-                        Unactivated users are visible in the contacts list in {{ config('app.name', 'Laravel') }} apps.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-
-                </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-<!-- Sip Credentials modal -->
-<div id="sipCredentialsModal"  class="modal fade" id="bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="sipCredentialsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="sipCredentialsModalLabel">User SIP Credentials</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="sip_username" class="form-label">Username</label>
-                    <div class="input-group input-group-merge">
-                        <input type="username" id="sip_username" name="sip_username" class="form-control" readonly="" placeholder="">
-                        <div class="input-group-text" id="copyUsernameToClipboardButton">
-                            <span class="dripicons-copy" data-bs-container="#copyUsernameToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="input-group input-group-merge">
-                        <input type="password" id="sip_password" class="form-control" placeholder="" readonly="" name="sip_password">
-                        <div class="input-group-text" data-password="false" id="showPasswordButton">
-                            <span class="password-eye" data-bs-container="#showPasswordButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Show Password"></span>
-                        </div>
-                        <div class="input-group-text" id="copyPasswordToClipboardButton">
-                            <span class="dripicons-copy" data-bs-container="#copyPasswordToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="sip_domain" class="form-label">Domain</label>
-                    <div class="input-group input-group-merge">
-                        <input type="domain" id="sip_domain" name="sip_domain" class="form-control" readonly="" placeholder="">
-                        <div class="input-group-text" id="copyDomainToClipboardButton">
-                            <span class="dripicons-copy" data-bs-container="#copyDomainToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
-                        </div>
-                    </div>
-                </div>
-                  <p>*Do not share these credenatils with anyone</p>
-            </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+@include('layouts.extensions.extensionUploadModal')
+@include('layouts.extensions.createMobileAppModal')
+@include('layouts.extensions.mobileAppModal')
+@include('layouts.extensions.createMobileAppSuccessModal')
+@include('layouts.extensions.createMobileAppDeactivatedSuccessModal')
+@include('layouts.extensions.sipCredentialsModal')
 
 @endsection
 
 
 @push('scripts')
+
+<!-- dropzone js -->
+<script src="{{asset("assets/libs/dropzone/dropzone.min.js")}}"></script>
+
 <script>
+
+    Dropzone.autoDiscover = false;
+
+    // set the dropzone container id
+    const id = "#file_dropzone";
+    const dropzone = document.querySelector(id);
+
+    // set the preview element template
+    var previewNode = dropzone.querySelector(".dropzone-item");
+    previewNode.id = "";
+    var previewTemplate = previewNode.parentNode.innerHTML;
+    previewNode.parentNode.removeChild(previewNode);
+
+    var fileDropzone = new Dropzone(id, {
+        url: '{{ route("extensions.import") }}', // Set the url for your upload script location
+        autoProcessQueue: false,
+        uploadMultiple: false,
+        parallelUploads: 5,
+        maxFilesize: 5, // Max filesize in MB
+        maxFiles: 1,
+        previewTemplate: previewTemplate,
+        previewsContainer: id + " .dropzone-items", // Define the container to display the previews
+        clickable: id + " .dropzone-select", // Define the element that should be used as click trigger to select files.
+        thumbnailWidth: 200,
+        acceptedFiles: ".csv,.xls,.xlsx",
+        headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        // accept: function(file, done) {
+        //     var reader = new FileReader();
+        //     reader.onload = handleReaderLoad;
+        //     reader.readAsDataURL(file);
+
+        //     function handleReaderLoad(e) {
+        //         var filePayload = e.target.result;
+        //         files.push ({'name': file.upload.filename,  'data': filePayload})
+        //         // file.upload.filename: 
+        //     }
+
+        //     done();
+        // }
+
+    });
+
+    fileDropzone.on("addedfile", function (file) {
+        // Hookup the start button
+        const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
+        dropzoneItems.forEach(dropzoneItem => {
+            dropzoneItem.style.display = '';
+        });
+
+    });
+
+    fileDropzone.on("removedfile", function (file) {
+        //
+    });
+
+    fileDropzone.on("success", function (file) {
+        console.log('Success');
+        $('#extension-upload-modal').modal("hide");
+
+        if (fileDropzone.getRejectedFiles().length == 0) {
+        //No errors
+        } else {
+            console.log("Errors");
+        }
+
+        // Successful Notification
+        $.NotificationApp.send("Success","Extensions have been successfully imported","top-right","#10c469","success");
+
+        // setTimeout(function (){
+        //     window.location.reload();
+        // }, 1000);
+
+    });
+    fileDropzone.on("complete", function (file) {
+        //
+    }); 
+
+    fileDropzone.on("error", function (file,message) {
+        $('#extension-upload-modal').modal("hide");
+        console.log("error: " + message.error);
+        // Warning Notification
+        $.NotificationApp.send("Warning",message.error,"top-right","#ff5b5b","error");
+    });
+
+
+
     $(document).ready(function() {
 
         $("#connectionSelect2").select2({
@@ -595,6 +375,13 @@
 
             });
         });
+
+        // Extension import submit form
+        $('#importExtensionsSubmit').on('click', function(e) {
+        e.preventDefault();
+        fileDropzone.processQueue();
+
+    })
 
 
         // Open Modal to show SIP credentials
