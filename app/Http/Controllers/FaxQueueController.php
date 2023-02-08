@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\FaxQueues;
+use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 
 class FaxQueueController extends Controller
 {
@@ -45,5 +47,60 @@ class FaxQueueController extends Controller
         return view('layouts.faxqueue.list')
             ->with($data)
             ->with('permissions', $permissions);
+    }
+
+    /**
+     * Show the create voicemail form.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+
+    public function create(){
+        if (!userCheckPermission('fax_queue_add') || !userCheckPermission('fax_queue_edit')) {
+            return redirect('/');
+        }
+
+        $faxqueues = new FaxQueues();
+
+        // Check FusionPBX login status
+        session_start();
+        if(session_status() === PHP_SESSION_NONE) {
+            return redirect()->route('logout');
+        }
+
+        $data = [];
+        $data['voicemail'] = $faxqueues;
+        return view('layouts.faxqueue.createOrUpdate')->with($data);
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $faxQueue = FaxQueues::findOrFail($id);
+
+        if(isset($faxQueue)){
+            $deleted = $faxQueue->delete();
+            if ($deleted){
+                return response()->json([
+                    'status' => 200,
+                    'success' => [
+                        'message' => 'Selected entries have been deleted'
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'There was an error deleting selected entries extensions'
+                    ]
+                ]);
+            }
+        }
     }
 }

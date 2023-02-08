@@ -193,6 +193,7 @@
 @include('layouts.extensions.createMobileAppSuccessModal')
 @include('layouts.extensions.createMobileAppDeactivatedSuccessModal')
 @include('layouts.extensions.sipCredentialsModal')
+@include('layouts.extensions.extensionUploadResultModal');
 
 @endsection
 
@@ -262,7 +263,10 @@
 
     fileDropzone.on("success", function (file) {
         console.log('Success');
+        this.removeAllFiles(true); 
         $('#extension-upload-modal').modal("hide");
+        $('#extensionUploadResultModal').modal("show");
+        $('#dropzoneError').hide();
 
         if (fileDropzone.getRejectedFiles().length == 0) {
         //No errors
@@ -283,8 +287,11 @@
     }); 
 
     fileDropzone.on("error", function (file,message) {
+        this.removeAllFiles(true); 
         $('#extension-upload-modal').modal("hide");
-        console.log("error: " + message.error);
+        $('#extensionUploadResultModal').modal("show");
+        $('#dropzoneError').html(message.error);
+        $('#dropzoneSuccess').hide();
         // Warning Notification
         $.NotificationApp.send("Warning",message.error,"top-right","#ff5b5b","error");
     });

@@ -23,13 +23,13 @@
                         <div class="col-12">
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 @if ($permissions['add_new'])
-                                    <a href="{{ route('voicemails.create') }}" class="btn btn-success mb-2 me-2">
+                                    <a href="{{ route('faxqueue.create') }}" class="btn btn-success mb-2 me-2">
                                         <i class="mdi mdi-plus-circle me-1"></i>
                                         Add New
                                     </a>
                                 @endif
                                 @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('voicemails.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                    <a href="javascript:confirmDeleteAction('{{ route('faxqueue.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                         Delete Selected
                                     </a>
                                 @endif
@@ -136,22 +136,6 @@
                 }
             });
         });
-
-        //This function plays the VM message
-        function playVmMessage(message_uuid){
-            $('#' + message_uuid + '_play_button').hide();
-            $('#' + message_uuid + '_pause_button').show();
-            var audioElement = document.getElementById(message_uuid + '_audio_file');
-            audioElement.play();
-        }
-
-        //This function pauses playing VM message
-        function pauseVmMessage(message_uuid){
-            $('#' + message_uuid + '_pause_button').hide();
-            $('#' + message_uuid + '_play_button').show();
-            var audioElement = document.getElementById(message_uuid + '_audio_file');
-            audioElement.pause();
-        }
 
         function checkAllbox(){
             var checked=true;

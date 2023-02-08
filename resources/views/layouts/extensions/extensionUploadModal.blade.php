@@ -45,7 +45,7 @@
                                             </a>
                                         </div>
                                     </div>
-                                    <div class="text-danger dropzone-error" data-dz-errormessage></div>
+                                    {{-- <div class="text-danger dropzone-error" data-dz-errormessage></div> --}}
                                 </div>
                             </div>
                             <!--end::File-->

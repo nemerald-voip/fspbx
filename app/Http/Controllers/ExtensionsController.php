@@ -757,6 +757,23 @@ class ExtensionsController extends Controller
             $import->import(request()->file('file'));
             Log::alert($import->failures());
 
+            if ($import->failures()->isNotEmpty()) {
+                $errormessage = 'Some errors were detected. Please, check the details: <ul>';
+                foreach ($import->failures() as $failure) {
+                    foreach ($failure->errors() as $error) {
+                        $value = (isset($failure->values()[$failure->attribute()]) ? $failure->values()[$failure->attribute()] : "NULL");
+                        $errormessage .= "<li>Skipping row <strong>" . $failure->row() . "</strong>. Invalid value <strong>'" . $value . "'</strong> for field <strong>'" . $failure->attribute() . "'</strong>. " . $error ."</li>";
+                    }
+                }
+                $errormessage .= '</ul>';
+
+                // Send response in format that Dropzone understands
+                return response()->json([
+                    'error' => $errormessage,
+                ],400);
+            }
+            // Log::alert($errormessage);
+
         } catch (Throwable $e) {
             Log::alert($e);
             // Send response in format that Dropzone understands
