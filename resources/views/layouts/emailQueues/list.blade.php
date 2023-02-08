@@ -74,11 +74,11 @@
                                         <td>
                                             @if (userCheckPermission('email_queue_edit'))
                                                 <a href="{{ route('faxes.edit',$emailQueue) }}" class="text-body fw-bold">
-                                                    {{ $emailQueue->email_date }}
+                                                    {{ Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid'))) }}
                                                 </a>
                                             @else
                                                 <span class="text-body fw-bold">
-                                                    {{ $emailQueue->email_date }}
+                                                    {{ Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid'))) }}
                                                 </span>
                                             @endif
                                         </td>
