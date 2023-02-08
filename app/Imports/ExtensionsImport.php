@@ -3,7 +3,9 @@
 namespace App\Imports;
 
 use App\Models\Extensions;
+use App\Models\Voicemails;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
@@ -29,6 +31,27 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             '*.extension' => [
                 'required',
                 'numeric',
+                Rule::unique('App\Models\Extensions','extension')
+                    // ->ignore($extension->extension_uuid,'extension_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+                Rule::unique('App\Models\Voicemails','voicemail_id')
+                    ->where('domain_uuid', Session::get('domain_uuid'))
+            ],
+            '*.first_name' => [
+                'required',
+                'string'
+            ],
+            '*.last_name' => [
+                'nullable',
+                'string'
+            ],
+            '*.outbound_caller_id_number' => [
+                'phone:US',
+                'nullable'
+            ],
+            '*.description' => [
+                'string',
+                'nullable'
             ],
         ];
     }
@@ -39,9 +62,21 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
     public function customValidationMessages()
     {
         return [
-            'extension.numeric' => 'Extension must contain digits only',
+            'extension.numeric' => 'Extension must only contain numeric values',
+            'outbound_caller_id_number.phone' => 'The :attribute is not a valid US number'
         ];
     }
+
+    // /**
+    //  * @return array
+    //  */
+    // public function customValidationAttributes()
+    // {
+    //     return [
+    //         'first_name' => 'first name',
+    //         'last_name' => 'last name',
+    //     ];
+    // }
 
     /**
     * @param array $row
@@ -60,12 +95,12 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             $extension = Extensions::create([
                 'extension' => $row['extension'],
                 'password' => Str::random(30),
-                'directory_first_name' => $row['first_name'],
-                'directory_last_name' => $row['last_name'],
-                'effective_caller_id_name' => $row['first_name'] . ' ' . $row['last_name'],
+                'directory_first_name' => trim($row['first_name']),
+                'directory_last_name' => trim($row['last_name']),
+                'effective_caller_id_name' => trim($row['first_name']) . ' ' . trim($row['last_name']),
                 'effective_caller_id_number' => $row['extension'],
                 'outbound_caller_id_number' => $row['outbound_caller_id_number'],
-                'description' => $row['description'],
+                'description' => trim($row['description']),
                 'directory_visible' => 'true',
                 'directory_exten_visible' => 'true',
                 'limit_max' => '5',
@@ -77,6 +112,9 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'enabled' => 'true',
 
             ]);
+
+            $extension->voicemail = new Voicemails();
+
         }
         // Log::alert($extension);
         // return $extension;
