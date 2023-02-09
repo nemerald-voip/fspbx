@@ -102,13 +102,13 @@
                                         </td>
                                         <td>
                                             @if ($faxQueue['fax_status'] == "sent")
-                                                <h5><span class="badge bg-success"></i>sent</span></h5>
+                                                <h5><span class="badge bg-success"></i>Sent</span></h5>
                                             @elseif($faxQueue['fax_status'] == "failed")
-                                                <h5><span class="badge bg-danger">failed</span></h5>
+                                                <h5><span class="badge bg-danger">Failed</span></h5>
                                             @elseif($faxQueue['fax_status'] == "waiting")
-                                                <h5><span class="badge bg-info">waiting</span></h5>
+                                                <h5><span class="badge bg-info">Waiting</span></h5>
                                             @else
-                                                {{ $faxQueue['fax_status'] }}
+                                                {{ ucfirst($faxQueue['fax_status']) }}
                                             @endif
                                         </td>
                                         <td>
