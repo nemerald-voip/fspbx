@@ -101,7 +101,15 @@
                                             {{ $faxQueue['fax_email_address'] }}
                                         </td>
                                         <td>
-                                            {{ ucfirst($faxQueue['fax_status']) }}
+                                            @if ($faxQueue['fax_status'] == "sent")
+                                                <h5><span class="badge bg-success"></i>sent</span></h5>
+                                            @elseif($faxQueue['fax_status'] == "failed")
+                                                <h5><span class="badge bg-danger">failed</span></h5>
+                                            @elseif($faxQueue['fax_status'] == "waiting")
+                                                <h5><span class="badge bg-info">waiting</span></h5>
+                                            @else
+                                                {{ $faxQueue['fax_status'] }}
+                                            @endif
                                         </td>
                                         <td>
                                             {{ $faxQueue['fax_notify_date']->format('D, M d, Y h:i:s A') }}
