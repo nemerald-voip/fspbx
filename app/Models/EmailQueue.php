@@ -17,4 +17,6 @@ class EmailQueue extends Model
     protected $primaryKey = 'email_queue_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    protected $guarded = ['email_queue_uuid'];
 }
