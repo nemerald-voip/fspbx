@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use libphonenumber\PhoneNumberFormat;
 
 class FaxQueueController extends Controller
 {
@@ -23,17 +24,29 @@ class FaxQueueController extends Controller
         }
 
         $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $selectedStatus = $request->get('status');
+        $searchString = $request->get('search');
 
         // Get local Time Zone
         $timeZone = get_local_time_zone(Session::get('domain_uuid'));
-
         $domainUuid = Session::get('domain_uuid');
-        $faxQueues = FaxQueues::where('domain_uuid', $domainUuid);
-        $selectedStatus = $request->get('status');
-        if (array_key_exists($selectedStatus, $statuses)) {
-            $faxQueues->where('fax_status', $selectedStatus);
+        $faxQueues = FaxQueues::query();
+        $faxQueues
+            ->where('domain_uuid', $domainUuid);
+
+        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
+            $faxQueues
+                ->where('fax_status', $selectedStatus);
+        }
+        if ($searchString) {
+            $faxQueues->where(function ($query) use ($searchString) {
+                $query
+                    ->orWhereLike('fax_email_address', $searchString)
+                    ->orWhereLike('fax_caller_id_number', $searchString);
+            });
         }
         $faxQueues = $faxQueues->orderBy('fax_date', 'asc')->paginate(10)->onEachSide(1);
+
         foreach ($faxQueues as $i => $faxQueue){
             $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);
             $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
@@ -44,8 +57,10 @@ class FaxQueueController extends Controller
         $data['faxQueues'] = $faxQueues;
         $data['statuses'] = $statuses;
         $data['selectedStatus'] = $selectedStatus;
+        $data['searchString'] = $searchString;
+        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
 
-        unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus);
+        unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus, $searchString);
 
         $permissions['delete'] = userCheckPermission('fax_queue_delete');
         $permissions['view'] = userCheckPermission('fax_queue_view');

@@ -21,15 +21,15 @@
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-xl-8">
-                            <form class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+                            <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
                                 <div class="col-auto">
-                                    <label for="inputPassword2" class="visually-hidden">Search</label>
-                                    <input type="search" class="form-control" id="inputPassword2" placeholder="Search...">
+                                    <label for="search" class="visually-hidden">Search</label>
+                                    <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
                                 </div>
                                 <div class="col-auto">
                                     <div class="d-flex align-items-center">
                                         <label for="status-select" class="me-2">Status</label>
-                                        <select class="form-select" id="status-select">
+                                        <select class="form-select" name="status" id="status-select">
                                             @foreach ($statuses as $key => $status)
                                                 <option value="{{ $key }}" @if ($selectedStatus == $key) selected @endif>{{ $status }}</option>
                                             @endforeach
@@ -96,13 +96,12 @@
                                             {{ $faxQueue['fax_date']->format('D, M d, Y h:i:s A') }}
                                         </td>
                                         <td>
-                                            {{ $faxQueue['fax_caller_id_number'] }}
-                                        </td>
+                                            {{ phone($faxQueue['fax_caller_id_number'], "US", $national_phone_number_format) }}</td>
                                         <td>
                                             {{ $faxQueue['fax_email_address'] }}
                                         </td>
                                         <td>
-                                            {{ $faxQueue['fax_status'] }}
+                                            {{ ucfirst($faxQueue['fax_status']) }}
                                         </td>
                                         <td>
                                             {{ $faxQueue['fax_notify_date']->format('D, M d, Y h:i:s A') }}
@@ -149,8 +148,12 @@
             });
 
             $('#status-select').on('change', function () {
+                $('#filterForm').submit();
+            })
+
+            $('#formFilter').on('submit', function () {
                 var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
-                location += '?page=1&status=' + $(this).val();
+                location += '?page=1' + $('#filterForm').serialize();
                 window.location.href = location;
             })
         });

@@ -8,6 +8,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Sanctum\PersonalAccessToken;
+use Illuminate\Database\Eloquent\Builder;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         Paginator::useBootstrap();
-        
+
         // Ringotel
         Http::macro('ringotel', function () {
             return Http::withHeaders([
@@ -52,6 +53,10 @@ class AppServiceProvider extends ServiceProvider
             if (env('APP_ENV') == 'local') {
                 return true;
             }
+        });
+
+        Builder::macro('orWhereLike', function(string $column, string $search) {
+            return $this->orWhere($column, 'LIKE', '%'.$search.'%');
         });
 
     }
