@@ -918,6 +918,36 @@ if (!function_exists('get_local_time_zone')){
 }
 
 
+if (!function_exists('get_domain_setting')){
+    /**
+     * Get requested domain setting or fallback to default
+     *
+     * @return DomainSettings $setting
+     */
+    function get_domain_setting($setting_name, $domain_uuid=null){
+        if (!$domain_uuid) $domain_uuid = Session::get('domain_uuid');
+
+        $setting = DomainSettings::where('domain_uuid',$domain_uuid)
+            ->where('domain_setting_subcategory', $setting_name)
+            ->where('domain_setting_enabled', 'true')
+            ->first();
+
+        if (isset($setting)) return $setting->domain_setting_value;
+
+        $setting = DefaultSettings::where('default_setting_subcategory', $setting_name)
+            ->where('default_setting_enabled', 'true')
+            ->first();
+
+        if (isset($setting)) return $setting->default_setting_value;
+        
+        //Otherwise
+        return null;
+
+
+    }
+}
+
+
 if (!function_exists('get_fax_dial_plan')){
     /**
      * takes fax as input and return dialplan
