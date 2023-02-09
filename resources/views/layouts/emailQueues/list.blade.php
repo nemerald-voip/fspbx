@@ -90,11 +90,11 @@
                                         <td>
                                             {{ $emailQueue->email_retry_count }}
                                             @if($emailQueue->email_status == 'waiting')
-                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue]) }}">
+                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid]) }}">
                                                     <button type="button" class="btn btn-light mb-2">Cancel</button>
                                                 </a>
                                             @else
-                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue, 'waiting']) }}">
+                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid, 'waiting']) }}">
                                                     <button type="button" class="btn btn-light mb-2">Retry</button>
                                                 </a>
                                             @endif
