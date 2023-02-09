@@ -29,4 +29,13 @@ class EmailQueueController extends Controller
             ]
         ]);
     }
+
+    public function updateStatus(EmailQueue $emailQueue, $status = null)
+    {
+        $emailQueue->update([
+            'email_status' => $status,
+        ]);
+
+        return redirect()->back();
+    }
 }

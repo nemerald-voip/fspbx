@@ -87,7 +87,18 @@
                                         <td>{{ $emailQueue->email_to }}</td>
                                         <td>{{ $emailQueue->email_subject }}</td>
                                         <td>{{ $emailQueue->email_status }}</td>
-                                        <td>{{ $emailQueue->email_retry_count }}</td>
+                                        <td>
+                                            {{ $emailQueue->email_retry_count }}
+                                            @if($emailQueue->email_status == 'waiting')
+                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue]) }}">
+                                                    <button type="button" class="btn btn-light mb-2">Cancel</button>
+                                                </a>
+                                            @else
+                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue, 'waiting']) }}">
+                                                    <button type="button" class="btn btn-light mb-2">Retry</button>
+                                                </a>
+                                            @endif
+                                        </td>
                                         <td>{{ $emailQueue->email_action_after }}</td>
                                     </tr>
                                 @endforeach
