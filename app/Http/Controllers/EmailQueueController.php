@@ -30,11 +30,13 @@ class EmailQueueController extends Controller
         ]);
     }
 
-    public function updateStatus(EmailQueue $emailQueue, $status = null)
+    public function updateStatus($id, $status = null)
     {
-        $emailQueue->update([
-            'email_status' => $status,
-        ]);
+        EmailQueue::query()
+            ->where('email_queue_uuid', $id)
+            ->update([
+                'email_status' => $status,
+            ]);
 
         return redirect()->back();
     }
