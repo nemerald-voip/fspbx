@@ -82,7 +82,8 @@ Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 // Fax Queue
-Route::resource('/faxqueue','FaxQueueController');
+Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue.list');
+Route::delete('/faxqueue/{id}',[FaxQueueController::class, 'destroy'])->name('faxQueue.destroy');
 
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));

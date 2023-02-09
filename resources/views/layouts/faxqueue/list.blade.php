@@ -20,16 +20,28 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
-                        <div class="col-12">
+                        <div class="col-xl-8">
+                            <form class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+                                <div class="col-auto">
+                                    <label for="inputPassword2" class="visually-hidden">Search</label>
+                                    <input type="search" class="form-control" id="inputPassword2" placeholder="Search...">
+                                </div>
+                                <div class="col-auto">
+                                    <div class="d-flex align-items-center">
+                                        <label for="status-select" class="me-2">Status</label>
+                                        <select class="form-select" id="status-select">
+                                            @foreach ($statuses as $key => $status)
+                                                <option value="{{ $key }}" @if ($selectedStatus == $key) selected @endif>{{ $status }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-xl-4">
                             <div class="text-xl-end mt-xl-0 mt-2">
-                                @if ($permissions['add_new'])
-                                    <a href="{{ route('faxqueue.create') }}" class="btn btn-success mb-2 me-2">
-                                        <i class="mdi mdi-plus-circle me-1"></i>
-                                        Add New
-                                    </a>
-                                @endif
                                 @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('faxqueue.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                    <a href="javascript:confirmDeleteAction('{{ route('faxQueue.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                         Delete Selected
                                     </a>
                                 @endif
@@ -39,11 +51,11 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-4">
-                            <label class="form-label">Showing {{ $faxqueues->firstItem() }} - {{ $faxqueues->lastItem() }} of {{ $faxqueues->total() }} results for Fax Queues</label>
+                            <label class="form-label">Showing {{ $faxQueues->firstItem() }} - {{ $faxQueues->lastItem() }} of {{ $faxQueues->total() }} results for Fax Queues</label>
                         </div>
                         <div class="col-8">
                             <div class="float-end">
-                                {{ $faxqueues->links() }}
+                                {{ $faxQueues->appends(request()->except('page'))->links() }}
                             </div>
                         </div>
                     </div>
@@ -70,36 +82,36 @@
                             </thead>
                             <tbody>
 
-                                @foreach ($faxqueues as $key=>$faxqueue)
-                                    <tr id="id{{ $faxqueue->fax_queue_uuid }}">
+                                @foreach ($faxQueues as $key => $faxQueue)
+                                    <tr id="id{{ $faxQueue->fax_queue_uuid }}">
                                         <td>
                                             @if ($permissions['delete'])
                                                 <div class="form-check">
-                                                    <input type="checkbox" name="action_box[]" value="{{ $faxqueue->fax_queue_uuid }}" class="form-check-input action_checkbox">
+                                                    <input type="checkbox" name="action_box[]" value="{{ $faxQueue->fax_queue_uuid }}" class="form-check-input action_checkbox">
                                                     <label class="form-check-label" >&nbsp;</label>
                                                 </div>
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_date']->format('D, M d, Y h:i:s A') }}
+                                            {{ $faxQueue['fax_date']->format('D, M d, Y h:i:s A') }}
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_caller_id_number'] }}
+                                            {{ $faxQueue['fax_caller_id_number'] }}
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_email_address'] }}
+                                            {{ $faxQueue['fax_email_address'] }}
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_status'] }}
+                                            {{ $faxQueue['fax_status'] }}
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_notify_date']->format('D, M d, Y h:i:s A') }}
+                                            {{ $faxQueue['fax_notify_date']->format('D, M d, Y h:i:s A') }}
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_retry_date']->format('D, M d, Y h:i:s A') }}
+                                            {{ $faxQueue['fax_retry_date']->format('D, M d, Y h:i:s A') }}
                                         </td>
                                         <td>
-                                            {{ $faxqueue['fax_retry_count'] }}
+                                            {{ $faxQueue['fax_retry_count'] }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -135,6 +147,12 @@
                     }
                 }
             });
+
+            $('#status-select').on('change', function () {
+                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+                location += '?page=1&status=' + $(this).val();
+                window.location.href = location;
+            })
         });
 
         function checkAllbox(){
