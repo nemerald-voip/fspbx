@@ -53,6 +53,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'string',
                 'nullable'
             ],
+            '*.email' => [
+                'nullable',
+                'email:rfc,dns',
+            ]
         ];
     }
 
@@ -92,6 +96,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         
         foreach ($rows as $row) 
         {
+
+            //Create extension
             $extension = Extensions::create([
                 'extension' => $row['extension'],
                 'password' => Str::random(30),
@@ -113,7 +119,23 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
             ]);
 
+            //Create voicemail
             $extension->voicemail = new Voicemails();
+            $extension->voicemail->fill([
+                'voicemail_id' => $row['extension'],
+                'voicemail_password' => $row['extension'],
+                'voicemail_mail_to' => $row['email'],
+                'voicemail_transcription_enabled' => 'true',
+                'voicemail_file' => 'attach',
+                'voicemail_local_after_email' => 'true',
+                'voicemail_enabled' => 'true',
+            ]);
+            $extension->voicemail->save();
+            
+
+            //Create device
+            log::alert (get_domain_setting('server_address_primary'));
+
 
         }
         // Log::alert($extension);

@@ -266,6 +266,7 @@
         this.removeAllFiles(true); 
         $('#extension-upload-modal').modal("hide");
         $('#extensionUploadResultModal').modal("show");
+        $('#dropzoneSuccess').show();
         $('#dropzoneError').hide();
 
         if (fileDropzone.getRejectedFiles().length == 0) {
@@ -291,6 +292,7 @@
         $('#extension-upload-modal').modal("hide");
         $('#extensionUploadResultModal').modal("show");
         $('#dropzoneError').html(message.error);
+        $('#dropzoneError').show();
         $('#dropzoneSuccess').hide();
         // Warning Notification
         $.NotificationApp.send("Warning",message.error,"top-right","#ff5b5b","error");

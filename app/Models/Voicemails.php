@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Extensions;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Voicemails extends Model
@@ -42,6 +43,14 @@ class Voicemails extends Model
         'voicemail_tutorial'
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct();
+        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+        $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->fill($attributes);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

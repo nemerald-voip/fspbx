@@ -11,7 +11,7 @@
                 <!-- <h3 class="text-success">Success</h3> -->
                     <p class="mb-3">Contratulations! You have successfully imported extensions to your account. Below you will find the results.</p>
                     <div class="alert alert-success" role="alert" id="dropzoneSuccess">
-                        <i class="ri-check-line me-2"></i> No errors encountered.
+                        <i class="ri-check-line me-2"></i> Your import was succesful.
                     </div>
                     <div class="alert alert-warning" role="alert" id="dropzoneError">
                         <i class="ri-alert-line me-2"></i> This is a <strong>warning</strong> alert - check it out!
