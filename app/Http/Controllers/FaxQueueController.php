@@ -11,12 +11,9 @@ use Illuminate\Support\Facades\Storage;
 
 class FaxQueueController extends Controller
 {
-
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function index(Request $request)
     {
@@ -24,23 +21,32 @@ class FaxQueueController extends Controller
         if (!userCheckPermission("fax_queue_all")) {
             return redirect('/');
         }
+
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+
         // Get local Time Zone
-        $time_zone = get_local_time_zone(Session::get('domain_uuid'));
+        $timeZone = get_local_time_zone(Session::get('domain_uuid'));
 
-        $domain_uuid = Session::get('domain_uuid');
-        $faxqueues = FaxQueues::where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'asc')->paginate(10)->onEachSide(1);
-
-        foreach ($faxqueues as $i => $faxqueue){
-            $faxqueues[$i]['fax_date'] = Carbon::parse($faxqueue['fax_date'])->setTimezone($time_zone);
-            $faxqueues[$i]['fax_notify_date'] = Carbon::parse($faxqueue['fax_notify_date'])->setTimezone($time_zone);
-            $faxqueues[$i]['fax_retry_date'] = Carbon::parse($faxqueue['fax_retry_date'])->setTimezone($time_zone);
+        $domainUuid = Session::get('domain_uuid');
+        $faxQueues = FaxQueues::where('domain_uuid', $domainUuid);
+        $selectedStatus = $request->get('status');
+        if (array_key_exists($selectedStatus, $statuses)) {
+            $faxQueues->where('fax_status', $selectedStatus);
+        }
+        $faxQueues = $faxQueues->orderBy('fax_date', 'asc')->paginate(10)->onEachSide(1);
+        foreach ($faxQueues as $i => $faxQueue){
+            $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);
+            $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
+            $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
         }
 
         $data = array();
-        $data['faxqueues'] = $faxqueues;
+        $data['faxQueues'] = $faxQueues;
+        $data['statuses'] = $statuses;
+        $data['selectedStatus'] = $selectedStatus;
 
-        $permissions['add_new'] = userCheckPermission('fax_queue_add');
-        $permissions['edit'] = userCheckPermission('fax_queue_edit');
+        unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus);
+
         $permissions['delete'] = userCheckPermission('fax_queue_delete');
         $permissions['view'] = userCheckPermission('fax_queue_view');
 
@@ -50,35 +56,8 @@ class FaxQueueController extends Controller
     }
 
     /**
-     * Show the create voicemail form.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-
-    public function create(){
-        if (!userCheckPermission('fax_queue_add') || !userCheckPermission('fax_queue_edit')) {
-            return redirect('/');
-        }
-
-        $faxqueues = new FaxQueues();
-
-        // Check FusionPBX login status
-        session_start();
-        if(session_status() === PHP_SESSION_NONE) {
-            return redirect()->route('logout');
-        }
-
-        $data = [];
-        $data['voicemail'] = $faxqueues;
-        return view('layouts.faxqueue.createOrUpdate')->with($data);
-
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse|void
      */
     public function destroy($id)
     {
