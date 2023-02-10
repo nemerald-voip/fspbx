@@ -80,8 +80,6 @@
                                     <th>To</th>
                                     <th style="width: 30px">Subject</th>
                                     <th>Status</th>
-                                    <th>Retry</th>
-                                    <th>After Email</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>
@@ -104,7 +102,7 @@
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>{{ $emailQueue->email_to }}</td>
-                                        <td style="width: 30px">{{ $emailQueue->email_subject }}</td>
+                                        <td style="width: 30px">{{ strlen($emailQueue->email_subject) > 50 ? substr($emailQueue->email_subject, 0, 50) . '...' : $emailQueue->email_subject }}</td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
                                                 <h5><span class="badge bg-success">Sent</span></h5>
@@ -118,10 +116,6 @@
                                                 </h5>
                                             @endif
                                         </td>
-                                        <td>
-                                            {{ $emailQueue->email_retry_count }}
-                                        </td>
-                                        <td>{{ $emailQueue->email_action_after }}</td>
                                         <td>
                                             @if (userCheckPermission('email_queue_edit'))
                                                 @if($emailQueue->email_status == 'waiting')
