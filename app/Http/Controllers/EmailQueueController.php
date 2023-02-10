@@ -3,17 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmailQueue;
+use Illuminate\Http\Request;
 
 class EmailQueueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Check permissions
         if (! userCheckPermission("email_queue_view")) {
             return redirect('/');
         }
 
-        $emailQueues = EmailQueue::query()->paginate();
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', '' => 'Blank'];
+        $selectedStatus = $request->get('status');
+        $searchString = $request->get('search');
+
+        $emailQueuesQuery = EmailQueue::query();
+        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
+            if (! $selectedStatus) {
+                $emailQueuesQuery
+                    ->where(function ($q) {
+                        $q->where('email_status', '')
+                            ->orWhereNull('email_status');
+                    });
+            } else {
+                $emailQueuesQuery
+                    ->where('email_status', $selectedStatus);
+            }
+        }
+        if ($searchString) {
+            $emailQueuesQuery->where(function ($query) use ($searchString) {
+                return $query
+                    ->whereLike('hostname', strtolower($searchString))
+                    ->orWhereLike('email_from', strtolower($searchString))
+                    ->orWhereLike('email_to', strtolower($searchString))
+                    ->orWhereLike('email_subject', strtolower($searchString));
+            });
+        }
+
+        $emailQueues = $emailQueuesQuery->paginate();
 
         return view('layouts.emailQueues.list', compact('emailQueues'));
     }
