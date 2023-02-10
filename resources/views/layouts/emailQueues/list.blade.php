@@ -111,9 +111,9 @@
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
                                                 <h5><span class="badge bg-success">Sent</span></h5>
-                                            @elseif($faxQueue['fax_status'] == "failed")
+                                            @elseif($emailQueue->email_status == "failed")
                                                 <h5><span class="badge bg-danger">Failed</span></h5>
-                                            @elseif($faxQueue['fax_status'] == "waiting")
+                                            @elseif($emailQueue->email_status == "waiting")
                                                 <h5><span class="badge bg-primary">Waiting</span></h5>
                                             @else
                                                 <h5>
