@@ -56,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Builder::macro('orWhereLike', function(string $column, string $search) {
-            return $this->orWhere($column, 'LIKE', '%'.$search.'%');
+            return $this->orWhere($column, 'ILIKE', '%'.$search.'%');
         });
 
     }

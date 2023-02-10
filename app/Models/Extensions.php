@@ -156,4 +156,13 @@ class Extensions extends Model
     {
         return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
     }
+
+    // /**
+    //  * Get the Device object associated with this extension.
+    //  *  returns Eloqeunt Object
+    //  */
+    // public function devices()
+    // {
+    //     return $this->hasMany(Device::class,'extension_uuid','extension_uuid');
+    // }
 }

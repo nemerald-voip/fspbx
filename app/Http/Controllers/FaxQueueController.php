@@ -24,16 +24,19 @@ class FaxQueueController extends Controller
         }
 
         $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $scopes = ['global', 'local'];
         $selectedStatus = $request->get('status');
         $searchString = $request->get('search');
+        $selectedScope = $request->get('scope', 'local');
 
         // Get local Time Zone
         $timeZone = get_local_time_zone(Session::get('domain_uuid'));
         $domainUuid = Session::get('domain_uuid');
         $faxQueues = FaxQueues::query();
-        $faxQueues
-            ->where('domain_uuid', $domainUuid);
-
+        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
+            $faxQueues
+                ->where('domain_uuid', $domainUuid);
+        }
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $faxQueues
                 ->where('fax_status', $selectedStatus);
@@ -41,8 +44,8 @@ class FaxQueueController extends Controller
         if ($searchString) {
             $faxQueues->where(function ($query) use ($searchString) {
                 $query
-                    ->orWhereLike('fax_email_address', $searchString)
-                    ->orWhereLike('fax_caller_id_number', $searchString);
+                    ->orWhereLike('fax_email_address', strtolower($searchString))
+                    ->orWhereLike('fax_caller_id_number', strtolower($searchString));
             });
         }
         $faxQueues = $faxQueues->orderBy('fax_date', 'asc')->paginate(10)->onEachSide(1);
@@ -57,10 +60,11 @@ class FaxQueueController extends Controller
         $data['faxQueues'] = $faxQueues;
         $data['statuses'] = $statuses;
         $data['selectedStatus'] = $selectedStatus;
+        $data['selectedScope'] = $selectedScope;
         $data['searchString'] = $searchString;
         $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
 
-        unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus, $searchString);
+        unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus, $searchString, $selectedScope);
 
         $permissions['delete'] = userCheckPermission('fax_queue_delete');
         $permissions['view'] = userCheckPermission('fax_queue_view');
