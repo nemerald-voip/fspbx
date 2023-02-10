@@ -99,12 +99,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="text-body fw-bold">
-                                                {{ get_local_time_zone(\Session::get('domain_uuid')) }}
-                                                {{ get_local_time_zone(\Session::get('domain_uuid')) ?: date_default_timezone_get() }}
-                                                {{ $emailQueue->email_date }}
-                                                {{ \Carbon\Carbon::createFromTimestamp($emailQueue->email_date)->setTimezone(get_local_time_zone(\Session::get('domain_uuid')) ?: date_default_timezone_get())->toDayDateTimeString() }}
-                                            </span>
+                                            {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
