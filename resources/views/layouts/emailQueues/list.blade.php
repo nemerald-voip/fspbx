@@ -78,7 +78,7 @@
                                     <th>Hostname</th>
                                     <th class="text-center">From</th>
                                     <th>To</th>
-                                    <th>Subject</th>
+                                    <th style="width: 30px">Subject</th>
                                     <th>Status</th>
                                     <th>Retry</th>
                                     <th>After Email</th>
@@ -104,7 +104,7 @@
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>{{ $emailQueue->email_to }}</td>
-                                        <td>{{ $emailQueue->email_subject }}</td>
+                                        <td style="width: 30px">{{ $emailQueue->email_subject }}</td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
                                                 <h5><span class="badge bg-success">Sent</span></h5>
