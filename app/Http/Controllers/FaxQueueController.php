@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\FaxQueues;
-use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 use libphonenumber\PhoneNumberFormat;
 
 class FaxQueueController extends Controller
@@ -53,7 +51,7 @@ class FaxQueueController extends Controller
         }
         $faxQueues = $faxQueues->orderBy('fax_date', 'asc')->paginate(10)->onEachSide(1);
 
-        foreach ($faxQueues as $i => $faxQueue){
+        foreach ($faxQueues as $i => $faxQueue) {
             $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);
             $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
             $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
@@ -85,9 +83,9 @@ class FaxQueueController extends Controller
     {
         $faxQueue = FaxQueues::findOrFail($id);
 
-        if(isset($faxQueue)){
+        if (isset($faxQueue)) {
             $deleted = $faxQueue->delete();
-            if ($deleted){
+            if ($deleted) {
                 return response()->json([
                     'status' => 200,
                     'success' => [
@@ -103,5 +101,14 @@ class FaxQueueController extends Controller
                 ]);
             }
         }
+    }
+
+    public function updateStatus(FaxQueues $faxQueue, $status = null)
+    {
+        $faxQueue->update([
+            'fax_status' => $status,
+        ]);
+
+        return redirect()->back();
     }
 }
