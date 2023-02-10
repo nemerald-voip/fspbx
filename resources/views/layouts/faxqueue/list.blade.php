@@ -36,6 +36,9 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="col-auto">
+
+                                </div>
                             </form>
                         </div>
                         <div class="col-xl-4">
@@ -46,6 +49,9 @@
                                     </a>
                                 @endif
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
+                                    <a href="{{ route('faxQueue', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                        Show {{ (($selectedScope == 'local')?'global':'local') }} queue
+                                    </a>
                             </div>
                         </div><!-- end col-->
                     </div>
@@ -71,6 +77,9 @@
                                             </div>
                                         @endif
                                     </th>
+                                    @if($selectedScope == 'global')
+                                        <th>Domain</th>
+                                    @endif
                                     <th>Date</th>
                                     <th>Caller ID Number</th>
                                     <th>Email Address</th>
@@ -92,6 +101,9 @@
                                                 </div>
                                             @endif
                                         </td>
+                                        @if($selectedScope == 'global')
+                                            <th>{{ $faxQueue['fax_domain'] }}</th>
+                                        @endif
                                         <td>
                                             {{ $faxQueue['fax_date']->format('D, M d, Y h:i:s A') }}
                                         </td>
