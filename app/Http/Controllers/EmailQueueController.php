@@ -15,7 +15,7 @@ class EmailQueueController extends Controller
         }
 
         $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', '' => 'Blank'];
-        $selectedStatus = $request->get('status');
+        $selectedStatus = $request->get('status') ?: 'all';
         $searchString = $request->get('search');
 
         $emailQueuesQuery = EmailQueue::query();
