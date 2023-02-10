@@ -21,17 +21,20 @@
                     <div class="card-body">
                         <div class="row mb-2">
                             <div class="col-xl-8">
-                                <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+                                <form id="filterForm" method="GET" action="{{url()->current()}}?page=1"
+                                      class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
                                     <div class="col-auto">
                                         <label for="search" class="visually-hidden">Search</label>
-                                        <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
+                                        <input type="search" class="form-control" name="search" id="search"
+                                               value="{{ $searchString }}" placeholder="Search...">
                                     </div>
                                     <div class="col-auto">
                                         <div class="d-flex align-items-center">
                                             <label for="status-select" class="me-2">Status</label>
                                             <select class="form-select" name="status" id="status-select">
                                                 @foreach ($statuses as $key => $status)
-                                                    <option value="{{ $key }}" @if ($selectedStatus == $key) selected @endif>{{ $status }}</option>
+                                                    <option value="{{ $key }}"
+                                                            @if ($selectedStatus == $key) selected @endif>{{ $status }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -54,14 +57,16 @@
                             </div><!-- end col-->
                         </div>
                         <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Extensions</label>
+                            <label class="form-label">Showing {{ $emailQueues->firstItem() }}
+                                - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for
+                                Extensions</label>
                         </div>
 
                         <div class="table-responsive">
                             <table class="table table-centered mb-0" id="voicemail_list">
                                 <thead class="table-light">
                                 <tr>
-                                    <th style="width: 20px;">
+                                    <th style="width: 10px;">
                                         @if (userCheckPermission('email_queue_delete'))
                                             <div class="form-check">
                                                 <input type="checkbox" class="form-check-input" id="selectallCheckbox">
@@ -77,6 +82,7 @@
                                     <th>Status</th>
                                     <th>Retry</th>
                                     <th>After Email</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -93,34 +99,60 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if (userCheckPermission('email_queue_edit'))
-                                                <a href="{{ route('faxes.edit',$emailQueue) }}" class="text-body fw-bold">
-                                                    {{ \Carbon\Carbon::createFromTimestamp($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
-                                                </a>
-                                            @else
-                                                <span class="text-body fw-bold">
-                                                    {{ \Carbon\Carbon::createFromTimestamp($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
-                                                </span>
-                                            @endif
+                                            <span class="text-body fw-bold">
+                                                {{ $emailQueue->email_date }}
+                                                {{ \Carbon\Carbon::createFromTimestamp($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
+                                            </span>
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>{{ $emailQueue->email_to }}</td>
                                         <td>{{ $emailQueue->email_subject }}</td>
-                                        <td>{{ $emailQueue->email_status }}</td>
+                                        <td>
+                                            @if ($emailQueue->email_status == "sent")
+                                                <h5><span class="badge bg-success">Sent</span></h5>
+                                            @elseif($faxQueue['fax_status'] == "failed")
+                                                <h5><span class="badge bg-danger">Failed</span></h5>
+                                            @elseif($faxQueue['fax_status'] == "waiting")
+                                                <h5><span class="badge bg-primary">Waiting</span></h5>
+                                            @else
+                                                <h5>
+                                                    <span class="badge bg-info">{{ ucfirst($emailQueue->email_status) }}</span>
+                                                </h5>
+                                            @endif
+                                        </td>
                                         <td>
                                             {{ $emailQueue->email_retry_count }}
-                                            @if($emailQueue->email_status == 'waiting')
-                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid]) }}">
-                                                    <button type="button" class="btn btn-light mb-2">Cancel</button>
-                                                </a>
+                                        </td>
+                                        <td>{{ $emailQueue->email_action_after }}</td>
+                                        <td>
+                                            @if (userCheckPermission('email_queue_edit'))
+                                                @if($emailQueue->email_status == 'waiting')
+                                                    <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid]) }}">
+                                                        <button type="button" class="btn btn-light mb-2">Cancel</button>
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid, 'waiting']) }}">
+                                                        <button type="button" class="btn btn-light mb-2">Retry</button>
+                                                    </a>
+                                                @endif
                                             @else
-                                                <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid, 'waiting']) }}">
+                                                @if($emailQueue->email_status == 'waiting')
+                                                    <button type="button" class="btn btn-light mb-2">Cancel</button>
+                                                @else
                                                     <button type="button" class="btn btn-light mb-2">Retry</button>
+                                                @endif
+                                            @endif
+                                            @if (userCheckPermission('email_queue_delete'))
+                                                <a href="javascript:confirmDeleteAction('{{ route('emailqueues.destroy', ':id') }}','{{ $emailQueue->email_queue_uuid }}');"
+                                                   class="action-icon">
+                                                    <i class="mdi mdi-delete"
+                                                       data-bs-container="#tooltip-container-actions"
+                                                       data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                       title="Delete"></i>
                                                 </a>
                                             @endif
                                         </td>
-                                        <td>{{ $emailQueue->email_action_after }}</td>
                                     </tr>
                                 @endforeach
 
@@ -168,7 +200,7 @@
             })
 
             $('#formFilter').on('submit', function () {
-                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+                var location = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 location += '?page=1' + $('#filterForm').serialize();
                 window.location.href = location;
             })
