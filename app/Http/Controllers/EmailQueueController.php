@@ -14,13 +14,13 @@ class EmailQueueController extends Controller
             return redirect('/');
         }
 
-        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', '' => 'Blank'];
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'null' => 'Blank'];
         $selectedStatus = $request->get('status') ?: 'all';
         $searchString = $request->get('search');
 
         $emailQueuesQuery = EmailQueue::query();
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
-            if (! $selectedStatus) {
+            if ($selectedStatus === 'null') {
                 $emailQueuesQuery
                     ->where(function ($q) {
                         $q->where('email_status', '')
