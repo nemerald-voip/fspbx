@@ -36,9 +36,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-auto">
-
-                                </div>
+                                <input type="hidden" name="scope" value="{{ $selectedScope }}" />
                             </form>
                         </div>
                         <div class="col-xl-4">
@@ -58,11 +56,6 @@
                     <div class="row mt-3">
                         <div class="col-4">
                             <label class="form-label">Showing {{ $faxQueues->firstItem() }} - {{ $faxQueues->lastItem() }} of {{ $faxQueues->total() }} results for Fax Queues</label>
-                        </div>
-                        <div class="col-8">
-                            <div class="float-end">
-                                {{ $faxQueues->appends(request()->except('page'))->links() }}
-                            </div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -102,7 +95,7 @@
                                             @endif
                                         </td>
                                         @if($selectedScope == 'global')
-                                            <th>{{ $faxQueue['fax_domain'] }}</th>
+                                            <th>{{ $faxQueue['domain_name'] }}</th>
                                         @endif
                                         <td>
                                             {{ $faxQueue['fax_date']->format('D, M d, Y h:i:s A') }}
@@ -117,10 +110,8 @@
                                                 <h5><span class="badge bg-success"></i>Sent</span></h5>
                                             @elseif($faxQueue['fax_status'] == "failed")
                                                 <h5><span class="badge bg-danger">Failed</span></h5>
-                                            @elseif($faxQueue['fax_status'] == "waiting")
-                                                <h5><span class="badge bg-info">Waiting</span></h5>
                                             @else
-                                                {{ ucfirst($faxQueue['fax_status']) }}
+                                                <h5><span class="badge bg-info">{{ ucfirst($faxQueue['fax_status']) }}</span></h5>
                                             @endif
                                         </td>
                                         <td>
@@ -139,6 +130,7 @@
                     </div>
                 </div> <!-- end card-body-->
             </div> <!-- end card-->
+            {{ $faxQueues->appends(request()->except('page'))->links() }}
         </div> <!-- end col -->
     </div>
     <!-- end row -->
