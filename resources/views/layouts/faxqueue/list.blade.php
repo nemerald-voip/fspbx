@@ -130,6 +130,8 @@
                                                 <a href="{{ route('faxQueue.updateStatus', [$faxQueue['fax_queue_uuid']]) }}">
                                                     <button type="button" class="btn btn-light mb-2">Cancel</button>
                                                 </a>
+                                            @elseif($faxQueue['fax_status'] == 'trying')
+                                                {{ $faxQueue['fax_retry_count'] }}
                                             @else
                                                 <a href="{{ route('faxQueue.updateStatus', [$faxQueue['fax_queue_uuid'], 'waiting']) }}">
                                                     <button type="button" class="btn btn-light mb-2">Retry</button>
