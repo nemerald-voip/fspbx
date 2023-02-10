@@ -43,7 +43,7 @@ class EmailQueueController extends Controller
 
         $emailQueues = $emailQueuesQuery->paginate();
 
-        return view('layouts.emailQueues.list', compact('emailQueues'));
+        return view('layouts.emailQueues.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus'));
     }
 
     public function delete($id)
