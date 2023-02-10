@@ -20,10 +20,28 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row mb-2">
-                            <div class="col-xl-4">
-                                <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Extensions</label>
-                            </div>
                             <div class="col-xl-8">
+                                <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+                                    <div class="col-auto">
+                                        <label for="search" class="visually-hidden">Search</label>
+                                        <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="d-flex align-items-center">
+                                            <label for="status-select" class="me-2">Status</label>
+                                            <select class="form-select" name="status" id="status-select">
+                                                @foreach ($statuses as $key => $status)
+                                                    <option value="{{ $key }}" @if ($selectedStatus == $key) selected @endif>{{ $status }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-xl-4">
                                 <div class="text-xl-end mt-xl-0 mt-2">
                                     @if (userCheckPermission('email_queue_delete'))
                                         <a href="javascript:confirmDeleteAction('{{ route('emailqueues.destroy', ':id') }}');"
@@ -34,6 +52,9 @@
                                     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                                 </div>
                             </div><!-- end col-->
+                        </div>
+                        <div class="col-xl-4">
+                            <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Extensions</label>
                         </div>
 
                         <div class="table-responsive">
