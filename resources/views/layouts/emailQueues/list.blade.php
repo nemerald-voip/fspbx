@@ -101,7 +101,7 @@
                                         <td>
                                             <span class="text-body fw-bold">
                                                 {{ $emailQueue->email_date }}
-                                                {{ \Carbon\Carbon::createFromTimestamp($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
+                                                {{ \Carbon\Carbon::createFromTimestamp($emailQueue->email_date)->setTimezone(get_local_time_zone(\Session::get('domain_uuid')))->toDayDateTimeString() }}
                                             </span>
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
