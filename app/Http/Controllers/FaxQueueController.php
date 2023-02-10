@@ -36,6 +36,9 @@ class FaxQueueController extends Controller
         if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
             $faxQueues
                 ->where('domain_uuid', $domainUuid);
+        } else {
+            $faxQueues
+                ->join('v_domains','v_domains.domain_uuid','=','v_fax_queue.domain_uuid');
         }
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $faxQueues
