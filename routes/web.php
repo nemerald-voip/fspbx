@@ -141,9 +141,9 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/messages', [MessagesController::class, 'index']) ->name('messagesStatus');
 
     // Email Queues
-    Route::get('email_queues', [EmailQueueController::class, 'index']);
-    Route::delete('email_queues/{id}', [EmailQueueController::class, 'delete'])->name('emailqueues.destroy');
-    Route::get('email_queues/{emailQueue}/{status?}', [EmailQueueController::class, 'updateStatus'])->name('emailqueues.updateStatus');
+    Route::get('emailqueues', [EmailQueueController::class, 'index']);
+    Route::delete('emailqueues/{id}', [EmailQueueController::class, 'delete'])->name('emailqueues.destroy');
+    Route::get('emailqueues/{emailQueue}/{status?}', [EmailQueueController::class, 'updateStatus'])->name('emailqueues.updateStatus');
 
     // Fax Queue
     Route::get('faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue.list');
