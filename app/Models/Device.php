@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\DeviceLines;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Device extends Model
 {
@@ -47,5 +49,22 @@ class Device extends Model
         'device_username',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct();
+        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+        $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->fill($attributes);
+    }
+
+    /**
+     * Get the Device Lines objects associated with this device.
+     *  returns Eloqeunt Object
+     */
+    public function lines()
+    {
+        return $this->hasMany(DeviceLines::class,'device_uuid','device_uuid');
+    }
     
 }

@@ -741,22 +741,16 @@ class ExtensionsController extends Controller
      */
     public function import(Request $request)
     {
-
-        // $request->validate([
-        //     'file' => 'required|file|mimes:xls,xlsx,csv',
-        // ]);
-
         try {
-            // Log::alert($request->all());
-            // $file = $request->file('file');
+ 
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
             
             // Excel::import(new ExtensionsImport, request()->file('file'));
 
             $import = new ExtensionsImport;
             $import->import(request()->file('file'));
-            Log::alert($import->failures());
 
+            // Get array of failures and combine into html
             if ($import->failures()->isNotEmpty()) {
                 $errormessage = 'Some errors were detected. Please, check the details: <ul>';
                 foreach ($import->failures() as $failure) {
@@ -772,10 +766,9 @@ class ExtensionsController extends Controller
                     'error' => $errormessage,
                 ],400);
             }
-            // Log::alert($errormessage);
 
         } catch (Throwable $e) {
-            Log::alert($e);
+            // Log::alert($e);
             // Send response in format that Dropzone understands
             return response()->json([
                 'error' => $e->getMessage(),

@@ -262,25 +262,24 @@
     });
 
     fileDropzone.on("success", function (file) {
-        console.log('Success');
         this.removeAllFiles(true); 
         $('#extension-upload-modal').modal("hide");
         $('#extensionUploadResultModal').modal("show");
         $('#dropzoneSuccess').show();
         $('#dropzoneError').hide();
 
-        if (fileDropzone.getRejectedFiles().length == 0) {
-        //No errors
-        } else {
-            console.log("Errors");
-        }
+        // if (fileDropzone.getRejectedFiles().length == 0) {
+        // //No errors
+        // } else {
+        //     console.log("Errors");
+        // }
 
         // Successful Notification
         $.NotificationApp.send("Success","Extensions have been successfully imported","top-right","#10c469","success");
 
-        // setTimeout(function (){
-        //     window.location.reload();
-        // }, 1000);
+        setTimeout(function (){
+            window.location.reload();
+        }, 1000);
 
     });
     fileDropzone.on("complete", function (file) {
