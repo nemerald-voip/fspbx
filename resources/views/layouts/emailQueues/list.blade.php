@@ -109,7 +109,7 @@
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
-                                        <td>{{ $emailQueue->email_to }}</td>
+                                        <td style="word-break: break-all">{{ $emailQueue->email_to }}</td>
                                         <td style="width: 30px">{{ strlen($emailQueue->email_subject) > 50 ? substr($emailQueue->email_subject, 0, 50) . '...' : $emailQueue->email_subject }}</td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
