@@ -47,7 +47,7 @@
                                     </a>
                                 @endif
                                 {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
-                                    <a href="{{ route('faxQueue', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                    <a href="{{ route('faxQueue.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
                                         Show {{ (($selectedScope == 'local')?'global':'local') }} queue
                                     </a>
                             </div>
@@ -56,6 +56,11 @@
                     <div class="row mt-3">
                         <div class="col-4">
                             <label class="form-label">Showing {{ $faxQueues->firstItem() }} - {{ $faxQueues->lastItem() }} of {{ $faxQueues->total() }} results for Fax Queues</label>
+                        </div>
+                        <div class="col-8">
+                            <div class="float-end">
+                                {{ $faxQueues->appends(request()->except('page'))->links() }}
+                            </div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -79,7 +84,7 @@
                                     <th>Status</th>
                                     <th>Notify Date</th>
                                     <th>Retry Date</th>
-                                    <th>Retry Count</th>
+                                    <th>Retry</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,7 +126,17 @@
                                             {{ $faxQueue['fax_retry_date']->format('D, M d, Y h:i:s A') }}
                                         </td>
                                         <td>
-                                            {{ $faxQueue['fax_retry_count'] }}
+                                            @if($faxQueue['fax_status'] == 'waiting')
+                                                <a href="{{ route('faxQueue.updateStatus', [$faxQueue['fax_queue_uuid']]) }}">
+                                                    <button type="button" class="btn btn-light mb-2">Cancel</button>
+                                                </a>
+                                            @elseif($faxQueue['fax_status'] == 'trying')
+                                                {{ $faxQueue['fax_retry_count'] }}
+                                            @else
+                                                <a href="{{ route('faxQueue.updateStatus', [$faxQueue['fax_queue_uuid'], 'waiting']) }}">
+                                                    <button type="button" class="btn btn-light mb-2">Retry</button>
+                                                </a>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -130,7 +145,6 @@
                     </div>
                 </div> <!-- end card-body-->
             </div> <!-- end card-->
-            {{ $faxQueues->appends(request()->except('page'))->links() }}
         </div> <!-- end col -->
     </div>
     <!-- end row -->

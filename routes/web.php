@@ -81,9 +81,6 @@ Route::resource('users','UsersController');
 Route::resource('voicemails','VoicemailController');
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
-// Fax Queue
-Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue.list');
-Route::delete('/faxqueue/{id}',[FaxQueueController::class, 'destroy'])->name('faxQueue.destroy');
 
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
@@ -149,7 +146,10 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('email_queues/{emailQueue}/{status?}', [EmailQueueController::class, 'updateStatus'])->name('emailqueues.updateStatus');
 
     // Fax Queue
-    Route::get('/faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue');
+    Route::get('faxqueue',[FaxQueueController::class, 'index'])->name('faxQueue.list');
+    Route::delete('faxqueue/{id}',[FaxQueueController::class, 'destroy'])->name('faxQueue.destroy');
+    Route::get('faxqueue/{faxQueue}/{status?}', [FaxQueueController::class, 'updateStatus'])->name('faxQueue.updateStatus');
+
 });
 
 // Route::group(['prefix' => '/'], function () {
