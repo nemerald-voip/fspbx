@@ -71,7 +71,7 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-centered mb-0 text-nowrap" id="voicemail_list">
+                            <table class="table table-centered mb-0" id="voicemail_list">
                                 <thead class="table-light">
                                 <tr>
                                     <th style="width: 10px;">
