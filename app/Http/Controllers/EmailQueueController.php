@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EmailQueue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class EmailQueueController extends Controller
 {
@@ -15,10 +16,20 @@ class EmailQueueController extends Controller
         }
 
         $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'null' => 'Blank'];
+        $scopes = ['global', 'local'];
         $selectedStatus = $request->get('status') ?: 'all';
         $searchString = $request->get('search');
+        $selectedScope = $request->get('scope', 'local');
 
         $emailQueuesQuery = EmailQueue::query();
+        $domainUuid = Session::get('domain_uuid');
+        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
+            $emailQueuesQuery
+                ->where('domain_uuid', $domainUuid);
+        } else {
+            $emailQueuesQuery
+                ->join('v_domains','v_domains.domain_uuid','=','v_email_queue.domain_uuid');
+        }
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             if ($selectedStatus === 'null') {
                 $emailQueuesQuery
@@ -43,7 +54,7 @@ class EmailQueueController extends Controller
 
         $emailQueues = $emailQueuesQuery->orderBy('email_date', 'desc')->paginate();
 
-        return view('layouts.emailQueues.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus'));
+        return view('layouts.emailQueues.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
     }
 
     public function delete($id)

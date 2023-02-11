@@ -52,6 +52,9 @@
                                             Delete Selected
                                         </a>
                                     @endif
+                                        <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                            Show {{ (($selectedScope == 'local')?'global':'local') }} queue
+                                        </a>
                                     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                                 </div>
                             </div><!-- end col-->
