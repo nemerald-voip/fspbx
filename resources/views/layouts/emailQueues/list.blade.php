@@ -153,6 +153,7 @@
                         </div>
                     </div> <!-- end card-body-->
                 </div> <!-- end card-->
+                {{ $faxQueues->appends(request()->except('page'))->links() }}
                 {{ $emailQueues->links() }}
             </div> <!-- end col -->
         </div>
