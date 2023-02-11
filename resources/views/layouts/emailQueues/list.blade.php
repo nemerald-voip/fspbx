@@ -56,10 +56,15 @@
                                 </div>
                             </div><!-- end col-->
                         </div>
-                        <div class="col-xl-4">
-                            <label class="form-label">Showing {{ $emailQueues->firstItem() }}
-                                - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for
-                                Extensions</label>
+                        <div class="row mt-3">
+                            <div class="col-4">
+                                <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Email Queues</label>
+                            </div>
+                            <div class="col-8">
+                                <div class="float-end">
+                                    {{ $emailQueues->appends(request()->except('page'))->links() }}
+                                </div>
+                            </div>
                         </div>
 
                         <div class="table-responsive">
@@ -153,7 +158,6 @@
                         </div>
                     </div> <!-- end card-body-->
                 </div> <!-- end card-->
-                {{ $emailQueues->appends(request()->except('page'))->links() }}
             </div> <!-- end col -->
         </div>
         <!-- end row -->
