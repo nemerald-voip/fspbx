@@ -89,7 +89,7 @@
                 </td>
                 <td>
                     @if ($faxQueue->fax_status == "sent")
-                        <h5><span class="badge bg-success"></i>Sent</span></h5>
+                        <h5><span class="badge bg-success">Sent</span></h5>
                     @elseif($faxQueue->fax_status == "failed")
                         <h5><span class="badge bg-danger">Failed</span></h5>
                     @else
