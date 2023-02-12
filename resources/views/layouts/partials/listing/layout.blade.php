@@ -9,7 +9,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row mb-2">
+                        <div class="row mb-3">
                             <div class="col-xl-8">
                                 @yield('searchbar')
                             </div>
@@ -19,7 +19,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row mb-2">
+                        <div class="row">
                             @yield('pagination')
                         </div>
                         <div class="table-responsive">

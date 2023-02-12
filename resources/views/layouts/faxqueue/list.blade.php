@@ -6,12 +6,12 @@
 
 @section('actionbar')
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('faxQueue.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+        <a href="javascript:confirmDeleteAction('{{ route('faxQueue.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger me-2 disabled">
             Delete Selected
         </a>
     @endif
     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
-    <a href="{{ route('faxQueue.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2">
+    <a href="{{ route('faxQueue.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light">
         Show {{ (($selectedScope == 'local')?'global':'local') }} queue
     </a>
 @endsection
@@ -41,8 +41,8 @@
         <th style="width: 20px;">
             @if ($permissions['delete'])
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="selectAllCheckbox">
-                    <label class="form-check-label" for="selectAllCheckbox">&nbsp;</label>
+                    <input type="checkbox" class="form-check-input" id="selectallCheckbox">
+                    <label class="form-check-label" for="selectallCheckbox">&nbsp;</label>
                 </div>
             @endif
         </th>
@@ -124,7 +124,7 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            $('#selectAllCheckbox').on('change',function(){
+            $('#selectallCheckbox').on('change',function(){
                 if($(this).is(':checked')){
                     $('.action_checkbox').prop('checked',true);
                 } else {
@@ -134,10 +134,10 @@
 
             $('.action_checkbox').on('change',function(){
                 if(!$(this).is(':checked')){
-                    $('#selectAllCheckbox').prop('checked',false);
+                    $('#selectallCheckbox').prop('checked',false);
                 } else {
                     if(checkAllbox()){
-                        $('#selectAllCheckbox').prop('checked',true);
+                        $('#selectallCheckbox').prop('checked',true);
                     }
                 }
             });
