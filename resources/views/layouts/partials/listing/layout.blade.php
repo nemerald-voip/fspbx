@@ -19,7 +19,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row mt-3">
+                        <div class="row mb-2">
                             @yield('pagination')
                         </div>
                         <div class="table-responsive">
