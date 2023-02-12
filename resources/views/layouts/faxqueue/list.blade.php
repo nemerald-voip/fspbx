@@ -77,43 +77,41 @@
                     @endif
                 </td>
                 @if($selectedScope == 'global')
-                    <th>{{ $faxQueue['domain_name'] }}</th>
+                    <th>{{ $faxQueue->domain_name }}</th>
                 @endif
                 <td>
-                    {{ $faxQueue['fax_date']->format('D, M d, Y h:i:s A') }}
+                    {{ $faxQueue->fax_date->format('D, M d, Y h:i:s A') }}
                 </td>
                 <td>
-                    {{ phone($faxQueue['fax_caller_id_number'], "US", $national_phone_number_format) }}</td>
+                    {{ phone($faxQueue->fax_caller_id_number, "US", $national_phone_number_format) }}</td>
                 <td>
-                    {{ $faxQueue['fax_email_address'] }}
+                    {{ $faxQueue->fax_email_address }}
                 </td>
                 <td>
-                    @if ($faxQueue['fax_status'] == "sent")
+                    @if ($faxQueue->fax_status == "sent")
                         <h5><span class="badge bg-success"></i>Sent</span></h5>
-                    @elseif($faxQueue['fax_status'] == "failed")
+                    @elseif($faxQueue->fax_status == "failed")
                         <h5><span class="badge bg-danger">Failed</span></h5>
                     @else
-                        <h5><span class="badge bg-info">{{ ucfirst($faxQueue['fax_status']) }}</span></h5>
+                        <h5><span class="badge bg-info">{{ ucfirst($faxQueue->fax_status) }}</span></h5>
                     @endif
                 </td>
                 <td>
-                    {{ $faxQueue['fax_notify_date']->format('D, M d, Y h:i:s A') }}
+                    {{ $faxQueue->fax_notify_date->format('D, M d, Y h:i:s A') }}
                 </td>
                 <td>
-                    {{ $faxQueue['fax_retry_date']->format('D, M d, Y h:i:s A') }}
+                    {{ $faxQueue->fax_retry_date->format('D, M d, Y h:i:s A') }}
                 </td>
                 <td>
-                    {{ $faxQueue['fax_retry_count'] }}
+                    {{ $faxQueue->fax_retry_count }}
                 </td>
                 <td>
-                    @if($faxQueue['fax_status'] == 'waiting')
-                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue['fax_queue_uuid']]) }}">
+                    @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
+                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid]) }}">
                             <button type="button" class="btn btn-light mb-2">Cancel</button>
                         </a>
-                    @elseif($faxQueue['fax_status'] == 'trying')
-                        {{ $faxQueue['fax_retry_count'] }}
                     @else
-                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue['fax_queue_uuid'], 'waiting']) }}">
+                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid, 'waiting']) }}">
                             <button type="button" class="btn btn-light mb-2">Retry</button>
                         </a>
                     @endif
