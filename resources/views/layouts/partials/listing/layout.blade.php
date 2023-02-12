@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> $pageTitle])
+@extends('layouts.horizontal', ["page_title" => $pageTitle])
 
 @section('content')
     <div class="container-fluid">
