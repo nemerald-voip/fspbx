@@ -11,7 +11,7 @@
         </a>
     @endif
     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
-    <a href="{{ route('faxQueue.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+    <a href="{{ route('faxQueue.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2">
         Show {{ (($selectedScope == 'local')?'global':'local') }} queue
     </a>
 @endsection
