@@ -111,7 +111,7 @@
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>
                                             <span data-toggle="modal" data-target="#exampleModal" data-whatever="{{ $emailQueue->email_to }}">
-
+                                                <a href="#">Show data</a>
                                             </span>
                                         </td>
                                         <td style="width: 30px">{{ strlen($emailQueue->email_subject) > 50 ? substr($emailQueue->email_subject, 0, 50) . '...' : $emailQueue->email_subject }}</td>
