@@ -82,7 +82,7 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th style="width: 100px">Date Time</th>
+                                    <th style="width: 200px">Date Time</th>
                                     <th>Hostname</th>
                                     <th class="text-center">From</th>
                                     <th>To</th>
@@ -104,7 +104,7 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td style="width: 100px">
+                                        <td style="width: 200px">
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
