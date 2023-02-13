@@ -80,9 +80,11 @@
                     <th>{{ $faxQueue->domain_name }}</th>
                 @endif
                 <td>
-                    {{ $faxQueue->fax_date->format('D, M d, Y h:i:s A') }}
+                    {{-- {{ $faxQueue->fax_date->format('D, M d, Y h:i:s A') }} --}}
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('D, M d, Y ')}}</span> 
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('h:i:s A') }}</span>
                 </td>
-                <td>
+                <td class="text-nowrap">
                     {{ phone($faxQueue->fax_caller_id_number, "US", $national_phone_number_format) }}</td>
                 <td>
                     {{ $faxQueue->fax_email_address }}
@@ -97,10 +99,14 @@
                     @endif
                 </td>
                 <td>
-                    {{ $faxQueue->fax_notify_date->format('D, M d, Y h:i:s A') }}
+                    {{-- {{ $faxQueue->fax_notify_date->format('D, M d, Y h:i:s A') }} --}}
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span> 
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('h:i:s A') }}</span>
                 </td>
                 <td>
-                    {{ $faxQueue->fax_retry_date->format('D, M d, Y h:i:s A') }}
+                    {{-- {{ $faxQueue->fax_retry_date->format('D, M d, Y h:i:s A') }} --}}
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span> 
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('h:i:s A') }}</span>
                 </td>
                 <td>
                     {{ $faxQueue->fax_retry_count }}

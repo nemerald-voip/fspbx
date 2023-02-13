@@ -52,7 +52,7 @@ class EmailQueueController extends Controller
             });
         }
 
-        $emailQueues = $emailQueuesQuery->orderBy('email_date', 'desc')->paginate();
+        $emailQueues = $emailQueuesQuery->orderBy('email_date', 'desc')->paginate()->onEachSide(1);
 
         return view('layouts.emailQueues.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
     }
