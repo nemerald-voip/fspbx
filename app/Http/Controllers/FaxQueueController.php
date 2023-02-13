@@ -49,7 +49,7 @@ class FaxQueueController extends Controller
                     ->orWhereLike('fax_caller_id_number', strtolower($searchString));
             });
         }
-        $faxQueues = $faxQueues->orderBy('fax_date', 'asc')->paginate(10)->onEachSide(1);
+        $faxQueues = $faxQueues->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
 
         foreach ($faxQueues as $i => $faxQueue) {
             $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);

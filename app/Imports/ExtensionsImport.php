@@ -103,6 +103,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         $data['first_name'] = trim($data['first_name']);
         $data['last_name'] = trim($data['last_name']);
         $data['description'] = trim($data['description']);
+        $data['email'] = strtolower(trim($data['description']));
         $data['outbound_caller_id_number'] = trim($data['outbound_caller_id_number']);
         return $data;
     }
