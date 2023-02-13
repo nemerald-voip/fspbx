@@ -82,7 +82,7 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th>Date Time</th>
+                                    <th style="width: 30px">Date Time</th>
                                     <th>Hostname</th>
                                     <th class="text-center">From</th>
                                     <th>To</th>
@@ -104,7 +104,7 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td style="width: 30px">
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
@@ -128,18 +128,18 @@
                                             @if (userCheckPermission('email_queue_edit'))
                                                 @if($emailQueue->email_status == 'waiting')
                                                     <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid]) }}">
-                                                        <button type="button" class="btn btn-light mb-2">Cancel</button>
+                                                        <i class="mdi mdi-cancel"
+                                                           data-bs-container="#tooltip-container-actions"
+                                                           data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                           title="Cancel"></i>
                                                     </a>
                                                 @else
                                                     <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid, 'waiting']) }}">
-                                                        <button type="button" class="btn btn-light mb-2">Retry</button>
+                                                        <i class="mdi mdi-repeat"
+                                                           data-bs-container="#tooltip-container-actions"
+                                                           data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                           title="Retry"></i>
                                                     </a>
-                                                @endif
-                                            @else
-                                                @if($emailQueue->email_status == 'waiting')
-                                                    <button type="button" class="btn btn-light mb-2">Cancel</button>
-                                                @else
-                                                    <button type="button" class="btn btn-light mb-2">Retry</button>
                                                 @endif
                                             @endif
                                             @if (userCheckPermission('email_queue_delete'))
