@@ -109,7 +109,11 @@
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
-                                        <td style="word-break: break-all">{{ $emailQueue->email_to }}</td>
+                                        <td>
+                                            <span data-toggle="modal" data-target="#exampleModal" data-whatever="{{ $emailQueue->email_to }}">
+
+                                            </span>
+                                        </td>
                                         <td style="width: 30px">{{ strlen($emailQueue->email_subject) > 50 ? substr($emailQueue->email_subject, 0, 50) . '...' : $emailQueue->email_subject }}</td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
@@ -202,6 +206,26 @@
                 location += '?page=1' + $('#filterForm').serialize();
                 window.location.href = location;
             })
+
+            $('#exampleModal').on('show.bs.modal',
+                function (event) {
+
+                    // Button that triggered the modal
+                    var li = $(event.relatedTarget)
+
+                    // Extract info from data attributes
+                    var recipient = li.data('whatever')
+
+                    // Updating the modal content using
+                    // jQuery query selectors
+                    var modal = $(this)
+
+                    modal.find('.modal-title')
+                        .text('New message to ' + recipient)
+
+                    modal.find('.modal-body p')
+                        .text('Welcome to ' + recipient)
+                })
         });
 
         function checkAllbox() {
