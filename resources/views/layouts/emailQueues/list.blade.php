@@ -111,7 +111,7 @@
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>
                                             @if(strlen($emailQueue->email_to) > 35)
-                                                {{ substr($emailQueue->email_to, 0, 35)}} <a type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
+                                                {{ substr($emailQueue->email_to, 0, 35)}} <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
                                                     Show more...
                                                 </a>
                                             @else
@@ -120,7 +120,7 @@
                                         </td>
                                         <td style="width: 30px">
                                             @if(strlen($emailQueue->email_subject) > 35)
-                                                {{ substr($emailQueue->email_subject, 0, 35)}} <a type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
+                                                {{ substr($emailQueue->email_subject, 0, 35)}} <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
                                                     Show more...
                                                 </a>
                                             @else
@@ -190,7 +190,7 @@
                     <h5 class="modal-title" id="FullDetailModalLabel">Modal title</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-break">
                     ...
                 </div>
                 <div class="modal-footer">
