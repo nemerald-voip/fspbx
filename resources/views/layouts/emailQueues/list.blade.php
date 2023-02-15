@@ -71,7 +71,7 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-centered mb-0" id="voicemail_list">
+                            <table class="table table-centered mb-0 text-nowrap" id="voicemail_list">
                                 <thead class="table-light">
                                 <tr>
                                     <th>
@@ -104,7 +104,7 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td class="nowrap">
+                                        <td>
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
