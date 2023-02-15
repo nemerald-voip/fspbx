@@ -111,7 +111,8 @@
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>
                                             @if(strlen($emailQueue->email_to) > 30)
-                                                {{ substr($emailQueue->email_to, 0, 30)}} <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
+                                                <p>{{ substr($emailQueue->email_to, 0, 30)}}</p>
+                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
                                                     Show more...
                                                 </a>
                                             @else
@@ -120,7 +121,8 @@
                                         </td>
                                         <td>
                                             @if(strlen($emailQueue->email_subject) > 30)
-                                                {{ substr($emailQueue->email_subject, 0, 30)}} <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
+                                                <p>{{ substr($emailQueue->email_subject, 0, 30)}}</p>
+                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
                                                     Show more...
                                                 </a>
                                             @else
