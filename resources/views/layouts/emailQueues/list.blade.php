@@ -69,6 +69,9 @@
                                 </div>
                             </div>
                         </div>
+                        <button data-toggle="modal" data-target="#exampleModal" data-whatever="test">
+                            Show data
+                        </button>
 
                         <div class="table-responsive">
                             <table class="table table-centered mb-0" id="voicemail_list">
