@@ -74,7 +74,7 @@
                             <table class="table table-centered mb-0" id="voicemail_list">
                                 <thead class="table-light">
                                 <tr>
-                                    <th style="width: 10px;">
+                                    <th>
                                         @if (userCheckPermission('email_queue_delete'))
                                             <div class="form-check">
                                                 <input type="checkbox" class="form-check-input" id="selectallCheckbox">
@@ -82,11 +82,11 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th style="width: 200px">Date Time</th>
+                                    <th>Date Time</th>
                                     <th>Hostname</th>
                                     <th class="text-center">From</th>
                                     <th>To</th>
-                                    <th style="width: 30px">Subject</th>
+                                    <th>Subject</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -104,7 +104,7 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td style="width: 200px">
+                                        <td>
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
@@ -118,7 +118,7 @@
                                                 {{$emailQueue->email_to }}
                                             @endif
                                         </td>
-                                        <td style="width: 30px">
+                                        <td>
                                             @if(strlen($emailQueue->email_subject) > 35)
                                                 {{ substr($emailQueue->email_subject, 0, 35)}} <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
                                                     Show more...
