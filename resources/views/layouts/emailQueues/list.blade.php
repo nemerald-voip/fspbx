@@ -19,10 +19,10 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row mb-2">
-                            <div class="col-xl-8">
-                                <form id="filterForm" method="GET" action="{{url()->current()}}?page=1"
-                                      class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+                        <form id="filterForm" method="GET" action="{{url()->current()}}?page=1"
+                              class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+                            <div class="row mb-2">
+                                <div class="col-xl-8">
                                     <div class="col-auto">
                                         <label for="search" class="visually-hidden">Search</label>
                                         <input type="search" class="form-control" name="search" id="search"
@@ -42,26 +42,30 @@
                                     <div class="col-auto">
 
                                     </div>
-                                </form>
-                            </div>
-                            <div class="col-xl-4">
-                                <div class="text-xl-end mt-xl-0 mt-2">
-                                    @if (userCheckPermission('email_queue_delete'))
-                                        <a href="javascript:confirmDeleteAction('{{ route('emailqueues.destroy', ':id') }}');"
-                                           id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
-                                            Delete Selected
-                                        </a>
-                                    @endif
-                                    <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
-                                        Show {{ (($selectedScope == 'local')?'global':'local') }} queue
-                                    </a>
-                                    {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                                 </div>
-                            </div><!-- end col-->
-                        </div>
+                                <div class="col-xl-4">
+                                    <div class="text-xl-end mt-xl-0 mt-2">
+                                        @if (userCheckPermission('email_queue_delete'))
+                                            <a href="javascript:confirmDeleteAction('{{ route('emailqueues.destroy', ':id') }}');"
+                                               id="deleteMultipleActionButton"
+                                               class="btn btn-danger mb-2 me-2 disabled">
+                                                Delete Selected
+                                            </a>
+                                        @endif
+                                        <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}"
+                                           class="btn btn-light mb-2 me-2">
+                                            Show {{ (($selectedScope == 'local')?'global':'local') }} queue
+                                        </a>
+                                        {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
+                                    </div>
+                                </div><!-- end col-->
+                            </div>
+                        </form>
                         <div class="row mt-3">
                             <div class="col-4">
-                                <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Email Queues</label>
+                                <label class="form-label">Showing {{ $emailQueues->firstItem() }}
+                                    - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Email
+                                    Queues</label>
                             </div>
                             <div class="col-8">
                                 <div class="float-end">
@@ -112,7 +116,9 @@
                                         <td>
                                             @if(strlen($emailQueue->email_to) > 30)
                                                 <p>{{ substr($emailQueue->email_to, 0, 30)}}</p>
-                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
+                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal"
+                                                   data-bs-target="#FullDetailModal"
+                                                   data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
                                                     Show more...
                                                 </a>
                                             @else
@@ -122,7 +128,10 @@
                                         <td>
                                             @if(strlen($emailQueue->email_subject) > 30)
                                                 <p>{{ substr($emailQueue->email_subject, 0, 30)}}</p>
-                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
+                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal"
+                                                   data-bs-target="#FullDetailModal"
+                                                   data-bs-whatever="{{ $emailQueue->email_subject }}"
+                                                   data-bs-title="Subject">
                                                     Show more...
                                                 </a>
                                             @else
@@ -185,7 +194,8 @@
     </div> <!-- container -->
 
     <!-- Modal -->
-    <div class="modal fade" id="FullDetailModal" tabindex="-1" aria-labelledby="FullDetailModalLabel" aria-hidden="true">
+    <div class="modal fade" id="FullDetailModal" tabindex="-1" aria-labelledby="FullDetailModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
