@@ -25,6 +25,7 @@
                                       class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
                                     <div class="col-auto">
                                         <label for="search" class="visually-hidden">Search</label>
+                                        <input type="hidden" name="scope" value="{{ $selectedScope }}">
                                         <input type="search" class="form-control" name="search" id="search"
                                                value="{{ $searchString }}" placeholder="Search...">
                                     </div>
@@ -52,7 +53,7 @@
                                             Delete Selected
                                         </a>
                                     @endif
-                                    <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                    <a href="{{ route('emailqueues.list', ['status' => $selectedStatus, 'search' => $searchString, 'scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
                                         Show {{ (($selectedScope == 'local')?'global':'local') }} queue
                                     </a>
                                     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
