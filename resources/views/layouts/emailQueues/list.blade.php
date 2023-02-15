@@ -104,7 +104,7 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="nowrap">
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
