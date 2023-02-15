@@ -110,8 +110,8 @@
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>
-                                            @if(strlen($emailQueue->email_to) > 50)
-                                                {{ substr($emailQueue->email_to, 0, 50)}} <a type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
+                                            @if(strlen($emailQueue->email_to) > 35)
+                                                {{ substr($emailQueue->email_to, 0, 35)}} <a type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
                                                     Show more...
                                                 </a>
                                             @else
@@ -119,8 +119,8 @@
                                             @endif
                                         </td>
                                         <td style="width: 30px">
-                                            @if(strlen($emailQueue->email_subject) > 50)
-                                                {{ substr($emailQueue->email_subject, 0, 50)}} <a type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
+                                            @if(strlen($emailQueue->email_subject) > 35)
+                                                {{ substr($emailQueue->email_subject, 0, 35)}} <a type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
                                                     Show more...
                                                 </a>
                                             @else
@@ -247,7 +247,7 @@
                 var modalBody = FullDetailModal.querySelector('.modal-body')
 
                 modalTitle.textContent = title
-                modalBody.text = data
+                modalBody.textContent = data
             })
         });
 
