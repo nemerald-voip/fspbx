@@ -69,9 +69,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button data-toggle="modal" data-target="#exampleModal" data-whatever="test">
-                            Show data
-                        </button>
+                        <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#exampleModal">Open Modal</button>
 
                         <div class="table-responsive">
                             <table class="table table-centered mb-0" id="voicemail_list">
