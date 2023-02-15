@@ -52,9 +52,9 @@
                                             Delete Selected
                                         </a>
                                     @endif
-                                        <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
-                                            Show {{ (($selectedScope == 'local')?'global':'local') }} queue
-                                        </a>
+                                    <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                        Show {{ (($selectedScope == 'local')?'global':'local') }} queue
+                                    </a>
                                     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                                 </div>
                             </div><!-- end col-->
@@ -69,30 +69,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Button trigger modal -->
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            Launch demo modal
-                        </button>
-
-                        <!-- Modal -->
-                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        ...
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary">Save changes</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
 
                         <div class="table-responsive">
                             <table class="table table-centered mb-0" id="voicemail_list">
@@ -134,11 +110,23 @@
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>
-                                            <button data-toggle="modal" data-target="#exampleModal" data-whatever="{{ $emailQueue->email_to }}">
-                                                Show data
-                                            </button>
+                                            @if(strlen($emailQueue->email_to) > 50)
+                                                {{ substr($emailQueue->email_to, 0, 50)}} <a type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
+                                                    Show more...
+                                                </a>
+                                            @else
+                                                {{$emailQueue->email_to }}
+                                            @endif
                                         </td>
-                                        <td style="width: 30px">{{ strlen($emailQueue->email_subject) > 50 ? substr($emailQueue->email_subject, 0, 50) . '...' : $emailQueue->email_subject }}</td>
+                                        <td style="width: 30px">
+                                            @if(strlen($emailQueue->email_subject) > 50)
+                                                {{ substr($emailQueue->email_subject, 0, 50)}} <a type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
+                                                    Show more...
+                                                </a>
+                                            @else
+                                                {{$emailQueue->email_subject }}
+                                            @endif
+                                        </td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
                                                 <h5><span class="badge bg-success">Sent</span></h5>
@@ -193,6 +181,24 @@
         </div>
         <!-- end row -->
     </div> <!-- container -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="FullDetailModal" tabindex="-1" aria-labelledby="FullDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="FullDetailModalLabel">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 
@@ -230,26 +236,19 @@
                 window.location.href = location;
             })
 
-            $('#exampleModal').on('show.bs.modal',
-                function (event) {
+            var FullDetailModal = document.getElementById('FullDetailModal')
+            FullDetailModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget
 
-                console.log('in modal');
-                    // Button that triggered the modal
-                    var li = $(event.relatedTarget)
+                var title = button.getAttribute('data-bs-title')
+                var data = button.getAttribute('data-bs-whatever')
 
-                    // Extract info from data attributes
-                    var recipient = li.data('whatever')
+                var modalTitle = FullDetailModal.querySelector('.modal-title')
+                var modalBody = FullDetailModal.querySelector('.modal-body')
 
-                    // Updating the modal content using
-                    // jQuery query selectors
-                    var modal = $(this)
-
-                    modal.find('.modal-title')
-                        .text('New message to ' + recipient)
-
-                    modal.find('.modal-body p')
-                        .text('Welcome to ' + recipient)
-                })
+                modalTitle.textContent = title
+                modalBody.text = data
+            })
         });
 
         function checkAllbox() {
