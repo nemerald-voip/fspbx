@@ -9,7 +9,6 @@ class StoreDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mac_address' => 'required',
             'device_mac_address' => 'required',
             'device_label' => 'required',
             'device_vendor' => 'required',
