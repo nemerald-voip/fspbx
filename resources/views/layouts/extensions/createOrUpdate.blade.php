@@ -1297,7 +1297,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary confirm-delete-btn" data-href="">Delete</button>
             </div>
         </div>
@@ -1509,7 +1509,7 @@
                         $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                         location.reload();
                     } else {
-                        $.NotificationApp.send("Warning",response.message,"top-right","#ebb42a","error");
+                        $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
                     }
                 },
                 error: function(error) {
