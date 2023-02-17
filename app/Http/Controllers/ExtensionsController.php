@@ -835,7 +835,7 @@ class ExtensionsController extends Controller
     {
         $inputs = $request->validated();
 
-        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid'] , 'extension' => $extension->extension])->exists();
+        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid'] , 'user_id' => $extension->extension])->exists();
 
         if ($devicExist){
             return response()->json([
