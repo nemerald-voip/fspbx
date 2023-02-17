@@ -39,7 +39,11 @@
                             $actionUrl = route('extensions.store');
                         }
                     @endphp
-
+                    <form method="POST" id="extensionForm" action="{{$actionUrl}}" class="form">
+                        @if ($extension->exists)
+                            @method('put')
+                        @endif
+                        @csrf
                     <div class="row">
                         <div class="col-sm-2 mb-2 mb-sm-0">
                             <div class="nav flex-column nav-pills" id="extensionNavPills" role="tablist" aria-orientation="vertical">
@@ -129,12 +133,8 @@
                         </div> <!-- end col-->
 
                             <div class="col-sm-10">
-                                <form method="POST" id="extensionForm" action="{{$actionUrl}}" class="form">
+
                                     <div class="tab-content">
-                                        @if ($extension->exists)
-                                            @method('put')
-                                        @endif
-                                        @csrf
                                         <div class="text-sm-end">
                                             <a href="{{ route('extensions.index') }}" class="btn btn-light me-2">Cancel</a>
                                             <button class="btn btn-success" type="submit" id="submitFormButton"><i class="uil uil-down-arrow me-2"></i> Save </button>
@@ -1190,7 +1190,7 @@
                                         <!-- End Settings Content-->
                                     </div>
                                     </div>
-                                </form>
+
                                 <div class="tab-content">
                                     @if ($extension->exists)
                                         <div class="tab-pane fade" id="v-pills-device-setting" role="tabpanel" aria-labelledby="v-pills-device-setting-tab">
@@ -1264,7 +1264,7 @@
                             </div> <!-- end col-->
                     </div>
                     <!-- end row-->
-
+                    </form>
 
                 </div> <!-- end card-body-->
             </div> <!-- end card-->
