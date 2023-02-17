@@ -129,8 +129,8 @@
                         </div> <!-- end col-->
 
                             <div class="col-sm-10">
-                                <div class="tab-content">
-                                    <form method="POST" id="extensionForm" action="{{$actionUrl}}" class="form">
+                                <form method="POST" id="extensionForm" action="{{$actionUrl}}" class="form">
+                                    <div class="tab-content">
                                         @if ($extension->exists)
                                             @method('put')
                                         @endif
@@ -1189,8 +1189,8 @@
                                         </div>
                                         <!-- End Settings Content-->
                                     </div>
-                                    </form>
-                                </div>
+                                    </div>
+                                </form>
                                 <div class="tab-content">
                                     @if ($extension->exists)
                                         <div class="tab-pane fade" id="v-pills-device-setting" role="tabpanel" aria-labelledby="v-pills-device-setting-tab">
