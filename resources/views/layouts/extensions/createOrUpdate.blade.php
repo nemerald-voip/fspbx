@@ -1333,6 +1333,18 @@
 
 
 @push('scripts')
+    <style>
+        .input-group > .select2-container--bootstrap {
+            width: auto;
+            flex: 1 1 auto;
+        }
+
+        .input-group > .select2-container--bootstrap .select2-selection--single {
+            height: 100%;
+            line-height: inherit;
+            padding: 0.5rem 1rem;
+        }
+    </style>
 <script>
     $(document).ready(function() {
 
@@ -1420,7 +1432,10 @@
                     $('.loading').hide();
                 },
                 success: function(result) {
-                    $('#addPaymentRecordModal').modal('hide');
+                    $('#createDeviceModal').modal('hide');
+                    $('#device-select').append(
+                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address);
+                    );
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                 },
                 error: function(error) {
@@ -1440,7 +1455,11 @@
                     }
                 }
             });
-        })
+        });
+
+        $('#device-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
 
         $(document).on('click', '.assign-device-btn', function(e){
             e.preventDefault();
@@ -1452,10 +1471,10 @@
                 '_token' : $('meta[name="csrf-token"]').attr('content')
             };
             console.log(data);
-            console.log("{{route('extensions.assign-device', [$extension->extension])}}");
+            console.log("{{route('extensions.assign-device', [$extension->extension_uuid])}}");
 
             $.ajax({
-                url: "{{route('extensions.assign-device', [$extension->extension])}}",
+                url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
                 type: 'POST',
                 data: data,
                 dataType: 'json',
@@ -1521,10 +1540,6 @@
         // Extension Page
         // Sort Select2 for users
         $('#users-select').select2({
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
-        });
-
-        $('#device-select').select2({
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
