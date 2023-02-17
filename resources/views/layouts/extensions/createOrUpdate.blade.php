@@ -785,420 +785,422 @@
                                     @endif
 
                                     <div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
-                                    <!-- Settings Content-->
-                                    <div class="tab-pane show active">
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <h4 class="mt-2 mb-3">Settings</h4>
+                                        <!-- Settings Content-->
+                                        <div class="tab-pane show active">
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mt-2 mb-3">Settings</h4>
 
-                                                <div class="row">
-                                                    @if (userCheckPermission('extension_domain'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Domain</label>
-                                                            <select data-toggle="select2" title="Domain" id="domain_uuid" name="domain_uuid">
-                                                                @foreach (Session::get("domains") as $domain))
-                                                                <option value="{{ $domain->domain_uuid }}"
-                                                                    @if($domain->domain_uuid == $extension->domain_uuid)
-                                                                    selected
-                                                                    @endif>
-                                                                    {{ $domain->domain_name }}
-                                                                </option>
-                                                                @endforeach
-                                                            </select>
-                                                            <div class="text-danger domain_uuid_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    @else
-                                                        <input type="hidden" name="domain_uuid" value="{{ Session::get('domain_uuid') }}">
-                                                    @endif
-
-                                                    @if (userCheckPermission('extension_user_context'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="context" class="form-label">Context <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="" id="user_context"
-                                                                name="user_context" value="{{ $extension->user_context}}"/>
-                                                            <div class="text-danger user_context_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    @else
-                                                        <input type="hidden" name="user_context" value="{{ Session::get('domain_name') }}">
-                                                    @endif
-                                                </div> <!-- end row -->
-
-                                                <div class="row">
-                                                    @if (userCheckPermission('number_alias'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="number-alias" class="form-label">Number Alias</label>
-                                                            <input class="form-control" type="text" placeholder="" id="number_alias"
-                                                            name="number_alias" value="{{ $extension->number_alias}}"/>
-                                                            <span class="help-block"><small>If the extension is numeric then number alias is optional.</small></span>
-                                                            <div class="text-danger number_alias_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    @endif
-
-                                                    @if (userCheckPermission('extension_accountcode'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="accountcode" class="form-label">Account Code</label>
-                                                            <input class="form-control" type="text" placeholder="" id="accountcode"
-                                                                name="accountcode" value="{{ $extension->accountcode}}"/>
-                                                            <span class="help-block"><small>Enter the account code here.</small></span>
-                                                            <div class="text-danger accountcode_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    @else
-                                                        <input type="hidden" name="accountcode" value="{{ Session::get('domain_name') }}">
-                                                    @endif
-                                                </div> <!-- end row -->
-
-                                                <div class="row">
-                                                    @if (userCheckPermission('extension_max_registrations'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="max_registrations" class="form-label">Total allowed registrations</label>
-                                                            <input class="form-control" type="text" placeholder="" id="max_registrations"
-                                                                name="max_registrations"  value="{{ $extension->max_registrations}}"/>
-                                                            <span class="help-block"><small>Enter the maximum registration allowed for this user</small></span>
-                                                            <div class="text-danger error-text max_registrations_err error_message"></div>
-                                                        </div>
-
-                                                    </div>
-                                                    @endif
-
-                                                    @if (userCheckPermission('extension_toll'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="toll_allow" class="form-label">Toll Allow</label>
-                                                            <input class="form-control" type="text" placeholder="" id="toll_allow"
-                                                                name="toll_allow" value="{{ $extension->toll_allow}}"/>
-                                                            <span class="help-block"><small>Enter the toll allow value here. (Examples: domestic,international,local)</small></span>
-                                                            <div class="text-danger toll_allow_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    @endif
-                                                </div> <!-- end row -->
-
-                                                @if (userCheckPermission('extension_limit'))
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="limit_destination" class="form-label">Limit Destination</label>
-                                                            <input class="form-control" type="text" placeholder="" id="limit_destination"
-                                                                name="limit_destination" value="{{ $extension->limit_destination}}"/>
-                                                            <span class="help-block"><small>Enter the destination to send the calls when the max number of outgoing calls has been reached.</small></span>
-                                                            <div class="text-danger limit_destination_err error_message"></div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="limit_max" class="form-label">Total allowed outbound calls</label>
-                                                            <input class="form-control" type="text" placeholder="" id="limit_max"
-                                                                name="limit_max" value="{{ $extension->limit_max}}"/>
-                                                            <span class="help-block"><small>Enter the max number of outgoing calls for this user.</small></span>
-                                                            <div class="text-danger limit_max_err error_message"></div>
-                                                        </div>
-                                                    </div>
-
-                                                </div> <!-- end row -->
-                                                @else
-                                                    <input type="hidden" name="limit_destination" value="!USER_BUSY">
-                                                    <input type="hidden" name="limit_max" value="5">
-                                                @endif
-
-
-                                                <div class="row">
-                                                    @if (userCheckPermission('extension_call_group'))
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label for="call_group" class="form-label">Call Group</label>
-                                                            <input class="form-control" type="text" placeholder="" id="call_group"
-                                                                name="call_group" value="{{ $extension->call_group}}"/>
-                                                            <span class="help-block"><small>Enter the user call group here. Groups available by default: sales, support, billing.</small></span>
-                                                            <div class="text-danger call_group_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    @endif
-                                                </div> <!-- end row -->
-
-                                                @if (userCheckPermission('extension_call_screen'))
-                                                <div class="row">
-                                                    <div class="col-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Enable call screening</label>
-                                                            <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                data-bs-content="You can use Call Screen to find out who’s calling and why before you pick up a call. ">
-                                                                <i class="dripicons-information"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-2">
-                                                        <div class="mb-3 text-sm-end">
-                                                            <input type="hidden" name="call_screen_enabled" value="false">
-                                                            <input type="checkbox" id="call_screen_enabled" name="call_screen_enabled"
-                                                            @if ($extension->call_screen_enabled == "true") checked @endif
-                                                            data-switch="primary"/>
-                                                            <label for="call_screen_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger call_screen_enabled_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-                                                @endif
-
-                                                @if (userCheckPermission('extension_user_record'))
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Call recording</label>
-                                                            <select data-toggle="select2" title="Call recording" name="user_record">
-                                                                <option value="">Disabled</option>
-                                                                <option value="all"
-                                                                    @if ($extension->user_record == 'all')
-                                                                    selected
-                                                                    @endif>
-                                                                    All
-                                                                </option>
-                                                                <option value="local"
-                                                                    @if ($extension->user_record == 'local')
-                                                                    selected
-                                                                    @endif>
-                                                                    Local
-                                                                </option>
-                                                                <option value="inbound"
-                                                                    @if ($extension->user_record == 'inbound')
-                                                                    selected
-                                                                    @endif>
-                                                                    Inbound
-                                                                </option>
-                                                                <option value="outbound"
-                                                                    @if ($extension->user_record == 'outbound')
-                                                                    selected
-                                                                    @endif>
-                                                                    Outbound
-                                                                </option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-                                                @endif
-
-                                                @if (userCheckPermission('extension_hold_music'))
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Select custom music on hold</label>
-                                                            <select data-toggle="select2" title="Select custom music on hold" name="hold_music">
-                                                                <option value="">Not selected</option>
-                                                                @if (!$moh->isEmpty())
-                                                                <optgroup label="Music on Hold">
-                                                                    @foreach ($moh as $music)
-                                                                    <option value="local_stream://{{ $music->music_on_hold_name }}"
-                                                                        @if("local_stream://" . $music->music_on_hold_name == $extension->hold_music)
-                                                                        selected
-                                                                        @endif>
-                                                                        {{ $music->music_on_hold_name }}
-                                                                    </option>
-                                                                    @endforeach
-                                                                </optgroup>
-                                                                @endif
-
-                                                                @if (!$recordings->isEmpty())
-                                                                <optgroup label="Recordings">
-                                                                    @foreach ($recordings as $recording)
-                                                                    <option value="{{ getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" . $recording->recording_filename }}"
-                                                                        @if(getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" . $recording->recording_filename == $extension->hold_music)
-                                                                        selected
-                                                                        @endif>
-                                                                        {{ $recording->recording_name }}
-                                                                    </option>
-                                                                    @endforeach
-                                                                </optgroup>
-                                                                @endif
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div> <!-- end row -->
-                                                @endif
-
-                                                @if (userCheckPermission('extension_advanced'))
                                                     <div class="row">
+                                                        @if (userCheckPermission('extension_domain'))
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label for="auth_acl" class="form-label">Auth ACL</label>
-                                                                <input class="form-control" type="text" placeholder="" id="auth_acl"
-                                                                    name="auth_acl" value="{{ $extension->auth_acl}}"/>
-                                                                <span class="help-block"><small>Enter the Auth ACL here.</small></span>
-                                                                <div class="text-danger auth_acl_err error_message"></div>
+                                                                <label class="form-label">Domain</label>
+                                                                <select data-toggle="select2" title="Domain" id="domain_uuid" name="domain_uuid">
+                                                                    @foreach (Session::get("domains") as $domain))
+                                                                    <option value="{{ $domain->domain_uuid }}"
+                                                                        @if($domain->domain_uuid == $extension->domain_uuid)
+                                                                        selected
+                                                                        @endif>
+                                                                        {{ $domain->domain_name }}
+                                                                    </option>
+                                                                    @endforeach
+                                                                </select>
+                                                                <div class="text-danger domain_uuid_err error_message"></div>
                                                             </div>
                                                         </div>
-                                                        @if (userCheckPermission('extension_cidr'))
+                                                        @else
+                                                            <input type="hidden" name="domain_uuid" value="{{ Session::get('domain_uuid') }}">
+                                                        @endif
+
+                                                        @if (userCheckPermission('extension_user_context'))
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label for="cidr" class="form-label">CIDR</label>
-                                                                <input class="form-control" type="text" placeholder="" id="cidr"
-                                                                    name="cidr" value="{{ $extension->cidr}}"/>
-                                                                <span class="help-block"><small>Enter allowed address/ranges in CIDR notation (comma separated).</small></span>
-                                                                <div class="text-danger cidr_err error_message"></div>
+                                                                <label for="context" class="form-label">Context <span class="text-danger">*</span></label>
+                                                                <input class="form-control" type="text" placeholder="" id="user_context"
+                                                                    name="user_context" value="{{ $extension->user_context}}"/>
+                                                                <div class="text-danger user_context_err error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                        @else
+                                                            <input type="hidden" name="user_context" value="{{ Session::get('domain_name') }}">
+                                                        @endif
+                                                    </div> <!-- end row -->
+
+                                                    <div class="row">
+                                                        @if (userCheckPermission('number_alias'))
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="number-alias" class="form-label">Number Alias</label>
+                                                                <input class="form-control" type="text" placeholder="" id="number_alias"
+                                                                name="number_alias" value="{{ $extension->number_alias}}"/>
+                                                                <span class="help-block"><small>If the extension is numeric then number alias is optional.</small></span>
+                                                                <div class="text-danger number_alias_err error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                        @endif
+
+                                                        @if (userCheckPermission('extension_accountcode'))
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="accountcode" class="form-label">Account Code</label>
+                                                                <input class="form-control" type="text" placeholder="" id="accountcode"
+                                                                    name="accountcode" value="{{ $extension->accountcode}}"/>
+                                                                <span class="help-block"><small>Enter the account code here.</small></span>
+                                                                <div class="text-danger accountcode_err error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                        @else
+                                                            <input type="hidden" name="accountcode" value="{{ Session::get('domain_name') }}">
+                                                        @endif
+                                                    </div> <!-- end row -->
+
+                                                    <div class="row">
+                                                        @if (userCheckPermission('extension_max_registrations'))
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="max_registrations" class="form-label">Total allowed registrations</label>
+                                                                <input class="form-control" type="text" placeholder="" id="max_registrations"
+                                                                    name="max_registrations"  value="{{ $extension->max_registrations}}"/>
+                                                                <span class="help-block"><small>Enter the maximum registration allowed for this user</small></span>
+                                                                <div class="text-danger error-text max_registrations_err error_message"></div>
+                                                            </div>
+
+                                                        </div>
+                                                        @endif
+
+                                                        @if (userCheckPermission('extension_toll'))
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="toll_allow" class="form-label">Toll Allow</label>
+                                                                <input class="form-control" type="text" placeholder="" id="toll_allow"
+                                                                    name="toll_allow" value="{{ $extension->toll_allow}}"/>
+                                                                <span class="help-block"><small>Enter the toll allow value here. (Examples: domestic,international,local)</small></span>
+                                                                <div class="text-danger toll_allow_err error_message"></div>
                                                             </div>
                                                         </div>
                                                         @endif
                                                     </div> <!-- end row -->
 
+                                                    @if (userCheckPermission('extension_limit'))
                                                     <div class="row">
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label class="form-label">SIP Force Contact</label>
-                                                                <select data-toggle="select2" title="SIP Force Contact" name="sip_force_contact">
-                                                                    <option value="">Disabled</option>
-                                                                    <option value="NDLB-connectile-dysfunction"
-                                                                        @if ($extension->sip_force_contact == 'NDLB-connectile-dysfunction')
-                                                                        selected
-                                                                        @endif>
-                                                                        Rewrite Contact IP and Port
-                                                                    </option>
-                                                                    <option value="NDLB-connectile-dysfunction-2.0"
-                                                                        @if ($extension->sip_force_contact == 'NDLB-connectile-dysfunction-2.0')
-                                                                        selected
-                                                                        @endif>
-                                                                        Rewrite Contact IP and Port 2.0
-                                                                    </option>
-                                                                    <option value="NDLB-tls-connectile-dysfunction"
-                                                                        @if ($extension->sip_force_contact == 'NDLB-tls-connectile-dysfunction')
-                                                                        selected
-                                                                        @endif>
-                                                                        Rewrite TLS Contact Port
-                                                                    </option>
-                                                                </select>
-                                                                <div class="text-danger sip_force_contact_err error_message"></div>
+                                                                <label for="limit_destination" class="form-label">Limit Destination</label>
+                                                                <input class="form-control" type="text" placeholder="" id="limit_destination"
+                                                                    name="limit_destination" value="{{ $extension->limit_destination}}"/>
+                                                                <span class="help-block"><small>Enter the destination to send the calls when the max number of outgoing calls has been reached.</small></span>
+                                                                <div class="text-danger limit_destination_err error_message"></div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-6">
-                                                            <div class="mb-3">
-                                                                <label for="sip_force_expires" class="form-label">SIP Force Expires</label>
-                                                                <input class="form-control" type="text" placeholder="" id="sip_force_expires"
-                                                                    name="sip_force_expires" value="{{ $extension->sip_force_expires}}"/>
-                                                                <span class="help-block"><small>To prevent stale registrations SIP Force expires can override the client expire.</small></span>
-                                                                <div class="text-danger sip_force_expires_err error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
 
-                                                    <div class="row">
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label for="mwi_account" class="form-label">Monitor MWI Account</label>
-                                                                <input class="form-control" type="text" placeholder="" id="mwi_account"
-                                                                    name="mwi_account" value="{{ $extension->mwi_account}}"/>
-                                                                <span class="help-block"><small>MWI Account with user@domain of the voicemail to monitor.</small></span>
-                                                                <div class="text-danger mwi_account_err error_message"></div>
+                                                                <label for="limit_max" class="form-label">Total allowed outbound calls</label>
+                                                                <input class="form-control" type="text" placeholder="" id="limit_max"
+                                                                    name="limit_max" value="{{ $extension->limit_max}}"/>
+                                                                <span class="help-block"><small>Enter the max number of outgoing calls for this user.</small></span>
+                                                                <div class="text-danger limit_max_err error_message"></div>
                                                             </div>
                                                         </div>
-                                                    </div> <!-- end row -->
 
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <div class="mb-3">
-                                                                <label class="form-label">SIP Bypass Media</label>
-                                                                <select data-toggle="select2" title="SIP Bypass Media" name="sip_bypass_media">
-                                                                    <option value="">Disabled</option>
-                                                                    <option value="bypass-media"
-                                                                        @if ($extension->sip_bypass_media == 'bypass-media')
-                                                                        selected
-                                                                        @endif>
-                                                                        Bypass Media
-                                                                    </option>
-                                                                    <option value="bypass-media-after-bridge"
-                                                                        @if ($extension->sip_bypass_media == 'bypass-media-after-bridge')
-                                                                        selected
-                                                                        @endif>
-                                                                        Bypass Media After Bridge
-                                                                    </option>
-                                                                    <option value="proxy-media"
-                                                                        @if ($extension->sip_bypass_media == 'proxy-media')
-                                                                        selected
-                                                                        @endif>
-                                                                        Proxy Media
-                                                                    </option>
-                                                                </select>
-                                                                <div class="text-danger sip_bypass_media_err error_message"></div>
-                                                            </div>
-                                                        </div>
                                                     </div> <!-- end row -->
-
-                                                    @if (userCheckPermission('extension_absolute_codec_string'))
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <div class="mb-3">
-                                                                <label for="absolute_codec_string" class="form-label">Absolute Codec String</label>
-                                                                <input class="form-control" type="text" placeholder="" id="absolute_codec_string"
-                                                                    name="absolute_codec_string" value="{{ $extension->absolute_codec_string}}"/>
-                                                                <span class="help-block"><small>Absolute Codec String for the extension</small></span>
-                                                                <div class="text-danger absolute_codec_string_err error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
+                                                    @else
+                                                        <input type="hidden" name="limit_destination" value="!USER_BUSY">
+                                                        <input type="hidden" name="limit_max" value="5">
                                                     @endif
 
-                                                    @if (userCheckPermission('extension_force_ping'))
+
+                                                    <div class="row">
+                                                        @if (userCheckPermission('extension_call_group'))
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="call_group" class="form-label">Call Group</label>
+                                                                <input class="form-control" type="text" placeholder="" id="call_group"
+                                                                    name="call_group" value="{{ $extension->call_group}}"/>
+                                                                <span class="help-block"><small>Enter the user call group here. Groups available by default: sales, support, billing.</small></span>
+                                                                <div class="text-danger call_group_err error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                        @endif
+                                                    </div> <!-- end row -->
+
+                                                    @if (userCheckPermission('extension_call_screen'))
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Force ping </label>
+                                                                <label class="form-label">Enable call screening</label>
                                                                 <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                    data-bs-content="Use OPTIONS to detect if extension is reachable">
+                                                                    data-bs-content="You can use Call Screen to find out who’s calling and why before you pick up a call. ">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
-                                                                <input type="hidden" name="force_ping" value="false">
-                                                                <input type="checkbox" id="force_ping" name="force_ping"
-                                                                @if ($extension->force_ping == "true") checked @endif
+                                                                <input type="hidden" name="call_screen_enabled" value="false">
+                                                                <input type="checkbox" id="call_screen_enabled" name="call_screen_enabled"
+                                                                @if ($extension->call_screen_enabled == "true") checked @endif
                                                                 data-switch="primary"/>
-                                                                <label for="force_ping" data-on-label="On" data-off-label="Off"></label>
-                                                                <div class="text-danger force_ping_err error_message"></div>
+                                                                <label for="call_screen_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                                <div class="text-danger call_screen_enabled_err error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
                                                     @endif
 
-                                                    @if (userCheckPermission('extension_dial_string'))
+                                                    @if (userCheckPermission('extension_user_record'))
                                                     <div class="row">
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label for="dial_string" class="form-label">Dial String</label>
-                                                                <input class="form-control" type="text" placeholder="" id="dial_string"
-                                                                    name="dial_string" value="{{ $extension->dial_string}}"/>
-                                                                <span class="help-block"><small>Location of the endpoint.</small></span>
-                                                                <div class="text-danger dial_string_err error_message"></div>
+                                                                <label class="form-label">Call recording</label>
+                                                                <select data-toggle="select2" title="Call recording" name="user_record">
+                                                                    <option value="">Disabled</option>
+                                                                    <option value="all"
+                                                                        @if ($extension->user_record == 'all')
+                                                                        selected
+                                                                        @endif>
+                                                                        All
+                                                                    </option>
+                                                                    <option value="local"
+                                                                        @if ($extension->user_record == 'local')
+                                                                        selected
+                                                                        @endif>
+                                                                        Local
+                                                                    </option>
+                                                                    <option value="inbound"
+                                                                        @if ($extension->user_record == 'inbound')
+                                                                        selected
+                                                                        @endif>
+                                                                        Inbound
+                                                                    </option>
+                                                                    <option value="outbound"
+                                                                        @if ($extension->user_record == 'outbound')
+                                                                        selected
+                                                                        @endif>
+                                                                        Outbound
+                                                                    </option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
                                                     @endif
-                                                @endif
 
-                                            </div>
+                                                    @if (userCheckPermission('extension_hold_music'))
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Select custom music on hold</label>
+                                                                <select data-toggle="select2" title="Select custom music on hold" name="hold_music">
+                                                                    <option value="">Not selected</option>
+                                                                    @if (!$moh->isEmpty())
+                                                                    <optgroup label="Music on Hold">
+                                                                        @foreach ($moh as $music)
+                                                                        <option value="local_stream://{{ $music->music_on_hold_name }}"
+                                                                            @if("local_stream://" . $music->music_on_hold_name == $extension->hold_music)
+                                                                            selected
+                                                                            @endif>
+                                                                            {{ $music->music_on_hold_name }}
+                                                                        </option>
+                                                                        @endforeach
+                                                                    </optgroup>
+                                                                    @endif
 
-                                        </div> <!-- end row-->
+                                                                    @if (!$recordings->isEmpty())
+                                                                    <optgroup label="Recordings">
+                                                                        @foreach ($recordings as $recording)
+                                                                        <option value="{{ getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" . $recording->recording_filename }}"
+                                                                            @if(getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" . $recording->recording_filename == $extension->hold_music)
+                                                                            selected
+                                                                            @endif>
+                                                                            {{ $recording->recording_name }}
+                                                                        </option>
+                                                                        @endforeach
+                                                                    </optgroup>
+                                                                    @endif
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    @endif
 
+                                                    @if (userCheckPermission('extension_advanced'))
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="auth_acl" class="form-label">Auth ACL</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="auth_acl"
+                                                                        name="auth_acl" value="{{ $extension->auth_acl}}"/>
+                                                                    <span class="help-block"><small>Enter the Auth ACL here.</small></span>
+                                                                    <div class="text-danger auth_acl_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                            @if (userCheckPermission('extension_cidr'))
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="cidr" class="form-label">CIDR</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="cidr"
+                                                                        name="cidr" value="{{ $extension->cidr}}"/>
+                                                                    <span class="help-block"><small>Enter allowed address/ranges in CIDR notation (comma separated).</small></span>
+                                                                    <div class="text-danger cidr_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                            @endif
+                                                        </div> <!-- end row -->
+
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">SIP Force Contact</label>
+                                                                    <select data-toggle="select2" title="SIP Force Contact" name="sip_force_contact">
+                                                                        <option value="">Disabled</option>
+                                                                        <option value="NDLB-connectile-dysfunction"
+                                                                            @if ($extension->sip_force_contact == 'NDLB-connectile-dysfunction')
+                                                                            selected
+                                                                            @endif>
+                                                                            Rewrite Contact IP and Port
+                                                                        </option>
+                                                                        <option value="NDLB-connectile-dysfunction-2.0"
+                                                                            @if ($extension->sip_force_contact == 'NDLB-connectile-dysfunction-2.0')
+                                                                            selected
+                                                                            @endif>
+                                                                            Rewrite Contact IP and Port 2.0
+                                                                        </option>
+                                                                        <option value="NDLB-tls-connectile-dysfunction"
+                                                                            @if ($extension->sip_force_contact == 'NDLB-tls-connectile-dysfunction')
+                                                                            selected
+                                                                            @endif>
+                                                                            Rewrite TLS Contact Port
+                                                                        </option>
+                                                                    </select>
+                                                                    <div class="text-danger sip_force_contact_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="sip_force_expires" class="form-label">SIP Force Expires</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="sip_force_expires"
+                                                                        name="sip_force_expires" value="{{ $extension->sip_force_expires}}"/>
+                                                                    <span class="help-block"><small>To prevent stale registrations SIP Force expires can override the client expire.</small></span>
+                                                                    <div class="text-danger sip_force_expires_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="mwi_account" class="form-label">Monitor MWI Account</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="mwi_account"
+                                                                        name="mwi_account" value="{{ $extension->mwi_account}}"/>
+                                                                    <span class="help-block"><small>MWI Account with user@domain of the voicemail to monitor.</small></span>
+                                                                    <div class="text-danger mwi_account_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">SIP Bypass Media</label>
+                                                                    <select data-toggle="select2" title="SIP Bypass Media" name="sip_bypass_media">
+                                                                        <option value="">Disabled</option>
+                                                                        <option value="bypass-media"
+                                                                            @if ($extension->sip_bypass_media == 'bypass-media')
+                                                                            selected
+                                                                            @endif>
+                                                                            Bypass Media
+                                                                        </option>
+                                                                        <option value="bypass-media-after-bridge"
+                                                                            @if ($extension->sip_bypass_media == 'bypass-media-after-bridge')
+                                                                            selected
+                                                                            @endif>
+                                                                            Bypass Media After Bridge
+                                                                        </option>
+                                                                        <option value="proxy-media"
+                                                                            @if ($extension->sip_bypass_media == 'proxy-media')
+                                                                            selected
+                                                                            @endif>
+                                                                            Proxy Media
+                                                                        </option>
+                                                                    </select>
+                                                                    <div class="text-danger sip_bypass_media_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+
+                                                        @if (userCheckPermission('extension_absolute_codec_string'))
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="absolute_codec_string" class="form-label">Absolute Codec String</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="absolute_codec_string"
+                                                                        name="absolute_codec_string" value="{{ $extension->absolute_codec_string}}"/>
+                                                                    <span class="help-block"><small>Absolute Codec String for the extension</small></span>
+                                                                    <div class="text-danger absolute_codec_string_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        @endif
+
+                                                        @if (userCheckPermission('extension_force_ping'))
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Force ping </label>
+                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                        data-bs-content="Use OPTIONS to detect if extension is reachable">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3 text-sm-end">
+                                                                    <input type="hidden" name="force_ping" value="false">
+                                                                    <input type="checkbox" id="force_ping" name="force_ping"
+                                                                    @if ($extension->force_ping == "true") checked @endif
+                                                                    data-switch="primary"/>
+                                                                    <label for="force_ping" data-on-label="On" data-off-label="Off"></label>
+                                                                    <div class="text-danger force_ping_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        @endif
+
+                                                        @if (userCheckPermission('extension_dial_string'))
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <div class="mb-3">
+                                                                    <label for="dial_string" class="form-label">Dial String</label>
+                                                                    <input class="form-control" type="text" placeholder="" id="dial_string"
+                                                                        name="dial_string" value="{{ $extension->dial_string}}"/>
+                                                                    <span class="help-block"><small>Location of the endpoint.</small></span>
+                                                                    <div class="text-danger dial_string_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        @endif
+                                                    @endif
+
+                                                </div>
+
+                                            </div> <!-- end row-->
+
+                                        </div>
+                                        <!-- End Settings Content-->
                                     </div>
-                                    <!-- End Settings Content-->
-                                </div>
+
                                     @if ($extension->exists)
                                         <div class="tab-pane fade" id="v-pills-device-setting" role="tabpanel" aria-labelledby="v-pills-device-setting-tab">
                                             <!-- Voicemail Content-->
-                                            <div class="tab-pane show active">
-                                                <div class="row">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="row">
                                                     <div class="col-lg-12">
                                                         <h4 class="mt-2">Attached Devices</h4>
                                                         <form method="POST" id="extensionForm" action="{{route('extensions.assign-device', [$extension->extension])}}" >
                                                             @csrf
-                                                            <div class="row form">
+                                                            <div class="row">
                                                                 <div class="col-md-3">
                                                                     <div class="form-group">
                                                                         <label class="col-form-label">Line Number</label>
@@ -1208,8 +1210,8 @@
                                                                 </div>
                                                                 <div class="col-md-3">
                                                                     <div class="form-group">
+                                                                        <label class="col-form-label">Select Device</label>
                                                                         <div class="input-group mb-3">
-                                                                            <label class="col-form-label">Select Device</label>
                                                                             <select name="device_uuid" class="form-select" id="device-select">
                                                                                 @foreach($devices as $device)
                                                                                     <option value="{{$device->device_uuid}}">{{$device->device_mac_address}}</option>
@@ -1221,8 +1223,8 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-3">
-                                                                    <div class="form-group">
-                                                                        <button class="btn btn-info assign-device-btn">Assign</button>
+                                                                    <div class="form-group mt-4">
+                                                                        <button class="btn btn-info assign-device-btn" type="button" Assign</button>
                                                                         <div class="error text-danger"></div>
                                                                     </div>
                                                                 </div>
@@ -1252,6 +1254,7 @@
                                                             @endforeach
                                                         </table>
                                                     </div> <!-- end row-->
+                                                </div>
                                                 </div>
                                             </div>
                                             <!-- End Voicemail Content-->
@@ -1420,7 +1423,7 @@
                             $.each( error.responseJSON.errors, function( key, value ) {
                                 if (value != '') {
                                     form.find('#'+key+'_error').text(value);
-                                    printErrorMsgvalue);
+                                    printErrorMsg(value);
                                 }
                             });
                         } else {
