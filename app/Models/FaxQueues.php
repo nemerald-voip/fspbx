@@ -19,4 +19,9 @@ class FaxQueues extends Model
     protected $keyType = 'string';
 
     protected $guarded = ['fax_queue_uuid'];
+
+    public function faxFiles()
+    {
+        return $this->hasOne(FaxFiles::class,  'fax_file_uuid', 'origination_uuid');
+    }
 }
