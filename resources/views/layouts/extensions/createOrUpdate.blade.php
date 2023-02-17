@@ -1320,11 +1320,11 @@
                         <textarea class="form-control" id="device_description" name="device_description" placeholder="Enter the Description"></textarea>
                         <div class="error text-danger" id="device_description_error"></div>
                     </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary save-device-btn">Save</button>
+                    </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary save-device-btn">Save</button>
             </div>
         </div>
     </div>
@@ -1451,7 +1451,7 @@
                 '_token' : $('meta[name="csrf-token"]').attr('content')
             };
             console.log(data);
-            console.log(form.attr('action'));
+            console.log({{route('extensions.assign-device', [$extension->extension])}});
 
             $.ajax({
                 url: "{{route('extensions.assign-device', [$extension->extension])}}",
