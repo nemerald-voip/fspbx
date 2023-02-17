@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssignDeviceRequest;
 use App\Models\Device;
 use App\Models\DeviceLines;
 use cache;
