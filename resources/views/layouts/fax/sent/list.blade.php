@@ -31,7 +31,7 @@
                         </div>
                         <div class="col-xl-8">
                             <div class="text-xl-end mt-xl-0 mt-2">
-                                
+
                                 @if ($permissions['delete'])
                                 <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                     Delete Selected
@@ -58,6 +58,10 @@
                                     <th>To</th>
                                     {{-- <th>View</th> --}}
                                     <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Notify Date</th>
+                                    <th>Retry Date</th>
+                                    <th>Retry Count</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -85,27 +89,61 @@
                                             </span>
                                         </td>
                                         <td>
-                                            {{ $file->fax_destination }} 
+                                            {{ $file->fax_destination }}
                                         </td>
-                                        {{-- <td> 
+                                        {{-- <td>
                                             {{ $file->fax_file_type }}
                                     </td> --}}
-                                        
-                                        <td>{{ $file->fax_date }}</td>
-
-                                        
                                         <td>
-                                            <a href="{{ route('downloadSentFaxFile', $file->fax_file_uuid ) }}">
-                                                <button type="button" class="btn btn-light" title="Download">
-                                                    <i class="uil uil-down-arrow"></i> 
-                                                </button>
-                                            </a>
-
-                                            @if ($permissions['delete'])
-                                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="btn btn-light"> 
-                                                <i class="uil uil-trash-alt" title="Delete"></i>
-                                            </a>
+                                            <span class="text-body text-nowrap">{{ $file->fax_date->format('D, M d, Y ')}}</span>
+                                            <span class="text-body text-nowrap">{{ $file->fax_date->format('h:i:s A') }}</span>
+                                        </td>
+                                        <td>
+                                            @if ($file->fax_status == "sent")
+                                                <h5><span class="badge bg-success">Sent</span></h5>
+                                            @elseif($file->fax_status == "failed")
+                                                <h5><span class="badge bg-danger">Failed</span></h5>
+                                            @else
+                                                <h5><span class="badge bg-info">{{ ucfirst($file->fax_status) }}</span></h5>
                                             @endif
+                                        </td>
+                                        <td>
+                                            @if ($file->fax_notify_date)
+                                                <span class="text-body text-nowrap">{{ $file->fax_notify_date->format('D, M d, Y ') }}</span>
+                                                <span class="text-body text-nowrap">{{ $file->fax_notify_date->format('h:i:s A') }}</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($file->fax_retry_date)
+                                                <span class="text-body text-nowrap">{{ $file->fax_retry_date->format('D, M d, Y ') }}</span>
+                                                <span class="text-body text-nowrap">{{ $file->fax_retry_date->format('h:i:s A') }}</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            {{ $file->fax_retry_count }}
+                                        </td>
+                                        <td>
+                                            <div id="tooltip-container-actions">
+                                                @if ($file->faxQueue)
+                                                    @if($file->faxQueue->fax_status == 'waiting' or $file->faxQueue->fax_status == 'trying')
+                                                        <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid]) }}" class="action-icon">
+                                                            <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
+                                                            <i class="mdi mdi-repeat" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+                                                        </a>
+                                                    @endif
+                                                @endif
+                                                <a href="{{ route('downloadSentFaxFile', $file->fax_file_uuid ) }}" class="action-icon">
+                                                    <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
+                                                </a>
+                                                @if ($permissions['delete'])
+                                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="action-icon">
+                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                    </a>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -231,7 +269,7 @@
         return has;
     }
 
-    
-    
+
+
 </script>
 @endpush
