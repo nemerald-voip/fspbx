@@ -1244,7 +1244,7 @@
                                                                 <td>{{$device->device_template}}</td>
                                                                 <td>
                                                                     <div id="tooltip-container-actions">
-                                                                        <a href="javascript:confirmDeleteAction('{{route('extensions.unassign-device', [$extension->extension, $device->pivot->device_line_uuid])}}');" class="action-icon">
+                                                                        <a class="action-icon" data-bs-toggle="modal" data-bs-target="#deleteModal" data-href="{{route('extensions.unassign-device', [$extension->extension_uuid, $device->pivot->device_line_uuid ])}}">
                                                                             <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                                         </a>
                                                                     </div>
@@ -1284,6 +1284,25 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="uil uil-times-circle h1 text-danger"></i>
+                    <h3 class="mt-3">Are you sure?</h3>
+                    <p class="mt-3">Do you really want to delete this? This process cannot be undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary confirm-delete-btn" data-href="">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="createDeviceModal" tabindex="-1" aria-labelledby="createDeviceModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -1513,6 +1532,39 @@
                 }
             });
         })
+
+        $('#deleteModal').on('shown.bs.modal', function (event) {
+            var btn = $(event.relatedTarget)
+            var modal = $(this);
+            let action = btn.data('href');
+            modal.find('.modal-body input').val(action)
+            modal.find('.confirm-delete-btn').attr('data-href', action);
+        });
+
+        $(document).off('click', '.confirm-delete-btn').on('click', '.confirm-delete-btn', function () {
+            var btn = $(this);
+
+            var token = $("meta[name='csrf-token']").attr("content");
+            $.ajax({
+                url: btn.attr('data-href'),
+                type: 'DELETE',
+                dataType: 'json',
+                data:{'_token' : token},
+                beforeSend: function() {
+                    $('.btn').attr('disabled', true);
+                },
+                complete: function (xhr,status) {
+                    $('.btn').attr('disabled', false);
+                },
+                success: function(result) {
+                    $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                    $('#deleteModal').modal('hide');
+                    window.reloadInvoiceDatatable();
+                }, error(e) {
+                    printErrorMsg(error.responseJSON.message);
+                }
+            });
+        });
 
         //Extension Page
         // Copy email to voicmemail_email
