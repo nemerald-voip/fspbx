@@ -173,6 +173,7 @@ class FaxesController extends Controller
         $files = FaxFiles::where('fax_uuid', $request->id)->where('fax_mode', 'tx')->where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'desc')->get();
 
         $time_zone = get_local_time_zone($domain_uuid);
+        /** @var FaxFiles $file */
         foreach ($files as $file) {
 
             // Try to convert caller ID number to National format

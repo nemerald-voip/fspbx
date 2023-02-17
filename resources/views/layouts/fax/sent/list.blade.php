@@ -131,7 +131,7 @@
                                                         </a>
                                                     @else
                                                         <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
-                                                            <i class="mdi mdi-repeat" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+                                                            <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
                                                         </a>
                                                     @endif
                                                 @endif
