@@ -498,7 +498,7 @@
                                                         </div>
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label for="vm-email-address" class="form-label">Email Address</span></label>
+                                                                <label for="vm-email-address" class="form-label">Email Address</label>
                                                                 <input class="form-control" type="email" disabled placeholder="Enter email" id="vm-email-address"
                                                                 value="{{ $extension->voicemail->voicemail_mail_to ?? ''}}"/>
                                                             </div>
@@ -1295,32 +1295,32 @@
             <div class="modal-body">
                 <form method="POST" action="{{route('devices.store')}}">
                     @csrf
-                    <div class="mb-3">
+                    <div class="">
                         <label class="col-form-label">Mac Address</label>
                         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
                         <div class="error text-danger" id="device_mac_address_error"></div>
                     </div>
-                    <div class="mb-3">
+                    <div class="">
                         <label class="col-form-label">Label</label>
                         <input type="text" class="form-control" id="device_label" name="device_label" placeholder="Enter the Device Label">
                         <div class="error text-danger" id="device_label_error"></div>
                     </div>
-                    <div class="mb-3">
+                    <div class="">
                         <label class="col-form-label">Vendor</label>
                         <input type="text" class="form-control" id="device_vendor" name="device_vendor" placeholder="Enter the Device Vendor">
                         <div class="error text-danger" id="device_vendor_error"></div>
                     </div>
-                    <div class="mb-3">
+                    <div class="">
                         <label class="col-form-label">Template</label>
                         <input type="text" class="form-control" id="device_template" name="device_template" placeholder="Enter the Device Template">
                         <div class="error text-danger" id="device_template_error"></div>
                     </div>
-                    <div class="mb-3">
+                    <div class="">
                         <label class="col-form-label">Description</label>
                         <textarea class="form-control" id="device_description" name="device_description" placeholder="Enter the Description"></textarea>
                         <div class="error text-danger" id="device_description_error"></div>
                     </div>
-                    <div class="mb-3">
+                    <div class="">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary save-device-btn">Save</button>
                     </div>
@@ -1434,7 +1434,7 @@
                 success: function(result) {
                     $('#createDeviceModal').modal('hide');
                     $('#device-select').append(
-                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address);
+                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address)
                     );
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                 },
