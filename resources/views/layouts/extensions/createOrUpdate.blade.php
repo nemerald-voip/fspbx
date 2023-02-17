@@ -1409,7 +1409,11 @@
                 printErrorMsg(error);
             });
         });
-        
+
+        if($('#extensionNavPills #v-pills-device-tab').hasClass('active')) {
+            $('#action-buttons').hide();
+        }
+
         $('#extensionNavPills .nav-link').on('click', function(e) {
             e.preventDefault();
             if($(this).attr('id') == 'v-pills-device-tab') {
@@ -1501,9 +1505,11 @@
                     $('.loading').hide();
                 },
                 success: function(result) {
-                    $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                     if(result.status == 'success') {
+                        $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                         location.reload();
+                    } else {
+                        $.NotificationApp.send("Warning",response.message,"top-right","#ebb42a","error");
                     }
                 },
                 error: function(error) {
