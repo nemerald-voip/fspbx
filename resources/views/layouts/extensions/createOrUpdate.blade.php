@@ -1297,8 +1297,8 @@
                     @csrf
                     <div class="mb-3">
                         <label class="col-form-label">Mac Address</label>
-                        <input type="text" class="form-control" id="mac_address" name="mac_address" placeholder="Enter the MAC address">
-                        <div class="error text-danger" id="mac_address_error"></div>
+                        <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
+                        <div class="error text-danger" id="device_mac_address_error"></div>
                     </div>
                     <div class="mb-3">
                         <label class="col-form-label">Label</label>
@@ -1386,6 +1386,7 @@
         });
 
         $('#extensionNavPills .nav-click').on('click', function() {
+            console.log('cdm test');
             if($(this).attr('id') == 'v-pills-device-tab') {
                 $('#action-buttons').hide();
             } else {
@@ -1460,7 +1461,7 @@
                 dataType: 'json',
                 beforeSend: function() {
                     //Reset error messages
-                    form.find('.error').text('');
+                    btn.closest('.card').find('.error').text('');
 
                     $('.error_message').text("");
                     $('.btn').attr('disabled', true);
@@ -1479,7 +1480,7 @@
                         if(error.responseJSON.errors) {
                             $.each( error.responseJSON.errors, function( key, value ) {
                                 if (value != '') {
-                                    form.find('#'+key+'_error').text(value);
+                                    btn.closest('.card').find('#'+key+'_error').text(value);
                                     printErrorMsg(value);
                                 }
                             });
