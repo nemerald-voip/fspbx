@@ -1409,8 +1409,8 @@
                 printErrorMsg(error);
             });
         });
-
-        $('#extensionNavPills .link').on('click', function(e) {
+        
+        $('#extensionNavPills .nav-link').on('click', function(e) {
             e.preventDefault();
             if($(this).attr('id') == 'v-pills-device-tab') {
                 $('#action-buttons').hide();
