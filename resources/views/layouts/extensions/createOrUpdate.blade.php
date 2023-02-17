@@ -1537,7 +1537,9 @@
             var btn = $(event.relatedTarget)
             var modal = $(this);
             let action = btn.data('href');
+            let table = btn.data('table');
             modal.find('.modal-body input').val(action)
+            modal.find('.confirm-delete-btn').attr('data-href', action);
             modal.find('.confirm-delete-btn').attr('data-href', action);
         });
 
@@ -1559,8 +1561,9 @@
                 success: function(result) {
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                     $('#deleteModal').modal('hide');
-                    window.reloadInvoiceDatatable();
-                }, error(e) {
+                    location.reload();
+                },
+                error(error) {
                     printErrorMsg(error.responseJSON.message);
                 }
             });
