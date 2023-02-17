@@ -498,7 +498,6 @@ class ExtensionsController extends Controller
         $extension = Extensions::query()
                     ->with(['devices'])
                     ->find($extension_uuid);
-        dd($extension->devices);
         $devices = Device::query()->get();
 
         // Get all phone numbers
