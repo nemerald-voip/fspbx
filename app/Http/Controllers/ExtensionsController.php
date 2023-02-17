@@ -835,6 +835,15 @@ class ExtensionsController extends Controller
     {
         $inputs = $request->validated();
 
+        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid'] , 'extension' => $extension->extension])->exists();
+
+        if ($devicExist){
+            return response()->json([
+                'status' => 'alert',
+                'message' => 'Device is already assigned.'
+            ]);
+        }
+
         $extension->deviceLines()->create([
             'device_uuid' => $inputs['device_uuid'],
             'line_number' => $inputs['line_number'] ?? '1',
