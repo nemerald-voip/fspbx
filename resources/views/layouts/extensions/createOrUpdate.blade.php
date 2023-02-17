@@ -1410,6 +1410,7 @@
             });
         });
 
+        console.log($('#extensionNavPills .nav-click').length);
         $('#extensionNavPills .nav-click').on('click', function(e) {
             e.preventDefault();
             console.log('cdm test');
@@ -1425,8 +1426,6 @@
 
             var btn = $(this);
             var form = btn.closest('form');
-            console.log(form);
-            console.log(form.attr('action'));
 
             $.ajax({
                 url: form.attr('action'),
@@ -1446,6 +1445,7 @@
                     $('.loading').hide();
                 },
                 success: function(result) {
+                    form[0].reset();
                     $('#createDeviceModal').modal('hide');
                     $('#device-select').append(
                         $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address)
@@ -1483,9 +1483,7 @@
                 'line_number' : btn.closest('.card').find('#line_number').val(),
                 'device_uuid' : btn.closest('.card').find('#device-select').val(),
                 '_token' : $('meta[name="csrf-token"]').attr('content')
-            };
-            console.log(data);
-            console.log("{{route('extensions.assign-device', [$extension->extension_uuid])}}");
+            }
 
             $.ajax({
                 url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
@@ -1505,8 +1503,10 @@
                     $('.loading').hide();
                 },
                 success: function(result) {
-                    $('#addPaymentRecordModal').modal('hide');
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                    if(result.status == 'success') {
+                        location.reload();
+                    }
                 },
                 error: function(error) {
                     if(error.status == 422){
