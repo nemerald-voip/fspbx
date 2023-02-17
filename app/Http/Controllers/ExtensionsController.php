@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Device;
+use App\Models\DeviceLines;
 use cache;
 use Throwable;
 use App\Models\User;
@@ -124,7 +126,7 @@ class ExtensionsController extends Controller
             abort(403, 'Unauthorized user. Contact your administrator');
         }
 
-        // Get all active phone numbers 
+        // Get all active phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
             ->where ('domain_uuid', $appUser->domain_uuid)
             ->get([
@@ -143,7 +145,7 @@ class ExtensionsController extends Controller
 
         // Get extension for user accessing the page
         $extension = Extensions::find($appUser->extension_uuid);
- 
+
         // If extension not found throw an error
         if (!isset($extension)){
             abort(403, 'Unauthorized extension. Contact your administrator');
@@ -192,7 +194,7 @@ class ExtensionsController extends Controller
                 'error' => [
                     'message' => 'Invalid phone number ID submitted. Please, contact your administrator'
                 ]
-            ]);     
+            ]);
         }
 
         $extension = Extensions::find ($extension_uuid);
@@ -277,7 +279,7 @@ class ExtensionsController extends Controller
         ])
         ->sortBy('destination_number');
 
-        // Get music on hold 
+        // Get music on hold
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
         ->orWhere('domain_uuid', null)
         ->orderBy('music_on_hold_name', 'ASC')
@@ -331,7 +333,7 @@ class ExtensionsController extends Controller
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
             'limit_max' => 'total allowed outbound calls'
-            
+
 
         ];
 
@@ -356,7 +358,7 @@ class ExtensionsController extends Controller
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
-            
+
 
             'domain_uuid' => 'required',
             'user_context' => 'required|string',
@@ -406,7 +408,7 @@ class ExtensionsController extends Controller
         $attributes['insert_date'] = date("Y-m-d H:i:s");
         $attributes['insert_user'] = Session::get('user_uuid');
 
-        $extension->fill($attributes);    
+        $extension->fill($attributes);
         $extension->save();
 
         if (isset($attributes['users'])) {
@@ -427,7 +429,7 @@ class ExtensionsController extends Controller
             session_start();
         }
         $cache = new cache;
-        $cache->delete("directory:".$extension->extension."@".$extension->user_context);      
+        $cache->delete("directory:".$extension->extension."@".$extension->user_context);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
@@ -462,7 +464,7 @@ class ExtensionsController extends Controller
      */
     public function sipShow(Request $request, Extensions $extension)
     {
-        
+
         return response()->json([
             'username' => $extension->extension,
             'password' => $extension->password,
@@ -470,7 +472,7 @@ class ExtensionsController extends Controller
             // 'user' => $response,
             'status' => 'success',
         ]);
-    }  
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -493,7 +495,10 @@ class ExtensionsController extends Controller
         }
 
         // get the extension
-        $extension = Extensions::find($extension_uuid);
+        $extension = Extensions::query()
+                    ->with(['devices'])
+                    ->find($extension_uuid);
+        $devices = Device::query()->get();
 
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
@@ -513,7 +518,7 @@ class ExtensionsController extends Controller
         $vm_name_file_exists = Storage::disk('voicemail')
             ->exists(Session::get('domain_name') .'/' . $extension->extension . '/recorded_name.wav');
 
-        // Get music on hold 
+        // Get music on hold
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
             ->orWhere('domain_uuid', null)
             ->orderBy('music_on_hold_name', 'ASC')
@@ -540,8 +545,9 @@ class ExtensionsController extends Controller
             -> with('vm_name_file_exists', $vm_name_file_exists)
             -> with ('moh', $moh)
             -> with ('recordings', $recordings)
+            -> with ('devices', $devices)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
-            
+
     }
 
     /**
@@ -568,7 +574,7 @@ class ExtensionsController extends Controller
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
             'limit_max' => 'total allowed outbound calls'
-            
+
 
         ];
 // dd($request->all());
@@ -593,7 +599,7 @@ class ExtensionsController extends Controller
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
-            
+
             'voicemail_id' => 'present',
             'voicemail_enabled' => "present",
             'call_timeout' => "numeric",
@@ -602,7 +608,7 @@ class ExtensionsController extends Controller
             'voicemail_transcription_enabled' => 'nullable',
             'voicemail_local_after_email' => 'nullable',
             'voicemail_description' => "nullable|string|max:100",
-            'voicemail_alternate_greet_id' => "nullable|numeric",   
+            'voicemail_alternate_greet_id' => "nullable|numeric",
             'voicemail_tutorial' => "nullable",
             'voicemail_destinations'  => 'nullable|array',
 
@@ -652,7 +658,7 @@ class ExtensionsController extends Controller
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
 
-        // Check if voicemail directory needs to be renamed 
+        // Check if voicemail directory needs to be renamed
         if($attributes['voicemail_id'] != $attributes['extension']) {
             if (file_exists(getDefaultSetting('switch','voicemail')."/default/".Session::get('domain_name')."/".$attributes['voicemail_id'])) {
                 rename(
@@ -703,11 +709,11 @@ class ExtensionsController extends Controller
         }
         $cache = new cache;
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
-    
+
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
         }
-        
+
         $extension->update($attributes);
 
         //clear the destinations session array
@@ -742,9 +748,9 @@ class ExtensionsController extends Controller
     public function import(Request $request)
     {
         try {
- 
+
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
-            
+
             // Excel::import(new ExtensionsImport, request()->file('file'));
 
             $import = new ExtensionsImport;
@@ -803,7 +809,7 @@ class ExtensionsController extends Controller
 
             if (isset($extension->extension_users)) {
                 $deleted = $extension->extension_users()->delete();
-            }   
+            }
 
             $deleted = $extension->delete();
 
@@ -822,6 +828,43 @@ class ExtensionsController extends Controller
                 ]);
             }
         }
+    }
+
+    public function assignDevice(AssignDeviceRequest $request, Extensions $extension)
+    {
+        $inputs = $request->validated();
+
+        $extension->deviceLines()->create([
+            'device_uuid' => $inputs['device_uuid'],
+            'line_number' => '1',
+            'server_address' => Session::get('domain_name'),
+            'server_address_primary' => get_domain_setting('server_address_primary'),
+            'server_address_secondary' => get_domain_setting('server_address_secondary'),
+            'display_name' => $extension->extension,
+            'user_id' => $extension->extension,
+            'auth_id' => $extension->extension,
+            'label' => $extension->extension,
+            'password' => $extension->password,
+            'sip_port' => get_domain_setting('line_sip_port'),
+            'sip_transport' => get_domain_setting('line_sip_transport'),
+            'register_expires' => get_domain_setting('line_register_expires'),
+            'enabled' => 'true',
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device has been assigned successfully.'
+        ]);
+    }
+
+    public function unAssignDevice(Extensions $extension, DeviceLines $deviceLine)
+    {
+        $deviceLine->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device has been unassigned successfully.'
+        ]);
     }
 
 }

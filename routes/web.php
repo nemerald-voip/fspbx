@@ -42,6 +42,8 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 // Extensions
 Route::resource('extensions', 'ExtensionsController');
 Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
+Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
+Route::delete('/extensions/{extension}/unassign/{deviceLine}/device', [ExtensionsController::class, 'unAssignDevice'])->name('extensions.unassign-device');
 
 // Groups
 Route::resource('groups', 'GroupsController');

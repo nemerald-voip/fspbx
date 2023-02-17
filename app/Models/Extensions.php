@@ -150,7 +150,7 @@ class Extensions extends Model
     }
 
     /**
-     * Get the domain to which this extension belongs 
+     * Get the domain to which this extension belongs
      */
     public function domain()
     {
@@ -161,8 +161,13 @@ class Extensions extends Model
      * Get the Device object associated with this extension.
      *  returns Eloqeunt Object
      */
-    public function device_lines()
+    public function deviceLines()
     {
         return $this->hasMany(DeviceLines::class,'user_id','extension');
+    }
+
+    public function devices()
+    {
+        return $this->belongsToMany(Device::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')->withPivot('user_id', 'line_number');
     }
 }
