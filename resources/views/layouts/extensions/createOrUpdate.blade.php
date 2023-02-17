@@ -1410,10 +1410,8 @@
             });
         });
 
-        console.log($('#extensionNavPills .nav-click').length);
-        $('#extensionNavPills .nav-click').on('click', function(e) {
+        $('#extensionNavPills .link').on('click', function(e) {
             e.preventDefault();
-            console.log('cdm test');
             if($(this).attr('id') == 'v-pills-device-tab') {
                 $('#action-buttons').hide();
             } else {
