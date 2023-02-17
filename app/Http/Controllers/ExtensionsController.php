@@ -837,7 +837,7 @@ class ExtensionsController extends Controller
 
         $extension->deviceLines()->create([
             'device_uuid' => $inputs['device_uuid'],
-            'line_number' => '1',
+            'line_number' => $inputs['line_number'] ?? '1',
             'server_address' => Session::get('domain_name'),
             'server_address_primary' => get_domain_setting('server_address_primary'),
             'server_address_secondary' => get_domain_setting('server_address_secondary'),

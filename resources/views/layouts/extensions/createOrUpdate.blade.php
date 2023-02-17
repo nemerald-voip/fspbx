@@ -1397,7 +1397,8 @@
             });
         });
 
-        $('#extensionNavPills .nav-click').on('click', function() {
+        $('#extensionNavPills .nav-click').on('click', function(e) {
+            e.preventDefault();
             console.log('cdm test');
             if($(this).attr('id') == 'v-pills-device-tab') {
                 $('#action-buttons').hide();

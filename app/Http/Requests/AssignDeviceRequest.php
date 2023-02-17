@@ -10,6 +10,7 @@ class AssignDeviceRequest extends FormRequest
     {
         return [
             'device_uuid' => 'required',
+            'line_number' => 'nullable',
         ];
     }
 }
