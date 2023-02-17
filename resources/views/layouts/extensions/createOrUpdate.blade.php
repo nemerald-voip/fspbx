@@ -1334,12 +1334,12 @@
 
 @push('scripts')
     <style>
-        .input-group > .select2-container--bootstrap {
+        .input-group > .select2-container--default {
             width: auto;
             flex: 1 1 auto;
         }
 
-        .input-group > .select2-container--bootstrap .select2-selection--single {
+        .input-group > .select2-container--default .select2-selection--single {
             height: 100%;
             line-height: inherit;
             padding: 0.5rem 1rem;
