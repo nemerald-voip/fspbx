@@ -124,7 +124,7 @@
                                     </span>
                                 </a>
 
-                                <a class="nav-link" id="v-pills-device-setting-tab" data-bs-toggle="pill" href="#v-pills-device-setting" role="tab" aria-controls="v-pills-device-setting"
+                                <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
                                     aria-selected="false">
                                     <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
                                     <span class="d-inline-block">Devices</span>
@@ -135,7 +135,7 @@
                             <div class="col-sm-10">
 
                                 <div class="tab-content">
-                                    <div class="text-sm-end">
+                                    <div class="text-sm-end" id="action-buttons">
                                         <a href="{{ route('extensions.index') }}" class="btn btn-light me-2">Cancel</a>
                                         <button class="btn btn-success" type="submit" id="submitFormButton"><i class="uil uil-down-arrow me-2"></i> Save </button>
                                         {{-- <button class="btn btn-success" type="submit">Save</button> --}}
@@ -1191,15 +1191,13 @@
                                     </div>
 
                                     @if ($extension->exists)
-                                        <div class="tab-pane fade" id="v-pills-device-setting" role="tabpanel" aria-labelledby="v-pills-device-setting-tab">
+                                        <div class="tab-pane fade" id="v-pills-device" role="tabpanel" aria-labelledby="v-pills-device-tab">
                                             <!-- Voicemail Content-->
-                                            <div class="card">
-                                                <div class="card-body">
-                                                    <div class="row">
-                                                    <div class="col-lg-12">
-                                                        <h4 class="mt-2">Attached Devices</h4>
-                                                        <form method="POST" id="extensionForm" action="{{route('extensions.assign-device', [$extension->extension])}}" >
-                                                            @csrf
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mt-2">Attached Devices</h4>
+                                                    <div class="card" id="extensionForm" action="" >
+                                                        <div class="card-body">
                                                             <div class="row">
                                                                 <div class="col-md-3">
                                                                     <div class="form-group">
@@ -1208,7 +1206,7 @@
                                                                         <div class="error text-danger"></div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-3">
+                                                                <div class="col-md-4">
                                                                     <div class="form-group">
                                                                         <label class="col-form-label">Select Device</label>
                                                                         <div class="input-group mb-3">
@@ -1224,40 +1222,38 @@
                                                                 </div>
                                                                 <div class="col-md-3">
                                                                     <div class="form-group mt-4">
-                                                                        <button class="btn btn-info assign-device-btn" type="button" Assign</button>
+                                                                        <button class="btn btn-info assign-device-btn" type="button"> Assign</button>
                                                                         <div class="error text-danger"></div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        </form>
+                                                        </div>
+                                                    </div>
 
-                                                        <table class="table table-bordered">
+                                                    <table class="table table-bordered">
+                                                        <tr>
+                                                            <td>Line</td>
+                                                            <td>MAC Address</td>
+                                                            <td>Template</td>
+                                                            <td>Actions</td>
+                                                        </tr>
+                                                        @foreach($extension->devices as $device)
                                                             <tr>
-                                                                <td>Line</td>
-                                                                <td>MAC Address</td>
-                                                                <td>Template</td>
-                                                                <td>Actions</td>
+                                                                <td>{{$device->pivot->line_number}}</td>
+                                                                <td>{{$device->device_mac_address}}</td>
+                                                                <td>{{$device->device_template}}</td>
+                                                                <td>
+                                                                    <div id="tooltip-container-actions">
+                                                                        <a href="javascript:confirmDeleteAction('{{route('extensions.unassign-device', [$extension->extension, $device->pivot->device_line_uuid])}}');" class="action-icon">
+                                                                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                                        </a>
+                                                                    </div>
+                                                                </td>
                                                             </tr>
-                                                            @foreach($extension->devices as $device)
-                                                                <tr>
-                                                                    <td>{{$device->pivot->line_number}}</td>
-                                                                    <td>{{$device->device_mac_address}}</td>
-                                                                    <td>{{$device->device_template}}</td>
-                                                                    <td>
-                                                                        <div id="tooltip-container-actions">
-                                                                            <a href="javascript:confirmDeleteAction('{{route('extensions.unassign-device', [$extension->extension, $device->pivot->device_line_uuid])}}');" class="action-icon">
-                                                                                <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                                                                            </a>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </table>
-                                                    </div> <!-- end row-->
-                                                </div>
-                                                </div>
+                                                        @endforeach
+                                                    </table>
+                                                </div> <!-- end row-->
                                             </div>
-                                            <!-- End Voicemail Content-->
                                         </div>
                                     @endif
                                 </div> <!-- end tab-content-->
@@ -1389,17 +1385,78 @@
             });
         });
 
-        $(document).on('click', '.save-device-btn, .assign-device-btn', function(e){
+        $('#extensionNavPills .nav-click').on('click', function() {
+            if($(this).attr('id') == 'v-pills-device-tab') {
+                $('#action-buttons').hide();
+            } else {
+                $('#action-buttons').show();
+            }
+        });
+
+        $(document).on('click', '.save-device-btn', function(e){
             e.preventDefault();
 
             var btn = $(this);
             var form = btn.closest('form');
-            var url = form.attr('action');
+            console.log(form);
+            console.log(form.attr('action'));
 
             $.ajax({
-                url: url,
+                url: form.attr('action'),
                 type: 'POST',
                 data: form.serialize(),
+                dataType: 'json',
+                beforeSend: function() {
+                    //Reset error messages
+                    form.find('.error').text('');
+
+                    $('.error_message').text("");
+                    $('.btn').attr('disabled', true);
+                    $('.loading').show();
+                },
+                complete: function (xhr,status) {
+                    $('.btn').attr('disabled', false);
+                    $('.loading').hide();
+                },
+                success: function(result) {
+                    $('#addPaymentRecordModal').modal('hide');
+                    $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                },
+                error: function(error) {
+                    if(error.status == 422){
+                        if(error.responseJSON.errors) {
+                            $.each( error.responseJSON.errors, function( key, value ) {
+                                if (value != '') {
+                                    form.find('#'+key+'_error').text(value);
+                                    printErrorMsg(value);
+                                }
+                            });
+                        } else {
+                            printErrorMsg(error.responseJSON.message);
+                        }
+                    } else {
+                        printErrorMsg(error.responseJSON.message);
+                    }
+                }
+            });
+        })
+
+        $(document).on('click', '.assign-device-btn', function(e){
+            e.preventDefault();
+
+            var btn = $(this);
+            var data = {
+                'line_number' : btn.closest('.card').find('#line_number').val(),
+                'device_uuid' : btn.closest('.card').find('#device-select').val(),
+                '_token' : $('meta[name="csrf-token"]').attr('content')
+            };
+            console.log(data);
+            console.log(form.attr('action'));
+
+            $.ajax({
+                url: "{{route('extensions.assign-device', [$extension->extension])}}",
+                type: 'POST',
+                data: data,
                 dataType: 'json',
                 beforeSend: function() {
                     //Reset error messages
