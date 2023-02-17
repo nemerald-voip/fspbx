@@ -1353,15 +1353,9 @@
 
 @push('scripts')
     <style>
-        .input-group > .select2-container--default {
-            width: auto;
+        .input-group > .select2-container {
+            width: auto !important;
             flex: 1 1 auto;
-        }
-
-        .input-group > .select2-container--default .select2-selection--single {
-            height: 100%;
-            line-height: inherit;
-            padding: 0.5rem 1rem;
         }
     </style>
 <script>
