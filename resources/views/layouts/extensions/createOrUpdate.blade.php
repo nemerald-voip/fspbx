@@ -1451,7 +1451,7 @@
                 '_token' : $('meta[name="csrf-token"]').attr('content')
             };
             console.log(data);
-            console.log({{route('extensions.assign-device', [$extension->extension])}});
+            console.log("{{route('extensions.assign-device', [$extension->extension])}}");
 
             $.ajax({
                 url: "{{route('extensions.assign-device', [$extension->extension])}}",
