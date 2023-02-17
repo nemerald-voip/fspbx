@@ -1202,7 +1202,7 @@
                                                                 <div class="col-md-3">
                                                                     <div class="form-group">
                                                                         <label class="col-form-label">Line Number</label>
-                                                                        <input type="text" name="line_number" value="" class="form-control" />
+                                                                        <input type="text" name="line_number" id="line_number" class="form-control" />
                                                                         <div class="error text-danger"></div>
                                                                     </div>
                                                                 </div>
