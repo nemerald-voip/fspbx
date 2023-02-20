@@ -502,6 +502,7 @@ class ExtensionsController extends Controller
                     ->find($extension_uuid);
 
         $devices = Device::query()
+            ->select('v_devices.device_uuid', 'v_devices.device_mac_address')
             ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'v_devices.device_uuid')
             ->whereNull('dl.device_line_uuid')
             ->get();
