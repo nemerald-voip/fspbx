@@ -1489,11 +1489,11 @@
         });
 
         $('#device-select').select2({
-            dropdownParent: $('#createDeviceModal'),
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
         $('#template-select').select2({
+            dropdownParent: $('#createDeviceModal'),
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
