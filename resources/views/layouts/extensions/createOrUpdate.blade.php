@@ -1493,7 +1493,7 @@
         });
 
         $('#template-select').select2({
-            dropdownParent: $('#createDeviceModal'),
+            // dropdownParent: $('#createDeviceModal'),
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
