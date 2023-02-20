@@ -507,11 +507,7 @@ class ExtensionsController extends Controller
             ->whereNull('dl.device_line_uuid')
             ->get();
 
-        $vendors = DeviceVendor::query()
-            ->select('devices.device_uuid', 'device_mac_address', 'device_label', 'device_vendor', 'device_model', 'device_template')
-            ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'devices.device_uuid')
-            ->whereNull('dl.device_line_uuid')
-            ->get();
+        $vendors = DeviceVendor::query()->get();
 
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
