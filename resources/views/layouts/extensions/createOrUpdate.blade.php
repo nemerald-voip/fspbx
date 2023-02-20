@@ -1332,9 +1332,8 @@
                     </div>
                     <div class="mb-3">
                         <label class="col-form-label">Template</label>
-                        <input type="text" class="form-control" id="device_template" name="device_template" placeholder="Enter the Device Template">
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
-                        <select name="device_uuid" class="form-select" id="device-select">
+                        <select name="device_template" class="form-select" id="template-select">
                             @foreach($vendors as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
@@ -1490,6 +1489,10 @@
         });
 
         $('#device-select').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        $('#template-select').select2({
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
