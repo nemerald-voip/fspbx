@@ -97,6 +97,12 @@
                                 </a>
                                 @endif
 
+                                <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
+                                   aria-selected="false">
+                                    <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
+                                    <span class="d-inline-block">Devices</span>
+                                </a>
+
                                 <a class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings"
                                    aria-selected="false">
                                     <i class="mdi mdi-settings-outline d-md-none d-block"></i>
@@ -124,11 +130,6 @@
                                     </span>
                                 </a>
 
-                                <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
-                                    aria-selected="false">
-                                    <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
-                                    <span class="d-inline-block">Devices</span>
-                                </a>
                             </div>
                         </div> <!-- end col-->
 
@@ -1332,6 +1333,21 @@
                     <div class="mb-3">
                         <label class="col-form-label">Template</label>
                         <input type="text" class="form-control" id="device_template" name="device_template" placeholder="Enter the Device Template">
+                        @php $templateDir = public_path('resources/templates/provision'); @endphp
+                        <select name="device_uuid" class="form-select" id="device-select">
+                            @foreach($vendors as $vendor)
+                                <optgroup label='{{escape($vendor->name)}}'>
+                                    @if (is_dir($templateDir.'/'.$vendor->name)) {
+                                        @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
+                                        @foreach($templates as $dir) {
+                                            @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
+                                                <option value='{{escape($vendor->name)."/".escape($dir)}}' {{$device_template == ($vendor->name."/".$dir) ? 'selected' : ''}}>{{escape($vendor->name)."/".escape($dir)}}</option>
+                                            @endif
+                                        @endforeach
+                                    @endif
+                                </optgroup>
+                            @endforeach
+                        </select>
                         <div class="error text-danger" id="device_template_error"></div>
                     </div>
                     <div class="mb-3">

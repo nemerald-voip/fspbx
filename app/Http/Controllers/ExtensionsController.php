@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AssignDeviceRequest;
 use App\Models\Device;
 use App\Models\DeviceLines;
+use App\Models\DeviceVendor;
 use cache;
 use Throwable;
 use App\Models\User;
@@ -499,7 +500,18 @@ class ExtensionsController extends Controller
         $extension = Extensions::query()
                     ->with(['devices'])
                     ->find($extension_uuid);
-        $devices = Device::query()->get();
+
+        $devices = Device::query()
+            ->select('devices.device_uuid', 'device_mac_address', 'device_label', 'device_vendor', 'device_model', 'device_template')
+            ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'devices.device_uuid')
+            ->whereNull('dl.device_line_uuid')
+            ->get();
+
+        $vendors = DeviceVendor::query()
+            ->select('devices.device_uuid', 'device_mac_address', 'device_label', 'device_vendor', 'device_model', 'device_template')
+            ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'devices.device_uuid')
+            ->whereNull('dl.device_line_uuid')
+            ->get();
 
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
@@ -547,6 +559,7 @@ class ExtensionsController extends Controller
             -> with ('moh', $moh)
             -> with ('recordings', $recordings)
             -> with ('devices', $devices)
+            -> with ('vendors', $vendors)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
 
     }
@@ -578,7 +591,7 @@ class ExtensionsController extends Controller
 
 
         ];
-// dd($request->all());
+
         $validator = Validator::make($request->all(), [
             'directory_first_name' => 'required|string',
             'directory_last_name' => 'nullable|string',
@@ -835,7 +848,7 @@ class ExtensionsController extends Controller
     {
         $inputs = $request->validated();
 
-        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid'] , 'user_id' => $extension->extension])->exists();
+        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid']])->exists();
 
         if ($devicExist){
             return response()->json([
