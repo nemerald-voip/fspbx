@@ -1372,7 +1372,7 @@
             width: auto !important;
             flex: 1 1 auto;
         }
-        .select2-container {
+        .select2-container--open {
             z-index:10000;
         }
     </style>
