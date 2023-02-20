@@ -1305,7 +1305,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="createDeviceModal" tabindex="-1" aria-labelledby="createDeviceModalLabel" aria-hidden="true">
+<div class="modal fade" id="createDeviceModal" role="dialog" aria-labelledby="createDeviceModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -1493,6 +1493,7 @@
         });
 
         $('#template-select').select2({
+            dropdownParent: $('#createDeviceModal'),
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
@@ -1505,6 +1506,7 @@
                 'device_uuid' : btn.closest('.card').find('#device-select').val(),
                 '_token' : $('meta[name="csrf-token"]').attr('content')
             }
+            console.log(data);
 
             $.ajax({
                 url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
