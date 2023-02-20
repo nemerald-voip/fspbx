@@ -1341,7 +1341,7 @@
                                         @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
                                         @foreach($templates as $dir) {
                                             @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
-                                                <option value='{{$vendor->name."/".$dir}}' {{$device_template == ($vendor->name."/".$dir) ? 'selected' : ''}}>{{$vendor->name."/".$dir}}</option>
+                                                <option value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
                                             @endif
                                         @endforeach
                                     @endif
