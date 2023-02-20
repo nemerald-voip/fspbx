@@ -1330,10 +1330,10 @@
                         <input type="text" class="form-control" id="device_vendor" name="device_vendor" placeholder="Enter the Device Vendor">
                         <div class="error text-danger" id="device_vendor_error"></div>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 position-relative">
                         <label class="col-form-label">Template</label>
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
-                        <select name="device_template" class="form-select" id="template-select">
+                        <select name="device_template" class="form-select select2" id="template-select">
                             @foreach($vendors as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
