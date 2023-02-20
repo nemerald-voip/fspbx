@@ -1233,10 +1233,10 @@
 
                                                     <table class="table table-bordered">
                                                         <tr>
-                                                            <td>Line</td>
-                                                            <td>MAC Address</td>
-                                                            <td>Template</td>
-                                                            <td>Actions</td>
+                                                            <th>Line</th>
+                                                            <th>MAC Address</th>
+                                                            <th>Template</th>
+                                                            <th>Actions</th>
                                                         </tr>
                                                         @foreach($extension->devices as $device)
                                                             <tr>
