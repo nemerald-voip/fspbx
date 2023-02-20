@@ -1336,12 +1336,12 @@
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
                         <select name="device_uuid" class="form-select" id="device-select">
                             @foreach($vendors as $vendor)
-                                <optgroup label='{{escape($vendor->name)}}'>
+                                <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
                                         @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
                                         @foreach($templates as $dir) {
                                             @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
-                                                <option value='{{escape($vendor->name)."/".escape($dir)}}' {{$device_template == ($vendor->name."/".$dir) ? 'selected' : ''}}>{{escape($vendor->name)."/".escape($dir)}}</option>
+                                                <option value='{{$vendor->name."/".$dir}}' {{$device_template == ($vendor->name."/".$dir) ? 'selected' : ''}}>{{$vendor->name."/".$dir}}</option>
                                             @endif
                                         @endforeach
                                     @endif
