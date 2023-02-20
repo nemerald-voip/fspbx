@@ -1372,6 +1372,9 @@
             width: auto !important;
             flex: 1 1 auto;
         }
+        .select2-container {
+            z-index:10000;
+        }
     </style>
 <script>
     $(document).ready(function() {
