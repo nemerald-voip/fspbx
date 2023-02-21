@@ -569,7 +569,6 @@ class ExtensionsController extends Controller
      */
     public function update(Request $request, Extensions $extension)
     {
-
         $attributes = [
             'directory_first_name' => 'first name',
             'directory_last_name' => 'last name',
@@ -584,8 +583,6 @@ class ExtensionsController extends Controller
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
             'limit_max' => 'total allowed outbound calls'
-
-
         ];
 
         $validator = Validator::make($request->all(), [
@@ -643,6 +640,14 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+            'forward_all_enabled' => 'in:true,false',
+            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|present',
+            'forward_busy_enabled' => 'in:true,false',
+            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|present',
+            'forward_no_answer_enabled' => 'in:true,false',
+            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|present',
+            'forward_user_not_registered_enabled' => 'in:true,false',
+            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|present',
 
         ], [], $attributes);
 
@@ -665,6 +670,14 @@ class ExtensionsController extends Controller
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+        if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled']== "on")  $attributes['forward_all_enabled'] = "true";
+        if (isset($attributes['forward_all_destination'])) $attributes['forward_all_destination'] = PhoneNumber::make($attributes['forward_all_destination'], "US")->formatE164();
+        if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled']== "on")  $attributes['forward_busy_enabled'] = "true";
+        if (isset($attributes['forward_busy_destination'])) $attributes['forward_busy_destination'] = PhoneNumber::make($attributes['forward_busy_destination'], "US")->formatE164();
+        if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled']== "on")  $attributes['forward_no_answer_enabled'] = "true";
+        if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = PhoneNumber::make($attributes['forward_no_answer_destination'], "US")->formatE164();
+        if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled']== "on")  $attributes['forward_user_not_registered_enabled'] = "true";
+        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = PhoneNumber::make($attributes['forward_user_not_registered_destination'], "US")->formatE164();
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
 

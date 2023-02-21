@@ -130,6 +130,16 @@
                                     </span>
                                 </a>
 
+                                <a class="nav-link" id="v-pills-callforward-tab" data-bs-toggle="pill" href="#v-pills-callforward" role="tab" aria-controls="v-pills-callforward"
+                                   aria-selected="false">
+                                    <i class="mdi mdi-settings-outline d-md-none d-block"></i>
+                                    <span class="d-none d-md-block">Call Forward
+                                        <span class="float-end text-end
+                                            call_forward_enabled_err_badge
+                                            " hidden><span class="badge badge-danger-lighten">error</span></span>
+                                    </span>
+                                </a>
+
                             </div>
                         </div> <!-- end col-->
 
@@ -499,7 +509,7 @@
                                                         </div>
                                                         <div class="col-6">
                                                             <div class="mb-3">
-                                                                <label for="vm-email-address" class="form-label">Email Address</span></label>
+                                                                <label for="vm-email-address" class="form-label">Email Address</label>
                                                                 <input class="form-control" type="email" disabled placeholder="Enter email" id="vm-email-address"
                                                                 value="{{ $extension->voicemail->voicemail_mail_to ?? ''}}"/>
                                                             </div>
@@ -1257,6 +1267,108 @@
                                             </div>
                                         </div>
                                     @endif
+
+                                    <div class="tab-pane fade" id="v-pills-callforward" role="tabpanel" aria-labelledby="v-pills-callforward-tab">
+                                        <!-- Settings Content-->
+                                        <div class="tab-pane show active">
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Call Forwarding Always</h4>
+                                                    <p class="text-muted mb-2">Ensure customers and colleagues can reach you, regardless of your physical location. Automatically redirect all incoming calls to another phone number of your choice.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_all_enabled" value="false">
+                                                            <input type="checkbox" id="forward_all_enabled" value="true" name="forward_all_enabled" class="forward_checkbox"
+                                                                   @if ($extension->forward_all_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_all_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_all_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_all_enabled_phone_number" class="row d-none">
+                                                        <div class="col-md-3">
+                                                            <label for="forward_all_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}">
+                                                            <div class="text-danger forward_all_destination_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Call Forwarding Busy</h4>
+                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if the phone is busy or Do Not Disturb is enabled.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_busy_enabled" value="false">
+                                                            <input type="checkbox" id="forward_busy_enabled" value="true" name="forward_busy_enabled" class="forward_checkbox"
+                                                                   @if ($extension->forward_busy_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_busy_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_busy_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_busy_enabled_phone_number" class="row d-none">
+                                                        <div class="col-md-3">
+                                                            <label for="forward_busy_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}">
+                                                            <div class="text-danger forward_busy_destination_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Call Forwarding No Answer</h4>
+                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no answer.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_no_answer_enabled" value="false">
+                                                            <input type="checkbox" id="forward_no_answer_enabled" value="true" name="forward_no_answer_enabled" class="forward_checkbox"
+                                                                   @if ($extension->forward_no_answer_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_no_answer_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_no_answer_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_no_answer_enabled_phone_number" class="row d-none">
+                                                        <div class="col-md-3">
+                                                            <label for="forward_no_answer_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}">
+                                                            <div class="text-danger forward_no_answer_destination_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Call Forwarding No User</h4>
+                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no user registered.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_user_not_registered_enabled" value="false">
+                                                            <input type="checkbox" id="forward_user_not_registered_enabled" value="true" name="forward_user_not_registered_enabled" class="forward_checkbox"
+                                                                   @if ($extension->forward_user_not_registered_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_user_not_registered_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_user_not_registered_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_user_not_registered_enabled_phone_number" class="row d-none">
+                                                        <div class="col-md-3">
+                                                            <label for="forward_user_not_registered_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}">
+                                                            <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End Settings Content-->
+                                    </div>
                                 </div> <!-- end tab-content-->
                             </div> <!-- end col-->
                     </div>
@@ -1438,6 +1550,16 @@
                 $('#action-buttons').hide();
             } else {
                 $('#action-buttons').show();
+            }
+        });
+
+        $(document).on('click', '.forward_checkbox', function (e) {
+            var checkbox = $(this);
+            var cname = checkbox.attr('name');
+            if(checkbox.is(':checked')) {
+                $('#'+cname+'_phone_number').removeClass('d-none');
+            } else {
+                $('#'+cname+'_phone_number').addClass('d-none');
             }
         });
 
