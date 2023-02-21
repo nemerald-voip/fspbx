@@ -7,6 +7,7 @@ use App\Models\Device;
 use App\Models\DeviceLines;
 use App\Models\DeviceVendor;
 use cache;
+use Propaganistas\LaravelPhone\Validation\Phone;
 use Throwable;
 use App\Models\User;
 use App\Models\Extensions;
@@ -582,7 +583,15 @@ class ExtensionsController extends Controller
             'user_context' => 'context',
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
-            'limit_max' => 'total allowed outbound calls'
+            'limit_max' => 'total allowed outbound calls',
+            'forward_all_enabled' => 'call forwarding always',
+            'forward_all_destination' => 'phone number',
+            'forward_busy_enabled' => 'call forwarding busy',
+            'forward_busy_destination' => 'phone number',
+            'forward_no_answer_enabled' => 'call forwarding no answer',
+            'forward_no_answer_description' => 'phone number',
+            'forward_user_not_registered_enabled' => 'call forwarding no user',
+            'forward_user_not_registered_destination' => 'phone number'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -641,13 +650,13 @@ class ExtensionsController extends Controller
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
             'forward_all_enabled' => 'in:true,false',
-            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|present',
+            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|present|PhoneOrExtension',
             'forward_busy_enabled' => 'in:true,false',
-            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|present',
+            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|present|PhoneOrExtension',
             'forward_no_answer_enabled' => 'in:true,false',
-            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|present',
+            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|present|PhoneOrExtension',
             'forward_user_not_registered_enabled' => 'in:true,false',
-            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|present',
+            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|present|PhoneOrExtension',
 
         ], [], $attributes);
 
