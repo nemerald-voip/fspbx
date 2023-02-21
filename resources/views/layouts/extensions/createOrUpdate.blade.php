@@ -1285,10 +1285,10 @@
                                                             <div class="text-danger forward_all_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_all_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
+                                                    <div id="forward_all_enabled_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
                                                             <label for="forward_all_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}">
+                                                            <input class="form-control w-25" type="text" placeholder="Enter phone number" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}">
                                                             <div class="text-danger forward_all_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1309,10 +1309,10 @@
                                                             <div class="text-danger forward_busy_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_busy_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
+                                                    <div id="forward_busy_enabled_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
                                                             <label for="forward_busy_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}">
+                                                            <input class="form-control w-25" type="text" placeholder="Enter phone number" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}">
                                                             <div class="text-danger forward_busy_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1333,10 +1333,10 @@
                                                             <div class="text-danger forward_no_answer_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_no_answer_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
+                                                    <div id="forward_no_answer_enabled_phone_number" class="row @if($extension->forward_no_answer_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
                                                             <label for="forward_no_answer_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}">
+                                                            <input class="form-control w-25" type="text" placeholder="Enter phone number" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}">
                                                             <div class="text-danger forward_no_answer_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1357,10 +1357,10 @@
                                                             <div class="text-danger forward_user_not_registered_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_user_not_registered_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
+                                                    <div id="forward_user_not_registered_enabled_phone_number" class="row @if($extension->forward_user_not_registered_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
                                                             <label for="forward_user_not_registered_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}">
+                                                            <input class="form-controlw-25" type="text" placeholder="Enter phone number" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}">
                                                             <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
                                                         </div>
                                                     </div>
