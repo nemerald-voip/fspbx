@@ -59,8 +59,7 @@
                                     {{-- <th>View</th> --}}
                                     <th>Date</th>
                                     <th>Status</th>
-                                    <th>Notify Date</th>
-                                    <th>Retry Date</th>
+                                    <th>Last attempt</th>
                                     <th>Retry Count</th>
                                     <th>Actions</th>
                                 </tr>
@@ -105,12 +104,6 @@
                                                 <h5><span class="badge bg-danger">Failed</span></h5>
                                             @else
                                                 <h5><span class="badge bg-info">{{ ucfirst($file->fax_status) }}</span></h5>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($file->fax_notify_date)
-                                                <span class="text-body text-nowrap">{{ $file->fax_notify_date->format('D, M d, Y ') }}</span>
-                                                <span class="text-body text-nowrap">{{ $file->fax_notify_date->format('h:i:s A') }}</span>
                                             @endif
                                         </td>
                                         <td>
