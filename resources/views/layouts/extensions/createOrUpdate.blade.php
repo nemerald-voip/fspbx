@@ -107,11 +107,13 @@
                                 </a>
                                 @endif
 
-                                <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
-                                   aria-selected="false">
-                                    <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
-                                    <span class="d-inline-block">Devices</span>
-                                </a>
+                                @if ($extension->exists)
+                                    <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
+                                       aria-selected="false">
+                                        <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
+                                        <span class="d-inline-block">Devices</span>
+                                    </a>
+                                @endif
 
                                 <a class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings"
                                    aria-selected="false">
@@ -1445,7 +1447,7 @@
                         <label class="col-form-label">Template</label>
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
                         <select name="device_template" class="form-select select2" id="template-select">
-                            @foreach($vendors as $vendor)
+                            @foreach($vendors ?? [] as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
                                         @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
@@ -1624,61 +1626,63 @@
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
-        $(document).on('click', '.assign-device-btn', function(e){
-            e.preventDefault();
+        @if ($extension->exists)
+            $(document).on('click', '.assign-device-btn', function(e){
+                e.preventDefault();
 
-            var btn = $(this);
-            var data = {
-                'line_number' : btn.closest('.card').find('#line_number').val(),
-                'device_uuid' : btn.closest('.card').find('#device-select').val(),
-                '_token' : $('meta[name="csrf-token"]').attr('content')
-            }
-            console.log(btn.closest('.card').find('#device-select'));
-            console.log(data);
+                var btn = $(this);
+                var data = {
+                    'line_number' : btn.closest('.card').find('#line_number').val(),
+                    'device_uuid' : btn.closest('.card').find('#device-select').val(),
+                    '_token' : $('meta[name="csrf-token"]').attr('content')
+                }
+                console.log(btn.closest('.card').find('#device-select'));
+                console.log(data);
 
-            $.ajax({
-                url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
-                type: 'POST',
-                data: data,
-                dataType: 'json',
-                beforeSend: function() {
-                    //Reset error messages
-                    btn.closest('.card').find('.error').text('');
+                $.ajax({
+                    url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
+                    type: 'POST',
+                    data: data,
+                    dataType: 'json',
+                    beforeSend: function() {
+                        //Reset error messages
+                        btn.closest('.card').find('.error').text('');
 
-                    $('.error_message').text("");
-                    $('.btn').attr('disabled', true);
-                    $('.loading').show();
-                },
-                complete: function (xhr,status) {
-                    $('.btn').attr('disabled', false);
-                    $('.loading').hide();
-                },
-                success: function(result) {
-                    if(result.status == 'success') {
-                        $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
-                        location.reload();
-                    } else {
-                        $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
-                    }
-                },
-                error: function(error) {
-                    if(error.status == 422){
-                        if(error.responseJSON.errors) {
-                            $.each( error.responseJSON.errors, function( key, value ) {
-                                if (value != '') {
-                                    btn.closest('.card').find('#'+key+'_error').text(value);
-                                    printErrorMsg(value);
-                                }
-                            });
+                        $('.error_message').text("");
+                        $('.btn').attr('disabled', true);
+                        $('.loading').show();
+                    },
+                    complete: function (xhr,status) {
+                        $('.btn').attr('disabled', false);
+                        $('.loading').hide();
+                    },
+                    success: function(result) {
+                        if(result.status == 'success') {
+                            $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                            location.reload();
+                        } else {
+                            $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
+                        }
+                    },
+                    error: function(error) {
+                        if(error.status == 422){
+                            if(error.responseJSON.errors) {
+                                $.each( error.responseJSON.errors, function( key, value ) {
+                                    if (value != '') {
+                                        btn.closest('.card').find('#'+key+'_error').text(value);
+                                        printErrorMsg(value);
+                                    }
+                                });
+                            } else {
+                                printErrorMsg(error.responseJSON.message);
+                            }
                         } else {
                             printErrorMsg(error.responseJSON.message);
                         }
-                    } else {
-                        printErrorMsg(error.responseJSON.message);
                     }
-                }
-            });
-        })
+                });
+            })
+        @endif
 
         $('#deleteModal').on('shown.bs.modal', function (event) {
             var btn = $(event.relatedTarget)
