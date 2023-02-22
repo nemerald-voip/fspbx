@@ -84,7 +84,14 @@
                                     <i class="mdi mdi-settings-outline d-md-none d-block"></i>
                                     <span class="d-none d-md-block">Call Forward
                                         <span class="float-end text-end
-                                            call_forward_enabled_err_badge
+                                            forward_all_enabled_err_badge
+                                            forward_all_destination_err_badge
+                                            forward_busy_enabled_err_badge
+                                            forward_busy_destination_err_badge
+                                            forward_no_answer_enabled_err_badge
+                                            forward_no_answer_destination_err_badge
+                                            forward_user_not_registered_enabled_err_badge
+                                            forward_user_not_registered_destination_err_badge
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                 </a>
