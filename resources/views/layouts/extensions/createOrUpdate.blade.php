@@ -1281,7 +1281,7 @@
                                         <div class="tab-pane show active">
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding Always</h4>
+                                                    <h4 class="mb-2 mt-0">Forward all calls</h4>
                                                     <p class="text-muted mb-2">Ensure customers and colleagues can reach you, regardless of your physical location. Automatically redirect all incoming calls to another phone number of your choice.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
@@ -1305,7 +1305,7 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding Busy</h4>
+                                                    <h4 class="mb-2 mt-0">When user is busy</h4>
                                                     <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if the phone is busy or Do Not Disturb is enabled.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
@@ -1329,7 +1329,7 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding No Answer</h4>
+                                                    <h4 class="mb-2 mt-0">When user does not answer the call</h4>
                                                     <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no answer.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
@@ -1353,7 +1353,7 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding No User</h4>
+                                                    <h4 class="mb-2 mt-0">When internet connection is down</h4>
                                                     <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no user registered.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
