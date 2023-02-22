@@ -7,6 +7,7 @@ use App\Models\Device;
 use App\Models\DeviceLines;
 use App\Models\DeviceVendor;
 use cache;
+use Propaganistas\LaravelPhone\Validation\Phone;
 use Throwable;
 use App\Models\User;
 use App\Models\Extensions;
@@ -582,7 +583,15 @@ class ExtensionsController extends Controller
             'user_context' => 'context',
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
-            'limit_max' => 'total allowed outbound calls'
+            'limit_max' => 'total allowed outbound calls',
+            'forward_all_enabled' => 'call forwarding always',
+            'forward_all_destination' => 'field',
+            'forward_busy_enabled' => 'call forwarding busy',
+            'forward_busy_destination' => 'field',
+            'forward_no_answer_enabled' => 'call forwarding no answer',
+            'forward_no_answer_description' => 'field',
+            'forward_user_not_registered_enabled' => 'call forwarding no user',
+            'forward_user_not_registered_destination' => 'field'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -641,15 +650,17 @@ class ExtensionsController extends Controller
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
             'forward_all_enabled' => 'in:true,false',
-            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|present',
+            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|nullable|PhoneOrExtension:US',
             'forward_busy_enabled' => 'in:true,false',
-            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|present',
+            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|nullable|PhoneOrExtension:US',
             'forward_no_answer_enabled' => 'in:true,false',
-            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|present',
+            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|nullable|PhoneOrExtension:US',
             'forward_user_not_registered_enabled' => 'in:true,false',
-            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|present',
+            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|nullable|PhoneOrExtension:US',
 
-        ], [], $attributes);
+        ], [
+            'phone_or_extension' => 'Should be valid US phone number or extension id'
+        ], $attributes);
 
         if ($validator->fails()) {
             return response()->json(['error'=>$validator->errors()]);
@@ -670,14 +681,14 @@ class ExtensionsController extends Controller
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
-        if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled']== "on")  $attributes['forward_all_enabled'] = "true";
-        if (isset($attributes['forward_all_destination'])) $attributes['forward_all_destination'] = PhoneNumber::make($attributes['forward_all_destination'], "US")->formatE164();
-        if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled']== "on")  $attributes['forward_busy_enabled'] = "true";
-        if (isset($attributes['forward_busy_destination'])) $attributes['forward_busy_destination'] = PhoneNumber::make($attributes['forward_busy_destination'], "US")->formatE164();
-        if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled']== "on")  $attributes['forward_no_answer_enabled'] = "true";
-        if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = PhoneNumber::make($attributes['forward_no_answer_destination'], "US")->formatE164();
-        if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled']== "on")  $attributes['forward_user_not_registered_enabled'] = "true";
-        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = PhoneNumber::make($attributes['forward_user_not_registered_destination'], "US")->formatE164();
+        if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled']== "true")  $attributes['forward_all_enabled'] = "true";
+        if (isset($attributes['forward_all_destination'])) $attributes['forward_all_destination'] = format_phone_or_extension($attributes['forward_all_destination']);
+        if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled']== "true")  $attributes['forward_busy_enabled'] = "true";
+        if (isset($attributes['forward_busy_destination'])) $attributes['forward_busy_destination'] = format_phone_or_extension($attributes['forward_busy_destination']);
+        if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled']== "true")  $attributes['forward_no_answer_enabled'] = "true";
+        if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
+        if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled']== "true")  $attributes['forward_user_not_registered_enabled'] = "true";
+        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
 
@@ -730,7 +741,7 @@ class ExtensionsController extends Controller
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
         }
-        $cache = new cache;
+        $cache = new cache();
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
 
         if (isset($extension->voicemail)) {
