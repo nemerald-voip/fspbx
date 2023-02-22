@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
 
         Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
             if(strlen($value) <= 5) {
-                return (bool)preg_match('/^[0-9]{3,5}$/', $value);
+                return true;
             } else {
                 return (new Phone())->validate($attribute, $value, $parameters, $validator);
             }
