@@ -42,6 +42,8 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 // Extensions
 Route::resource('extensions', 'ExtensionsController');
 Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
+Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
+Route::delete('/extensions/{extension}/unassign/{deviceLine}/device', [ExtensionsController::class, 'unAssignDevice'])->name('extensions.unassign-device');
 
 // Groups
 Route::resource('groups', 'GroupsController');
@@ -57,6 +59,7 @@ Route::delete('/faxes/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFi
 Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
 Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
 Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');
+Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
 Route::post('/faxes/send', [FaxesController::class, 'sendFax']) -> name ('faxes.sendFax');
 
 // Domain Groups

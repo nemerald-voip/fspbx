@@ -22,6 +22,7 @@
 
         dataObj = new Object();
         dataObj.url = url;
+        console.log(dataObj.url);
 
         if(setting_id==''){
             setting_id=[];
@@ -178,7 +179,7 @@
             });
         });
 
-        // Fire an event when right side bar is toggled 
+        // Fire an event when right side bar is toggled
         $('#right-modal').on('shown.bs.modal', function (e) {
             $('#domainSearchInput').focus();
         });

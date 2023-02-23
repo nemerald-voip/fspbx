@@ -25,6 +25,7 @@
                                       class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
                                     <div class="col-auto">
                                         <label for="search" class="visually-hidden">Search</label>
+                                        <input type="hidden" name="scope" value="{{ $selectedScope }}">
                                         <input type="search" class="form-control" name="search" id="search"
                                                value="{{ $searchString }}" placeholder="Search...">
                                     </div>
@@ -52,9 +53,9 @@
                                             Delete Selected
                                         </a>
                                     @endif
-                                        <a href="{{ route('emailqueues.list', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
-                                            Show {{ (($selectedScope == 'local')?'global':'local') }} queue
-                                        </a>
+                                    <a href="{{ route('emailqueues.list', ['status' => $selectedStatus, 'search' => $searchString, 'scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                        Show {{ (($selectedScope == 'local')?'global':'local') }} queue
+                                    </a>
                                     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
                                 </div>
                             </div><!-- end col-->
@@ -74,7 +75,7 @@
                             <table class="table table-centered mb-0" id="voicemail_list">
                                 <thead class="table-light">
                                 <tr>
-                                    <th style="width: 10px;">
+                                    <th>
                                         @if (userCheckPermission('email_queue_delete'))
                                             <div class="form-check">
                                                 <input type="checkbox" class="form-check-input" id="selectallCheckbox">
@@ -82,11 +83,11 @@
                                             </div>
                                         @endif
                                     </th>
-                                    <th style="width: 200px">Date Time</th>
+                                    <th>Date Time</th>
                                     <th>Hostname</th>
                                     <th class="text-center">From</th>
                                     <th>To</th>
-                                    <th style="width: 30px">Subject</th>
+                                    <th>Subject</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -104,13 +105,31 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td style="width: 200px">
+                                        <td class="text-nowrap">
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         <td>{{ $emailQueue->hostname }}</td>
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
-                                        <td style="word-break: break-all">{{ $emailQueue->email_to }}</td>
-                                        <td style="width: 30px">{{ strlen($emailQueue->email_subject) > 50 ? substr($emailQueue->email_subject, 0, 50) . '...' : $emailQueue->email_subject }}</td>
+                                        <td>
+                                            @if(strlen($emailQueue->email_to) > 30)
+                                                <p>{{ substr($emailQueue->email_to, 0, 30)}}</p>
+                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_to }}" data-bs-title="To">
+                                                    Show more...
+                                                </a>
+                                            @else
+                                                {{$emailQueue->email_to }}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(strlen($emailQueue->email_subject) > 30)
+                                                <p>{{ substr($emailQueue->email_subject, 0, 30)}}</p>
+                                                <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
+                                                    Show more...
+                                                </a>
+                                            @else
+                                                {{$emailQueue->email_subject }}
+                                            @endif
+                                        </td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
                                                 <h5><span class="badge bg-success">Sent</span></h5>
@@ -164,8 +183,25 @@
             </div> <!-- end col -->
         </div>
         <!-- end row -->
-
     </div> <!-- container -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="FullDetailModal" tabindex="-1" aria-labelledby="FullDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="FullDetailModalLabel">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-break">
+                    ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 
@@ -201,6 +237,20 @@
                 var location = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 location += '?page=1' + $('#filterForm').serialize();
                 window.location.href = location;
+            })
+
+            var FullDetailModal = document.getElementById('FullDetailModal')
+            FullDetailModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget
+
+                var title = button.getAttribute('data-bs-title')
+                var data = button.getAttribute('data-bs-whatever')
+
+                var modalTitle = FullDetailModal.querySelector('.modal-title')
+                var modalBody = FullDetailModal.querySelector('.modal-body')
+
+                modalTitle.textContent = title
+                modalBody.textContent = data
             })
         });
 
