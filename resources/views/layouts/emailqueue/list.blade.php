@@ -85,7 +85,7 @@
                                     </th>
                                     <th>Date Time</th>
                                     {{-- <th>Hostname</th> --}}
-                                    <th class="text-center">From</th>
+                                    <th>From</th>
                                     <th>To</th>
                                     <th>Subject</th>
                                     <th>Status</th>
@@ -105,8 +105,10 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td class="text-nowrap">
-                                            {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
+                                        <td>
+                                            <span class="text-body text-nowrap">{{ $emailQueue->email_date->format('D, M d, Y ')}}</span>
+                                            <span class="text-body text-nowrap">{{ $emailQueue->email_date->format('h:i:s A') }}</span>
+                                            {{-- {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }} --}}
                                         </td>
                                         {{-- <td>{{ $emailQueue->hostname }}</td> --}}
                                         <td>{{ $emailQueue->email_from }}</td>
@@ -121,14 +123,14 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if(strlen($emailQueue->email_subject) > 30)
+                                            {{-- @if(strlen($emailQueue->email_subject) > 30)
                                                 <p>{{ substr($emailQueue->email_subject, 0, 30)}}</p>
                                                 <a type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#FullDetailModal" data-bs-whatever="{{ $emailQueue->email_subject }}" data-bs-title="Subject">
                                                     Show more...
                                                 </a>
-                                            @else
+                                            @else --}}
                                                 {{$emailQueue->email_subject }}
-                                            @endif
+                                            {{-- @endif --}}
                                         </td>
                                         <td>
                                             @if ($emailQueue->email_status == "sent")
