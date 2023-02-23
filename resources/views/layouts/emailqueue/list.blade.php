@@ -84,7 +84,7 @@
                                         @endif
                                     </th>
                                     <th>Date Time</th>
-                                    <th>Hostname</th>
+                                    {{-- <th>Hostname</th> --}}
                                     <th class="text-center">From</th>
                                     <th>To</th>
                                     <th>Subject</th>
@@ -108,7 +108,7 @@
                                         <td class="text-nowrap">
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
-                                        <td>{{ $emailQueue->hostname }}</td>
+                                        {{-- <td>{{ $emailQueue->hostname }}</td> --}}
                                         <td class="text-center">{{ $emailQueue->email_from }}</td>
                                         <td>
                                             @if(strlen($emailQueue->email_to) > 30)
