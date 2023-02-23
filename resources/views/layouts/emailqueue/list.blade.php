@@ -109,7 +109,7 @@
                                             {{ \Carbon\Carbon::parse($emailQueue->email_date)->setTimezone(get_local_time_zone(session('domain_uuid')))->toDayDateTimeString() }}
                                         </td>
                                         {{-- <td>{{ $emailQueue->hostname }}</td> --}}
-                                        <td class="text-center">{{ $emailQueue->email_from }}</td>
+                                        <td>{{ $emailQueue->email_from }}</td>
                                         <td>
                                             @if(strlen($emailQueue->email_to) > 30)
                                                 <p>{{ substr($emailQueue->email_to, 0, 30)}}</p>
