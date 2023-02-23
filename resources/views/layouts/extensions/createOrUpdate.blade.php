@@ -1295,9 +1295,16 @@
                                                     </div>
                                                     <div id="forward_all_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
+                                                            @if(empty($extension->forward_all_destination))
+                                                                <p>No destination selected. <a href="#" onclick="openForwardDestinationModal('Select destination to forward all calls'); return false;">Click here to choose</a>.</p>
+                                                            @else
+                                                                <p>Selected destination: {{ $extension->forward_all_destination }} <a href="#" onclick="openForwardDestinationModal('Edit destination to forward all calls'); return false;" >Edit</a>.</p>
+                                                            @endif
+                                                            <div class="d-none">
                                                             <label for="forward_all_destination" class="form-label">Phone Number or Extension Id <span class="text-danger">*</span></label>
                                                             <input class="form-control w-25" type="text" placeholder="Enter numbers" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}" />
                                                             <div class="text-danger forward_all_destination_err error_message"></div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1319,9 +1326,16 @@
                                                     </div>
                                                     <div id="forward_busy_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
+                                                            @if(empty($extension->forward_busy_destination))
+                                                                <p>No destination selected. <a href="#" onclick="openForwardDestinationModal('Select destination to forward call when user is busy'); return false;">Click here to choose</a>.</p>
+                                                            @else
+                                                                <p>Selected destination: {{ $extension->forward_busy_destination }} <a href="#" onclick="openForwardDestinationModal('Edit destination to forward all call when user is busy'); return false;" >Edit</a>.</p>
+                                                            @endif
+                                                                <div class="d-none">
                                                             <label for="forward_busy_destination" class="form-label">Phone Number or Extension Id <span class="text-danger">*</span></label>
                                                             <input class="form-control w-25" type="text" placeholder="Enter numbers" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}" />
                                                             <div class="text-danger forward_busy_destination_err error_message"></div>
+                                                                </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1483,8 +1497,8 @@
         </div>
     </div>
 </div>
+    @include('layouts.extensions.chooseForwardDestinationModal')
 @endsection
-
 
 @push('scripts')
     <style>
@@ -1494,6 +1508,11 @@
         }
         .select2-container--open {
             z-index:10000;
+        }
+        @media (min-width: 576px) {
+            #ForwardDestinationModal > .modal-dialog {
+                max-width: 800px;
+            }
         }
     </style>
 <script>
@@ -2075,6 +2094,13 @@
         });
 
     });
+
+    function openForwardDestinationModal(title) {
+        let modal = $('#ForwardDestinationModal');
+        modal.find('.modal-title').text(title)
+        modal.modal('show');
+    }
+
 
 </script>
 @endpush
