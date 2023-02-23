@@ -6,25 +6,14 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDeviceRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
-    {
-        return false;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            //
+            'device_mac_address' => 'required',
+            'device_label' => 'required',
+            'device_vendor' => 'required',
+            'device_template' => 'nullable',
+            'device_description' => 'nullable',
         ];
     }
 }

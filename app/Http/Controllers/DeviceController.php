@@ -25,7 +25,7 @@ class DeviceController extends Controller
         } else {
             return redirect('/');
         }
-        
+
     }
 
     /**
@@ -46,7 +46,17 @@ class DeviceController extends Controller
      */
     public function store(StoreDeviceRequest $request)
     {
-        //
+        $inputs = $request->validated();
+        $inputs['device_enabled'] = true;
+        $inputs['device_enabled_date'] = date('Y-m-d H:i:s');
+
+        $device = Device::query()->create($inputs);
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device,
+            'message' => 'Device has been created.'
+        ]);
     }
 
     /**

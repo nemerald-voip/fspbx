@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssignDeviceRequest;
+use App\Models\Device;
+use App\Models\DeviceLines;
+use App\Models\DeviceVendor;
 use cache;
+use Propaganistas\LaravelPhone\Validation\Phone;
 use Throwable;
 use App\Models\User;
 use App\Models\Extensions;
@@ -124,7 +129,7 @@ class ExtensionsController extends Controller
             abort(403, 'Unauthorized user. Contact your administrator');
         }
 
-        // Get all active phone numbers 
+        // Get all active phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
             ->where ('domain_uuid', $appUser->domain_uuid)
             ->get([
@@ -143,7 +148,7 @@ class ExtensionsController extends Controller
 
         // Get extension for user accessing the page
         $extension = Extensions::find($appUser->extension_uuid);
- 
+
         // If extension not found throw an error
         if (!isset($extension)){
             abort(403, 'Unauthorized extension. Contact your administrator');
@@ -192,7 +197,7 @@ class ExtensionsController extends Controller
                 'error' => [
                     'message' => 'Invalid phone number ID submitted. Please, contact your administrator'
                 ]
-            ]);     
+            ]);
         }
 
         $extension = Extensions::find ($extension_uuid);
@@ -277,7 +282,7 @@ class ExtensionsController extends Controller
         ])
         ->sortBy('destination_number');
 
-        // Get music on hold 
+        // Get music on hold
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
         ->orWhere('domain_uuid', null)
         ->orderBy('music_on_hold_name', 'ASC')
@@ -297,6 +302,10 @@ class ExtensionsController extends Controller
         $extension->limit_destination = "!USER_BUSY";
         $extension->limit_max = "5";
         $extension->call_timeout = "25";
+        $extension->forward_all_enabled = "false";
+        $extension->forward_busy_enabled = "false";
+        $extension->forward_no_answer_enabled = "false";
+        $extension->forward_user_not_registered_enabled = "false";
 
         //dd($extension->domain->users);
         return view('layouts.extensions.createOrUpdate')
@@ -330,8 +339,15 @@ class ExtensionsController extends Controller
             'user_context' => 'context',
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
-            'limit_max' => 'total allowed outbound calls'
-            
+            'limit_max' => 'total allowed outbound calls',
+            'forward_all_enabled' => 'call forwarding always',
+            'forward_all_destination' => 'field',
+            'forward_busy_enabled' => 'call forwarding busy',
+            'forward_busy_destination' => 'field',
+            'forward_no_answer_enabled' => 'call forwarding no answer',
+            'forward_no_answer_description' => 'field',
+            'forward_user_not_registered_enabled' => 'call forwarding no user',
+            'forward_user_not_registered_destination' => 'field'
 
         ];
 
@@ -356,7 +372,7 @@ class ExtensionsController extends Controller
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
-            
+
 
             'domain_uuid' => 'required',
             'user_context' => 'required|string',
@@ -379,8 +395,18 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+            'forward_all_enabled' => 'in:true,false',
+            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward_busy_enabled' => 'in:true,false',
+            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward_no_answer_enabled' => 'in:true,false',
+            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward_user_not_registered_enabled' => 'in:true,false',
+            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|nullable|PhoneOrExtension:US',
 
-        ], [], $attributes);
+        ], [
+            'phone_or_extension' => 'Should be valid US phone number or extension id'
+        ], $attributes);
 
         if ($validator->fails()) {
             return response()->json(['error'=>$validator->errors()]);
@@ -405,8 +431,17 @@ class ExtensionsController extends Controller
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
         $attributes['insert_date'] = date("Y-m-d H:i:s");
         $attributes['insert_user'] = Session::get('user_uuid');
+        if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled']== "true")  $attributes['forward_all_enabled'] = "true";
+        if (isset($attributes['forward_all_destination'])) $attributes['forward_all_destination'] = format_phone_or_extension($attributes['forward_all_destination']);
+        if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled']== "true")  $attributes['forward_busy_enabled'] = "true";
+        if (isset($attributes['forward_busy_destination'])) $attributes['forward_busy_destination'] = format_phone_or_extension($attributes['forward_busy_destination']);
+        if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled']== "true")  $attributes['forward_no_answer_enabled'] = "true";
+        if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
+        if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled']== "true")  $attributes['forward_user_not_registered_enabled'] = "true";
+        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);
 
-        $extension->fill($attributes);    
+
+        $extension->fill($attributes);
         $extension->save();
 
         if (isset($attributes['users'])) {
@@ -427,7 +462,7 @@ class ExtensionsController extends Controller
             session_start();
         }
         $cache = new cache;
-        $cache->delete("directory:".$extension->extension."@".$extension->user_context);      
+        $cache->delete("directory:".$extension->extension."@".$extension->user_context);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
@@ -462,7 +497,7 @@ class ExtensionsController extends Controller
      */
     public function sipShow(Request $request, Extensions $extension)
     {
-        
+
         return response()->json([
             'username' => $extension->extension,
             'password' => $extension->password,
@@ -470,7 +505,7 @@ class ExtensionsController extends Controller
             // 'user' => $response,
             'status' => 'success',
         ]);
-    }  
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -493,7 +528,17 @@ class ExtensionsController extends Controller
         }
 
         // get the extension
-        $extension = Extensions::find($extension_uuid);
+        $extension = Extensions::query()
+                    ->with(['devices'])
+                    ->find($extension_uuid);
+
+        $devices = Device::query()
+            ->select('v_devices.device_uuid', 'v_devices.device_mac_address')
+            ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'v_devices.device_uuid')
+            ->whereNull('dl.device_line_uuid')
+            ->get();
+
+        $vendors = DeviceVendor::query()->orderBy('name')->get();
 
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
@@ -513,7 +558,7 @@ class ExtensionsController extends Controller
         $vm_name_file_exists = Storage::disk('voicemail')
             ->exists(Session::get('domain_name') .'/' . $extension->extension . '/recorded_name.wav');
 
-        // Get music on hold 
+        // Get music on hold
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
             ->orWhere('domain_uuid', null)
             ->orderBy('music_on_hold_name', 'ASC')
@@ -540,8 +585,10 @@ class ExtensionsController extends Controller
             -> with('vm_name_file_exists', $vm_name_file_exists)
             -> with ('moh', $moh)
             -> with ('recordings', $recordings)
+            -> with ('devices', $devices)
+            -> with ('vendors', $vendors)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
-            
+
     }
 
     /**
@@ -553,7 +600,6 @@ class ExtensionsController extends Controller
      */
     public function update(Request $request, Extensions $extension)
     {
-
         $attributes = [
             'directory_first_name' => 'first name',
             'directory_last_name' => 'last name',
@@ -567,11 +613,17 @@ class ExtensionsController extends Controller
             'user_context' => 'context',
             'max_registrations' => 'registrations',
             'accountcode' => 'account code',
-            'limit_max' => 'total allowed outbound calls'
-            
-
+            'limit_max' => 'total allowed outbound calls',
+            'forward_all_enabled' => 'call forwarding always',
+            'forward_all_destination' => 'field',
+            'forward_busy_enabled' => 'call forwarding busy',
+            'forward_busy_destination' => 'field',
+            'forward_no_answer_enabled' => 'call forwarding no answer',
+            'forward_no_answer_description' => 'field',
+            'forward_user_not_registered_enabled' => 'call forwarding no user',
+            'forward_user_not_registered_destination' => 'field'
         ];
-// dd($request->all());
+
         $validator = Validator::make($request->all(), [
             'directory_first_name' => 'required|string',
             'directory_last_name' => 'nullable|string',
@@ -593,7 +645,7 @@ class ExtensionsController extends Controller
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
-            
+
             'voicemail_id' => 'present',
             'voicemail_enabled' => "present",
             'call_timeout' => "numeric",
@@ -602,7 +654,7 @@ class ExtensionsController extends Controller
             'voicemail_transcription_enabled' => 'nullable',
             'voicemail_local_after_email' => 'nullable',
             'voicemail_description' => "nullable|string|max:100",
-            'voicemail_alternate_greet_id' => "nullable|numeric",   
+            'voicemail_alternate_greet_id' => "nullable|numeric",
             'voicemail_tutorial' => "nullable",
             'voicemail_destinations'  => 'nullable|array',
 
@@ -627,8 +679,18 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+            'forward_all_enabled' => 'in:true,false',
+            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward_busy_enabled' => 'in:true,false',
+            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward_no_answer_enabled' => 'in:true,false',
+            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward_user_not_registered_enabled' => 'in:true,false',
+            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|nullable|PhoneOrExtension:US',
 
-        ], [], $attributes);
+        ], [
+            'phone_or_extension' => 'Should be valid US phone number or extension id'
+        ], $attributes);
 
         if ($validator->fails()) {
             return response()->json(['error'=>$validator->errors()]);
@@ -649,10 +711,18 @@ class ExtensionsController extends Controller
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled']== "on")  $attributes['call_screen_enabled'] = "true";
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+        if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled']== "true")  $attributes['forward_all_enabled'] = "true";
+        if (isset($attributes['forward_all_destination'])) $attributes['forward_all_destination'] = format_phone_or_extension($attributes['forward_all_destination']);
+        if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled']== "true")  $attributes['forward_busy_enabled'] = "true";
+        if (isset($attributes['forward_busy_destination'])) $attributes['forward_busy_destination'] = format_phone_or_extension($attributes['forward_busy_destination']);
+        if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled']== "true")  $attributes['forward_no_answer_enabled'] = "true";
+        if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
+        if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled']== "true")  $attributes['forward_user_not_registered_enabled'] = "true";
+        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
 
-        // Check if voicemail directory needs to be renamed 
+        // Check if voicemail directory needs to be renamed
         if($attributes['voicemail_id'] != $attributes['extension']) {
             if (file_exists(getDefaultSetting('switch','voicemail')."/default/".Session::get('domain_name')."/".$attributes['voicemail_id'])) {
                 rename(
@@ -701,13 +771,13 @@ class ExtensionsController extends Controller
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
         }
-        $cache = new cache;
+        $cache = new cache();
         $cache->delete("directory:".$extension->extension."@".$extension->user_context);
-    
+
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
         }
-        
+
         $extension->update($attributes);
 
         //clear the destinations session array
@@ -742,9 +812,9 @@ class ExtensionsController extends Controller
     public function import(Request $request)
     {
         try {
- 
+
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
-            
+
             // Excel::import(new ExtensionsImport, request()->file('file'));
 
             $import = new ExtensionsImport;
@@ -803,7 +873,7 @@ class ExtensionsController extends Controller
 
             if (isset($extension->extension_users)) {
                 $deleted = $extension->extension_users()->delete();
-            }   
+            }
 
             $deleted = $extension->delete();
 
@@ -822,6 +892,52 @@ class ExtensionsController extends Controller
                 ]);
             }
         }
+    }
+
+    public function assignDevice(AssignDeviceRequest $request, Extensions $extension)
+    {
+        $inputs = $request->validated();
+
+        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid']])->exists();
+
+        if ($devicExist){
+            return response()->json([
+                'status' => 'alert',
+                'message' => 'Device is already assigned.'
+            ]);
+        }
+
+        $extension->deviceLines()->create([
+            'device_uuid' => $inputs['device_uuid'],
+            'line_number' => $inputs['line_number'] ?? '1',
+            'server_address' => Session::get('domain_name'),
+            'server_address_primary' => get_domain_setting('server_address_primary'),
+            'server_address_secondary' => get_domain_setting('server_address_secondary'),
+            'display_name' => $extension->extension,
+            'user_id' => $extension->extension,
+            'auth_id' => $extension->extension,
+            'label' => $extension->extension,
+            'password' => $extension->password,
+            'sip_port' => get_domain_setting('line_sip_port'),
+            'sip_transport' => get_domain_setting('line_sip_transport'),
+            'register_expires' => get_domain_setting('line_register_expires'),
+            'enabled' => 'true',
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device has been assigned successfully.'
+        ]);
+    }
+
+    public function unAssignDevice(Extensions $extension, DeviceLines $deviceLine)
+    {
+        $deviceLine->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device has been unassigned successfully.'
+        ]);
     }
 
 }
