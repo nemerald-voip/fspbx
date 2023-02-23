@@ -60,7 +60,8 @@ class EmailQueueController extends Controller
         foreach ($emailQueues as $emailQueue) {
             // Try to convert the date to human redable format
             $emailQueue->email_date = Carbon::parse($emailQueue->email_date)->setTimezone($time_zone);
-            // dd($emailQueue->email_subject);
+            // decode a MIME header field to its original character set and content. 
+            $emailQueue->email_subject = iconv_mime_decode($emailQueue->email_subject);
         }
 
 
