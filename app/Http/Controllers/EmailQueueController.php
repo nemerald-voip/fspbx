@@ -54,7 +54,7 @@ class EmailQueueController extends Controller
 
         $emailQueues = $emailQueuesQuery->orderBy('email_date', 'desc')->paginate()->onEachSide(1);
 
-        return view('layouts.emailQueues.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
+        return view('layouts.emailqueue.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
     }
 
     public function delete($id)

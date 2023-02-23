@@ -48,12 +48,12 @@
                             <div class="col-xl-4">
                                 <div class="text-xl-end mt-xl-0 mt-2">
                                     @if (userCheckPermission('email_queue_delete'))
-                                        <a href="javascript:confirmDeleteAction('{{ route('emailqueues.destroy', ':id') }}');"
-                                           id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                        <a href="javascript:confirmDeleteAction('{{ route('emailqueue.destroy', ':id') }}');"
+                                           id="deleteMultipleActionButton" class="btn btn-danger btn-sm mb-2 me-2 disabled">
                                             Delete Selected
                                         </a>
                                     @endif
-                                    <a href="{{ route('emailqueues.list', ['status' => $selectedStatus, 'search' => $searchString, 'scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-light mb-2 me-2">
+                                    <a href="{{ route('emailqueue.list', ['status' => $selectedStatus, 'search' => $searchString, 'scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
                                         Show {{ (($selectedScope == 'local')?'global':'local') }} queue
                                     </a>
                                     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
@@ -144,32 +144,38 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if (userCheckPermission('email_queue_edit'))
-                                                @if($emailQueue->email_status == 'waiting')
-                                                    <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid]) }}">
-                                                        <i class="mdi mdi-cancel"
-                                                           data-bs-container="#tooltip-container-actions"
-                                                           data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                           title="Cancel"></i>
-                                                    </a>
-                                                @else
-                                                    <a href="{{ route('emailqueues.updateStatus', [$emailQueue->email_queue_uuid, 'waiting']) }}">
-                                                        <i class="mdi mdi-repeat"
-                                                           data-bs-container="#tooltip-container-actions"
-                                                           data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                           title="Retry"></i>
+                                            {{-- Action Buttons --}}
+                                            <div id="tooltip-container-actions">
+
+                                                @if (userCheckPermission('email_queue_edit'))
+                                                    @if($emailQueue->email_status == 'waiting')
+                                                        <a href="{{ route('emailqueue.updateStatus', [$emailQueue->email_queue_uuid]) }}" class="action-icon">
+                                                            <i class="uil uil-times-circle"
+                                                            data-bs-container="#tooltip-container-actions"
+                                                            data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                            title="Cancel"></i>
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('emailqueue.updateStatus', [$emailQueue->email_queue_uuid, 'waiting']) }}" class="action-icon">
+                                                            <i class="uil uil-redo"
+                                                            data-bs-container="#tooltip-container-actions"
+                                                            data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                            title="Retry"></i>
+                                                        </a>
+                                                    @endif
+                                                @endif
+                                                @if (userCheckPermission('email_queue_delete'))
+                                                    <a href="javascript:confirmDeleteAction('{{ route('emailqueue.destroy', ':id') }}','{{ $emailQueue->email_queue_uuid }}');"
+                                                    class="action-icon">
+                                                        <i class="mdi mdi-delete"
+                                                        data-bs-container="#tooltip-container-actions"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                        title="Delete"></i>
                                                     </a>
                                                 @endif
-                                            @endif
-                                            @if (userCheckPermission('email_queue_delete'))
-                                                <a href="javascript:confirmDeleteAction('{{ route('emailqueues.destroy', ':id') }}','{{ $emailQueue->email_queue_uuid }}');"
-                                                   class="action-icon">
-                                                    <i class="mdi mdi-delete"
-                                                       data-bs-container="#tooltip-container-actions"
-                                                       data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                       title="Delete"></i>
-                                                </a>
-                                            @endif
+                                            </div>
+                                            {{-- End of action buttons --}}
+                                            
                                         </td>
                                     </tr>
                                 @endforeach
