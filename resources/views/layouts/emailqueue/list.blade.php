@@ -62,7 +62,7 @@
                         </div>
                         <div class="row mt-3">
                             <div class="col-4">
-                                <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Email Queues</label>
+                                <label class="form-label">Showing {{ $emailQueues->firstItem() }} - {{ $emailQueues->lastItem() }} of {{ $emailQueues->total() }} results for Sent Emails</label>
                             </div>
                             <div class="col-8">
                                 <div class="float-end">
