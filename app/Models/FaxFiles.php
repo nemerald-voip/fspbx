@@ -34,6 +34,6 @@ class FaxFiles extends Model
 
     public function faxQueue()
     {
-        return $this->belongsTo(FaxQueues::class, 'fax_file_uuid', 'origination_uuid');
+        return $this->belongsTo(FaxQueues::class, 'fax_file_path', 'fax_file');
     }
 }
