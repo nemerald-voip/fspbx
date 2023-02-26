@@ -306,12 +306,13 @@ class ExtensionsController extends Controller
         $extension->forward_busy_enabled = "false";
         $extension->forward_no_answer_enabled = "false";
         $extension->forward_user_not_registered_enabled = "false";
-
+        $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))->get();
         //dd($extension->domain->users);
         return view('layouts.extensions.createOrUpdate')
-            -> with('extension',$extension)
-            -> with('destinations',$destinations)
-            -> with('domain_users',$extension->domain->users)
+            -> with('extension', $extension)
+            -> with('extensions', $extensions)
+            -> with('destinations', $destinations)
+            -> with('domain_users', $extension->domain->users)
             -> with ('moh', $moh)
             -> with ('recordings', $recordings)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
@@ -461,8 +462,11 @@ class ExtensionsController extends Controller
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
         }
-        $cache = new cache;
-        $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
+        if(isset($extension->extension)) {
+            $cache = new cache;
+            $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
+        }
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
@@ -574,11 +578,13 @@ class ExtensionsController extends Controller
             $extension->voicemail = new Voicemails();
         }
 
+        $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))->get();
         // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extension)
             -> with('domain_users',$extension->domain->users)
             -> with('domain_voicemails', $extension->domain->voicemails)
+            -> with('extensions', $extensions)
             -> with('extension_users',$extension->users())
             -> with('destinations',$destinations)
             -> with('vm_unavailable_file_exists', $vm_unavailable_file_exists)
@@ -771,8 +777,11 @@ class ExtensionsController extends Controller
         if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
             session_start();
         }
-        $cache = new cache();
-        $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
+        if (isset($extension->cache)) {
+            $cache = new cache();
+            $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
+        }
 
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
