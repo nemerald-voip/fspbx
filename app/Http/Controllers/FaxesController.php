@@ -166,14 +166,25 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $selectedStatus = $request->get('status');
+
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
 
         $domain_uuid = Session::get('domain_uuid');
-        $files = FaxFiles::where('fax_uuid', $request->id)
+        $files = FaxFiles::where('v_fax_files.fax_uuid', $request->id)
             ->where('fax_mode', 'tx')
-            ->where('domain_uuid', $domain_uuid)
-            ->orderBy('fax_date', 'desc')
+            ->where('v_fax_files.domain_uuid', $domain_uuid)
+            ->join('v_fax_queue','fax_file_path', '=', 'fax_file');
+
+        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
+            $files
+                ->where('fax_status', $selectedStatus);
+        }
+
+        $files = $files
+            ->orderBy('v_fax_files.fax_date', 'desc')
             ->paginate(10)
             ->onEachSide(1);
 
@@ -205,7 +216,7 @@ class FaxesController extends Controller
 
             $faxQueue = $file->faxQueue()->first();
             $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone);
-            if($faxQueue) {
+            if ($faxQueue) {
                 $file->fax_notify_date = Carbon::parse($faxQueue->fax_notify_date)->setTimezone($time_zone);
                 $file->fax_retry_date = Carbon::parse($faxQueue->fax_retry_date)->setTimezone($time_zone);
                 $file->fax_retry_count = $faxQueue->fax_retry_count;
@@ -214,6 +225,8 @@ class FaxesController extends Controller
         }
 
         $data['files'] = $files;
+        $data['statuses'] = $statuses;
+        $data['selectedStatus'] = $selectedStatus;
         $permissions['delete'] = userCheckPermission('fax_sent_delete');
         return view('layouts.fax.sent.list')
             ->with($data)
