@@ -170,7 +170,12 @@ class FaxesController extends Controller
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
 
         $domain_uuid = Session::get('domain_uuid');
-        $files = FaxFiles::where('fax_uuid', $request->id)->where('fax_mode', 'tx')->where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'desc')->get();
+        $files = FaxFiles::where('fax_uuid', $request->id)
+            ->where('fax_mode', 'tx')
+            ->where('domain_uuid', $domain_uuid)
+            ->orderBy('fax_date', 'desc')
+            ->paginate(10)
+            ->onEachSide(1);
 
         $time_zone = get_local_time_zone($domain_uuid);
         /** @var FaxFiles $file */
