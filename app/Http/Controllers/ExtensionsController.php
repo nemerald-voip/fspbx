@@ -578,7 +578,7 @@ class ExtensionsController extends Controller
             $extension->voicemail = new Voicemails();
         }
 
-        $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))->get();
+        $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))->whereNotIn('extension_uuid', [$extension->extension_uuid])->get();
         // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
             -> with('extension',$extension)
