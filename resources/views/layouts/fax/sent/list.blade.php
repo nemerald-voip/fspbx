@@ -16,6 +16,21 @@
     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
 @endsection
 
+@section('searchbar')
+    <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+        <div class="col-auto">
+            <div class="d-flex align-items-center">
+                <label for="status-select" class="me-2">Status</label>
+                <select class="form-select" name="status" id="status-select">
+                    @foreach ($statuses as $key => $status)
+                        <option value="{{ $key }}" @if ($selectedStatus == $key) selected @endif>{{ $status }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </form>
+@endsection
+
 @section('table-head')
     <tr>
         <th style="width: 20px;">
@@ -137,6 +152,16 @@
                 }
             }
         });
+
+        $('#status-select').on('change', function () {
+            $('#filterForm').submit();
+        })
+
+        $('#formFilter').on('submit', function () {
+            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+            location += '?page=1' + $('#filterForm').serialize();
+            window.location.href = location;
+        })
     });
 
     function checkAllbox(){
