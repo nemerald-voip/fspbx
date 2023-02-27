@@ -1296,9 +1296,9 @@
                                                     <div id="forward_all_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             @if(empty($extension->forward_all_destination))
-                                                                <p>No destination selected. <a href="#" onclick="openForwardDestinationModal('Select destination to forward all calls', 'all'); return false;">Click here to choose</a>.</p>
+                                                                <p><span id="forward_all_label">No destination selected.</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward all calls', 'all'); return false;">Edit</a>.</p>
                                                             @else
-                                                                <p>Selected destination: {{ $extension->forward_all_destination }} <a href="#" onclick="openForwardDestinationModal('Edit destination to forward all calls', 'all'); return false;" >Edit</a>.</p>
+                                                                <p><span id="forward_all_label">Selected destination: {{ $extension->forward_all_destination }}</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward all calls', 'all'); return false;" >Edit</a>.</p>
                                                             @endif
                                                             <div class="text-danger forward_all_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}" />
@@ -1324,9 +1324,9 @@
                                                     <div id="forward_busy_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             @if(empty($extension->forward_busy_destination))
-                                                                <p>No destination selected. <a href="#" onclick="openForwardDestinationModal('Select destination to forward call when user is busy', 'busy'); return false;">Click here to choose</a>.</p>
+                                                                <p><span id="forward_busy_label">No destination selected.</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when user is busy', 'busy'); return false;">Edit</a>.</p>
                                                             @else
-                                                                <p>Selected destination: {{ $extension->forward_busy_destination }} <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when user is busy', 'busy'); return false;" >Edit</a>.</p>
+                                                                <p><span id="forward_busy_label">Selected destination: {{ $extension->forward_busy_destination }}</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when user is busy', 'busy'); return false;" >Edit</a>.</p>
                                                             @endif
                                                             <div class="text-danger forward_busy_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}" />
@@ -1352,9 +1352,9 @@
                                                     <div id="forward_no_answer_phone_number" class="row @if($extension->forward_no_answer_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             @if(empty($extension->forward_no_answer_destination))
-                                                                <p>No destination selected. <a href="#" onclick="openForwardDestinationModal('Select destination to forward call when user does not answer', 'noanswer'); return false;">Click here to choose</a>.</p>
+                                                                <p><span id="forward_no_answer_label">No destination selected.</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when user does not answer', 'no_answer'); return false;">Edit</a>.</p>
                                                             @else
-                                                                <p>Selected destination: {{ $extension->forward_no_answer_destination }} <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when user does not answer', 'noanswer'); return false;" >Edit</a>.</p>
+                                                                <p><span id="forward_no_answer_label">Selected destination: {{ $extension->forward_no_answer_destination }}</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when user does not answer', 'no_answer'); return false;" >Edit</a>.</p>
                                                             @endif
                                                             <div class="text-danger forward_no_answer_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}" />
@@ -1380,9 +1380,9 @@
                                                     <div id="forward_user_not_registered_phone_number" class="row @if($extension->forward_user_not_registered_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             @if(empty($extension->forward_user_not_registered_destination))
-                                                                <p>No destination selected. <a href="#" onclick="openForwardDestinationModal('Select destination to forward call when internet connection is down', 'down'); return false;">Click here to choose</a>.</p>
+                                                                <p><span id="forward_down_label">No destination selected.</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when internet connection is down', 'down'); return false;">Edit</a>.</p>
                                                             @else
-                                                                <p>Selected destination: {{ $extension->forward_user_not_registered_destination }} <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when internet connection is down', 'down'); return false;" >Edit</a>.</p>
+                                                                <p><span id="forward_down_label">Selected destination: {{ $extension->forward_user_not_registered_destination }}</span> <a href="#" onclick="openForwardDestinationModal('Edit destination to forward call when internet connection is down', 'down'); return false;" >Edit</a>.</p>
                                                             @endif
                                                             <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}" />
@@ -2045,6 +2045,28 @@
             audioElement.pause();
         });
 
+        $('#ForwardDestinationModalAction').click(function() {
+            let modal = $('#ForwardDestinationModal');
+            let type = modal.find('#forward_destination_type').val()
+            let destnumber = modal.find('#number_destination_popup').val()
+            let destext = modal.find('#extension_destination_popup').val()
+            if (destnumber !== '') {
+                $('#forward_'+type+'_label').html('Selected destination: '+destnumber)
+                $('#forward_'+type+'_destination').val(destnumber)
+            } else if(destext !== '') {
+                $('#forward_'+type+'_label').html('Selected destination: '+destext)
+                $('#forward_'+type+'_destination').val(destext)
+            }
+            modal.modal('hide')
+        });
+
+        $('#extension_destination_popup').change(function() {
+            $('#number_destination_popup').val('')
+        })
+
+        $("#ForwardDestinationModal").on("hidden.bs.modal", function () {
+            $('#ForwardDestinationModal').find('#forward_destination_type').val('')
+        });
 
         $('#voicemail_enabled').change(function() {
             if(this.checked == true){
@@ -2099,6 +2121,8 @@
 
     function openForwardDestinationModal(title, section) {
         let modal = $('#ForwardDestinationModal'), number = ''
+        modal.find('#extension_destination_popup').val('').trigger('change');
+        modal.find('#number_destination_popup').val('')
         switch (section) {
             case 'all':
                 number = $('#forward_all_destination').val()
@@ -2106,19 +2130,30 @@
             case 'busy':
                 number = $('#forward_busy_destination').val()
                 break;
-            case 'noanswer':
+            case 'no_answer':
                 number = $('#forward_no_answer_destination').val()
                 break;
             case 'down':
                 number = $('#forward_user_not_registered_destination').val()
                 break;
+            default:
+                alert('Error');
+                return;
         }
+        modal.find('#forward_destination_type').val(section)
         if(number.length > 5) {
             modal.find('.nav-tabs a[href="#choose-phone-number"]').tab('show')
             modal.find('#number_destination_popup').val(number)
         } else {
             modal.find('.nav-tabs a[href="#choose-extension"]').tab('show')
-            modal.find('#extension_destination_popup').val(number).trigger('change')
+            //let regExp = new RegExp(`^${number} `,'ig');
+            $.each(modal.find('#extension_destination_popup').find('option'), (i, e) => {
+                if(e.value === number) {
+                    modal.find('#extension_destination_popup').val(e.value).trigger('change')
+                } else {
+                    //console.log('not found')
+                }
+            })
         }
         modal.find('.modal-title').text(title)
         modal.modal('show')

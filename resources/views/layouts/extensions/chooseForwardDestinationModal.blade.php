@@ -28,7 +28,7 @@
                                 <select id="extension_destination_popup" data-toggle="select2" title="Extensions list" name="extension_destination_popup">
                                     <option value="">Choose</option>
                                     @foreach ($extensions as $extension)
-                                        <option value="{{ $extension->extension_uuid }}">
+                                        <option value="{{ $extension->extension }}">
                                             {{ $extension->extension }} ({{ implode(" / ", [$extension->effective_caller_id_name, $extension->outbound_caller_id_number]) }})
                                         </option>
                                     @endforeach
@@ -47,7 +47,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Select</button>
+                <input id="forward_destination_type" type="hidden" name="type" value="" />
+                <button id="ForwardDestinationModalAction" type="button" class="btn btn-success">Select</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
