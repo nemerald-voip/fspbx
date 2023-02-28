@@ -168,6 +168,10 @@ class FaxesController extends Controller
 
         $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
         $selectedStatus = $request->get('status');
+        $searchString = $request->get('search');
+        $searchPeriod = $request->get('period');
+
+        //print_r($searchPeriod);
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
@@ -181,6 +185,21 @@ class FaxesController extends Controller
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $files
                 ->where('fax_status', $selectedStatus);
+        }
+
+        if ($searchString) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
+                $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $files->where(function ($query) use ($searchString) {
+                        $query
+                            ->orWhereLike('v_fax_files.fax_caller_id_number', $searchString);
+                    });
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the number as is
+            }
         }
 
         $files = $files
@@ -227,6 +246,7 @@ class FaxesController extends Controller
         $data['files'] = $files;
         $data['statuses'] = $statuses;
         $data['selectedStatus'] = $selectedStatus;
+        $data['searchString'] = $searchString;
         $permissions['delete'] = userCheckPermission('fax_sent_delete');
         return view('layouts.fax.sent.list')
             ->with($data)
