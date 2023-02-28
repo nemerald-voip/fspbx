@@ -19,6 +19,16 @@
 @section('searchbar')
     <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
         <div class="col-auto">
+            <label for="search" class="visually-hidden">Search</label>
+            <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
+        </div>
+        <div class="col-auto">
+            <div class="d-flex align-items-center">
+                <label for="status-select" class="me-2">Period</label>
+                <input type="text" style="width: 198px" class="form-control date" id="period" name="period" data-toggle="date-picker" data-time-picker="true" data-locale="{'format': 'DD/MM hh:mm A'}">
+            </div>
+        </div>
+        <div class="col-auto">
             <div class="d-flex align-items-center">
                 <label for="status-select" class="me-2">Status</label>
                 <select class="form-select" name="status" id="status-select">
@@ -28,6 +38,7 @@
                 </select>
             </div>
         </div>
+        <div class="d-none"><input type="submit" name="submit" value="Ok" /></div>
     </form>
 @endsection
 
@@ -53,80 +64,84 @@
 @endsection
 
 @section('table-body')
-    @foreach ($files as $key=>$file)
-        <tr id="id{{ $file->fax_file_uuid  }}">
-            <td>
-                @if ($permissions['delete'])
-                    <div class="form-check">
-                        <input type="checkbox" name="action_box[]" value="{{ $file->fax_file_uuid }}" class="form-check-input action_checkbox">
-                        <label class="form-check-label" >&nbsp;</label>
-                    </div>
-                @endif
-            </td>
-            <td>
-                @if($file->fax_caller_id_name!='')
-                    <span class="text-body fw-bold">
-                                                {{ $file->fax_caller_id_name ?? ''}}
-                                            </span>
-                    <br>
-                @endif
-                <span class="text-body fw-bold ">
-                                                {{ $file->fax_caller_id_number ?? '' }}
-                                            </span>
-            </td>
-            <td>
-                {{ $file->fax_destination }}
-            </td>
-            {{-- <td>
-                {{ $file->fax_file_type }}
-        </td> --}}
-            <td>
-                <span class="text-body text-nowrap">{{ $file->fax_date->format('D, M d, Y ')}}</span>
-                <span class="text-body text-nowrap">{{ $file->fax_date->format('h:i:s A') }}</span>
-            </td>
-            <td>
-                @if ($file->fax_status == "sent")
-                    <h5><span class="badge bg-success">Sent</span></h5>
-                @elseif($file->fax_status == "failed")
-                    <h5><span class="badge bg-danger">Failed</span></h5>
-                @else
-                    <h5><span class="badge bg-info">{{ ucfirst($file->fax_status) }}</span></h5>
-                @endif
-            </td>
-            <td>
-                @if ($file->fax_retry_date)
-                    <span class="text-body text-nowrap">{{ $file->fax_retry_date->format('D, M d, Y ') }}</span>
-                    <span class="text-body text-nowrap">{{ $file->fax_retry_date->format('h:i:s A') }}</span>
-                @endif
-            </td>
-            <td>
-                {{ $file->fax_retry_count }}
-            </td>
-            <td>
-                <div id="tooltip-container-actions">
-                    @if ($file->faxQueue)
-                        @if($file->faxQueue->fax_status == 'waiting' or $file->faxQueue->fax_status == 'trying')
-                            <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid]) }}" class="action-icon">
-                                <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
-                            </a>
-                        @else
-                            <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
-                                <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+    @if($files->count() == 0)
+        @include('layouts.partials.listing.norecordsfound', ['colspan' => 9])
+    @else
+        @foreach ($files as $key=>$file)
+            <tr id="id{{ $file->fax_file_uuid  }}">
+                <td>
+                    @if ($permissions['delete'])
+                        <div class="form-check">
+                            <input type="checkbox" name="action_box[]" value="{{ $file->fax_file_uuid }}" class="form-check-input action_checkbox">
+                            <label class="form-check-label" >&nbsp;</label>
+                        </div>
+                    @endif
+                </td>
+                <td>
+                    @if($file->fax_caller_id_name!='')
+                        <span class="text-body fw-bold">
+                                                    {{ $file->fax_caller_id_name ?? ''}}
+                                                </span>
+                        <br>
+                    @endif
+                    <span class="text-body fw-bold ">
+                                                    {{ $file->fax_caller_id_number ?? '' }}
+                                                </span>
+                </td>
+                <td>
+                    {{ $file->fax_destination }}
+                </td>
+                {{-- <td>
+                    {{ $file->fax_file_type }}
+            </td> --}}
+                <td>
+                    <span class="text-body text-nowrap">{{ $file->fax_date->format('D, M d, Y ')}}</span>
+                    <span class="text-body text-nowrap">{{ $file->fax_date->format('h:i:s A') }}</span>
+                </td>
+                <td>
+                    @if ($file->fax_status == "sent")
+                        <h5><span class="badge bg-success">Sent</span></h5>
+                    @elseif($file->fax_status == "failed")
+                        <h5><span class="badge bg-danger">Failed</span></h5>
+                    @else
+                        <h5><span class="badge bg-info">{{ ucfirst($file->fax_status) }}</span></h5>
+                    @endif
+                </td>
+                <td>
+                    @if ($file->fax_retry_date)
+                        <span class="text-body text-nowrap">{{ $file->fax_retry_date->format('D, M d, Y ') }}</span>
+                        <span class="text-body text-nowrap">{{ $file->fax_retry_date->format('h:i:s A') }}</span>
+                    @endif
+                </td>
+                <td>
+                    {{ $file->fax_retry_count }}
+                </td>
+                <td>
+                    <div id="tooltip-container-actions">
+                        @if ($file->faxQueue)
+                            @if($file->faxQueue->fax_status == 'waiting' or $file->faxQueue->fax_status == 'trying')
+                                <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid]) }}" class="action-icon">
+                                    <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
+                                </a>
+                            @else
+                                <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
+                                    <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+                                </a>
+                            @endif
+                        @endif
+                        <a href="{{ route('downloadSentFaxFile', $file->fax_file_uuid ) }}" class="action-icon">
+                            <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
+                        </a>
+                        @if ($permissions['delete'])
+                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="action-icon">
+                                <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                             </a>
                         @endif
-                    @endif
-                    <a href="{{ route('downloadSentFaxFile', $file->fax_file_uuid ) }}" class="action-icon">
-                        <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
-                    </a>
-                    @if ($permissions['delete'])
-                        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="action-icon">
-                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                        </a>
-                    @endif
-                </div>
-            </td>
-        </tr>
-    @endforeach
+                    </div>
+                </td>
+            </tr>
+        @endforeach
+    @endif
 @endsection
 
 @push('scripts')
@@ -157,11 +172,9 @@
             $('#filterForm').submit();
         })
 
-        $('#formFilter').on('submit', function () {
-            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
-            location += '?page=1' + $('#filterForm').serialize();
-            window.location.href = location;
-        })
+        $('#period').datepicker().on('apply.daterangepicker', function(e) {
+            $('#filterForm').submit();
+        });
     });
 
     function checkAllbox(){
@@ -245,8 +258,5 @@
         }});
         return has;
     }
-
-
-
 </script>
 @endpush
