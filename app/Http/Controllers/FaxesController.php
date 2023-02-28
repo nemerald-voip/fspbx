@@ -170,16 +170,25 @@ class FaxesController extends Controller
         $selectedStatus = $request->get('status');
         $searchString = $request->get('search');
         $searchPeriod = $request->get('period');
+        $period = [
+            Carbon::now()->startOfMonth()->subMonthsNoOverflow(),
+            Carbon::now()->endOfDay()
+        ];
 
-        //print_r($searchPeriod);
+        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+            $e = explode("-", $searchPeriod);
+            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
+            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
+        }
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
 
         $domain_uuid = Session::get('domain_uuid');
         $files = FaxFiles::where('v_fax_files.fax_uuid', $request->id)
-            ->where('fax_mode', 'tx')
+            ->where('v_fax_files.fax_mode', 'tx')
             ->where('v_fax_files.domain_uuid', $domain_uuid)
+            ->whereBetween('v_fax_files.fax_date', $period)
             ->join('v_fax_queue','fax_file_path', '=', 'fax_file');
 
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
@@ -192,10 +201,7 @@ class FaxesController extends Controller
                 $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
                 $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $files->where(function ($query) use ($searchString) {
-                        $query
-                            ->orWhereLike('v_fax_files.fax_caller_id_number', $searchString);
-                    });
+                    $files->where('v_fax_files.fax_caller_id_number', $searchString);
                 }
             } catch (NumberParseException $e) {
                 // Do nothing and leave the number as is
@@ -247,6 +253,9 @@ class FaxesController extends Controller
         $data['statuses'] = $statuses;
         $data['selectedStatus'] = $selectedStatus;
         $data['searchString'] = $searchString;
+        $data['searchPeriod'] = implode(" - ", $period);
+        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
+        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
         $permissions['delete'] = userCheckPermission('fax_sent_delete');
         return view('layouts.fax.sent.list')
             ->with($data)
