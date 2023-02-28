@@ -169,7 +169,9 @@
         });
 
         $('#status-select').on('change', function () {
-            $('#filterForm').submit();
+            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+            location += '?page=1&' + $('#filterForm').serialize();
+            window.location.href = location;
         })
 
         $('#period').daterangepicker({

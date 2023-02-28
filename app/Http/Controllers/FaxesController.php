@@ -253,9 +253,9 @@ class FaxesController extends Controller
         $data['statuses'] = $statuses;
         $data['selectedStatus'] = $selectedStatus;
         $data['searchString'] = $searchString;
-        $data['searchPeriod'] = implode(" - ", $period);
         $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
         $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
+        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
         $permissions['delete'] = userCheckPermission('fax_sent_delete');
         return view('layouts.fax.sent.list')
             ->with($data)
