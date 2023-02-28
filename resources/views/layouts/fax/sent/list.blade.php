@@ -25,7 +25,7 @@
         <div class="col-auto">
             <div class="d-flex align-items-center">
                 <label for="status-select" class="me-2">Period</label>
-                <input type="text" style="width: 198px" class="form-control date" id="period" name="period" data-toggle="date-picker" data-time-picker="true" data-locale="{'format': 'DD/MM hh:mm A'}">
+                <input type="text" style="width: 298px" class="form-control date" id="period" name="period" value="{{ $searchPeriod }}" />
             </div>
         </div>
         <div class="col-auto">
@@ -172,8 +172,17 @@
             $('#filterForm').submit();
         })
 
-        $('#period').datepicker().on('apply.daterangepicker', function(e) {
-            $('#filterForm').submit();
+        $('#period').daterangepicker({
+            timePicker: true,
+            startDate: '{{ $searchPeriodStart }}',//moment().subtract(1, 'months').startOf('month'),
+            endDate: '{{ $searchPeriodEnd }}',//moment().endOf('day'),
+            locale: {
+                format: 'MM/DD/YY hh:mm A'
+            }
+        }).on('apply.daterangepicker', function(e) {
+            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+            location += '?page=1&' + $('#filterForm').serialize();
+            window.location.href = location;
         });
     });
 
