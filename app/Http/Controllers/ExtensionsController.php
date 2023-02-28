@@ -957,7 +957,7 @@ class ExtensionsController extends Controller
                 $extension->forward_all_destination = '';
                 $extension->forward_all_enabled = 'false';
                 break;
-            case 'down':
+            case 'user_not_registered':
                 $extension->forward_user_not_registered_destination = '';
                 $extension->forward_user_not_registered_enabled = 'false';
                 break;

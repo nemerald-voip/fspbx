@@ -1399,13 +1399,13 @@
                                                         <div class="col-md-12">
                                                             <p>
                                                             @if(empty($extension->forward_user_not_registered_destination))
-                                                                <span id="forward_down_label">No destination selected.</span>
+                                                                <span id="forward_user_not_registered_label">No destination selected.</span>
                                                             @else
-                                                                <span id="forward_down_label">Selected destination: {{ $extension->forward_user_not_registered_destination }}</span>
+                                                                <span id="forward_user_not_registered_label">Selected destination: {{ $extension->forward_user_not_registered_destination }}</span>
                                                             @endif
-                                                                <span class="mx-2"><a href="javascript:openForwardDestinationModal('Edit destination to forward call when internet connection is down', 'down');">Edit</a></span>
+                                                                <span class="mx-2"><a href="javascript:openForwardDestinationModal('Edit destination to forward call when internet connection is down', 'user_not_registered');">Edit</a></span>
                                                             @if(!empty($extension->forward_user_not_registered_destination))
-                                                                <span class="clear-dest ml-2"><a href="javascript:confirmClearDestinationAction('{{ route('extensions.clear-callforward-destination', ['extension' => $extension->extension_uuid, 'type' => 'down']) }}', 'user_not_registered');">Clear destination</a></span>
+                                                                <span class="clear-dest ml-2"><a href="javascript:confirmClearDestinationAction('{{ route('extensions.clear-callforward-destination', ['extension' => $extension->extension_uuid, 'type' => 'user_not_registered']) }}', 'user_not_registered');">Clear destination</a></span>
                                                             @endif
                                                             </p>
                                                             <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
@@ -2161,7 +2161,7 @@
             case 'no_answer':
                 number = $('#forward_no_answer_destination').val()
                 break;
-            case 'down':
+            case 'user_not_registered':
                 number = $('#forward_user_not_registered_destination').val()
                 break;
             default:
