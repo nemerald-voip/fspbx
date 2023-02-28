@@ -17,7 +17,7 @@ if (!function_exists('userCheckPermission')){
     function userCheckPermission($permission){
         $list = Session::get('permissions', false);
         if (!$list) return false;
-        
+
         foreach ($list as $item){
             if ($item->permission_name == $permission){
                 return true;
@@ -46,7 +46,7 @@ if (!function_exists('getDefaultSetting')){
         $settings = Session::get('default_settings', false);
 
         if (!$settings) return null;
-        
+
         foreach ($settings as $setting){
             if ($setting['default_setting_category'] == $category &&
                 $setting['default_setting_subcategory'] == $subcategory){
@@ -165,7 +165,7 @@ if (!function_exists('appsStoreConnectionDetails')){
     }
 }
 
-// Get a list of all organizations via Ringotel API call 
+// Get a list of all organizations via Ringotel API call
 if (!function_exists('appsGetOrganizations')){
     function appsGetOrganizations() {
         $data = array(
@@ -190,7 +190,7 @@ if (!function_exists('appsGetOrganizations')){
     }
 }
 
-// Get a list of connections that belong to requested organization via Ringotel API call 
+// Get a list of connections that belong to requested organization via Ringotel API call
 if (!function_exists('appsGetConnections')){
     function appsGetConnections($org_id) {
         $data = array(
@@ -218,7 +218,7 @@ if (!function_exists('appsGetConnections')){
     }
 }
 
-// Delete connection that belong to requested organization via Ringotel API call 
+// Delete connection that belong to requested organization via Ringotel API call
 if (!function_exists('appsDeleteConnection')){
     function appsDeleteConnection($org_id, $conn_id) {
         $data = array(
@@ -243,7 +243,7 @@ if (!function_exists('appsDeleteConnection')){
                 ])->getData(true);
             })
             ->json();
-        
+
         return $response;
     }
 }
@@ -278,7 +278,7 @@ if (!function_exists('appsGetUsers')){
 }
 
 
-// Create mobile app user via Ringotel API call 
+// Create mobile app user via Ringotel API call
 if (!function_exists('appsCreateUser')){
     function appsCreateUser($mobile_app) {
 
@@ -309,13 +309,13 @@ if (!function_exists('appsCreateUser')){
                     'message' => 'Unable to create a new user']);
                 })
             ->json();
-        
+
         return $response;
     }
 }
 
 
-// Delete mobile app user via Ringotel API call 
+// Delete mobile app user via Ringotel API call
 if (!function_exists('appsDeleteUser')){
     function appsDeleteUser($org_id, $user_id) {
         $data = array(
@@ -340,12 +340,12 @@ if (!function_exists('appsDeleteUser')){
                 ])->getData(true);
             })
             ->json();
-        
+
         return $response;
     }
 }
 
-// Update mobile app user via Ringotel API call 
+// Update mobile app user via Ringotel API call
 if (!function_exists('appsUpdateUser')){
     function appsUpdateUser($mobile_app) {
         $data = array(
@@ -377,12 +377,12 @@ if (!function_exists('appsUpdateUser')){
                 ])->getData(true);
             })
             ->json();
-        
+
         return $response;
     }
 }
 
-// Reset password for mobile app user via Ringotel API call 
+// Reset password for mobile app user via Ringotel API call
 if (!function_exists('appsResetPassword')){
     function appsResetPassword($org_id, $user_id) {
         $data = array(
@@ -407,12 +407,12 @@ if (!function_exists('appsResetPassword')){
                 ])->getData(true);
             })
             ->json();
-        
+
         return $response;
     }
 }
 
-// Set Status for mobile app user via Ringotel API call 
+// Set Status for mobile app user via Ringotel API call
 if (!function_exists('appsSetStatus')){
     function appsSetStatus($org_id, $user_id, $status) {
         $data = array(
@@ -438,12 +438,12 @@ if (!function_exists('appsSetStatus')){
                 ])->getData(true);
             })
             ->json();
-        
+
         return $response;
-    }    
+    }
 }
 
-// Delete organizaion via Ringotel API call 
+// Delete organizaion via Ringotel API call
 if (!function_exists('appsDeleteOrganization')){
     function appsDeleteOrganization($org_id) {
         $data = array(
@@ -467,7 +467,7 @@ if (!function_exists('appsDeleteOrganization')){
                 ])->getData(true);
             })
             ->json();
- 
+
             Log::info($response);
 
             if (!isset($array) || empty($array)){
@@ -598,14 +598,14 @@ if (!function_exists('outbound_route_to_bridge')){
                             if (isset($matches[5])){
                                 $regex_match_5 = $matches[5][0];
                             }
-                        } 
+                        }
 
                     } elseif ($dialplan_detail['dialplan_detail_type'] == "\${toll_allow}") {
                         $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
                         preg_match($pattern, $channel_variables['toll_allow'], $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
-                        } 
+                        }
                         else {
                             $condition_match = 'true';
                         }
@@ -637,13 +637,13 @@ if (!function_exists('outbound_route_to_bridge')){
                             $x++;
                         }
                 }
-                
+
                 if ($dialplan["dialplan_continue"] == "false") {
                     break;
                 }
             }
         }
-        
+
         return $bridge_array;
     }
 }
@@ -760,7 +760,7 @@ if (!function_exists('get_registrations')){
                     //increment the array id
                         $id++;
                 }
-                
+
                 unset($array);
             }
         }
@@ -779,7 +779,7 @@ if (!function_exists('pr')){
 
 if (!function_exists('setDefaultS3')){
     function setDefaultS3($arr){
-       
+
     }
 }
 
@@ -827,7 +827,7 @@ function getS3Setting($domain_id){
         $config['endpoint']='';
         $config['region']='us-west-2';
         $config['use_path_style_endpoint']=false;
-       
+
         if(!blank($settings)){
             foreach($settings as $conf){
                 $config[getCredentialKey($conf->domain_setting_subcategory)]=trim($conf->domain_setting_value);
@@ -837,15 +837,15 @@ function getS3Setting($domain_id){
             $config=getDefaultS3Configuration();
             $config['type'] = 'default';
         }
-        
+
 
         $setting['default']='s3';
         $setting['disks']['s3']=$config;
-         
+
         return $config;
     }
 }
-    
+
 if (!function_exists('getDefaultS3Configuration')){
        function getDefaultS3Configuration(){
         $default_credentials=DefaultSettings::where('default_setting_category','aws')->get();
@@ -912,7 +912,7 @@ if (!function_exists('get_local_time_zone')){
         } else {
             $local_time_zone = $local_time_zone_setting->domain_setting_value;
         }
-        
+
         return $local_time_zone;
     }
 }
@@ -939,7 +939,7 @@ if (!function_exists('get_domain_setting')){
             ->first();
 
         if (isset($setting)) return $setting->default_setting_value;
-        
+
         //Otherwise
         return null;
 
@@ -954,7 +954,7 @@ if (!function_exists('get_fax_dial_plan')){
      *
      * @return string
      */
-    
+
      function get_fax_dial_plan($fax,$dialplan){
         $last_fax = "last_fax=\${caller_id_number}-\${strftime(%Y-%m-%d-%H-%M-%S)}";
         $rxfax_data=Storage::disk('fax')->path($fax->accountcode . '/' . $fax->fax_extension .  "/inbox/" . $fax->forward_prefix . '${last_fax}.tif');
@@ -969,7 +969,7 @@ if (!function_exists('get_fax_dial_plan')){
             ->where('default_setting_subcategory','variable')
             ->where('default_setting_enabled','true')
             ->get();
-            
+
             foreach($settings as $data) {
                 if (substr($data->default_setting_value,0,8) == "inbound:") {
                     $dialplan_xml .= "		<action application=\"set\" data=\"".substr($data->default_setting_value,8,strlen($data->default_setting_value))."\"/>\n";
@@ -987,5 +987,15 @@ if (!function_exists('get_fax_dial_plan')){
                 return $dialplan_xml;
 
 
+    }
+}
+
+if (!function_exists('format_phone_or_extension')){
+    /**
+     * @param $value
+     * @return string|int
+     */
+    function format_phone_or_extension($value) {
+        return (strlen($value) <= 5) ? $value : \Propaganistas\LaravelPhone\PhoneNumber::make($value, "US")->formatE164();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Validator;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Pagination\Paginator;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Sanctum\PersonalAccessToken;
 use Illuminate\Database\Eloquent\Builder;
+use Propaganistas\LaravelPhone\Validation\Phone;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -59,5 +61,12 @@ class AppServiceProvider extends ServiceProvider
             return $this->orWhere($column, 'ILIKE', '%'.$search.'%');
         });
 
+        Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
+            if(strlen($value) <= 5) {
+                return true;
+            } else {
+                return (new Phone())->validate($attribute, $value, $parameters, $validator);
+            }
+        });
     }
 }

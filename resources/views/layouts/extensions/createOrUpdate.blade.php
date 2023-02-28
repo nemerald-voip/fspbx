@@ -79,6 +79,23 @@
                                     </span>
                                 </a>
 
+                                <a class="nav-link" id="v-pills-callforward-tab" data-bs-toggle="pill" href="#v-pills-callforward" role="tab" aria-controls="v-pills-callforward"
+                                   aria-selected="false">
+                                    <i class="mdi mdi-settings-outline d-md-none d-block"></i>
+                                    <span class="d-none d-md-block">Call Forward
+                                        <span class="float-end text-end
+                                            forward_all_enabled_err_badge
+                                            forward_all_destination_err_badge
+                                            forward_busy_enabled_err_badge
+                                            forward_busy_destination_err_badge
+                                            forward_no_answer_enabled_err_badge
+                                            forward_no_answer_destination_err_badge
+                                            forward_user_not_registered_enabled_err_badge
+                                            forward_user_not_registered_destination_err_badge
+                                            " hidden><span class="badge badge-danger-lighten">error</span></span>
+                                    </span>
+                                </a>
+
                                 @if (userCheckPermission('voicemail_option_edit') && $extension->exists)
                                 <a class="nav-link" id="v-pills-voicemail-tab" data-bs-toggle="pill" href="#v-pills-voicemail" role="tab" aria-controls="v-pills-voicemail"
                                     aria-selected="false">
@@ -97,11 +114,13 @@
                                 </a>
                                 @endif
 
-                                <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
-                                   aria-selected="false">
-                                    <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
-                                    <span class="d-inline-block">Devices</span>
-                                </a>
+                                @if ($extension->exists)
+                                    <a class="nav-link" id="v-pills-device-tab" data-bs-toggle="pill" href="#v-pills-device" role="tab" aria-controls="v-pills-device"
+                                       aria-selected="false">
+                                        <i class="mdi mdi-devices-circle d-md-none d-inline-block"></i>
+                                        <span class="d-inline-block">Devices</span>
+                                    </a>
+                                @endif
 
                                 <a class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings"
                                    aria-selected="false">
@@ -129,17 +148,6 @@
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                 </a>
-
-                                <a class="nav-link" id="v-pills-callforward-tab" data-bs-toggle="pill" href="#v-pills-callforward" role="tab" aria-controls="v-pills-callforward"
-                                   aria-selected="false">
-                                    <i class="mdi mdi-settings-outline d-md-none d-block"></i>
-                                    <span class="d-none d-md-block">Call Forward
-                                        <span class="float-end text-end
-                                            call_forward_enabled_err_badge
-                                            " hidden><span class="badge badge-danger-lighten">error</span></span>
-                                    </span>
-                                </a>
-
                             </div>
                         </div> <!-- end col-->
 
@@ -1273,22 +1281,22 @@
                                         <div class="tab-pane show active">
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding Always</h4>
+                                                    <h4 class="mb-2 mt-0">Forward all calls</h4>
                                                     <p class="text-muted mb-2">Ensure customers and colleagues can reach you, regardless of your physical location. Automatically redirect all incoming calls to another phone number of your choice.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_all_enabled" value="false">
-                                                            <input type="checkbox" id="forward_all_enabled" value="true" name="forward_all_enabled" class="forward_checkbox"
+                                                            <input type="checkbox" id="forward_all_enabled" value="true" name="forward_all_enabled" data-option="forward_all" class="forward_checkbox"
                                                                    @if ($extension->forward_all_enabled == "true") checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_all_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_all_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_all_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
-                                                            <label for="forward_all_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}">
+                                                    <div id="forward_all_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <label for="forward_all_destination" class="form-label">Phone Number or Extension Id <span class="text-danger">*</span></label>
+                                                            <input class="form-control w-25" type="text" placeholder="Enter numbers" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}" />
                                                             <div class="text-danger forward_all_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1297,22 +1305,22 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding Busy</h4>
+                                                    <h4 class="mb-2 mt-0">When user is busy</h4>
                                                     <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if the phone is busy or Do Not Disturb is enabled.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_busy_enabled" value="false">
-                                                            <input type="checkbox" id="forward_busy_enabled" value="true" name="forward_busy_enabled" class="forward_checkbox"
+                                                            <input type="checkbox" id="forward_busy_enabled" value="true" name="forward_busy_enabled" data-option="forward_busy" class="forward_checkbox"
                                                                    @if ($extension->forward_busy_enabled == "true") checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_busy_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_busy_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_busy_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
-                                                            <label for="forward_busy_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}">
+                                                    <div id="forward_busy_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <label for="forward_busy_destination" class="form-label">Phone Number or Extension Id <span class="text-danger">*</span></label>
+                                                            <input class="form-control w-25" type="text" placeholder="Enter numbers" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}" />
                                                             <div class="text-danger forward_busy_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1321,22 +1329,22 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding No Answer</h4>
+                                                    <h4 class="mb-2 mt-0">When user does not answer the call</h4>
                                                     <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no answer.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_no_answer_enabled" value="false">
-                                                            <input type="checkbox" id="forward_no_answer_enabled" value="true" name="forward_no_answer_enabled" class="forward_checkbox"
+                                                            <input type="checkbox" id="forward_no_answer_enabled" value="true" name="forward_no_answer_enabled" data-option="forward_no_answer" class="forward_checkbox"
                                                                    @if ($extension->forward_no_answer_enabled == "true") checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_no_answer_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_no_answer_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_no_answer_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
-                                                            <label for="forward_no_answer_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}">
+                                                    <div id="forward_no_answer_phone_number" class="row @if($extension->forward_no_answer_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <label for="forward_no_answer_destination" class="form-label">Phone Number or Extension Id <span class="text-danger">*</span></label>
+                                                            <input class="form-control w-25" type="text" placeholder="Enter numbers" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}" />
                                                             <div class="text-danger forward_no_answer_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1345,22 +1353,22 @@
                                             <hr />
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Call Forwarding No User</h4>
+                                                    <h4 class="mb-2 mt-0">When internet connection is down</h4>
                                                     <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no user registered.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_user_not_registered_enabled" value="false">
-                                                            <input type="checkbox" id="forward_user_not_registered_enabled" value="true" name="forward_user_not_registered_enabled" class="forward_checkbox"
+                                                            <input type="checkbox" id="forward_user_not_registered_enabled" value="true" name="forward_user_not_registered_enabled" data-option="forward_user_not_registered" class="forward_checkbox"
                                                                    @if ($extension->forward_user_not_registered_enabled == "true") checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_user_not_registered_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_user_not_registered_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_user_not_registered_enabled_phone_number" class="row d-none">
-                                                        <div class="col-md-3">
-                                                            <label for="forward_user_not_registered_destination" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                                            <input class="form-control" type="text" placeholder="Enter phone number" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}">
+                                                    <div id="forward_user_not_registered_phone_number" class="row @if($extension->forward_user_not_registered_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <label for="forward_user_not_registered_destination" class="form-label">Phone Number or Extension Id <span class="text-danger">*</span></label>
+                                                            <input class="form-control w-25" type="text" placeholder="Enter numbers" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}" />
                                                             <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
                                                         </div>
                                                     </div>
@@ -1446,7 +1454,7 @@
                         <label class="col-form-label">Template</label>
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
                         <select name="device_template" class="form-select select2" id="template-select">
-                            @foreach($vendors as $vendor)
+                            @foreach($vendors ?? [] as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
                                         @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
@@ -1555,11 +1563,14 @@
 
         $(document).on('click', '.forward_checkbox', function (e) {
             var checkbox = $(this);
-            var cname = checkbox.attr('name');
+            var cname = checkbox.data('option');
+            console.log(cname)
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
+                $('#'+cname+'_destination').prop('disabled', false);
             } else {
                 $('#'+cname+'_phone_number').addClass('d-none');
+                $('#'+cname+'_destination').prop('disabled', true);
             }
         });
 
@@ -1622,61 +1633,63 @@
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
-        $(document).on('click', '.assign-device-btn', function(e){
-            e.preventDefault();
+        @if ($extension->exists)
+            $(document).on('click', '.assign-device-btn', function(e){
+                e.preventDefault();
 
-            var btn = $(this);
-            var data = {
-                'line_number' : btn.closest('.card').find('#line_number').val(),
-                'device_uuid' : btn.closest('.card').find('#device-select').val(),
-                '_token' : $('meta[name="csrf-token"]').attr('content')
-            }
-            console.log(btn.closest('.card').find('#device-select'));
-            console.log(data);
+                var btn = $(this);
+                var data = {
+                    'line_number' : btn.closest('.card').find('#line_number').val(),
+                    'device_uuid' : btn.closest('.card').find('#device-select').val(),
+                    '_token' : $('meta[name="csrf-token"]').attr('content')
+                }
+                console.log(btn.closest('.card').find('#device-select'));
+                console.log(data);
 
-            $.ajax({
-                url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
-                type: 'POST',
-                data: data,
-                dataType: 'json',
-                beforeSend: function() {
-                    //Reset error messages
-                    btn.closest('.card').find('.error').text('');
+                $.ajax({
+                    url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
+                    type: 'POST',
+                    data: data,
+                    dataType: 'json',
+                    beforeSend: function() {
+                        //Reset error messages
+                        btn.closest('.card').find('.error').text('');
 
-                    $('.error_message').text("");
-                    $('.btn').attr('disabled', true);
-                    $('.loading').show();
-                },
-                complete: function (xhr,status) {
-                    $('.btn').attr('disabled', false);
-                    $('.loading').hide();
-                },
-                success: function(result) {
-                    if(result.status == 'success') {
-                        $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
-                        location.reload();
-                    } else {
-                        $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
-                    }
-                },
-                error: function(error) {
-                    if(error.status == 422){
-                        if(error.responseJSON.errors) {
-                            $.each( error.responseJSON.errors, function( key, value ) {
-                                if (value != '') {
-                                    btn.closest('.card').find('#'+key+'_error').text(value);
-                                    printErrorMsg(value);
-                                }
-                            });
+                        $('.error_message').text("");
+                        $('.btn').attr('disabled', true);
+                        $('.loading').show();
+                    },
+                    complete: function (xhr,status) {
+                        $('.btn').attr('disabled', false);
+                        $('.loading').hide();
+                    },
+                    success: function(result) {
+                        if(result.status == 'success') {
+                            $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                            location.reload();
+                        } else {
+                            $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
+                        }
+                    },
+                    error: function(error) {
+                        if(error.status == 422){
+                            if(error.responseJSON.errors) {
+                                $.each( error.responseJSON.errors, function( key, value ) {
+                                    if (value != '') {
+                                        btn.closest('.card').find('#'+key+'_error').text(value);
+                                        printErrorMsg(value);
+                                    }
+                                });
+                            } else {
+                                printErrorMsg(error.responseJSON.message);
+                            }
                         } else {
                             printErrorMsg(error.responseJSON.message);
                         }
-                    } else {
-                        printErrorMsg(error.responseJSON.message);
                     }
-                }
-            });
-        })
+                });
+            })
+        @endif
 
         $('#deleteModal').on('shown.bs.modal', function (event) {
             var btn = $(event.relatedTarget)
