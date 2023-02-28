@@ -949,4 +949,39 @@ class ExtensionsController extends Controller
         ]);
     }
 
+    public function clearCallforwardDestination(Extensions $extension, Request $request)
+    {
+        $type = $request->route('type');
+        switch ($type) {
+            case 'all':
+                $extension->forward_all_destination = '';
+                $extension->forward_all_enabled = 'false';
+                break;
+            case 'down':
+                $extension->forward_user_not_registered_destination = '';
+                $extension->forward_user_not_registered_enabled = 'false';
+                break;
+            case 'no_answer':
+                $extension->forward_no_answer_destination = '';
+                $extension->forward_no_answer_enabled = 'false';
+                break;
+            case 'busy':
+                $extension->forward_busy_destination = '';
+                $extension->forward_busy_enabled = 'false';
+                break;
+            default:
+                return response()->json([
+                    'status' => 'alert',
+                    'message' => 'Unknown type.'
+                ]);
+        }
+
+        $extension->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'CallForward destination has been disabled successfully.'
+        ]);
+    }
+
 }
