@@ -44,6 +44,8 @@ Route::resource('extensions', 'ExtensionsController');
 Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
 Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
 Route::delete('/extensions/{extension}/unassign/{deviceLine}/device', [ExtensionsController::class, 'unAssignDevice'])->name('extensions.unassign-device');
+Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsController::class, 'clearCallforwardDestination'])->name('extensions.clear-callforward-destination');
+
 
 // Groups
 Route::resource('groups', 'GroupsController');
