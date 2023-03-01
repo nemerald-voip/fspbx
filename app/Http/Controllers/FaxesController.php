@@ -166,11 +166,52 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $selectedStatus = $request->get('status');
+        $searchString = $request->get('search');
+        $searchPeriod = $request->get('period');
+        $period = [
+            Carbon::now()->startOfMonth()->subMonthsNoOverflow(),
+            Carbon::now()->endOfDay()
+        ];
+
+        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+            $e = explode("-", $searchPeriod);
+            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
+            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
+        }
+
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
 
         $domain_uuid = Session::get('domain_uuid');
-        $files = FaxFiles::where('fax_uuid', $request->id)->where('fax_mode', 'tx')->where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'desc')->get();
+        $files = FaxFiles::where('v_fax_files.fax_uuid', $request->id)
+            ->where('v_fax_files.fax_mode', 'tx')
+            ->where('v_fax_files.domain_uuid', $domain_uuid)
+            ->whereBetween('v_fax_files.fax_date', $period)
+            ->join('v_fax_queue','fax_file_path', '=', 'fax_file');
+
+        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
+            $files
+                ->where('fax_status', $selectedStatus);
+        }
+
+        if ($searchString) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
+                $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $files->where('v_fax_files.fax_caller_id_number', $searchString);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the number as is
+            }
+        }
+
+        $files = $files
+            ->orderBy('v_fax_files.fax_date', 'desc')
+            ->paginate(10)
+            ->onEachSide(1);
 
         $time_zone = get_local_time_zone($domain_uuid);
         /** @var FaxFiles $file */
@@ -200,7 +241,7 @@ class FaxesController extends Controller
 
             $faxQueue = $file->faxQueue()->first();
             $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone);
-            if($faxQueue) {
+            if ($faxQueue) {
                 $file->fax_notify_date = Carbon::parse($faxQueue->fax_notify_date)->setTimezone($time_zone);
                 $file->fax_retry_date = Carbon::parse($faxQueue->fax_retry_date)->setTimezone($time_zone);
                 $file->fax_retry_count = $faxQueue->fax_retry_count;
@@ -209,6 +250,12 @@ class FaxesController extends Controller
         }
 
         $data['files'] = $files;
+        $data['statuses'] = $statuses;
+        $data['selectedStatus'] = $selectedStatus;
+        $data['searchString'] = $searchString;
+        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
+        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
+        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
         $permissions['delete'] = userCheckPermission('fax_sent_delete');
         return view('layouts.fax.sent.list')
             ->with($data)
@@ -891,6 +938,7 @@ class FaxesController extends Controller
     {
         $faxQueue->update([
             'fax_status' => $status,
+            'fax_retry_count' => 0
         ]);
 
         return redirect()->back();
