@@ -379,7 +379,7 @@
             .fail(function (jqXHR, testStatus, error) {
                     //console.log(error);
                     printErrorMsg(error);
-                    $('#loader').hide();
+                    $('.loading').hide();
 
             });
         });
@@ -638,7 +638,7 @@
         function appUserSetStatusAction(url,id=''){
             var mobile_app = $("#MobileAppModal").data("mobile_app");
             url = url.replace(':id', mobile_app.extension_uuid );
-            console.log (mobile_app.status);
+            // console.log (mobile_app.status);
             // Set new status
             if (!mobile_app.status || mobile_app.status==-1 ) {
                 mobile_app.status = 1;

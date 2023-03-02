@@ -248,7 +248,7 @@
                                         <div class="mb-3">
                                             <label for="connection_port" class="form-label">Port</label>
                                             <input class="form-control" type="text" id="connection_port" name="connection_port" 
-                                            value="{{ $conn_params['connection_port'] }}" required="" placeholder="">
+                                            value="" required="" placeholder="">
                                             <span class="help-block"><small>SIP Port</small></span>
         
                                         </div>
@@ -274,7 +274,7 @@
                                                 <div class="mb-3">        
                                                     <label for="connection_proxy_address" class="form-label">Address</label>
                                                     <input class="form-control" type="text" id="connection_proxy_address" name="connection_proxy_address" 
-                                                        value="{{ $conn_params['outbound_proxy'] ?? ''}}" placeholder="">
+                                                        value="" placeholder="">
                                                     <span class="help-block"><small>e.g. pbx.example.com:5070</small></span>
                                                 </div>
                                             </div>
@@ -631,11 +631,12 @@
                 type : "POST",
                 url : url,
                 data: $(this).serialize(),
-                headers: {
-                    'X-CSRF-Token': '{{ csrf_token() }}',
-                },
+                // headers: {
+                //     'X-CSRF-Token': '{{ csrf_token() }}',
+                // },
             })
             .done(function(response) {
+                // console.log(response);
                 // remove the spinner and change button to default
                 $("#appProvisionNextButton").html('');
                 $("#appProvisionNextButton").append('Next');
@@ -651,6 +652,9 @@
                     $('a[href*="connection-b2"] span').trigger("click");
                     // Assign Org ID to a hidden input
                     $("#org_id").val(response.org_id);
+                    // Assign other variables
+                    $("#connection_port").val(response.connection_port);
+                    $("#connection_proxy_address").val(response.outbound_proxy + ":" + response.connection_port);
                 }
             })
             .fail(function (response){
@@ -776,7 +780,7 @@
                 cache: false,
         })
         .done(function(response) {
-            console.log(response);
+            //console.log(response);
             if (response.error){
                 $('.loading').hide();
                 printErrorMsg(response.error);

@@ -373,7 +373,7 @@
                 
         })
         .done(function(response) {
-                console.log(response);
+                // console.log(response);
                 $('.loading').hide();
 
                 if (response.error){
