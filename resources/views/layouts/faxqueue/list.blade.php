@@ -33,6 +33,7 @@
             </div>
         </div>
         <input type="hidden" name="scope" value="{{ $selectedScope }}" />
+        <div class="d-none"><input type="submit" name="submit" value="Ok" /></div>
     </form>
 @endsection
 
@@ -62,9 +63,7 @@
 
 @section('table-body')
     @if($faxQueues->count() == 0)
-        <tr>
-            <td class="text-center" colspan="@if($selectedScope == 'global') 10 @else 9 @endif">No matching records found</td>
-        </tr>
+        @include('layouts.partials.listing.norecordsfound', ['colspan' => (($selectedScope == 'global') ? 10 : 9) ])
     @else
         @foreach ($faxQueues as $key => $faxQueue)
             <tr id="id{{ $faxQueue->fax_queue_uuid }}">
@@ -81,7 +80,7 @@
                 @endif
                 <td>
                     {{-- {{ $faxQueue->fax_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('D, M d, Y ')}}</span> 
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('D, M d, Y ')}}</span>
                     <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('h:i:s A') }}</span>
                 </td>
                 <td class="text-nowrap">
@@ -100,12 +99,12 @@
                 </td>
                 <td>
                     {{-- {{ $faxQueue->fax_notify_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span> 
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span>
                     <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('h:i:s A') }}</span>
                 </td>
                 <td>
                     {{-- {{ $faxQueue->fax_retry_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span> 
+                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span>
                     <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('h:i:s A') }}</span>
                 </td>
                 <td>
@@ -150,12 +149,6 @@
 
             $('#status-select').on('change', function () {
                 $('#filterForm').submit();
-            })
-
-            $('#formFilter').on('submit', function () {
-                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
-                location += '?page=1' + $('#filterForm').serialize();
-                window.location.href = location;
             })
         });
 

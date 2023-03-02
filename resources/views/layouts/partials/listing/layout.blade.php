@@ -3,7 +3,7 @@
 @section('content')
     <div class="container-fluid">
         <div class="row">
-            @include('layouts.partials.subheader', ['title' => $pageTitle])
+            @include('layouts.partials.subheader', ['title' => $pageTitle, 'breadcrumbs' => $breadcrumbs ?? []])
         </div>
         <div class="row">
             <div class="col-12">

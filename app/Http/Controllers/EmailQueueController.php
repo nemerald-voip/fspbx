@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EmailQueue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
 
 class EmailQueueController extends Controller
@@ -54,7 +55,17 @@ class EmailQueueController extends Controller
 
         $emailQueues = $emailQueuesQuery->orderBy('email_date', 'desc')->paginate()->onEachSide(1);
 
-        return view('layouts.emailQueues.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
+        $domain_uuid = Session::get('domain_uuid');
+        $time_zone = get_local_time_zone($domain_uuid);
+        foreach ($emailQueues as $emailQueue) {
+            // Try to convert the date to human redable format
+            $emailQueue->email_date = Carbon::parse($emailQueue->email_date)->setTimezone($time_zone);
+            // decode a MIME header field to its original character set and content. 
+            $emailQueue->email_subject = iconv_mime_decode($emailQueue->email_subject);
+        }
+
+
+        return view('layouts.emailqueue.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
     }
 
     public function delete($id)
