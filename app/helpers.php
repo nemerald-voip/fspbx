@@ -112,7 +112,10 @@ if (!function_exists('appsGetOrganizationDetails')){
             ->where ('domain_setting_enabled', true)
             ->first();
 
-        return $domainSettingsModel->domain_setting_value;
+        if (isset($domainSettingsModel)) {
+            return $domainSettingsModel->domain_setting_value;
+        }
+        return null;
     }
 }
 

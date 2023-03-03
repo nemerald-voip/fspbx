@@ -22,7 +22,7 @@
 
         dataObj = new Object();
         dataObj.url = url;
-        console.log(dataObj.url);
+        // console.log(dataObj.url);
 
         if(setting_id==''){
             setting_id=[];

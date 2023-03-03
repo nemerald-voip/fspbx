@@ -1610,7 +1610,7 @@
         $(document).on('click', '.forward_checkbox', function (e) {
             var checkbox = $(this);
             var cname = checkbox.data('option');
-            console.log(cname)
+            // console.log(cname)
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
                 $('#'+cname+'_destination').prop('disabled', false);
@@ -1689,8 +1689,8 @@
                     'device_uuid' : btn.closest('.card').find('#device-select').val(),
                     '_token' : $('meta[name="csrf-token"]').attr('content')
                 }
-                console.log(btn.closest('.card').find('#device-select'));
-                console.log(data);
+                // console.log(btn.closest('.card').find('#device-select'));
+                // console.log(data);
 
                 $.ajax({
                     url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
@@ -2075,9 +2075,9 @@
             let type = modal.find('#forward_destination_type').val()
             let destnumber = modal.find('#number_destination_popup').val()
             let destext = modal.find('#extension_destination_popup').val()
-            console.log(destnumber);
-            console.log(destext)
-            console.log(type)
+            // console.log(destnumber);
+            // console.log(destext)
+            // console.log(type)
             if (destnumber !== '') {
                 $('#forward_'+type+'_label').html('Selected destination: '+destnumber)
                 $('#forward_'+type+'_destination').val(destnumber)
@@ -2199,7 +2199,7 @@
 
         let url = $("#confirmClearDestinationModal").data("url")
         let type = $("#confirmClearDestinationModal").data("type")
-        console.log(type)
+        // console.log(type)
         $.ajax({
             type: 'POST',
             url: url,
