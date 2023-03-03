@@ -184,24 +184,21 @@ class FaxesController extends Controller
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
 
-        $domain_uuid = Session::get('domain_uuid');
-        $files = FaxFiles::where('v_fax_files.fax_uuid', $request->id)
-            ->where('v_fax_files.fax_mode', 'tx')
-            ->where('v_fax_files.domain_uuid', $domain_uuid)
-            ->whereBetween('v_fax_files.fax_date', $period)
-            ->join('v_fax_queue','fax_file_path', '=', 'fax_file');
+        $domainUuid = Session::get('domain_uuid');
 
+        $files = FaxQueues::where('fax_uuid', $request->id)
+            ->where('domain_uuid', $domainUuid)
+            ->whereBetween('fax_date', $period);
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $files
                 ->where('fax_status', $selectedStatus);
         }
-
         if ($searchString) {
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
                 $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $files->where('v_fax_files.fax_caller_id_number', $searchString);
+                    $files->where('fax_caller_id_number', $searchString);
                 }
             } catch (NumberParseException $e) {
                 // Do nothing and leave the number as is
@@ -209,44 +206,39 @@ class FaxesController extends Controller
         }
 
         $files = $files
-            ->orderBy('v_fax_files.fax_date', 'desc')
+            ->orderBy('fax_date', 'desc')
             ->paginate(10)
             ->onEachSide(1);
 
-        $time_zone = get_local_time_zone($domain_uuid);
+        $time_zone = get_local_time_zone($domainUuid);
         /** @var FaxFiles $file */
         foreach ($files as $file) {
 
             // Try to convert caller ID number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_caller_id_number, 'US');
+            //try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->getFaxFile()->fax_caller_id_number, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                     $file->fax_caller_id_number = $phoneNumberUtil
                         ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 }
-            } catch (NumberParseException $e) {
+            /*} catch (NumberParseException $e) {
                 // Do nothing and leave the number as is
-            }
+            }*/
 
             // Try to convert destination number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_destination, 'US');
+            //try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->getFaxFile()->fax_destination, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                     $file->fax_destination = $phoneNumberUtil
                         ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 }
-            } catch (NumberParseException $e) {
+            /*} catch (NumberParseException $e) {
                 // Do nothing and leave the number as is
-            }
+            }*/
 
-            $faxQueue = $file->faxQueue()->first();
-            $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone);
-            if ($faxQueue) {
-                $file->fax_notify_date = Carbon::parse($faxQueue->fax_notify_date)->setTimezone($time_zone);
-                $file->fax_retry_date = Carbon::parse($faxQueue->fax_retry_date)->setTimezone($time_zone);
-                $file->fax_retry_count = $faxQueue->fax_retry_count;
-                $file->fax_status = $faxQueue->fax_status;
-            }
+            $file->fax_date = Carbon::createFromTimestamp($file->getFaxFile()->fax_epoch, $time_zone);
+            $file->fax_notify_date = Carbon::parse($file->getFaxFile()->fax_notify_date)->setTimezone($time_zone);
+            $file->fax_retry_date = Carbon::parse($file->getFaxFile()->fax_retry_date)->setTimezone($time_zone);
         }
 
         $data['files'] = $files;

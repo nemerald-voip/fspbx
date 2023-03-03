@@ -20,8 +20,13 @@ class FaxQueues extends Model
 
     protected $guarded = ['fax_queue_uuid'];
 
-    public function faxFiles()
+    public function faxFile()
     {
-        return $this->hasOne(FaxFiles::class,  'fax_file_uuid', 'origination_uuid');
+        return $this->hasOne(FaxFiles::class,  'fax_file_path', 'fax_file');
+    }
+
+    public function getFaxFile()
+    {
+        return $this->faxFile()->firstOrFail();
     }
 }
