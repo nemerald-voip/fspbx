@@ -68,25 +68,20 @@
         @include('layouts.partials.listing.norecordsfound', ['colspan' => 9])
     @else
         @foreach ($files as $key=>$file)
-            <tr id="id{{ $file->fax_file_uuid  }}">
+            <tr id="id{{ $file->getFaxFile()->fax_file_uuid  }}">
                 <td>
                     @if ($permissions['delete'])
                         <div class="form-check">
-                            <input type="checkbox" name="action_box[]" value="{{ $file->fax_file_uuid }}" class="form-check-input action_checkbox">
+                            <input type="checkbox" name="action_box[]" value="{{ $file->getFaxFile()->fax_file_uuid }}" class="form-check-input action_checkbox">
                             <label class="form-check-label" >&nbsp;</label>
                         </div>
                     @endif
                 </td>
                 <td>
-                    @if($file->fax_caller_id_name!='')
-                        <span class="text-body fw-bold">
-                                                    {{ $file->fax_caller_id_name ?? ''}}
-                                                </span>
-                        <br>
+                    @if($file->getFaxFile()->fax_caller_id_name!='')
+                        <span class="text-body fw-bold">{{ $file->getFaxFile()->fax_caller_id_name ?? ''}}</span><br />
                     @endif
-                    <span class="text-body fw-bold ">
-                                                    {{ $file->fax_caller_id_number ?? '' }}
-                                                </span>
+                    <span class="text-body fw-bold ">{{ $file->fax_caller_id_number ?? '' }}</span>
                 </td>
                 <td>
                     {{ $file->fax_destination }}
@@ -118,22 +113,20 @@
                 </td>
                 <td>
                     <div id="tooltip-container-actions">
-                        @if ($file->faxQueue)
-                            @if($file->faxQueue->fax_status == 'waiting' or $file->faxQueue->fax_status == 'trying')
-                                <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid]) }}" class="action-icon">
-                                    <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
-                                </a>
-                            @else
-                                <a href="{{ route('faxes.file.updateStatus', [$file->faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
-                                    <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
-                                </a>
-                            @endif
+                        @if($file->fax_status == 'waiting' or $file->fax_status == 'trying')
+                            <a href="{{ route('faxes.file.updateStatus', [$file->fax_queue_uuid]) }}" class="action-icon">
+                                <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('faxes.file.updateStatus', [$file->fax_queue_uuid, 'waiting']) }}" class="action-icon">
+                                <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+                            </a>
                         @endif
-                        <a href="{{ route('downloadSentFaxFile', $file->fax_file_uuid ) }}" class="action-icon">
+                        <a href="{{ route('downloadSentFaxFile', $file->getFaxFile()->fax_file_uuid ) }}" class="action-icon">
                             <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
                         </a>
                         @if ($permissions['delete'])
-                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="action-icon">
+                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->getFaxFile()->fax_file_uuid }}');" class="action-icon">
                                 <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                             </a>
                         @endif
