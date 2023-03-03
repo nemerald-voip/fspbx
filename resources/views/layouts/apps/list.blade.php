@@ -226,7 +226,7 @@
                                             <select class="form-select mb-3" id="connection_protocol" name="connection_protocol">
                                                 <option value="sip">SIP (UDP)</option>
                                                 <option value="tcp">SIP (TCP)</option>
-                                                <option value="sips" selected>SIPS (TLS/SRTP)</option>
+                                                <option value="sips">SIPS (TLS/SRTP)</option>
                                             </select> 
         
                                         </div>
@@ -631,9 +631,6 @@
                 type : "POST",
                 url : url,
                 data: $(this).serialize(),
-                // headers: {
-                //     'X-CSRF-Token': '{{ csrf_token() }}',
-                // },
             })
             .done(function(response) {
                 // console.log(response);
@@ -655,6 +652,8 @@
                     // Assign other variables
                     $("#connection_port").val(response.connection_port);
                     $("#connection_proxy_address").val(response.outbound_proxy + ":" + response.connection_port);
+                    $('#connection_protocol').val(response.protocol); 
+                    $('#connection_protocol').trigger('change'); 
                 }
             })
             .fail(function (response){
