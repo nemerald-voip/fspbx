@@ -99,6 +99,7 @@ class AppsController extends Controller
             }
 
             // Get connection port from database or env file
+            $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
             $port = get_domain_setting('line_sip_port', $request->organization_uuid);
             $proxy = get_domain_setting('mobile_app_proxy', $request->organization_uuid);
 
@@ -108,6 +109,7 @@ class AppsController extends Controller
                 'organization_domain' => $request->organization_domain,
                 'organization_region' => $request->organization_region,
                 'org_id' => $response['result']['id'],
+                'protocol' => ($protocol) ? $protocol : "",
                 'connection_port' => ($port) ? $port : env("RINGOTEL_CONNECTION_PORT"),
                 'outbound_proxy' => ($proxy) ? $proxy : env("RINGOTEL_OUTBOUND_PROXY"),
                 'success' => [
