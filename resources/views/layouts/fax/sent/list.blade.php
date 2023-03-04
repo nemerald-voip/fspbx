@@ -68,23 +68,25 @@
         @include('layouts.partials.listing.norecordsfound', ['colspan' => 9])
     @else
         @foreach ($files as $key=>$file)
-            <tr id="id{{ $file->getFaxFile()->fax_file_uuid  }}">
+            <tr id="id{{ $file->fax_queue_uuid  }}">
                 <td>
                     @if ($permissions['delete'])
                         <div class="form-check">
-                            <input type="checkbox" name="action_box[]" value="{{ $file->getFaxFile()->fax_file_uuid }}" class="form-check-input action_checkbox">
+                            <input type="checkbox" name="action_box[]" value="{{ $file->fax_queue_uuid }}" class="form-check-input action_checkbox">
                             <label class="form-check-label" >&nbsp;</label>
                         </div>
                     @endif
                 </td>
                 <td>
-                    @if($file->getFaxFile()->fax_caller_id_name!='')
-                        <span class="text-body fw-bold">{{ $file->getFaxFile()->fax_caller_id_name ?? ''}}</span><br />
+                    @if($file->fax_caller_id_name!='')
+                        <span class="text-body fw-bold">{{ $file->fax_caller_id_name ?? ''}}</span><br />
                     @endif
-                    <span class="text-body fw-bold ">{{ $file->fax_caller_id_number ?? '' }}</span>
+                    <span class="text-body fw-bold ">{{ phone($file->fax_caller_id_number, "US", $national_phone_number_format) }}</span>
                 </td>
                 <td>
-                    {{ $file->fax_destination }}
+                    @if($file->getFaxFile())
+                        {{ phone($file->getFaxFile()->fax_destination, "US", $national_phone_number_format) }}
+                    @endif
                 </td>
                 {{-- <td>
                     {{ $file->fax_file_type }}
@@ -122,11 +124,13 @@
                                 <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
                             </a>
                         @endif
-                        <a href="{{ route('downloadSentFaxFile', $file->getFaxFile()->fax_file_uuid ) }}" class="action-icon">
-                            <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
-                        </a>
+                        @if($file->getFaxFile())
+                            <a href="{{ route('downloadSentFaxFile', $file->getFaxFile()->fax_file_uuid ) }}" class="action-icon">
+                                <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
+                            </a>
+                        @endif
                         @if ($permissions['delete'])
-                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->getFaxFile()->fax_file_uuid }}');" class="action-icon">
+                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_queue_uuid }}');" class="action-icon">
                                 <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                             </a>
                         @endif
