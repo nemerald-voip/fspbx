@@ -181,9 +181,6 @@ class FaxesController extends Controller
             $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
         }
 
-        //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-
         $domainUuid = Session::get('domain_uuid');
 
         $files = FaxQueues::where('fax_uuid', $request->id)
@@ -195,6 +192,8 @@ class FaxesController extends Controller
         }
         if ($searchString) {
             try {
+                //Get libphonenumber object
+                $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
                 $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
                 $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
@@ -210,35 +209,12 @@ class FaxesController extends Controller
             ->paginate(10)
             ->onEachSide(1);
 
-        $time_zone = get_local_time_zone($domainUuid);
-        /** @var FaxFiles $file */
+        $timeZone = get_local_time_zone($domainUuid);
+        /** @var FaxQueues $file */
         foreach ($files as $file) {
-
-            // Try to convert caller ID number to National format
-            //try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->getFaxFile()->fax_caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            /*} catch (NumberParseException $e) {
-                // Do nothing and leave the number as is
-            }*/
-
-            // Try to convert destination number to National format
-            //try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->getFaxFile()->fax_destination, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax_destination = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            /*} catch (NumberParseException $e) {
-                // Do nothing and leave the number as is
-            }*/
-
-            $file->fax_date = Carbon::createFromTimestamp($file->getFaxFile()->fax_epoch, $time_zone);
-            $file->fax_notify_date = Carbon::parse($file->getFaxFile()->fax_notify_date)->setTimezone($time_zone);
-            $file->fax_retry_date = Carbon::parse($file->getFaxFile()->fax_retry_date)->setTimezone($time_zone);
+            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
+            $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
+            $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
         }
 
         $data['files'] = $files;
@@ -248,6 +224,7 @@ class FaxesController extends Controller
         $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
         $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
         $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
+        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
         $permissions['delete'] = userCheckPermission('fax_sent_delete');
         return view('layouts.fax.sent.list')
             ->with($data)
@@ -742,9 +719,15 @@ class FaxesController extends Controller
 
     public function deleteFaxFile($id)
     {
-        $fax = FaxFiles::findOrFail($id);
+        /** @var FaxQueues $fax */
+        $fax = FaxQueues::findOrFail($id);
 
         if (isset($fax)) {
+            if($fax->getFaxFile()) {
+                $file = $fax->getFaxFile();
+                $file->delete();
+            }
+
             $deleted = $fax->delete();
             if ($deleted) {
                 return response()->json([

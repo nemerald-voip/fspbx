@@ -27,6 +27,6 @@ class FaxQueues extends Model
 
     public function getFaxFile()
     {
-        return $this->faxFile()->firstOrFail();
+        return $this->faxFile()->first();
     }
 }
