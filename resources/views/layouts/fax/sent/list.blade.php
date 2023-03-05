@@ -20,7 +20,10 @@
     <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
         <div class="col-auto">
             <label for="search" class="visually-hidden">Search</label>
-            <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
+            <div class="input-group input-group-merge">
+                <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search..." />
+                <input type="button" class="btn btn-light" name="clear" id="clearSearch" value="Clear" />
+            </div>
         </div>
         <div class="col-auto">
             <div class="d-flex align-items-center">
@@ -154,6 +157,13 @@
                 $('.action_checkbox').prop('checked',false);
             }
         });
+
+        $('#clearSearch').on('click', function () {
+            $('#search').val('');
+            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+            location += '?page=1&' + $('#filterForm').serialize();
+            window.location.href = location;
+        })
 
         $('.action_checkbox').on('change',function(){
             if(!$(this).is(':checked')){
