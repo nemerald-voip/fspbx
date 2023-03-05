@@ -195,12 +195,12 @@ class FaxesController extends Controller
                 //Get libphonenumber object
                 $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
                 $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
-                $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $files->where('fax_caller_id_number', $searchString);
+                    $files->andWhereLike('fax_caller_id_number', $searchString);
                 }
             } catch (NumberParseException $e) {
-                // Do nothing and leave the number as is
+                $files->andWhereLike('fax_caller_id_number', $searchString);
             }
         }
 
