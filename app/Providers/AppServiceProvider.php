@@ -61,6 +61,10 @@ class AppServiceProvider extends ServiceProvider
             return $this->orWhere($column, 'ILIKE', '%'.$search.'%');
         });
 
+        Builder::macro('andWhereLike', function(string $column, string $search) {
+            return $this->where($column, 'ILIKE', '%'.$search.'%');
+        });
+
         Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
             if(strlen($value) <= 5) {
                 return true;

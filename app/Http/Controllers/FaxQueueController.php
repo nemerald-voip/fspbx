@@ -6,6 +6,7 @@ use App\Models\FaxQueues;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
+use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
 
 class FaxQueueController extends Controller
@@ -45,8 +46,18 @@ class FaxQueueController extends Controller
         if ($searchString) {
             $faxQueues->where(function ($query) use ($searchString) {
                 $query
-                    ->orWhereLike('fax_email_address', strtolower($searchString))
-                    ->orWhereLike('fax_caller_id_number', strtolower($searchString));
+                    ->orWhereLike('fax_email_address', strtolower($searchString));
+                try {
+                    //Get libphonenumber object
+                    $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                    $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
+                    $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
+                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                        $query->orWhereLike('fax_caller_id_number', $searchString);
+                    }
+                } catch (NumberParseException $e) {
+                    $query->orWhereLike('fax_caller_id_number', $searchString);
+                }
             });
         }
         $faxQueues = $faxQueues->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
