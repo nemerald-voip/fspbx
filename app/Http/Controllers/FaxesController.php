@@ -171,7 +171,7 @@ class FaxesController extends Controller
         $searchString = $request->get('search');
         $searchPeriod = $request->get('period');
         $period = [
-            Carbon::now()->startOfMonth()->subMonthsNoOverflow(),
+            Carbon::now()->startOfDay()->subDays(30),
             Carbon::now()->endOfDay()
         ];
 
