@@ -407,6 +407,9 @@ class FaxesController extends Controller
         $fax->dialplan_uuid = $dialplan->dialplan_uuid;
         $fax->save();
 
+        // Create all fax directories
+        $fax->CreateFaxDirectories();
+
 
         // If allowed email list is submitted save it to database
         if (isset($attributes['email_list'])) {
