@@ -170,4 +170,14 @@ class Extensions extends Model
     {
         return $this->belongsToMany(Device::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')->withPivot('user_id', 'line_number', 'device_line_uuid');
     }
+
+    public function followMe()
+    {
+        return $this->belongsTo(FollowMe::class,'follow_me_uuid','follow_me_uuid');
+    }
+
+    public function getFollowMeDestinations()
+    {
+        return $this->belongsTo(FollowMeDestinations::class,'follow_me_uuid','follow_me_uuid')->orderBy('follow_me_order')->get();
+    }
 }
