@@ -400,7 +400,6 @@ class Faxes extends Model
                 }            
             }
 
-            log::alert($this->fax_dir);
             // Set variables for all directories
             $this->dir_fax_inbox = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/inbox';
             $this->dir_fax_sent = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/sent';
