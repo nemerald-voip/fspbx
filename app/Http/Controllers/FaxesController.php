@@ -408,7 +408,55 @@ class FaxesController extends Controller
         $fax->save();
 
         // Create all fax directories
-        $fax->CreateFaxDirectories();
+        try {
+
+            $settings= DefaultSettings::where('default_setting_category','switch')
+            ->get([
+                'default_setting_subcategory',
+                'default_setting_name',
+                'default_setting_value',
+            ]);
+    
+            foreach ($settings as $setting) {
+                if ($setting->default_setting_subcategory == 'storage') {
+                    $fax_dir = $setting->default_setting_value . '/fax/' . $domain_name;
+                    $stor_dir = $setting->default_setting_value;
+                }            
+            }
+
+            // Set variables for all directories
+            $dir_fax_inbox = $fax_dir.'/'.$fax->fax_extension.'/inbox';
+            $dir_fax_sent = $fax_dir.'/'.$fax->fax_extension.'/sent';
+            $dir_fax_temp = $fax_dir.'/'.$fax->fax_extension.'/temp';
+    
+            //make sure the directories exist
+            if (!is_dir($stor_dir)) {
+                mkdir($stor_dir, 0770);
+            }
+            if (!is_dir($stor_dir.'/fax')) {
+                mkdir($stor_dir.'/fax', 0770);
+            }
+            if (!is_dir($stor_dir.'/fax/'.$domain_name)) {
+                mkdir($stor_dir.'/fax/'.$domain_name, 0770);
+            }
+            if (!is_dir($fax_dir.'/'.$fax->fax_extension)) {
+                mkdir($fax_dir.'/'.$fax->fax_extension, 0770);
+            }
+            if (!is_dir($dir_fax_inbox)) {
+                mkdir($dir_fax_inbox, 0770);
+            }
+            if (!is_dir($dir_fax_sent)) {
+                mkdir($dir_fax_sent, 0770);
+            }
+            if (!is_dir($dir_fax_temp)) {
+                mkdir($dir_fax_temp, 0770);
+            }
+        } catch (Throwable $e) {
+            $this->message .= $e->getMessage() . " at ". $e->getFile() . ":". $e->getLine().'\n';
+            Log::alert($this->message);
+            SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+            //Process errors
+        }
 
 
         // If allowed email list is submitted save it to database
