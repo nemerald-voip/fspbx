@@ -402,9 +402,9 @@ class Faxes extends Model
 
             log::alert($this->fax_dir);
             // Set variables for all directories
-            $this->dir_fax_inbox = $this->fax_dir.'/'.$this->fax_extension.'/inbox';
-            $this->dir_fax_sent = $this->fax_dir.'/'.$this->fax_extension.'/sent';
-            $this->dir_fax_temp = $this->fax_dir.'/'.$this->fax_extension.'/temp';
+            $this->dir_fax_inbox = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/inbox';
+            $this->dir_fax_sent = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/sent';
+            $this->dir_fax_temp = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/temp';
     
             //make sure the directories exist
             if (!is_dir($this->stor_dir)) {
@@ -416,8 +416,8 @@ class Faxes extends Model
             if (!is_dir($this->stor_dir.'/fax/'.$this->domain->domain_name)) {
                 mkdir($this->stor_dir.'/fax/'.$this->domain->domain_name, 0770);
             }
-            if (!is_dir($this->fax_dir.'/'.$this->fax_extension)) {
-                mkdir($this->fax_dir.'/'.$this->fax_extension, 0770);
+            if (!is_dir($this->fax_dir.'/'.$this->fax_extension->fax_extension)) {
+                mkdir($this->fax_dir.'/'.$this->fax_extension->fax_extension, 0770);
             }
             if (!is_dir($this->dir_fax_inbox)) {
                 mkdir($this->dir_fax_inbox, 0770);
