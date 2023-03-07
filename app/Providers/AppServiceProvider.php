@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Extensions;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Pagination\Paginator;
@@ -66,10 +69,18 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
+            $phoneFormat = 'US';
+            if(isset($parameters[0])) {
+                $phoneFormat = $parameters[0];
+            }
             if(strlen($value) <= 5) {
-                return true;
+                $builder = Extensions::where('extension', $value);
+                if(isset($parameters[1])) {
+                    $builder->where('domain_uuid', $parameters[1]);
+                }
+                return (bool)$builder->first();
             } else {
-                return (new Phone())->validate($attribute, $value, $parameters, $validator);
+                return (new Phone())->validate($attribute, $value, [$phoneFormat], $validator);
             }
         });
     }

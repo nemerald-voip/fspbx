@@ -142,6 +142,7 @@
         var error_message = "<ul>";
         if (Array.isArray(msg) || typeof msg === 'object') {
             $.each( msg, function( key, value ) {
+                key = key.replace(/\./g,'_')
                 //console.log(key);
                 $('.'+key+'_err').text(value);
                 $('.'+key+'_err_badge').attr("hidden", false);

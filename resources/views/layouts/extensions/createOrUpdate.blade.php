@@ -1438,7 +1438,9 @@
                                                                 <div class="col-2">
                                                                     <div class="text-sm-end">
                                                                         <input type="hidden" name="follow_me_ignore_busy" value="false">
-                                                                        <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" checked="" data-switch="primary">
+                                                                        <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
+                                                                               @if ($extension->follow_me_ignore_busy == "true") checked @endif
+                                                                               data-switch="primary">
                                                                         <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
                                                                     </div>
                                                                 </div>
@@ -1460,9 +1462,12 @@
                                                                         <tr id="row{{$destination->follow_me_destination_uuid}}">
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
-                                                                            <td><input type="text" id="destination_target_{{$destination->follow_me_destination_uuid}}" class="form-control" name="destination[{{$destination->follow_me_destination_uuid}}][target]" placeholder="Enter extension or phone number" value="{{$destination->follow_me_destination}}" /></td>
                                                                             <td>
-                                                                                <select id="destination_delay_{{$destination->follow_me_destination_uuid}}" name="destination[{{$destination->follow_me_destination_uuid}}][delay]">
+                                                                                <input type="text" id="destination_target_{{$destination->follow_me_destination_uuid}}" class="form-control" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target]" placeholder="Enter extension or phone number" value="{{$destination->follow_me_destination}}" />
+                                                                                <div class="text-danger follow_me_destinations_{{$destination->follow_me_destination_uuid}}_target_err error_message"></div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <select id="destination_delay_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][delay]">
                                                                                     @for ($i = 1; $i < 21; $i++)
                                                                                         <option value="{{ $i * 5 }}" @if ($destination->follow_me_delay == $i*5) selected @endif>
                                                                                             {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
@@ -1471,7 +1476,7 @@
                                                                                 </select>
                                                                             </td>
                                                                             <td>
-                                                                                <select id="destination_timeout_{{$destination->follow_me_destination_uuid}}" name="destination[{{$destination->follow_me_destination_uuid}}][timeout]">
+                                                                                <select id="destination_timeout_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][timeout]">
                                                                                     @for ($i = 1; $i < 21; $i++)
                                                                                         <option value="{{ $i * 5 }}" @if ($destination->follow_me_timout == $i*5) selected @endif>
                                                                                             {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
@@ -1480,8 +1485,8 @@
                                                                                 </select>
                                                                             </td>
                                                                             <td>
-                                                                                <input type="hidden" name="destination[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
-                                                                                <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="destination[{{$destination->follow_me_destination_uuid}}][prompt]"
+                                                                                <input type="hidden" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
+                                                                                <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]"
                                                                                        @if ($extension->follow_me_enabled == "true") checked @endif
                                                                                        data-switch="primary"/>
                                                                                 <label for="destination_prompt_{{$destination->follow_me_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
@@ -2487,15 +2492,16 @@
 
         let newRow = `
         <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
-        <td><input type="text" id="destination_target___NEWROWID__" class="form-control" name="destination[newrow__NEWROWID__][target]" placeholder="Enter extension or phone number" value="" /></td>
-        <td><select id="destination_delay___NEWROWID__" name="destination[newrow__NEWROWID__][delay]">
+        <td><input type="text" id="destination_target___NEWROWID__" class="form-control" name="follow_me_destinations[newrow__NEWROWID__][target]" placeholder="Enter extension or phone number" value="" />
+        <div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
+        <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
         @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 1) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
-        <td><select id="destination_timeout___NEWROWID__" name="destination[newrow__NEWROWID__][timeout]">
+        <td><select id="destination_timeout___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][timeout]">
         @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 1) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td><td>
-        <input type="hidden" name="destination[newrow__NEWROWID__][prompt]" value="false">
-        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="destination[newrow__NEWROWID__][prompt]" data-option="follow_me_enabled" class="forward_checkbox" data-switch="primary"/>
+        <input type="hidden" name="follow_me_destinations[newrow__NEWROWID__][prompt]" value="false">
+        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="follow_me_destinations[newrow__NEWROWID__][prompt]" data-option="follow_me_enabled" class="forward_checkbox" data-switch="primary"/>
         <label for="destination_prompt___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
         </td><td><div id="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>

@@ -6,6 +6,8 @@ use App\Http\Requests\AssignDeviceRequest;
 use App\Models\Device;
 use App\Models\DeviceLines;
 use App\Models\DeviceVendor;
+use App\Models\FollowMe;
+use App\Models\FollowMeDestinations;
 use cache;
 use Propaganistas\LaravelPhone\Validation\Phone;
 use Throwable;
@@ -694,8 +696,19 @@ class ExtensionsController extends Controller
             'forward_user_not_registered_enabled' => 'in:true,false',
             'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|nullable|PhoneOrExtension:US',
 
+            'follow_me_enabled' => 'in:true,false',
+            'follow_me_ignore_busy' => 'in:true,false',
+            'follow_me_destinations'  => 'nullable|array',
+            'follow_me_destinations.*.target'  => [
+                'nullable',
+                'PhoneOrExtension:US,'.Session::get('domain_uuid')
+            ],
+            'follow_me_destinations.*.delay'  => 'numeric',
+            'follow_me_destinations.*.timeout'  => 'numeric',
+            'follow_me_destinations.*.prompt'  => 'in:true,false'
         ], [
-            'phone_or_extension' => 'Should be valid US phone number or extension id'
+            'phone_or_extension' => 'Should be valid US phone number or extension id',
+            'exists' => 'Extension is not found'
         ], $attributes);
 
         if ($validator->fails()) {
@@ -704,6 +717,7 @@ class ExtensionsController extends Controller
 
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
+
         $attributes['effective_caller_id_name'] = $attributes['directory_first_name'] . " " . $attributes['directory_last_name'];
         $attributes['effective_caller_id_number'] = $attributes['extension'];
         if (isset($attributes['directory_visible']) && $attributes['directory_visible']== "on")  $attributes['directory_visible'] = "true";
@@ -753,6 +767,31 @@ class ExtensionsController extends Controller
                 $destination->voicemail_uuid_copy=$voicemail_destination;
                 $destination->domain_uuid = Session::get('domain_uuid');
                 $extension->voicemail->voicemail_destinations()->save($destination);
+            }
+        }
+
+        // Update Sequential destinations
+        if($followMe = $extension->followMe()->first()) {
+            $followMe->delete();
+        }
+
+        foreach($extension->getFollowMeDestinations() as $followMeDest) {
+            $followMeDest->delete();
+        }
+
+        if (isset($attributes['follow_me_destinations'])) {
+            $followMe = new FollowMe();
+            $followMe->domain_uuid = Session::get('domain_uuid');
+            $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
+            $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
+            $extension->followMe()->save($followMe);
+            foreach($attributes['follow_me_destinations'] as $destination){
+                $followMeDest = new FollowMeDestinations();
+                $followMeDest->follow_me_destination = $destination['target'];
+                $followMeDest->follow_me_delay = $destination['delay'];
+                $followMeDest->follow_me_timeout = $destination['timeout'];
+                $followMeDest->follow_me_prompt = $destination['prompt'];
+                $followMe->followMeDestinations()->save($followMeDest);
             }
         }
 
