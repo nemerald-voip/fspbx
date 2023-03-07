@@ -481,7 +481,11 @@ class ExtensionsController extends Controller
                 $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
-                $followMeDest->follow_me_prompt = $destination['prompt'];
+                if($destination['prompt'] == 'true') {
+                    $followMeDest->follow_me_prompt = 1;
+                } else {
+                    $followMeDest->follow_me_prompt = null;
+                }
                 $followMeDest->follow_me_order = $i;
                 $followMe->followMeDestinations()->save($followMeDest);
                 $i++;
@@ -825,7 +829,11 @@ class ExtensionsController extends Controller
                 $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
-                $followMeDest->follow_me_prompt = $destination['prompt'];
+                if($destination['prompt'] == 'true') {
+                    $followMeDest->follow_me_prompt = 1;
+                } else {
+                    $followMeDest->follow_me_prompt = null;
+                }
                 $followMeDest->follow_me_order = $i;
                 $followMe->followMeDestinations()->save($followMeDest);
                 $i++;
