@@ -1438,7 +1438,7 @@
                                                                 <div class="col-2">
                                                                     <input type="hidden" name="follow_me_ignore_busy" value="false">
                                                                     <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
-                                                                           @if ($extension->follow_me_ignore_busy == "true") checked @endif
+                                                                           @if ($extension->getFollowMe() && $extension->getFollowMe()->follow_me_ignore_busy == "true") checked @endif
                                                                            data-switch="primary">
                                                                     <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
@@ -1502,7 +1502,7 @@
                                                                     @endforeach
                                                                     </tbody>
                                                                 </table>
-                                                                <div id="addDestinationBar" class="my-1">
+                                                                <div id="addDestinationBar" class="my-1" @if($extension->getFollowMeDestinations()->count() >= 10) style="display: none;" @endif>
                                                                     <a href="javascript:addDestinationAction(this);" class="btn btn-success">
                                                                         <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
                                                                     </a>
