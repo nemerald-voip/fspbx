@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 class FaxesController extends Controller
 {
@@ -74,7 +75,7 @@ class FaxesController extends Controller
         $domain_uuid = Session::get('domain_uuid');
 
         //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
         $files = FaxFiles::where('fax_uuid', $request->id)->where('fax_mode', 'rx')->where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'desc')->get();
         $data['files'] = $files;
@@ -183,29 +184,30 @@ class FaxesController extends Controller
 
         $domainUuid = Session::get('domain_uuid');
 
-        $files = FaxQueues::where('fax_uuid', $request->id)
-            ->where('domain_uuid', $domainUuid)
-            ->whereBetween('fax_date', $period);
+        $files = FaxQueues::where('v_fax_queue.fax_uuid', $request->id)
+            ->where('v_fax_queue.domain_uuid', $domainUuid)
+            ->whereBetween('v_fax_queue.fax_date', $period);
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $files
-                ->where('fax_status', $selectedStatus);
+                ->where('v_fax_queue.fax_status', $selectedStatus);
         }
+        $files->join('v_fax_files', 'fax_file_path', 'fax_file');
         if ($searchString) {
             try {
-                //Get libphonenumber object
-                $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                $phoneNumberUtil = PhoneNumberUtil::getInstance();
                 $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
-                $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $files->andWhereLike('fax_caller_id_number', $searchString);
+                    $files->andWhereLike('v_fax_files.fax_destination', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
+                } else {
+                    $files->andWhereLike('v_fax_files.fax_destination', str_replace("-", "",  $searchString));
                 }
             } catch (NumberParseException $e) {
-                $files->andWhereLike('fax_caller_id_number', $searchString);
+                $files->andWhereLike('v_fax_files.fax_destination', str_replace("-", "",  $searchString));
             }
         }
 
         $files = $files
-            ->orderBy('fax_date', 'desc')
+            ->orderBy('v_fax_queue.fax_date', 'desc')
             ->paginate(10)
             ->onEachSide(1);
 
@@ -239,7 +241,7 @@ class FaxesController extends Controller
         }
 
         //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
 
         $domain_uuid = Session::get('domain_uuid');
@@ -416,19 +418,19 @@ class FaxesController extends Controller
                 'default_setting_name',
                 'default_setting_value',
             ]);
-    
+
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == 'storage') {
                     $fax_dir = $setting->default_setting_value . '/fax/' . $domain_name;
                     $stor_dir = $setting->default_setting_value;
-                }            
+                }
             }
 
             // Set variables for all directories
             $dir_fax_inbox = $fax_dir.'/'.$fax->fax_extension.'/inbox';
             $dir_fax_sent = $fax_dir.'/'.$fax->fax_extension.'/sent';
             $dir_fax_temp = $fax_dir.'/'.$fax->fax_extension.'/temp';
-    
+
             //make sure the directories exist
             if (!is_dir($stor_dir)) {
                 mkdir($stor_dir, 0770);
