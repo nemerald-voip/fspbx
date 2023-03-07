@@ -76,7 +76,6 @@ class Extensions extends Model
         'forward_user_not_registered_enabled',
         'follow_me_uuid',
         'follow_me_enabled',
-        'follow_me_destinations',
         'enabled',
         'description',
         'absolute_codec_string',
@@ -174,6 +173,11 @@ class Extensions extends Model
     public function followMe()
     {
         return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid');
+    }
+
+    public function getFollowMe()
+    {
+        return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid')->first();
     }
 
     public function getFollowMeDestinations()

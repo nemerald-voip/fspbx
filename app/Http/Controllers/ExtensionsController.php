@@ -308,6 +308,7 @@ class ExtensionsController extends Controller
         $extension->forward_busy_enabled = "false";
         $extension->forward_no_answer_enabled = "false";
         $extension->forward_user_not_registered_enabled = "false";
+        $extension->follow_me_enabled = "false";
         $extensions = Extensions::where ('domain_uuid', Session::get('domain_uuid'))->get();
         //dd($extension->domain->users);
         return view('layouts.extensions.createOrUpdate')
@@ -407,6 +408,15 @@ class ExtensionsController extends Controller
             'forward_user_not_registered_enabled' => 'in:true,false',
             'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|nullable|PhoneOrExtension:US',
 
+            'follow_me_enabled' => 'in:true,false',
+            'follow_me_ignore_busy' => 'in:true,false',
+            'follow_me_destinations'  => 'nullable|array',
+            'follow_me_destinations.*.target'  => [
+                'PhoneOrExtension:US,'.Session::get('domain_uuid')
+            ],
+            'follow_me_destinations.*.delay'  => 'numeric',
+            'follow_me_destinations.*.timeout'  => 'numeric',
+            'follow_me_destinations.*.prompt'  => 'in:true,false'
         ], [
             'phone_or_extension' => 'Should be valid US phone number or extension id'
         ], $attributes);
@@ -441,8 +451,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled']== "true")  $attributes['forward_no_answer_enabled'] = "true";
         if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
         if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled']== "true")  $attributes['forward_user_not_registered_enabled'] = "true";
-        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);
-
+        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);;
 
         $extension->fill($attributes);
         $extension->save();
@@ -453,6 +462,26 @@ class ExtensionsController extends Controller
                 $extension_users->user_uuid = $ext_user;
                 $extension_users->domain_uuid = Session::get('domain_uuid');
                 $extension->extension_users()->save($extension_users);
+            }
+        }
+
+        if (isset($attributes['follow_me_destinations'])) {
+            $followMe = new FollowMe();
+            $followMe->domain_uuid = Session::get('domain_uuid');
+            $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
+            $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
+            $extension->followMe()->save($followMe);
+            $i = 0;
+            foreach($attributes['follow_me_destinations'] as $destination){
+                if($i > 9) break;
+                $followMeDest = new FollowMeDestinations();
+                $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
+                $followMeDest->follow_me_delay = $destination['delay'];
+                $followMeDest->follow_me_timeout = $destination['timeout'];
+                $followMeDest->follow_me_prompt = $destination['prompt'];
+                $followMeDest->follow_me_order = $i;
+                $followMe->followMeDestinations()->save($followMeDest);
+                $i++;
             }
         }
 
@@ -700,15 +729,13 @@ class ExtensionsController extends Controller
             'follow_me_ignore_busy' => 'in:true,false',
             'follow_me_destinations'  => 'nullable|array',
             'follow_me_destinations.*.target'  => [
-                'nullable',
                 'PhoneOrExtension:US,'.Session::get('domain_uuid')
             ],
             'follow_me_destinations.*.delay'  => 'numeric',
             'follow_me_destinations.*.timeout'  => 'numeric',
             'follow_me_destinations.*.prompt'  => 'in:true,false'
         ], [
-            'phone_or_extension' => 'Should be valid US phone number or extension id',
-            'exists' => 'Extension is not found'
+            'phone_or_extension' => 'Should be valid US phone number or extension id'
         ], $attributes);
 
         if ($validator->fails()) {
@@ -771,22 +798,26 @@ class ExtensionsController extends Controller
         }
 
         // Update Sequential destinations
-        if($followMe = $extension->followMe()->first()) {
-            $followMe->delete();
-        }
-
         foreach($extension->getFollowMeDestinations() as $followMeDest) {
             $followMeDest->delete();
         }
 
+        if($followMe = $extension->followMe()->first()) {
+            $followMe->delete();
+        }
+
+        $followMe = new FollowMe();
+        $followMe->domain_uuid = Session::get('domain_uuid');
+        $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
+        $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
+        $followMe->save();
+        $extension->follow_me_uuid = $followMe->follow_me_uuid;
+        $extension->save();
+
         if (isset($attributes['follow_me_destinations'])) {
-            $followMe = new FollowMe();
-            $followMe->domain_uuid = Session::get('domain_uuid');
-            $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
-            $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
-            $extension->followMe()->save($followMe);
             $i = 0;
-            foreach($attributes['follow_me_destinations'] as$destination){
+            foreach($attributes['follow_me_destinations'] as $destination){
+                if($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
                 $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
                 $followMeDest->follow_me_delay = $destination['delay'];
