@@ -785,13 +785,16 @@ class ExtensionsController extends Controller
             $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
             $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
             $extension->followMe()->save($followMe);
-            foreach($attributes['follow_me_destinations'] as $destination){
+            $i = 0;
+            foreach($attributes['follow_me_destinations'] as$destination){
                 $followMeDest = new FollowMeDestinations();
-                $followMeDest->follow_me_destination = $destination['target'];
+                $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 $followMeDest->follow_me_prompt = $destination['prompt'];
+                $followMeDest->follow_me_order = $i;
                 $followMe->followMeDestinations()->save($followMeDest);
+                $i++;
             }
         }
 
