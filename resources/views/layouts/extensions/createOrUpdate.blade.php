@@ -1487,7 +1487,7 @@
                                                                             <td>
                                                                                 <input type="hidden" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
                                                                                 <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]"
-                                                                                       @if ($destination->follow_me_prompt == "true") checked @endif
+                                                                                       @if ($destination->follow_me_prompt == "1") checked @endif
                                                                                        data-switch="primary"/>
                                                                                 <label for="destination_prompt_{{$destination->follow_me_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
                                                                             </td>
