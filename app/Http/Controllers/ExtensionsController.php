@@ -465,12 +465,15 @@ class ExtensionsController extends Controller
             }
         }
 
+        $followMe = new FollowMe();
+        $followMe->domain_uuid = Session::get('domain_uuid');
+        $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
+        $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
+        $followMe->save();
+        $extension->follow_me_uuid = $followMe->follow_me_uuid;
+        $extension->save();
+
         if (isset($attributes['follow_me_destinations'])) {
-            $followMe = new FollowMe();
-            $followMe->domain_uuid = Session::get('domain_uuid');
-            $followMe->follow_me_enabled = $attributes['follow_me_enabled'];
-            $followMe->follow_me_ignore_busy = $attributes['follow_me_ignore_busy'];
-            $extension->followMe()->save($followMe);
             $i = 0;
             foreach($attributes['follow_me_destinations'] as $destination){
                 if($i > 9) break;
