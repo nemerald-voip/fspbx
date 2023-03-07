@@ -1418,7 +1418,7 @@
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">Sequential ring</h4>
-                                                    <p class="text-muted mb-2">List and determine the order of up to 10 phone numbers or SIP URI addresses you would like to ring after your primary phone when you receive a call. You can drag-n-drop lines to adjust current sequential.</p>
+                                                    <p class="text-muted mb-2">List and determine the order of up to 10 phone numbers or SIP URI addresses you would like to ring after your primary phone when you receive a call.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
                                                             <input type="hidden" name="follow_me_enabled" value="false">
@@ -1430,22 +1430,22 @@
                                                         </div>
                                                     </div>
                                                     <div id="follow_me_phone_number" class="row @if($extension->follow_me_enabled == "false") d-none @endif">
-                                                        <div class="col-md-8 offset-md-2 mt-4">
+                                                        <div class="col-md-12">
                                                             <div class="row mb-3">
-                                                                <div class="col-10">
-                                                                    <label class="form-label">Continue ringing sequence if main number is busy </label>
+                                                                <div class="col-5">
+                                                                    <label class="form-label">Continue ringing sequence if main number is busy</label>
                                                                 </div>
                                                                 <div class="col-2">
-                                                                    <div class="text-sm-end">
-                                                                        <input type="hidden" name="follow_me_ignore_busy" value="false">
-                                                                        <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
-                                                                               @if ($extension->follow_me_ignore_busy == "true") checked @endif
-                                                                               data-switch="primary">
-                                                                        <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
-                                                                    </div>
+                                                                    <input type="hidden" name="follow_me_ignore_busy" value="false">
+                                                                    <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
+                                                                           @if ($extension->follow_me_ignore_busy == "true") checked @endif
+                                                                           data-switch="primary">
+                                                                    <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
                                                             </div>
                                                             <div class="row">
+                                                                <h4 class="mt-2">Sequential order</h4>
+                                                                <p class="text-muted mb-2">You can drag-n-drop lines to adjust current sequential.</p>
                                                                 <table class="table table-centered mb-0">
                                                                     <thead>
                                                                         <tr>
@@ -1487,7 +1487,7 @@
                                                                             <td>
                                                                                 <input type="hidden" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
                                                                                 <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]"
-                                                                                       @if ($extension->follow_me_enabled == "true") checked @endif
+                                                                                       @if ($destination->follow_me_prompt == "true") checked @endif
                                                                                        data-switch="primary"/>
                                                                                 <label for="destination_prompt_{{$destination->follow_me_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
                                                                             </td>
