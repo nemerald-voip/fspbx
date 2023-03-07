@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 class FaxQueueController extends Controller
 {
@@ -48,15 +49,15 @@ class FaxQueueController extends Controller
                 $query
                     ->orWhereLike('fax_email_address', strtolower($searchString));
                 try {
-                    //Get libphonenumber object
-                    $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+                    $phoneNumberUtil = PhoneNumberUtil::getInstance();
                     $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
-                    $searchString = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
                     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                        $query->orWhereLike('fax_caller_id_number', $searchString);
+                        $query->orWhereLike('fax_caller_id_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
+                    } else {
+                        $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
                     }
                 } catch (NumberParseException $e) {
-                    $query->orWhereLike('fax_caller_id_number', $searchString);
+                    $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
                 }
             });
         }
