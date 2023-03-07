@@ -173,7 +173,7 @@ class Extensions extends Model
 
     public function followMe()
     {
-        return $this->belongsTo(FollowMe::class,'follow_me_uuid','follow_me_uuid');
+        return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid');
     }
 
     public function getFollowMeDestinations()
