@@ -1656,6 +1656,8 @@
             $('#extensionNavPills a[href="' + activeTab + '"]').tab('show');
         }
 
+        applyDestinationSelect2()
+
         $('#submitFormButton').on('click', function(e) {
             e.preventDefault();
             $('.loading').show();
@@ -2309,7 +2311,7 @@
                 evt.newDraggableIndex; // element's new index within new parent, only counting draggable elements
                 evt.clone // the clone element
                 evt.pullMode;  // when item is in another sortable: `"clone"` if cloning, `true` if moving
-                updateFollowMeOrder()
+                updateDestinationOrder()
             },
 
             // Element is dropped into the list from another list
@@ -2360,7 +2362,7 @@
             }
         });
 
-        //updateFollowMeOrder()
+        //updateDestinationOrder()
     });
 
     function openForwardDestinationModal(title, section) {
@@ -2456,13 +2458,22 @@
         }
     }
 
-    function updateFollowMeOrder() {
+    function applyDestinationSelect2() {
         $('#destination_sortable > tr').each(function (i, el) {
-            $(el).find('.drag-handler').find('span').text(i++)
-            /*$(el).find('select').each(function(i, el2) {
-                $(el2).select2('destroy').hide()
-                $(el2).select2().show()
-            });*/
+            $(el).find('select').each(function(i, el2) {
+                if ($(el2).data('select2')) {
+                    $(el2).select2('destroy').hide()
+                    $(el2).select2().show()
+                } else {
+                    $(el2).select2().show()
+                }
+            });
+        })
+    }
+
+    function updateDestinationOrder() {
+        $('#destination_sortable > tr').each(function (i, el) {
+            $(el).find('.drag-handler').find('span').text(i + 1)
         })
     }
 
@@ -2489,17 +2500,21 @@
         </td><td><div id="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
         </a></div></td></tr>`;
-        newRow = newRow.replaceAll('__NEWROWID__', newCount)
+        newRow = newRow.replaceAll('__NEWROWID__', Math.random().toString(16).slice(2))
 
         $('#destination_sortable').append(newRow)
 
         showHideAddDestination()
-        updateFollowMeOrder()
+        updateDestinationOrder()
+        applyDestinationSelect2()
     }
 
     function confirmDeleteDestinationAction(el){
+        if ($(`#${el}`).data('select2')) {
+            $(`#${el}`).select2('destroy').hide()
+        }
         $(`#${el}`).remove();
-        updateFollowMeOrder()
+        updateDestinationOrder()
         showHideAddDestination()
     }
 </script>
