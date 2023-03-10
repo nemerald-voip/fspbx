@@ -1450,7 +1450,8 @@
                                                                     <thead>
                                                                         <tr>
                                                                             <th style="width: 20px;">Order</th>
-                                                                            <th>Phone Number</th>
+                                                                            <th></th>
+                                                                            <th>Destination</th>
                                                                             <th>Delay</th>
                                                                             <th>Number of rings</th>
                                                                             <th>Answer confirmation required</th>
@@ -1463,7 +1464,22 @@
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
                                                                             <td>
-                                                                                <input type="text" id="destination_target_{{$destination->follow_me_destination_uuid}}" class="form-control" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target]" placeholder="Enter extension or phone number" value="{{$destination->follow_me_destination}}" />
+                                                                                <select onchange="changeDestinationType('row{{$destination->follow_me_destination_uuid}}');" id="destination_type_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][type]">
+                                                                                    <option value="internal" @if ($destination->follow_me_delay == '') selected @endif>Internal</option>
+                                                                                    <option value="external" @if ($destination->follow_me_delay == '')  @endif>External</option>
+                                                                                </select>
+                                                                            </td>
+                                                                            <td>
+                                                                                <input type="text" id="destination_target_external_{{$destination->follow_me_destination_uuid}}"
+                                                                                       class="form-control dest-external" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_external]"
+                                                                                       placeholder="Enter phone number" value="{{$destination->follow_me_destination}}" />
+                                                                                <select id="destination_target_internal_{{$destination->follow_me_destination_uuid}}" class="dest-internal" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_internal]">
+                                                                                    @foreach($extensions as $ext)
+                                                                                        <option value="{{ $ext->extension }}">
+                                                                                            {{ $ext->extension }} ({{ implode(" / ", [$ext->effective_caller_id_name, $ext->outbound_caller_id_number]) }})
+                                                                                        </option>
+                                                                                    @endforeach
+                                                                                </select>
                                                                                 <div class="text-danger follow_me_destinations_{{$destination->follow_me_destination_uuid}}_target_err error_message"></div>
                                                                             </td>
                                                                             <td>
@@ -2504,10 +2520,16 @@
 
         let newRow = `
         <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
-        <td><input type="text" id="destination_target___NEWROWID__" class="form-control" name="follow_me_destinations[newrow__NEWROWID__][target]" placeholder="Enter extension or phone number" value="" />
-        <div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
-        <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
-        @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
+        <td><select onchange="changeDestinationType('row__NEWROWID__');" id="destination_type___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][type]">
+        <option value="internal" selected>Internal</option><option value="external">External</option></select></td>
+        <td><input type="text" id="destination_target_external___NEWROWID__" class="form-control dest-external"
+        name="follow_me_destinations[newrow__NEWROWID__][target_external]" placeholder="Enter phone number" value="" />
+        <select id="destination_target_internal___NEWROWID__" class="dest-internal" name="follow_me_destinations[newrow__NEWROWID__][target_internal]">
+        @foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }}
+        ({{ implode(" / ", [$ext->effective_caller_id_name, $ext->outbound_caller_id_number]) }})</option> @endforeach
+        </select><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
+<td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
+@for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
         <td><select id="destination_timeout___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][timeout]">
         @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
