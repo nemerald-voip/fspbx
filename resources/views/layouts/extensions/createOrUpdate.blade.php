@@ -2528,8 +2528,8 @@
         @foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }}
         ({{ implode(" / ", [$ext->effective_caller_id_name, $ext->outbound_caller_id_number]) }})</option> @endforeach
         </select><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
-<td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
-@for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
+        <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
+        @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
         <td><select id="destination_timeout___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][timeout]">
         @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
