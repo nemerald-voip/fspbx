@@ -1468,7 +1468,7 @@
                                                                             </td>
                                                                             <td>
                                                                                 <select id="destination_delay_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][delay]">
-                                                                                    @for ($i = 1; $i < 21; $i++)
+                                                                                    @for ($i = 0; $i < 20; $i++)
                                                                                         <option value="{{ $i * 5 }}" @if ($destination->follow_me_delay == $i*5) selected @endif>
                                                                                             {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
                                                                                         </option>
@@ -1661,6 +1661,7 @@
             $('#extensionNavPills a[href="' + activeTab + '"]').tab('show');
         }
 
+        autoAddEmptyDestinationRow();
         applyDestinationSelect2()
 
         $('#submitFormButton').on('click', function(e) {
@@ -1723,6 +1724,9 @@
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
                 $('#'+cname+'_destination').prop('disabled', false);
+                if(cname === 'follow_me') {
+                    autoAddEmptyDestinationRow();
+                }
             } else {
                 $('#'+cname+'_phone_number').addClass('d-none');
                 $('#'+cname+'_destination').prop('disabled', true);
@@ -2476,6 +2480,14 @@
         })
     }
 
+    function autoAddEmptyDestinationRow() {
+        if($('#follow_me_enabled:checked').length === 1) {
+            if($('#destination_sortable').find('tr').length === 0) {
+                addDestinationAction(document.getElementById('addDestinationBar'));
+            }
+        }
+    }
+
     function updateDestinationOrder() {
         $('#destination_sortable > tr').each(function (i, el) {
             $(el).find('.drag-handler').find('span').text(i + 1)
@@ -2495,10 +2507,10 @@
         <td><input type="text" id="destination_target___NEWROWID__" class="form-control" name="follow_me_destinations[newrow__NEWROWID__][target]" placeholder="Enter extension or phone number" value="" />
         <div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
         <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
-        @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 1) selected @endif>
+        @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
         <td><select id="destination_timeout___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][timeout]">
-        @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 1) selected @endif>
+        @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td><td>
         <input type="hidden" name="follow_me_destinations[newrow__NEWROWID__][prompt]" value="false">
         <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="follow_me_destinations[newrow__NEWROWID__][prompt]" data-option="follow_me_enabled" class="forward_checkbox" data-switch="primary"/>
