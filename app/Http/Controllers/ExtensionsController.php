@@ -478,7 +478,11 @@ class ExtensionsController extends Controller
             foreach($attributes['follow_me_destinations'] as $destination){
                 if($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
+                if($destination['type'] == 'external') {
+                    $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
+                } else {
+                    $followMeDest->follow_me_destination = $destination['target_internal'];
+                }
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 if($destination['prompt'] == 'true') {
@@ -826,7 +830,11 @@ class ExtensionsController extends Controller
             foreach($attributes['follow_me_destinations'] as $destination){
                 if($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
+                if($destination['type'] == 'external') {
+                    $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
+                } else {
+                    $followMeDest->follow_me_destination = $destination['target_internal'];
+                }
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 if($destination['prompt'] == 'true') {
