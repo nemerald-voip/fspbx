@@ -411,8 +411,17 @@ class ExtensionsController extends Controller
             'follow_me_enabled' => 'in:true,false',
             'follow_me_ignore_busy' => 'in:true,false',
             'follow_me_destinations'  => 'nullable|array',
-            'follow_me_destinations.*.target'  => [
-                'PhoneOrExtension:US,'.Session::get('domain_uuid')
+            'follow_me_destinations.*.target_external'  => [
+                'required_if:follow_me_destinations.*.type,==,external',
+                'nullable',
+                'PhoneOrExtension:US',
+            ],
+            'follow_me_destinations.*.target_internal'  => [
+                'required_if:follow_me_destinations.*.type,==,internal',
+                'nullable',
+                'numeric',
+                Rule::exists('App\Models\Extensions','extension')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'follow_me_destinations.*.delay'  => 'numeric',
             'follow_me_destinations.*.timeout'  => 'numeric',
@@ -478,7 +487,11 @@ class ExtensionsController extends Controller
             foreach($attributes['follow_me_destinations'] as $destination){
                 if($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
+                if($destination['type'] == 'external') {
+                    $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
+                } else {
+                    $followMeDest->follow_me_destination = $destination['target_internal'];
+                }
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 if($destination['prompt'] == 'true') {
@@ -735,8 +748,17 @@ class ExtensionsController extends Controller
             'follow_me_enabled' => 'in:true,false',
             'follow_me_ignore_busy' => 'in:true,false',
             'follow_me_destinations'  => 'nullable|array',
-            'follow_me_destinations.*.target'  => [
-                'PhoneOrExtension:US,'.Session::get('domain_uuid')
+            'follow_me_destinations.*.target_external'  => [
+                'required_if:follow_me_destinations.*.type,==,external',
+                'nullable',
+                'PhoneOrExtension:US',
+            ],
+            'follow_me_destinations.*.target_internal'  => [
+                'required_if:follow_me_destinations.*.type,==,internal',
+                'nullable',
+                'numeric',
+                Rule::exists('App\Models\Extensions','extension')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'follow_me_destinations.*.delay'  => 'numeric',
             'follow_me_destinations.*.timeout'  => 'numeric',
@@ -826,7 +848,11 @@ class ExtensionsController extends Controller
             foreach($attributes['follow_me_destinations'] as $destination){
                 if($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                $followMeDest->follow_me_destination = format_phone_or_extension($destination['target']);
+                if($destination['type'] == 'external') {
+                    $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
+                } else {
+                    $followMeDest->follow_me_destination = $destination['target_internal'];
+                }
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 if($destination['prompt'] == 'true') {
