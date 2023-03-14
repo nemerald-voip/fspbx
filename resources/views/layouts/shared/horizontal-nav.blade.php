@@ -7,7 +7,7 @@
             <!-- LOGO -->
             <a href="/dashboard" class="topnav-logo me-3">
                 <span class="topnav-logo-sm">
-                    <img src="{{asset('/themes/default/logo.png')}}" alt="" height="40">
+                    <img src="{{asset('/storage/logo.png')}}" alt="" height="40">
                 </span>
             </a>
 
