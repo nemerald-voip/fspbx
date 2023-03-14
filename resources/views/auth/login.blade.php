@@ -14,7 +14,7 @@
               <div class="row">
                 <div class="col-lg-10 col-md-9 col-xl-7 mx-auto">
                     <div class="text-center">
-                        <img src="/themes/default/logo.png" style="padding:20px;max-width:100%;">
+                        <img src="{{asset('/storage/logo.png')}}" style="padding:20px;max-width:100%;">
                     </div>
                    <div class="text-center mb-12">
                       <h1 class="ls-tight font-bolder mt-6">Login</h1>
