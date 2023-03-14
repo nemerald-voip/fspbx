@@ -14,6 +14,9 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="{{asset('/storage/favicon.png')}}">
+
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}" defer></script>
 
