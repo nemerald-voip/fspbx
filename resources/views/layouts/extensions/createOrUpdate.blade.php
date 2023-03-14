@@ -1452,9 +1452,9 @@
                                                                             <th style="width: 20px;">Order</th>
                                                                             <th>Destination</th>
                                                                             <th style="width: 425px"></th>
-                                                                            <th>Delay</th>
-                                                                            <th>Number of rings</th>
-                                                                            <th>Answer confirmation required</th>
+                                                                            <th style="width: 150px">Delay</th>
+                                                                            <th style="width: 150px">Number of rings</th>
+                                                                            <th style="width: 130px;">Answer confirmation required</th>
                                                                             <th>Action</th>
                                                                         </tr>
                                                                     </thead>
