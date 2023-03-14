@@ -14,7 +14,7 @@ We can work around this with a simple addition to the <head> of the main layout 
 <meta http-equiv="refresh" content="{{ config('session.lifetime') * 60 }}">
 
 <!-- App favicon -->
-<link rel="shortcut icon" href="{{asset('/assets/images/favicon.png')}}">
+<link rel="shortcut icon" href="{{asset('/storage/favicon.png')}}">
 
 @yield('css')
 
