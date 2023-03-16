@@ -565,10 +565,10 @@ class ExtensionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  guid  $extention
+     * @param  Extension  $extention
      * @return \Illuminate\Http\Response
      */
-    public function edit($extension_uuid)
+    public function edit(Extensions $extension)
     {
 
         //check permissions
@@ -582,16 +582,13 @@ class ExtensionsController extends Controller
             return redirect()->route('logout');
         }
 
-        // get the extension
-        $extension = Extensions::query()
-                    ->with(['devices'])
-                    ->find($extension_uuid);
+        // $devices = Devices::query()
+        //     ->select('v_devices.device_uuid', 'v_devices.device_mac_address')
+        //     ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'v_devices.device_uuid')
+        //     ->whereNull('dl.device_line_uuid')
+        //     ->get();
 
-        $devices = Devices::query()
-            ->select('v_devices.device_uuid', 'v_devices.device_mac_address')
-            ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'v_devices.device_uuid')
-            ->whereNull('dl.device_line_uuid')
-            ->get();
+        // dd($extension->devices);
 
         $vendors = DeviceVendor::query()->orderBy('name')->get();
 
@@ -642,7 +639,7 @@ class ExtensionsController extends Controller
             -> with('vm_name_file_exists', $vm_name_file_exists)
             -> with ('moh', $moh)
             -> with ('recordings', $recordings)
-            -> with ('devices', $devices)
+            -> with ('devices', $extension->devices)
             -> with ('vendors', $vendors)
             -> with('national_phone_number_format',PhoneNumberFormat::NATIONAL);
 
