@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AssignDeviceRequest;
-use App\Models\Device;
+use App\Models\Devices;
 use App\Models\DeviceLines;
 use App\Models\DeviceVendor;
 use App\Models\FollowMe;
@@ -587,7 +587,7 @@ class ExtensionsController extends Controller
                     ->with(['devices'])
                     ->find($extension_uuid);
 
-        $devices = Device::query()
+        $devices = Devices::query()
             ->select('v_devices.device_uuid', 'v_devices.device_mac_address')
             ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'v_devices.device_uuid')
             ->whereNull('dl.device_line_uuid')

@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use cache;
-use App\Models\Device;
+use App\Models\Devices;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Models\DeviceLines;
@@ -66,7 +66,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             ],
             '*.device_mac_address_modified' => [
                 'nullable',
-                Rule::unique('App\Models\Device','device_mac_address')
+                Rule::unique('App\Models\Devices','device_mac_address')
             ],
             '*.device_vendor' => [
                 'string',
@@ -174,7 +174,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
             //Create device
             if (isset($row['device_mac_address']) && !empty($row['device_mac_address'])) {
-                $device = new Device();
+                $device = new Devices();
                 $device->fill([
                     'device_mac_address' => $row['device_mac_address'],
                     'device_label' => $row['extension'],
