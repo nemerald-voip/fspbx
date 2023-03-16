@@ -167,7 +167,7 @@ class Extensions extends Model
 
     public function devices()
     {
-        return $this->belongsToMany(Device::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')->withPivot('user_id', 'line_number', 'device_line_uuid');
+        return $this->belongsToMany(Devices::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')->withPivot('user_id', 'line_number', 'device_line_uuid');
     }
 
     public function followMe()

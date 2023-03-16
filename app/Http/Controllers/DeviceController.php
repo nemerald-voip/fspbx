@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Device;
+use App\Models\Devices;
 use App\Models\Domain;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 
-class DeviceController extends Controller
+class DevicesController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -50,7 +50,7 @@ class DeviceController extends Controller
         $inputs['device_enabled'] = true;
         $inputs['device_enabled_date'] = date('Y-m-d H:i:s');
 
-        $device = Device::query()->create($inputs);
+        $device = Devices::query()->create($inputs);
 
         return response()->json([
             'status' => 'success',
@@ -62,10 +62,10 @@ class DeviceController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Device  $device
+     * @param  \App\Models\Devices  $device
      * @return \Illuminate\Http\Response
      */
-    public function show(Device $device)
+    public function show(Devices $device)
     {
         //
     }
@@ -73,10 +73,10 @@ class DeviceController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Device  $device
+     * @param  \App\Models\Devices  $device
      * @return \Illuminate\Http\Response
      */
-    public function edit(Device $device)
+    public function edit(Devices $device)
     {
         //
     }
@@ -88,7 +88,7 @@ class DeviceController extends Controller
      * @param  \App\Models\Device  $device
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateDeviceRequest $request, Device $device)
+    public function update(UpdateDeviceRequest $request, Devices $device)
     {
         //
     }
@@ -96,10 +96,10 @@ class DeviceController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Device  $device
+     * @param  \App\Models\Devices  $device
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Device $device)
+    public function destroy(Devices $device)
     {
         //
     }

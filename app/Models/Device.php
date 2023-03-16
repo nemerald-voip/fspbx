@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Device extends Model
+class Devices extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
