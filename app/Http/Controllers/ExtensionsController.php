@@ -304,6 +304,7 @@ class ExtensionsController extends Controller
         $extension->forward_no_answer_enabled = "false";
         $extension->forward_user_not_registered_enabled = "false";
         $extension->follow_me_enabled = "false";
+        $extension->do_not_disturb = "false";
         $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))->get();
         //dd($extension->domain->users);
         return view('layouts.extensions.createOrUpdate')
@@ -373,7 +374,7 @@ class ExtensionsController extends Controller
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
-
+            'do_not_disturb' => 'in:true,false',
 
             'domain_uuid' => 'required',
             'user_context' => 'required|string',
@@ -459,6 +460,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
         if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled'] == "true") $attributes['forward_user_not_registered_enabled'] = "true";
         if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);;
+        if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
 
         $extension->fill($attributes);
         $extension->save();
@@ -724,6 +726,7 @@ class ExtensionsController extends Controller
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
+            'do_not_disturb' => 'in:true,false',
 
             'voicemail_id' => 'present',
             'voicemail_enabled' => "present",
@@ -818,6 +821,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
         if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled'] == "true") $attributes['forward_user_not_registered_enabled'] = "true";
         if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);
+        if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
 
