@@ -1378,7 +1378,7 @@
                                                                 <div class="col-2">
                                                                     <input type="hidden" name="follow_me_ignore_busy" value="false">
                                                                     <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
-                                                                           @if ($extension->getFollowMe() && $extension->getFollowMe()->follow_me_ignore_busy == "true") checked @endif
+                                                                           @if ($extension->getFollowMe() && $extension->getFollowMe()->follow_me_ignore_busy == "false") checked @endif
                                                                            data-switch="primary">
                                                                     <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
@@ -1630,7 +1630,6 @@
             $('#extensionNavPills a[href="' + activeTab + '"]').tab('show');
         }
 
-        autoAddEmptyDestinationRow();
         applyDestinationSelect2()
 
         $('#submitFormButton').on('click', function(e) {
@@ -1693,9 +1692,6 @@
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
                 $('#'+cname+'_destination').prop('disabled', false);
-                if(cname === 'follow_me') {
-                    autoAddEmptyDestinationRow();
-                }
             } else {
                 $('#'+cname+'_phone_number').addClass('d-none');
                 $('#'+cname+'_destination').prop('disabled', true);
@@ -2451,14 +2447,6 @@
                 }
             });
         })
-    }
-
-    function autoAddEmptyDestinationRow() {
-        if($('#follow_me_enabled:checked').length === 1) {
-            if($('#destination_sortable').find('tr').length === 0) {
-                addDestinationAction(document.getElementById('addDestinationBar'));
-            }
-        }
     }
 
     function updateDestinationOrder() {
