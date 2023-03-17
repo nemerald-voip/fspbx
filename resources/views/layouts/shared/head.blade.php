@@ -14,7 +14,15 @@ We can work around this with a simple addition to the <head> of the main layout 
 <meta http-equiv="refresh" content="{{ config('session.lifetime') * 60 }}">
 
 <!-- App favicon -->
-<link rel="shortcut icon" href="{{asset('/storage/favicon.png')}}">
+<link rel="apple-touch-icon" sizes="180x180" href="/storage/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/storage/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/storage/favicon-16x16.png">
+<link rel="manifest" href="/storage/site.webmanifest">
+<link rel="mask-icon" href="/storage/safari-pinned-tab.svg" color="#f08439">
+<link rel="shortcut icon" href="/storage/favicon.ico">
+<meta name="msapplication-TileColor" content="#00aba9">
+<meta name="msapplication-config" content="/storage/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
 
 @yield('css')
 
