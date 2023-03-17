@@ -1401,7 +1401,7 @@
                                                             <div class="row">
                                                                 <h4 class="mt-2">Sequential order</h4>
                                                                 <p class="text-muted mb-2">You can drag-n-drop lines to adjust current sequential.</p>
-                                                                <table class="table table-centered mb-0">
+                                                                <table class="table table-centered table-responsive table-sm mb-0 sequential-table">
                                                                     <thead>
                                                                         <tr>
                                                                             <th style="width: 20px;">Order</th>
@@ -1623,7 +1623,6 @@
         }
         .drag-handler {
             cursor: all-scroll;
-            text-align: center;
         }
         #addDestinationBar {
             width: 75px;
@@ -1631,6 +1630,17 @@
         }
         .destination_wrapper {
             width: 415px;
+        }
+        @media (max-width: 1724px) {
+            .sequential-table {
+                width: 100%;
+            }
+            .sequential-table th {
+                width: calc(100%/8) !important;
+            }
+            .sequential-table td .destination_wrapper {
+                width: auto !important;
+            }
         }
     </style>
 <script>
@@ -2486,7 +2496,7 @@
 name="follow_me_destinations[newrow__NEWROWID__][target_external]" placeholder="Enter phone number" value="" /></div>
 <div id="destination_target_internal_wrapper___NEWROWID__" class="destination_wrapper"><select id="destination_target_internal___NEWROWID__" class="dest-internal" name="follow_me_destinations[newrow__NEWROWID__][target_internal]">
 @foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }}
-        ({{ implode(" / ", [$ext->effective_caller_id_name, $ext->outbound_caller_id_number]) }})</option> @endforeach
+        @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif</option> @endforeach
         </select></div><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
         <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
         @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
