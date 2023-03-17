@@ -1373,7 +1373,7 @@
                                                         <div class="col-md-12">
                                                             <div class="row mb-3">
                                                                 <div class="col-5">
-                                                                    <label class="form-label">Ring my main phone first for </label>
+                                                                    <label class="form-label" style="padding-top: 10px;">Ring my main phone first for </label>
                                                                 </div>
                                                                 <div class="col-2">
                                                                     <select data-toggle="select2" title="Ring my main phone first" name="follow_me_ring_my_phone_timeout">
@@ -1388,7 +1388,7 @@
                                                             </div>
                                                             <div class="row mb-3">
                                                                 <div class="col-5">
-                                                                    <label class="form-label">Continue ringing sequence if main number is busy</label>
+                                                                    <label class="form-label" style="padding-top: 2px;">Continue ringing sequence if main number is busy</label>
                                                                 </div>
                                                                 <div class="col-2">
                                                                     <input type="hidden" name="follow_me_ignore_busy" value="false">
@@ -1440,7 +1440,7 @@
                                                                                             name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_internal]">
                                                                                         @foreach($extensions as $ext)
                                                                                             <option value="{{ $ext->extension }}" @if($destination->follow_me_destination == $ext->extension) selected @endif>
-                                                                                                {{ $ext->extension }} @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif
+                                                                                                {{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif
                                                                                             </option>
                                                                                         @endforeach
                                                                                     </select>
@@ -2495,8 +2495,7 @@
         <td><div id="destination_target_external_wrapper___NEWROWID__" class="destination_wrapper" style="display:none;"><input type="text" id="destination_target_external___NEWROWID__" class="form-control dest-external"
 name="follow_me_destinations[newrow__NEWROWID__][target_external]" placeholder="Enter phone number" value="" /></div>
 <div id="destination_target_internal_wrapper___NEWROWID__" class="destination_wrapper"><select id="destination_target_internal___NEWROWID__" class="dest-internal" name="follow_me_destinations[newrow__NEWROWID__][target_internal]">
-@foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }}
-        @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif</option> @endforeach
+@foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif</option> @endforeach
         </select></div><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
         <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
         @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
