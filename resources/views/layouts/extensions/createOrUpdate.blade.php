@@ -1373,6 +1373,21 @@
                                                         <div class="col-md-12">
                                                             <div class="row mb-3">
                                                                 <div class="col-5">
+                                                                    <label class="form-label">Ring my main phone first for </label>
+                                                                </div>
+                                                                <div class="col-2">
+                                                                    <select data-toggle="select2" title="Ring my main phone first" name="follow_me_ring_my_phone_timeout">
+                                                                        <option value="">Disabled</option>
+                                                                        @for ($i = 1; $i < 20; $i++)
+                                                                            <option value="{{ $i * 5 }}" @if ($follow_me_ring_my_phone_timeout == $i*5) selected @endif>
+                                                                                {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                            </option>
+                                                                        @endfor
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row mb-3">
+                                                                <div class="col-5">
                                                                     <label class="form-label">Continue ringing sequence if main number is busy</label>
                                                                 </div>
                                                                 <div class="col-2">
@@ -1399,7 +1414,7 @@
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody id="destination_sortable">
-                                                                    @foreach($extension->getFollowMeDestinations() as $b => $destination)
+                                                                    @foreach($follow_me_destinations as $b => $destination)
                                                                         <tr id="row{{$destination->follow_me_destination_uuid}}">
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
@@ -1425,7 +1440,7 @@
                                                                                             name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_internal]">
                                                                                         @foreach($extensions as $ext)
                                                                                             <option value="{{ $ext->extension }}" @if($destination->follow_me_destination == $ext->extension) selected @endif>
-                                                                                                {{ $ext->extension }} ({{ implode(" / ", [$ext->effective_caller_id_name, $ext->outbound_caller_id_number]) }})
+                                                                                                {{ $ext->extension }} @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif
                                                                                             </option>
                                                                                         @endforeach
                                                                                     </select>
@@ -1444,7 +1459,7 @@
                                                                             <td>
                                                                                 <select id="destination_timeout_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][timeout]">
                                                                                     @for ($i = 1; $i < 21; $i++)
-                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_timout == $i*5) selected @endif>
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_timeout == $i*5) selected @endif>
                                                                                             {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
                                                                                         </option>
                                                                                     @endfor
