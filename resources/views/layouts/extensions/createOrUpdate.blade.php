@@ -1413,8 +1413,9 @@
                                                                             <th>Action</th>
                                                                         </tr>
                                                                     </thead>
+                                                                    @php $b = 0 @endphp
                                                                     <tbody id="destination_sortable">
-                                                                    @foreach($follow_me_destinations as $b => $destination)
+                                                                    @foreach($follow_me_destinations as $destination)
                                                                         <tr id="row{{$destination->follow_me_destination_uuid}}">
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
