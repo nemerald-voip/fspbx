@@ -1493,6 +1493,22 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Do not disturb</h4>
+                                                    <p class="text-muted mb-2">Avoid calls to the extension.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="do_not_disturb" value="false">
+                                                            <input type="checkbox" id="do_not_disturb" value="true" name="do_not_disturb"
+                                                                   @if ($extension->do_not_disturb == "true") checked @endif
+                                                                   data-switch="danger"/>
+                                                            <label for="do_not_disturb" data-on-label="On" data-off-label="Off"></label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <!-- End Settings Content-->
                                     </div>
