@@ -94,11 +94,15 @@ class SendFaxInTransitNotification implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['FromFull']['Email'] . ", To:" . $this->request['fax_destination'] ." is in progress\n";
-            
-            Notification::route('slack', env('SLACK_FAX_HOOK'))
-                ->notify(new SendSlackFaxNotification($this->request));
+            // Send Slack notification to user that fax is in transit
+            if (get_domain_setting('fax_slack_notification') == "all") {
+                $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['FromFull']['Email'] . ", To:" . $this->request['fax_destination'] ." is in progress\n";
+                
+                Notification::route('slack', env('SLACK_FAX_HOOK'))
+                    ->notify(new SendSlackFaxNotification($this->request));
+            }
 
+            // Send email notification to user that fax is in transit
             Mail::to($this->request['FromFull']['Email'])->send(new FaxInTransit($this->request));
 
 
