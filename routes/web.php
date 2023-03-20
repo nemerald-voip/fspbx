@@ -1,25 +1,26 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\EmailQueueController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
+use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
-use App\Http\Controllers\FaxesController;
-use App\Http\Controllers\FaxQueueController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -33,6 +34,13 @@ use App\Http\Controllers\FaxQueueController;
 
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
 Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
+
+// STIR SHAKEN
+Route::post('/hello', function () {
+    Log::alert("STIR SHAKEN");
+    return response('Hello World', 200)
+    ->header('Content-Type', 'text/plain');
+})->withoutMiddleware(['auth','web']);
 
 //Polycom log handling
 Route::put('/polycom/log/{name}', [PolycomLogController::class, 'store'])->withoutMiddleware(['auth','web']) ->name('log.store');
