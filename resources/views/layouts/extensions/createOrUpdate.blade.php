@@ -1406,7 +1406,6 @@
                                                                         <tr>
                                                                             <th style="width: 20px;">Order</th>
                                                                             <th>Destination</th>
-                                                                            <th style="width: 425px"></th>
                                                                             <th style="width: 150px">Delay</th>
                                                                             <th style="width: 150px">Number of rings</th>
                                                                             <th style="width: 130px;">Answer confirmation required</th>
@@ -1420,31 +1419,35 @@
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
                                                                             <td>
-                                                                                <select onchange="changeDestinationType('{{$destination->follow_me_destination_uuid}}');" id="destination_type_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][type]">
-                                                                                    <option value="internal" @if (!detect_if_phone_number($destination->follow_me_destination)) selected @endif>Internal</option>
-                                                                                    <option value="external" @if (detect_if_phone_number($destination->follow_me_destination)) selected @endif>External</option>
-                                                                                </select>
-                                                                            </td>
-                                                                            <td>
-                                                                                <div id="destination_target_external_wrapper_{{$destination->follow_me_destination_uuid}}" class="destination_wrapper"
-                                                                                     @if (!detect_if_phone_number($destination->follow_me_destination)) style="display: none;" @endif
-                                                                                >
-                                                                                    <input type="text" id="destination_target_external_{{$destination->follow_me_destination_uuid}}"
-                                                                                           class="form-control dest-external" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_external]"
-                                                                                           placeholder="Enter phone number" value="{{$destination->follow_me_destination}}" />
-                                                                                </div>
-                                                                                <div id="destination_target_internal_wrapper_{{$destination->follow_me_destination_uuid}}" class="destination_wrapper"
-                                                                                     @if (detect_if_phone_number($destination->follow_me_destination)) style="display: none;" @endif
-                                                                                >
-                                                                                    <select id="destination_target_internal_{{$destination->follow_me_destination_uuid}}"
-                                                                                            class="dest-internal"
-                                                                                            name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_internal]">
-                                                                                        @foreach($extensions as $ext)
-                                                                                            <option value="{{ $ext->extension }}" @if($destination->follow_me_destination == $ext->extension) selected @endif>
-                                                                                                {{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif
-                                                                                            </option>
-                                                                                        @endforeach
-                                                                                    </select>
+                                                                                <div class="d-flex">
+                                                                                    <div class="mx-1">
+                                                                                        <select onchange="changeDestinationType('{{$destination->follow_me_destination_uuid}}');" id="destination_type_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][type]">
+                                                                                            <option value="internal" @if (!detect_if_phone_number($destination->follow_me_destination)) selected @endif>Internal</option>
+                                                                                            <option value="external" @if (detect_if_phone_number($destination->follow_me_destination)) selected @endif>External</option>
+                                                                                        </select>
+                                                                                    </div>
+                                                                                    <div class="flex-fill">
+                                                                                        <div id="destination_target_external_wrapper_{{$destination->follow_me_destination_uuid}}" class="destination_wrapper"
+                                                                                             @if (!detect_if_phone_number($destination->follow_me_destination)) style="display: none;" @endif
+                                                                                        >
+                                                                                            <input type="text" id="destination_target_external_{{$destination->follow_me_destination_uuid}}"
+                                                                                                   class="form-control dest-external" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_external]"
+                                                                                                   placeholder="Enter phone number" value="{{$destination->follow_me_destination}}" />
+                                                                                        </div>
+                                                                                        <div id="destination_target_internal_wrapper_{{$destination->follow_me_destination_uuid}}" class="destination_wrapper"
+                                                                                             @if (detect_if_phone_number($destination->follow_me_destination)) style="display: none;" @endif
+                                                                                        >
+                                                                                            <select id="destination_target_internal_{{$destination->follow_me_destination_uuid}}"
+                                                                                                    class="dest-internal"
+                                                                                                    name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][target_internal]">
+                                                                                                @foreach($extensions as $ext)
+                                                                                                    <option value="{{ $ext->extension }}" @if($destination->follow_me_destination == $ext->extension) selected @endif>
+                                                                                                        {{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif
+                                                                                                    </option>
+                                                                                                @endforeach
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
                                                                                 </div>
                                                                                 <div class="text-danger follow_me_destinations_{{$destination->follow_me_destination_uuid}}_target_err error_message"></div>
                                                                             </td>
@@ -1651,9 +1654,6 @@
         @media (max-width: 1724px) {
             .sequential-table {
                 width: 100%;
-            }
-            .sequential-table th {
-                width: calc(100%/8) !important;
             }
             .sequential-table td .destination_wrapper {
                 width: auto !important;
@@ -2507,13 +2507,13 @@
 
         let newRow = `
         <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
-        <td><select onchange="changeDestinationType('__NEWROWID__');" id="destination_type___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][type]">
-        <option value="internal" selected>Internal</option><option value="external">External</option></select></td>
-        <td><div id="destination_target_external_wrapper___NEWROWID__" class="destination_wrapper" style="display:none;"><input type="text" id="destination_target_external___NEWROWID__" class="form-control dest-external"
+        <td><div class="d-flex"><div class="mx-1"><select onchange="changeDestinationType('__NEWROWID__');" id="destination_type___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][type]">
+        <option value="internal" selected>Internal</option><option value="external">External</option></select></div><div class="flex-fill">
+        <div id="destination_target_external_wrapper___NEWROWID__" class="destination_wrapper" style="display:none;"><input type="text" id="destination_target_external___NEWROWID__" class="form-control dest-external"
 name="follow_me_destinations[newrow__NEWROWID__][target_external]" placeholder="Enter phone number" value="" /></div>
 <div id="destination_target_internal_wrapper___NEWROWID__" class="destination_wrapper"><select id="destination_target_internal___NEWROWID__" class="dest-internal" name="follow_me_destinations[newrow__NEWROWID__][target_internal]">
 @foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif</option> @endforeach
-        </select></div><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
+        </select></div></div></div><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div></td>
         <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
         @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
