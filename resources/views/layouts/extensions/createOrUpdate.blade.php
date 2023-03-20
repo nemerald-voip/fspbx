@@ -2478,15 +2478,7 @@
         if(newCount > 10) {
             return false;
         }
-/*
-<div class="d-flex"><div class="mx-1"><select onchange="changeDestinationType('__NEWROWID__');" id="destination_type___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][type]">
-        <option value="internal" selected>Internal</option><option value="external">External</option></select></div><div class="flex-fill">
-        <div id="destination_target_external_wrapper___NEWROWID__" class="destination_wrapper" style="display:none;"><input type="text" id="destination_target_external___NEWROWID__" class="form-control dest-external"
-name="follow_me_destinations[newrow__NEWROWID__][target_external]" placeholder="Enter phone number" value="" /></div>
-<div id="destination_target_internal_wrapper___NEWROWID__" class="destination_wrapper"><select id="destination_target_internal___NEWROWID__" class="dest-internal" name="follow_me_destinations[newrow__NEWROWID__][target_internal]">
-@foreach($extensions as $ext) <option value="{{ $ext->extension }}">{{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif</option> @endforeach
-        </select></div></div></div><div class="text-danger follow_me_destinations_newrow__NEWROWID___target_err error_message"></div>
- */
+
         let newRow = `
         <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
         <td>
