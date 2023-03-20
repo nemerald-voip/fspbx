@@ -761,14 +761,78 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+
             'forward_all_enabled' => 'in:true,false',
-            'forward_all_destination' => 'bail|required_if:forward_all_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward.all.type' => [
+                'required_if:forward_all_enabled,==,true',
+                'in:external,internal'
+            ],
+            'forward.all.target_external' => [
+                'required_if:forward.all.type,==,external',
+                'nullable',
+                'phone:US',
+            ],
+            'forward.all.target_internal' => [
+                'required_if:forward.all.type,==,internal',
+                'nullable',
+                'numeric',
+                Rule::exists('App\Models\Extensions', 'extension')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+            ],
+
             'forward_busy_enabled' => 'in:true,false',
-            'forward_busy_destination' => 'bail|required_if:forward_busy_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward.busy.type' => [
+                'required_if:forward_busy_enabled,==,true',
+                'in:external,internal'
+            ],
+            'forward.busy.target_external' => [
+                'required_if:forward.busy.type,==,external',
+                'nullable',
+                'phone:US',
+            ],
+            'forward.busy.target_internal' => [
+                'required_if:forward.busy.type,==,internal',
+                'nullable',
+                'numeric',
+                Rule::exists('App\Models\Extensions', 'extension')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+            ],
+
             'forward_no_answer_enabled' => 'in:true,false',
-            'forward_no_answer_destination' => 'bail|required_if:forward_no_answer_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward.no_answer.type' => [
+                'required_if:forward_no_answer_enabled,==,true',
+                'in:external,internal'
+            ],
+            'forward.no_answer.target_external' => [
+                'required_if:forward.no_answer.type,==,external',
+                'nullable',
+                'phone:US',
+            ],
+            'forward.no_answer.target_internal' => [
+                'required_if:forward.no_answer.type,==,internal',
+                'nullable',
+                'numeric',
+                Rule::exists('App\Models\Extensions', 'extension')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+            ],
+
             'forward_user_not_registered_enabled' => 'in:true,false',
-            'forward_user_not_registered_destination' => 'bail|required_if:forward_user_not_registered_enabled,==,true|nullable|PhoneOrExtension:US',
+            'forward.user_not_registered.type' => [
+                'required_if:forward_user_not_registered_enabled,==,true',
+                'in:external,internal'
+            ],
+            'forward.user_not_registered.target_external' => [
+                'required_if:forward.user_not_registered.type,==,external',
+                'nullable',
+                'phone:US',
+            ],
+            'forward.user_not_registered.target_internal' => [
+                'required_if:forward.user_not_registered.type,==,internal',
+                'nullable',
+                'numeric',
+                Rule::exists('App\Models\Extensions', 'extension')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
+            ],
 
             'follow_me_enabled' => 'in:true,false',
             'follow_me_ignore_busy' => 'in:true,false',
@@ -777,7 +841,7 @@ class ExtensionsController extends Controller
             'follow_me_destinations.*.target_external' => [
                 'required_if:follow_me_destinations.*.type,==,external',
                 'nullable',
-                'PhoneOrExtension:US',
+                'phone:US',
             ],
             'follow_me_destinations.*.target_internal' => [
                 'required_if:follow_me_destinations.*.type,==,internal',
@@ -790,7 +854,8 @@ class ExtensionsController extends Controller
             'follow_me_destinations.*.timeout' => 'numeric',
             'follow_me_destinations.*.prompt' => 'in:true,false'
         ], [
-            'phone_or_extension' => 'Should be valid US phone number or extension id'
+            'phone' => 'Should be valid US phone number or extension id',
+            'required_if' => 'Should be valid US phone number or extension id'
         ], $attributes);
 
         if ($validator->fails()) {
@@ -814,13 +879,37 @@ class ExtensionsController extends Controller
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
         if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled'] == "true") $attributes['forward_all_enabled'] = "true";
-        if (isset($attributes['forward_all_destination'])) $attributes['forward_all_destination'] = format_phone_or_extension($attributes['forward_all_destination']);
+
+        if ($attributes['forward']['all']['type'] == 'external') {
+            $attributes['forward_all_destination'] = PhoneNumber::make($attributes['forward']['all']['target_external'], "US")->formatE164();
+        } else {
+            $attributes['forward_all_destination'] = $attributes['forward']['all']['target_internal'];
+        }
+
         if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled'] == "true") $attributes['forward_busy_enabled'] = "true";
-        if (isset($attributes['forward_busy_destination'])) $attributes['forward_busy_destination'] = format_phone_or_extension($attributes['forward_busy_destination']);
+
+        if ($attributes['forward']['busy']['type'] == 'external') {
+            $attributes['forward_busy_destination'] = PhoneNumber::make($attributes['forward']['busy']['target_external'], "US")->formatE164();
+        } else {
+            $attributes['forward_busy_destination'] = $attributes['forward']['busy']['target_internal'];
+        }
+
         if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled'] == "true") $attributes['forward_no_answer_enabled'] = "true";
-        if (isset($attributes['forward_no_answer_destination'])) $attributes['forward_no_answer_destination'] = format_phone_or_extension($attributes['forward_no_answer_destination']);
+
+        if ($attributes['forward']['no_answer']['type'] == 'external') {
+            $attributes['forward_no_answer_destination'] = PhoneNumber::make($attributes['forward']['no_answer']['target_external'], "US")->formatE164();
+        } else {
+            $attributes['forward_no_answer_destination'] = $attributes['forward']['no_answer']['target_internal'];
+        }
+
         if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled'] == "true") $attributes['forward_user_not_registered_enabled'] = "true";
-        if (isset($attributes['forward_user_not_registered_destination'])) $attributes['forward_user_not_registered_destination'] = format_phone_or_extension($attributes['forward_user_not_registered_destination']);
+
+        if ($attributes['forward']['user_not_registered']['type'] == 'external') {
+            $attributes['forward_user_not_registered_destination'] = PhoneNumber::make($attributes['forward']['user_not_registered']['target_external'], "US")->formatE164();
+        } else {
+            $attributes['forward_user_not_registered_destination'] = $attributes['forward']['user_not_registered']['target_internal'];
+        }
+
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');

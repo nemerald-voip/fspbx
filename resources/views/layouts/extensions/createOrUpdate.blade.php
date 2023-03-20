@@ -579,7 +579,8 @@
                                                             <audio id="voicemail_unavailable_audio_file"
                                                                 @if ($vm_unavailable_file_exists)
                                                                 src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
-                                                                @endif >
+                                                                @endif
+                                                            >
                                                             </audio>
                                                             <p class="text-muted mb-1">File name: <span id='voicemailUnavailableFilename'>
                                                                 <strong>
@@ -1236,6 +1237,15 @@
                                                     <div id="forward_all_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'forward',
+                                                                                    'id' => 'all',
+                                                                                    'value' => $extension->forward_all_destination,
+                                                                                    'extensions' => $extensions
+                                                                ])
+                                                                <div class="text-danger forward_all_destination_err error_message"></div>
+                                                            </p>
+{{--
                                                             @if(empty($extension->forward_all_destination))
                                                                 <span id="forward_all_label">No destination selected.</span>
                                                             @else
@@ -1246,8 +1256,9 @@
                                                                 <span class="clear-dest ml-2"><a href="javascript:confirmClearDestinationAction('{{ route('extensions.clear-callforward-destination', ['extension' => $extension->extension_uuid, 'type' => 'all']) }}', 'all');">Clear destination</a></span>
                                                             @endif
                                                             </p>
-                                                            <div class="text-danger forward_all_destination_err error_message"></div>
+
                                                             <input type="hidden" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}" />
+--}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1270,6 +1281,16 @@
                                                     <div id="forward_busy_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'forward',
+                                                                                    'id' => 'busy',
+                                                                                    'value' => $extension->forward_busy_destination,
+                                                                                    'extensions' => $extensions
+                                                                ])
+                                                                <div class="text-danger forward_busy_destination_err error_message"></div>
+                                                            </p>
+                                                            {{--
+                                                            <p>
                                                             @if(empty($extension->forward_busy_destination))
                                                                 <span id="forward_busy_label">No destination selected.</span>
                                                             @else
@@ -1282,6 +1303,7 @@
                                                             </p>
                                                             <div class="text-danger forward_busy_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}" />
+                                                            --}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1304,6 +1326,17 @@
                                                     <div id="forward_no_answer_phone_number" class="row @if($extension->forward_no_answer_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'forward',
+                                                                                    'id' => 'no_answer',
+                                                                                    'value' => $extension->forward_no_answer_destination,
+                                                                                    'extensions' => $extensions
+                                                                ])
+                                                                <div class="text-danger forward_no_answer_destination_err error_message"></div>
+                                                            </p>
+                                                            {{--
+                                                            <p>
+
                                                             @if(empty($extension->forward_no_answer_destination))
                                                                 <span id="forward_no_answer_label">No destination selected.</span>
                                                             @else
@@ -1316,6 +1349,7 @@
                                                             </p>
                                                             <div class="text-danger forward_no_answer_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}" />
+                                                            --}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1338,6 +1372,16 @@
                                                     <div id="forward_user_not_registered_phone_number" class="row @if($extension->forward_user_not_registered_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                            @include('layouts.partials.destinationSelector', [
+                                                                                'type' => 'forward',
+                                                                                'id' => 'user_not_registered',
+                                                                                'value' => $extension->forward_user_not_registered_destination,
+                                                                                'extensions' => $extensions
+                                                            ])
+                                                            <div class="text-danger forward_not_registered_destination_err error_message"></div>
+                                                            </p>
+                                                            {{--
+                                                            <p>
                                                             @if(empty($extension->forward_user_not_registered_destination))
                                                                 <span id="forward_user_not_registered_label">No destination selected.</span>
                                                             @else
@@ -1350,6 +1394,7 @@
                                                             </p>
                                                             <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}" />
+                                                            --}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1420,6 +1465,7 @@
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
                                                                             <td>
                                                                                 @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'follow_me_destinations',
                                                                                     'id' => $destination->follow_me_destination_uuid,
                                                                                     'value' => $destination->follow_me_destination,
                                                                                     'extensions' => $extensions
@@ -1596,8 +1642,10 @@
         </div>
     </div>
 </div>
+{{--
 @include('layouts.extensions.confirmClearDestinationModal')
 @include('layouts.extensions.chooseForwardDestinationModal', ['extensions' => $extensions])
+--}}
 @endsection
 
 @push('scripts')
@@ -1610,11 +1658,12 @@
         .select2-container--open {
             z-index:10000;
         }
+        /*
         @media (min-width: 576px) {
             #ForwardDestinationModal > .modal-dialog {
                 max-width: 800px;
             }
-        }
+        }*/
         .drag-handler {
             cursor: all-scroll;
         }
@@ -1704,13 +1753,13 @@
         $(document).on('click', '.forward_checkbox', function (e) {
             var checkbox = $(this);
             var cname = checkbox.data('option');
-            // console.log(cname)
+            console.log(cname)
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
-                $('#'+cname+'_destination').prop('disabled', false);
             } else {
                 $('#'+cname+'_phone_number').addClass('d-none');
-                $('#'+cname+'_destination').prop('disabled', true);
+                $('#'+cname+'_phone_number').find('.mx-1').find('select').val('internal');
+                $('#'+cname+'_phone_number').find('.mx-1').find('select').trigger('change');
             }
         });
 
@@ -2164,6 +2213,7 @@
             audioElement.pause();
         });
 
+         /*
         $('#ForwardDestinationModalAction').click(function() {
             let modal = $('#ForwardDestinationModal');
             let type = modal.find('#forward_destination_type').val()
@@ -2180,15 +2230,15 @@
                 $('#forward_'+type+'_destination').val(destext)
             }
             modal.modal('hide')
-        });
-
+        });*/
+/*
         $('#extension_destination_popup').change(function() {
             $('#number_destination_popup').val('')
         })
 
         $("#ForwardDestinationModal").on("hidden.bs.modal", function () {
             $('#ForwardDestinationModal').find('#forward_destination_type').val('')
-        });
+        });*/
 
         $('#voicemail_enabled').change(function() {
             if(this.checked == true){
@@ -2352,9 +2402,20 @@
             }
         });
 
+        $(`#forward_target_internal_all`).select2();
+        $(`#forward_type_all`).select2();
+
+        $(`#forward_target_internal_busy`).select2();
+        $(`#forward_type_busy`).select2();
+
+        $(`#forward_target_internal_no_answer`).select2();
+        $(`#forward_type_no_answer`).select2();
+
+        $(`#forward_target_internal_user_not_registered`).select2();
+        $(`#forward_type_user_not_registered`).select2();
         //updateDestinationOrder()
     });
-
+/*
     function openForwardDestinationModal(title, section) {
         let modal = $('#ForwardDestinationModal'), number = ''
         modal.find('#extension_destination_popup').val('').trigger('change');
@@ -2394,14 +2455,16 @@
         modal.find('.modal-title').text(title)
         modal.modal('show')
     }
-
+*/
+    /*
     function confirmClearDestinationAction(url, type){
         let dataObj = {};
         dataObj.url = url;
         dataObj.type = type;
         $('#confirmClearDestinationModal').data(dataObj).modal('show');
     }
-
+*/
+    /*
     function performConfirmedClearDestinationAction() {
         $('#confirmClearDestinationModal').modal('hide');
 
@@ -2438,7 +2501,7 @@
             .fail(function (response) {
                 $.NotificationApp.send("Warning", response, "top-right", "#ff5b5b", "error");
             });
-    }
+    }*/
 
     function showHideAddDestination() {
         if($('#destination_sortable > tr').length > 9) {
@@ -2483,6 +2546,7 @@
         <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
         <td>
         @include('layouts.partials.destinationSelector', [
+            'type' => 'follow_me_destinations',
             'id' => '__NEWROWID__',
             'value' => '',
             'extensions' => $extensions
