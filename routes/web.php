@@ -35,13 +35,6 @@ use App\Http\Controllers\VoicemailMessagesController;
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
 Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
 
-// STIR SHAKEN
-Route::post('/hello', function () {
-    Log::alert("STIR SHAKEN");
-    return response('Hello World', 200)
-    ->header('Content-Type', 'text/plain');
-})->withoutMiddleware(['auth','web']);
-
 //Polycom log handling
 Route::put('/polycom/log/{name}', [PolycomLogController::class, 'store'])->withoutMiddleware(['auth','web']) ->name('log.store');
 Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withoutMiddleware(['auth','web']) ->name('log.get');
