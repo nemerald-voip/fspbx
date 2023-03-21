@@ -3,27 +3,30 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\DefaultSettings;
-use App\Models\Destinations;
-use App\Models\Dialplans;
-use App\Models\FaxAllowedDomainNames;
-use App\Models\FaxAllowedEmails;
-use App\Models\Faxes;
-use App\Models\FaxFiles;
-use App\Models\FaxLogs;
-use App\Models\FaxQueues;
-use App\Models\FreeswitchSettings;
 use cache;
+use Throwable;
 use Carbon\Carbon;
+use App\Models\Faxes;
+use App\Models\FaxLogs;
+use App\Models\FaxFiles;
+use App\Models\Dialplans;
+use App\Models\FaxQueues;
+use App\Models\Destinations;
 use Illuminate\Http\Request;
+use App\Models\DefaultSettings;
+use App\Models\FaxAllowedEmails;
+use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
+use App\Models\FaxAllowedDomainNames;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
+use App\Jobs\SendFaxNotificationToSlack;
+use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
-use libphonenumber\PhoneNumberUtil;
+use Illuminate\Support\Facades\Validator;
 
 class FaxesController extends Controller
 {
@@ -454,9 +457,9 @@ class FaxesController extends Controller
                 mkdir($dir_fax_temp, 0770);
             }
         } catch (Throwable $e) {
-            $this->message .= $e->getMessage() . " at ". $e->getFile() . ":". $e->getLine().'\n';
-            Log::alert($this->message);
-            SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+            $message = $e->getMessage() . " at ". $e->getFile() . ":". $e->getLine().'\n';
+            Log::alert($message);
+            SendFaxNotificationToSlack::dispatch($message)->onQueue('faxes');
             //Process errors
         }
 
