@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 
-class DevicesController extends Controller
+class DeviceController extends Controller
 {
     /**
      * Display a listing of the resource.
