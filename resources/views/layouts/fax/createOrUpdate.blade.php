@@ -92,7 +92,7 @@
 
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label for="fax_caller_id_number" class="form-label">Caller ID Number </label>
+                                                    <label for="fax_caller_id_number" class="form-label">Caller ID Number <span class="text-danger">*</span></label>
                                                     {{-- <input class="form-control"  type="text" value="{{ $fax->fax_caller_id_number ?? ''}}" 
                                                         placeholder="Enter Caller ID Number" id="fax_caller_id_number" name="fax_caller_id_number" /> --}}
 
@@ -241,7 +241,7 @@
                             </div>
                             <div class="row">
                                 <label for="fax_email_input" class="form-label">Fax email address</label>
-                                <div class="mb-3 col-10">
+                                <div class="mb-3 col-9">
                                     <input type="email" id="fax_email_input" class="form-control" placeholder="Email">
                                 </div>
                                 <div class="mb-3 col-2">
@@ -284,7 +284,7 @@
                             </div>
                             <div class="row">
                                 <label for="emailAddress" class="form-label">Add a new trusted email address</label>
-                                <div class="mb-3 col-6">
+                                <div class="mb-3 col-9">
                                     <input type="email" id="emailAddress" name="example-email" class="form-control" placeholder="Email">
                                 </div>
                                 <div class="mb-3 col-3">
@@ -324,7 +324,7 @@
                             </div>
                             <div class="row">
                                 <label for="domainName" class="form-label">Add a new trusted domain name (example.com)</label>
-                                <div class="mb-3 col-6">
+                                <div class="mb-3 col-9">
                                     <input type="text" id="domainName" class="form-control" placeholder="Domain">
                                 </div>
                                 <div class="mb-3 col-3">

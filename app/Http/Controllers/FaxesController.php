@@ -366,7 +366,7 @@ class FaxesController extends Controller
             // 'fax_prefix' => 'nullable',
             'fax_email' => 'nullable|array',
             'fax_caller_id_name' => 'nullable',
-            'fax_caller_id_number' => 'nullable',
+            'fax_caller_id_number' => 'required',
             'fax_forward_number' => 'nullable',
             'fax_toll_allow' => 'nullable',
             'fax_send_channels' => 'nullable',
