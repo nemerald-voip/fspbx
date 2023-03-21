@@ -1,25 +1,26 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\EmailQueueController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
+use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
-use App\Http\Controllers\FaxesController;
-use App\Http\Controllers\FaxQueueController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes

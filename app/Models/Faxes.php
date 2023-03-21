@@ -269,9 +269,7 @@ class Faxes extends Model
         }
 
         // Send notification to user that fax is in transit
-        if (get_domain_setting('fax_slack_notification') == "all") {
-            SendFaxInTransitNotification::dispatch(new Request($payload))->onQueue('emails');
-        }
+        SendFaxInTransitNotification::dispatch(new Request($payload))->onQueue('emails');
 
         // Set fax subject
         $this->fax_subject = $payload['Subject'];

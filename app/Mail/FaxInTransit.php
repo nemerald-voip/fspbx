@@ -37,6 +37,9 @@ class FaxInTransit extends Mailable
                 if ($setting->default_setting_subcategory == "email_company_name") {
                     $attributes['company_name'] = $setting->default_setting_value;
                 }
+                if ($setting->default_setting_subcategory == "help_url") {
+                    $attributes['help_url'] = $setting->default_setting_value;
+                }
             }
         }
         $this->attributes = $attributes;
