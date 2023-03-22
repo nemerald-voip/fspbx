@@ -662,6 +662,10 @@
                                         </div> <!-- end row -->
                                         @endif
 
+                                        @if (isSuperAdmin())
+                                            @stack ('api')
+                                        @endif
+
                                         <div class="row mt-4">
                                             <div class="col-sm-12">
                                                 <div class="text-sm-end">
