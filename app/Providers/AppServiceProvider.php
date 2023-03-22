@@ -67,7 +67,7 @@ class AppServiceProvider extends ServiceProvider
         Builder::macro('andWhereLike', function(string $column, string $search) {
             return $this->where($column, 'ILIKE', '%'.trim($search).'%');
         });
-
+/* Note: Temporary commented. Not removed because it can be used in next updates
         Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
             $phoneFormat = 'US';
             if(isset($parameters[0])) {
@@ -81,6 +81,20 @@ class AppServiceProvider extends ServiceProvider
                 return (bool)$builder->first();
             } else {
                 return (new Phone())->validate($attribute, $value, [$phoneFormat], $validator);
+            }
+        });
+*/
+        Validator::extend('ExtensionExists', function ($attribute, $value, $parameters, $validator) {
+            if(!isset($parameters[0])) {
+                return false;
+            }
+            $domain = $parameters[0];
+            if($value == '0') {
+                // Bypass validation if the extension is 0. Means we have not chosen an extension due
+                // the option is partially optional
+                return true;
+            } else {
+                return (bool)Extensions::where('extension', $value)->where('domain_uuid', $domain)->first();
             }
         });
     }
