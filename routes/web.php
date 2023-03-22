@@ -19,6 +19,7 @@ use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
+use App\Http\Controllers\UserApiKeyController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 /*
@@ -83,8 +84,11 @@ Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'si
 Route::webhooks('webhook/postmark','postmark');
 Route::webhooks('webhook/commio/sms','commio');
 
+//Users
 Route::resource('users','UsersController');
+
 Route::resource('voicemails','VoicemailController');
+
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 
