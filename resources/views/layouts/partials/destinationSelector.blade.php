@@ -12,7 +12,7 @@
 @endphp
 <div class="d-flex">
     <div class="mx-1">
-        <select onchange="(function(){if($('#{{$type}}_type_{{$id}}').val() === 'external'){$('#{{$type}}_target_external_wrapper_{{$id}}').show();$('#{{$type}}_target_internal_wrapper_{{$id}}').hide()} else {$('#{{$type}}_target_internal_wrapper_{{$id}}').show();$('#{{$type}}_target_external_wrapper_{{$id}}').hide()}})()" id="{{$type}}_type_{{$id}}" name="{{$type}}[{{$arrval}}][type]">
+        <select onchange="(function(){if($('#{{$type}}_type_{{$id}}').val() === 'external'){$('#{{$type}}_target_external_wrapper_{{$id}}').show();$('#{{$type}}_target_internal_wrapper_{{$id}}').hide();$('#{{$type}}_target_internal_{{$id}}').val('0');$('#{{$type}}_target_internal_{{$id}}').trigger('change');} else {$('#{{$type}}_target_internal_wrapper_{{$id}}').show();$('#{{$type}}_target_external_wrapper_{{$id}}').hide();$('#{{$type}}_target_external_{{$id}}').val('');}})()" id="{{$type}}_type_{{$id}}" name="{{$type}}[{{$arrval}}][type]">
             <option value="internal" @if (!detect_if_phone_number($value)) selected @endif>Internal</option>
             <option value="external" @if (detect_if_phone_number($value)) selected @endif>External</option>
         </select>
@@ -37,6 +37,7 @@
             <select id="{{$type}}_target_internal_{{$id}}"
                     class="dest-internal"
                     name="{{$type}}[{{$arrval}}][target_internal]">
+                <option value="0" @if($value == '') selected @endif>Choose destination</option>
                 @foreach($extensions as $ext)
                     <option value="{{ $ext->extension }}" @if($value == $ext->extension) selected @endif>
                         {{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif

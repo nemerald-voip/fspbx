@@ -2454,18 +2454,6 @@
         applyDestinationSelect2()
     }
 
-    /*
-    function changeDestinationType(el) {
-        let val = $(`#destination_type_${el}`).val();
-        if(val === 'external') {
-            $(`#destination_target_external_wrapper_${el}`).show()
-            $(`#destination_target_internal_wrapper_${el}`).hide()
-        } else {
-            $(`#destination_target_internal_wrapper_${el}`).show()
-            $(`#destination_target_external_wrapper_${el}`).hide()
-        }
-    }*/
-
     function confirmDeleteDestinationAction(el){
         if ($(`#${el}`).data('select2')) {
             $(`#${el}`).select2('destroy').hide()

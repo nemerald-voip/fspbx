@@ -305,7 +305,9 @@ class ExtensionsController extends Controller
         $extension->forward_user_not_registered_enabled = "false";
         $extension->follow_me_enabled = "false";
         $extension->do_not_disturb = "false";
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))->get();
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('extension')
+            ->get();
         //dd($extension->domain->users);
         return view('layouts.extensions.createOrUpdate')
             ->with('extension', $extension)
@@ -349,8 +351,8 @@ class ExtensionsController extends Controller
             'forward_no_answer_enabled' => 'call forwarding no answer',
             'forward_no_answer_description' => 'field',
             'forward_user_not_registered_enabled' => 'call forwarding no user',
-            'forward_user_not_registered_destination' => 'field'
-
+            'forward_user_not_registered_destination' => 'field',
+            'follow_me_destinations.*.target_internal' => 'value'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -397,6 +399,7 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+
             'forward_all_enabled' => 'in:true,false',
             'forward.all.type' => [
                 'required_if:forward_all_enabled,==,true',
@@ -411,8 +414,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.all.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'forward_busy_enabled' => 'in:true,false',
@@ -429,8 +431,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.busy.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'forward_no_answer_enabled' => 'in:true,false',
@@ -447,8 +448,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.no_answer.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'forward_user_not_registered_enabled' => 'in:true,false',
@@ -465,8 +465,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.user_not_registered.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'follow_me_enabled' => 'in:true,false',
@@ -490,7 +489,8 @@ class ExtensionsController extends Controller
             'follow_me_destinations.*.prompt' => 'in:true,false'
         ], [
             'phone' => 'Should be valid US phone number or extension id',
-            'required_if' => 'Should be valid US phone number or extension id'
+            'required_if' => 'This is the required field',
+            'ExtensionExists' => 'Should be valid destination'
         ], $attributes);
 
         if ($validator->fails()) {
@@ -516,12 +516,20 @@ class ExtensionsController extends Controller
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
         $attributes['insert_date'] = date("Y-m-d H:i:s");
         $attributes['insert_user'] = Session::get('user_uuid');
+
         if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled'] == "true") $attributes['forward_all_enabled'] = "true";
 
         if ($attributes['forward']['all']['type'] == 'external') {
             $attributes['forward_all_destination'] = PhoneNumber::make($attributes['forward']['all']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_all_destination'] = $attributes['forward']['all']['target_internal'];
+            $attributes['forward_all_destination'] = ($attributes['forward']['all']['target_internal'] =='0')?'':$attributes['forward']['all']['target_internal'];;
+            if(empty($attributes['forward_all_destination'])) {
+                $attributes['forward_all_enabled'] = 'false';
+            }
+        }
+
+        if ($attributes['forward_all_enabled'] == 'false') {
+            $attributes['forward_all_destination'] = '';
         }
 
         if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled'] == "true") $attributes['forward_busy_enabled'] = "true";
@@ -529,7 +537,14 @@ class ExtensionsController extends Controller
         if ($attributes['forward']['busy']['type'] == 'external') {
             $attributes['forward_busy_destination'] = PhoneNumber::make($attributes['forward']['busy']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_busy_destination'] = $attributes['forward']['busy']['target_internal'];
+            $attributes['forward_busy_destination'] = ($attributes['forward']['busy']['target_internal'] =='0')?'':$attributes['forward']['busy']['target_internal'];;
+            if(empty($attributes['forward_busy_destination'])) {
+                $attributes['forward_busy_enabled'] = 'false';
+            }
+        }
+
+        if ($attributes['forward_busy_enabled'] == 'false') {
+            $attributes['forward_busy_destination'] = '';
         }
 
         if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled'] == "true") $attributes['forward_no_answer_enabled'] = "true";
@@ -537,7 +552,14 @@ class ExtensionsController extends Controller
         if ($attributes['forward']['no_answer']['type'] == 'external') {
             $attributes['forward_no_answer_destination'] = PhoneNumber::make($attributes['forward']['no_answer']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_no_answer_destination'] = $attributes['forward']['no_answer']['target_internal'];
+            $attributes['forward_no_answer_destination'] = ($attributes['forward']['no_answer']['target_internal'] =='0')?'':$attributes['forward']['no_answer']['target_internal'];
+            if(empty($attributes['forward_no_answer_destination'])) {
+                $attributes['forward_no_answer_enabled'] = 'false';
+            }
+        }
+
+        if($attributes['forward_no_answer_enabled'] == 'false') {
+            $attributes['forward_no_answer_destination'] = '';
         }
 
         if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled'] == "true") $attributes['forward_user_not_registered_enabled'] = "true";
@@ -545,7 +567,14 @@ class ExtensionsController extends Controller
         if ($attributes['forward']['user_not_registered']['type'] == 'external') {
             $attributes['forward_user_not_registered_destination'] = PhoneNumber::make($attributes['forward']['user_not_registered']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_user_not_registered_destination'] = $attributes['forward']['user_not_registered']['target_internal'];
+            $attributes['forward_user_not_registered_destination'] = ($attributes['forward']['user_not_registered']['target_internal'] =='0')?'':$attributes['forward']['user_not_registered']['target_internal'];;
+            if(empty($attributes['forward_user_not_registered_destination'])) {
+                $attributes['forward_user_not_registered_enabled'] = 'false';
+            }
+        }
+
+        if ($attributes['forward_user_not_registered_enabled'] == 'false') {
+            $attributes['forward_user_not_registered_destination'] = '';
         }
 
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
@@ -739,7 +768,10 @@ class ExtensionsController extends Controller
             }
         }
 
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))->whereNotIn('extension_uuid', [$extension->extension_uuid])->get();
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+            ->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('extension')
+            ->get();
         // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
             ->with('extension', $extension)
@@ -790,7 +822,8 @@ class ExtensionsController extends Controller
             'forward_no_answer_enabled' => 'call forwarding no answer',
             'forward_no_answer_description' => 'field',
             'forward_user_not_registered_enabled' => 'call forwarding no user',
-            'forward_user_not_registered_destination' => 'field'
+            'forward_user_not_registered_destination' => 'field',
+            'follow_me_destinations.*.target_internal' => 'value'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -864,8 +897,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.all.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'forward_busy_enabled' => 'in:true,false',
@@ -882,8 +914,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.busy.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'forward_no_answer_enabled' => 'in:true,false',
@@ -900,8 +931,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.no_answer.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'forward_user_not_registered_enabled' => 'in:true,false',
@@ -918,8 +948,7 @@ class ExtensionsController extends Controller
                 'required_if:forward.user_not_registered.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
 
             'follow_me_enabled' => 'in:true,false',
@@ -943,7 +972,8 @@ class ExtensionsController extends Controller
             'follow_me_destinations.*.prompt' => 'in:true,false'
         ], [
             'phone' => 'Should be valid US phone number or extension id',
-            'required_if' => 'Should be valid US phone number or extension id'
+            'required_if' => 'This is the required field',
+            'ExtensionExists' => 'Should be valid destination'
         ], $attributes);
 
         if ($validator->fails()) {
@@ -966,12 +996,20 @@ class ExtensionsController extends Controller
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+
         if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled'] == "true") $attributes['forward_all_enabled'] = "true";
 
         if ($attributes['forward']['all']['type'] == 'external') {
             $attributes['forward_all_destination'] = PhoneNumber::make($attributes['forward']['all']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_all_destination'] = $attributes['forward']['all']['target_internal'];
+            $attributes['forward_all_destination'] = ($attributes['forward']['all']['target_internal'] =='0')?'':$attributes['forward']['all']['target_internal'];;
+            if(empty($attributes['forward_all_destination'])) {
+                $attributes['forward_all_enabled'] = 'false';
+            }
+        }
+
+        if ($attributes['forward_all_enabled'] == 'false') {
+            $attributes['forward_all_destination'] = '';
         }
 
         if (isset($attributes['forward_busy_enabled']) && $attributes['forward_busy_enabled'] == "true") $attributes['forward_busy_enabled'] = "true";
@@ -979,7 +1017,14 @@ class ExtensionsController extends Controller
         if ($attributes['forward']['busy']['type'] == 'external') {
             $attributes['forward_busy_destination'] = PhoneNumber::make($attributes['forward']['busy']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_busy_destination'] = $attributes['forward']['busy']['target_internal'];
+            $attributes['forward_busy_destination'] = ($attributes['forward']['busy']['target_internal'] =='0')?'':$attributes['forward']['busy']['target_internal'];;
+            if(empty($attributes['forward_busy_destination'])) {
+                $attributes['forward_busy_enabled'] = 'false';
+            }
+        }
+
+        if ($attributes['forward_busy_enabled'] == 'false') {
+            $attributes['forward_busy_destination'] = '';
         }
 
         if (isset($attributes['forward_no_answer_enabled']) && $attributes['forward_no_answer_enabled'] == "true") $attributes['forward_no_answer_enabled'] = "true";
@@ -987,7 +1032,14 @@ class ExtensionsController extends Controller
         if ($attributes['forward']['no_answer']['type'] == 'external') {
             $attributes['forward_no_answer_destination'] = PhoneNumber::make($attributes['forward']['no_answer']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_no_answer_destination'] = $attributes['forward']['no_answer']['target_internal'];
+            $attributes['forward_no_answer_destination'] = ($attributes['forward']['no_answer']['target_internal'] =='0')?'':$attributes['forward']['no_answer']['target_internal'];
+            if(empty($attributes['forward_no_answer_destination'])) {
+                $attributes['forward_no_answer_enabled'] = 'false';
+            }
+        }
+
+        if($attributes['forward_no_answer_enabled'] == 'false') {
+            $attributes['forward_no_answer_destination'] = '';
         }
 
         if (isset($attributes['forward_user_not_registered_enabled']) && $attributes['forward_user_not_registered_enabled'] == "true") $attributes['forward_user_not_registered_enabled'] = "true";
@@ -995,7 +1047,14 @@ class ExtensionsController extends Controller
         if ($attributes['forward']['user_not_registered']['type'] == 'external') {
             $attributes['forward_user_not_registered_destination'] = PhoneNumber::make($attributes['forward']['user_not_registered']['target_external'], "US")->formatE164();
         } else {
-            $attributes['forward_user_not_registered_destination'] = $attributes['forward']['user_not_registered']['target_internal'];
+            $attributes['forward_user_not_registered_destination'] = ($attributes['forward']['user_not_registered']['target_internal'] =='0')?'':$attributes['forward']['user_not_registered']['target_internal'];;
+            if(empty($attributes['forward_user_not_registered_destination'])) {
+                $attributes['forward_user_not_registered_enabled'] = 'false';
+            }
+        }
+
+        if ($attributes['forward_user_not_registered_enabled'] == 'false') {
+            $attributes['forward_user_not_registered_destination'] = '';
         }
 
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
