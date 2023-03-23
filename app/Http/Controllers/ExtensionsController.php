@@ -15,9 +15,11 @@ use App\Models\ExtensionUser;
 use App\Models\FollowMe;
 use App\Models\FollowMeDestinations;
 use App\Models\FreeswitchSettings;
+use App\Models\IvrMenus;
 use App\Models\MobileAppUsers;
 use App\Models\MusicOnHold;
 use App\Models\Recordings;
+use App\Models\RingGroups;
 use App\Models\VoicemailDestinations;
 use App\Models\Voicemails;
 use cache;
@@ -305,13 +307,10 @@ class ExtensionsController extends Controller
         $extension->forward_user_not_registered_enabled = "false";
         $extension->follow_me_enabled = "false";
         $extension->do_not_disturb = "false";
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('extension')
-            ->get();
-        //dd($extension->domain->users);
+
         return view('layouts.extensions.createOrUpdate')
             ->with('extension', $extension)
-            ->with('extensions', $extensions)
+            ->with('extensions', $this->getDestinationExtensions())
             ->with('destinations', $destinations)
             ->with('follow_me_destinations', [])
             ->with('domain_users', $extension->domain->users)
@@ -768,16 +767,11 @@ class ExtensionsController extends Controller
             }
         }
 
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-            ->whereNotIn('extension_uuid', [$extension->extension_uuid])
-            ->orderBy('extension')
-            ->get();
-        // dd($vm_unavailable_file_exists);
         return view('layouts.extensions.createOrUpdate')
             ->with('extension', $extension)
             ->with('domain_users', $extension->domain->users)
             ->with('domain_voicemails', $extension->domain->voicemails)
-            ->with('extensions', $extensions)
+            ->with('extensions', $this->getDestinationExtensions())
             ->with('extension_users', $extension->users())
             ->with('destinations', $destinations)
             ->with('follow_me_destinations', $follow_me_destinations)
@@ -1372,6 +1366,26 @@ class ExtensionsController extends Controller
             'status' => 'success',
             'message' => 'CallForward destination has been disabled successfully.'
         ]);
+    }
+
+    private function getDestinationExtensions() {
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('extension')
+            ->get();
+        $ivrMenus = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('ivr_menu_extension')
+            ->get();
+        $ringGroups = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('ring_group_extension')
+            ->get();
+        return [
+            'Extensions' => $extensions,
+            'Ivr Menus' => $ivrMenus,
+            'Ring Groups' => $ringGroups
+        ];
     }
 
 }
