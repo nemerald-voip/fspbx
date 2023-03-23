@@ -38,10 +38,14 @@
                     class="dest-internal"
                     name="{{$type}}[{{$arrval}}][target_internal]">
                 <option value="0" @if($value == '') selected @endif>Choose destination</option>
-                @foreach($extensions as $ext)
-                    <option value="{{ $ext->extension }}" @if($value == $ext->extension) selected @endif>
-                        {{ $ext->extension }} - @if(!empty($ext->effective_caller_id_name)) {{ $ext->effective_caller_id_name }} @else {{ $ext->description }} @endif
-                    </option>
+                @foreach($extensions as $group => $exts)
+                    <optgroup label="{{$group}}">
+                        @foreach($exts as $ext)
+                            <option value="{{ $ext->getId() }}" @if($value == $ext->getId()) selected @endif>
+                                {{ $ext->getName() }}
+                            </option>
+                        @endforeach
+                    </optgroup>
                 @endforeach
             </select>
         </div>

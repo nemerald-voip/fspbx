@@ -186,4 +186,14 @@ class Extensions extends Model
     {
         return $this->belongsTo(FollowMeDestinations::class,'follow_me_uuid','follow_me_uuid')->orderBy('follow_me_order')->get();
     }
+
+    public function getId()
+    {
+        return $this->extension;
+    }
+
+    public function getName()
+    {
+        return $this->extension.' - '.((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
+    }
 }
