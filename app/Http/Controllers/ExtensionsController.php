@@ -350,8 +350,7 @@ class ExtensionsController extends Controller
             'forward_no_answer_enabled' => 'call forwarding no answer',
             'forward_no_answer_description' => 'field',
             'forward_user_not_registered_enabled' => 'call forwarding no user',
-            'forward_user_not_registered_destination' => 'field',
-            'follow_me_destinations.*.target_internal' => 'value'
+            'forward_user_not_registered_destination' => 'field'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -480,8 +479,7 @@ class ExtensionsController extends Controller
                 'required_if:follow_me_destinations.*.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
             'follow_me_destinations.*.delay' => 'numeric',
             'follow_me_destinations.*.timeout' => 'numeric',
@@ -817,7 +815,6 @@ class ExtensionsController extends Controller
             'forward_no_answer_description' => 'field',
             'forward_user_not_registered_enabled' => 'call forwarding no user',
             'forward_user_not_registered_destination' => 'field',
-            'follow_me_destinations.*.target_internal' => 'value'
         ];
 
         $validator = Validator::make($request->all(), [
@@ -958,8 +955,7 @@ class ExtensionsController extends Controller
                 'required_if:follow_me_destinations.*.type,==,internal',
                 'nullable',
                 'numeric',
-                Rule::exists('App\Models\Extensions', 'extension')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                'ExtensionExists:'.Session::get('domain_uuid')
             ],
             'follow_me_destinations.*.delay' => 'numeric',
             'follow_me_destinations.*.timeout' => 'numeric',
@@ -1381,10 +1377,15 @@ class ExtensionsController extends Controller
             //->whereNotIn('extension_uuid', [$extension->extension_uuid])
             ->orderBy('ring_group_extension')
             ->get();
+        $voicemails = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('voicemail_id')
+            ->get();
         return [
             'Extensions' => $extensions,
             'Ivr Menus' => $ivrMenus,
-            'Ring Groups' => $ringGroups
+            'Ring Groups' => $ringGroups,
+            'Voicemails' => $voicemails
         ];
     }
 
