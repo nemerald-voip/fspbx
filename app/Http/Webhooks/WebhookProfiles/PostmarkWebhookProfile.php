@@ -37,7 +37,7 @@ class PostmarkWebhookProfile implements WebhookProfile
         }
 
         // Get FROM email subject and check if it's authorized
-        $from_email = $request['From'];
+        $from_email = strtolower($request['FromFull']['Email']);
 
         // Check if domain is whitelisted for sending faxes
         try {
