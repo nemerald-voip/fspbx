@@ -3,9 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Extensions;
-use Illuminate\Support\Facades\Session;
+use App\Models\IvrMenus;
+use App\Models\RingGroups;
+use App\Models\Voicemails;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Pagination\Paginator;
@@ -94,7 +95,21 @@ class AppServiceProvider extends ServiceProvider
                 // the option is partially optional
                 return true;
             } else {
-                return (bool)Extensions::where('extension', $value)->where('domain_uuid', $domain)->first();
+                $found = false;
+                if(Extensions::where('extension', $value)->where('domain_uuid', $domain)->first()) {
+                    $found = true;
+                }
+                if(IvrMenus::where('ivr_menu_extension', $value)->where('domain_uuid', $domain)->first()) {
+                    $found = true;
+                }
+                if(RingGroups::where('ring_group_extension', $value)->where('domain_uuid', $domain)->first()) {
+                    $found = true;
+                }
+                if(Voicemails::where('voicemail_id', $value)->where('domain_uuid', $domain)->first()) {
+                    $found = true;
+                }
+
+                return $found;
             }
         });
     }
