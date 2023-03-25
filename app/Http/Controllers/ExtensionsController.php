@@ -1377,15 +1377,17 @@ class ExtensionsController extends Controller
             //->whereNotIn('extension_uuid', [$extension->extension_uuid])
             ->orderBy('ring_group_extension')
             ->get();
-        $voicemails = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+
+        /* NOTE: disabling voicemails as a call forward destination
+         * $voicemails = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
             //->whereNotIn('extension_uuid', [$extension->extension_uuid])
             ->orderBy('voicemail_id')
-            ->get();
+            ->get();*/
         return [
             'Extensions' => $extensions,
             'Ivr Menus' => $ivrMenus,
             'Ring Groups' => $ringGroups,
-            'Voicemails' => $voicemails
+            //'Voicemails' => $voicemails
         ];
     }
 
