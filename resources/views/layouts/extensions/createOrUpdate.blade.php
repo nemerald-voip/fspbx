@@ -2070,7 +2070,7 @@
                     $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
                     $("#voicemailNameGreetingError").text(response.message);
                 } else {
-                    $.NotificationApp.send("Success","The greeeting has been uploaded successfully","top-right","#10c469","success")
+                    $.NotificationApp.send("Success","The greeting has been uploaded successfully","top-right","#10c469","success")
                 }
             })
             .fail(function (response){
