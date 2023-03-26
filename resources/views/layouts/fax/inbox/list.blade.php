@@ -33,7 +33,7 @@
                             <div class="text-xl-end mt-xl-0 mt-2">
                                 
                                 @if ($permissions['delete'])
-                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteReceivedFax', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
                                         Delete Selected
                                     </a>
                                 @endif
@@ -57,7 +57,7 @@
                                     <th>From</th>
                                     <th>To</th>
                                     <th>Date</th>
-                                    <th class="text-end">Actions</th>
+                                    <th style="width: 125px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -89,19 +89,18 @@
                                         
                                         <td>{{ $file->fax_date }}</td>
 
-                                        <td class="text-end">
-                                            <a href="{{ route('downloadInboxFaxFile', $file->fax_file_uuid ) }}">
-                                                <button type="button" class="btn btn-light" title="Download">
-                                                    <i class="uil uil-down-arrow me-1"></i> Download
-                                                </button>
-                                            </a>
+                                        <td>
+                                            <div id="tooltip-container-actions">
+                                                <a href="{{ route('downloadInboxFaxFile', $file->fax_file_uuid ) }}" class="action-icon">
+                                                    <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
+                                                </a>
 
-                                            @if ($permissions['delete'])
-                                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_file_uuid }}');" class="btn btn-light"> 
-                                                <i class="uil uil-trash-alt" title="Delete"></i>
-                                            </a>
-                                            @endif
-
+                                                @if ($permissions['delete'])
+                                                    <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteReceivedFax', ':id') }}','{{ $file->fax_file_uuid }}');" class="action-icon">
+                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                    </a>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
