@@ -59,7 +59,8 @@ Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes
 Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
 Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
 Route::get('/faxes/log/{id}', [FaxesController::class, 'log']) ->name('faxes.log.list');
-Route::delete('/faxes/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFile']) ->name('faxes.file.deleteFaxFile');
+Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax']) ->name('faxes.file.deleteSentFax');
+Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax']) ->name('faxes.file.deleteReceivedFax');
 Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
 Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
 Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');

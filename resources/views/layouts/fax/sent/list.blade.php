@@ -1,6 +1,6 @@
 @extends('layouts.partials.listing.layout', ["pageTitle"=> 'Sent Faxes', 'breadcrumbs' => [
     'Virtual Fax Machines' => 'faxes.index',
-    'Fax Sent' => ''
+    'Sent Faxes' => ''
 ]])
 
 @section('pagination')
@@ -9,7 +9,7 @@
 
 @section('actionbar')
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteSentFax', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
             Delete Selected
         </a>
     @endif
@@ -62,7 +62,7 @@
         <th>Status</th>
         <th>Last attempt</th>
         <th>Retry Count</th>
-        <th>Actions</th>
+        <th style="width: 125px;">Actions</th>
     </tr>
 @endsection
 
@@ -133,7 +133,7 @@
                             </a>
                         @endif
                         @if ($permissions['delete'])
-                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxFile', ':id') }}','{{ $file->fax_queue_uuid }}');" class="action-icon">
+                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteSentFax', ':id') }}','{{ $file->fax_queue_uuid }}');" class="action-icon">
                                 <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                             </a>
                         @endif

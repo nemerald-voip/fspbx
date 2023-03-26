@@ -758,6 +758,37 @@ class FaxesController extends Controller
                 return response()->json([
                     'status' => 200,
                     'success' => [
+                        'message' => 'Selected faxes have been deleted'
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'There was an error deleting selected faxes'
+                    ]
+                ]);
+            }
+        }
+    }
+
+
+    public function deleteSentFax($id)
+    {
+        /** @var FaxQueues $fax */
+        $fax = FaxQueues::findOrFail($id);
+
+        if (isset($fax)) {
+            if($fax->getFaxFile()) {
+                $file = $fax->getFaxFile();
+                $file->delete();
+            }
+
+            $deleted = $fax->delete();
+            if ($deleted) {
+                return response()->json([
+                    'status' => 200,
+                    'success' => [
                         'message' => 'Selected fax have been deleted'
                     ]
                 ]);
@@ -772,18 +803,11 @@ class FaxesController extends Controller
         }
     }
 
-
-    public function deleteFaxFile($id)
+    public function deleteReceivedFax($id)
     {
-        /** @var FaxQueues $fax */
-        $fax = FaxQueues::findOrFail($id);
+        $fax = FaxFiles::findOrFail($id);
 
         if (isset($fax)) {
-            if($fax->getFaxFile()) {
-                $file = $fax->getFaxFile();
-                $file->delete();
-            }
-
             $deleted = $fax->delete();
             if ($deleted) {
                 return response()->json([
@@ -951,9 +975,9 @@ class FaxesController extends Controller
             );
 
         }
-
+        
         $fax = new Faxes();
-        // $result = $fax->EmailToFax($payload);
+        $result = $fax->EmailToFax($payload);
 
 
         return response()->json([
