@@ -26,10 +26,12 @@ class AppCredentials extends Mailable
         if ($settings) {
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == "smtp_from") {
-                    $attributes['support_email'] = $setting->default_setting_value;
                     $attributes['unsubscribe_email'] = $setting->default_setting_value;
                 } else {
                     $attributes['unsubscribe_email'] = "";
+                }
+                if ($setting->default_setting_subcategory == "support_email") {
+                    $attributes['support_email'] = $setting->default_setting_value;
                 }
             }
         }
