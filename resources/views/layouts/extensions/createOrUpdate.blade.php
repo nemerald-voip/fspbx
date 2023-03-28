@@ -2229,6 +2229,7 @@
                             voicemail_enabled: "true",
                             voicemail_transcription_enabled: "true",
                             voicemail_attach_file: "true",
+                            voicemail_tutorial: "true",
                             voicemail_file: "attach",
                             voicemail_local_after_email: "true",
                         },
