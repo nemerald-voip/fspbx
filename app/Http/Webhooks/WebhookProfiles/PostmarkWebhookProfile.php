@@ -18,6 +18,7 @@ class PostmarkWebhookProfile implements WebhookProfile
     public function shouldProcess(Request $request): bool
     {
 
+        $destination_number_valid = false;
         // Get destination fax number and check if it's valid
         $phone_number = strstr($request['ToFull'][0]['Email'], '@', true);
         //Get libphonenumber object
