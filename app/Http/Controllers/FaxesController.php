@@ -187,14 +187,26 @@ class FaxesController extends Controller
 
         $domainUuid = Session::get('domain_uuid');
 
-        $files = FaxQueues::where('v_fax_queue.fax_uuid', $request->id)
+        $files = FaxQueues::select(
+            'v_fax_queue.fax_queue_uuid',
+            'v_fax_queue.fax_caller_id_name',
+            'v_fax_queue.fax_caller_id_number',
+            'v_fax_queue.fax_date',
+            'v_fax_queue.fax_status',
+            'v_fax_queue.fax_uuid',
+            'v_fax_queue.fax_date',
+            'v_fax_queue.fax_status',
+            'v_fax_queue.fax_retry_count',
+            'v_fax_files.fax_destination'
+        )
+            ->where('v_fax_queue.fax_uuid', $request->id)
             ->where('v_fax_queue.domain_uuid', $domainUuid)
             ->whereBetween('v_fax_queue.fax_date', $period);
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $files
                 ->where('v_fax_queue.fax_status', $selectedStatus);
         }
-        $files->join('v_fax_files', 'fax_file_path', 'fax_file');
+        $files->leftJoin('v_fax_files', 'fax_file_path', 'fax_file');
         if ($searchString) {
             try {
                 $phoneNumberUtil = PhoneNumberUtil::getInstance();
@@ -212,7 +224,14 @@ class FaxesController extends Controller
         $files = $files
             ->orderBy('v_fax_queue.fax_date', 'desc')
             ->paginate(10)
-            ->onEachSide(1);
+            ->onEachSide(1)
+        ;
+
+        //$query = str_replace(array('?'), array('\'%s\''), $files->toSql());
+        //$query = vsprintf($query, $files->getBindings());
+        //print($query);
+        //print $files->toSql();
+        //die;
 
         $timeZone = get_local_time_zone($domainUuid);
         /** @var FaxQueues $file */
@@ -975,7 +994,7 @@ class FaxesController extends Controller
             );
 
         }
-        
+
         $fax = new Faxes();
         $result = $fax->EmailToFax($payload);
 
