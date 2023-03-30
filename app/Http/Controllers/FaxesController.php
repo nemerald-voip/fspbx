@@ -224,14 +224,7 @@ class FaxesController extends Controller
         $files = $files
             ->orderBy('v_fax_queue.fax_date', 'desc')
             ->paginate(10)
-            ->onEachSide(1)
-        ;
-
-        //$query = str_replace(array('?'), array('\'%s\''), $files->toSql());
-        //$query = vsprintf($query, $files->getBindings());
-        //print($query);
-        //print $files->toSql();
-        //die;
+            ->onEachSide(1);
 
         $timeZone = get_local_time_zone($domainUuid);
         /** @var FaxQueues $file */
