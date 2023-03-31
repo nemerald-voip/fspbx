@@ -80,11 +80,48 @@ class FaxesController extends Controller
         //Get libphonenumber object
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
-        $files = FaxFiles::where('fax_uuid', $request->id)->where('fax_mode', 'rx')->where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'desc')->get();
-        $data['files'] = $files;
-        $time_zone = get_local_time_zone($domain_uuid);
+        $searchString = $request->get('search');
+        $searchPeriod = $request->get('period');
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
+
+        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+            $e = explode("-", $searchPeriod);
+            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
+            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
+        }
+
+        $files = FaxFiles::where('fax_uuid', $request->id)
+            ->where('fax_mode', 'rx')
+            ->where('domain_uuid', $domain_uuid)
+            ->whereBetween('fax_date', $period);
+
+        if ($searchString) {
+            try {
+                $phoneNumberUtil = PhoneNumberUtil::getInstance();
+                $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $files->andWhereLike('fax_caller_id_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
+                } else {
+                    $files->andWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
+                }
+            } catch (NumberParseException $e) {
+                $files->andWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
+            }
+        }
+        $files = $files
+            ->orderBy('fax_date', 'desc')
+            ->paginate(10)
+            ->onEachSide(1);
+
+        $timeZone = get_local_time_zone($domain_uuid);
         foreach ($files as $file) {
-            if (Storage::disk('fax')->exists($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type)) {
+            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
+            //$file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
+            //$file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
+            /*if (Storage::disk('fax')->exists($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type)) {
                 $file->fax_file_path = Storage::disk('fax')->path($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type);
             }
 
@@ -108,12 +145,20 @@ class FaxesController extends Controller
                 }
             } catch (NumberParseException $e) {
                 // Do nothing and leave the numner as is
-            }
+            }*/
 
             // Try to convert the date to human redable format
-            $file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $time_zone)->toDayDateTimeString();
+            //$file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $timeZone)->toDayDateTimeString();
         }
+
         $permissions['delete'] = userCheckPermission('fax_inbox_delete');
+
+        $data['files'] = $files;
+        $data['searchString'] = $searchString;
+        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
+        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
+        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
+        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
         return view('layouts.fax.inbox.list')
             ->with($data)
             ->with('permissions', $permissions);
@@ -213,12 +258,12 @@ class FaxesController extends Controller
                 $phoneNumberUtil = PhoneNumberUtil::getInstance();
                 $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $files->andWhereLike('v_fax_files.fax_destination', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
+                    $files->andWhereLike('v_fax_queue.fax_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
                 } else {
-                    $files->andWhereLike('v_fax_files.fax_destination', str_replace("-", "",  $searchString));
+                    $files->andWhereLike('v_fax_queue.fax_number', str_replace("-", "",  $searchString));
                 }
             } catch (NumberParseException $e) {
-                $files->andWhereLike('v_fax_files.fax_destination', str_replace("-", "",  $searchString));
+                $files->andWhereLike('v_fax_queue.fax_number', str_replace("-", "",  $searchString));
             }
         }
 
