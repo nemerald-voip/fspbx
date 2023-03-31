@@ -89,9 +89,7 @@
                     @endif
                 </td>
                 <td>
-                    @if($file->fax_destination)
-                        {{ phone($file->fax_destination, "US", $national_phone_number_format) }}
-                    @endif
+                    {{ phone($file->fax_number, "US", $national_phone_number_format) }}
                 </td>
                 {{-- <td>
                     {{ $file->fax_file_type }}

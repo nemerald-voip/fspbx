@@ -191,6 +191,7 @@ class FaxesController extends Controller
             'v_fax_queue.fax_queue_uuid',
             'v_fax_queue.fax_caller_id_name',
             'v_fax_queue.fax_caller_id_number',
+            'v_fax_queue.fax_number',
             'v_fax_queue.fax_date',
             'v_fax_queue.fax_status',
             'v_fax_queue.fax_uuid',
