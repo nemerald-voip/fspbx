@@ -1599,16 +1599,6 @@
                         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
                         <div class="error text-danger" id="device_mac_address_error"></div>
                     </div>
-                    <div class="mb-3">
-                        <label class="col-form-label">Label</label>
-                        <input type="text" class="form-control" id="device_label" name="device_label" placeholder="Enter the Device Label">
-                        <div class="error text-danger" id="device_label_error"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="col-form-label">Vendor</label>
-                        <input type="text" class="form-control" id="device_vendor" name="device_vendor" placeholder="Enter the Device Vendor">
-                        <div class="error text-danger" id="device_vendor_error"></div>
-                    </div>
                     <div class="mb-3 position-relative">
                         <label class="col-form-label">Template</label>
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
@@ -1628,12 +1618,7 @@
                         </select>
                         <div class="error text-danger" id="device_template_error"></div>
                     </div>
-                    <div class="mb-3">
-                        <label class="col-form-label">Description</label>
-                        <textarea class="form-control" id="device_description" name="device_description" placeholder="Enter the Description"></textarea>
-                        <div class="error text-danger" id="device_description_error"></div>
-                    </div>
-                    <div class="mb-3">
+                    <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary save-device-btn">Save</button>
                     </div>
@@ -1810,6 +1795,10 @@
         });
 
         $('#device-select').select2({
+            placeholder: {
+                id: "-1", // the value of the option
+                text: "Select device"
+            },
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });
 
