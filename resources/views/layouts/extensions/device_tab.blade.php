@@ -26,22 +26,26 @@
                 <th>Template</th>
                 <th>Actions</th>
             </tr>
-            @foreach($extension->devices as $device)
-                <tr>
-                    <td>{{$device->device_mac_address}}</td>
-                    <td>{{$device->device_template}}</td>
-                    <td>
-                        <div id="tooltip-container-actions">
-                            <a href="" class="action-icon" title="Edit">
-                                <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
-                            </a>
-                            <a class="action-icon" data-bs-toggle="modal" data-bs-target="#deleteModal" data-href="{{route('extensions.unassign-device', [$extension->extension_uuid, $device->pivot->device_line_uuid ])}}">
-                                <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            @endforeach
+            @if($extension->devices->count() == 0)
+                @include('layouts.partials.listing.norecordsfound', ['colspan' => 3])
+            @else
+                @foreach($extension->devices as $device)
+                    <tr>
+                        <td>{{$device->device_mac_address}}</td>
+                        <td>{{$device->device_template}}</td>
+                        <td>
+                            <div id="tooltip-container-actions">
+                                <a href="" class="action-icon" title="Edit">
+                                    <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
+                                </a>
+                                <a class="action-icon" data-bs-toggle="modal" data-bs-target="#deleteModal" data-href="{{route('extensions.unassign-device', [$extension->extension_uuid, $device->pivot->device_line_uuid ])}}">
+                                    <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            @endif
         </table>
     </div> <!-- end row-->
 </div>
