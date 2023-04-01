@@ -129,10 +129,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         // Validator::make($rows->toArray(), [
         //     '*.extension' => 'required|numeric',
         // ])->validate();
-        
-        foreach ($rows as $row) 
+
+        foreach ($rows as $row)
         {
-            
+
             //Create extension
             $extension = Extensions::create([
                 'extension' => $row['extension'],
@@ -167,7 +167,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'voicemail_enabled' => 'true',
             ]);
             $extension->voicemail->save();
-            
+
 
             //Convert Mac address xx:xx:xx:xx:xx:xx to string xxxxxxxxxxxx
             $row['device_mac_address'] = str_replace(':', '', $row['device_mac_address']);
@@ -203,8 +203,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                     'sip_transport' => get_domain_setting('line_sip_transport'),
                     'register_expires' => get_domain_setting('line_register_expires'),
                     'enabled' => 'true',
-
-                ]); 
+                ]);
 
                 $device->lines->save();
             }
@@ -213,8 +212,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 session_start();
             }
             $cache = new cache;
-            $cache->delete("directory:".$extension->extension."@".$extension->user_context);      
-    
+            $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
             //clear the destinations session array
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);

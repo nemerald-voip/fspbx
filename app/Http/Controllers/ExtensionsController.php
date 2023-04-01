@@ -9,6 +9,8 @@ use App\Jobs\UpdateAppSettings;
 use App\Models\DefaultSettings;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
+use App\Models\DeviceProfile;
+use App\Models\Devices;
 use App\Models\DeviceVendor;
 use App\Models\Extensions;
 use App\Models\ExtensionUser;
@@ -712,15 +714,14 @@ class ExtensionsController extends Controller
             return redirect()->route('logout');
         }
 
-        // $devices = Devices::query()
-        //     ->select('v_devices.device_uuid', 'v_devices.device_mac_address')
-        //     ->leftJoin('v_device_lines as dl', 'dl.device_uuid', 'v_devices.device_uuid')
-        //     ->whereNull('dl.device_line_uuid')
-        //     ->get();
+        $devices = Devices::where('device_enabled', 'true')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->get();
 
-        // dd($extension->devices);
-
-        $vendors = DeviceVendor::query()->orderBy('name')->get();
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('device_profile_name')->get();
 
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
@@ -778,8 +779,9 @@ class ExtensionsController extends Controller
             ->with('vm_name_file_exists', $vm_name_file_exists)
             ->with('moh', $moh)
             ->with('recordings', $recordings)
-            ->with('devices', $extension->devices)
+            ->with('devices', $devices)
             ->with('vendors', $vendors)
+            ->with('profiles', $profiles)
             ->with('national_phone_number_format', PhoneNumberFormat::NATIONAL);
 
     }

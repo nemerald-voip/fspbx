@@ -1594,10 +1594,20 @@
             <div class="modal-body">
                 <form method="POST" action="{{route('devices.store')}}">
                     @csrf
+                    <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
                     <div class="mb-3">
                         <label class="col-form-label">Mac Address</label>
                         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
                         <div class="error text-danger" id="device_mac_address_error"></div>
+                    </div>
+                    <div class="mb-3 position-relative">
+                        <label class="col-form-label">Profile</label>
+                        <select name="device_profile" class="form-select select2" id="profile-select">
+                            @foreach($profiles as $profile) {
+                                <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
+                            @endforeach
+                        </select>
+                        <div class="error text-danger" id="device_profile_error"></div>
                     </div>
                     <div class="mb-3 position-relative">
                         <label class="col-form-label">Template</label>
@@ -1606,12 +1616,12 @@
                             @foreach($vendors ?? [] as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
-                                        @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
-                                        @foreach($templates as $dir) {
-                                            @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
-                                                <option value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
-                                            @endif
-                                        @endforeach
+                                    @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
+                                    @foreach($templates as $dir) {
+                                    @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
+                                        <option value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
+                                    @endif
+                                    @endforeach
                                     @endif
                                 </optgroup>
                             @endforeach
@@ -1776,6 +1786,8 @@
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                 },
                 error: function(error) {
+                    $('.loading').hide();
+                    $('.btn').attr('disabled', false);
                     if(error.status == 422){
                         if(error.responseJSON.errors) {
                             $.each( error.responseJSON.errors, function( key, value ) {
@@ -1844,6 +1856,7 @@
                         } else {
                             $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
                         }
+                        $('.loading').hide();
                     },
                     error: function(error) {
                         if(error.status == 422){
@@ -1860,6 +1873,7 @@
                         } else {
                             printErrorMsg(error.responseJSON.message);
                         }
+                        $('.loading').hide();
                     }
                 });
             })
