@@ -1603,7 +1603,7 @@
                     <div class="mb-3 position-relative">
                         <label class="col-form-label">Profile</label>
                         <select name="device_profile" class="form-select select2" id="profile-select">
-                            @foreach($profiles as $profile) {
+                            @foreach($profiles ?? [] as $profile) {
                                 <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
                             @endforeach
                         </select>
