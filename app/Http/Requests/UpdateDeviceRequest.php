@@ -21,10 +21,18 @@ class UpdateDeviceRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
-            //
+            'device_profile' => [
+                'required',
+                Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid'))
+            ],
+            'device_template' => [
+                'required',
+                'string',
+            ]
         ];
     }
 }
