@@ -1595,6 +1595,7 @@
                 <form method="POST" action="{{route('devices.store')}}">
                     @csrf
                     <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
+                    <input type="hidden" id="device_uuid" name="device_uuid" value="" />
                     <div class="mb-3">
                         <label class="col-form-label">Mac Address</label>
                         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
@@ -1607,9 +1608,9 @@
                             <option value="" selected>Choose template</option>
                             @foreach($vendors ?? [] as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
-                                    @if (is_dir($templateDir.'/'.$vendor->name)) {
+                                    @if (is_dir($templateDir.'/'.$vendor->name))
                                     @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
-                                    @foreach($templates as $dir) {
+                                    @foreach($templates as $dir)
                                     @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
                                         <option value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
                                     @endif
@@ -1627,7 +1628,7 @@
                         <label class="col-form-label">Profile</label>
                         <select name="device_profile" class="form-select select2" id="profile-select">
                             <option value="" selected>Choose profile</option>
-                            @foreach($profiles ?? [] as $profile) {
+                            @foreach($profiles ?? [] as $profile)
                                 <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
                             @endforeach
                         </select>
@@ -1764,10 +1765,17 @@
 
             var btn = $(this);
             var form = btn.closest('form');
+            var method = 'POST'
+            var action = form.attr('action')
 
+            if(form.find('#device_mac_address').attr('readonly') !== undefined) {
+                method = 'PUT'
+                action = '{{route('devices.update', ['device' => ':device'])}}'.replace(':device', form.find('#device_uuid').val())
+            }
+//
             $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
+                url: action,
+                type: method,
                 data: form.serialize(),
                 dataType: 'json',
                 beforeSend: function() {
@@ -1810,6 +1818,37 @@
                     }
                 }
             });
+        });
+
+        $('#createDeviceModal').on('shown.bs.modal', function(e){
+            if(typeof e.relatedTarget.dataset.href !== 'undefined') {
+                $('#createDeviceModalLabel').text('Edit Device')
+                // Edit device
+                $.ajax({
+                    url: e.relatedTarget.dataset.href,
+                    type: 'GET',
+                    dataType: 'json',
+                    beforeSend: function () {
+                        $('.loading').show();
+                    },
+                    complete: function (xhr, status) {
+                        $('.btn').attr('disabled', false);
+                        $('.loading').hide();
+                    },
+                    success: function (result) {
+                        $('#device_mac_address').attr('readonly', true).val(result.device_mac_address)
+                        $('#template-select').val(result.device_template).trigger('change')
+                        $('#profile-select').val(result.device_profile_uuid).trigger('change')
+                        $('#device_uuid').val(result.device_uuid)
+                    }
+                });
+            } else {
+                $('#createDeviceModalLabel').text('Create New Device')
+                $('#device_mac_address').attr('readonly', false).val('')
+                $('#device_uuid').val('')
+                $('#template-select').val('').trigger('change')
+                $('#profile-select').val('').trigger('change')
+            }
         });
 
         $('#device-select').select2({

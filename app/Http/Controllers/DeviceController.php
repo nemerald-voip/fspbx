@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Http\Request;
 
 class DeviceController extends Controller
 {
@@ -62,6 +63,7 @@ class DeviceController extends Controller
             'device_enabled' => 'true',
             'device_enabled_date' => date('Y-m-d H:i:s'),
             'device_template' => $inputs['device_template'],
+            'device_profile_uuid' => $inputs['device_profile'],
             'device_description' => '',
         ]);
         $device->save();
@@ -111,9 +113,9 @@ class DeviceController extends Controller
      * @param  \App\Models\Devices  $device
      * @return \Illuminate\Http\Response
      */
-    public function edit(Devices $device)
+    public function edit(Request $request, Devices $device)
     {
-        //
+        return response()->json($device);
     }
 
     /**
@@ -125,7 +127,10 @@ class DeviceController extends Controller
      */
     public function update(UpdateDeviceRequest $request, Devices $device)
     {
-        //
+        $inputs = $request->validated();
+
+        var_dump($inputs);
+
     }
 
     /**

@@ -35,7 +35,7 @@
                         <td>{{$device->device_template}}</td>
                         <td>
                             <div id="tooltip-container-actions">
-                                <a href="" class="action-icon" title="Edit">
+                                <a class="action-icon" title="Edit" data-bs-toggle="modal" data-bs-target="#createDeviceModal" data-href="{{route('devices.edit', [$device->device_uuid])}}">
                                     <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
                                 </a>
                                 <a class="action-icon" data-bs-toggle="modal" data-bs-target="#deleteModal" data-href="{{route('extensions.unassign-device', [$extension->extension_uuid, $device->pivot->device_line_uuid ])}}">
