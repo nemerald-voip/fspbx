@@ -716,6 +716,11 @@ class ExtensionsController extends Controller
 
         $devices = Devices::where('device_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))
+            ->whereNotExists( function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('v_device_lines')
+                    ->whereRaw('v_devices.device_uuid = v_device_lines.device_uuid');
+            })
             ->get();
 
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();

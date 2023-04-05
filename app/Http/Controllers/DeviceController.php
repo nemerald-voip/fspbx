@@ -53,8 +53,7 @@ class DeviceController extends Controller
 
         $extension = Extensions::find($inputs['extension_uuid']);
 
-        $inputs['device_mac_address'] = str_replace(':', '', $inputs['device_mac_address']);
-        $inputs['device_mac_address'] = str_replace('-', '', $inputs['device_mac_address']);
+        $inputs['device_mac_address'] = str_replace([':', '-'], '', $inputs['device_mac_address']);
         $device = new Devices();
         $device->fill([
             'device_mac_address' => $inputs['device_mac_address'],
@@ -91,7 +90,7 @@ class DeviceController extends Controller
         return response()->json([
             'status' => 'success',
             'device' => $device,
-            'message' => 'Device has been created.'
+            'message' => 'Device has been created and assigned.'
         ]);
     }
 
