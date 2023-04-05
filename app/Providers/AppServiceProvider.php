@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Devices;
 use App\Models\Extensions;
 use App\Models\IvrMenus;
 use App\Models\RingGroups;
@@ -111,6 +112,11 @@ class AppServiceProvider extends ServiceProvider
 
                 return $found;
             }
+        });
+
+        Validator::extend('DeviceMacAddressNotExists', function ($attribute, $value, $parameters, $validator) {
+            $value = str_replace([':', '-'], '', $value);
+            return !Devices::where('device_mac_address', $value)->exists();
         });
     }
 }

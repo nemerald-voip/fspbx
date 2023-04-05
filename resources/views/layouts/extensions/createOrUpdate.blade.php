@@ -1601,18 +1601,10 @@
                         <div class="error text-danger" id="device_mac_address_error"></div>
                     </div>
                     <div class="mb-3 position-relative">
-                        <label class="col-form-label">Profile</label>
-                        <select name="device_profile" class="form-select select2" id="profile-select">
-                            @foreach($profiles ?? [] as $profile) {
-                                <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
-                            @endforeach
-                        </select>
-                        <div class="error text-danger" id="device_profile_error"></div>
-                    </div>
-                    <div class="mb-3 position-relative">
                         <label class="col-form-label">Template</label>
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
                         <select name="device_template" class="form-select select2" id="template-select">
+                            <option value="" selected>Choose template</option>
                             @foreach($vendors ?? [] as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
                                     @if (is_dir($templateDir.'/'.$vendor->name)) {
@@ -1627,6 +1619,19 @@
                             @endforeach
                         </select>
                         <div class="error text-danger" id="device_template_error"></div>
+                    </div>
+                    <div class="mb-3 position-relative text-center">
+                        <img src="https://dummyimage.com/400x300/d4d4d4/2e2e2e.png&text=Phone+Picture" />
+                    </div>
+                    <div class="mb-3 position-relative">
+                        <label class="col-form-label">Profile</label>
+                        <select name="device_profile" class="form-select select2" id="profile-select">
+                            <option value="" selected>Choose profile</option>
+                            @foreach($profiles ?? [] as $profile) {
+                                <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
+                            @endforeach
+                        </select>
+                        <div class="error text-danger" id="device_profile_error"></div>
                     </div>
                     <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1780,10 +1785,11 @@
                 success: function(result) {
                     form[0].reset();
                     $('#createDeviceModal').modal('hide');
-                    $('#device-select').append(
-                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address)
-                    );
+                    /*$('#device-select').append(
+                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address + ' - ' + result.device.device_template)
+                    );*/
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                    window.location.reload();
                 },
                 error: function(error) {
                     $('.loading').hide();
@@ -1807,16 +1813,15 @@
         });
 
         $('#device-select').select2({
-            placeholder: {
-                id: "-1", // the value of the option
-                text: "Select device"
-            },
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+        });
+
+        $('#profile-select').select2({
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
 
         $('#template-select').select2({
-            // dropdownParent: $('#createDeviceModal'),
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
 
         @if ($extension->exists)
