@@ -1165,10 +1165,8 @@ class ExtensionsController extends Controller
             session_start();
         }
 
-        if (isset($extension->cache)) {
-            $cache = new cache();
-            $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
-        }
+        $cache = new cache();
+        $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
 
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
