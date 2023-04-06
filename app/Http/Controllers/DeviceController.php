@@ -6,6 +6,7 @@ use App\Models\DeviceLines;
 use App\Models\Devices;
 use App\Models\Domain;
 use App\Models\Extensions;
+use App\Models\FaxQueues;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
@@ -19,16 +20,20 @@ class DeviceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //$user = Auth::user();
-        // $domain = Domain::where('domain_uuid',$user->domain_uuid)->first();
-
-        if (userCheckPermission("device_view")){
-            return view('layouts.devices.list');
-        } else {
+        if (!userCheckPermission("device_view")) {
             return redirect('/');
         }
+
+        $domainUuid = Session::get('domain_uuid');
+        $data = array();
+        $data['devices'] = Devices::query()
+            ->where('domain_uuid', $domainUuid)
+            ->orderBy('device_label')
+            ->paginate(10)->onEachSide(1);
+
+        return view('layouts.devices.list')->with($data);
 
     }
 
