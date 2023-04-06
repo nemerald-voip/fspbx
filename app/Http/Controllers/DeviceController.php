@@ -63,7 +63,7 @@ class DeviceController extends Controller
             'device_enabled' => 'true',
             'device_enabled_date' => date('Y-m-d H:i:s'),
             'device_template' => $inputs['device_template'],
-            'device_profile_uuid' => $inputs['device_profile'],
+            'device_profile_uuid' => $inputs['device_profile_uuid'],
             'device_description' => '',
         ]);
         $device->save();
@@ -129,8 +129,13 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        var_dump($inputs);
+        $device->update($inputs);
 
+        return response()->json([
+            'status' => 'success',
+            'device' => $device,
+            'message' => 'Device has been updated.'
+        ]);
     }
 
     /**
