@@ -215,7 +215,7 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
-        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed', 'sending' => 'Sending'];
         $selectedStatus = $request->get('status');
         $searchString = $request->get('search');
         $searchPeriod = $request->get('period');
