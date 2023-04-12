@@ -119,7 +119,8 @@ class FaxQueueController extends Controller
     {
         $faxQueue->update([
             'fax_status' => $status,
-            'fax_retry_count' => 0
+            'fax_retry_count' => 0,
+            'fax_retry_date' => null
         ]);
 
         return redirect()->back();
