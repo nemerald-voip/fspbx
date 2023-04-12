@@ -23,7 +23,7 @@ class FaxQueueController extends Controller
             return redirect('/');
         }
 
-        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed', 'sending' => 'Sending'];
         $scopes = ['global', 'local'];
         $selectedStatus = $request->get('status');
         $searchString = $request->get('search');
