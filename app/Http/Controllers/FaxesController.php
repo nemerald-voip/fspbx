@@ -242,7 +242,9 @@ class FaxesController extends Controller
             'v_fax_queue.fax_uuid',
             'v_fax_queue.fax_date',
             'v_fax_queue.fax_status',
+            'v_fax_queue.fax_retry_date',
             'v_fax_queue.fax_retry_count',
+            'v_fax_queue.fax_notify_date',
             'v_fax_files.fax_destination'
         )
             ->where('v_fax_queue.fax_uuid', $request->id)
@@ -276,8 +278,12 @@ class FaxesController extends Controller
         /** @var FaxQueues $file */
         foreach ($files as $file) {
             $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
-            $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
-            $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
+            if(!empty($file->fax_notify_date)) {
+                $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
+            }
+            if(!empty($file->fax_retry_date)) {
+                $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
+            }
         }
 
         $data['files'] = $files;
