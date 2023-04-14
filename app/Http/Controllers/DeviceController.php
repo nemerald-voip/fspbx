@@ -28,8 +28,7 @@ class DeviceController extends Controller
 
         $domainUuid = Session::get('domain_uuid');
         $data = array();
-        $data['devices'] = Devices::query()
-            ->where('domain_uuid', $domainUuid)
+        $data['devices'] = Devices::where('domain_uuid', $domainUuid)
             ->orderBy('device_label')
             ->paginate(10)->onEachSide(1);
 
