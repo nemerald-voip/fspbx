@@ -1906,6 +1906,8 @@
                         $('.loading').hide();
                     },
                     error: function(error) {
+                        $('.loading').hide();
+                        $('.btn').attr('disabled', false);
                         if(error.status == 422){
                             if(error.responseJSON.errors) {
                                 $.each( error.responseJSON.errors, function( key, value ) {
@@ -1920,7 +1922,6 @@
                         } else {
                             printErrorMsg(error.responseJSON.message);
                         }
-                        $('.loading').hide();
                     }
                 });
             })
