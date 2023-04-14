@@ -1600,6 +1600,7 @@
                         <label class="col-form-label">Mac Address</label>
                         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
                         <div class="error text-danger" id="device_mac_address_error"></div>
+                        <div class="error text-danger" id="device_mac_address_modified_error"></div>
                     </div>
                     <div class="mb-3 position-relative">
                         <label class="col-form-label">Template</label>
@@ -1621,9 +1622,11 @@
                         </select>
                         <div class="error text-danger" id="device_template_error"></div>
                     </div>
+                    {{--
                     <div class="mb-3 position-relative text-center">
                         <img src="https://dummyimage.com/400x300/d4d4d4/2e2e2e.png&text=Phone+Picture" />
                     </div>
+                    --}}
                     <div class="mb-3 position-relative">
                         <label class="col-form-label">Profile</label>
                         <select name="device_profile_uuid" class="form-select select2" id="profile-select">
@@ -1632,7 +1635,7 @@
                                 <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
                             @endforeach
                         </select>
-                        <div class="error text-danger" id="device_profile_error"></div>
+                        <div class="error text-danger" id="device_profile_uuid_error"></div>
                     </div>
                     <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

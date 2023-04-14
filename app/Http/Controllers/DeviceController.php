@@ -59,10 +59,9 @@ class DeviceController extends Controller
 
         $extension = Extensions::find($inputs['extension_uuid']);
 
-        $inputs['device_mac_address'] = str_replace([':', '-'], '', $inputs['device_mac_address']);
         $device = new Devices();
         $device->fill([
-            'device_mac_address' => $inputs['device_mac_address'],
+            'device_mac_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_mac_address']))),
             'device_label' => $extension->extension,
             'device_vendor' => explode("/", $inputs['device_template'])[0],
             'device_enabled' => 'true',

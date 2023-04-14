@@ -43,4 +43,12 @@ class UpdateDeviceRequest extends FormRequest
             ],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'device_profile_uuid.required' => 'Profile is required',
+            'device_template.required' => 'Template is required'
+        ];
+    }
 }

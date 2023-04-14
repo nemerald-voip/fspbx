@@ -113,10 +113,12 @@ class AppServiceProvider extends ServiceProvider
                 return $found;
             }
         });
-
+/*
         Validator::extend('DeviceMacAddressNotExists', function ($attribute, $value, $parameters, $validator) {
-            $value = str_replace([':', '-'], '', $value);
+            $value = str_replace([':', '-', '.'], '', $value);
+            $value = strtolower($value);
             return !Devices::where('device_mac_address', $value)->exists();
         });
+*/
     }
 }

@@ -25,7 +25,10 @@ class StoreDeviceRequest extends FormRequest
             'device_mac_address' => [
                 'required',
                 'mac_address',
-                'DeviceMacAddressNotExists'
+            ],
+            'device_mac_address_modified' => [
+                'nullable',
+                Rule::unique('App\Models\Devices', 'device_mac_address')
             ],
             'device_profile_uuid' => [
                 'required',
@@ -47,7 +50,18 @@ class StoreDeviceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'device_mac_address_not_exists' => 'This mac address is already used'
+            'device_mac_address_modified.unique' => 'This MAC address is already used',
+            'device_profile_uuid.required' => 'Profile is required',
+            'device_template.required' => 'Template is required'
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        $macAddress = str_replace([':', '.', '-'], '', trim(strtolower($this->get('device_mac_address'))));
+        $this->merge([
+            'device_mac_address' => implode(":", str_split($macAddress, 2)),
+            'device_mac_address_modified' => $macAddress
+        ]);
     }
 }
