@@ -9,18 +9,18 @@
                 <div class="modal-body">
 
                 <!-- <h3 class="text-success">Success</h3> -->
-                    <p class="mb-3">Contratulations! You have successfully imported extensions to your account. Below you will find the results.</p>
+                    <p class="mb-3">Congratulations! You have successfully imported extensions to your account. Below you will find the results.</p>
                     <div class="alert alert-success" role="alert" id="dropzoneSuccess">
-                        <i class="ri-check-line me-2"></i> Your import was succesful.
+                        <i class="ri-check-line me-2"></i> Your import was successfully.
                     </div>
                     <div class="alert alert-warning" role="alert" id="dropzoneError">
                         <i class="ri-alert-line me-2"></i> This is a <strong>warning</strong> alert - check it out!
                     </div>
-                    
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    
+
                 </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
