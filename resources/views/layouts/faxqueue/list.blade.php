@@ -101,17 +101,19 @@
                     @endif
                 </td>
                 <td>
-                    {{-- {{ $faxQueue->fax_retry_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span>
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('h:i:s A') }}</span>
+                    @if ($faxQueue->fax_retry_date)
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span>
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('h:i:s A') }}</span>
+                    @endif
                 </td>
                 <td>
                     {{ $faxQueue->fax_retry_count }}
                 </td>
                 <td>
-                    {{-- {{ $faxQueue->fax_notify_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span>
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('h:i:s A') }}</span>
+                    @if ($faxQueue->fax_notify_date)
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span>
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('h:i:s A') }}</span>
+                    @endif
                 </td>
                 <td>
                     @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
