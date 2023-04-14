@@ -14,11 +14,11 @@
 --}}
 @section('table-head')
     <tr>
-        <th>Mac Address</th>
+        <th>MAC Address</th>
         <th>Name</th>
         <th>Template</th>
         <th>Profile</th>
-        <th>Status</th>
+        <th>Assigned to</th>
         <th>Action</th>
     </tr>
 @endsection
@@ -30,7 +30,7 @@
         @foreach ($devices as $key => $device)
             <tr id="id{{ $device->device_uuid }}">
                 <td>
-                    {{ $device->device_uuid }}
+                    {{ $device->device_mac_address }}
                 </td>
                 <td>
                     {{ $device->device_label }}
@@ -42,10 +42,14 @@
                     {{ $device->device_profile_uuid }}
                 </td>
                 <td>
-
+                    @if($device->lines()->first())
+                        {{ $device->lines()->first()->display_name }}
+                    @endif
                 </td>
                 <td>
-
+                    <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}','{{ $device->device_uuid }}');" class="action-icon">
+                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                    </a>
                 </td>
             </tr>
         @endforeach
