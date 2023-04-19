@@ -18,6 +18,7 @@ class PostmarkWebhookProfile implements WebhookProfile
     public function shouldProcess(Request $request): bool
     {
 
+        $destination_number_valid = false;
         // Get destination fax number and check if it's valid
         $phone_number = strstr($request['ToFull'][0]['Email'], '@', true);
         //Get libphonenumber object
@@ -37,7 +38,7 @@ class PostmarkWebhookProfile implements WebhookProfile
         }
 
         // Get FROM email subject and check if it's authorized
-        $from_email = $request['From'];
+        $from_email = strtolower($request['FromFull']['Email']);
 
         // Check if domain is whitelisted for sending faxes
         try {

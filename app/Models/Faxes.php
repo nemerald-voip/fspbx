@@ -139,19 +139,19 @@ class Faxes extends Model
             $this->fax_cover = false;
         }
 
-        $settings= DefaultSettings::where('default_setting_category','switch')
-        ->get([
-            'default_setting_subcategory',
-            'default_setting_name',
-            'default_setting_value',
-        ]);
+        // $settings= DefaultSettings::where('default_setting_category','switch')
+        // ->get([
+        //     'default_setting_subcategory',
+        //     'default_setting_name',
+        //     'default_setting_value',
+        // ]);
 
-        foreach ($settings as $setting) {
-            if ($setting->default_setting_subcategory == 'storage') {
-                $this->fax_dir = $setting->default_setting_value . '/fax/' . $this->domain->domain_name;
-                $this->stor_dir = $setting->default_setting_value;
-            }            
-        }
+        // foreach ($settings as $setting) {
+        //     if ($setting->default_setting_subcategory == 'storage') {
+        //         $this->fax_dir = $setting->default_setting_value . '/fax/' . $this->domain->domain_name;
+        //         $this->stor_dir = $setting->default_setting_value;
+        //     }            
+        // }
 
         // Create all fax directories 
         $this->CreateFaxDirectories();
@@ -268,7 +268,6 @@ class Faxes extends Model
             return "No attachements";
         }
 
-
         // Send notification to user that fax is in transit
         SendFaxInTransitNotification::dispatch(new Request($payload))->onQueue('emails');
 
@@ -384,20 +383,35 @@ class Faxes extends Model
 
     public function CreateFaxDirectories() {
         try {
+
+            $settings= DefaultSettings::where('default_setting_category','switch')
+            ->get([
+                'default_setting_subcategory',
+                'default_setting_name',
+                'default_setting_value',
+            ]);
+    
+            foreach ($settings as $setting) {
+                if ($setting->default_setting_subcategory == 'storage') {
+                    $this->fax_dir = $setting->default_setting_value . '/fax/' . $this->domain->domain_name;
+                    $this->stor_dir = $setting->default_setting_value;
+                }            
+            }
+
             // Set variables for all directories
             $this->dir_fax_inbox = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/inbox';
             $this->dir_fax_sent = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/sent';
             $this->dir_fax_temp = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/temp';
     
             //make sure the directories exist
-            if (!is_dir($this->fax_dir)) {
-                mkdir($this->fax_dir, 0770);
+            if (!is_dir($this->stor_dir)) {
+                mkdir($this->stor_dir, 0770);
             }
-            if (!is_dir($this->fax_dir.'/fax')) {
-                mkdir($this->fax_dir.'/fax', 0770);
+            if (!is_dir($this->stor_dir.'/fax')) {
+                mkdir($this->stor_dir.'/fax', 0770);
             }
-            if (!is_dir($this->fax_dir.'/fax/'.$this->domain->domain_name)) {
-                mkdir($this->fax_dir.'/fax/'.$this->domain->domain_name, 0770);
+            if (!is_dir($this->stor_dir.'/fax/'.$this->domain->domain_name)) {
+                mkdir($this->stor_dir.'/fax/'.$this->domain->domain_name, 0770);
             }
             if (!is_dir($this->fax_dir.'/'.$this->fax_extension->fax_extension)) {
                 mkdir($this->fax_dir.'/'.$this->fax_extension->fax_extension, 0770);

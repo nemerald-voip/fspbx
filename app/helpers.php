@@ -112,7 +112,10 @@ if (!function_exists('appsGetOrganizationDetails')){
             ->where ('domain_setting_enabled', true)
             ->first();
 
-        return $domainSettingsModel->domain_setting_value;
+        if (isset($domainSettingsModel)) {
+            return $domainSettingsModel->domain_setting_value;
+        }
+        return null;
     }
 }
 
@@ -997,5 +1000,20 @@ if (!function_exists('format_phone_or_extension')){
      */
     function format_phone_or_extension($value) {
         return (strlen($value) <= 5) ? $value : \Propaganistas\LaravelPhone\PhoneNumber::make($value, "US")->formatE164();
+    }
+}
+
+if (!function_exists('detect_if_phone_number')){
+    /**
+     * @param $value
+     * @return bool
+     */
+    function detect_if_phone_number($value) {
+        try {
+            \Propaganistas\LaravelPhone\PhoneNumber::make($value, "US")->formatE164();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\VoicemailGreetings;
+use Illuminate\Support\Facades\Log;
 use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -42,8 +43,8 @@ class VoicemailController extends Controller
 
         return view('layouts.voicemails.list')
             ->with($data)
-            ->with('permissions',$permissions);     
-    } 
+            ->with('permissions',$permissions);
+    }
 
     /**
      * Show the create voicemail form.
@@ -149,7 +150,7 @@ class VoicemailController extends Controller
             'voicemail_tutorial' => 'present',
             'voicemail_alternate_greet_id' => 'nullable|numeric',
             'voicemail_description' => 'nullable|string|max:100',
-            // 'voicemail_transcription_enabled' => 'present',
+            'voicemail_transcription_enabled' => 'nullable',
             // 'voicemail_attach_file' => 'present',
             'voicemail_file' => 'present',
             'voicemail_local_after_email' => 'present',
@@ -164,33 +165,14 @@ class VoicemailController extends Controller
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
         $attributes['domain_uuid'] = Session::get('domain_uuid');
-
-        if(strtolower($attributes['voicemail_enabled'])=='on'){
-            $attributes['voicemail_enabled']='true';
-        } else{
-            $attributes['voicemail_enabled']='false';
-        }
-
-        if(strtolower($attributes['voicemail_local_after_email'])=='on'){
-            $attributes['voicemail_local_after_email']='true';
-        } else{
-            $attributes['voicemail_local_after_email']='false';
-        }
-
-        if(strtolower($attributes['voicemail_tutorial'])=='on'){
-            $attributes['voicemail_tutorial']='true';
-        } else{
-            $attributes['voicemail_tutorial']='false';
-        }
-
-        $voicemail->fill($attributes);    
+        $attributes['voicemail_transcription_enabled'] = "true";
+        $voicemail->fill($attributes);
         $voicemail->save();
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
         }
-
 
         return response()->json([
             'voicemail' => $voicemail->voicemail_uuid,
@@ -231,7 +213,7 @@ class VoicemailController extends Controller
             'voicemail_tutorial' => 'present',
             'voicemail_alternate_greet_id' => 'nullable|numeric',
             'voicemail_description' => 'nullable|string|max:100',
-            // 'voicemail_transcription_enabled' => 'present',
+            'voicemail_transcription_enabled' => 'nullable',
             // 'voicemail_attach_file' => 'present',
             'voicemail_file' => 'present',
             'voicemail_local_after_email' => 'present',
@@ -246,28 +228,13 @@ class VoicemailController extends Controller
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
         // $attributes['domain_uuid'] = Session::get('domain_uuid');
+        $attributes['voicemail_transcription_enabled'] = "true";
+        $attributes['update_date'] = date("Y-m-d H:i:s");
+        $attributes['update_user'] = Session::get('user_uuid');
+        Log::alert($attributes);
+        $voicemail->update($attributes);
 
-        if(strtolower($attributes['voicemail_enabled'])=='on'){
-            $attributes['voicemail_enabled']='true';
-        } else{
-            $attributes['voicemail_enabled']='false';
-        }
 
-        if(strtolower($attributes['voicemail_local_after_email'])=='on'){
-            $attributes['voicemail_local_after_email']='true';
-        } else{
-            $attributes['voicemail_local_after_email']='false';
-        }
-
-        if(strtolower($attributes['voicemail_tutorial'])=='on'){
-            $attributes['voicemail_tutorial']='true';
-        } else{
-            $attributes['voicemail_tutorial']='false';
-        }
-        
-        $voicemail->update($attributes);  
-
-    
        if($request->has('voicemail_destinations')){
         $voicemail_destinations=$request->voicemail_destinations;
         //delete destinations before updating
@@ -286,7 +253,6 @@ class VoicemailController extends Controller
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
         }
-      
 
         return response()->json([
             'voicemail' => $voicemail->voicemail_id,
@@ -326,7 +292,7 @@ class VoicemailController extends Controller
         if (!Storage::disk('voicemail')->exists($path)) {
             return response()->json([
                 'error' => 401,
-                'message' => 'Failed to upload file']);   
+                'message' => 'Failed to upload file']);
         }
 
         // Remove old greeting
@@ -371,7 +337,7 @@ class VoicemailController extends Controller
         $path = Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/' . $filename;
 
         if(!Storage::disk('voicemail')->exists($path)) abort(404);
-  
+
         $file = Storage::disk('voicemail')->path($path);
         $type = Storage::disk('voicemail')->mimeType($path);
 
@@ -391,7 +357,7 @@ class VoicemailController extends Controller
         $path = Session::get('domain_name') .'/' . $voicemail->voicemail_id . '/' . $filename;
 
         if(!Storage::disk('voicemail')->exists($path)) abort(404);
-  
+
         $file = Storage::disk('voicemail')->path($path);
         $type = Storage::disk('voicemail')->mimeType($path);
         $headers = array (

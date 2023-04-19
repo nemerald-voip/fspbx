@@ -1,25 +1,27 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\EmailQueueController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\RoutingController;
+use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\SmsWebhookController;
+use App\Http\Controllers\UserApiKeyController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
-use App\Http\Controllers\FaxesController;
-use App\Http\Controllers\FaxQueueController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -57,7 +59,8 @@ Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes
 Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
 Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
 Route::get('/faxes/log/{id}', [FaxesController::class, 'log']) ->name('faxes.log.list');
-Route::delete('/faxes/deleteFaxFile/{id}', [FaxesController::class, 'deleteFaxFile']) ->name('faxes.file.deleteFaxFile');
+Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax']) ->name('faxes.file.deleteSentFax');
+Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax']) ->name('faxes.file.deleteReceivedFax');
 Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
 Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
 Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');
@@ -82,8 +85,11 @@ Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'si
 Route::webhooks('webhook/postmark','postmark');
 Route::webhooks('webhook/commio/sms','commio');
 
+//Users
 Route::resource('users','UsersController');
+
 Route::resource('voicemails','VoicemailController');
+
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
 

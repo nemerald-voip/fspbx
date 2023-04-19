@@ -40,7 +40,11 @@ class Voicemails extends Model
         'voicemail_enabled',
         'voicemail_description',
         'voicemail_name_base64',
-        'voicemail_tutorial'
+        'voicemail_tutorial',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user'
     ];
 
     public function __construct(array $attributes = [])
@@ -79,7 +83,7 @@ class Voicemails extends Model
             ->where('domain_uuid', $this->domain_uuid);
     }
 
-    
+
     /**
      * Get all messages for this voicemail.
      */
@@ -100,7 +104,7 @@ class Voicemails extends Model
 
     /**
      * Get all forward destinations for this voicemail
-     *      
+     *
     */
     public function forward_destinations()
     {
@@ -120,11 +124,21 @@ class Voicemails extends Model
     }
 
     /**
-     * Get the domain to which this voicemail belongs 
+     * Get the domain to which this voicemail belongs
      */
     public function domain()
     {
         return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
+    }
+
+    public function getId()
+    {
+        return $this->voicemail_id;
+    }
+
+    public function getName()
+    {
+        return $this->voicemail_id.' - '.$this->voicemail_mail_to;
     }
 
 }

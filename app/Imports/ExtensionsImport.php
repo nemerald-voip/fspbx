@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use cache;
-use App\Models\Device;
+use App\Models\Devices;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Models\DeviceLines;
@@ -66,7 +66,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             ],
             '*.device_mac_address_modified' => [
                 'nullable',
-                Rule::unique('App\Models\Device','device_mac_address')
+                Rule::unique('App\Models\Devices','device_mac_address')
             ],
             '*.device_vendor' => [
                 'string',
@@ -103,7 +103,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         $data['first_name'] = trim($data['first_name']);
         $data['last_name'] = trim($data['last_name']);
         $data['description'] = trim($data['description']);
-        $data['email'] = strtolower(trim($data['description']));
+        $data['email'] = strtolower(trim($data['email']));
         $data['outbound_caller_id_number'] = trim($data['outbound_caller_id_number']);
         return $data;
     }
@@ -129,10 +129,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         // Validator::make($rows->toArray(), [
         //     '*.extension' => 'required|numeric',
         // ])->validate();
-        
-        foreach ($rows as $row) 
+
+        foreach ($rows as $row)
         {
-            
+
             //Create extension
             $extension = Extensions::create([
                 'extension' => $row['extension'],
@@ -167,14 +167,14 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'voicemail_enabled' => 'true',
             ]);
             $extension->voicemail->save();
-            
+
 
             //Convert Mac address xx:xx:xx:xx:xx:xx to string xxxxxxxxxxxx
             $row['device_mac_address'] = str_replace(':', '', $row['device_mac_address']);
 
             //Create device
             if (isset($row['device_mac_address']) && !empty($row['device_mac_address'])) {
-                $device = new Device();
+                $device = new Devices();
                 $device->fill([
                     'device_mac_address' => $row['device_mac_address'],
                     'device_label' => $row['extension'],
@@ -203,8 +203,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                     'sip_transport' => get_domain_setting('line_sip_transport'),
                     'register_expires' => get_domain_setting('line_register_expires'),
                     'enabled' => 'true',
-
-                ]); 
+                ]);
 
                 $device->lines->save();
             }
@@ -213,8 +212,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 session_start();
             }
             $cache = new cache;
-            $cache->delete("directory:".$extension->extension."@".$extension->user_context);      
-    
+            $cache->delete("directory:".$extension->extension."@".$extension->user_context);
+
             //clear the destinations session array
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);

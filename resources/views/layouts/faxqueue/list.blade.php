@@ -20,7 +20,10 @@
     <form id="filterForm" method="GET" action="{{url()->current()}}?page=1" class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
         <div class="col-auto">
             <label for="search" class="visually-hidden">Search</label>
-            <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
+            <div class="input-group input-group-merge">
+                <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search...">
+                <input type="button" class="btn btn-light" name="clear" id="clearSearch" value="Clear" />
+            </div>
         </div>
         <div class="col-auto">
             <div class="d-flex align-items-center">
@@ -54,9 +57,9 @@
         <th>Caller ID Number</th>
         <th>Email Address</th>
         <th>Status</th>
-        <th>Notify Date</th>
-        <th>Retry Date</th>
+        <th>Last Attempt</th>
         <th>Retry Count</th>
+        <th>Notify Date</th>
         <th>Action</th>
     </tr>
 @endsection
@@ -98,17 +101,19 @@
                     @endif
                 </td>
                 <td>
-                    {{-- {{ $faxQueue->fax_notify_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span>
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('h:i:s A') }}</span>
-                </td>
-                <td>
-                    {{-- {{ $faxQueue->fax_retry_date->format('D, M d, Y h:i:s A') }} --}}
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span>
-                    <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('h:i:s A') }}</span>
+                    @if ($faxQueue->fax_retry_date)
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('D, M d, Y ')}}</span>
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_retry_date->format('h:i:s A') }}</span>
+                    @endif
                 </td>
                 <td>
                     {{ $faxQueue->fax_retry_count }}
+                </td>
+                <td>
+                    @if ($faxQueue->fax_notify_date)
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('D, M d, Y ')}}</span>
+                        <span class="text-body text-nowrap">{{ $faxQueue->fax_notify_date->format('h:i:s A') }}</span>
+                    @endif
                 </td>
                 <td>
                     @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
@@ -147,8 +152,17 @@
                 }
             });
 
+            $('#clearSearch').on('click', function () {
+                $('#search').val('');
+                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+                location += '?page=1';
+                window.location.href = location;
+            })
+
             $('#status-select').on('change', function () {
-                $('#filterForm').submit();
+                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+                location += '?page=1&' + $('#filterForm').serialize();
+                window.location.href = location;
             })
         });
 

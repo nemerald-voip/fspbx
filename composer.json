@@ -2,12 +2,16 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "keywords": [
+        "framework",
+        "laravel"
+    ],
     "license": "MIT",
     "require": {
         "php": "^7.3|^8.0",
         "aws/aws-sdk-php": "~3.0",
         "doctrine/dbal": "^3.4",
+        "firebase/php-jwt": "^6.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.75",
@@ -19,6 +23,7 @@
         "league/flysystem-aws-s3-v3": "^1.0",
         "linfo/linfo": "^4.0",
         "maatwebsite/excel": "^3.1",
+        "nwidart/laravel-modules": "^8.3",
         "predis/predis": "^2.0",
         "propaganistas/laravel-phone": "^4.3",
         "simplesoftwareio/simple-qrcode": "^4.2",
@@ -37,10 +42,11 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Modules\\": "Modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         },
-        "files" : [
+        "files": [
             "app/helpers.php",
             "public/resources/classes/cache.php",
             "public/resources/classes/event_socket.php",

@@ -22,7 +22,7 @@
 
         dataObj = new Object();
         dataObj.url = url;
-        console.log(dataObj.url);
+        // console.log(dataObj.url);
 
         if(setting_id==''){
             setting_id=[];
@@ -61,16 +61,28 @@
                     //$('.loading').hide();
 
                     if (response.error){
-                        $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
+                        if (response.message) {
+                            $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
+                        }
+                        if (response.error.message) {
+                            $.NotificationApp.send("Warning",response.error.message,"top-right","#ff5b5b","error");
+                        }
 
                     } else {
-                        $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                        $("#id" + item).fadeOut("slow");
+                        if (response.message) {
+                            $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                        }
+
+                        if (response.success && response.success.message) {
+                            $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
+                        }
+                        $("#id" + setting_id).fadeOut("slow");
+                        //$(this).closest('tr').fadeOut("fast");
                     }
                 })
-                .fail(function (response){
+                .fail(function (jqXHR, testStatus, error) {
                     $('.loading').hide();
-                    printErrorMsg(response.error);
+                    printErrorMsg(error);
                 });
             });
 
@@ -142,9 +154,11 @@
         var error_message = "<ul>";
         if (Array.isArray(msg) || typeof msg === 'object') {
             $.each( msg, function( key, value ) {
-                //console.log(key);
-                $('.'+key+'_err').text(value);
-                $('.'+key+'_err_badge').attr("hidden", false);
+                if(typeof key === 'string' || key instanceof String) {
+                    key = key.replace(/\./g, '_')
+                    $('.' + key + '_err').text(value);
+                    $('.' + key + '_err_badge').attr("hidden", false);
+                }
                 error_message = error_message + '<li>'+value+'</li>';
             });
         }else {

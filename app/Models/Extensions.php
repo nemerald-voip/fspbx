@@ -76,7 +76,6 @@ class Extensions extends Model
         'forward_user_not_registered_enabled',
         'follow_me_uuid',
         'follow_me_enabled',
-        'follow_me_destinations',
         'enabled',
         'description',
         'absolute_codec_string',
@@ -168,6 +167,33 @@ class Extensions extends Model
 
     public function devices()
     {
-        return $this->belongsToMany(Device::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')->withPivot('user_id', 'line_number', 'device_line_uuid');
+        return $this->belongsToMany(Devices::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')
+            ->withPivot('user_id', 'line_number', 'device_line_uuid')
+            ->where('v_devices.domain_uuid', $this->domain_uuid);
+    }
+
+    public function followMe()
+    {
+        return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid');
+    }
+
+    public function getFollowMe()
+    {
+        return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid')->first();
+    }
+
+    public function getFollowMeDestinations()
+    {
+        return $this->belongsTo(FollowMeDestinations::class,'follow_me_uuid','follow_me_uuid')->orderBy('follow_me_order')->get();
+    }
+
+    public function getId()
+    {
+        return $this->extension;
+    }
+
+    public function getName()
+    {
+        return $this->extension.' - '.((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
     }
 }

@@ -33,11 +33,7 @@
         <div class="col-12">
             <div class="card mt-3">
                 <div class="card-body">
-                    
-                   
-
                     <div class="tab-content">
-                            
                         <!-- Body Content-->
                             <div class="row">
                                 <div class="col-lg-12">
@@ -48,7 +44,6 @@
                                 @else
                                 <form method="POST" id="voicemail_form" action="{{ route('voicemails.store') }}">
                                 @endif
-                                      
                                     @csrf
 
                                         <div class="row">
@@ -60,8 +55,8 @@
                                             <div class="col-md-2">
                                                 <div class="mb-3 text-sm-end">
 
-                                                    <input type="hidden" name="voicemail_enabled" value="off">
-                                                    <input type="checkbox" id="voicemail_enabled" data-switch="primary" name="voicemail_enabled"
+                                                    <input type="hidden" name="voicemail_enabled" value="false">
+                                                    <input type="checkbox" id="voicemail_enabled" data-switch="primary" name="voicemail_enabled" value="true"
                                                     @if (isset($voicemail->voicemail_enabled) && $voicemail->voicemail_enabled == "true") checked @endif />
                                                     <label for="voicemail_enabled" data-on-label="On" data-off-label="Off"></label>
 
@@ -73,7 +68,7 @@
                                             <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="voicemail_id" class="form-label">Voicemail Extension <span class="text-danger">*</span></label>
-                                                    <input class="form-control"  type="text" value="{{ $voicemail->voicemail_id ?? ''}}" 
+                                                    <input class="form-control"  type="text" value="{{ $voicemail->voicemail_id ?? ''}}"
                                                         placeholder="Enter voicemail extension" id="voicemail_id" name="voicemail_id" />
                                                     <div class="text-danger error_message voicemail_id_err"></div>
                                                 </div>
@@ -98,15 +93,12 @@
                                                             data-bs-content="The parameter allows you to override the default extension or phone number spoken by the system in the voicemail greeting. This controls system greetings that read back a phone number, not user recorded greetings.">
                                                             <i class="dripicons-information"></i>
                                                         </a>
-                                                        <input class="form-control"  type="text" value="{{ $voicemail->voicemail_alternate_greet_id ?? ''}}" 
+                                                        <input class="form-control"  type="text" value="{{ $voicemail->voicemail_alternate_greet_id ?? ''}}"
                                                             placeholder="Enter your Alternate Greet ID" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id" />
                                                         <div class="text-danger error_message voicemail_alternate_greet_id_err"></div>
                                                     </div>
                                                 </div>
                                         </div> <!-- end row -->
-                                      
-                            
- 
 
                                         <div class="row">
                                             <div class="col-6">
@@ -117,7 +109,6 @@
                                                             Email with audio file attachment
                                                         </option>
                                                         <option value="link" @if (isset($voicemail) && $voicemail->voicemail_file == "link") selected @endif
-                                                            
                                                             @if ($voicemail->voicemail_file == "link") selected @endif>
                                                             Email with download link
                                                         </option>
@@ -128,7 +119,7 @@
                                             <div class="col-6">
                                                 <div class="mb-3">
                                                     <label for="vm-email-address" class="form-label">Email Address</span></label>
-                                                    <input class="form-control" type="email" name="voicemail_mail_to"  placeholder="Enter email" id="vm-email-address" 
+                                                    <input class="form-control" type="email" name="voicemail_mail_to"  placeholder="Enter email" id="vm-email-address"
                                                     value="{{ $voicemail->voicemail_mail_to ?? ''}}"/>
                                                 </div>
                                             </div>
@@ -147,8 +138,8 @@
                                             </div>
                                             <div class="col-2">
                                                 <div class="mb-3 text-sm-end">
-                                                    <input type="hidden" name="voicemail_transcription_enabled" value="off">
-                                                    <input type="checkbox" id="voicemail_transcription_enabled" data-switch="primary" name="voicemail_transcription_enabled"
+                                                    <input type="hidden" name="voicemail_transcription_enabled" value="false">
+                                                    <input type="checkbox" id="voicemail_transcription_enabled" data-switch="primary" name="voicemail_transcription_enabled" value="true"
                                                     @if ($voicemail->voicemail_transcription_enabled == "true") checked @endif />
                                                     <label for="voicemail_transcription_enabled" data-on-label="On" data-off-label="Off"></label>
                                                 </div>
@@ -169,8 +160,8 @@
                                             </div>
                                             <div class="col-2">
                                                 <div class="mb-3 text-sm-end">
-                                                    <input type="hidden" name="voicemail_local_after_email" value="off">
-                                                    <input type="checkbox" id="voicemail_local_after_email" data-switch="primary" name="voicemail_local_after_email"
+                                                    <input type="hidden" name="voicemail_local_after_email" value="false">
+                                                    <input type="checkbox" id="voicemail_local_after_email" data-switch="primary" name="voicemail_local_after_email" value="true"
                                                     @if (isset($voicemail->voicemail_local_after_email) && $voicemail->voicemail_local_after_email == "true") checked @endif />
                                                     <label for="voicemail_local_after_email" data-on-label="On" data-off-label="Off"></label>
                                                 </div>
@@ -190,7 +181,7 @@
                                             <div class="col-2">
                                                 <div class="mb-3 text-sm-end">
                                                     <input type="hidden" name="voicemail_tutorial" value="false">
-                                                    <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial"
+                                                    <input type="checkbox" id="voicemail_tutorial" data-switch="primary" name="voicemail_tutorial" value="true"
                                                     @if ($voicemail->voicemail_tutorial == "true") checked @endif />
                                                     <label for="voicemail_tutorial" data-on-label="On" data-off-label="Off"></label>
                                                     <div class="text-danger voicemail_tutorial_err error_message"></div>
@@ -206,25 +197,25 @@
 
                                                     <p class="text-muted mb-2">This plays when you do not pick up the phone.</p>
                                                     <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
-                                                    
-                                                    <audio id="voicemail_unavailable_audio_file" 
+
+                                                    <audio id="voicemail_unavailable_audio_file"
                                                         @if ($vm_unavailable_file_exists)
                                                         src="{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
-                                                        @endif >   
+                                                        @endif >
                                                     </audio>
                                                     <p class="text-muted mb-1">File name: <span id='voicemailUnavailableFilename'>
                                                         <strong>
                                                             @if ($vm_unavailable_file_exists) greeting_1.wav
-                                                            @else generic greeting 
+                                                            @else generic greeting
                                                             @endif
                                                         </strong></span></p>
-                                                    <button type="button" class="btn btn-light" id="voicemail_unavailable_play_button" 
+                                                    <button type="button" class="btn btn-light" id="voicemail_unavailable_play_button"
                                                         @if (!$vm_unavailable_file_exists) disabled @endif
-                                                        title="Play"><i class="uil uil-play"></i> 
+                                                        title="Play"><i class="uil uil-play"></i>
                                                     </button>
 
                                                     <button type="button" class="btn btn-light" id="voicemail_unavailable_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
-                                                    
+
                                                     <button id="voicemail_unavailable_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
                                                         <span id="voicemail_unavailable_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
                                                         <span id="voicemail_unavailable_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -237,7 +228,7 @@
                                                         ] ) }}">
                                                             <button id="voicemail_unavailable_download_file_button" type="button" class="btn btn-light" title="Download"
                                                             @if (!$vm_unavailable_file_exists) disabled @endif>
-                                                            <i class="uil uil-down-arrow"></i> 
+                                                            <i class="uil uil-down-arrow"></i>
                                                         </button>
                                                     </a>
 
@@ -247,7 +238,7 @@
                                                         <span id="voicemail_unavailable_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
                                                         <span id="voicemail_unavailable_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                     </button>
-                                                    
+
 
                                                     <div class="text-danger" id="voicemailUnvaialableGreetingError"></div>
 
@@ -258,24 +249,24 @@
 
                                                     <p class="text-muted mb-2">This plays to identify your extension in the company's dial by name directory.</p>
                                                     <p class="text-black-50 mb-1">Play the default, upload or record a new message.</p>
-                                                    <audio id="voicemail_name_audio_file" 
+                                                    <audio id="voicemail_name_audio_file"
                                                         @if ($vm_name_file_exists)
                                                         src="{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid,'filename' => 'recorded_name.wav'] ) }}"
-                                                        @endif >   
+                                                        @endif >
                                                     </audio>
                                                     <p class="text-muted mb-1">File name: <span id='voicemailNameFilename'>
                                                         <strong>
                                                             @if ($vm_name_file_exists) recorded_name.wav
-                                                            @else generic greeting 
+                                                            @else generic greeting
                                                             @endif
                                                         </strong></span></p>
-                                                    <button type="button" class="btn btn-light" id="voicemail_name_play_button" 
+                                                    <button type="button" class="btn btn-light" id="voicemail_name_play_button"
                                                         @if (!$vm_name_file_exists) disabled @endif
-                                                        title="Play"><i class="uil uil-play"></i> 
+                                                        title="Play"><i class="uil uil-play"></i>
                                                     </button>
 
                                                     <button type="button" class="btn btn-light" id="voicemail_name_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
-                                                    
+
                                                     <button id="voicemail_name_upload_file_button" data-url="{{ route("uploadVoicemailGreeting", $voicemail->voicemail_uuid) }}" type="button" class="btn btn-light" title="Upload">
                                                         <span id="voicemail_name_upload_file_button_icon" ><i class="uil uil-export"></i> </span>
                                                         <span id="voicemail_name_upload_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -288,7 +279,7 @@
                                                         ] ) }}">
                                                             <button id="voicemail_name_download_file_button" type="button" class="btn btn-light" title="Download"
                                                             @if (!$vm_name_file_exists) disabled @endif>
-                                                            <i class="uil uil-down-arrow"></i> 
+                                                            <i class="uil uil-down-arrow"></i>
                                                         </button>
                                                     </a>
 
@@ -298,7 +289,7 @@
                                                         <span id="voicemail_name_delete_file_button_icon" ><i class="uil uil-trash-alt"></i> </span>
                                                         <span id="voicemail_name_delete_file_button_spinner" hidden class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                     </button>
-                                                    
+
                                                     <div class="text-danger" id="voicemailNameGreetingError"></div>
 
                                                 </div>
@@ -306,7 +297,7 @@
                                             </div> <!-- end row-->
 
                                         @endif
-                                            
+
 
                                             <div class="row">
                                                 <div class="col-12">
@@ -314,14 +305,14 @@
                                                         <label for="voicemail_description" class="form-label">Description</label>
                                                         <textarea class="form-control" type="text" placeholder="" id="voicemail_description" name="voicemail_description"
                                                         />{{ $voicemail->voicemail_description }}</textarea>
-                                                        
+
                                                         <div class="text-danger voicemail_description_err error_message"></div>
                                                     </div>
                                                 </div>
                                             </div> <!-- end row -->
 
 
-                                            
+
                                             @if ($voicemail->exists && userCheckPermission('voicemail_forward'))
                                             <div class="row">
                                                 <div class="col-6">
@@ -337,20 +328,20 @@
                                                                     @if($voicemail->forward_destinations()->contains($domain_voicemail))
                                                                         selected
                                                                     @endif>
-                                                                    @if (isset($domain_voicemail->extension->directory_first_name) || 
+                                                                    @if (isset($domain_voicemail->extension->directory_first_name) ||
                                                                         isset($domain_voicemail->extension->directory_last_name))
-                                                                            {{ $domain_voicemail->extension->directory_first_name ?? ""}} 
-                                                                        
-                                                                            {{ $domain_voicemail->extension->directory_last_name ?? ""}} 
+                                                                            {{ $domain_voicemail->extension->directory_first_name ?? ""}}
+
+                                                                            {{ $domain_voicemail->extension->directory_last_name ?? ""}}
                                                                         (ext {{ $domain_voicemail->voicemail_id }})
                                                                     @elseif ($domain_voicemail->voicemail_description)
-                                                                        {{ $domain_voicemail->voicemail_description }} (ext {{ $domain_voicemail->voicemail_id }}) 
+                                                                        {{ $domain_voicemail->voicemail_description }} (ext {{ $domain_voicemail->voicemail_id }})
                                                                     @else
                                                                         Voicemail (ext {{ $domain_voicemail->voicemail_id }})
                                                                     @endif
 
-                                                                   
-                                                              
+
+
                                                                 </option>
                                                             @endforeach
                                                     </select>
@@ -368,7 +359,7 @@
                                                     </div>
                                                 </div> <!-- end col -->
                                             </div>
-    
+
 
                                     </form>
                                 </div>
@@ -396,11 +387,11 @@
     $(document).ready(function() {
     });
 
-    
+
     $('#submitFormButton').on('click', function(e) {
         e.preventDefault();
         $('.loading').show();
-        
+
         //Reset error messages
         $('.error_message').text("");
 
@@ -444,7 +435,7 @@
 
             var formData = new FormData();
             formData.append('voicemail_unavailable_upload_file', $(this)[0].files[0]);
-            formData.append('greeting_type', 'unavailable');                
+            formData.append('greeting_type', 'unavailable');
 
             // Add spinner
             $("#voicemail_unavailable_upload_file_button_icon").hide();
@@ -476,7 +467,7 @@
 
                 @if($voicemail->exists)
                 //Update audio file
-                $("#voicemail_unavailable_audio_file").attr("src", 
+                $("#voicemail_unavailable_audio_file").attr("src",
                     "{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
                 );
                 @endif
@@ -488,7 +479,7 @@
 
                 if (response.error){
                     $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
-                    $("#voicemailUnvaialableGreetingError").text(response.message);  
+                    $("#voicemailUnvaialableGreetingError").text(response.message);
                 } else {
                     $.NotificationApp.send("Success","The greeeting has been uploaded successfully","top-right","#10c469","success")
                 }
@@ -510,7 +501,7 @@
 
             var formData = new FormData();
             formData.append('voicemail_name_upload_file', $(this)[0].files[0]);
-            formData.append('greeting_type', 'name');                
+            formData.append('greeting_type', 'name');
 
             // Add spinner
             $("#voicemail_name_upload_file_button_icon").hide();
@@ -540,10 +531,10 @@
                 //Enable delete button
                 $("#voicemail_name_delete_file_button").attr("disabled", false);
 
-              
+
                 @if($voicemail->exists)
                 //Update audio file
-                $("#voicemail_name_audio_file").attr("src", 
+                $("#voicemail_name_audio_file").attr("src",
                     "{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
                 );
                 @endif
@@ -554,7 +545,7 @@
 
                 if (response.error){
                     $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
-                    $("#voicemailNameGreetingError").text(response.message);  
+                    $("#voicemailNameGreetingError").text(response.message);
                 } else {
                     $.NotificationApp.send("Success","The greeeting has been uploaded successfully","top-right","#10c469","success")
                 }
@@ -598,7 +589,7 @@
 
                 if (response.error){
                     $.NotificationApp.send("Warning","There was a error deleting this greeting","top-right","#ff5b5b","error")
-                    $("#voicemailGreetingError").text(response.message);  
+                    $("#voicemailGreetingError").text(response.message);
                 } else {
                     $.NotificationApp.send("Success","The greeeting has been deleted successfully","top-right","#10c469","success")
                 }
@@ -641,7 +632,7 @@
 
                 if (response.error){
                     $.NotificationApp.send("Warning","There was a error deleting this greeting","top-right","#ff5b5b","error")
-                    $("#voicemailGreetingError").text(response.message);  
+                    $("#voicemailGreetingError").text(response.message);
                 } else {
                     $.NotificationApp.send("Success","The greeeting has been deleted successfully","top-right","#10c469","success")
                 }

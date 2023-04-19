@@ -90,7 +90,7 @@ class SendAppCredentials implements ShouldQueue
         $settings = DefaultSettings::where('default_setting_category','email')->get();
         if ($settings) {
             foreach ($settings as $setting) {
-                if ($setting->default_setting_subcategory == "smtp_from") {
+                if ($setting->default_setting_subcategory == "support_email") {
                     $attributes['support_email'] = $setting->default_setting_value;
                 }
                 if ($setting->default_setting_subcategory == "email_company_address") {

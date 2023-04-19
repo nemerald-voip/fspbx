@@ -579,7 +579,8 @@
                                                             <audio id="voicemail_unavailable_audio_file"
                                                                 @if ($vm_unavailable_file_exists)
                                                                 src="{{ route('getVoicemailGreeting', ['voicemail' => $extension->voicemail->voicemail_uuid,'filename' => 'greeting_1.wav'] ) }}"
-                                                                @endif >
+                                                                @endif
+                                                            >
                                                             </audio>
                                                             <p class="text-muted mb-1">File name: <span id='voicemailUnavailableFilename'>
                                                                 <strong>
@@ -1211,68 +1212,8 @@
 
                                     @if ($extension->exists)
                                         <div class="tab-pane fade" id="v-pills-device" role="tabpanel" aria-labelledby="v-pills-device-tab">
-                                            <!-- Voicemail Content-->
-                                            <div class="row">
-                                                <div class="col-lg-12">
-                                                    <h4 class="mt-2">Attached Devices</h4>
-                                                    <div class="card" id="extensionForm" action="" >
-                                                        <div class="card-body">
-                                                            <div class="row">
-                                                                <div class="col-md-3">
-                                                                    <div class="form-group">
-                                                                        <label class="col-form-label">Line Number</label>
-                                                                        <input type="text" name="line_number" id="line_number" class="form-control" />
-                                                                        <div class="error text-danger"></div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-4">
-                                                                    <div class="form-group">
-                                                                        <label class="col-form-label">Select Device</label>
-                                                                        <div class="input-group">
-                                                                            <select name="device_uuid" class="form-select" id="device-select">
-                                                                                @foreach($devices as $device)
-                                                                                    <option value="{{$device->device_uuid}}">{{$device->device_mac_address}}</option>
-                                                                                @endforeach
-                                                                            </select>
-                                                                            <button class="btn btn-primary" type="button" id="add-new-device" data-bs-toggle="modal" data-bs-target="#createDeviceModal">Create</button>
-                                                                        </div>
-                                                                        <div class="error text-danger" id="device_uuid_error"></div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-3">
-                                                                    <div class="form-group mt-4">
-                                                                        <button class="btn btn-info assign-device-btn" type="button"> Assign</button>
-                                                                        <div class="error text-danger"></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <table class="table table-bordered">
-                                                        <tr>
-                                                            <th>Line</th>
-                                                            <th>MAC Address</th>
-                                                            <th>Template</th>
-                                                            <th>Actions</th>
-                                                        </tr>
-                                                        @foreach($extension->devices as $device)
-                                                            <tr>
-                                                                <td>{{$device->pivot->line_number}}</td>
-                                                                <td>{{$device->device_mac_address}}</td>
-                                                                <td>{{$device->device_template}}</td>
-                                                                <td>
-                                                                    <div id="tooltip-container-actions">
-                                                                        <a class="action-icon" data-bs-toggle="modal" data-bs-target="#deleteModal" data-href="{{route('extensions.unassign-device', [$extension->extension_uuid, $device->pivot->device_line_uuid ])}}">
-                                                                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </table>
-                                                </div> <!-- end row-->
-                                            </div>
+                                            <!-- Devices Content-->
+                                            @include ('layouts.extensions.device_tab')
                                         </div>
                                     @endif
 
@@ -1296,6 +1237,15 @@
                                                     <div id="forward_all_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'forward',
+                                                                                    'id' => 'all',
+                                                                                    'value' => $extension->forward_all_destination,
+                                                                                    'extensions' => $extensions
+                                                                ])
+                                                                <div class="text-danger forward_all_destination_err error_message"></div>
+                                                            </p>
+{{--
                                                             @if(empty($extension->forward_all_destination))
                                                                 <span id="forward_all_label">No destination selected.</span>
                                                             @else
@@ -1306,8 +1256,9 @@
                                                                 <span class="clear-dest ml-2"><a href="javascript:confirmClearDestinationAction('{{ route('extensions.clear-callforward-destination', ['extension' => $extension->extension_uuid, 'type' => 'all']) }}', 'all');">Clear destination</a></span>
                                                             @endif
                                                             </p>
-                                                            <div class="text-danger forward_all_destination_err error_message"></div>
+
                                                             <input type="hidden" id="forward_all_destination" name="forward_all_destination" value="{{ $extension->forward_all_destination }}" />
+--}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1330,6 +1281,16 @@
                                                     <div id="forward_busy_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'forward',
+                                                                                    'id' => 'busy',
+                                                                                    'value' => $extension->forward_busy_destination,
+                                                                                    'extensions' => $extensions
+                                                                ])
+                                                                <div class="text-danger forward_busy_destination_err error_message"></div>
+                                                            </p>
+                                                            {{--
+                                                            <p>
                                                             @if(empty($extension->forward_busy_destination))
                                                                 <span id="forward_busy_label">No destination selected.</span>
                                                             @else
@@ -1342,6 +1303,7 @@
                                                             </p>
                                                             <div class="text-danger forward_busy_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_busy_destination" name="forward_busy_destination" value="{{ $extension->forward_busy_destination }}" />
+                                                            --}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1364,6 +1326,17 @@
                                                     <div id="forward_no_answer_phone_number" class="row @if($extension->forward_no_answer_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'forward',
+                                                                                    'id' => 'no_answer',
+                                                                                    'value' => $extension->forward_no_answer_destination,
+                                                                                    'extensions' => $extensions
+                                                                ])
+                                                                <div class="text-danger forward_no_answer_destination_err error_message"></div>
+                                                            </p>
+                                                            {{--
+                                                            <p>
+
                                                             @if(empty($extension->forward_no_answer_destination))
                                                                 <span id="forward_no_answer_label">No destination selected.</span>
                                                             @else
@@ -1376,6 +1349,7 @@
                                                             </p>
                                                             <div class="text-danger forward_no_answer_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_no_answer_destination" name="forward_no_answer_destination" value="{{ $extension->forward_no_answer_destination }}" />
+                                                            --}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1398,6 +1372,16 @@
                                                     <div id="forward_user_not_registered_phone_number" class="row @if($extension->forward_user_not_registered_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
+                                                            @include('layouts.partials.destinationSelector', [
+                                                                                'type' => 'forward',
+                                                                                'id' => 'user_not_registered',
+                                                                                'value' => $extension->forward_user_not_registered_destination,
+                                                                                'extensions' => $extensions
+                                                            ])
+                                                            <div class="text-danger forward_not_registered_destination_err error_message"></div>
+                                                            </p>
+                                                            {{--
+                                                            <p>
                                                             @if(empty($extension->forward_user_not_registered_destination))
                                                                 <span id="forward_user_not_registered_label">No destination selected.</span>
                                                             @else
@@ -1410,6 +1394,141 @@
                                                             </p>
                                                             <div class="text-danger forward_user_not_registered_destination_err error_message"></div>
                                                             <input type="hidden" id="forward_user_not_registered_destination" name="forward_user_not_registered_destination" value="{{ $extension->forward_user_not_registered_destination }}" />
+                                                            --}}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Sequential ring</h4>
+                                                    <p class="text-muted mb-2">List and determine the order of up to 10 phone numbers or SIP URI addresses you would like to ring after your primary phone when you receive a call.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="follow_me_enabled" value="false">
+                                                            <input type="checkbox" id="follow_me_enabled" value="true" name="follow_me_enabled" data-option="follow_me" class="forward_checkbox"
+                                                                   @if ($extension->follow_me_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="follow_me_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger follow_me_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="follow_me_phone_number" class="row @if($extension->follow_me_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <div class="row mb-3">
+                                                                <div class="col-5">
+                                                                    <label class="form-label" style="padding-top: 10px;">Ring my main phone first for </label>
+                                                                </div>
+                                                                <div class="col-2">
+                                                                    <select data-toggle="select2" title="Ring my main phone first" name="follow_me_ring_my_phone_timeout">
+                                                                        <option value="">Disabled</option>
+                                                                        @for ($i = 1; $i < 20; $i++)
+                                                                            <option value="{{ $i * 5 }}" @if ($follow_me_ring_my_phone_timeout == $i*5) selected @endif>
+                                                                                {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                            </option>
+                                                                        @endfor
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row mb-3">
+                                                                <div class="col-5">
+                                                                    <label class="form-label" style="padding-top: 2px;">Continue ringing sequence if main number is busy</label>
+                                                                </div>
+                                                                <div class="col-2">
+                                                                    <input type="hidden" name="follow_me_ignore_busy" value="false">
+                                                                    <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
+                                                                           @if ($extension->getFollowMe() && $extension->getFollowMe()->follow_me_ignore_busy == "false") checked @endif
+                                                                           data-switch="primary">
+                                                                    <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <h4 class="mt-2">Sequential order</h4>
+                                                                <p class="text-muted mb-2">You can drag-n-drop lines to adjust current sequential.</p>
+                                                                <table class="table table-centered table-responsive table-sm mb-0 sequential-table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th style="width: 20px;">Order</th>
+                                                                            <th>Destination</th>
+                                                                            <th style="width: 150px">Delay</th>
+                                                                            <th style="width: 150px">Number of rings</th>
+                                                                            <th style="width: 130px;">Answer confirmation required</th>
+                                                                            <th>Action</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    @php $b = 0 @endphp
+                                                                    <tbody id="destination_sortable">
+                                                                    @foreach($follow_me_destinations as $destination)
+                                                                        <tr id="row{{$destination->follow_me_destination_uuid}}">
+                                                                            @php $b++ @endphp
+                                                                            <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
+                                                                            <td>
+                                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'follow_me_destinations',
+                                                                                    'id' => $destination->follow_me_destination_uuid,
+                                                                                    'value' => $destination->follow_me_destination,
+                                                                                    'extensions' => $extensions
+                                                                                ])
+                                                                            </td>
+                                                                            <td>
+                                                                                <select id="destination_delay_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][delay]">
+                                                                                    @for ($i = 0; $i < 20; $i++)
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_delay == $i*5) selected @endif>
+                                                                                            {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                                        </option>
+                                                                                    @endfor
+                                                                                </select>
+                                                                            </td>
+                                                                            <td>
+                                                                                <select id="destination_timeout_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][timeout]">
+                                                                                    @for ($i = 1; $i < 21; $i++)
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_timeout == $i*5) selected @endif>
+                                                                                            {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                                        </option>
+                                                                                    @endfor
+                                                                                </select>
+                                                                            </td>
+                                                                            <td>
+                                                                                <input type="hidden" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
+                                                                                <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]"
+                                                                                       @if ($destination->follow_me_prompt == "1") checked @endif
+                                                                                       data-switch="primary"/>
+                                                                                <label for="destination_prompt_{{$destination->follow_me_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div id="tooltip-container-actions">
+                                                                                    <a href="javascript:confirmDeleteDestinationAction('row{{$destination->follow_me_destination_uuid}}');" class="action-icon">
+                                                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                    </tbody>
+                                                                </table>
+                                                                <div id="addDestinationBar" class="my-1" @if($extension->getFollowMeDestinations()->count() >= 10) style="display: none;" @endif>
+                                                                    <a href="javascript:addDestinationAction(this);" class="btn btn-success">
+                                                                        <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Do not disturb</h4>
+                                                    <p class="text-muted mb-2">Avoid calls to the extension.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="do_not_disturb" value="false">
+                                                            <input type="checkbox" id="do_not_disturb" value="true" name="do_not_disturb"
+                                                                   @if ($extension->do_not_disturb == "true") checked @endif
+                                                                   data-switch="danger"/>
+                                                            <label for="do_not_disturb" data-on-label="On" data-off-label="Off"></label>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1475,46 +1594,50 @@
             <div class="modal-body">
                 <form method="POST" action="{{route('devices.store')}}">
                     @csrf
+                    <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
+                    <input type="hidden" id="device_uuid" name="device_uuid" value="" />
                     <div class="mb-3">
                         <label class="col-form-label">Mac Address</label>
                         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address">
                         <div class="error text-danger" id="device_mac_address_error"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="col-form-label">Label</label>
-                        <input type="text" class="form-control" id="device_label" name="device_label" placeholder="Enter the Device Label">
-                        <div class="error text-danger" id="device_label_error"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="col-form-label">Vendor</label>
-                        <input type="text" class="form-control" id="device_vendor" name="device_vendor" placeholder="Enter the Device Vendor">
-                        <div class="error text-danger" id="device_vendor_error"></div>
+                        <div class="error text-danger" id="device_mac_address_modified_error"></div>
                     </div>
                     <div class="mb-3 position-relative">
                         <label class="col-form-label">Template</label>
                         @php $templateDir = public_path('resources/templates/provision'); @endphp
                         <select name="device_template" class="form-select select2" id="template-select">
+                            <option value="" selected>Choose template</option>
                             @foreach($vendors ?? [] as $vendor)
                                 <optgroup label='{{$vendor->name}}'>
-                                    @if (is_dir($templateDir.'/'.$vendor->name)) {
-                                        @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
-                                        @foreach($templates as $dir) {
-                                            @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
-                                                <option value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
-                                            @endif
-                                        @endforeach
+                                    @if (is_dir($templateDir.'/'.$vendor->name))
+                                    @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
+                                    @foreach($templates as $dir)
+                                    @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
+                                        <option value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
+                                    @endif
+                                    @endforeach
                                     @endif
                                 </optgroup>
                             @endforeach
                         </select>
                         <div class="error text-danger" id="device_template_error"></div>
                     </div>
-                    <div class="mb-3">
-                        <label class="col-form-label">Description</label>
-                        <textarea class="form-control" id="device_description" name="device_description" placeholder="Enter the Description"></textarea>
-                        <div class="error text-danger" id="device_description_error"></div>
+                    {{--
+                    <div class="mb-3 position-relative text-center">
+                        <img src="https://dummyimage.com/400x300/d4d4d4/2e2e2e.png&text=Phone+Picture" />
                     </div>
-                    <div class="mb-3">
+                    --}}
+                    <div class="mb-3 position-relative">
+                        <label class="col-form-label">Profile</label>
+                        <select name="device_profile_uuid" class="form-select select2" id="profile-select">
+                            <option value="" selected>Choose profile</option>
+                            @foreach($profiles ?? [] as $profile)
+                                <option value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
+                            @endforeach
+                        </select>
+                        <div class="error text-danger" id="device_profile_uuid_error"></div>
+                    </div>
+                    <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary save-device-btn">Save</button>
                     </div>
@@ -1523,11 +1646,10 @@
         </div>
     </div>
 </div>
-@include('layouts.extensions.confirmClearDestinationModal')
-@include('layouts.extensions.chooseForwardDestinationModal', ['extensions' => $extensions])
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
         .input-group > .select2-container {
             width: auto !important;
@@ -1536,9 +1658,28 @@
         .select2-container--open {
             z-index:10000;
         }
+        /*
         @media (min-width: 576px) {
             #ForwardDestinationModal > .modal-dialog {
                 max-width: 800px;
+            }
+        }*/
+        .drag-handler {
+            cursor: all-scroll;
+        }
+        #addDestinationBar {
+            width: 75px;
+            text-align: center;
+        }
+        .destination_wrapper {
+            width: 415px;
+        }
+        @media (max-width: 1724px) {
+            .sequential-table {
+                width: 100%;
+            }
+            .sequential-table td .destination_wrapper {
+                width: auto !important;
             }
         }
     </style>
@@ -1553,6 +1694,8 @@
         if(activeTab){
             $('#extensionNavPills a[href="' + activeTab + '"]').tab('show');
         }
+
+        applyDestinationSelect2()
 
         $('#submitFormButton').on('click', function(e) {
             e.preventDefault();
@@ -1613,10 +1756,10 @@
             console.log(cname)
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
-                $('#'+cname+'_destination').prop('disabled', false);
             } else {
                 $('#'+cname+'_phone_number').addClass('d-none');
-                $('#'+cname+'_destination').prop('disabled', true);
+                $('#'+cname+'_phone_number').find('.mx-1').find('select').val('internal');
+                $('#'+cname+'_phone_number').find('.mx-1').find('select').trigger('change');
             }
         });
 
@@ -1625,10 +1768,17 @@
 
             var btn = $(this);
             var form = btn.closest('form');
+            var method = 'POST'
+            var action = form.attr('action')
 
+            if(form.find('#device_mac_address').attr('readonly') !== undefined) {
+                method = 'PUT'
+                action = '{{route('devices.update', ['device' => ':device'])}}'.replace(':device', form.find('#device_uuid').val())
+            }
+//
             $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
+                url: action,
+                type: method,
                 data: form.serialize(),
                 dataType: 'json',
                 beforeSend: function() {
@@ -1646,12 +1796,15 @@
                 success: function(result) {
                     form[0].reset();
                     $('#createDeviceModal').modal('hide');
-                    $('#device-select').append(
-                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address)
-                    );
+                    /*$('#device-select').append(
+                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address + ' - ' + result.device.device_template)
+                    );*/
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                    window.location.reload();
                 },
                 error: function(error) {
+                    $('.loading').hide();
+                    $('.btn').attr('disabled', false);
                     if(error.status == 422){
                         if(error.responseJSON.errors) {
                             $.each( error.responseJSON.errors, function( key, value ) {
@@ -1670,13 +1823,47 @@
             });
         });
 
+        $('#createDeviceModal').on('shown.bs.modal', function(e){
+            if(typeof e.relatedTarget.dataset.href !== 'undefined') {
+                $('#createDeviceModalLabel').text('Edit Device')
+                // Edit device
+                $.ajax({
+                    url: e.relatedTarget.dataset.href,
+                    type: 'GET',
+                    dataType: 'json',
+                    beforeSend: function () {
+                        $('.loading').show();
+                    },
+                    complete: function (xhr, status) {
+                        $('.btn').attr('disabled', false);
+                        $('.loading').hide();
+                    },
+                    success: function (result) {
+                        $('#device_mac_address').attr('readonly', true).val(result.device_mac_address)
+                        $('#template-select').val(result.device_template).trigger('change')
+                        $('#profile-select').val(result.device_profile_uuid).trigger('change')
+                        $('#device_uuid').val(result.device_uuid)
+                    }
+                });
+            } else {
+                $('#createDeviceModalLabel').text('Create New Device')
+                $('#device_mac_address').attr('readonly', false).val('')
+                $('#device_uuid').val('')
+                $('#template-select').val('').trigger('change')
+                $('#profile-select').val('').trigger('change')
+            }
+        });
+
         $('#device-select').select2({
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+        });
+
+        $('#profile-select').select2({
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
 
         $('#template-select').select2({
-            // dropdownParent: $('#createDeviceModal'),
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
 
         @if ($extension->exists)
@@ -1689,8 +1876,8 @@
                     'device_uuid' : btn.closest('.card').find('#device-select').val(),
                     '_token' : $('meta[name="csrf-token"]').attr('content')
                 }
-                console.log(btn.closest('.card').find('#device-select'));
-                console.log(data);
+                // console.log(btn.closest('.card').find('#device-select'));
+                // console.log(data);
 
                 $.ajax({
                     url: "{{route('extensions.assign-device', [$extension->extension_uuid])}}",
@@ -1716,8 +1903,11 @@
                         } else {
                             $.NotificationApp.send("Warning",result.message,"top-right","#ebb42a","error");
                         }
+                        $('.loading').hide();
                     },
                     error: function(error) {
+                        $('.loading').hide();
+                        $('.btn').attr('disabled', false);
                         if(error.status == 422){
                             if(error.responseJSON.errors) {
                                 $.each( error.responseJSON.errors, function( key, value ) {
@@ -1931,7 +2121,7 @@
                     $.NotificationApp.send("Warning","There was a error uploading this greeting","top-right","#ff5b5b","error")
                     $("#voicemailNameGreetingError").text(response.message);
                 } else {
-                    $.NotificationApp.send("Success","The greeeting has been uploaded successfully","top-right","#10c469","success")
+                    $.NotificationApp.send("Success","The greeting has been uploaded successfully","top-right","#10c469","success")
                 }
             })
             .fail(function (response){
@@ -2070,32 +2260,6 @@
             audioElement.pause();
         });
 
-        $('#ForwardDestinationModalAction').click(function() {
-            let modal = $('#ForwardDestinationModal');
-            let type = modal.find('#forward_destination_type').val()
-            let destnumber = modal.find('#number_destination_popup').val()
-            let destext = modal.find('#extension_destination_popup').val()
-            console.log(destnumber);
-            console.log(destext)
-            console.log(type)
-            if (destnumber !== '') {
-                $('#forward_'+type+'_label').html('Selected destination: '+destnumber)
-                $('#forward_'+type+'_destination').val(destnumber)
-            } else if(destext !== '') {
-                $('#forward_'+type+'_label').html('Selected destination: '+destext)
-                $('#forward_'+type+'_destination').val(destext)
-            }
-            modal.modal('hide')
-        });
-
-        $('#extension_destination_popup').change(function() {
-            $('#number_destination_popup').val('')
-        })
-
-        $("#ForwardDestinationModal").on("hidden.bs.modal", function () {
-            $('#ForwardDestinationModal').find('#forward_destination_type').val('')
-        });
-
         $('#voicemail_enabled').change(function() {
             if(this.checked == true){
                 //check if voicemail already exists. If not create it
@@ -2116,6 +2280,7 @@
                             voicemail_enabled: "true",
                             voicemail_transcription_enabled: "true",
                             voicemail_attach_file: "true",
+                            voicemail_tutorial: "true",
                             voicemail_file: "attach",
                             voicemail_local_after_email: "true",
                         },
@@ -2145,91 +2310,209 @@
 
         });
 
+        let sortable = new Sortable(document.getElementById('destination_sortable'), {
+            delay: 0, // time in milliseconds to define when the sorting should start
+            delayOnTouchOnly: false, // only delay if user is using touch
+            touchStartThreshold: 0, // px, how many pixels the point should move before cancelling a delayed drag event
+            disabled: false, // Disables the sortable if set to true.
+            store: null,  // @see Store
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            easing: "cubic-bezier(1, 0, 0, 1)", // Easing for animation. Defaults to null. See https://easings.net/ for examples.
+            handle: ".drag-handler",  // Drag handle selector within list items
+            filter: ".ignore-elements",  // Selectors that do not lead to dragging (String or Function)
+            preventOnFilter: true, // Call `event.preventDefault()` when triggered `filter`
+
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dragClass: "sortable-drag",  // Class name for the dragging item
+
+            swapThreshold: 1, // Threshold of the swap zone
+            invertSwap: false, // Will always use inverted swap zone if set to true
+            invertedSwapThreshold: 1, // Threshold of the inverted swap zone (will be set to swapThreshold value by default)
+            direction: 'vertical', // Direction of Sortable (will be detected automatically if not given)
+
+            forceFallback: false,  // ignore the HTML5 DnD behaviour and force the fallback to kick in
+
+            fallbackClass: "sortable-fallback",  // Class name for the cloned DOM Element when using forceFallback
+            fallbackOnBody: false,  // Appends the cloned DOM Element into the Document's Body
+            fallbackTolerance: 0, // Specify in pixels how far the mouse should move before it's considered as a drag.
+
+            dragoverBubble: false,
+            removeCloneOnHide: true, // Remove the clone element when it is not showing, rather than just hiding it
+            emptyInsertThreshold: 5, // px, distance mouse must be from empty sortable to insert drag element into it
+
+
+            setData: function (/** DataTransfer */dataTransfer, /** HTMLElement*/dragEl) {
+                dataTransfer.setData('Text', dragEl.textContent); // `dataTransfer` object of HTML5 DragEvent
+            },
+
+            // Element is chosen
+            onChoose: function (/**Event*/evt) {
+                evt.oldIndex;  // element index within parent
+            },
+
+            // Element is unchosen
+            onUnchoose: function(/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Element dragging started
+            onStart: function (/**Event*/evt) {
+                evt.oldIndex;  // element index within parent
+            },
+
+            // Element dragging ended
+            onEnd: function (/**Event*/evt) {
+                var itemEl = evt.item;  // dragged HTMLElement
+                evt.to;    // target list
+                evt.from;  // previous list
+                evt.oldIndex;  // element's old index within old parent
+                evt.newIndex;  // element's new index within new parent
+                evt.oldDraggableIndex; // element's old index within old parent, only counting draggable elements
+                evt.newDraggableIndex; // element's new index within new parent, only counting draggable elements
+                evt.clone // the clone element
+                evt.pullMode;  // when item is in another sortable: `"clone"` if cloning, `true` if moving
+                updateDestinationOrder()
+            },
+
+            // Element is dropped into the list from another list
+            onAdd: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Changed sorting within list
+            onUpdate: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Called by any change to the list (add / update / remove)
+            onSort: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Element is removed from the list into another list
+            onRemove: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Attempt to drag a filtered element
+            onFilter: function (/**Event*/evt) {
+                var itemEl = evt.item;  // HTMLElement receiving the `mousedown|tapstart` event.
+            },
+
+            // Event when you move an item in the list or between lists
+            onMove: function (/**Event*/evt, /**Event*/originalEvent) {
+                // Example: https://jsbin.com/nawahef/edit?js,output
+                evt.dragged; // dragged HTMLElement
+                evt.draggedRect; // DOMRect {left, top, right, bottom}
+                evt.related; // HTMLElement on which have guided
+                evt.relatedRect; // DOMRect
+                evt.willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
+                originalEvent.clientY; // mouse position
+                // return false; — for cancel
+                // return -1; — insert before target
+                // return 1; — insert after target
+                // return true; — keep default insertion point based on the direction
+                // return void; — keep default insertion point based on the direction
+            },
+
+            // Called when dragging element changes position
+            onChange: function(/**Event*/evt) {
+                evt.newIndex // most likely why this event is used is to get the dragging element's current index
+                // same properties as onEnd
+            }
+        });
+
+        $(`#forward_target_internal_all`).select2();
+        $(`#forward_type_all`).select2();
+
+        $(`#forward_target_internal_busy`).select2();
+        $(`#forward_type_busy`).select2();
+
+        $(`#forward_target_internal_no_answer`).select2();
+        $(`#forward_type_no_answer`).select2();
+
+        $(`#forward_target_internal_user_not_registered`).select2();
+        $(`#forward_type_user_not_registered`).select2();
     });
 
-    function openForwardDestinationModal(title, section) {
-        let modal = $('#ForwardDestinationModal'), number = ''
-        modal.find('#extension_destination_popup').val('').trigger('change');
-        modal.find('#number_destination_popup').val('')
-        switch (section) {
-            case 'all':
-                number = $('#forward_all_destination').val()
-                break;
-            case 'busy':
-                number = $('#forward_busy_destination').val()
-                break;
-            case 'no_answer':
-                number = $('#forward_no_answer_destination').val()
-                break;
-            case 'user_not_registered':
-                number = $('#forward_user_not_registered_destination').val()
-                break;
-            default:
-                alert('Error');
-                return;
-        }
-        modal.find('#forward_destination_type').val(section)
-        if(number.length > 5) {
-            modal.find('.nav-tabs a[href="#choose-phone-number"]').tab('show')
-            modal.find('#number_destination_popup').val(number)
+    function showHideAddDestination() {
+        if($('#destination_sortable > tr').length > 9) {
+            $('#addDestinationBar').hide();
         } else {
-            modal.find('.nav-tabs a[href="#choose-extension"]').tab('show')
-            //let regExp = new RegExp(`^${number} `,'ig');
-            $.each(modal.find('#extension_destination_popup').find('option'), (i, e) => {
-                if(e.value === number) {
-                    modal.find('#extension_destination_popup').val(e.value).trigger('change')
-                } else {
-                    //console.log('not found')
-                }
-            })
+            $('#addDestinationBar').show();
         }
-        modal.find('.modal-title').text(title)
-        modal.modal('show')
     }
 
-    function confirmClearDestinationAction(url, type){
-        let dataObj = {};
-        dataObj.url = url;
-        dataObj.type = type;
-        $('#confirmClearDestinationModal').data(dataObj).modal('show');
-    }
-
-    function performConfirmedClearDestinationAction() {
-        $('#confirmClearDestinationModal').modal('hide');
-
-        let url = $("#confirmClearDestinationModal").data("url")
-        let type = $("#confirmClearDestinationModal").data("type")
-        console.log(type)
-        $.ajax({
-            type: 'POST',
-            url: url,
-            cache: false,
-            data: {
-                '_method': 'DELETE',
-            }
-        })
-            .done(function (response) {
-                if (response.error) {
-                    if (response.message) {
-                        $.NotificationApp.send("Warning", response.message, "top-right", "#ff5b5b", "error");
-                    }
-                    if (response.error.message) {
-                        $.NotificationApp.send("Warning", response.error.message, "top-right", "#ff5b5b", "error");
-                    }
+    function applyDestinationSelect2() {
+        $('#destination_sortable > tr').each(function (i, el) {
+            $(el).find('select').each(function(i, el2) {
+                if ($(el2).data('select2')) {
+                    $(el2).select2('destroy').hide()
+                    $(el2).select2({
+                        width: 'element'
+                    }).show()
                 } else {
-                    if (response.message) {
-                        $('#forward_'+type+'_enabled').prop('checked', false)
-                        $('#forward_'+type+'_phone_number').addClass('d-none')
-                        $('#forward_'+type+'_phone_number').find('p > span:first').text('No destination selected.')
-                        $('#forward_'+type+'_phone_number').find('.clear-dest').remove()
-                        $('#forward_'+type+'_phone_number').find('input').val('')
-                        $.NotificationApp.send("Success", response.message, "top-right", "#10c469", "success");
-                    }
+                    $(el2).select2({
+                        width: 'element'
+                    }).show()
                 }
-            })
-            .fail(function (response) {
-                $.NotificationApp.send("Warning", response, "top-right", "#ff5b5b", "error");
             });
+        })
+    }
+
+    function updateDestinationOrder() {
+        $('#destination_sortable > tr').each(function (i, el) {
+            $(el).find('.drag-handler').find('span').text(i + 1)
+        })
+    }
+
+    function addDestinationAction(el){
+        let wrapper = $(`#destination_sortable > tr`)
+        let count = wrapper.length
+        let newCount = (count + 1)
+        if(newCount > 10) {
+            return false;
+        }
+
+        let newRow = `
+        <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
+        <td>
+        @include('layouts.partials.destinationSelector', [
+            'type' => 'follow_me_destinations',
+            'id' => '__NEWROWID__',
+            'value' => '',
+            'extensions' => $extensions
+        ])
+        </td>
+        <td><select id="destination_delay___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][delay]">
+        @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
+        {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
+        <td><select id="destination_timeout___NEWROWID__" name="follow_me_destinations[newrow__NEWROWID__][timeout]">
+        @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
+        {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td><td>
+        <input type="hidden" name="follow_me_destinations[newrow__NEWROWID__][prompt]" value="false">
+        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="follow_me_destinations[newrow__NEWROWID__][prompt]" data-option="follow_me_enabled" class="forward_checkbox" data-switch="primary"/>
+        <label for="destination_prompt___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
+        </td><td><div id="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
+        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+        </a></div></td></tr>`;
+        newRow = newRow.replaceAll('__NEWROWID__', Math.random().toString(16).slice(2))
+
+        $('#destination_sortable').append(newRow)
+
+        showHideAddDestination()
+        updateDestinationOrder()
+        applyDestinationSelect2()
+    }
+
+    function confirmDeleteDestinationAction(el){
+        if ($(`#${el}`).data('select2')) {
+            $(`#${el}`).select2('destroy').hide()
+        }
+        $(`#${el}`).remove();
+        updateDestinationOrder()
+        showHideAddDestination()
     }
 </script>
 @endpush

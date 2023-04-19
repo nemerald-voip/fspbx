@@ -6,7 +6,9 @@ use App\Models\FaxQueues;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
+use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 class FaxQueueController extends Controller
 {
@@ -21,7 +23,7 @@ class FaxQueueController extends Controller
             return redirect('/');
         }
 
-        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed'];
+        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed', 'sending' => 'Sending'];
         $scopes = ['global', 'local'];
         $selectedStatus = $request->get('status');
         $searchString = $request->get('search');
@@ -45,16 +47,30 @@ class FaxQueueController extends Controller
         if ($searchString) {
             $faxQueues->where(function ($query) use ($searchString) {
                 $query
-                    ->orWhereLike('fax_email_address', strtolower($searchString))
-                    ->orWhereLike('fax_caller_id_number', strtolower($searchString));
+                    ->orWhereLike('fax_email_address', strtolower($searchString));
+                try {
+                    $phoneNumberUtil = PhoneNumberUtil::getInstance();
+                    $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
+                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                        $query->orWhereLike('fax_caller_id_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
+                    } else {
+                        $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
+                    }
+                } catch (NumberParseException $e) {
+                    $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
+                }
             });
         }
         $faxQueues = $faxQueues->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
 
         foreach ($faxQueues as $i => $faxQueue) {
             $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);
-            $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
-            $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
+            if(!empty($faxQueue['fax_notify_date'])) {
+                $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
+            }
+            if(!empty($faxQueue['fax_retry_date'])) {
+                $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
+            }
         }
 
         $data = array();
@@ -107,7 +123,8 @@ class FaxQueueController extends Controller
     {
         $faxQueue->update([
             'fax_status' => $status,
-            'fax_retry_count' => 0
+            'fax_retry_count' => 0,
+            'fax_retry_date' => null
         ]);
 
         return redirect()->back();

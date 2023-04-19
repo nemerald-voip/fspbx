@@ -9,19 +9,25 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-xl-8">
-                                @yield('searchbar')
-                            </div>
-                            <div class="col-xl-4">
-                                <div class="text-xl-end mt-xl-0 mt-2">
-                                    @yield('actionbar')
-                                </div>
-                            </div>
-                        </div>
                         <div class="row">
-                            @yield('pagination')
+                            @hasSection('searchbar')
+                                <div class="col-xl-8 mb-3">
+                                    @yield('searchbar')
+                                </div>
+                            @endif
+                            @hasSection('actionbar')
+                                <div class="col-xl-4 mb-3">
+                                    <div class="text-xl-end mt-xl-0 mt-2">
+                                        @yield('actionbar')
+                                    </div>
+                                </div>
+                            @endif
                         </div>
+                        @hasSection('pagination')
+                            <div class="row">
+                                @yield('pagination')
+                            </div>
+                        @endif
                         <div class="table-responsive">
                             <table class="table table-centered mb-0">
                                 <thead class="table-light">@yield('table-head')</thead>

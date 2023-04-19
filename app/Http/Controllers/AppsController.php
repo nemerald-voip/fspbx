@@ -46,14 +46,8 @@ class AppsController extends Controller
 
         }
 
-        $conn_params = [
-            "connection_port" => env("RINGOTEL_CONNECTION_PORT"),
-            "outbound_proxy" => env("RINGOTEL_OUTBOUND_PROXY")
-        ];
-
         return view('layouts.apps.list')
-            ->with("domains",$domains)
-            ->with("conn_params", $conn_params);
+            ->with("domains",$domains);
     }
 
     /**
@@ -91,7 +85,7 @@ class AppsController extends Controller
         // If successful store Org ID and return success status
         if (isset($response['result'])){
 
-            // Add recieved OrgID to the request and store it in database
+            // Add received OrgID to the request and store it in database
             $request->merge(['org_id' => $response['result']['id']]);
 
             if (!appsStoreOrganizationDetails($request)){
@@ -104,12 +98,23 @@ class AppsController extends Controller
                 ]);
             }
 
+            // Get connection port from database or env file
+            $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
+            $port = get_domain_setting('line_sip_port', $request->organization_uuid);
+            $proxy = get_domain_setting('mobile_app_proxy', $request->organization_uuid);
+
             return response()->json([
+                'status' => 200,
                 'organization_name' => $request->organization_name,
                 'organization_domain' => $request->organization_domain,
                 'organization_region' => $request->organization_region,
                 'org_id' => $response['result']['id'],
-                'message' => 'Organization created succesfully',
+                'protocol' => ($protocol) ? $protocol : "",
+                'connection_port' => ($port) ? $port : env("RINGOTEL_CONNECTION_PORT"),
+                'outbound_proxy' => ($proxy) ? $proxy : env("RINGOTEL_OUTBOUND_PROXY"),
+                'success' => [
+                    'message' => 'Organization created succesfully',
+                ]
             ]);
         // Otherwise return failed status
         } elseif (isset($response['error'])) {
@@ -298,6 +303,32 @@ class AppsController extends Controller
                         'Progress' => 'Progress 1',
                         'Ringback' => 'United States',
                     ),
+                    'features' => 'pbx',
+                    "speeddial" => array(
+                        [
+                            'number' => '*97',
+                            'title' => 'Voicemail'
+                        ]
+                    ),
+                    'vmail' => [
+                        'ext' => '*97',
+                        'name' => 'Voicemail',
+                        'mess' => 'You have a new message',
+                        'off' => '',
+                        'on' => ''
+                    ],
+                    'dnd' => [
+                        'off' => '*79',
+                        'on' => '*78'
+                    ],
+                    'forwarding' => [
+                        'cfuon' => '',
+                        'cfboff' => '',
+                        'cfon' => '*72',
+                        'cfbon' => '',
+                        'cfuoff' => '',
+                        'cfoff' => '*73'
+                    ],
 
                 )
             )
@@ -641,6 +672,16 @@ class AppsController extends Controller
         // If the user doesn't exist prepare to create a new one
         $org_id = appsGetOrganizationDetails($extension->domain_uuid);
 
+        // If Organization isn't set up return 
+        if(!isset($org_id)) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => "Mobile apps are not activated. Please, contact your administrator",
+                ],
+            ]);
+        }
+        
         // Get all connections for this organization
         $response = appsGetConnections($org_id);
            
