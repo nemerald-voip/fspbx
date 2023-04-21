@@ -53,9 +53,10 @@
         @if($selectedScope == 'global')
             <th>Domain</th>
         @endif
-        <th>Date</th>
-        <th>Caller ID Number</th>
+        <th>From</th>
+        <th>To</th>
         <th>Email Address</th>
+        <th>Date</th>
         <th>Status</th>
         <th>Last Attempt</th>
         <th>Retry Count</th>
@@ -66,7 +67,7 @@
 
 @section('table-body')
     @if($faxQueues->count() == 0)
-        @include('layouts.partials.listing.norecordsfound', ['colspan' => (($selectedScope == 'global') ? 10 : 9) ])
+        @include('layouts.partials.listing.norecordsfound', ['colspan' => (($selectedScope == 'global') ? 11 : 10) ])
     @else
         @foreach ($faxQueues as $key => $faxQueue)
             <tr id="id{{ $faxQueue->fax_queue_uuid }}">
@@ -82,14 +83,23 @@
                     <th>{{ $faxQueue->domain_name }}</th>
                 @endif
                 <td>
+                    @if($faxQueue->fax_caller_id_name!='')
+                        <span class="text-body fw-bold text-nowrap">{{ $faxQueue->fax_caller_id_name ?? ''}}</span><br />
+                    @endif
+                    @if($faxQueue->fax_caller_id_number!='')
+                        <span class="text-body fw-bold text-nowrap">{{ phone($faxQueue->fax_caller_id_number, "US", $national_phone_number_format) }}</span>
+                    @endif
+                </td>
+                <td class="text-nowrap">
+                    {{ phone($faxQueue->fax_number, "US", $national_phone_number_format) }}
+                </td>
+                <td>
+                    {{ $faxQueue->fax_email_address }}
+                </td>
+                <td>
                     {{-- {{ $faxQueue->fax_date->format('D, M d, Y h:i:s A') }} --}}
                     <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('D, M d, Y ')}}</span>
                     <span class="text-body text-nowrap">{{ $faxQueue->fax_date->format('h:i:s A') }}</span>
-                </td>
-                <td class="text-nowrap">
-                    {{ phone($faxQueue->fax_caller_id_number, "US", $national_phone_number_format) }}</td>
-                <td>
-                    {{ $faxQueue->fax_email_address }}
                 </td>
                 <td>
                     @if ($faxQueue->fax_status == "sent")
