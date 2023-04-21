@@ -1319,6 +1319,11 @@ class ExtensionsController extends Controller
             'enabled' => 'true',
         ]);
 
+        /** @var Devices $device */
+        $device = $extension->devices()->first();
+        $device->device_label = $extension->extension;
+        $device->save();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Device has been assigned successfully.'
