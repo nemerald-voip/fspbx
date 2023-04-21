@@ -28,7 +28,7 @@ class UpdateDeviceRequest extends FormRequest
     {
         return [
             'device_profile_uuid' => [
-                'required',
+                'nullable',
                 Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],

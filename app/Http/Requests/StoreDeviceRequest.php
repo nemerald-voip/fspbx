@@ -31,7 +31,7 @@ class StoreDeviceRequest extends FormRequest
                 Rule::unique('App\Models\Devices', 'device_mac_address')
             ],
             'device_profile_uuid' => [
-                'required',
+                'nullable',
                 Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
