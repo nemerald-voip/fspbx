@@ -18,7 +18,7 @@
         <th>Name</th>
         <th>Template</th>
         <th>Profile</th>
-        <th>Assigned to</th>
+        <th>Assigned extension</th>
         <th>Action</th>
     </tr>
 @endsection
@@ -39,11 +39,15 @@
                     {{ $device->device_template }}
                 </td>
                 <td>
-                    {{ $device->device_profile_uuid }}
+                    @if($device->profile()->first())
+                        {{ $device->profile()->first()->device_profile_name }}
+                    @endif
                 </td>
                 <td>
-                    @if($device->lines()->first())
-                        {{ $device->lines()->first()->display_name }}
+                    @if($device->lines()->first() && $device->lines()->first()->extension())
+                        <a href="{{ route('extensions.edit',$device->lines()->first()->extension()) }}">
+                            {{ $device->lines()->first()->extension()->extension }}
+                        </a>
                     @endif
                 </td>
                 <td>

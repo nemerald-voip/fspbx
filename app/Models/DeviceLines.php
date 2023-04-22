@@ -55,4 +55,9 @@ class DeviceLines extends Model
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->fill($attributes);
     }
+
+    public function extension()
+    {
+        return Extensions::where('extension', $this->attributes['label'])->first();
+    }
 }
