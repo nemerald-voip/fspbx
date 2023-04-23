@@ -54,6 +54,54 @@
 @endsection
 
 @push('scripts')
+    <script>
+    $(document).ready(function() {
+        $('#extension-select').select2({
+        //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+        });
 
+        $('#profile-select').select2({
+        //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+        });
 
+        $('#template-select').select2({
+        //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+        });
+    });
+
+    $('.save-device-btn').on('click', function(e) {
+        e.preventDefault();
+        $('.loading').show();
+
+        //Reset error messages
+        $('.error_message').text("");
+
+        $.ajax({
+            type : "POST",
+            url: $('#device_form').attr('action'),
+            cache: false,
+            data: $("#device_form").serialize(),
+        })
+            .done(function(response) {
+                //console.log(response);
+                $('.loading').hide();
+
+                if (response.error){
+                    printErrorMsg(response.error);
+
+                } else {
+                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
+                    setTimeout(function (){
+                        window.location.href = "{{ route('devices.index')}}";
+                    }, 1000);
+
+                }
+            })
+            .fail(function (response){
+                $('.loading').hide();
+                printErrorMsg(response.responseText);
+            });
+
+    })
+    </script>
 @endpush

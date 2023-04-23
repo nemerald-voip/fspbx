@@ -82,6 +82,6 @@ class Devices extends Model
      */
     public function extension()
     {
-        return ($this->lines()->first() && $this->lines()->first()->extension()) ? $this->lines()->first()->extension()->first() : null;
+        return ($this->lines()->first() && $this->lines()->first()->extension()) ? $this->lines()->first()->extension() : null;
     }
 }

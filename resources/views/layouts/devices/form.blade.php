@@ -1,4 +1,4 @@
-<form method="POST" action="{{route('devices.store')}}">
+<form id="device_form" method="POST" action="{{route('devices.store')}}">
     @csrf
     @if(isset($extension) && $extension->extension_uuid)
         <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
@@ -52,10 +52,10 @@
                 <option value="" selected>Choose extension</option>
                 @foreach($extensions as $extension)
                     <option @php
-                        if($device->extension()->extension == $extension->extension && method_exists($device, 'extension')) {
+                        if($device->extension() && $device->extension()->extension == $extension->extension) {
                             print 'selected';
                         }
-                    @endphp value='{{$extension->extension}}'>{{$extension->extension}}</option>
+                    @endphp value='{{$extension->extension_uuid}}'>{{$extension->extension}}</option>
                 @endforeach
             </select>
             <div class="error text-danger" id="device_profile_uuid_error"></div>
