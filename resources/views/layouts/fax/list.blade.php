@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Vertual Fax Machines"])
+@extends('layouts.horizontal', ["page_title"=> "Virtual Fax Machines"])
 
 @section('content')
 
