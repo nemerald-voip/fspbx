@@ -385,6 +385,7 @@ class ExtensionsController extends Controller
             'max_registrations' => 'nullable|numeric',
             'limit_max' => 'nullable|numeric',
             'limit_destination' => 'nullable|string',
+            'call_timeout' => "numeric",
             'toll_allow' => 'nullable|string',
             'call_group' => 'nullable|string',
             'call_screen_enabled' => 'nullable',
