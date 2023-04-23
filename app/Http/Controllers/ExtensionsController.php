@@ -716,11 +716,11 @@ class ExtensionsController extends Controller
 
         $devices = Devices::where('device_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))
-            ->whereNotExists( function ($query) {
+            /*->whereNotExists( function ($query) {
                 $query->select(DB::raw(1))
                     ->from('v_device_lines')
                     ->whereRaw('v_devices.device_uuid = v_device_lines.device_uuid');
-            })
+            })*/
             ->get();
 
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
@@ -1292,13 +1292,14 @@ class ExtensionsController extends Controller
     {
         $inputs = $request->validated();
 
-        $devicExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid']])->exists();
+        $deviceExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid']])->first();
 
-        if ($devicExist) {
-            return response()->json([
+        if ($deviceExist) {
+            $deviceExist->delete();
+            /*return response()->json([
                 'status' => 'alert',
                 'message' => 'Device is already assigned.'
-            ]);
+            ]);*/
         }
 
         $extension->deviceLines()->create([
@@ -1317,6 +1318,11 @@ class ExtensionsController extends Controller
             'register_expires' => get_domain_setting('line_register_expires'),
             'enabled' => 'true',
         ]);
+
+        /** @var Devices $device */
+        $device = $extension->devices()->first();
+        $device->device_label = $extension->extension;
+        $device->save();
 
         return response()->json([
             'status' => 'success',

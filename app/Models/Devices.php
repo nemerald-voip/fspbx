@@ -60,11 +60,28 @@ class Devices extends Model
 
     /**
      * Get the Device Lines objects associated with this device.
-     *  returns Eloqeunt Object
+     *  returns Eloquent Object
      */
     public function lines()
     {
-        return $this->hasMany(DeviceLines::class,'device_uuid','device_uuid');
+        return $this->hasMany(DeviceLines::class, 'device_uuid', 'device_uuid');
     }
-    
+
+    /**
+     * Get the Device Profile object associated with this device.
+     *  returns Eloquent Object
+     */
+    public function profile()
+    {
+        return $this->hasOne(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
+    }
+
+    /**
+     * Get the Extension that the device is assigned for.
+     * @return mixed|null
+     */
+    public function extension()
+    {
+        return ($this->lines()->first() && $this->lines()->first()->extension()) ? $this->lines()->first()->extension() : null;
+    }
 }

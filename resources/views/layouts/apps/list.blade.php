@@ -44,7 +44,7 @@
                                 </button>
 
                                 <a href="#"
-                                    data-attr="{{ route('appsGetOrganizations') }}" class="btn btn-success mb-2 me-2 orgSyncButton" title="Sync"> 
+                                    data-attr="{{ route('appsGetOrganizations') }}" class="btn btn-success mb-2 me-2 orgSyncButton" title="Sync">
                                     <i class="mdi mdi-cloud me-1" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sync"></i>Sync
                                 </a>
 
@@ -75,7 +75,7 @@
                                     <tr>
                                         {{-- <td>
                                             <div class="form-check">
-                                                <input type="checkbox" class="form-check-input appCompanyCheckbox" id="@php print 'companyCheck'.$i; @endphp" 
+                                                <input type="checkbox" class="form-check-input appCompanyCheckbox" id="@php print 'companyCheck'.$i; @endphp"
                                                     value="{{ $company['domain_uuid'] }}">
                                                 <label class="form-check-label" for="@php print 'companyCheck'.$i; @endphp">&nbsp;</label>
                                             </div>
@@ -88,12 +88,12 @@
                                         </td>
                                         <td><a href="" class="text-body fw-bold">{{ $domain->domain_description ?? $domain->domain_name}}</a> </td>
                                         <td>
-                                            {{ $domain->domain_name }} 
+                                            {{ $domain->domain_name }}
                                         </td>
                                         <td>
-                                            @if ($domain->status == 'true') 
-                                                <h5><span class="badge bg-success"></i>Provisioned</span></h5>
-                                            @else 
+                                            @if ($domain->status == 'true')
+                                                <h5><span class="badge bg-success">Provisioned</span></h5>
+                                            @else
                                                 <h5><span class="badge bg-warning">Inactive</span></h5>
                                             @endif
                                         </td>
@@ -107,11 +107,11 @@
                                              {{-- Action Buttons --}}
                                              <div id="tooltip-container-actions">
 
-                                                <a href="javascript:syncAppUsers('{{ route('appsSyncUsers', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon" title="Sync Users"> 
+                                                <a href="javascript:syncAppUsers('{{ route('appsSyncUsers', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon" title="Sync Users">
                                                     <i class="uil uil-sync" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Sync Users"></i>
                                                 </a>
 
-                                                <a href="javascript:confirmAppDeleteAction('{{ route('appsDestroyOrganization', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon"> 
+                                                <a href="javascript:confirmAppDeleteAction('{{ route('appsDestroyOrganization', ':id') }}','{{ $domain->domain_uuid }}');" class="action-icon">
                                                     <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                 </a>
 
@@ -119,7 +119,7 @@
                                             {{-- End of action buttons --}}
                                         </td>
                                     </tr>
-                                    @php 
+                                    @php
                                         $i++;
                                     @endphp
                                 @endforeach
@@ -139,7 +139,7 @@
     <div id="app-provision-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-    
+
                 <div class="modal-body">
 
                     <ul class="nav nav-tabs nav-justified nav-bordered mb-3">
@@ -166,20 +166,20 @@
                     <div class="tab-content">
                         <div class="tab-pane show active" id="organization-b2">
                             <form class="ps-3 pe-3" action="" id="createOrganizationForm">
-    
+
                                 <div class="mb-3">
                                     <label for="organization_name" class="form-label">Organization Name</label>
                                     <input class="form-control" type="text" id="organization_name" name="organization_name" required="" placeholder="">
                                 </div>
-            
+
                                 <div class="row">
                                     <div class="col-7">
-                                        <div class="mb-3">        
+                                        <div class="mb-3">
                                             <label for="organization_domain" class="form-label">Unique Organization Domain</label>
                                             <input class="form-control" type="text" id="organization_domain" name="organization_domain" required="" placeholder="">
                                         </div>
                                     </div>
-        
+
                                     <div class="col-5">
                                         <div class="mb-3">
                                             <label for="organization_region" class="form-label">Region</label>
@@ -189,37 +189,37 @@
                                                 <option value="3">Europe (Frankfurt)</option>
                                                 <option value="4">Asia Pacific (Singapore)</option>
                                                 <option value="5">Europe (London)</option>
-                                            </select> 
-        
+                                            </select>
+
                                         </div>
                                     </div>
                                     <input type="hidden" id="organization_uuid" name="organization_uuid">
                                 </div>
-            
+
                                 <div class="alert alert-danger" id="appOrganizationError" style="display:none">
                                     <ul></ul>
                                 </div>
-            
+
                                 <div class="mb-3 text-center">
                                     <button class="btn btn-primary" id="appProvisionNextButton" type="submit">Next</button>
                                 </div>
-            
+
                             </form>
                         </div>
 
 
                         <div class="tab-pane" id="connection-b2">
                             <form class="ps-3 pe-3" action="" id="createConnectionForm">
-            
+
                                 <div class="row">
                                     <div class="col-7">
-                                        <div class="mb-3">        
+                                        <div class="mb-3">
                                             <label for="connection_name" class="form-label">Connection Name</label>
                                             <input class="form-control" type="text" id="connection_name" name="connection_name" required="" placeholder="">
                                             <span class="help-block"><small>Enter a name for this connection</small></span>
                                         </div>
                                     </div>
-        
+
                                     <div class="col-5">
                                         <div class="mb-3">
                                             <label for="connection_protocol" class="form-label">Protocol</label>
@@ -227,8 +227,8 @@
                                                 <option value="sip">SIP (UDP)</option>
                                                 <option value="tcp">SIP (TCP)</option>
                                                 <option value="sips">SIPS (TLS/SRTP)</option>
-                                            </select> 
-        
+                                            </select>
+
                                         </div>
                                     </div>
                                     <input type="hidden" id="org_id" name="org_id">
@@ -237,20 +237,20 @@
 
                                 <div class="row">
                                     <div class="col-8">
-                                        <div class="mb-3">        
+                                        <div class="mb-3">
                                             <label for="connection_domain" class="form-label">Domain Name or IP Address</label>
                                             <input class="form-control" type="text" id="connection_domain" name="connection_domain" required="" placeholder="">
                                             <span class="help-block"><small>e.g. pbx.example.com or 192.168.1.101</small></span>
                                         </div>
                                     </div>
-        
+
                                     <div class="col-4">
                                         <div class="mb-3">
                                             <label for="connection_port" class="form-label">Port</label>
-                                            <input class="form-control" type="text" id="connection_port" name="connection_port" 
+                                            <input class="form-control" type="text" id="connection_port" name="connection_port"
                                             value="" required="" placeholder="">
                                             <span class="help-block"><small>SIP Port</small></span>
-        
+
                                         </div>
                                     </div>
                                 </div>
@@ -267,13 +267,13 @@
                                                 </a>
                                             </h5>
                                         </div>
-                                
+
                                         <div id="collapseOne" class="collapse"
                                             aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                                             <div class="card-body">
-                                                <div class="mb-3">        
+                                                <div class="mb-3">
                                                     <label for="connection_proxy_address" class="form-label">Address</label>
-                                                    <input class="form-control" type="text" id="connection_proxy_address" name="connection_proxy_address" 
+                                                    <input class="form-control" type="text" id="connection_proxy_address" name="connection_proxy_address"
                                                         value="" placeholder="">
                                                     <span class="help-block"><small>e.g. pbx.example.com:5070</small></span>
                                                 </div>
@@ -295,20 +295,20 @@
                                             <div class="card-body">
                                                 <div class="row">
                                                     <div class="col-4">
-                                                        <div class="mb-3">        
+                                                        <div class="mb-3">
                                                             <label for="connection_ttl" class="form-label">Registration TTL</label>
                                                             <input class="form-control" type="text" id="connection_ttl" name="connection_ttl" value="300" required="" placeholder="">
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="row">                        
+                                                <div class="row">
                                                     <div class="col-6">
                                                         <div class="mb-3">
                                                             <div class="form-check mb-2">
                                                                 <input type="checkbox" class="form-check-input" id="connection_private_list" name="connection_private_list">
                                                                 <label class="form-check-label" for="connection_private_list">Private user list</label>
                                                             </div>
-                        
+
                                                         </div>
                                                     </div>
                                                 </div>
@@ -377,15 +377,15 @@
                                 </div>
 
 
-            
+
                                 <div class="alert alert-danger" id="appConnectionError" style="display:none">
                                     <ul></ul>
                                 </div>
-            
+
                                 <div class="mb-3 text-center">
                                     <button class="btn btn-primary" id="appConnectionNextButton" type="submit">Next</button>
                                 </div>
-            
+
                             </form>
                         </div>
                         <div class="tab-pane" id="result-b2">
@@ -402,8 +402,8 @@
                             </div>
                         </div>
                     </div>
-                    
-    
+
+
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
@@ -419,7 +419,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="card-body">
- 
+
                         <div class="table-responsive">
                             <table id="appsTable" class="table table-centered table-nowrap table-hover mb-0">
                                 <thead class="table-light">
@@ -508,7 +508,7 @@
                                                 '<span class="text-muted font-13">id: ' + cloud_org.id + ' </span>' +
                                             '</td>' +
                                             '<td>' +
-                                                // '<h5 class="font-14 my-1 fw-normal">$79.49</h5>' + 
+                                                // '<h5 class="font-14 my-1 fw-normal">$79.49</h5>' +
                                                 // '<span class="text-muted font-13">Price</span>' +
                                                 '<select class="select2 appDomainSelect2" data-toggle="select2" title="AppDomain" name="AppDomain">';
                             if (cloud_org.domain_uuid) {
@@ -516,7 +516,7 @@
                             } else {
                                 newRows += '<option selected> Select domain </option>';
                             }
-                                                    
+
                             newRows +=           '</select>' +
                                             '</td>' +
                                         '</tr>';
@@ -643,7 +643,7 @@
                     $("#appOrganizationError").find("ul").html('');
                     $("#appOrganizationError").css('display','block');
                     $("#appOrganizationError").find("ul").append('<li>'+response.message+'</li>');
-                    
+
                 } else {
                     //Switch to the next tab
                     $('a[href*="connection-b2"] span').trigger("click");
@@ -652,8 +652,8 @@
                     // Assign other variables
                     $("#connection_port").val(response.connection_port);
                     $("#connection_proxy_address").val(response.outbound_proxy + ":" + response.connection_port);
-                    $('#connection_protocol').val(response.protocol); 
-                    $('#connection_protocol').trigger('change'); 
+                    $('#connection_protocol').val(response.protocol);
+                    $('#connection_protocol').trigger('change');
                 }
             })
             .fail(function (response){
@@ -694,7 +694,7 @@
                     $("#appConnectionError").find("ul").html('');
                     $("#appConnectionError").css('display','block');
                     $("#appConnectionError").find("ul").append('<li>'+response.message+'</li>');
-                    
+
                 } else {
                     //Switch to the next tab
                     $('a[href*="result-b2"] span').trigger("click");
@@ -710,7 +710,7 @@
 
     // Save all changes to the array on Select2 change
     var app_array = {};
-    $(document).on("select2:select",".appDomainSelect2", function() { 
+    $(document).on("select2:select",".appDomainSelect2", function() {
         var name = "name";
         app_array[$.trim($(this).closest("tr").attr('id'))] = $(this).val();
 
@@ -763,7 +763,7 @@
                 // console.log(error);
                 $('#loader').hide();
                 printErrorMsg(error);
-            
+
         });
     }
 
@@ -793,7 +793,7 @@
                 // console.log(error);
                 $('.loading').hide();
                 printErrorMsg(error);
-            
+
         });
 
     }

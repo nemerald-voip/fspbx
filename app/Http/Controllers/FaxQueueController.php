@@ -65,8 +65,12 @@ class FaxQueueController extends Controller
 
         foreach ($faxQueues as $i => $faxQueue) {
             $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);
-            $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
-            $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
+            if(!empty($faxQueue['fax_notify_date'])) {
+                $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
+            }
+            if(!empty($faxQueue['fax_retry_date'])) {
+                $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
+            }
         }
 
         $data = array();
