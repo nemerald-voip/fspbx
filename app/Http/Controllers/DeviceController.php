@@ -43,7 +43,22 @@ class DeviceController extends Controller
      */
     public function create()
     {
-        //
+        $domainUuid = Session::get('domain_uuid');
+
+        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', $domainUuid)
+            ->orderBy('device_profile_name')->get();
+
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $extensions = Extensions::where('domain_uuid', $domainUuid)->orderBy('extension')->get();
+
+        $device = new Devices();
+
+        return view('layouts.devices.createOrUpdate')
+            ->with('device', $device)
+            ->with('profiles', $profiles)
+            ->with('vendors', $vendors)
+            ->with('extensions', $extensions);
     }
 
     /**
@@ -129,7 +144,7 @@ class DeviceController extends Controller
             ->orderBy('device_profile_name')->get();
 
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
-        $extensions = Extensions::where('domain_uuid', $domainUuid)->get();
+        $extensions = Extensions::where('domain_uuid', $domainUuid)->orderBy('extension')->get();
 
         return view('layouts.devices.createOrUpdate')
             ->with('device', $device)
