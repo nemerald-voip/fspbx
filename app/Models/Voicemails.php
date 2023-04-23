@@ -40,7 +40,11 @@ class Voicemails extends Model
         'voicemail_enabled',
         'voicemail_description',
         'voicemail_name_base64',
-        'voicemail_tutorial'
+        'voicemail_tutorial',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user'
     ];
 
     public function __construct(array $attributes = [])

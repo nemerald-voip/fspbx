@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeviceLines;
+use App\Models\DeviceProfile;
 use App\Models\Devices;
-use App\Models\Domain;
+use App\Models\DeviceVendor;
 use App\Models\Extensions;
-use App\Models\FaxQueues;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
@@ -28,8 +28,7 @@ class DeviceController extends Controller
 
         $domainUuid = Session::get('domain_uuid');
         $data = array();
-        $data['devices'] = Devices::query()
-            ->where('domain_uuid', $domainUuid)
+        $data['devices'] = Devices::where('domain_uuid', $domainUuid)
             ->orderBy('device_label')
             ->paginate(10)->onEachSide(1);
 
@@ -44,7 +43,22 @@ class DeviceController extends Controller
      */
     public function create()
     {
-        //
+        $domainUuid = Session::get('domain_uuid');
+
+        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', $domainUuid)
+            ->orderBy('device_profile_name')->get();
+
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $extensions = Extensions::where('domain_uuid', $domainUuid)->orderBy('extension')->get();
+
+        $device = new Devices();
+
+        return view('layouts.devices.createOrUpdate')
+            ->with('device', $device)
+            ->with('profiles', $profiles)
+            ->with('vendors', $vendors)
+            ->with('extensions', $extensions);
     }
 
     /**
@@ -59,10 +73,9 @@ class DeviceController extends Controller
 
         $extension = Extensions::find($inputs['extension_uuid']);
 
-        $inputs['device_mac_address'] = str_replace([':', '-'], '', $inputs['device_mac_address']);
         $device = new Devices();
         $device->fill([
-            'device_mac_address' => $inputs['device_mac_address'],
+            'device_mac_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_mac_address']))),
             'device_label' => $extension->extension,
             'device_vendor' => explode("/", $inputs['device_template'])[0],
             'device_enabled' => 'true',
@@ -120,7 +133,24 @@ class DeviceController extends Controller
      */
     public function edit(Request $request, Devices $device)
     {
-        return response()->json($device);
+        if($request->ajax()){
+            return response()->json($device);
+        }
+
+        $domainUuid = Session::get('domain_uuid');
+
+        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', $domainUuid)
+            ->orderBy('device_profile_name')->get();
+
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $extensions = Extensions::where('domain_uuid', $domainUuid)->orderBy('extension')->get();
+
+        return view('layouts.devices.createOrUpdate')
+            ->with('device', $device)
+            ->with('profiles', $profiles)
+            ->with('vendors', $vendors)
+            ->with('extensions', $extensions);
     }
 
     /**

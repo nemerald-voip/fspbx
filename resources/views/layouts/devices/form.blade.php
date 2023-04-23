@@ -1,0 +1,68 @@
+<form id="device_form" method="POST" action="{{route('devices.store')}}">
+    @csrf
+    @if(isset($extension) && $extension->extension_uuid)
+        <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
+        <input type="hidden" id="device_uuid" name="device_uuid" value="" />
+    @endif
+    <div class="mb-3">
+        <label class="col-form-label">Mac Address</label>
+        <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address" value="{{$device->device_mac_address ?? ''}}" />
+        <div class="error text-danger" id="device_mac_address_error"></div>
+        <div class="error text-danger" id="device_mac_address_modified_error"></div>
+    </div>
+    <div class="mb-3 position-relative">
+        <label class="col-form-label">Template</label>
+        @php $templateDir = public_path('resources/templates/provision'); @endphp
+        <select name="device_template" class="form-select select2" id="template-select">
+            <option value="" selected>Choose template</option>
+            @foreach($vendors ?? [] as $vendor)
+                <optgroup label='{{$vendor->name}}'>
+                    @if (is_dir($templateDir.'/'.$vendor->name))
+                        @php $templates = scandir($templateDir.'/'.$vendor->name); @endphp
+                        @foreach($templates as $dir)
+                            @if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir))
+                                <option @if (isset($device->device_template) && $device->device_template == $vendor->name."/".$dir) selected @endif value='{{$vendor->name."/".$dir}}'>{{$vendor->name."/".$dir}}</option>
+                            @endif
+                        @endforeach
+                    @endif
+                </optgroup>
+            @endforeach
+        </select>
+        <div class="error text-danger" id="device_template_error"></div>
+    </div>
+    {{--
+    <div class="mb-3 position-relative text-center">
+        <img src="https://dummyimage.com/400x300/d4d4d4/2e2e2e.png&text=Phone+Picture" />
+    </div>
+    --}}
+    <div class="mb-3 position-relative">
+        <label class="col-form-label">Profile</label>
+        <select name="device_profile_uuid" class="form-select select2" id="profile-select">
+            <option value="" selected>Choose profile</option>
+            @foreach($profiles ?? [] as $profile)
+                <option @if (isset($device->device_profile_uuid) && $device->device_profile_uuid == $profile->device_profile_uuid) selected @endif value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
+            @endforeach
+        </select>
+        <div class="error text-danger" id="device_profile_uuid_error"></div>
+    </div>
+    @if($extensions)
+        <div class="mb-3 position-relative">
+            <label class="col-form-label">Extension</label>
+            <select name="extension_uuid" class="form-select select2" id="extension-select">
+                <option value="" selected>Choose extension</option>
+                @foreach($extensions as $extension)
+                    <option @php
+                        if($device->extension() && $device->extension()->extension == $extension->extension) {
+                            print 'selected';
+                        }
+                    @endphp value='{{$extension->extension_uuid}}'>{{$extension->extension}}</option>
+                @endforeach
+            </select>
+            <div class="error text-danger" id="device_profile_uuid_error"></div>
+        </div>
+    @endif
+    <div>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary save-device-btn">Save</button>
+    </div>
+</form>
