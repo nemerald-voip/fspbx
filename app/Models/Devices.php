@@ -75,4 +75,13 @@ class Devices extends Model
     {
         return $this->hasOne(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
     }
+
+    /**
+     * Get the Extension that the device is assigned for.
+     * @return mixed|null
+     */
+    public function extension()
+    {
+        return ($this->lines()->first() && $this->lines()->first()->extension()) ? $this->lines()->first()->extension()->first() : null;
+    }
 }

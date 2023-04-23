@@ -50,7 +50,11 @@
                         </a>
                     @endif
                 </td>
-                <td>
+                <td id="tooltip-container-actions">
+                    <a href="{{ route('devices.edit',$device) }}" class="action-icon" title="Edit">
+                        <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
+                    </a>
+
                     <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}','{{ $device->device_uuid }}');" class="action-icon">
                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                     </a>

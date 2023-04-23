@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeviceLines;
+use App\Models\DeviceProfile;
 use App\Models\Devices;
-use App\Models\Domain;
+use App\Models\DeviceVendor;
 use App\Models\Extensions;
-use App\Models\FaxQueues;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
@@ -118,7 +118,24 @@ class DeviceController extends Controller
      */
     public function edit(Request $request, Devices $device)
     {
-        return response()->json($device);
+        if($request->ajax()){
+            return response()->json($device);
+        }
+
+        $domainUuid = Session::get('domain_uuid');
+
+        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', $domainUuid)
+            ->orderBy('device_profile_name')->get();
+
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $extensions = Extensions::where('domain_uuid', $domainUuid)->get();
+
+        return view('layouts.devices.createOrUpdate')
+            ->with('device', $device)
+            ->with('profiles', $profiles)
+            ->with('vendors', $vendors)
+            ->with('extensions', $extensions);
     }
 
     /**
