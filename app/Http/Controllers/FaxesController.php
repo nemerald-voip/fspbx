@@ -307,48 +307,58 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+        $statuses = ['all' => 'Show All', 'success' => 'Success', 'failed' => 'Failed'];
+        $selectedStatus = $request->get('status');
+        $searchString = $request->get('search');
+        $searchPeriod = $request->get('period');
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
 
-
-        $domain_uuid = Session::get('domain_uuid');
-        $logs = FaxLogs::where('fax_uuid', $request->id)->where('domain_uuid', $domain_uuid)->orderBy('fax_date', 'desc')->get();
-        $time_zone = get_local_time_zone($domain_uuid);
-        foreach ($logs as $log) {
-
-            // Try to convert caller ID number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($log->fax_local_station_id, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $log->fax_local_station_id = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
-
-            // Try to convert destination number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse(basename($log->fax_uri), 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $log->fax_uri = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
-
-            // Try to convert the date to human redable format
-            $log->fax_date = Carbon::createFromTimestamp($log->fax_epoch, $time_zone)->toDayDateTimeString();
+        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+            $e = explode("-", $searchPeriod);
+            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
+            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
         }
 
+        $domain_uuid = Session::get('domain_uuid');
+
+        $timeZone = get_local_time_zone(Session::get('domain_uuid'));
+        $logs = FaxLogs::where('fax_uuid', $request->id)
+            ->where('domain_uuid', $domain_uuid);
+        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
+            $logs
+                ->where('fax_success', ($selectedStatus == 'success'));
+        }
+        if ($searchString) {
+            $logs->where(function ($query) use ($searchString) {
+                $query
+                    ->orWhereLike('fax_local_station_id', strtolower($searchString))
+                    ->orWhereLike('fax_uri', strtolower($searchString));
+            });
+        }
+        $logs->whereBetween('fax_date', $period);
+        $logs = $logs->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
+
+        foreach ($logs as $i => $log) {
+            $logs[$i]['fax_date'] = Carbon::parse($log['fax_date'])->setTimezone($timeZone);
+        }
 
         $data['logs'] = $logs;
+        $data['statuses'] = $statuses;
+        $data['selectedStatus'] = $selectedStatus;
+        $data['searchString'] = $searchString;
+        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
+        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
+        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
+
+        unset($statuses, $logs, $log, $domainUuid, $timeZone, $selectedStatus, $searchString, $selectedScope);
+
         $permissions['delete'] = userCheckPermission('fax_log_delete');
         return view('layouts.fax.log.list')
             ->with($data)
             ->with('permissions', $permissions);
-
     }
 
     /**
