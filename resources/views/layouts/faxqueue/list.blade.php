@@ -132,15 +132,17 @@
                     @endif
                 </td>
                 <td>
-                    @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
-                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid]) }}">
-                            <button type="button" class="btn btn-light mb-2">Cancel</button>
-                        </a>
-                    @else
-                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid, 'waiting']) }}">
-                            <button type="button" class="btn btn-light mb-2">Retry</button>
-                        </a>
-                    @endif
+                    <div id="tooltip-container-actions">
+                        @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
+                            <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid]) }}" class="action-icon">
+                                <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
+                                <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+                            </a>
+                        @endif
+                    </div>
                 </td>
             </tr>
         @endforeach

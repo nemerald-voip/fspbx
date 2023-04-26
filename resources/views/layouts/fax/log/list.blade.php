@@ -106,11 +106,11 @@
                 <td>{{ $log->fax_uri }}</td>
                 <td>
                     <div id="tooltip-container-actions">
-                    @if ($permissions['delete'])
-                        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxLog', ':id') }}','{{ $log->fax_log_uuid }}');" class="action-icon">
-                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                        </a>
-                    @endif
+                        @if ($permissions['delete'])
+                            <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxLog', ':id') }}','{{ $log->fax_log_uuid }}');" class="action-icon">
+                                <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                            </a>
+                        @endif
                     </div>
                 </td>
             </tr>
