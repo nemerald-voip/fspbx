@@ -9,7 +9,7 @@
 
 @section('actionbar')
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteSentFax', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
+        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteSentFax', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger disabled">
             Delete Selected
         </a>
     @endif

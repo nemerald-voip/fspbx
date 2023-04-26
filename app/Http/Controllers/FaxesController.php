@@ -44,7 +44,7 @@ class FaxesController extends Controller
         // $list = Session::get('permissions', false);
         // pr($list);exit;
         $domain_uuid = Session::get('domain_uuid');
-        $data['faxes'] = Faxes::where('domain_uuid', $domain_uuid)->get();
+        $data['faxes'] = Faxes::where('domain_uuid', $domain_uuid)->paginate(10)->onEachSide(1);
         $permissions['add_new'] = userCheckPermission('fax_add');
         $permissions['edit'] = userCheckPermission('fax_edit');
         $permissions['delete'] = userCheckPermission('fax_delete');
