@@ -28,6 +28,17 @@ class FaxQueueController extends Controller
         $selectedStatus = $request->get('status');
         $searchString = $request->get('search');
         $selectedScope = $request->get('scope', 'local');
+        $searchPeriod = $request->get('period');
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
+
+        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+            $e = explode("-", $searchPeriod);
+            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
+            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
+        }
 
         // Get local Time Zone
         $timeZone = get_local_time_zone(Session::get('domain_uuid'));
@@ -53,14 +64,18 @@ class FaxQueueController extends Controller
                     $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
                     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                         $query->orWhereLike('fax_caller_id_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
+                        $query->orWhereLike('fax_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
                     } else {
                         $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
+                        $query->orWhereLike('fax_number', str_replace("-", "",  $searchString));
                     }
                 } catch (NumberParseException $e) {
                     $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
+                    $query->orWhereLike('fax_number', str_replace("-", "",  $searchString));
                 }
             });
         }
+        $faxQueues->whereBetween('fax_date', $period);
         $faxQueues = $faxQueues->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
 
         foreach ($faxQueues as $i => $faxQueue) {
@@ -79,6 +94,9 @@ class FaxQueueController extends Controller
         $data['selectedStatus'] = $selectedStatus;
         $data['selectedScope'] = $selectedScope;
         $data['searchString'] = $searchString;
+        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
+        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
+        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
         $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
 
         unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus, $searchString, $selectedScope);

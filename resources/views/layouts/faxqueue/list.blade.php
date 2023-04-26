@@ -27,6 +27,12 @@
         </div>
         <div class="col-auto">
             <div class="d-flex align-items-center">
+                <label for="status-select" class="me-2">Period</label>
+                <input type="text" style="width: 298px" class="form-control date" id="period" name="period" value="{{ $searchPeriod }}" />
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex align-items-center">
                 <label for="status-select" class="me-2">Status</label>
                 <select class="form-select" name="status" id="status-select">
                     @foreach ($statuses as $key => $status)
@@ -160,6 +166,19 @@
                         $('#selectallCheckbox').prop('checked',true);
                     }
                 }
+            });
+
+            $('#period').daterangepicker({
+                timePicker: true,
+                startDate: '{{ $searchPeriodStart }}',//moment().subtract(1, 'months').startOf('month'),
+                endDate: '{{ $searchPeriodEnd }}',//moment().endOf('day'),
+                locale: {
+                    format: 'MM/DD/YY hh:mm A'
+                }
+            }).on('apply.daterangepicker', function(e) {
+                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+                location += '?page=1&' + $('#filterForm').serialize();
+                window.location.href = location;
             });
 
             $('#clearSearch').on('click', function () {
