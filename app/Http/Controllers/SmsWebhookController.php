@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use message;
 use domain_settings;
 use App\Models\Domain;
 use App\Models\Messages;
 use App\Models\Extensions;
+use App\Jobs\SendCommioSMS;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
@@ -14,7 +16,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Illuminate\Support\Facades\Notification;
-use message;
 
 class SmsWebhookController extends Controller
 {
@@ -293,27 +294,8 @@ class SmsWebhookController extends Controller
                 'to_did' => $phoneNumberObject->getNationalNumber(),
                 "message" => $message['params']['content'],
             );
-            Log::alert($data);
-            exit();
-            // dd(json_encode($data));
-            $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . base64_encode(env('THINQ_USERNAME') . ":" . env('THINQ_TOKEN')),
-                'Content-Type' => 'application/json'
-            ])
-                ->withBody(json_encode($data), 'application/json')
-                ->post('https://api.thinq.com/account/' . env('THINQ_ACCOUNT_ID') . '/product/origination/sms/send');
-
-            // Get result
-            if (isset($response)) {
-                $result = json_decode($response->body());
-                // dd($result);
-                if (isset($result->code) && ($result->code == 400 || $result->code == 401)) {
-                    $status = $result->message;
-                }
-                if (isset($result->guid)) {
-                    $status = "success";
-                }
-            }
+            SendCommioSMS::dispatch($data)->onQueue('messages');
+            $status = "Queued";
         }
 
         //dd($response->body());
