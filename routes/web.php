@@ -83,7 +83,7 @@ Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'si
 
 // Webhooks
 Route::webhooks('webhook/postmark','postmark');
-Route::webhooks('webhook/commio/sms','commio');
+Route::webhooks('webhook/commio/sms','commio_messaging');
 
 //Users
 Route::resource('users','UsersController');
