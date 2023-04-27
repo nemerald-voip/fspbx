@@ -2,12 +2,11 @@
 
 namespace App\Jobs;
 
-use Illuminate\Http\Request;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Commio\CommioOutboundSMS;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -62,15 +61,22 @@ class SendCommioSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $request;
+    private $domain_setting_value;
+    private $to_did;
+    private $from_did;
+    private $message;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct($data)
     {
-        $this->request = $request->all();
+        $this->domain_setting_value = $data['domain_setting_value'];
+        $this->to_did = $data['to_did'];
+        $this->from_did = $data['from_did'];
+        $this->message = $data['message'];
     }
 
     /**
@@ -92,17 +98,16 @@ class SendCommioSMS implements ShouldQueue
     {
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-            
-            // Notification::route('slack', env('SLACK_FAX_HOOK'))
-            //     ->notify(new SendSlackFaxNotification($this->request));
-
-            // Mail::to($this->request['FromFull']['Email'])->send(new FaxFailed($this->request));
-
-
+            $sms = new CommioOutboundSMS(
+                $this->domain_setting_value,
+                $this->to_did,
+                $this->from_did,
+                $this->message
+            );
+            $sms->send();
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
-
     }
 }

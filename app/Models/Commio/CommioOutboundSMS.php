@@ -2,24 +2,40 @@
 
 namespace App\Models\Commio;
 
-use App\Jobs\SendCommioSMS;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Http;
 
+/**
+ * @property string|null $domain_setting_value
+ * @property string|null $to_did
+ * @property string|null $from_did
+ * @property string|null $message
+ */
 class CommioOutboundSMS extends Model
 {
-    protected $fillable = ['to_did', 'from_did', 'message'];
+    protected $fillable = [
+        'domain_setting_value',
+        'to_did',
+        'from_did',
+        'message'
+    ];
 
     /**
      * CommioOutboundSMS constructor.
      *
-     * @param string $to_did
-     * @param string $from_did
-     * @param string $message
+     * @param  string|null  $domain_setting_value
+     * @param  string|null  $to_did
+     * @param  string|null  $from_did
+     * @param  string|null  $message
      */
-    public function __construct(string $to_did, string $from_did, string $message)
-    {
-        parent::__construct();
-
+    public function __construct(
+        string $domain_setting_value = null,
+        string $to_did = null,
+        string $from_did = null,
+        string $message = null
+    ) {
+        $this->domain_setting_value = $domain_setting_value;
         $this->to_did = $to_did;
         $this->from_did = $from_did;
         $this->message = $message;
@@ -35,7 +51,31 @@ class CommioOutboundSMS extends Model
         // Logic to send the SMS message using a third-party Commio API,
         // This method should return a boolean indicating whether the message was sent successfully.
 
-        SendCommioSMS::dispatch($message)->onQueue('faxes');
+        Log::alert('Touching ringotel with params'.print_r([
+                $this->to_did, $this->from_did, $this->message
+            ], true));
+
+        $response = Http::ringotel_api()
+            //->dd()
+            ->timeout(5)
+            ->withBody(json_encode([
+                'method' => 'message',
+                'params' => [
+                    'orgid' => $this->domain_setting_value,
+                    'from' => $this->from_did,
+                    'to' => $this->to_did,
+                    'content' => $this->message
+                ]
+            ]), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                Notification::route('mail', 'dexter@stellarvoip.com')
+                    ->notify(new StatusUpdate("error"));
+                return false;
+            })
+            ->json();
+
+        Log::alert($response);
 
         return true; // Change this to reflect the result of the API call.
     }
