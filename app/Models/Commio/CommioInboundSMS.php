@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
  * @property string|null $from_did
  * @property string|null $message
  */
-class CommioOutboundSMS extends Model
+class CommioInboundSMS extends Model
 {
     protected $fillable = [
         'domain_setting_value',
