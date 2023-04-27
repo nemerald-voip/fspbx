@@ -140,7 +140,7 @@ class FaxesController extends Controller
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($file->fax->fax_caller_id_number, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax_destination = $phoneNumberUtil
+                    $file->fax->fax_caller_id_number = $phoneNumberUtil
                         ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 }
             } catch (NumberParseException $e) {
