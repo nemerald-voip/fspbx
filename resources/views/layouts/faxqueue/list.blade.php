@@ -27,6 +27,12 @@
         </div>
         <div class="col-auto">
             <div class="d-flex align-items-center">
+                <label for="status-select" class="me-2">Period</label>
+                <input type="text" style="width: 298px" class="form-control date" id="period" name="period" value="{{ $searchPeriod }}" />
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="d-flex align-items-center">
                 <label for="status-select" class="me-2">Status</label>
                 <select class="form-select" name="status" id="status-select">
                     @foreach ($statuses as $key => $status)
@@ -126,15 +132,17 @@
                     @endif
                 </td>
                 <td>
-                    @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
-                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid]) }}">
-                            <button type="button" class="btn btn-light mb-2">Cancel</button>
-                        </a>
-                    @else
-                        <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid, 'waiting']) }}">
-                            <button type="button" class="btn btn-light mb-2">Retry</button>
-                        </a>
-                    @endif
+                    <div id="tooltip-container-actions">
+                        @if($faxQueue->fax_status == 'waiting' or $faxQueue->fax_status == 'trying')
+                            <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid]) }}" class="action-icon">
+                                <i class="mdi mdi-cancel" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cancel trying"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('faxQueue.updateStatus', [$faxQueue->fax_queue_uuid, 'waiting']) }}" class="action-icon">
+                                <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
+                            </a>
+                        @endif
+                    </div>
                 </td>
             </tr>
         @endforeach
@@ -160,6 +168,19 @@
                         $('#selectallCheckbox').prop('checked',true);
                     }
                 }
+            });
+
+            $('#period').daterangepicker({
+                timePicker: true,
+                startDate: '{{ $searchPeriodStart }}',//moment().subtract(1, 'months').startOf('month'),
+                endDate: '{{ $searchPeriodEnd }}',//moment().endOf('day'),
+                locale: {
+                    format: 'MM/DD/YY hh:mm A'
+                }
+            }).on('apply.daterangepicker', function(e) {
+                var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+                location += '?page=1&' + $('#filterForm').serialize();
+                window.location.href = location;
             });
 
             $('#clearSearch').on('click', function () {
