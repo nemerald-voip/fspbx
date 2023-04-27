@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
  * @property string|null $from_did
  * @property string|null $message
  */
-class CommioOutboundSMS extends Model
+class CommioInboundSMS extends Model
 {
     protected $fillable = [
         'domain_setting_value',
@@ -52,7 +52,7 @@ class CommioOutboundSMS extends Model
         // This method should return a boolean indicating whether the message was sent successfully.
 
         Log::alert('Touching ringotel with params'.print_r([
-                $this->to_did, $this->from_did, $this->message
+                $this->to_did, $this->from_did, $this->message, $this->domain_setting_value
             ], true));
 
         $response = Http::ringotel_api()
@@ -63,7 +63,7 @@ class CommioOutboundSMS extends Model
                 'params' => [
                     'orgid' => $this->domain_setting_value,
                     'from' => $this->from_did,
-                    'to' => $this->to_did,
+                    'to' => '100',//$this->to_did,
                     'content' => $this->message
                 ]
             ]), 'application/json')
@@ -75,6 +75,7 @@ class CommioOutboundSMS extends Model
             })
             ->json();
 
+        Log::alert('============');
         Log::alert($response);
 
         return true; // Change this to reflect the result of the API call.
