@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Commio\CommioInboundSMS;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -96,8 +97,8 @@ class ProcessCommioSMS implements ShouldQueue
     {
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-            
-            $sms = new CommioOutboundSMS();
+
+            $sms = new CommioInboundSMS();
             $sms->to_did = $this->to_did;
             $sms->from_did = $this->from_did;
             $sms->message = $this->message;
