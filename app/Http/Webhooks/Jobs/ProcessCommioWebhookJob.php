@@ -77,16 +77,6 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
 
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-
-            Log::alert('-------');
-            Log::alert([
-                'domain_setting_value' => $this->webhookCall->payload['domain_setting_value'],
-                'to_did' => $this->webhookCall->payload['to'],
-                'from_did' => $this->webhookCall->payload['from'],
-                'message' => $this->webhookCall->payload['message']
-            ]);
-            Log::alert('-------');
-
             ProcessCommioSMS::dispatch([
                 'domain_setting_value' => $this->webhookCall->payload['domain_setting_value'],
                 'to_did' => $this->webhookCall->payload['to'],
