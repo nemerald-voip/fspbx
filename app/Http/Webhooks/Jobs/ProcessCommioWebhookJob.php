@@ -2,7 +2,7 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Models\DefaultSettings;
+use App\Jobs\SendCommioSMS;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Models\WebhookCall;
@@ -70,18 +70,18 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         $this->webhookCall = $webhookCall;
     }
 
-
     public function handle()
     {
         // $this->webhookCall // contains an instance of `WebhookCall`
 
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-
-            // perform the work here
-
-
-
+            SendCommioSMS::dispatch([
+                'domain_setting_value' => $this->webhookCall->payload['domain_setting_value'],
+                'to_did' => $this->webhookCall->payload['to'],
+                'from_did' => $this->webhookCall->payload['from'],
+                'message' => $this->webhookCall->payload['message']
+            ])->onQueue('messages');
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
