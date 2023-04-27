@@ -121,9 +121,9 @@ class FaxesController extends Controller
             $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
             //$file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
             //$file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
-            /*if (Storage::disk('fax')->exists($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type)) {
-                $file->fax_file_path = Storage::disk('fax')->path($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type);
-            }
+            // if (Storage::disk('fax')->exists($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type)) {
+            //     $file->fax_file_path = Storage::disk('fax')->path($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type);
+            // }
 
             // Try to convert caller ID number to National format
             try {
@@ -145,7 +145,7 @@ class FaxesController extends Controller
                 }
             } catch (NumberParseException $e) {
                 // Do nothing and leave the numner as is
-            }*/
+            }
 
             // Try to convert the date to human redable format
             //$file->fax_date = Carbon::createFromTimestamp($file->fax_epoch, $timeZone)->toDayDateTimeString();
