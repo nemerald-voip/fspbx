@@ -61,7 +61,6 @@ class SendCommioSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $domain_setting_value;
     private $to_did;
     private $from_did;
     private $message;
@@ -73,7 +72,6 @@ class SendCommioSMS implements ShouldQueue
      */
     public function __construct($data)
     {
-        $this->domain_setting_value = $data['domain_setting_value'];
         $this->to_did = $data['to_did'];
         $this->from_did = $data['from_did'];
         $this->message = $data['message'];
@@ -98,13 +96,13 @@ class SendCommioSMS implements ShouldQueue
     {
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-            $sms = new CommioOutboundSMS(
-                $this->domain_setting_value,
-                $this->to_did,
-                $this->from_did,
-                $this->message
-            );
+            
+            $sms = new CommioOutboundSMS();
+            $sms->to_did = $this->to_did;
+            $sms->from_did = $this->from_did;
+            $sms->message = $this->message;
             $sms->send();
+
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
