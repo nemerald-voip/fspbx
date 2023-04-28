@@ -68,6 +68,8 @@ class ProcessCommioSMS implements ShouldQueue
 
     private $domain_setting_value;
 
+    private $message_uuid;
+
     /**
      * Create a new job instance.
      *
@@ -79,6 +81,7 @@ class ProcessCommioSMS implements ShouldQueue
         $this->from_did = $data['from_did'];
         $this->message = $data['message'];
         $this->domain_setting_value = $data['domain_setting_value'];
+        $this->message_uuid = $data['message_uuid'];
     }
 
     /**
@@ -106,6 +109,7 @@ class ProcessCommioSMS implements ShouldQueue
             $sms->from_did = $this->from_did;
             $sms->message = $this->message;
             $sms->domain_setting_value = $this->domain_setting_value;
+            $sms->message_uuid = $this->message_uuid;
             $sms->send();
 
         }, function () {
