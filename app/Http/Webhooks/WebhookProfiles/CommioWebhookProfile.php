@@ -37,18 +37,13 @@ class CommioWebhookProfile implements WebhookProfile
                 throw new \Exception('ORG ID is not found');
             }
 
-            $request['domain_setting_value'] = $setting['domain_setting_value'];
+            $request['domain_setting_value'] = $setting->domain_setting_value;
+            $request['to'] = $smsDestinationModel->chatplan_detail_data;
 
             $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
             $phoneNumberObject = $phoneNumberUtil->parse($request['from'], 'US');
             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
                 $request['from'] = $phoneNumberUtil
-                    ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
-            }
-
-            $phoneNumberObject = $phoneNumberUtil->parse($request['to'], 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
-                $request['to'] = $phoneNumberUtil
                     ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
             }
 

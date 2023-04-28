@@ -50,11 +50,6 @@ class CommioInboundSMS extends Model
     {
         // Logic to send the SMS message using a third-party Commio API,
         // This method should return a boolean indicating whether the message was sent successfully.
-
-        Log::alert('Touching ringotel with params'.print_r([
-                $this->to_did, $this->from_did, $this->message, $this->domain_setting_value
-            ], true));
-
         $response = Http::ringotel_api()
             //->dd()
             ->timeout(5)
@@ -63,7 +58,7 @@ class CommioInboundSMS extends Model
                 'params' => [
                     'orgid' => $this->domain_setting_value,
                     'from' => $this->from_did,
-                    'to' => '100',//$this->to_did,
+                    'to' => $this->to_did,
                     'content' => $this->message
                 ]
             ]), 'application/json')
@@ -75,7 +70,6 @@ class CommioInboundSMS extends Model
             })
             ->json();
 
-        Log::alert('============');
         Log::alert($response);
 
         return true; // Change this to reflect the result of the API call.
