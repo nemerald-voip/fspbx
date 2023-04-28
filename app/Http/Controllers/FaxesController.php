@@ -341,8 +341,27 @@ class FaxesController extends Controller
         $logs->whereBetween('fax_date', $period);
         $logs = $logs->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
 
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
         foreach ($logs as $i => $log) {
             $logs[$i]['fax_date'] = Carbon::parse($log['fax_date'])->setTimezone($timeZone);
+            
+            // Check if the values are not empty and contain a phone number
+            if (!empty($logs[$i]['fax_uri']) && preg_match("/\+\d{11}/", $logs[$i]['fax_uri'], $matches1)) {
+                $logs[$i]['fax_uri'] = $matches1[0]; // Extract the phone number from the matched value
+            }
+
+            // Try to convert fax_uri number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($logs[$i]['fax_uri'], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $logs[$i]['fax_uri'] = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
         }
 
         $data['logs'] = $logs;
