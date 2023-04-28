@@ -65,6 +65,8 @@ class SendCommioSMS implements ShouldQueue
     private $from_did;
     private $message;
 
+    private $message_uuid;
+
     /**
      * Create a new job instance.
      *
@@ -75,6 +77,7 @@ class SendCommioSMS implements ShouldQueue
         $this->to_did = $data['to_did'];
         $this->from_did = $data['from_did'];
         $this->message = $data['message'];
+        $this->message_uuid = $data['message_uuid'];
     }
 
     /**
@@ -96,11 +99,12 @@ class SendCommioSMS implements ShouldQueue
     {
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-            
+
             $sms = new CommioOutboundSMS();
             $sms->to_did = $this->to_did;
             $sms->from_did = $this->from_did;
             $sms->message = $this->message;
+            $sms->message_uuid = $this->message_uuid;
             $sms->send();
 
         }, function () {

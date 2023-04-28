@@ -3,7 +3,6 @@
 namespace App\Http\Webhooks\Jobs;
 
 use App\Jobs\ProcessCommioSMS;
-use App\Jobs\SendCommioSMS;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Models\WebhookCall;
@@ -79,6 +78,7 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
             ProcessCommioSMS::dispatch([
                 'domain_setting_value' => $this->webhookCall->payload['domain_setting_value'],
+                'message_uuid' => $this->webhookCall->payload['message_uuid'],
                 'to_did' => $this->webhookCall->payload['to'],
                 'from_did' => $this->webhookCall->payload['from'],
                 'message' => $this->webhookCall->payload['message']
