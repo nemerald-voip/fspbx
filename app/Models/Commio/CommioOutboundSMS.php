@@ -2,6 +2,7 @@
 
 namespace App\Models\Commio;
 
+use App\Models\Messages;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ class CommioOutboundSMS extends Model
     public $to_did;
     public $from_did;
     public $message;
+    public $message_uuid;
 
     /**
      * Send the outbound SMS message.
@@ -26,6 +28,12 @@ class CommioOutboundSMS extends Model
      */
     public function send()
     {
+        $message = Messages::find($this->message_uuid);
+
+        if(!$message) {
+            Log::alert("Could not find sms entity from ".$this->from_did." to ".$this->to_did);
+        }
+
         // Logic to send the SMS message using a third-party Commio API,
         // This method should return a boolean indicating whether the message was sent successfully.
 
@@ -47,14 +55,14 @@ class CommioOutboundSMS extends Model
             $result = json_decode($response->body());
             // dd($result);
             if (isset($result->code) && ($result->code >= 400)) {
-                $status = $result->message;
+                $message->status = $result->message;
             }
             if (isset($result->guid)) {
-                $status = "success";
+                $message->status = "success";
             }
+            $message->save();
         }
 
-        Log::alert($status);
         return true; // Change this to reflect the result of the API call.
     }
 

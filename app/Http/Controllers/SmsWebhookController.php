@@ -26,21 +26,21 @@ class SmsWebhookController extends Controller
         // Notification::route('mail', 'dexter@stellarvoip.com')
         //      ->notify(new StatusUpdate($request));
 
-        //Check if the request has Unique ID. This will confirm that it 
+        //Check if the request has Unique ID. This will confirm that it
         //came from the correct source
 
         // Example of the request that came from TELI:
-        //POST /api/sms/webhook HTTP/1.1 Accept: / Content-Length: 120 Content-Type: 
-        //application/x-www-form-urlencoded Host: freeswitchpbx.us.nemerald.net 
+        //POST /api/sms/webhook HTTP/1.1 Accept: / Content-Length: 120 Content-Type:
+        //application/x-www-form-urlencoded Host: freeswitchpbx.us.nemerald.net
         //source=6467052267&destination=4243591155&message=2&type=sms
         //&cost=0.000000&unique_id=1c6327d2-a653-4a81-a0b6-8d2e313876d9
 
         //Example of the request that came from THINQ
 
-        // POST /api/sms/webhook HTTP/1.1 Accept: / Accept-Encoding: deflate, gzip 
-        // Content-Length: 59 Content-Type: application/x-www-form-urlencoded 
-        // Host: tx01.us.nemerald.net Referer: https://tx01.us.nemerald.net/api/sms/webhook 
-        // User-Agent: thinq-sms X-Sms-Guid: 4ed4cec6-dc4a-11ec-947c-174dda593dc8 
+        // POST /api/sms/webhook HTTP/1.1 Accept: / Accept-Encoding: deflate, gzip
+        // Content-Length: 59 Content-Type: application/x-www-form-urlencoded
+        // Host: tx01.us.nemerald.net Referer: https://tx01.us.nemerald.net/api/sms/webhook
+        // User-Agent: thinq-sms X-Sms-Guid: 4ed4cec6-dc4a-11ec-947c-174dda593dc8
         // from=6467052267&to=6578330000&type=sms&message=test+message
 
         if (!$request->unique_id && $request->header('user-agent') != "thinq-sms") {
@@ -194,7 +194,7 @@ class SmsWebhookController extends Controller
             $status = "Wrong API Key";
         }
 
-        // if method is "typing"  
+        // if method is "typing"
         if ($message['method'] == "typing") {
             return;
         }
@@ -213,13 +213,13 @@ class SmsWebhookController extends Controller
             }
         }
 
-        // if method is "read" send  
+        // if method is "read" send
         if ($message['method'] == "read") {
             // Process read response
             exit();
         }
 
-        // if method is "delivered" send  
+        // if method is "delivered" send
         if ($message['method'] == "delivered") {
             // Process delivered response
             exit();
@@ -287,20 +287,6 @@ class SmsWebhookController extends Controller
             }
         }
 
-        // Send text message through Thinq API
-        if ($validation && $message['method'] == "message" && $carrier == "thinq") {
-            $data = array(
-                'from_did' => $sourcePhoneNumberObject->getNationalNumber(),
-                'to_did' => $phoneNumberObject->getNationalNumber(),
-                "message" => $message['params']['content'],
-            );
-            SendCommioSMS::dispatch($data)->onQueue('messages');
-            $status = "Queued";
-        }
-
-        //dd($response->body());
-
-        // Store message in database
         $messageModel = new Messages;
         $messageModel->extension_uuid = (isset($ext_model->extension_uuid)) ? $ext_model->extension_uuid : null;
         $messageModel->domain_uuid = (isset($smsDestinationModel->domain_uuid)) ? $smsDestinationModel->domain_uuid : null;
@@ -309,8 +295,28 @@ class SmsWebhookController extends Controller
         $messageModel->message = $message['params']['content'];
         $messageModel->direction = 'out';
         $messageModel->type = 'sms';
+        $messageModel->save();
+
+        // Send text message through Thinq API
+        if ($validation && $message['method'] == "message" && $carrier == "thinq") {
+            $data = array(
+                'from_did' => $sourcePhoneNumberObject->getNationalNumber(),
+                'to_did' => $phoneNumberObject->getNationalNumber(),
+                "message" => $message['params']['content'],
+                "message_uuid" => $messageModel->message_uuid
+            );
+            SendCommioSMS::dispatch($data)->onQueue('messages');
+            $status = "Queued";
+        }
+
+        // Updating message status
         $messageModel->status = $status;
         $messageModel->save();
+
+        //dd($response->body());
+
+        // Store message in database
+
 
         // Notification::route('mail', 'dexter@stellarvoip.com')
         //           ->notify(new StatusUpdate($response));

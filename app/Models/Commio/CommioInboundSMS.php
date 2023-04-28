@@ -16,36 +16,11 @@ use Illuminate\Support\Facades\Http;
  */
 class CommioInboundSMS extends Model
 {
-    protected $fillable = [
-        'domain_setting_value',
-        'to_did',
-        'from_did',
-        'message',
-        'message_uuid'
-    ];
-
-    /**
-     * CommioOutboundSMS constructor.
-     *
-     * @param  string|null  $domain_setting_value
-     * @param  string|null  $to_did
-     * @param  string|null  $from_did
-     * @param  string|null  $message
-     * @param  string|null  $message_uuid
-     */
-    public function __construct(
-        string $domain_setting_value = null,
-        string $to_did = null,
-        string $from_did = null,
-        string $message = null,
-        string $message_uuid = null
-    ) {
-        $this->domain_setting_value = $domain_setting_value;
-        $this->to_did = $to_did;
-        $this->from_did = $from_did;
-        $this->message = $message;
-        $this->message_uuid = $message_uuid;
-    }
+    public $domain_setting_value;
+    public $to_did;
+    public $from_did;
+    public $message;
+    public $message_uuid;
 
     /**
      * Send the outbound SMS message.
@@ -56,7 +31,7 @@ class CommioInboundSMS extends Model
     {
         $message = Messages::find($this->message_uuid);
 
-        if(!$message) {
+        if (!$message) {
             Log::alert("Could not find sms entity from ".$this->from_did." to ".$this->to_did);
         }
 
@@ -82,7 +57,7 @@ class CommioInboundSMS extends Model
             })
             ->json();
 
-        if($message) {
+        if ($message) {
             if (isset($response['result'])) {
                 $message->status = 'success';
             } elseif (isset($response['error'])) {
