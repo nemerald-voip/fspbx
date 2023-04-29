@@ -241,7 +241,7 @@ class SmsWebhookController extends Controller
 
         if (!$smsDestinationModel) {
             $validation = false;
-            $status = "SMS user not found";
+            $status = "Caller ID not found for extension " .$message['params']['from'];
         }
 
         if ($smsDestinationModel) {
@@ -313,7 +313,7 @@ class SmsWebhookController extends Controller
         $messageModel->save();
 
         if (!$validation) {
-            SendSmsNotificationToSlack::dispatch("Error delivering SMS to Ringotel")->onQueue('messages');
+            SendSmsNotificationToSlack::dispatch("*Commio Outbound SMS*: From: " . $message['params']['from'] . " To: " . $message['params']['to'].  "\n Error delivering SMS from Ringtotel to Commio. " . $status)->onQueue('messages');
 
         }
 
