@@ -1048,6 +1048,7 @@ class FaxesController extends Controller
             'fax_uuid' => $data['fax_uuid'],
         );
 
+        $redirect_url = route('faxes.sent.list', $data['fax_uuid']);
         $payload['Attachments'] = array();
 
         // Parse files
@@ -1072,9 +1073,8 @@ class FaxesController extends Controller
         $fax = new Faxes();
         $result = $fax->EmailToFax($payload);
 
-
         return response()->json([
-            'request' => $request->all(),
+            'redirect_url' => $redirect_url,
             'status' => 200,
             'success' => [
                 'message' => 'Fax is scheduled for delivery'
