@@ -343,8 +343,10 @@ class FaxesController extends Controller
 
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
+        $timeZone = get_local_time_zone(Session::get('domain_uuid'));
+
         foreach ($logs as $i => $log) {
-            $logs[$i]['fax_date'] = Carbon::parse($log['fax_date'])->setTimezone($timeZone);
+            $logs[$i]['fax_date'] = Carbon::parse($log['fax_date']);
             
             // Check if the values are not empty and contain a phone number
             if (!empty($logs[$i]['fax_uri']) && preg_match("/\+\d{11}/", $logs[$i]['fax_uri'], $matches1)) {
@@ -362,6 +364,16 @@ class FaxesController extends Controller
                 // Do nothing and leave the numner as is
             }
 
+            // Try to convert fax_local_station_id number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($logs[$i]['fax_local_station_id'], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $logs[$i]['fax_local_station_id'] = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
         }
 
         $data['logs'] = $logs;
