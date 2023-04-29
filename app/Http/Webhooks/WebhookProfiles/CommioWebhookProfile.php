@@ -37,8 +37,20 @@ class CommioWebhookProfile implements WebhookProfile
                 ->where('extension', $smsDestinationModel->chatplan_detail_data)
                 ->first();
 
-            if (!$extensionModel) {
-                throw new \Exception('Unable to find extension '.$smsDestinationModel->chatplan_detail_data.' which is set as destination for '. $request["to"]);
+            if (!$extensionModel && (is_null($smsDestinationModel->email) ||  $smsDestinationModel->email =="")) {
+                throw new \Exception('Unable to find extension or email destination for '. $request["to"]);
+            }
+
+            if (!is_null($smsDestinationModel->email) &&  $smsDestinationModel->email !="") {
+                $email = $smsDestinationModel->email;
+            } else {
+                $email = "";
+            }
+
+            if (!is_null($smsDestinationModel->chatplan_detail_data) &&  $smsDestinationModel->chatplan_detail_data !="") {
+                $ext = $smsDestinationModel->chatplan_detail_data;
+            } else {
+                $ext = "";
             }
 
             $setting = $domainModel->settings()
@@ -47,7 +59,7 @@ class CommioWebhookProfile implements WebhookProfile
                 ->get('domain_setting_value')
                 ->first();
 
-            if (!$setting) {
+            if (!$setting && (is_null($smsDestinationModel->email) ||  $smsDestinationModel->email =="")) {
                 throw new \Exception('Ringotel Org ID is missing for - ' . $domainModel->domain_description . ' (' . $smsDestinationModel->domain_uuid . ')');
             }
 
@@ -64,7 +76,8 @@ class CommioWebhookProfile implements WebhookProfile
             $messageModel->save();
 
             $request['org_id'] = $setting->domain_setting_value;
-            $request['to'] = $smsDestinationModel->chatplan_detail_data;
+            $request['to'] = $ext;
+            $request['email_to'] = $email;
             $request['message_uuid'] = $messageModel->message_uuid;
 
             return true;

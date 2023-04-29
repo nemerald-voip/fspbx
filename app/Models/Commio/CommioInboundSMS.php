@@ -2,9 +2,12 @@
 
 namespace App\Models\Commio;
 
+use App\Mail\SmsToEmail;
 use App\Models\Messages;
+use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Database\Eloquent\Model;
 use App\Jobs\SendSmsNotificationToSlack;
 
@@ -22,6 +25,7 @@ class CommioInboundSMS extends Model
     public $from_did;
     public $message;
     public $message_uuid;
+    public $email_to;
 
     /**
      * Send the outbound SMS message.
@@ -72,6 +76,52 @@ class CommioInboundSMS extends Model
             }
             $message->save();
         }
+        //Log::alert($response);
+
+        return true; // Change this to reflect the result of the API call.
+    }
+
+
+    /**
+     * Send the outbound SMS message over email.
+     *
+     * @return bool
+     */
+    public function smsToEmail()
+    {
+        $message = Messages::find($this->message_uuid);
+
+        if (!$message) {
+            Log::alert("Could not find sms entity from ".$this->from_did." to ".$this->to_did);
+        }
+
+        $settings = DefaultSettings::where('default_setting_category','sms')->get();
+        if ($settings) {
+            foreach ($settings as $setting) {
+                if ($setting->default_setting_subcategory == "smtp_from") {
+                    $attributes['smtp_from'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "email_company_address") {
+                    $attributes['company_address'] = $setting->default_setting_value;
+                }
+                if ($setting->default_setting_subcategory == "smtp_from_name") {
+                    $attributes['smtp_from_name'] = $setting->default_setting_value;
+                }
+            }
+        }
+        $attributes['orgid'] = $this->org_id;
+        $attributes['from'] = $this->from_did;
+        $attributes['email_to'] = $this->email_to;
+        $attributes['message'] = $this->message;
+
+        // Logic to deliver the SMS message using email
+        // This method should return a boolean indicating whether the message was sent successfully.
+       Mail::to($this->email_to)->send(new SmsToEmail($attributes));
+
+        if ($message->status = "Queued") {
+                $message->status = 'emailed';
+        }
+            $message->save();
         //Log::alert($response);
 
         return true; // Change this to reflect the result of the API call.
