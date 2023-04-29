@@ -381,9 +381,9 @@
 
                 } else {
                     $.NotificationApp.send("Success",response.success.message,"top-right","#10c469","success");
-                    // setTimeout(function (){
-                    //     window.location.href = response.redirect_url;
-                    // }, 1000);
+                    setTimeout(function (){
+                        window.location.href = response.redirect_url;
+                    }, 1000);
 
                 }
             })
