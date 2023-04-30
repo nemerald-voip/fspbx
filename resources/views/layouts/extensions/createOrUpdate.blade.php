@@ -1646,6 +1646,9 @@
     </style>
 <script>
     $(document).ready(function() {
+        // $("#template-select").select2({
+        //     dropdownParent: $("#createDeviceModal")
+        // });
 
         $('a[data-bs-toggle="pill"]').on('show.bs.tab', function(e) {
             localStorage.setItem('activeTab', $(e.target).attr('href'));
