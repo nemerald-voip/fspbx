@@ -118,7 +118,7 @@ class FaxesController extends Controller
 
         $timeZone = get_local_time_zone($domain_uuid);
         foreach ($files as $file) {
-            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
+            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date);
             //$file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
             //$file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
             // if (Storage::disk('fax')->exists($file->domain->domain_name . '/' . $file->fax->fax_extension . "/inbox/" . substr(basename($file->fax_file_path), 0, (strlen(basename($file->fax_file_path)) - 4)) . '.' . $file->fax_file_type)) {
