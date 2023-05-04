@@ -51,8 +51,8 @@ class FaxesController extends Controller
         $faxes =  Faxes::where('domain_uuid', $domain_uuid);
         if ($searchString) {
             $faxes->where(function ($query) use ($searchString) {
-                $query->where('fax_name', 'like', '%' . str_replace('-', '', $searchString) . '%')
-                      ->orWhere('fax_extension', 'like', '%' . str_replace('-', '', $searchString). '%');
+                $query->where('fax_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                      ->orWhere('fax_extension', 'ilike', '%' . str_replace('-', '', $searchString). '%');
             });
         }
 
@@ -61,6 +61,7 @@ class FaxesController extends Controller
             ->onEachSide(1);
 
         $data['faxes'] = $faxes;
+        $data['searchString'] = $searchString;
         $permissions['add_new'] = userCheckPermission('fax_add');
         $permissions['edit'] = userCheckPermission('fax_edit');
         $permissions['delete'] = userCheckPermission('fax_delete');
