@@ -35,7 +35,7 @@ class FaxesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         // Check permissions
         if (!userCheckPermission("fax_view")) {
@@ -43,8 +43,24 @@ class FaxesController extends Controller
         }
         // $list = Session::get('permissions', false);
         // pr($list);exit;
+
+        $searchString = $request->get('search');
+
         $domain_uuid = Session::get('domain_uuid');
-        $data['faxes'] = Faxes::where('domain_uuid', $domain_uuid)->paginate(10)->onEachSide(1);
+
+        $faxes =  Faxes::where('domain_uuid', $domain_uuid);
+        if ($searchString) {
+            $faxes->where(function ($query) use ($searchString) {
+                $query->where('fax_name', 'like', '%' . str_replace('-', '', $searchString) . '%')
+                      ->orWhere('fax_extension', 'like', '%' . str_replace('-', '', $searchString). '%');
+            });
+        }
+
+        $faxes = $faxes
+            ->paginate(10)
+            ->onEachSide(1);
+
+        $data['faxes'] = $faxes;
         $permissions['add_new'] = userCheckPermission('fax_add');
         $permissions['edit'] = userCheckPermission('fax_edit');
         $permissions['delete'] = userCheckPermission('fax_delete');
