@@ -52,7 +52,8 @@ class FaxesController extends Controller
         if ($searchString) {
             $faxes->where(function ($query) use ($searchString) {
                 $query->where('fax_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                      ->orWhere('fax_extension', 'ilike', '%' . str_replace('-', '', $searchString). '%');
+                      ->orWhere('fax_extension', 'ilike', '%' . str_replace('-', '', $searchString). '%')
+                      ->orWhere('fax_email', 'ilike', '%' . str_replace('-', '', $searchString). '%');
             });
         }
 
