@@ -1046,7 +1046,6 @@ class FaxesController extends Controller
         // Convert form fields to associative array
         parse_str($data['data'], $data);
 
-
         // Validate the input
         $attributes = [
             'recipient' => 'fax recipient',
@@ -1054,6 +1053,7 @@ class FaxesController extends Controller
 
         $validator = Validator::make($data, [
             'recipient' => 'numeric|required|phone:US',
+            'fax_message' => 'string|nullable'
 
         ], [], $attributes);
 
@@ -1070,10 +1070,10 @@ class FaxesController extends Controller
             'FromFull' => array(
                 'Email' => Session::get('user.user_email'),
             ),
-            'To' => $data['recipient'] . '@fax.nemerald.com',
-            'Subject' => $data['fax_subject'],
-            'TextBody' => $data['fax_message'],
-            'HtmlBody' => $data['fax_message'],
+            'To' => $data['recipient'] . '@fax.domain.com',
+            'Subject' => ($data['fax_message'] == "") ? $data['fax_subject'] : $data['fax_subject'] . " body",
+            'TextBody' => strip_tags($data['fax_message']),
+            'HtmlBody' => strip_tags($data['fax_message']),
             'fax_destination' => $data['recipient'],
             'fax_uuid' => $data['fax_uuid'],
         );
