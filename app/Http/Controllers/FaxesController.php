@@ -52,8 +52,8 @@ class FaxesController extends Controller
         if ($searchString) {
             $faxes->where(function ($query) use ($searchString) {
                 $query->where('fax_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                      ->orWhere('fax_extension', 'ilike', '%' . str_replace('-', '', $searchString). '%')
-                      ->orWhere('fax_email', 'ilike', '%' . str_replace('-', '', $searchString). '%');
+                    ->orWhere('fax_extension', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('fax_email', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
             });
         }
 
@@ -61,8 +61,106 @@ class FaxesController extends Controller
             ->paginate(10)
             ->onEachSide(1);
 
+        // Set the start and end dates for the period
+        $endDate = Carbon::now();  // Current date
+        $startDate = Carbon::now()->subDays(30);  // 30 days ago
+
+        // Convert the dates to the desired format for the query
+        $period = [$startDate->toDateString(), $endDate->toDateString()];
+
+        // Calculate total of sent faxes in the last month
+        $totalReceived = FaxFiles::where('fax_mode', 'rx')
+            ->where('domain_uuid', $domain_uuid)
+            ->whereBetween('fax_date', $period)
+            ->count();
+        // ->toSql();
+
+        // Calculate total of sent faxes in the last month
+        $totalSent = FaxFiles::where('fax_mode', 'tx')
+            ->where('domain_uuid', $domain_uuid)
+            ->whereBetween('fax_date', $period)
+            ->count();
+        // ->toSql();
+
+
+        // Get recent outbound faxes
+        $outboundFaxes = FaxQueues::select(
+            'v_fax_queue.fax_queue_uuid',
+            'v_fax_queue.fax_caller_id_name',
+            'v_fax_queue.fax_caller_id_number',
+            'v_fax_queue.fax_number',
+            'v_fax_queue.fax_date',
+            'v_fax_queue.fax_status',
+            'v_fax_queue.fax_uuid',
+            'v_fax_queue.fax_date',
+            'v_fax_queue.fax_status',
+            'v_fax_queue.fax_retry_date',
+            'v_fax_queue.fax_retry_count',
+            'v_fax_queue.fax_notify_date',
+            'v_fax_files.fax_destination'
+        )
+            ->where('v_fax_queue.domain_uuid', $domain_uuid)
+            ->whereBetween('v_fax_queue.fax_date', $period)
+            ->leftJoin('v_fax_files', 'fax_file_path', 'fax_file')
+            ->orderBy('v_fax_queue.fax_date', 'desc')
+            ->limit(5)
+            ->get();
+
+        $timeZone = get_local_time_zone($domain_uuid);
+        /** @var FaxQueues $file */
+        foreach ($outboundFaxes as $file) {
+            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
+            if (!empty($file->fax_notify_date)) {
+                $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
+            }
+            if (!empty($file->fax_retry_date)) {
+                $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
+            }
+        }
+
+        $inboundFaxes = FaxFiles::where('fax_mode', 'rx')
+            ->where('domain_uuid', $domain_uuid)
+            ->whereBetween('fax_date', $period)
+            ->orderBy('fax_date', 'desc')
+            ->limit(5)
+            ->get();
+
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+        foreach ($inboundFaxes as $file) {
+            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date);
+            // Try to convert caller ID number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $file->fax_caller_id_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            // Try to convert destination number to National format
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($file->fax->fax_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $file->fax->fax_caller_id_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+        }
+
+
         $data['faxes'] = $faxes;
         $data['searchString'] = $searchString;
+        $data['totalReceived'] = $totalReceived;
+        $data['totalSent'] = $totalSent;
+        $data['files'] = $outboundFaxes;
+        $data['inboundFaxes'] = $inboundFaxes;
+        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
         $permissions['add_new'] = userCheckPermission('fax_add');
         $permissions['edit'] = userCheckPermission('fax_edit');
         $permissions['delete'] = userCheckPermission('fax_delete');
@@ -105,7 +203,7 @@ class FaxesController extends Controller
             Carbon::now()->endOfDay()
         ];
 
-        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+        if (preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
             $e = explode("-", $searchPeriod);
             $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
             $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
@@ -180,7 +278,6 @@ class FaxesController extends Controller
         return view('layouts.fax.inbox.list')
             ->with($data)
             ->with('permissions', $permissions);
-
     }
 
     public function downloadInboxFaxFile(FaxFiles $file)
@@ -242,7 +339,7 @@ class FaxesController extends Controller
             Carbon::now()->endOfDay()
         ];
 
-        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+        if (preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
             $e = explode("-", $searchPeriod);
             $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
             $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
@@ -296,10 +393,10 @@ class FaxesController extends Controller
         /** @var FaxQueues $file */
         foreach ($files as $file) {
             $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
-            if(!empty($file->fax_notify_date)) {
+            if (!empty($file->fax_notify_date)) {
                 $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
             }
-            if(!empty($file->fax_retry_date)) {
+            if (!empty($file->fax_retry_date)) {
                 $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
             }
         }
@@ -334,7 +431,7 @@ class FaxesController extends Controller
             Carbon::now()->endOfDay()
         ];
 
-        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+        if (preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
             $e = explode("-", $searchPeriod);
             $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
             $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
@@ -365,7 +462,7 @@ class FaxesController extends Controller
 
         foreach ($logs as $i => $log) {
             $logs[$i]['fax_date'] = Carbon::parse($log['fax_date']);
-            
+
             // Check if the values are not empty and contain a phone number
             if (!empty($logs[$i]['fax_uri']) && preg_match("/\+\d{11}/", $logs[$i]['fax_uri'], $matches1)) {
                 $logs[$i]['fax_uri'] = $matches1[0]; // Extract the phone number from the matched value
@@ -538,12 +635,12 @@ class FaxesController extends Controller
         // Create all fax directories
         try {
 
-            $settings= DefaultSettings::where('default_setting_category','switch')
-            ->get([
-                'default_setting_subcategory',
-                'default_setting_name',
-                'default_setting_value',
-            ]);
+            $settings = DefaultSettings::where('default_setting_category', 'switch')
+                ->get([
+                    'default_setting_subcategory',
+                    'default_setting_name',
+                    'default_setting_value',
+                ]);
 
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == 'storage') {
@@ -553,22 +650,22 @@ class FaxesController extends Controller
             }
 
             // Set variables for all directories
-            $dir_fax_inbox = $fax_dir.'/'.$fax->fax_extension.'/inbox';
-            $dir_fax_sent = $fax_dir.'/'.$fax->fax_extension.'/sent';
-            $dir_fax_temp = $fax_dir.'/'.$fax->fax_extension.'/temp';
+            $dir_fax_inbox = $fax_dir . '/' . $fax->fax_extension . '/inbox';
+            $dir_fax_sent = $fax_dir . '/' . $fax->fax_extension . '/sent';
+            $dir_fax_temp = $fax_dir . '/' . $fax->fax_extension . '/temp';
 
             //make sure the directories exist
             if (!is_dir($stor_dir)) {
                 mkdir($stor_dir, 0770);
             }
-            if (!is_dir($stor_dir.'/fax')) {
-                mkdir($stor_dir.'/fax', 0770);
+            if (!is_dir($stor_dir . '/fax')) {
+                mkdir($stor_dir . '/fax', 0770);
             }
-            if (!is_dir($stor_dir.'/fax/'.$domain_name)) {
-                mkdir($stor_dir.'/fax/'.$domain_name, 0770);
+            if (!is_dir($stor_dir . '/fax/' . $domain_name)) {
+                mkdir($stor_dir . '/fax/' . $domain_name, 0770);
             }
-            if (!is_dir($fax_dir.'/'.$fax->fax_extension)) {
-                mkdir($fax_dir.'/'.$fax->fax_extension, 0770);
+            if (!is_dir($fax_dir . '/' . $fax->fax_extension)) {
+                mkdir($fax_dir . '/' . $fax->fax_extension, 0770);
             }
             if (!is_dir($dir_fax_inbox)) {
                 mkdir($dir_fax_inbox, 0770);
@@ -580,7 +677,7 @@ class FaxesController extends Controller
                 mkdir($dir_fax_temp, 0770);
             }
         } catch (Throwable $e) {
-            $message = $e->getMessage() . " at ". $e->getFile() . ":". $e->getLine().'\n';
+            $message = $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . '\n';
             Log::alert($message);
             SendFaxNotificationToSlack::dispatch($message)->onQueue('faxes');
             //Process errors
@@ -641,7 +738,6 @@ class FaxesController extends Controller
             'status' => 'success',
             'message' => 'Fax has been created'
         ]);
-
     }
 
     /**
@@ -861,7 +957,6 @@ class FaxesController extends Controller
             'status' => 'success',
             'message' => 'Fax has been updated'
         ]);
-
     }
 
 
@@ -902,7 +997,7 @@ class FaxesController extends Controller
         $fax = FaxQueues::findOrFail($id);
 
         if (isset($fax)) {
-            if($fax->getFaxFile()) {
+            if ($fax->getFaxFile()) {
                 $file = $fax->getFaxFile();
                 $file->delete();
             }
@@ -1090,14 +1185,14 @@ class FaxesController extends Controller
             $mime = $mime_split_without_base64[0];
             // $mime_split=explode('/', $mime_split_without_base64[0],2);
 
-            array_push($payload['Attachments'],
+            array_push(
+                $payload['Attachments'],
                 array(
                     'Content' => $data,
                     'ContentType' => $mime,
                     'Name' => $file['name'],
                 )
             );
-
         }
 
         $fax = new Faxes();
