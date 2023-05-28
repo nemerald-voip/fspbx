@@ -9,9 +9,9 @@
 
 @section('actionbar')
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxLog', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger disabled">
-            Delete Selected
-        </a>
+
+        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteFaxLog', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger btn-sm mb-2 me-2 disabled">Delete Selected</a>
+
     @endif
     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
 @endsection
@@ -99,11 +99,15 @@
                 <td>{{ $log->fax_result_text }}</td>
                 <td>{{ substr(basename($log->fax_file), 0, (strlen(basename($log->fax_file)) -4)) }}</td>
                 <td>{{ $log->fax_ecm_used }}</td>
-                <td>{{ $log->fax_local_station_id }}</td>
+                <td>
+                    <span class="text-body text-nowrap">{{ $log->fax_local_station_id }}</span>
+                </td>
                 <td>{{ $log->fax_bad_rows }}</td>
                 <td>{{ $log->fax_transfer_rate }}</td>
                 <td>{{ $log->fax_retry_attempts }}</td>
-                <td>{{ $log->fax_uri }}</td>
+                <td>
+                    <span class="text-body text-nowrap">{{ $log->fax_uri }}</span>
+                </td>
                 <td>
                     <div id="tooltip-container-actions">
                         @if ($permissions['delete'])

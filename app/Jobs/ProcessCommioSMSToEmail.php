@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
-use App\Mail\FaxNotAuthorized;
-use Illuminate\Http\Request;
+use App\Models\Commio\CommioInboundSMS;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Commio\CommioOutboundSMS;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,7 +16,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use App\Notifications\SendSlackFaxNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class SendFaxNotificationToSlack implements ShouldQueue
+class ProcessCommioSMSToEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -54,7 +53,7 @@ class SendFaxNotificationToSlack implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 15;
+    public $backoff = 30;
 
     /**
      * Delete the job if its models no longer exist.
@@ -63,15 +62,26 @@ class SendFaxNotificationToSlack implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $request;
+    private $email_to;
+    private $from_did;
+    private $message;
+
+    private $org_id;
+
+    private $message_uuid;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($message)
+    public function __construct($data)
     {
-        $this->request['slack_message'] = $message;
+        $this->email_to = $data['email_to'];
+        $this->from_did = $data['from_did'];
+        $this->message = $data['message'];
+        $this->org_id = $data['org_id'];
+        $this->message_uuid = $data['message_uuid'];
     }
 
     /**
@@ -81,7 +91,7 @@ class SendFaxNotificationToSlack implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new RateLimitedWithRedis('slack'))];
+        return [(new RateLimitedWithRedis('emails'))];
     }
 
     /**
@@ -92,15 +102,19 @@ class SendFaxNotificationToSlack implements ShouldQueue
     public function handle()
     {
         // Allow only 2 tasks every 1 second
-        Redis::throttle('slack')->allow(2)->every(1)->then(function () {
-            
-            Notification::route('slack', env('SLACK_FAX_HOOK'))
-                ->notify(new SendSlackFaxNotification($this->request));
+        Redis::throttle('emails')->allow(2)->every(1)->then(function () {
+
+            $sms = new CommioInboundSMS();
+            $sms->email_to = $this->email_to;
+            $sms->from_did = $this->from_did;
+            $sms->message = $this->message;
+            $sms->org_id = $this->org_id;
+            $sms->message_uuid = $this->message_uuid;
+            $sms->smsToEmail();
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
-
     }
 }

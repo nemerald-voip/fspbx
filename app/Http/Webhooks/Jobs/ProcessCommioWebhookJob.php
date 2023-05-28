@@ -4,6 +4,7 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Jobs\ProcessCommioSMS;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\ProcessCommioSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
@@ -76,13 +77,27 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
 
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-            ProcessCommioSMS::dispatch([
-                'domain_setting_value' => $this->webhookCall->payload['domain_setting_value'],
-                'message_uuid' => $this->webhookCall->payload['message_uuid'],
-                'to_did' => $this->webhookCall->payload['to'],
-                'from_did' => $this->webhookCall->payload['from'],
-                'message' => $this->webhookCall->payload['message']
-            ])->onQueue('messages');
+
+            if ($this->webhookCall->payload['to'] !="") {
+                ProcessCommioSMS::dispatch([
+                    'org_id' => $this->webhookCall->payload['org_id'],
+                    'message_uuid' => $this->webhookCall->payload['message_uuid'],
+                    'to_did' => $this->webhookCall->payload['to'],
+                    'from_did' => $this->webhookCall->payload['from'],
+                    'message' => $this->webhookCall->payload['message']
+                ])->onQueue('messages');
+            }
+
+            if ($this->webhookCall->payload['email_to'] !="") {
+                ProcessCommioSMSToEmail::dispatch([
+                    'org_id' => $this->webhookCall->payload['org_id'],
+                    'message_uuid' => $this->webhookCall->payload['message_uuid'],
+                    'email_to' => $this->webhookCall->payload['email_to'],
+                    'from_did' => $this->webhookCall->payload['from'],
+                    'message' => $this->webhookCall->payload['message']
+                ])->onQueue('emails');
+            }
+
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);

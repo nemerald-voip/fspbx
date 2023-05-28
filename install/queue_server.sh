@@ -17,6 +17,8 @@ echo "Redis Server is installed\n\n"
 
 cp install/horizon.conf /etc/supervisor/conf.d/
 
+composer require laravel/horizon:*
+
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl restart horizon:*

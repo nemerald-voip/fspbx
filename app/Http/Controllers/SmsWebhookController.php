@@ -14,6 +14,7 @@ use App\Models\SmsDestinations;
 use App\Notifications\StatusUpdate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Jobs\SendSmsNotificationToSlack;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Illuminate\Support\Facades\Notification;
 
@@ -180,9 +181,6 @@ class SmsWebhookController extends Controller
         //         "content":"5","orgid":"16467742064165946777"}}';
         $message = json_decode($rawdata, true);
 
-        // Notification::route('mail', 'dexter@stellarvoip.com')
-        // ->notify(new StatusUpdate($rawdata));
-
         // Set initial validation status
         $validation = true;
 
@@ -243,7 +241,7 @@ class SmsWebhookController extends Controller
 
         if (!$smsDestinationModel) {
             $validation = false;
-            $status = "SMS user not found";
+            $status = "Caller ID not found for extension " .$message['params']['from'];
         }
 
         if ($smsDestinationModel) {
@@ -287,6 +285,7 @@ class SmsWebhookController extends Controller
             }
         }
 
+        // Store message in database
         $messageModel = new Messages;
         $messageModel->extension_uuid = (isset($ext_model->extension_uuid)) ? $ext_model->extension_uuid : null;
         $messageModel->domain_uuid = (isset($smsDestinationModel->domain_uuid)) ? $smsDestinationModel->domain_uuid : null;
@@ -313,12 +312,10 @@ class SmsWebhookController extends Controller
         $messageModel->status = $status;
         $messageModel->save();
 
-        //dd($response->body());
+        if (!$validation) {
+            SendSmsNotificationToSlack::dispatch("*Commio Outbound SMS*: From: " . $message['params']['from'] . " To: " . $message['params']['to'].  "\n Error delivering SMS from Ringtotel to Commio. " . $status)->onQueue('messages');
 
-        // Store message in database
+        }
 
-
-        // Notification::route('mail', 'dexter@stellarvoip.com')
-        //           ->notify(new StatusUpdate($response));
     }
 }

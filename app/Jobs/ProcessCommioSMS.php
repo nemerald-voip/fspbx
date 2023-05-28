@@ -66,7 +66,7 @@ class ProcessCommioSMS implements ShouldQueue
     private $from_did;
     private $message;
 
-    private $domain_setting_value;
+    private $org_id;
 
     private $message_uuid;
 
@@ -80,7 +80,7 @@ class ProcessCommioSMS implements ShouldQueue
         $this->to_did = $data['to_did'];
         $this->from_did = $data['from_did'];
         $this->message = $data['message'];
-        $this->domain_setting_value = $data['domain_setting_value'];
+        $this->org_id = $data['org_id'];
         $this->message_uuid = $data['message_uuid'];
     }
 
@@ -108,7 +108,7 @@ class ProcessCommioSMS implements ShouldQueue
             $sms->to_did = $this->to_did;
             $sms->from_did = $this->from_did;
             $sms->message = $this->message;
-            $sms->domain_setting_value = $this->domain_setting_value;
+            $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
             $sms->send();
 
