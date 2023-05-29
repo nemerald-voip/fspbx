@@ -26,11 +26,24 @@ class DeviceController extends Controller
             return redirect('/');
         }
 
-        $domainUuid = Session::get('domain_uuid');
+        $searchString = $request->get('search');
+        $searchStringKey = strtolower(trim($searchString));
+        $devices = Devices::query();
+        $devices->where('domain_uuid', Session::get('domain_uuid'));
+        if (!empty($searchStringKey)) {
+            $devices->where(function ($query) use ($searchStringKey) {
+                $query
+                    ->orWhereLike('device_mac_address', str_replace([':', '-', '.'], '', $searchStringKey))
+                    ->orWhereLike('device_label', $searchStringKey)
+                    ->orWhereLike('device_vendor', $searchStringKey)
+                    ->orWhereLike('device_template', $searchStringKey);
+            });
+        }
+        $devices = $devices->orderBy('device_label')->paginate(10)->onEachSide(1);
+
         $data = array();
-        $data['devices'] = Devices::where('domain_uuid', $domainUuid)
-            ->orderBy('device_label')
-            ->paginate(10)->onEachSide(1);
+        $data['devices'] = $devices;
+        $data['searchString'] = $searchString;
 
         return view('layouts.devices.list')->with($data);
 

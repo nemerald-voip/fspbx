@@ -15,7 +15,7 @@
         <div class="col-auto">
             <label for="search" class="visually-hidden">Search</label>
             <div class="input-group input-group-merge">
-                <input type="search" class="form-control" name="search" id="search" value="" placeholder="Search..." />
+                <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}" placeholder="Search..." />
                 <input type="button" class="btn btn-light" name="clear" id="clearSearch" value="Clear" />
             </div>
         </div>

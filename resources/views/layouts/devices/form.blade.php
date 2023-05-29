@@ -50,19 +50,24 @@
             <label for="extension-select" class="col-form-label">Extension</label>
             <select name="extension_uuid" class="form-select" id="extension-select">
                 <option value="" selected>Choose extension</option>
-                @foreach($extensions as $extension)
+                @foreach($extensions as $extensionItem)
                     <option @php
-                        if($device->extension() && $device->extension()->extension == $extension->extension) {
+                        if($device->extension() && $device->extension()->extension == $extensionItem->extension) {
                             print 'selected';
                         }
-                    @endphp value='{{$extension->extension_uuid}}'>{{$extension->extension}}</option>
+                    @endphp value='{{$extensionItem->extension_uuid}}'>{{$extensionItem->extension}}</option>
                 @endforeach
             </select>
             <div class="error text-danger" id="device_profile_uuid_error"></div>
         </div>
     @endif
     <div>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        {{-- Assuming that's modal if the extension variable exists --}}
+        @if(isset($extension) && $extension->extension_uuid)
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        @else
+            <a href="{{ route('devices.index') }}" class="btn btn-light me-2">Cancel</a>
+        @endif
         <button type="button" class="btn btn-primary save-device-btn">Save</button>
     </div>
 </form>
