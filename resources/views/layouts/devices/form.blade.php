@@ -36,7 +36,7 @@
     </div>
     --}}
     <div class="mb-3 position-relative">
-        <label for="profile-select" class="col-form-label">Profile1</label>
+        <label for="profile-select" class="col-form-label">Profile</label>
         <select name="device_profile_uuid" class="form-select" id="profile-select">
             <option value="" selected>Choose profile</option>
             @foreach($profiles ?? [] as $profile)
