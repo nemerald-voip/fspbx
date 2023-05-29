@@ -57,15 +57,15 @@
     <script>
     $(document).ready(function() {
         $('#extension-select').select2({
-        //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
 
         $('#profile-select').select2({
-        //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
 
         $('#template-select').select2({
-        //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
+            //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
     });
 
