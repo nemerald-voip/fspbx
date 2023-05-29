@@ -5,15 +5,15 @@
         <input type="hidden" id="device_uuid" name="device_uuid" value="" />
     @endif
     <div class="mb-3">
-        <label class="col-form-label">Mac Address</label>
+        <label for="device_mac_address" class="col-form-label">Mac Address</label>
         <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address" value="{{$device->device_mac_address ?? ''}}" />
         <div class="error text-danger" id="device_mac_address_error"></div>
         <div class="error text-danger" id="device_mac_address_modified_error"></div>
     </div>
     <div class="mb-3 position-relative">
-        <label class="col-form-label">Template</label>
+        <label for="template-select" class="col-form-label">Template</label>
         @php $templateDir = public_path('resources/templates/provision'); @endphp
-        <select name="device_template" class="form-select select2" id="template-select">
+        <select name="device_template" class="form-select" id="template-select">
             <option value="" selected>Choose template</option>
             @foreach($vendors ?? [] as $vendor)
                 <optgroup label='{{$vendor->name}}'>
@@ -36,8 +36,8 @@
     </div>
     --}}
     <div class="mb-3 position-relative">
-        <label class="col-form-label">Profile</label>
-        <select name="device_profile_uuid" class="form-select select2" id="profile-select">
+        <label for="profile-select" class="col-form-label">Profile1</label>
+        <select name="device_profile_uuid" class="form-select" id="profile-select">
             <option value="" selected>Choose profile</option>
             @foreach($profiles ?? [] as $profile)
                 <option @if (isset($device->device_profile_uuid) && $device->device_profile_uuid == $profile->device_profile_uuid) selected @endif value='{{$profile->device_profile_uuid}}'>{{$profile->device_profile_name}}</option>
@@ -47,8 +47,8 @@
     </div>
     @if($extensions)
         <div class="mb-3 position-relative">
-            <label class="col-form-label">Extension</label>
-            <select name="extension_uuid" class="form-select select2" id="extension-select">
+            <label for="extension-select" class="col-form-label">Extension</label>
+            <select name="extension_uuid" class="form-select" id="extension-select">
                 <option value="" selected>Choose extension</option>
                 @foreach($extensions as $extension)
                     <option @php
