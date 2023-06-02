@@ -1,4 +1,14 @@
-<form id="device_form" method="POST" action="{{route('devices.store')}}">
+@php
+    if (isset($device) && $device) {
+        $actionUrl = route('devices.update', $device);
+    } else {
+        $actionUrl = route('devices.store');
+    }
+@endphp
+<form id="device_form" method="POST" action="{{$actionUrl}}">
+    @if (isset($device) && $device)
+        @method('put')
+    @endif
     @csrf
     @if(isset($extension) && $extension->extension_uuid)
         <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
