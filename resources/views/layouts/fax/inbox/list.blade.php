@@ -9,9 +9,8 @@
 
 @section('actionbar')
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteReceivedFax', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger mb-2 me-2 disabled">
-            Delete Selected
-        </a>
+        <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteReceivedFax', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger btn-sm mb-2 me-2 disabled">Delete Selected</a>
+
     @endif
     {{-- <button type="button" class="btn btn-light mb-2">Export</button> --}}
 @endsection
@@ -71,12 +70,12 @@
                         <span class="text-body fw-bold">{{ $file->fax_caller_id_name ?? ''}}</span><br />
                     @endif
                     @if($file->fax_caller_id_number!='')
-                        <span class="text-body fw-bold ">{{ phone($file->fax_caller_id_number, "US", $national_phone_number_format) }}</span>
+                        <span class="text-body fw-bold ">{{ $file->fax_caller_id_number ?? ''}}</span>
                     @endif
                 </td>
                 {{-- <td>{{ $file->fax_file_type }}</td> --}}
                 <td>
-                    {{ phone($file->fax->fax_caller_id_number, "US", $national_phone_number_format) }}
+                    {{ $file->fax->fax_caller_id_number ?? '' }}
                 </td>
                 <td>
                     <span class="text-body text-nowrap">{{ $file->fax_date->format('D, M d, Y ')}}</span>

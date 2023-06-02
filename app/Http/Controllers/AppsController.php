@@ -78,7 +78,7 @@ class AppsController extends Controller
                     'message' => 'Unable to create organization']);
              })
              ->json();
-        
+
         //dd(isset($response['error']));
 
 
@@ -333,15 +333,15 @@ class AppsController extends Controller
                 )
             )
         );
-     
-        
+
+
         // Add codecs
         if (isset($request->connection_codec_u711)){
             $codec = array(
                     'codec' => 'G.711 Ulaw',
                     'frame' => 20
                 );
-            $codecs[]=$codec;          
+            $codecs[]=$codec;
         }
 
 
@@ -350,7 +350,7 @@ class AppsController extends Controller
                     'codec' => 'G.711 Alaw',
                     'frame' => 20
                 );
-            $codecs[]=$codec; 
+            $codecs[]=$codec;
         }
 
         if (isset($request->connection_codec_729)){
@@ -358,7 +358,7 @@ class AppsController extends Controller
                     'codec' => 'G.729',
                     'frame' => 20
                 );
-            $codecs[]=$codec; 
+            $codecs[]=$codec;
         }
 
         if (isset($request->connection_codec_opus)){
@@ -366,7 +366,7 @@ class AppsController extends Controller
                     'codec' => 'OPUS',
                     'frame' => 20
                 );
-            $codecs[]=$codec; 
+            $codecs[]=$codec;
         }
 
         $data['params']['provision']['codecs'] = $codecs;
@@ -399,7 +399,7 @@ class AppsController extends Controller
                     'message' => 'Connection was created succesfully, but unable to store Conn ID in database',
                 ]);
             }
-            
+
             return response()->json([
                 'connection_name' => $request->connection_name,
                 'connection_domain' => $request->connection_domain,
@@ -435,7 +435,7 @@ class AppsController extends Controller
      */
     public function updateConnection(Request $request)
     {
- 
+
     }
 
 
@@ -449,7 +449,7 @@ class AppsController extends Controller
 
         // Send request to get all Organizations
         $response = appsGetOrganizations();
- 
+
         //If there is an error return failed status
         if (isset($response['error'])) {
             return response()->json([
@@ -462,7 +462,7 @@ class AppsController extends Controller
             return response()->json([
                 'status' => 401,
                 'error' => [
-                    'message' => "An unknown error has occured",
+                    'message' => "An unknown error has occurred",
                 ],
             ])->getData(true);
         }
@@ -574,7 +574,7 @@ class AppsController extends Controller
             ]);
         }
 
-        // If successful continue 
+        // If successful continue
         if (isset($response['result'])){
             $connections = $response['result'];
             $app_domain = $response['result'][0]['domain'];
@@ -600,7 +600,7 @@ class AppsController extends Controller
             //Get all users for this connection
             $response = appsGetUsers($org_id, $connection['id']);
 
-            // If successful continue 
+            // If successful continue
             if (isset($response['result'])){
                 $users = $response['result'];
 
@@ -636,7 +636,7 @@ class AppsController extends Controller
                     $appUser->user_id = $user['id'];
                     $appUser->status = $user['status'];
 
-                    $appUser->save();                    
+                    $appUser->save();
                 }
             }
 
@@ -672,7 +672,7 @@ class AppsController extends Controller
         // If the user doesn't exist prepare to create a new one
         $org_id = appsGetOrganizationDetails($extension->domain_uuid);
 
-        // If Organization isn't set up return 
+        // If Organization isn't set up return
         if(!isset($org_id)) {
             return response()->json([
                 'status' => 401,
@@ -681,11 +681,11 @@ class AppsController extends Controller
                 ],
             ]);
         }
-        
+
         // Get all connections for this organization
         $response = appsGetConnections($org_id);
-           
-        // If successful continue 
+
+        // If successful continue
         if (isset($response['result'])){
             $connections = $response['result'];
             $app_domain = $response['result'][0]['domain'];
@@ -755,12 +755,12 @@ class AppsController extends Controller
             return response()->json([
                 'status' => 401,
                 'error' => [
-                    'message' => "An unknown error has occured",
+                    'message' => "An unknown error has occurred",
                 ],
             ])->getData(true);
         }
 
-        // If success and user is activated send user email with credentials 
+        // If success and user is activated send user email with credentials
         if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
@@ -782,10 +782,10 @@ class AppsController extends Controller
         $qrcode = "";
         if ($request->activate == 'on'){
             // Generate QR code
-            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] . 
+            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
                 '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
         }
-        
+
         return response()->json([
             'user' => $response['result'],
             'qrcode' => base64_encode($qrcode),
@@ -810,7 +810,7 @@ class AppsController extends Controller
 
         // Send request to delеte user
         $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
- 
+
         //If there is an error return failed status
         if (isset($response['error'])) {
             return response()->json([
@@ -823,7 +823,7 @@ class AppsController extends Controller
             return response()->json([
                 'status' => 401,
                 'error' => [
-                    'message' => "An unknown error has occured",
+                    'message' => "An unknown error has occurred",
                 ],
             ])->getData(true);
         }
@@ -850,7 +850,7 @@ class AppsController extends Controller
 
         // Send request to reset password
         $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id']);
- 
+
         //If there is an error return failed status
         if (isset($response['error'])) {
             return response()->json([
@@ -863,18 +863,18 @@ class AppsController extends Controller
             return response()->json([
                 'status' => 401,
                 'error' => [
-                    'message' => "An unknown error has occured",
+                    'message' => "An unknown error has occurred",
                 ],
             ])->getData(true);
         }
 
-        // If success and user is activated send user email with credentials 
+        // If success and user is activated send user email with credentials
         if (isset($extension->voicemail->voicemail_mail_to)){
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
         // Generate QR code
-        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] . 
+        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
             '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
 
         return response()->json([
@@ -923,7 +923,7 @@ class AppsController extends Controller
                     'status' => 401,
                     'result' => $response,
                     'error' => [
-                        'message' => "An unknown error has occured",
+                        'message' => "An unknown error has occurred",
                     ],
                 ])->getData(true);
             }
@@ -932,13 +932,13 @@ class AppsController extends Controller
             if ($appUser) {
                 $appUser->status = $mobile_app['status'];
                 $appUser->save();
-            } 
+            }
 
         } else if ($mobile_app['status']==-1) {
 
             // Send request to delete user first and then recreate it
             $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
-    
+
             //If there is an error return failed status
             if (isset($response['error'])) {
                 return response()->json([
@@ -952,7 +952,7 @@ class AppsController extends Controller
                     'status' => 401,
                     'result' => $response,
                     'error' => [
-                        'message' => "An unknown error has occured",
+                        'message' => "An unknown error has occurred",
                     ],
                 ])->getData(true);
             }
@@ -976,7 +976,7 @@ class AppsController extends Controller
                     'status' => 401,
                     'result' => $response,
                     'error' => [
-                        'message' => "An unknown error has occured",
+                        'message' => "An unknown error has occurred",
                     ],
                 ])->getData(true);
             }
@@ -986,7 +986,7 @@ class AppsController extends Controller
             $mobile_app['authname'] = $extension->extension;
             $mobile_app['domain'] = $response['result']['domain'];
             $response = appsCreateUser($mobile_app);
-    
+
             //If there is an error return failed status
             if (isset($response['error'])) {
                 return response()->json([
@@ -1000,7 +1000,7 @@ class AppsController extends Controller
                     'status' => 401,
                     'result' => $response,
                     'error' => [
-                        'message' => "An unknown error has occured",
+                        'message' => "An unknown error has occurred",
                     ],
                 ])->getData(true);
             }

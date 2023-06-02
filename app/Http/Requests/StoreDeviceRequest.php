@@ -31,7 +31,7 @@ class StoreDeviceRequest extends FormRequest
                 Rule::unique('App\Models\Devices', 'device_mac_address')
             ],
             'device_profile_uuid' => [
-                'required',
+                'nullable',
                 Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
@@ -52,7 +52,8 @@ class StoreDeviceRequest extends FormRequest
         return [
             'device_mac_address_modified.unique' => 'This MAC address is already used',
             'device_profile_uuid.required' => 'Profile is required',
-            'device_template.required' => 'Template is required'
+            'device_template.required' => 'Template is required',
+            'extension_uuid.required' => 'Extension is required'
         ];
     }
 

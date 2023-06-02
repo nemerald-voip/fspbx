@@ -5,6 +5,7 @@
                 <div class="form-group">
                     <div class="input-group">
                         <select name="device_uuid" class="form-select" id="device-select">
+                            <option value="" selected>Choose device</option>
                             @foreach($devices as $device)
                                 <option value="{{$device->device_uuid}}">{{$device->device_mac_address}} - {{$device->device_template}}</option>
                             @endforeach

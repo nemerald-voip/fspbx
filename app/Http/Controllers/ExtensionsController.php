@@ -262,7 +262,7 @@ class ExtensionsController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
      */
     public function create()
     {
@@ -385,6 +385,7 @@ class ExtensionsController extends Controller
             'max_registrations' => 'nullable|numeric',
             'limit_max' => 'nullable|numeric',
             'limit_destination' => 'nullable|string',
+            'call_timeout' => "numeric",
             'toll_allow' => 'nullable|string',
             'call_group' => 'nullable|string',
             'call_screen_enabled' => 'nullable',
@@ -704,7 +705,7 @@ class ExtensionsController extends Controller
     {
 
         //check permissions
-        if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
+        if (!userCheckPermission('extension_add') && !userCheckPermission('extension_edit')) {
             return redirect('/');
         }
 
@@ -1318,6 +1319,10 @@ class ExtensionsController extends Controller
             'register_expires' => get_domain_setting('line_register_expires'),
             'enabled' => 'true',
         ]);
+
+        $device = Devices::where('device_uuid', $inputs['device_uuid'])->firstOrFail();
+        $device->device_label = $extension->extension;
+        $device->save();
 
         return response()->json([
             'status' => 'success',

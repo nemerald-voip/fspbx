@@ -1,10 +1,24 @@
-@extends('layouts.horizontal', ["page_title" => $pageTitle])
+@extends('layouts.horizontal', ['page_title' => $pageTitle])
 
 @section('content')
     <div class="container-fluid">
         <div class="row">
-            @include('layouts.partials.subheader', ['title' => $pageTitle, 'breadcrumbs' => $breadcrumbs ?? []])
+            @include('layouts.partials.subheader', [
+                'title' => $pageTitle,
+                'breadcrumbs' => $breadcrumbs ?? [],
+            ])
         </div>
+
+        @hasSection('widgets')
+            <div class="row">
+                @yield('widgets')
+            </div>
+        @endif
+
+        @hasSection('cards')
+            @yield('cards')
+        @endif
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -16,10 +30,11 @@
                                 </div>
                             @endif
                             @hasSection('actionbar')
-                                <div class="col-xl-4 mb-3">
-                                    <div class="text-xl-end mt-xl-0 mt-2">
-                                        @yield('actionbar')
-                                    </div>
+                                @sectionMissing('searchbar')
+                                    <div class="col-xl-8 mb-3"></div>
+                                @endif
+                                <div class="text-xl-end col-xl-4 mb-3">
+                                    @yield('actionbar')
                                 </div>
                             @endif
                         </div>
@@ -39,4 +54,4 @@
             </div>
         </div>
     </div>
-@endsection
+    @endsection

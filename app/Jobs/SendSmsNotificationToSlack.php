@@ -17,7 +17,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use App\Notifications\SendSlackFaxNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class SendFaxNotificationToSlack implements ShouldQueue
+class SendSmsNotificationToSlack implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -94,7 +94,7 @@ class SendFaxNotificationToSlack implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('slack')->allow(2)->every(1)->then(function () {
             
-            Notification::route('slack', env('SLACK_FAX_HOOK'))
+            Notification::route('slack', env('SLACK_SMS_HOOK'))
                 ->notify(new SendSlackFaxNotification($this->request));
 
         }, function () {

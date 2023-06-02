@@ -2,12 +2,12 @@
 
 @section('content')
 <div class="container">
-    
+
     <!-- Outer Row -->
     <div class="row justify-content-center">
 
         <div class="col-xl-6 col-lg-6 col-md-9">
-  
+
           <div class="card o-hidden border-0 shadow-lg my-5" id="mainlogin">
             <div class="card-body p-0">
               <!-- Nested Row within Card Body -->
@@ -20,10 +20,15 @@
                       <h1 class="ls-tight font-bolder mt-6">Login</h1>
                       <p class="mt-2">Business Phone System Portal</p>
                    </div>
+                    @if (session('status'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    @endif
                    <form method="POST" action="{{ route('login') }}">
                         @csrf
                         <div class="mb-3">
-                            <label for="user_email" class="col-form-label text-md-end">{{ __('Username') }}</label> 
+                            <label for="user_email" class="col-form-label text-md-end">{{ __('Username') }}</label>
                             <input id="email" type="email" placeholder="Your email address or username" class="form-control @error('user_email') is-invalid @enderror" name="user_email" value="{{ old('user_email') }}" required autocomplete="email" autofocus>
 
                             @error('user_email')
@@ -64,9 +69,9 @@
 
             </div>
           </div>
-  
+
         </div>
-  
+
     </div>
 
 </div>
