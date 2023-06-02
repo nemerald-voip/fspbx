@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
@@ -51,5 +52,12 @@ class ResetPasswordController extends Controller
         return $request->only(
             'user_email', 'password', 'password_confirmation', 'token'
         );
+    }
+
+    protected function sendResetResponse(Request $request, $response)
+    {
+        return $request->wantsJson()
+            ? new JsonResponse(['message' => trans($response)], 200)
+            : redirect()->route('login')->with('status', trans($response));
     }
 }
