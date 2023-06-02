@@ -229,6 +229,15 @@ class DeviceController extends Controller
      */
     public function destroy(Devices $device)
     {
-        //
+        if ($device->lines()) {
+            $device->lines()->delete();
+        }
+        $device->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device,
+            'message' => 'Device has been deleted'
+        ]);
     }
 }
