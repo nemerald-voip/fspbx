@@ -66,7 +66,7 @@
                         <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
                     </a>
 
-                    <a href="javascript:confirmDeleteAction('{{ route('extensions.destroy', ':id') }}','{{ $device->device_uuid }}');" class="action-icon">
+                    <a href="javascript:confirmDeleteAction('{{ route('devices.destroy', ':id') }}','{{ $device->device_uuid }}');" class="action-icon">
                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                     </a>
                 </td>
@@ -76,5 +76,14 @@
 @endsection
 
 @push('scripts')
-
+    <script>
+        $(document).ready(function() {
+            $('#clearSearch').on('click', function () {
+                $('#search').val('');
+                var location = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                location += '?page=1';
+                window.location.href = location;
+            })
+        });
+    </script>
 @endpush

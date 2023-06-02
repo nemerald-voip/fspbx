@@ -262,7 +262,7 @@ class ExtensionsController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
      */
     public function create()
     {
@@ -705,7 +705,7 @@ class ExtensionsController extends Controller
     {
 
         //check permissions
-        if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
+        if (!userCheckPermission('extension_add') && !userCheckPermission('extension_edit')) {
             return redirect('/');
         }
 
@@ -1320,8 +1320,7 @@ class ExtensionsController extends Controller
             'enabled' => 'true',
         ]);
 
-        /** @var Devices $device */
-        $device = $extension->devices()->first();
+        $device = Devices::where('device_uuid', $inputs['device_uuid'])->firstOrFail();
         $device->device_label = $extension->extension;
         $device->save();
 

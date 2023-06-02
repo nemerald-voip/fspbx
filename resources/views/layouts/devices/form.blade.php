@@ -1,4 +1,14 @@
-<form id="device_form" method="POST" action="{{route('devices.store')}}">
+@php
+    if (isset($device) && $device) {
+        $actionUrl = route('devices.update', $device);
+    } else {
+        $actionUrl = route('devices.store');
+    }
+@endphp
+<form id="device_form" method="POST" action="{{$actionUrl}}">
+    @if (isset($device) && $device)
+        @method('put')
+    @endif
     @csrf
     @if(isset($extension) && $extension->extension_uuid)
         <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
@@ -6,7 +16,9 @@
     @endif
     <div class="mb-3">
         <label for="device_mac_address" class="col-form-label">Mac Address</label>
-        <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address" value="{{$device->device_mac_address ?? ''}}" />
+        <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address" value="{{$device->device_mac_address ?? ''}}"
+        @if (isset($device) && $device) readonly @endif
+        />
         <div class="error text-danger" id="device_mac_address_error"></div>
         <div class="error text-danger" id="device_mac_address_modified_error"></div>
     </div>
@@ -52,7 +64,7 @@
                 <option value="" selected>Choose extension</option>
                 @foreach($extensions as $extensionItem)
                     <option @php
-                        if($device->extension() && $device->extension()->extension == $extensionItem->extension) {
+                        if($device && $device->extension() && $device->extension()->extension == $extensionItem->extension) {
                             print 'selected';
                         }
                     @endphp value='{{$extensionItem->extension_uuid}}'>{{$extensionItem->extension}}</option>
