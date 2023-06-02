@@ -37,7 +37,7 @@
                                 <div class="col-lg-4 offset-lg-4">
                                     @include('layouts.devices.form', [
                                         'action' => route('devices.store'),
-                                        'device' => $device,
+                                        'device' => $device->exists ? $device : null,
                                         'extensions' => $extensions,
                                         'vendors' => $vendors,
                                         'profiles' => $profiles
