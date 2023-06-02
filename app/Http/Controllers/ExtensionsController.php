@@ -1320,8 +1320,7 @@ class ExtensionsController extends Controller
             'enabled' => 'true',
         ]);
 
-        /** @var Devices $device */
-        $device = $extension->devices()->first();
+        $device = Devices::where('device_uuid', $inputs['device_uuid'])->firstOrFail();
         $device->device_label = $extension->extension;
         $device->save();
 
