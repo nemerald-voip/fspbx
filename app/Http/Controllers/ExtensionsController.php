@@ -705,7 +705,7 @@ class ExtensionsController extends Controller
     {
 
         //check permissions
-        if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
+        if (!userCheckPermission('extension_add') && !userCheckPermission('extension_edit')) {
             return redirect('/');
         }
 
