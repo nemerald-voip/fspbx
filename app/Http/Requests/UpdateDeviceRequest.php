@@ -48,7 +48,8 @@ class UpdateDeviceRequest extends FormRequest
     {
         return [
             'device_profile_uuid.required' => 'Profile is required',
-            'device_template.required' => 'Template is required'
+            'device_template.required' => 'Template is required',
+            'extension_uuid.required' => 'Extension is required'
         ];
     }
 }
