@@ -76,32 +76,50 @@
         //Reset error messages
         $('.error_message').text("");
 
+        let form = $('#device_form');
+
         $.ajax({
             type : "POST",
-            url: $('#device_form').attr('action'),
+            url: form.attr('action'),
             cache: false,
-            data: $("#device_form").serialize(),
-        })
-            .done(function(response) {
-                //console.log(response);
+            data: form.serialize(),
+            dataType: 'json',
+            beforeSend: function() {
+                //Reset error messages
+                form.find('.error').text('');
+
+                $('.error_message').text("");
+                $('.btn').attr('disabled', true);
+                $('.loading').show();
+            },
+            complete: function (xhr,status) {
+                $('.btn').attr('disabled', false);
                 $('.loading').hide();
-
-                if (response.error){
-                    printErrorMsg(response.error);
-
+            },
+            success: function(result) {
+                $('.loading').hide();
+                $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                window.location.href = "{{ route('devices.index')}}";
+            },
+            error: function(error) {
+                $('.loading').hide();
+                $('.btn').attr('disabled', false);
+                if(error.status == 422){
+                    if(error.responseJSON.errors) {
+                        $.each( error.responseJSON.errors, function( key, value ) {
+                            if (value != '') {
+                                form.find('#'+key+'_error').text(value);
+                                printErrorMsg(value);
+                            }
+                        });
+                    } else {
+                        printErrorMsg(error.responseJSON.message);
+                    }
                 } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                    setTimeout(function (){
-                        window.location.href = "{{ route('devices.index')}}";
-                    }, 1000);
-
+                    printErrorMsg(error.responseJSON.message);
                 }
-            })
-            .fail(function (response){
-                $('.loading').hide();
-                printErrorMsg(response.responseText);
-            });
-
+            }
+        });
     })
     </script>
 @endpush
