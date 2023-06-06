@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\JsonResponse;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\ResetsPasswords;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
 class ResetPasswordController extends Controller
@@ -31,7 +31,7 @@ class ResetPasswordController extends Controller
      */
 
     //protected $redirectTo = RouteServiceProvider::HOME;
-    protected $redirectTo = "password/reset";
+    protected $redirectTo = "login";
 
     /**
      * Get the password reset validation rules.
@@ -54,10 +54,14 @@ class ResetPasswordController extends Controller
         );
     }
 
-    protected function sendResetResponse(Request $request, $response)
+    protected function resetPassword($user, $password)
     {
-        return $request->wantsJson()
-            ? new JsonResponse(['message' => trans($response)], 200)
-            : redirect()->route('login')->with('status', trans($response));
+        $this->setUserPassword($user, $password);
+
+        $user->setRememberToken(Str::random(60));
+
+        $user->save();
+
+        event(new PasswordReset($user));
     }
 }
