@@ -161,6 +161,8 @@ Route::group(['middleware' => 'auth'], function(){
     Route::delete('faxqueue/{id}',[FaxQueueController::class, 'destroy'])->name('faxQueue.destroy');
     Route::get('faxqueue/{faxQueue}/{status?}', [FaxQueueController::class, 'updateStatus'])->name('faxQueue.updateStatus');
 
+    // Ring Groups
+    Route::resource('ring-groups', 'RingGroupsController');
 });
 
 // Route::group(['prefix' => '/'], function () {
