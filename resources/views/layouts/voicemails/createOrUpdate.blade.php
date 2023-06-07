@@ -125,7 +125,7 @@
                                             </div>
                                         </div> <!-- end row -->
 
-                                        @if (userCheckPermission('voicemail_transcription_edit'))
+                                        @if (userCheckPermission('voicemail_transcription_enabled'))
                                         <div class="row">
                                             <div class="col-4">
                                                 <div class="mb-3">
