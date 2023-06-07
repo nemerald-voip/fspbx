@@ -511,7 +511,7 @@ class ExtensionsController extends Controller
         $attributes['voicemail_id'] = $attributes['extension'];
         $attributes['voicemail_password'] = $attributes['extension'];
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
-        $attributes['password'] = Str::random(25);
+        $attributes['password'] = generate_password();
         if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
         if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
         $attributes['insert_date'] = date("Y-m-d H:i:s");

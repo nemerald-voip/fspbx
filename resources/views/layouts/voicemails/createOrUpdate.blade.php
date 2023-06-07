@@ -69,7 +69,7 @@
                                                 <div class="mb-3">
                                                     <label for="voicemail_id" class="form-label">Voicemail Extension <span class="text-danger">*</span></label>
                                                     <input class="form-control"  type="text" value="{{ $voicemail->voicemail_id ?? ''}}"
-                                                        placeholder="Enter voicemail extension" id="voicemail_id" name="voicemail_id" />
+                                                        placeholder="Enter voicemail extension" id="voicemail_id" name="voicemail_id" autocomplete="off"/>
                                                     <div class="text-danger error_message voicemail_id_err"></div>
                                                 </div>
                                             </div>
@@ -78,7 +78,7 @@
                                                     <label for="voicemail_password" class="form-label">Set voicemail PIN <span class="text-danger">*</span></label>
                                                     <div class="input-group input-group-merge">
                                                         <input type="password" id="voicemail_password" class="form-control" placeholder="xxxx"
-                                                        value="{{ $voicemail->voicemail_password ?? ''}}" name="voicemail_password">
+                                                        value="{{ $voicemail->voicemail_password ?? ''}}" name="voicemail_password" autocomplete="off">
                                                         <div class="input-group-text" data-password="false">
                                                             <span class="password-eye"></span>
                                                         </div>
@@ -94,7 +94,7 @@
                                                             <i class="dripicons-information"></i>
                                                         </a>
                                                         <input class="form-control"  type="text" value="{{ $voicemail->voicemail_alternate_greet_id ?? ''}}"
-                                                            placeholder="Enter your Alternate Greet ID" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id" />
+                                                            placeholder="Enter your Alternate Greet ID" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id" autocomplete="off"/>
                                                         <div class="text-danger error_message voicemail_alternate_greet_id_err"></div>
                                                     </div>
                                                 </div>
@@ -120,7 +120,7 @@
                                                 <div class="mb-3">
                                                     <label for="vm-email-address" class="form-label">Email Address</span></label>
                                                     <input class="form-control" type="email" name="voicemail_mail_to"  placeholder="Enter email" id="vm-email-address"
-                                                    value="{{ $voicemail->voicemail_mail_to ?? ''}}"/>
+                                                    value="{{ $voicemail->voicemail_mail_to ?? ''}}" autocomplete="off"/>
                                                 </div>
                                             </div>
                                         </div> <!-- end row -->
