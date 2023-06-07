@@ -59,6 +59,8 @@ class VoicemailController extends Controller
 
         $voicemail = new Voicemails();
         $voicemail->voicemail_enabled = "true";
+        $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
+        logger($voicemail->voicemail_transcription_enabled);
 
         //Check FusionPBX login status
         session_start();
