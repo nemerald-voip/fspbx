@@ -1,36 +1,38 @@
 <?php
 
 use App\Models\Settings;
+use App\Models\Dialplans;
 use App\Models\SipProfiles;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
-use App\Models\Dialplans;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 
+use Illuminate\Support\Facades\Http;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Session;
 
-if (!function_exists('userCheckPermission')){
-    function userCheckPermission($permission){
+if (!function_exists('userCheckPermission')) {
+    function userCheckPermission($permission)
+    {
         $list = Session::get('permissions', false);
         if (!$list) return false;
 
-        foreach ($list as $item){
-            if ($item->permission_name == $permission){
+        foreach ($list as $item) {
+            if ($item->permission_name == $permission) {
                 return true;
             }
         }
         return false;
     }
-
 }
 
 // Check if currenlty signed in user a superadmin
-if (!function_exists('isSuperAdmin')){
-    function isSuperAdmin(){
+if (!function_exists('isSuperAdmin')) {
+    function isSuperAdmin()
+    {
         foreach (Session::get('user.groups') as $group) {
             if ($group->group_name == "superadmin" && $group->group_level >= 80) {
                 return true;
@@ -38,52 +40,66 @@ if (!function_exists('isSuperAdmin')){
         }
         return false;
     }
-
 }
 
-if (!function_exists('getDefaultSetting')){
-    function getDefaultSetting($category,$subcategory){
+if (!function_exists('getDefaultSetting')) {
+    function getDefaultSetting($category, $subcategory)
+    {
         $settings = Session::get('default_settings', false);
 
         if (!$settings) return null;
 
-        foreach ($settings as $setting){
-            if ($setting['default_setting_category'] == $category &&
-                $setting['default_setting_subcategory'] == $subcategory){
-                return $setting ['default_setting_value'];
+        foreach ($settings as $setting) {
+            if (
+                $setting['default_setting_category'] == $category &&
+                $setting['default_setting_subcategory'] == $subcategory
+            ) {
+                return $setting['default_setting_value'];
             }
         }
         return null;
     }
-
 }
 
-if (!function_exists('getFusionPBXPreviousURL')){
-    function getFusionPBXPreviousURL($previous_url) {
-        if (strpos($previous_url, "time_condition_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "time_condition_edit.php")) . "time_conditions.php";}
-        elseif (strpos($previous_url, "destination_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "destination_edit.php")) . "destinations.php";}
-        elseif (strpos($previous_url, "extension_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "extension_edit.php")) . "extensions.php";}
-        elseif (strpos($previous_url, "ring_group_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "ring_group_edit.php")) . "ring_groups.php";}
-        elseif (strpos($previous_url, "device_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "device_edit.php")) . "devices.php";}
-        elseif (strpos($previous_url, "dialplan_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "dialplan_edit.php")) . "dialplans.php";}
-        elseif (strpos($previous_url, "ivr_menu_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";}
-        elseif (strpos($previous_url, "voicemail_edit.php")) {$url = substr($previous_url,0,strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";}
-        elseif (strpos($previous_url, "/extensions/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/extensions/")) . "/extensions";}
-        elseif (strpos($previous_url, "/faxes/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/faxes/")) . "/faxes";}
-        elseif (strpos($previous_url, "/voicemails/")) {$url = substr($previous_url,0,strpos(url()->previous(), "/voicemails/")) . "/voicemails";}
-        else $url = $previous_url;
+if (!function_exists('getFusionPBXPreviousURL')) {
+    function getFusionPBXPreviousURL($previous_url)
+    {
+        if (strpos($previous_url, "time_condition_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "time_condition_edit.php")) . "time_conditions.php";
+        } elseif (strpos($previous_url, "destination_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "destination_edit.php")) . "destinations.php";
+        } elseif (strpos($previous_url, "extension_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "extension_edit.php")) . "extensions.php";
+        } elseif (strpos($previous_url, "ring_group_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "ring_group_edit.php")) . "ring_groups.php";
+        } elseif (strpos($previous_url, "device_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "device_edit.php")) . "devices.php";
+        } elseif (strpos($previous_url, "dialplan_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "dialplan_edit.php")) . "dialplans.php";
+        } elseif (strpos($previous_url, "ivr_menu_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";
+        } elseif (strpos($previous_url, "voicemail_edit.php")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";
+        } elseif (strpos($previous_url, "/extensions/")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/extensions/")) . "/extensions";
+        } elseif (strpos($previous_url, "/faxes/")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/")) . "/faxes";
+        } elseif (strpos($previous_url, "/voicemails/")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/")) . "/voicemails";
+        } else $url = $previous_url;
         return $url;
     }
 }
 
-if (!function_exists('appsStoreOrganizationDetails')){
-    function appsStoreOrganizationDetails(Request $request) {
+if (!function_exists('appsStoreOrganizationDetails')) {
+    function appsStoreOrganizationDetails(Request $request)
+    {
 
         // Delete any existing records
         $deleted = DB::table('v_domain_settings')
-        ->where ('domain_uuid','=', $request->organization_uuid)
-        ->where('domain_setting_category','=', 'app shell')
-        ->delete();
+            ->where('domain_uuid', '=', $request->organization_uuid)
+            ->where('domain_setting_category', '=', 'app shell')
+            ->delete();
 
         // Store new records
         $domainSettingsModel = DomainSettings::create([
@@ -95,7 +111,7 @@ if (!function_exists('appsStoreOrganizationDetails')){
             'domain_setting_enabled' => true,
         ]);
         $saved = $domainSettingsModel->save();
-        if ($saved){
+        if ($saved) {
             return true;
         } else {
             return false;
@@ -103,13 +119,14 @@ if (!function_exists('appsStoreOrganizationDetails')){
     }
 }
 
-if (!function_exists('appsGetOrganizationDetails')){
-    function appsGetOrganizationDetails($domain_uuid) {
+if (!function_exists('appsGetOrganizationDetails')) {
+    function appsGetOrganizationDetails($domain_uuid)
+    {
         // Get Org ID
-        $domainSettingsModel = DomainSettings::where('domain_uuid',$domain_uuid)
-            ->where ('domain_setting_category', 'app shell')
-            ->where ('domain_setting_subcategory', 'org_id')
-            ->where ('domain_setting_enabled', true)
+        $domainSettingsModel = DomainSettings::where('domain_uuid', $domain_uuid)
+            ->where('domain_setting_category', 'app shell')
+            ->where('domain_setting_subcategory', 'org_id')
+            ->where('domain_setting_enabled', true)
             ->first();
 
         if (isset($domainSettingsModel)) {
@@ -119,8 +136,9 @@ if (!function_exists('appsGetOrganizationDetails')){
     }
 }
 
-if (!function_exists('appsGetOrganization')){
-    function appsGetOrganization($org_id) {
+if (!function_exists('appsGetOrganization')) {
+    function appsGetOrganization($org_id)
+    {
         $data = array(
             'method' => 'getOrganization',
             'params' => array(
@@ -131,7 +149,7 @@ if (!function_exists('appsGetOrganization')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -147,8 +165,9 @@ if (!function_exists('appsGetOrganization')){
 }
 
 
-if (!function_exists('appsStoreConnectionDetails')){
-    function appsStoreConnectionDetails(Request $request) {
+if (!function_exists('appsStoreConnectionDetails')) {
+    function appsStoreConnectionDetails(Request $request)
+    {
 
         // Store new records
         $domainSettingsModel = DomainSettings::create([
@@ -160,7 +179,7 @@ if (!function_exists('appsStoreConnectionDetails')){
             'domain_setting_enabled' => true,
         ]);
         $saved = $domainSettingsModel->save();
-        if ($saved){
+        if ($saved) {
             return true;
         } else {
             return false;
@@ -169,8 +188,9 @@ if (!function_exists('appsStoreConnectionDetails')){
 }
 
 // Get a list of all organizations via Ringotel API call
-if (!function_exists('appsGetOrganizations')){
-    function appsGetOrganizations() {
+if (!function_exists('appsGetOrganizations')) {
+    function appsGetOrganizations()
+    {
         $data = array(
             'method' => 'getOrganizations',
         );
@@ -178,7 +198,7 @@ if (!function_exists('appsGetOrganizations')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -194,8 +214,9 @@ if (!function_exists('appsGetOrganizations')){
 }
 
 // Get a list of connections that belong to requested organization via Ringotel API call
-if (!function_exists('appsGetConnections')){
-    function appsGetConnections($org_id) {
+if (!function_exists('appsGetConnections')) {
+    function appsGetConnections($org_id)
+    {
         $data = array(
             'method' => 'getBranches',
             'params' => array(
@@ -206,7 +227,7 @@ if (!function_exists('appsGetConnections')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -222,8 +243,9 @@ if (!function_exists('appsGetConnections')){
 }
 
 // Delete connection that belong to requested organization via Ringotel API call
-if (!function_exists('appsDeleteConnection')){
-    function appsDeleteConnection($org_id, $conn_id) {
+if (!function_exists('appsDeleteConnection')) {
+    function appsDeleteConnection($org_id, $conn_id)
+    {
         $data = array(
             'method' => 'deleteBranch',
             'params' => array(
@@ -235,7 +257,7 @@ if (!function_exists('appsDeleteConnection')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -252,8 +274,9 @@ if (!function_exists('appsDeleteConnection')){
 }
 
 // Get a list of all user for this organizaion and connection
-if (!function_exists('appsGetUsers')){
-    function appsGetUsers($org_id, $conn_id) {
+if (!function_exists('appsGetUsers')) {
+    function appsGetUsers($org_id, $conn_id)
+    {
         $data = array(
             'method' => 'getUsers',
             'params' => array(
@@ -265,7 +288,7 @@ if (!function_exists('appsGetUsers')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -282,8 +305,9 @@ if (!function_exists('appsGetUsers')){
 
 
 // Create mobile app user via Ringotel API call
-if (!function_exists('appsCreateUser')){
-    function appsCreateUser($mobile_app) {
+if (!function_exists('appsCreateUser')) {
+    function appsCreateUser($mobile_app)
+    {
 
         $data = array(
             'method' => 'createUser',
@@ -298,19 +322,20 @@ if (!function_exists('appsCreateUser')){
                 'authname' => $mobile_app['authname'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
-                )
-            );
+            )
+        );
 
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
                     'error' => 401,
-                    'message' => 'Unable to create a new user']);
-                })
+                    'message' => 'Unable to create a new user'
+                ]);
+            })
             ->json();
 
         return $response;
@@ -319,8 +344,9 @@ if (!function_exists('appsCreateUser')){
 
 
 // Delete mobile app user via Ringotel API call
-if (!function_exists('appsDeleteUser')){
-    function appsDeleteUser($org_id, $user_id) {
+if (!function_exists('appsDeleteUser')) {
+    function appsDeleteUser($org_id, $user_id)
+    {
         $data = array(
             'method' => 'deleteUser',
             'params' => array(
@@ -332,7 +358,7 @@ if (!function_exists('appsDeleteUser')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -349,8 +375,9 @@ if (!function_exists('appsDeleteUser')){
 }
 
 // Update mobile app user via Ringotel API call
-if (!function_exists('appsUpdateUser')){
-    function appsUpdateUser($mobile_app) {
+if (!function_exists('appsUpdateUser')) {
+    function appsUpdateUser($mobile_app)
+    {
         $data = array(
             'method' => 'updateUser',
             'params' => array(
@@ -369,7 +396,7 @@ if (!function_exists('appsUpdateUser')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -386,8 +413,9 @@ if (!function_exists('appsUpdateUser')){
 }
 
 // Reset password for mobile app user via Ringotel API call
-if (!function_exists('appsResetPassword')){
-    function appsResetPassword($org_id, $user_id) {
+if (!function_exists('appsResetPassword')) {
+    function appsResetPassword($org_id, $user_id)
+    {
         $data = array(
             'method' => 'resetUserPassword',
             'params' => array(
@@ -399,7 +427,7 @@ if (!function_exists('appsResetPassword')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -416,8 +444,9 @@ if (!function_exists('appsResetPassword')){
 }
 
 // Set Status for mobile app user via Ringotel API call
-if (!function_exists('appsSetStatus')){
-    function appsSetStatus($org_id, $user_id, $status) {
+if (!function_exists('appsSetStatus')) {
+    function appsSetStatus($org_id, $user_id, $status)
+    {
         $data = array(
             'method' => 'setUserStatus',
             'params' => array(
@@ -430,7 +459,7 @@ if (!function_exists('appsSetStatus')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -447,8 +476,9 @@ if (!function_exists('appsSetStatus')){
 }
 
 // Delete organizaion via Ringotel API call
-if (!function_exists('appsDeleteOrganization')){
-    function appsDeleteOrganization($org_id) {
+if (!function_exists('appsDeleteOrganization')) {
+    function appsDeleteOrganization($org_id)
+    {
         $data = array(
             'method' => 'deleteOrganization',
             'params' => array(
@@ -459,7 +489,7 @@ if (!function_exists('appsDeleteOrganization')){
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
+            ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
                 return response()->json([
@@ -471,24 +501,25 @@ if (!function_exists('appsDeleteOrganization')){
             })
             ->json();
 
-            Log::info($response);
+        Log::info($response);
 
-            if (!isset($array) || empty($array)){
-                Log::info("here");
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Organization not found",
-                    ],
-                ])->getData(true);
-            }
+        if (!isset($array) || empty($array)) {
+            Log::info("here");
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => "Organization not found",
+                ],
+            ])->getData(true);
+        }
 
         return $response;
     }
 }
 
-if (!function_exists('event_socket_create')){
-    function event_socket_create($host, $port, $password) {
+if (!function_exists('event_socket_create')) {
+    function event_socket_create($host, $port, $password)
+    {
         $esl = new event_socket;
         if ($esl->connect($host, $port, $password)) {
             return $esl->reset_fp();
@@ -497,8 +528,9 @@ if (!function_exists('event_socket_create')){
     }
 }
 
-if (!function_exists('event_socket_request')){
-    function event_socket_request($fp, $cmd) {
+if (!function_exists('event_socket_request')) {
+    function event_socket_request($fp, $cmd)
+    {
         $esl = new event_socket($fp);
         $result = $esl->request($cmd);
         $esl->reset_fp();
@@ -506,8 +538,9 @@ if (!function_exists('event_socket_request')){
     }
 }
 
-if (!function_exists('event_socket_request_cmd')){
-    function event_socket_request_cmd($cmd) {
+if (!function_exists('event_socket_request_cmd')) {
+    function event_socket_request_cmd($cmd)
+    {
 
         // Get event socket credentials
         $settings = Settings::first();
@@ -522,15 +555,15 @@ if (!function_exists('event_socket_request_cmd')){
         return $response;
     }
 }
-if (!function_exists('outbound_route_to_bridge')){
-    function outbound_route_to_bridge($domain_uuid, $destination_number, array $channel_variables=null) {
+if (!function_exists('outbound_route_to_bridge')) {
+    function outbound_route_to_bridge($domain_uuid, $destination_number, array $channel_variables = null)
+    {
 
         $destination_number = trim($destination_number);
         preg_match('/^[\*\+0-9]*$/', $destination_number, $matches, PREG_OFFSET_CAPTURE);
         if (count($matches) > 0) {
             //not found, continue to process the function
-        }
-        else {
+        } else {
             //not a number, brige_array and exit the function
             $bridge_array[0] = $destination_number;
             return $bridge_array;
@@ -542,15 +575,15 @@ if (!function_exists('outbound_route_to_bridge')){
             $hostname = 'unknown';
         }
 
-        $dialplans = Dialplans::where('dialplan_enabled','true')
-            ->where ('app_uuid', '8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3')
-            ->where(function($q) use ($domain_uuid) {
+        $dialplans = Dialplans::where('dialplan_enabled', 'true')
+            ->where('app_uuid', '8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3')
+            ->where(function ($q) use ($domain_uuid) {
                 $q->where('domain_uuid', $domain_uuid)
-                  ->orWhere('domain_uuid', null);
+                    ->orWhere('domain_uuid', null);
             })
-            ->where(function($q) use ($hostname) {
+            ->where(function ($q) use ($hostname) {
                 $q->where('hostname', $hostname)
-                  ->orWhere('hostname', null);
+                    ->orWhere('hostname', null);
             })
             ->get([
                 'dialplan_uuid',
@@ -570,46 +603,45 @@ if (!function_exists('outbound_route_to_bridge')){
         //     }
         // }
 
-        if ($dialplans->isEmpty()) {return;}
+        if ($dialplans->isEmpty()) {
+            return;
+        }
 
         $x = 0;
-        foreach($dialplans as $dialplan){
+        foreach ($dialplans as $dialplan) {
             $condition_match = false;
-            foreach($dialplan->dialplan_details as $dialplan_detail){
+            foreach ($dialplan->dialplan_details as $dialplan_detail) {
                 if ($dialplan_detail['dialplan_detail_tag'] == "condition") {
 
-                    if ($dialplan_detail['dialplan_detail_type'] == "destination_number"){
-                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
+                    if ($dialplan_detail['dialplan_detail_type'] == "destination_number") {
+                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
                         preg_match($pattern, $destination_number, $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
-                        }
-                        else {
+                        } else {
                             $condition_match = 'true';
-                            if (isset($matches[1])){
+                            if (isset($matches[1])) {
                                 $regex_match_1 = $matches[1][0];
                             }
-                            if (isset($matches[2])){
+                            if (isset($matches[2])) {
                                 $regex_match_2 = $matches[2][0];
                             }
-                            if (isset($matches[3])){
+                            if (isset($matches[3])) {
                                 $regex_match_3 = $matches[1][0];
                             }
-                            if (isset($matches[4])){
+                            if (isset($matches[4])) {
                                 $regex_match_4 = $matches[4][0];
                             }
-                            if (isset($matches[5])){
+                            if (isset($matches[5])) {
                                 $regex_match_5 = $matches[5][0];
                             }
                         }
-
                     } elseif ($dialplan_detail['dialplan_detail_type'] == "\${toll_allow}") {
-                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
+                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
                         preg_match($pattern, $channel_variables['toll_allow'], $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
-                        }
-                        else {
+                        } else {
                             $condition_match = 'true';
                         }
                     }
@@ -619,26 +651,26 @@ if (!function_exists('outbound_route_to_bridge')){
             if ($condition_match == 'true') {
                 foreach ($dialplan->dialplan_details as $dialplan_detail) {
                     // log::alert($dialplan_detail);
-                        $dialplan_detail_data = $dialplan_detail['dialplan_detail_data'];
-                        if ($dialplan_detail['dialplan_detail_tag'] == "action" && $dialplan_detail['dialplan_detail_type'] == "bridge" && $dialplan_detail_data != "\${enum_auto_route}") {
-                            if (isset($regex_match_1)){
-                                $dialplan_detail_data = str_replace("\$1", $regex_match_1, $dialplan_detail_data);
-                            }
-                            if (isset($regex_match_2)){
-                                $dialplan_detail_data = str_replace("\$2", $regex_match_2, $dialplan_detail_data);
-                            }
-                            if (isset($regex_match_3)){
-                                $dialplan_detail_data = str_replace("\$3", $regex_match_3, $dialplan_detail_data);
-                            }
-                            if (isset($regex_match_4)){
-                                $dialplan_detail_data = str_replace("\$4", $regex_match_4, $dialplan_detail_data);
-                            }
-                            if (isset($regex_match_5)){
-                                $dialplan_detail_data = str_replace("\$5", $regex_match_5, $dialplan_detail_data);
-                            }
-                            $bridge_array[$x] = $dialplan_detail_data;
-                            $x++;
+                    $dialplan_detail_data = $dialplan_detail['dialplan_detail_data'];
+                    if ($dialplan_detail['dialplan_detail_tag'] == "action" && $dialplan_detail['dialplan_detail_type'] == "bridge" && $dialplan_detail_data != "\${enum_auto_route}") {
+                        if (isset($regex_match_1)) {
+                            $dialplan_detail_data = str_replace("\$1", $regex_match_1, $dialplan_detail_data);
                         }
+                        if (isset($regex_match_2)) {
+                            $dialplan_detail_data = str_replace("\$2", $regex_match_2, $dialplan_detail_data);
+                        }
+                        if (isset($regex_match_3)) {
+                            $dialplan_detail_data = str_replace("\$3", $regex_match_3, $dialplan_detail_data);
+                        }
+                        if (isset($regex_match_4)) {
+                            $dialplan_detail_data = str_replace("\$4", $regex_match_4, $dialplan_detail_data);
+                        }
+                        if (isset($regex_match_5)) {
+                            $dialplan_detail_data = str_replace("\$5", $regex_match_5, $dialplan_detail_data);
+                        }
+                        $bridge_array[$x] = $dialplan_detail_data;
+                        $x++;
+                    }
                 }
 
                 if ($dialplan["dialplan_continue"] == "false") {
@@ -651,8 +683,9 @@ if (!function_exists('outbound_route_to_bridge')){
     }
 }
 
-if (!function_exists('get_registrations')){
-    function get_registrations ($show=null) {
+if (!function_exists('get_registrations')) {
+    function get_registrations($show = null)
+    {
         // //Check FusionPBX login status
         // session_start();
         // if(session_status() === PHP_SESSION_NONE) {
@@ -660,19 +693,23 @@ if (!function_exists('get_registrations')){
         // }
 
         //create the event socket connection
-		$fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
+        $fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
 
-        $sip_profiles = SipProfiles::where('sip_profile_enabled','true')
+        $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')
             ->get();
 
         $registrations = array();
-        $id=0;
+        $id = 0;
         foreach ($sip_profiles as $sip_profile) {
-            $cmd = "api sofia xmlstatus profile '".$sip_profile['sip_profile_name']."' reg";
-			$xml_response = trim(event_socket_request($fp, $cmd));
-            if (function_exists('iconv')) { $xml_response = iconv("utf-8", "utf-8//IGNORE", $xml_response); }
+            $cmd = "api sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
+            $xml_response = trim(event_socket_request($fp, $cmd));
+            if (function_exists('iconv')) {
+                $xml_response = iconv("utf-8", "utf-8//IGNORE", $xml_response);
+            }
             $xml_response = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml_response);
-            if ($xml_response == "Invalid Profile!") { $xml_response = "<error_msg>".'Error'."</error_msg>"; }
+            if ($xml_response == "Invalid Profile!") {
+                $xml_response = "<error_msg>" . 'Error' . "</error_msg>";
+            }
             $xml_response = str_replace("<profile-info>", "<profile_info>", $xml_response);
             $xml_response = str_replace("</profile-info>", "</profile_info>", $xml_response);
             $xml_response = str_replace("&lt;", "", $xml_response);
@@ -680,11 +717,10 @@ if (!function_exists('get_registrations')){
             if (strlen($xml_response) > 101) {
                 try {
                     $xml = new SimpleXMLElement($xml_response);
-                }
-                catch(Exception $e) {
-                    echo basename(__FILE__)."<br />\n";
-                    echo "line: ".__line__."<br />\n";
-                    echo "error: ".$e->getMessage()."<br />\n";
+                } catch (Exception $e) {
+                    echo basename(__FILE__) . "<br />\n";
+                    echo "line: " . __line__ . "<br />\n";
+                    echo "error: " . $e->getMessage() . "<br />\n";
                     //echo $xml_response;
                     exit;
                 }
@@ -703,165 +739,166 @@ if (!function_exists('get_registrations')){
                 foreach ($array['registrations']['registration'] as $row) {
 
                     //build the registrations array
-                        //$registrations[0] = $row;
-                        $user_array = explode('@', $row['user']);
-                        $registrations[$id]['user'] = $row['user'] ?: '';
-                        $registrations[$id]['call-id'] = $row['call-id'] ?: '';
-                        $registrations[$id]['contact'] = $row['contact'] ?: '';
-                        $registrations[$id]['sip-auth-user'] = $row['sip-auth-user'] ?: '';
-                        $registrations[$id]['agent'] = $row['agent'] ?: '';
-                        $registrations[$id]['host'] = $row['host'] ?: '';
-                        $registrations[$id]['network-port'] = $row['network-port'] ?: '';
-                        $registrations[$id]['sip-auth-realm'] = $row['sip-auth-realm'] ?: '';
-                        $registrations[$id]['mwi-account'] = $row['mwi-account'] ?: '';
-                        $registrations[$id]['status'] = $row['status'] ?: '';
-                        $registrations[$id]['ping-time'] = $row['ping-time'] ?: '';
-                        $registrations[$id]['sip_profile_name'] = $sip_profile['sip_profile_name'];
+                    //$registrations[0] = $row;
+                    $user_array = explode('@', $row['user']);
+                    $registrations[$id]['user'] = $row['user'] ?: '';
+                    $registrations[$id]['call-id'] = $row['call-id'] ?: '';
+                    $registrations[$id]['contact'] = $row['contact'] ?: '';
+                    $registrations[$id]['sip-auth-user'] = $row['sip-auth-user'] ?: '';
+                    $registrations[$id]['agent'] = $row['agent'] ?: '';
+                    $registrations[$id]['host'] = $row['host'] ?: '';
+                    $registrations[$id]['network-port'] = $row['network-port'] ?: '';
+                    $registrations[$id]['sip-auth-realm'] = $row['sip-auth-realm'] ?: '';
+                    $registrations[$id]['mwi-account'] = $row['mwi-account'] ?: '';
+                    $registrations[$id]['status'] = $row['status'] ?: '';
+                    $registrations[$id]['ping-time'] = $row['ping-time'] ?: '';
+                    $registrations[$id]['sip_profile_name'] = $sip_profile['sip_profile_name'];
 
                     //get network-ip to url or blank
-                        if (isset($row['network-ip'])) {
-                            $registrations[$id]['network-ip'] = $row['network-ip'];
-                        }
-                        else {
-                            $registrations[$id]['network-ip'] = '';
-                        }
+                    if (isset($row['network-ip'])) {
+                        $registrations[$id]['network-ip'] = $row['network-ip'];
+                    } else {
+                        $registrations[$id]['network-ip'] = '';
+                    }
 
                     //get the LAN IP address if it exists replace the external ip
-                        $call_id_array = explode('@', $row['call-id']);
-                        if (isset($call_id_array[1])) {
-                            $agent = $row['agent'];
-                            $lan_ip = $call_id_array[1];
-                            if (false !== stripos($agent, 'grandstream')) {
-                                $lan_ip = str_ireplace(
-                                    array('A','B','C','D','E','F','G','H','I','J'),
-                                    array('0','1','2','3','4','5','6','7','8','9'),
-                                    $lan_ip);
-                            }
-                            elseif (1 === preg_match('/\ACL750A/', $agent)) {
-                                //required for GIGASET Sculpture CL750A puts _ in it's lan ip account
-                                $lan_ip = preg_replace('/_/', '.', $lan_ip);
-                            }
-                            $registrations[$id]['lan-ip'] = $lan_ip;
+                    $call_id_array = explode('@', $row['call-id']);
+                    if (isset($call_id_array[1])) {
+                        $agent = $row['agent'];
+                        $lan_ip = $call_id_array[1];
+                        if (false !== stripos($agent, 'grandstream')) {
+                            $lan_ip = str_ireplace(
+                                array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'),
+                                array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'),
+                                $lan_ip
+                            );
+                        } elseif (1 === preg_match('/\ACL750A/', $agent)) {
+                            //required for GIGASET Sculpture CL750A puts _ in it's lan ip account
+                            $lan_ip = preg_replace('/_/', '.', $lan_ip);
                         }
-                        else if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $row['contact'], $ip_match)) {
-                            $lan_ip = preg_replace('/_/', '.', $ip_match[0]);
-                            $registrations[$id]['lan-ip'] = "$lan_ip";
-                        }
-                        else {
-                            $registrations[$id]['lan-ip'] = '';
-                        }
+                        $registrations[$id]['lan-ip'] = $lan_ip;
+                    } else if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/', $row['contact'], $ip_match)) {
+                        $lan_ip = preg_replace('/_/', '.', $ip_match[0]);
+                        $registrations[$id]['lan-ip'] = "$lan_ip";
+                    } else {
+                        $registrations[$id]['lan-ip'] = '';
+                    }
 
                     //remove unrelated domains
-                        if (!userCheckPermission('registration_all') || $show != 'all') {
-                            if ($registrations[$id]['sip-auth-realm'] == $_SESSION['domain_name']) {}
-                            else if ($user_array[1] == $_SESSION['domain_name']) {}
-                            else {
-                                unset($registrations[$id]);
-                            }
+                    if (!userCheckPermission('registration_all') || $show != 'all') {
+                        if ($registrations[$id]['sip-auth-realm'] == $_SESSION['domain_name']) {
+                        } else if ($user_array[1] == $_SESSION['domain_name']) {
+                        } else {
+                            unset($registrations[$id]);
                         }
+                    }
 
                     //increment the array id
-                        $id++;
+                    $id++;
                 }
 
                 unset($array);
             }
         }
         return $registrations;
-
     }
 }
 
-if (!function_exists('pr')){
-    function pr($arr){
+if (!function_exists('pr')) {
+    function pr($arr)
+    {
         echo '<pre>';
         print_r($arr);
         echo '</pre>';
     }
 }
 
-if (!function_exists('setDefaultS3')){
-    function setDefaultS3($arr){
-
+if (!function_exists('setDefaultS3')) {
+    function setDefaultS3($arr)
+    {
     }
 }
 
-if (!function_exists('getCredentialKey')){
-    function getCredentialKey($string){
-       switch($string){
-        case 'region':
-            return 'region';
-        case 'secret_key':
-            return 'secret';
-        case 'bucket_name':
-            return 'bucket';
-        case 'access_key':
-            return 'key';
-        default:
-            return $string;
-       }
+if (!function_exists('getCredentialKey')) {
+    function getCredentialKey($string)
+    {
+        switch ($string) {
+            case 'region':
+                return 'region';
+            case 'secret_key':
+                return 'secret';
+            case 'bucket_name':
+                return 'bucket';
+            case 'access_key':
+                return 'key';
+            default:
+                return $string;
+        }
     }
 }
 
-if (!function_exists('sendEmail')){
-function sendEmail($data)
-{
-    try {
-        Mail::send($data['email_layout'], ['data' => $data], function ($mail) use ($data) {
-            $mail->to($data['user']->email, $data['user']->name)
-                ->subject($data['subject']);
-            $mail->from('noc@nemerald.com', 'Nemerald Support');
-        });
-        return '';
-    } catch (\Exception $e) {
-        return $e->getMessage();
+if (!function_exists('sendEmail')) {
+    function sendEmail($data)
+    {
+        try {
+            Mail::send($data['email_layout'], ['data' => $data], function ($mail) use ($data) {
+                $mail->to($data['user']->email, $data['user']->name)
+                    ->subject($data['subject']);
+                $mail->from('noc@nemerald.com', 'Nemerald Support');
+            });
+            return '';
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        }
     }
 }
-}
 
-if (!function_exists('getS3Setting')){
-function getS3Setting($domain_id){
-        $config=[];
-        $settings=DomainSettings::where('domain_uuid',$domain_id)
-            ->where('domain_setting_category','aws')
+if (!function_exists('getS3Setting')) {
+    function getS3Setting($domain_id)
+    {
+        $config = [];
+        $settings = DomainSettings::where('domain_uuid', $domain_id)
+            ->where('domain_setting_category', 'aws')
             ->get();
-        $config['driver']='s3';
-        $config['url']='';
-        $config['endpoint']='';
-        $config['region']='us-west-2';
-        $config['use_path_style_endpoint']=false;
+        $config['driver'] = 's3';
+        $config['url'] = '';
+        $config['endpoint'] = '';
+        $config['region'] = 'us-west-2';
+        $config['use_path_style_endpoint'] = false;
 
-        if(!blank($settings)){
-            foreach($settings as $conf){
-                $config[getCredentialKey($conf->domain_setting_subcategory)]=trim($conf->domain_setting_value);
+        if (!blank($settings)) {
+            foreach ($settings as $conf) {
+                $config[getCredentialKey($conf->domain_setting_subcategory)] = trim($conf->domain_setting_value);
             }
             $config['type'] = 'custom';
         } else {
-            $config=getDefaultS3Configuration();
+            $config = getDefaultS3Configuration();
             $config['type'] = 'default';
         }
 
 
-        $setting['default']='s3';
-        $setting['disks']['s3']=$config;
+        $setting['default'] = 's3';
+        $setting['disks']['s3'] = $config;
 
         return $config;
     }
 }
 
-if (!function_exists('getDefaultS3Configuration')){
-       function getDefaultS3Configuration(){
-        $default_credentials=DefaultSettings::where('default_setting_category','aws')->get();
-        $config=[];
-        foreach($default_credentials as $d_conf){
-            $config[getCredentialKey($d_conf->default_setting_subcategory)]=$d_conf->default_setting_value;
+if (!function_exists('getDefaultS3Configuration')) {
+    function getDefaultS3Configuration()
+    {
+        $default_credentials = DefaultSettings::where('default_setting_category', 'aws')->get();
+        $config = [];
+        foreach ($default_credentials as $d_conf) {
+            $config[getCredentialKey($d_conf->default_setting_subcategory)] = $d_conf->default_setting_value;
         }
         return $config;
     }
 }
 
-if (!function_exists('getSignedURL')){
-    function getSignedURL($s3Client,$bucket,$key){
+if (!function_exists('getSignedURL')) {
+    function getSignedURL($s3Client, $bucket, $key)
+    {
         //  $s3Client = new Aws\S3\S3Client($sharedConfig);
 
         $cmd = $s3Client->getCommand('GetObject', [
@@ -875,11 +912,12 @@ if (!function_exists('getSignedURL')){
     }
 }
 
-if (!function_exists('arr_to_map')){
-    function arr_to_map(&$arr){
-        if(is_array($arr)){
-            $map = Array();
-            foreach($arr as &$val){
+if (!function_exists('arr_to_map')) {
+    function arr_to_map(&$arr)
+    {
+        if (is_array($arr)) {
+            $map = array();
+            foreach ($arr as &$val) {
                 $map[$val] = true;
             }
             return $map;
@@ -888,26 +926,27 @@ if (!function_exists('arr_to_map')){
     }
 }
 
-if (!function_exists('get_local_time_zone')){
+if (!function_exists('get_local_time_zone')) {
     /**
      * Get tenant's local time zone or return the system default setting
      *
      * @return string
      */
-    function get_local_time_zone($domain_uuid){
-        $local_time_zone_setting = DomainSettings::where('domain_uuid',$domain_uuid)
+    function get_local_time_zone($domain_uuid)
+    {
+        $local_time_zone_setting = DomainSettings::where('domain_uuid', $domain_uuid)
             ->where('domain_setting_category', 'domain')
             ->where('domain_setting_subcategory', 'time_zone')
             ->where('domain_setting_enabled', 'true')
             ->first();
 
-        if(!$local_time_zone_setting) {
+        if (!$local_time_zone_setting) {
             $system_time_zone_setting = DefaultSettings::where('default_setting_category', 'domain')
-            ->where('default_setting_subcategory', 'time_zone')
-            ->where('default_setting_enabled', 'true')
-            ->first();
+                ->where('default_setting_subcategory', 'time_zone')
+                ->where('default_setting_enabled', 'true')
+                ->first();
 
-            if($system_time_zone_setting) {
+            if ($system_time_zone_setting) {
                 $local_time_zone = $system_time_zone_setting->default_setting_value;
             } else {
                 $local_time_zone = "UTC";
@@ -921,16 +960,17 @@ if (!function_exists('get_local_time_zone')){
 }
 
 
-if (!function_exists('get_domain_setting')){
+if (!function_exists('get_domain_setting')) {
     /**
      * Get requested domain setting or fallback to default
      *
      * @return DomainSettings $setting
      */
-    function get_domain_setting($setting_name, $domain_uuid=null){
+    function get_domain_setting($setting_name, $domain_uuid = null)
+    {
         if (!$domain_uuid) $domain_uuid = Session::get('domain_uuid');
 
-        $setting = DomainSettings::where('domain_uuid',$domain_uuid)
+        $setting = DomainSettings::where('domain_uuid', $domain_uuid)
             ->where('domain_setting_subcategory', $setting_name)
             ->where('domain_setting_enabled', 'true')
             ->first();
@@ -945,70 +985,93 @@ if (!function_exists('get_domain_setting')){
 
         //Otherwise
         return null;
+    }
+}
 
+if (!function_exists('generate_password')) {
+    /**
+     * Generate a secure password
+     *
+     * @return string 
+     */
+    function generate_password()
+    {
+        $characters = str_split('!^$%*?.');
+        $random_keys = array_rand($characters, 3);
+        $random_characters = array();
 
+        foreach ($random_keys as $key) {
+            $random_characters[] = $characters[$key];
+        }
+        $random_string = Str::random(25);
+        foreach ($random_characters as $character) {
+            $random_string = substr_replace($random_string, $character, mt_rand(0, strlen($random_string)), 1);
+        }
+
+        $password = $random_string;
+        return $password;
     }
 }
 
 
-if (!function_exists('get_fax_dial_plan')){
+if (!function_exists('get_fax_dial_plan')) {
     /**
      * takes fax as input and return dialplan
      *
      * @return string
      */
 
-     function get_fax_dial_plan($fax,$dialplan){
+    function get_fax_dial_plan($fax, $dialplan)
+    {
         $last_fax = "last_fax=\${caller_id_number}-\${strftime(%Y-%m-%d-%H-%M-%S)}";
-        $rxfax_data=Storage::disk('fax')->path($fax->accountcode . '/' . $fax->fax_extension .  "/inbox/" . $fax->forward_prefix . '${last_fax}.tif');
+        $rxfax_data = Storage::disk('fax')->path($fax->accountcode . '/' . $fax->fax_extension .  "/inbox/" . $fax->forward_prefix . '${last_fax}.tif');
         //build the xml dialplan
-            $dialplan_xml = "<extension name=\"".$fax->fax_name ."\" continue=\"false\" uuid=\"".$dialplan->dialplan_uuid."\">\n";
-            $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^".$fax->fax_destination_number."$\">\n";
-            $dialplan_xml .= "		<action application=\"answer\" data=\"\"/>\n";
-            $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=".$fax->fax_uuid."\"/>\n";
-            $dialplan_xml .= "		<action application=\"set\" data=\"api_hangup_hook=lua app/fax/resources/scripts/hangup_rx.lua\"/>\n";
-            $settings=\DB::table('v_default_settings')
-            ->where('default_setting_category','fax')
-            ->where('default_setting_subcategory','variable')
-            ->where('default_setting_enabled','true')
+        $dialplan_xml = "<extension name=\"" . $fax->fax_name . "\" continue=\"false\" uuid=\"" . $dialplan->dialplan_uuid . "\">\n";
+        $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^" . $fax->fax_destination_number . "$\">\n";
+        $dialplan_xml .= "		<action application=\"answer\" data=\"\"/>\n";
+        $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=" . $fax->fax_uuid . "\"/>\n";
+        $dialplan_xml .= "		<action application=\"set\" data=\"api_hangup_hook=lua app/fax/resources/scripts/hangup_rx.lua\"/>\n";
+        $settings = \DB::table('v_default_settings')
+            ->where('default_setting_category', 'fax')
+            ->where('default_setting_subcategory', 'variable')
+            ->where('default_setting_enabled', 'true')
             ->get();
 
-            foreach($settings as $data) {
-                if (substr($data->default_setting_value,0,8) == "inbound:") {
-                    $dialplan_xml .= "		<action application=\"set\" data=\"".substr($data->default_setting_value,8,strlen($data->default_setting_value))."\"/>\n";
-                }
-                elseif (substr($data->default_setting_value,0,9) == "outbound:") {}
-                else {
-                    $dialplan_xml .= "		<action application=\"set\" data=\"".$data->default_setting_value."\"/>\n";
-                }
+        foreach ($settings as $data) {
+            if (substr($data->default_setting_value, 0, 8) == "inbound:") {
+                $dialplan_xml .= "		<action application=\"set\" data=\"" . substr($data->default_setting_value, 8, strlen($data->default_setting_value)) . "\"/>\n";
+            } elseif (substr($data->default_setting_value, 0, 9) == "outbound:") {
+            } else {
+                $dialplan_xml .= "		<action application=\"set\" data=\"" . $data->default_setting_value . "\"/>\n";
             }
-            $dialplan_xml .= "		<action application=\"set\" data=\"".$last_fax."\"/>\n";
-            $dialplan_xml .= "		<action application=\"rxfax\" data=\"$rxfax_data\"/>\n";
-            $dialplan_xml .= "		<action application=\"hangup\" data=\"\"/>\n";
-            $dialplan_xml .= "	</condition>\n";
-            $dialplan_xml .= "</extension>\n";
-                return $dialplan_xml;
-
-
+        }
+        $dialplan_xml .= "		<action application=\"set\" data=\"" . $last_fax . "\"/>\n";
+        $dialplan_xml .= "		<action application=\"rxfax\" data=\"$rxfax_data\"/>\n";
+        $dialplan_xml .= "		<action application=\"hangup\" data=\"\"/>\n";
+        $dialplan_xml .= "	</condition>\n";
+        $dialplan_xml .= "</extension>\n";
+        return $dialplan_xml;
     }
 }
 
-if (!function_exists('format_phone_or_extension')){
+if (!function_exists('format_phone_or_extension')) {
     /**
      * @param $value
      * @return string|int
      */
-    function format_phone_or_extension($value) {
+    function format_phone_or_extension($value)
+    {
         return (strlen($value) <= 5) ? $value : \Propaganistas\LaravelPhone\PhoneNumber::make($value, "US")->formatE164();
     }
 }
 
-if (!function_exists('detect_if_phone_number')){
+if (!function_exists('detect_if_phone_number')) {
     /**
      * @param $value
      * @return bool
      */
-    function detect_if_phone_number($value) {
+    function detect_if_phone_number($value)
+    {
         try {
             \Propaganistas\LaravelPhone\PhoneNumber::make($value, "US")->formatE164();
             return true;

@@ -32,7 +32,7 @@ class DashboardController extends Controller
         date_default_timezone_set('America/Los_Angeles');
         $domain_id = Session::get('domain_uuid');
 
-        
+
         $data = [];
         $data['permissions']['users']=userCheckPermission("user_view");
         $data['permissions']['extensions']=userCheckPermission("extension_view");
@@ -55,7 +55,7 @@ class DashboardController extends Controller
             ->where('enabled', 'true')
             ->count();
 
-            
+
         //Phone Number count
         $data['phone_number'] = DB::table('v_destinations')
         ->where('domain_uuid', $domain_id)
@@ -132,7 +132,7 @@ class DashboardController extends Controller
 		// $cpuload = $load[0];
 
 
-        //if superuser get regisration status 
+        //if superuser get registration status
         if (isSuperAdmin()) {
             //Check FusionPBX login status
             session_start();
@@ -140,7 +140,7 @@ class DashboardController extends Controller
                 return redirect()->route('logout');
             }
 
-            // Count global unique registrations 
+            // Count global unique registrations
             $registrations = get_registrations("all");
             $unique_regs =[];
             foreach ($registrations as $registration) {
@@ -148,7 +148,7 @@ class DashboardController extends Controller
             }
             $data['global_reg_count'] = count($unique_regs);
 
-            // Count local unique registrations 
+            // Count local unique registrations
             $registrations = get_registrations();
             $unique_regs =[];
             foreach ($registrations as $registration) {
@@ -156,7 +156,7 @@ class DashboardController extends Controller
             }
             $data['local_reg_count'] = count($unique_regs);
 
-            //Get Disk Usage 
+            //Get Disk Usage
             $data['diskfree'] = disk_free_space(".") / 1073741824;
             $data['disktotal'] = disk_total_space("/") / 1073741824;
             $data['diskused'] = $data['disktotal'] - $data['diskfree'];
@@ -204,13 +204,13 @@ class DashboardController extends Controller
 
             //Get domain total count
             $data['domain_count'] = Session::get("domains")->count();
-            // Get extension total count 
+            // Get extension total count
             $data['extension_count'] = Extensions::get()->count();
 
             //Get core count
             $data['core_count']=trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
 
-            // Get uptime 
+            // Get uptime
             $data['uptime'] = $parser->getUpTime();
 
         }
