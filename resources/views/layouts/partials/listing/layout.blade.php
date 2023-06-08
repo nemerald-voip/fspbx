@@ -54,4 +54,9 @@
             </div>
         </div>
     </div>
-    @endsection
+
+
+    @hasSection('includes')
+        @yield('includes')
+    @endif
+@endsection

@@ -52,7 +52,7 @@ class ExtensionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         // Check permissions
         if (!userCheckPermission("extension_view")) {
@@ -65,14 +65,25 @@ class ExtensionsController extends Controller
             return redirect()->route('logout');
         }
 
+        $searchString = $request->get('search');
+
         // Get all registered devices for this domain
         $registrations = get_registrations();
 
         // Get all extensions
         $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('extension')
-            ->paginate(50)->onEachSide(1);
+            ->orderBy('extension');
 
+        if ($searchString) {
+            $extensions->where(function ($query) use ($searchString) {
+                $query->where('extension', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('effective_caller_id_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('directory_first_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('directory_last_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('description', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
+            });
+        }
+        $extensions = $extensions->paginate(50)->onEachSide(1);
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
@@ -100,6 +111,7 @@ class ExtensionsController extends Controller
 
         $data = array();
         // $domain_uuid=Session::get('domain_uuid');
+        $data['searchString'] = $searchString;
         $data['extensions'] = $extensions;
 
         //assign permissions
