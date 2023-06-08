@@ -48,6 +48,6 @@ class AppCredentials extends Mailable
         $this->withSwiftMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->subject('Nemerald App Credentials')->view('emails.app.credentials');
+        return $this->subject(env('APP_NAME', 'Laravel') . ' App Credentials')->view('emails.app.credentials');
     }
 }
