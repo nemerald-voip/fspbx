@@ -62,7 +62,19 @@
                 </td>
                 <td>
                     <div id="tooltip-container-actions">
-
+                        @if ($permissions['edit'])
+                        <a href="{{ route('ring-groups.edit', $ringGroup) }}" class="action-icon" title="Edit">
+                            <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions"
+                               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit ring group"></i>
+                        </a>
+                        @endif
+                        @if ($permissions['delete'])
+                        <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}','{{ $ringGroup->ring_group_uuid }}');"
+                           class="action-icon">
+                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions"
+                               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                        </a>
+                        @endif
                     </div>
                 </td>
             </tr>
