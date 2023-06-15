@@ -22,7 +22,7 @@ class StoreRingGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ring_group_extension' => [
+            /*'ring_group_extension' => [
                 'required',
                 'RingGroupExists:'.Session::get('domain_uuid')
             ],
@@ -31,7 +31,7 @@ class StoreRingGroupRequest extends FormRequest
             ],
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
-            ]
+            ]*/
         ];
     }
 

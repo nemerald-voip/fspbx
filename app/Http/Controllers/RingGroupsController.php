@@ -82,7 +82,7 @@ ring_group_destination_edit
         if (!userCheckPermission('ring_group_add') || !userCheckPermission('ring_group_edit')) {
             return redirect('/');
         }
-die('ssss');
+
         $ringGroup = new RingGroups();
 
         return view('layouts.ringgroups.createOrUpdate')
@@ -97,7 +97,12 @@ die('ssss');
      */
     public function store(StoreRingGroupRequest $request)
     {
-        die('ssss');
+        $inputs = $request->validated();
+
+        var_dump($inputs);
+        return response()->json([
+            'message' => 'User has been saved'
+        ]);
     }
 
     /**
