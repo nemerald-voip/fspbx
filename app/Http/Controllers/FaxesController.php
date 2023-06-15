@@ -63,10 +63,15 @@ class FaxesController extends Controller
 
         // Set the start and end dates for the period
         $endDate = Carbon::now();  // Current date
+        // dd($endDate);
         $startDate = Carbon::now()->subDays(30);  // 30 days ago
-
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
+        // dd(Carbon::now()->endOfDay());
         // Convert the dates to the desired format for the query
-        $period = [$startDate->toDateString(), $endDate->toDateString()];
+        // $period = [$startDate->toDateString(), $endDate->toDateString()];
 
         // Calculate total of sent faxes in the last month
         $totalReceived = FaxFiles::where('fax_mode', 'rx')
