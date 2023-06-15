@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRingGroupRequest;
 use App\Models\FaxQueues;
 use App\Models\RingGroups;
 use Illuminate\Http\Request;
@@ -35,6 +36,7 @@ class RingGroupsController extends Controller
 
         $permissions['delete'] = userCheckPermission('ring_group_delete');
         $permissions['view'] = userCheckPermission('ring_group_view');
+        $permissions['edit'] = userCheckPermission('ring_group_edit');
         $data = [];
         $data['ringGroups'] = $ringGroups;
 
@@ -50,18 +52,57 @@ class RingGroupsController extends Controller
      */
     public function create()
     {
-        //
+/*
+ * ring_group_destination_delete
+extension_dial_string
+extension_absolute_codec_string
+ring_group_view
+ring_group_add
+ring_group_edit
+ring_group_delete
+ring_group_forward
+ring_group_prompt
+ring_group_destination_view
+ring_group_destination_add
+ring_group_user_view
+ring_group_user_add
+ring_group_user_edit
+ring_group_user_delete
+ring_group_missed_call
+ring_group_forward_toll_allow
+ring_group_caller_id_name
+ring_group_caller_id_number
+ring_group_context
+ring_group_all
+ring_group_destinations
+ring_group_destination_edit
+ */
+
+        //check permissions
+        if (!userCheckPermission('ring_group_add') || !userCheckPermission('ring_group_edit')) {
+            return redirect('/');
+        }
+
+        $ringGroup = new RingGroups();
+
+        return view('layouts.ringgroups.createOrUpdate')
+            ->with('ringGroup', $ringGroup);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\StoreRingGroupRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreRingGroupRequest $request)
     {
-        //
+        $inputs = $request->validated();
+
+        var_dump($inputs);
+        return response()->json([
+            'message' => 'User has been saved'
+        ]);
     }
 
     /**
@@ -81,9 +122,11 @@ class RingGroupsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(StoreRingGroupRequest $request, $id)
     {
-        //
+        if (!userCheckPermission('ring_group_edit')) {
+            return redirect('/');
+        }
     }
 
     /**
@@ -95,7 +138,10 @@ class RingGroupsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        if (!userCheckPermission('ring_group_edit')) {
+            return redirect('/');
+        }
+
     }
 
     /**
@@ -106,6 +152,8 @@ class RingGroupsController extends Controller
      */
     public function destroy($id)
     {
-        //
+        if (!userCheckPermission('ring_group_delete')) {
+            return redirect('/');
+        }
     }
 }
