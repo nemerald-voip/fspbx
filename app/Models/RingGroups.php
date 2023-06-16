@@ -22,20 +22,24 @@ class RingGroups extends Model
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
-     *
+     */
     protected $fillable = [
+        'ring_group_extension',
+        'ring_group_greeting',
+        'ring_group_strategy',
+        'ring_group_name'
+    ];
 
-    ];*/
-
-    /*
     public function __construct(array $attributes = [])
     {
         parent::__construct();
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->attributes['ring_group_context'] = Session::get('domain_name');
+        $this->attributes['ring_group_enabled'] = "true";
         $this->fill($attributes);
-    }*/
+    }
 
     public function getId()
     {
