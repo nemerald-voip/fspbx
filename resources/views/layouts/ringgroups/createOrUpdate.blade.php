@@ -52,15 +52,7 @@
                                     <i class="mdi mdi-home-variant d-md-none d-block"></i>
                                     <span class="d-none d-md-block">Basic Information
                                         <span class="float-end text-end
-                                            directory_first_name_err_badge
-                                            directory_last_name_err_badge
-                                            extension_err_badge
-                                            voicemail_mail_to_err_badge
-                                            users_err_badge
-                                            directory_visible_err_badge
-                                            directory_exten_visible_err_badge
-                                            enabled_err_badge
-                                            description_err_badge
+                                            ring_group_extension_badge
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                 </a>
@@ -87,9 +79,9 @@
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_extension" class="form-label">Ring Group number <span class="text-danger">*</span></label>
-                                                                <input class="form-control" type="text" placeholder="xxxx" id="ring_group_extension"
+                                                                <input class="form-control" type="text" placeholder="xxx" id="ring_group_extension"
                                                                        name="ring_group_extension" value="{{ $ringGroup->ring_group_extension }}"/>
-                                                                <div class="text-danger error-text ring_group_number_err error_message"></div>
+                                                                <div id="ring_group_extension_err" class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -99,7 +91,7 @@
                                                                         id="ring_group_greeting" name="ring_group_greeting">
                                                                     <option value=""></option>
                                                                 </select>
-                                                                <div class="text-danger ring_group_greeting_err error_message"></div>
+                                                                <div id="ring_group_greeting_err" class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
@@ -115,7 +107,17 @@
                                                                     <option value="enterprise" @if($ringGroup->ring_group_strategy == 'enterprise') selected="selected" @endif>Enterprise</option>
                                                                     <option value="rollover" @if($ringGroup->ring_group_strategy == 'rollover') selected="selected" @endif>Rollover</option>
                                                                 </select>
-                                                                <div class="text-danger ring_group_strategy_err error_message"></div>
+                                                                <div id="ring_group_strategy_err" class="text-danger text-error error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_ringback" class="form-label">Ring Back</label>
+                                                                <select class="select2 form-control" data-toggle="select2" data-placeholder="Choose ..."
+                                                                        id="ring_group_ringback" name="ring_group_ringback">
+                                                                    <option value=""></option>
+                                                                </select>
+                                                                <div id="ring_group_ringback_err" class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
@@ -144,7 +146,57 @@
 
 <script>
     $(document).ready(function() {
+        const form = $('#ringGroupForm');
+        $('#submitFormButton').on('click', function(e) {
+            e.preventDefault();
+            $('.loading').show();
 
+            //Reset error messages
+            $('.error_message').text("");
+
+            var url = form.attr('action');
+
+            $.ajax({
+                type : "POST",
+                url : url,
+                cache: false,
+                data : form.serialize(),
+                beforeSend: function() {
+                    //Reset error messages
+                    form.find('.error').text('');
+                    $('.error_message').text("");
+                    $('.btn').attr('disabled', true);
+                    $('.loading').show();
+                },
+                complete: function (xhr,status) {
+                    $('.btn').attr('disabled', false);
+                    $('.loading').hide();
+                },
+                success: function(result) {
+                    $('.loading').hide();
+                    $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                    //window.location.href = "{{ route('ring-groups.index')}}";
+                },
+                error: function(error) {
+                    $('.loading').hide();
+                    $('.btn').attr('disabled', false);
+                    if(error.status == 422){
+                        if(error.responseJSON.errors) {
+                            $.each( error.responseJSON.errors, function( key, value ) {
+                                if (value != '') {
+                                    form.find('#'+key+'_err').text(value);
+                                    printErrorMsg(value);
+                                }
+                            });
+                        } else {
+                            printErrorMsg(error.responseJSON.message);
+                        }
+                    } else {
+                        printErrorMsg(error.responseJSON.message);
+                    }
+                }
+            })
+        });
     });
 </script>
 @endpush
