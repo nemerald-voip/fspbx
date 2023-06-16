@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
 use Illuminate\Support\Facades\Session;
+use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
 class DashboardController extends Controller
 {
@@ -105,32 +106,16 @@ class DashboardController extends Controller
         $data['faxes'] = Faxes::where('domain_uuid', $domain_id)
         ->count();
 
-        // $free = shell_exec('free');
-        // $free = (string)trim($free);
-        // $free_arr = explode("\n", $free);
-        // $mem = explode(" ", $free_arr[1]);
-        // $mem = array_filter($mem);
-        // $mem = array_merge($mem);
-        // $memory_usage = $mem[2]/$mem[1]*100;
+        // Get the current status of Horizon.
+        if (! $masters = app(MasterSupervisorRepository::class)->all()) {
+            $data['horizonStatus'] = 'inactive';
+        }
 
-        // $loads=sys_getloadavg();
-        // $core_nums=trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
-        // $load=$loads[0]/$core_nums;
-
-        // $cont = file('/proc/stat');
-        // $cpuloadtmp = explode(' ',$cont[0]);
-        // $cpuload0[0] = $cpuloadtmp[2] + $cpuloadtmp[4];
-        // $cpuload0[1] = $cpuloadtmp[2] + $cpuloadtmp[4]+ $cpuloadtmp[5];
-        // sleep(1);
-        // $cont = file('/proc/stat');
-        // $cpuloadtmp = explode(' ',$cont[0]);
-        // $cpuload1[0] = $cpuloadtmp[2] + $cpuloadtmp[4];
-        // $cpuload1[1] = $cpuloadtmp[2] + $cpuloadtmp[4]+ $cpuloadtmp[5];
-        // dd ($cpuload1[0] - $cpuload0[0])*100/($cpuload1[1] - $cpuload0[1]);
-
-        // $load = sys_getloadavg();
-		// $cpuload = $load[0];
-
+        if (!isset($data['horizonStatus'])) {
+            $data['horizonStatus'] =  collect($masters)->every(function ($master) {
+                return $master->status === 'paused';
+            }) ? 'paused' : 'running';
+        }
 
         //if superuser get registration status
         if (isSuperAdmin()) {
