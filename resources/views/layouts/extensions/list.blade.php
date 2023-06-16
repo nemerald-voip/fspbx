@@ -72,8 +72,10 @@
                 <td>
                     @if ($extension['registrations'])
                         {{-- <h6><span class="badge bg-success rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">&nbsp;&nbsp;&nbsp;</span></h6> --}}
-                        <a class="badge bg-success rounded-pill dropdown-toggle text-success" href="#"
-                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span></span></a>
+                        <a class="" href="#"
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-circle text-success"></i>
+                            </a>
                         <div class="dropdown-menu p-3">
                             <div class="card">
                                 <div class="card-body">
@@ -97,8 +99,8 @@
 
                         </div>
                     @else
-                        <h6><span class="badge bg-light rounded-pill">&nbsp;&nbsp;&nbsp;</span>
-                        </h6>
+                        <i class="mdi mdi-circle text-light"></i>
+                        
                     @endif
 
                 </td>
