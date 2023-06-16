@@ -22,23 +22,24 @@ class StoreRingGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /*'ring_group_extension' => [
+            'ring_group_extension' => [
                 'required',
-                'RingGroupExists:'.Session::get('domain_uuid')
+                'RingGroupUnique:'.Session::get('domain_uuid')
             ],
-            'ring_group_greeting' => [
+            /*'ring_group_greeting' => [
 
-            ],
+            ],*/
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
-            ]*/
+            ]
         ];
     }
 
     public function messages(): array
     {
         return [
-            'RingGroupExists' => 'This number is already used',
+            'ring_group_extension.required' => 'RingGroup number is required',
+            'ring_group_extension.RingGroupExists' => 'This number is already used',
         ];
     }
 }
