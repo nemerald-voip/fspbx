@@ -37,6 +37,7 @@ class RingGroupsController extends Controller
         $permissions['delete'] = userCheckPermission('ring_group_delete');
         $permissions['view'] = userCheckPermission('ring_group_view');
         $permissions['edit'] = userCheckPermission('ring_group_edit');
+        $permissions['add'] = userCheckPermission('ring_group_add');
         $data = [];
         $data['ringGroups'] = $ringGroups;
 
@@ -93,15 +94,25 @@ ring_group_destination_edit
      * Store a newly created resource in storage.
      *
      * @param  \App\Http\Requests\StoreRingGroupRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(StoreRingGroupRequest $request)
     {
-        $inputs = $request->validated();
+        $attributes = $request->validated();
 
-        var_dump($inputs);
+        $ringGroups = new RingGroups();
+        $ringGroups->fill([
+            'ring_group_name' => $attributes['ring_group_extension'],
+            'ring_group_extension' => $attributes['ring_group_extension'],
+            'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
+            'ring_group_strategy' => $attributes['ring_group_strategy']
+        ]);
+        $ringGroups->save();
+
         return response()->json([
-            'message' => 'User has been saved'
+            'status' => 'success',
+            'ring_group' => $ringGroups,
+            'message' => 'RingGroup has been created and assigned.'
         ]);
     }
 

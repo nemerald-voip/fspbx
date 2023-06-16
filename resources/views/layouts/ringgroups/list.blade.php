@@ -5,8 +5,14 @@
 @endsection
 
 @section('actionbar')
+    @if ($permissions['add'])
+        <a href="{{ route('ring-groups.create') }}" class="btn btn-success me-2">
+            <i class="uil uil-plus me-1"></i>
+            Add New
+        </a>
+    @endif
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger me-2 disabled">
+        <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger disabled">
             Delete Selected
         </a>
     @endif
