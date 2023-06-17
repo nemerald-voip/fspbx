@@ -22,16 +22,12 @@ class UpdateRingGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /*'ring_group_extension' => [
-                'required',
-                'RingGroupExists:'.Session::get('domain_uuid')
-            ],
-            'ring_group_greeting' => [
+            /*'ring_group_greeting' => [
 
-            ],
+            ],*/
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
-            ]*/
+            ]
         ];
     }
 

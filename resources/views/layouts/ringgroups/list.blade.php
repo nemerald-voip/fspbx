@@ -31,8 +31,8 @@
         <th>Name</th>
         <th>Extension</th>
         <th>Strategy</th>
-        <th>Description</th>
-        <th>Status</th>
+        <!--th>Description</th-->
+        <!--th>Status</th-->
         <th>Action</th>
     </tr>
 @endsection
@@ -60,18 +60,18 @@
                 <td>
                     {{ $ringGroup->ring_group_strategy }}
                 </td>
-                <td>
+                <!--td>
                     {{ $ringGroup->ring_group_description }}
-                </td>
-                <td>
+                </td-->
+                <!--td>
                     {{ $ringGroup->ring_group_enabled }}
-                </td>
+                </td-->
                 <td>
                     <div id="tooltip-container-actions">
                         @if ($permissions['edit'])
                         <a href="{{ route('ring-groups.edit', $ringGroup) }}" class="action-icon" title="Edit">
                             <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions"
-                               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit ring group"></i>
+                               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i>
                         </a>
                         @endif
                         @if ($permissions['delete'])
