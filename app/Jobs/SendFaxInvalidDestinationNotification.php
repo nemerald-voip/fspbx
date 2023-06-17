@@ -14,7 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Notifications\SendSlackFaxNotification;
+use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 class SendFaxInvalidDestinationNotification implements ShouldQueue
@@ -99,7 +99,7 @@ class SendFaxInvalidDestinationNotification implements ShouldQueue
             Log::alert($this->request['slack_message']);
 
             Notification::route('slack', env('SLACK_FAX_HOOK'))
-                ->notify(new SendSlackFaxNotification($this->request));
+                ->notify(new SendSlackNotification($this->request));
 
             Mail::to($this->request['FromFull']['Email'])->send(new FaxInvalidDestination($this->request));
 

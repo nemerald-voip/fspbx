@@ -14,7 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Notifications\SendSlackFaxNotification;
+use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 class SendFaxNotificationToSlack implements ShouldQueue
@@ -95,7 +95,7 @@ class SendFaxNotificationToSlack implements ShouldQueue
         Redis::throttle('slack')->allow(2)->every(1)->then(function () {
             
             Notification::route('slack', env('SLACK_FAX_HOOK'))
-                ->notify(new SendSlackFaxNotification($this->request));
+                ->notify(new SendSlackNotification($this->request));
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
