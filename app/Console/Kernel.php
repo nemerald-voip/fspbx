@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel
 
         // you’d like to see graphs of how your queues are doing, run this
         $schedule->command('horizon:snapshot')->everyFiveMinutes();
+
+        // Check Horizon status
+        $schedule->command('horizon:check-status')->everyTenMinutes();
     }
 
     /**
