@@ -80,7 +80,8 @@
                                                             <div class="mb-3">
                                                                 <label for="ring_group_extension" class="form-label">Ring Group number <span class="text-danger">*</span></label>
                                                                 <input class="form-control" type="text" placeholder="xxx" id="ring_group_extension"
-                                                                       name="ring_group_extension" value="{{ $ringGroup->ring_group_extension }}"/>
+                                                                       name="ring_group_extension" value="{{ $ringGroup->ring_group_extension }}"
+                                                                @if ($ringGroup->exists) readonly @endif />
                                                                 <div id="ring_group_extension_err" class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
