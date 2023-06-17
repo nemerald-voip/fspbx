@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\SlackMessage;
 
-class SendSlackFaxNotification extends Notification implements ShouldQueue
+class SendSlackNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
