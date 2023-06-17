@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
+use App\Models\Extensions;
 use App\Models\FaxQueues;
+use App\Models\IvrMenus;
 use App\Models\RingGroups;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -88,8 +90,20 @@ class RingGroupsController extends Controller
 
         $ringGroup = new RingGroups();
 
+        $follow_me_ring_my_phone_timeout = 0;
+        /*$follow_me_destinations = $extension->getFollowMeDestinations();
+        if($follow_me_destinations->count() > 0) {
+            if($follow_me_destinations[0]->follow_me_destination == $extension->extension) {
+                $follow_me_ring_my_phone_timeout = $follow_me_destinations[0]->follow_me_timeout;
+                unset($follow_me_destinations[0]);
+            }
+        }*/
+
         return view('layouts.ringgroups.createOrUpdate')
-            ->with('ringGroup', $ringGroup);
+            ->with('ringGroup', $ringGroup)
+            ->with('extensions', $this->getDestinationExtensions())
+            ->with('follow_me_ring_my_phone_timeout', $follow_me_ring_my_phone_timeout)
+            ->with('follow_me_destinations', []);
     }
 
     /**
@@ -142,8 +156,20 @@ class RingGroupsController extends Controller
             return redirect('/');
         }
 
+        $follow_me_ring_my_phone_timeout = 0;
+        /*$follow_me_destinations = $extension->getFollowMeDestinations();
+        if($follow_me_destinations->count() > 0) {
+            if($follow_me_destinations[0]->follow_me_destination == $extension->extension) {
+                $follow_me_ring_my_phone_timeout = $follow_me_destinations[0]->follow_me_timeout;
+                unset($follow_me_destinations[0]);
+            }
+        }*/
+
         return view('layouts.ringgroups.createOrUpdate')
-            ->with('ringGroup', $ringGroup);
+            ->with('ringGroup', $ringGroup)
+            ->with('extensions', $this->getDestinationExtensions())
+            ->with('follow_me_ring_my_phone_timeout', $follow_me_ring_my_phone_timeout)
+            ->with('follow_me_destinations', []);
     }
 
     /**
@@ -199,5 +225,32 @@ class RingGroupsController extends Controller
                 'message' => 'There was an error deleting this Ring Group'
             ]);
         }
+    }
+
+    private function getDestinationExtensions() {
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('extension')
+            ->get();
+        $ivrMenus = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('ivr_menu_extension')
+            ->get();
+        $ringGroups = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('ring_group_extension')
+            ->get();
+
+        /* NOTE: disabling voicemails as a call forward destination
+         * $voicemails = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+            ->orderBy('voicemail_id')
+            ->get();*/
+        return [
+            'Extensions' => $extensions,
+            'Ivr Menus' => $ivrMenus,
+            'Ring Groups' => $ringGroups,
+            //'Voicemails' => $voicemails
+        ];
     }
 }
