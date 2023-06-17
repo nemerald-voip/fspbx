@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Notifications\SendSlackFaxNotification;
+use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 class SendCommioSMS implements ShouldQueue

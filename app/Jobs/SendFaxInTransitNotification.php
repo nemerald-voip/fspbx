@@ -14,7 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Notifications\SendSlackFaxNotification;
+use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 class SendFaxInTransitNotification implements ShouldQueue
@@ -99,7 +99,7 @@ class SendFaxInTransitNotification implements ShouldQueue
                 $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['FromFull']['Email'] . ", To:" . $this->request['fax_destination'] ." is in progress\n";
                 
                 Notification::route('slack', env('SLACK_FAX_HOOK'))
-                    ->notify(new SendSlackFaxNotification($this->request));
+                    ->notify(new SendSlackNotification($this->request));
             }
 
             // Send email notification to user that fax is in transit
