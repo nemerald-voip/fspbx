@@ -14,7 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Notifications\SendSlackFaxNotification;
+use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 class SendFaxFailedNotification implements ShouldQueue
@@ -95,7 +95,7 @@ class SendFaxFailedNotification implements ShouldQueue
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
             
             Notification::route('slack', env('SLACK_FAX_HOOK'))
-                ->notify(new SendSlackFaxNotification($this->request));
+                ->notify(new SendSlackNotification($this->request));
 
             Mail::to($this->request['FromFull']['Email'])->send(new FaxFailed($this->request));
 
