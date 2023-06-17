@@ -56,6 +56,22 @@
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                 </a>
+                                <a class="nav-link" id="v-pills-callforward-tab" data-bs-toggle="pill" href="#v-pills-callforward" role="tab" aria-controls="v-pills-callforward"
+                                   aria-selected="false">
+                                    <i class="mdi mdi-settings-outline d-md-none d-block"></i>
+                                    <span class="d-none d-md-block">Call Forward
+                                        <span class="float-end text-end
+                                            forward_all_enabled_err_badge
+                                            forward_all_destination_err_badge
+                                            forward_busy_enabled_err_badge
+                                            forward_busy_destination_err_badge
+                                            forward_no_answer_enabled_err_badge
+                                            forward_no_answer_destination_err_badge
+                                            forward_user_not_registered_enabled_err_badge
+                                            forward_user_not_registered_destination_err_badge
+                                            " hidden><span class="badge badge-danger-lighten">error</span></span>
+                                    </span>
+                                </a>
                             </div>
                         </div> <!-- end col-->
 
@@ -126,6 +142,269 @@
 
                                         </div> <!-- end row-->
 
+                                    </div>
+                                    <div class="tab-pane fade" id="v-pills-callforward" role="tabpanel" aria-labelledby="v-pills-callforward-tab">
+                                        <!-- Settings Content-->
+                                        <div class="tab-pane show active">
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Forward all calls</h4>
+                                                    <p class="text-muted mb-2">Ensure customers and colleagues can reach you, regardless of your physical location. Automatically redirect all incoming calls to another phone number of your choice.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_all_enabled" value="false">
+                                                            <input type="checkbox" id="forward_all_enabled" value="true" name="forward_all_enabled" data-option="forward_all" class="forward_checkbox"
+                                                                   @if ($ringGroup->forward_all_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_all_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_all_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_all_phone_number" class="row @if($ringGroup->forward_all_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <p>
+                                                            @include('layouts.partials.destinationSelector', [
+                                                                                'type' => 'forward',
+                                                                                'id' => 'all',
+                                                                                'value' => $ringGroup->forward_all_destination,
+                                                                                'extensions' => $extensions
+                                                            ])
+                                                            <div class="text-danger forward_all_destination_err error_message"></div>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">When user is busy</h4>
+                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if the phone is busy or Do Not Disturb is enabled.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_busy_enabled" value="false">
+                                                            <input type="checkbox" id="forward_busy_enabled" value="true" name="forward_busy_enabled" data-option="forward_busy" class="forward_checkbox"
+                                                                   @if ($ringGroup->forward_busy_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_busy_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_busy_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_busy_phone_number" class="row @if($ringGroup->forward_busy_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <p>
+                                                            @include('layouts.partials.destinationSelector', [
+                                                                                'type' => 'forward',
+                                                                                'id' => 'busy',
+                                                                                'value' => $ringGroup->forward_busy_destination,
+                                                                                'extensions' => $extensions
+                                                            ])
+                                                            <div class="text-danger forward_busy_destination_err error_message"></div>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">When user does not answer the call</h4>
+                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no answer.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_no_answer_enabled" value="false">
+                                                            <input type="checkbox" id="forward_no_answer_enabled" value="true" name="forward_no_answer_enabled" data-option="forward_no_answer" class="forward_checkbox"
+                                                                   @if ($ringGroup->forward_no_answer_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_no_answer_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_no_answer_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_no_answer_phone_number" class="row @if($ringGroup->forward_no_answer_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <p>
+                                                            @include('layouts.partials.destinationSelector', [
+                                                                                'type' => 'forward',
+                                                                                'id' => 'no_answer',
+                                                                                'value' => $ringGroup->forward_no_answer_destination,
+                                                                                'extensions' => $extensions
+                                                            ])
+                                                            <div class="text-danger forward_no_answer_destination_err error_message"></div>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">When internet connection is down</h4>
+                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no user registered.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="forward_user_not_registered_enabled" value="false">
+                                                            <input type="checkbox" id="forward_user_not_registered_enabled" value="true" name="forward_user_not_registered_enabled" data-option="forward_user_not_registered" class="forward_checkbox"
+                                                                   @if ($ringGroup->forward_user_not_registered_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="forward_user_not_registered_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger forward_user_not_registered_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="forward_user_not_registered_phone_number" class="row @if($ringGroup->forward_user_not_registered_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <p>
+                                                            @include('layouts.partials.destinationSelector', [
+                                                                                'type' => 'forward',
+                                                                                'id' => 'user_not_registered',
+                                                                                'value' => $ringGroup->forward_user_not_registered_destination,
+                                                                                'extensions' => $extensions
+                                                            ])
+                                                            <div class="text-danger forward_not_registered_destination_err error_message"></div>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Sequential ring</h4>
+                                                    <p class="text-muted mb-2">List and determine the order of up to 10 phone numbers or SIP URI addresses you would like to ring after your primary phone when you receive a call.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="follow_me_enabled" value="false">
+                                                            <input type="checkbox" id="follow_me_enabled" value="true" name="follow_me_enabled" data-option="follow_me" class="forward_checkbox"
+                                                                   @if ($ringGroup->follow_me_enabled == "true") checked @endif
+                                                                   data-switch="primary"/>
+                                                            <label for="follow_me_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger follow_me_enabled_err error_message"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="follow_me_phone_number" class="row @if($ringGroup->follow_me_enabled == "false") d-none @endif">
+                                                        <div class="col-md-12">
+                                                            <div class="row mb-3">
+                                                                <div class="col-5">
+                                                                    <label class="form-label" style="padding-top: 10px;">Ring my main phone first for </label>
+                                                                </div>
+                                                                <div class="col-2">
+                                                                    <select data-toggle="select2" title="Ring my main phone first" name="follow_me_ring_my_phone_timeout">
+                                                                        <option value="">Disabled</option>
+                                                                        @for ($i = 1; $i < 20; $i++)
+                                                                            <option value="{{ $i * 5 }}" @if ($follow_me_ring_my_phone_timeout == $i*5) selected @endif>
+                                                                                {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                            </option>
+                                                                        @endfor
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row mb-3">
+                                                                <div class="col-5">
+                                                                    <label class="form-label" style="padding-top: 2px;">Continue ringing sequence if main number is busy</label>
+                                                                </div>
+                                                                <div class="col-2">
+                                                                    <input type="hidden" name="follow_me_ignore_busy" value="false">
+                                                                    <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
+                                                                           {{--
+                                                                           @if ($ringGroup->getFollowMe() && $ringGroup->getFollowMe()->follow_me_ignore_busy == "false") checked @endif
+                                                                           --}}
+                                                                           data-switch="primary">
+                                                                    <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <h4 class="mt-2">Sequential order</h4>
+                                                                <p class="text-muted mb-2">You can drag-n-drop lines to adjust current sequential.</p>
+                                                                <table class="table table-centered table-responsive table-sm mb-0 sequential-table">
+                                                                    <thead>
+                                                                    <tr>
+                                                                        <th style="width: 20px;">Order</th>
+                                                                        <th>Destination</th>
+                                                                        <th style="width: 150px">Delay</th>
+                                                                        <th style="width: 150px">Number of rings</th>
+                                                                        <th style="width: 130px;">Answer confirmation required</th>
+                                                                        <th>Action</th>
+                                                                    </tr>
+                                                                    </thead>
+                                                                    @php $b = 0 @endphp
+                                                                    <tbody id="destination_sortable">
+                                                                    @foreach($follow_me_destinations as $destination)
+                                                                        <tr id="row{{$destination->follow_me_destination_uuid}}">
+                                                                            @php $b++ @endphp
+                                                                            <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
+                                                                            <td>
+                                                                                @include('layouts.partials.destinationSelector', [
+                                                                                    'type' => 'follow_me_destinations',
+                                                                                    'id' => $destination->follow_me_destination_uuid,
+                                                                                    'value' => $destination->follow_me_destination,
+                                                                                    'extensions' => $extensions
+                                                                                ])
+                                                                            </td>
+                                                                            <td>
+                                                                                <select id="destination_delay_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][delay]">
+                                                                                    @for ($i = 0; $i < 20; $i++)
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_delay == $i*5) selected @endif>
+                                                                                            {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                                        </option>
+                                                                                    @endfor
+                                                                                </select>
+                                                                            </td>
+                                                                            <td>
+                                                                                <select id="destination_timeout_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][timeout]">
+                                                                                    @for ($i = 1; $i < 21; $i++)
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_timeout == $i*5) selected @endif>
+                                                                                            {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
+                                                                                        </option>
+                                                                                    @endfor
+                                                                                </select>
+                                                                            </td>
+                                                                            <td>
+                                                                                <input type="hidden" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
+                                                                                <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]"
+                                                                                       @if ($destination->follow_me_prompt == "1") checked @endif
+                                                                                       data-switch="primary"/>
+                                                                                <label for="destination_prompt_{{$destination->follow_me_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div id="tooltip-container-actions">
+                                                                                    <a href="javascript:confirmDeleteDestinationAction('row{{$destination->follow_me_destination_uuid}}');" class="action-icon">
+                                                                                        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                    </tbody>
+                                                                </table>
+                                                                {{--
+                                                                <div id="addDestinationBar" class="my-1" @if($ringGroup->getFollowMeDestinations()->count() >= 10) style="display: none;" @endif>
+                                                                    <a href="javascript:addDestinationAction(this);" class="btn btn-success">
+                                                                        <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
+                                                                    </a>
+                                                                </div>
+                                                                --}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <h4 class="mb-2 mt-0">Do not disturb</h4>
+                                                    <p class="text-muted mb-2">Avoid calls to the extension.</p>
+                                                    <div class="row">
+                                                        <div class="mb-2">
+                                                            <input type="hidden" name="do_not_disturb" value="false">
+                                                            <input type="checkbox" id="do_not_disturb" value="true" name="do_not_disturb"
+                                                                   @if ($ringGroup->do_not_disturb == "true") checked @endif
+                                                                   data-switch="danger"/>
+                                                            <label for="do_not_disturb" data-on-label="On" data-off-label="Off"></label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- End Settings Content-->
                                     </div>
                                 </div> <!-- end tab-content-->
                             </div> <!-- end col-->
