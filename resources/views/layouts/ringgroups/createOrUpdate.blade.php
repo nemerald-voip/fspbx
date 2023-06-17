@@ -176,6 +176,7 @@
                                                 </div>
                                             </div>
                                             <hr />
+                                            {{--
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">When user is busy</h4>
@@ -206,6 +207,8 @@
                                                 </div>
                                             </div>
                                             <hr />
+                                            --}}
+                                            {{--
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">When user does not answer the call</h4>
@@ -236,6 +239,8 @@
                                                 </div>
                                             </div>
                                             <hr />
+                                            --}}
+                                            {{--
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">When internet connection is down</h4>
@@ -266,21 +271,22 @@
                                                 </div>
                                             </div>
                                             <hr />
+                                            --}}
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">Sequential ring</h4>
                                                     <p class="text-muted mb-2">List and determine the order of up to 10 phone numbers or SIP URI addresses you would like to ring after your primary phone when you receive a call.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
-                                                            <input type="hidden" name="follow_me_enabled" value="false">
-                                                            <input type="checkbox" id="follow_me_enabled" value="true" name="follow_me_enabled" data-option="follow_me" class="forward_checkbox"
-                                                                   @if ($ringGroup->follow_me_enabled == "true") checked @endif
+                                                            <input type="hidden" name="ring_group_follow_me_enabled" value="false">
+                                                            <input type="checkbox" id="ring_group_follow_me_enabled" value="true" name="ring_group_follow_me_enabled" data-option="ring_group_follow_me" class="forward_checkbox"
+                                                                   @if ($ringGroup->ring_group_follow_me_enabled == "true") checked @endif
                                                                    data-switch="primary"/>
-                                                            <label for="follow_me_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger follow_me_enabled_err error_message"></div>
+                                                            <label for="ring_group_follow_me_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger ring_group_follow_me_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="follow_me_phone_number" class="row @if($ringGroup->follow_me_enabled == "false") d-none @endif">
+                                                    <div id="ring_group_follow_me_phone_number" class="row @if($ringGroup->ring_group_follow_me_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <div class="row mb-3">
                                                                 <div class="col-5">
@@ -295,20 +301,6 @@
                                                                             </option>
                                                                         @endfor
                                                                     </select>
-                                                                </div>
-                                                            </div>
-                                                            <div class="row mb-3">
-                                                                <div class="col-5">
-                                                                    <label class="form-label" style="padding-top: 2px;">Continue ringing sequence if main number is busy</label>
-                                                                </div>
-                                                                <div class="col-2">
-                                                                    <input type="hidden" name="follow_me_ignore_busy" value="false">
-                                                                    <input type="checkbox" id="follow_me_ignore_busy" name="follow_me_ignore_busy" value="true"
-                                                                           {{--
-                                                                           @if ($ringGroup->getFollowMe() && $ringGroup->getFollowMe()->follow_me_ignore_busy == "false") checked @endif
-                                                                           --}}
-                                                                           data-switch="primary">
-                                                                    <label for="follow_me_ignore_busy" data-on-label="On" data-off-label="Off"></label>
                                                                 </div>
                                                             </div>
                                                             <div class="row">
@@ -375,30 +367,12 @@
                                                                     @endforeach
                                                                     </tbody>
                                                                 </table>
-                                                                {{--
-                                                                <div id="addDestinationBar" class="my-1" @if($ringGroup->getFollowMeDestinations()->count() >= 10) style="display: none;" @endif>
+                                                                <div id="addDestinationBar" class="my-1" @if($ringGroup->getGroupDestinations()->count() >= 10) style="display: none;" @endif>
                                                                     <a href="javascript:addDestinationAction(this);" class="btn btn-success">
                                                                         <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
                                                                     </a>
                                                                 </div>
-                                                                --}}
                                                             </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr />
-                                            <div class="row">
-                                                <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Do not disturb</h4>
-                                                    <p class="text-muted mb-2">Avoid calls to the extension.</p>
-                                                    <div class="row">
-                                                        <div class="mb-2">
-                                                            <input type="hidden" name="do_not_disturb" value="false">
-                                                            <input type="checkbox" id="do_not_disturb" value="true" name="do_not_disturb"
-                                                                   @if ($ringGroup->do_not_disturb == "true") checked @endif
-                                                                   data-switch="danger"/>
-                                                            <label for="do_not_disturb" data-on-label="On" data-off-label="Off"></label>
                                                         </div>
                                                     </div>
                                                 </div>

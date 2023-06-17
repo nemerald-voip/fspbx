@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 
-class RingGroups extends Model
+class RingGroupsDestinations extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_ring_groups";
+    protected $table = "v_ring_group_destinations";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'ring_group_uuid';
+    protected $primaryKey = 'ring_group_destination_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -24,10 +24,17 @@ class RingGroups extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'ring_group_extension',
-        'ring_group_greeting',
-        'ring_group_strategy',
-        'ring_group_name'
+        'ring_group_destination_uuid',
+        'domain_uuid',
+        'ring_group_uuid',
+        'destination_number',
+        'destination_delay',
+        'destination_timeout',
+        'destination_prompt',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user',
     ];
 
     public function __construct(array $attributes = [])
@@ -36,23 +43,6 @@ class RingGroups extends Model
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->attributes['ring_group_context'] = Session::get('domain_name');
-        $this->attributes['ring_group_enabled'] = "true";
         $this->fill($attributes);
-    }
-
-    public function getId()
-    {
-        return $this->ring_group_extension;
-    }
-
-    public function getName()
-    {
-        return $this->ring_group_extension.' - '.$this->ring_group_name;
-    }
-
-    public function getGroupDestinations()
-    {
-        return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->get();
     }
 }
