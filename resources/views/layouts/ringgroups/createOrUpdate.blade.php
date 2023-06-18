@@ -154,7 +154,7 @@
                                                             <div class="text-danger ring_group_forward_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="ring_group_forward_phone_number" class="row @if($ringGroup->ring_group_forward_enabled == "false") d-none @endif">
+                                                    <div id="ring_group_forward_phone_number" class="row @if($ringGroup->ring_group_forward_enabled !== "true") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
                                                             @include('layouts.partials.destinationSelector', [
@@ -170,102 +170,6 @@
                                                 </div>
                                             </div>
                                             <hr />
-                                            {{--
-                                            <div class="row">
-                                                <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">When user is busy</h4>
-                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if the phone is busy or Do Not Disturb is enabled.</p>
-                                                    <div class="row">
-                                                        <div class="mb-2">
-                                                            <input type="hidden" name="forward_busy_enabled" value="false">
-                                                            <input type="checkbox" id="forward_busy_enabled" value="true" name="forward_busy_enabled" data-option="forward_busy" class="forward_checkbox"
-                                                                   @if ($ringGroup->forward_busy_enabled == "true") checked @endif
-                                                                   data-switch="primary"/>
-                                                            <label for="forward_busy_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger forward_busy_enabled_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div id="forward_busy_phone_number" class="row @if($ringGroup->forward_busy_enabled == "false") d-none @endif">
-                                                        <div class="col-md-12">
-                                                            <p>
-                                                            @include('layouts.partials.destinationSelector', [
-                                                                                'type' => 'forward',
-                                                                                'id' => 'busy',
-                                                                                'value' => $ringGroup->forward_busy_destination,
-                                                                                'extensions' => $extensions
-                                                            ])
-                                                            <div class="text-danger forward_busy_destination_err error_message"></div>
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr />
-                                            --}}
-                                            {{--
-                                            <div class="row">
-                                                <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">When user does not answer the call</h4>
-                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no answer.</p>
-                                                    <div class="row">
-                                                        <div class="mb-2">
-                                                            <input type="hidden" name="forward_no_answer_enabled" value="false">
-                                                            <input type="checkbox" id="forward_no_answer_enabled" value="true" name="forward_no_answer_enabled" data-option="forward_no_answer" class="forward_checkbox"
-                                                                   @if ($ringGroup->forward_no_answer_enabled == "true") checked @endif
-                                                                   data-switch="primary"/>
-                                                            <label for="forward_no_answer_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger forward_no_answer_enabled_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div id="forward_no_answer_phone_number" class="row @if($ringGroup->forward_no_answer_enabled == "false") d-none @endif">
-                                                        <div class="col-md-12">
-                                                            <p>
-                                                            @include('layouts.partials.destinationSelector', [
-                                                                                'type' => 'forward',
-                                                                                'id' => 'no_answer',
-                                                                                'value' => $ringGroup->forward_no_answer_destination,
-                                                                                'extensions' => $extensions
-                                                            ])
-                                                            <div class="text-danger forward_no_answer_destination_err error_message"></div>
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr />
-                                            --}}
-                                            {{--
-                                            <div class="row">
-                                                <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">When internet connection is down</h4>
-                                                    <p class="text-muted mb-2">Automatically redirect incoming calls to a different phone number if no user registered.</p>
-                                                    <div class="row">
-                                                        <div class="mb-2">
-                                                            <input type="hidden" name="forward_user_not_registered_enabled" value="false">
-                                                            <input type="checkbox" id="forward_user_not_registered_enabled" value="true" name="forward_user_not_registered_enabled" data-option="forward_user_not_registered" class="forward_checkbox"
-                                                                   @if ($ringGroup->forward_user_not_registered_enabled == "true") checked @endif
-                                                                   data-switch="primary"/>
-                                                            <label for="forward_user_not_registered_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger forward_user_not_registered_enabled_err error_message"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div id="forward_user_not_registered_phone_number" class="row @if($ringGroup->forward_user_not_registered_enabled == "false") d-none @endif">
-                                                        <div class="col-md-12">
-                                                            <p>
-                                                            @include('layouts.partials.destinationSelector', [
-                                                                                'type' => 'forward',
-                                                                                'id' => 'user_not_registered',
-                                                                                'value' => $ringGroup->forward_user_not_registered_destination,
-                                                                                'extensions' => $extensions
-                                                            ])
-                                                            <div class="text-danger forward_not_registered_destination_err error_message"></div>
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr />
-                                            --}}
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">Sequential ring</h4>
