@@ -90,20 +90,20 @@ class RingGroupsController extends Controller
 
         $ringGroup = new RingGroups();
 
-        $follow_me_ring_my_phone_timeout = 0;
-        $follow_me_destinations = $ringGroup->getGroupDestinations();
-        if($follow_me_destinations->count() > 0) {
-            if($follow_me_destinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
-                $follow_me_ring_my_phone_timeout = $follow_me_destinations[0]->destination_timeout;
-                unset($follow_me_destinations[0]);
+        $ringGroupRingMyPhoneTimeout = 0;
+        $ringGroupDestinations = $ringGroup->getGroupDestinations();
+        if($ringGroupDestinations->count() > 0) {
+            if($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
+                $ringGroupDestinations = $ringGroupDestinations[0]->destination_timeout;
+                unset($ringGroupDestinations[0]);
             }
         }
 
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)
             ->with('extensions', $this->getDestinationExtensions())
-            ->with('follow_me_ring_my_phone_timeout', $follow_me_ring_my_phone_timeout)
-            ->with('follow_me_destinations', $follow_me_destinations);
+            ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
+            ->with('ringGroupDestinations', $ringGroupDestinations);
     }
 
     /**
@@ -156,20 +156,20 @@ class RingGroupsController extends Controller
             return redirect('/');
         }
 
-        $follow_me_ring_my_phone_timeout = 0;
-        $follow_me_destinations = $ringGroup->getGroupDestinations();
-        if($follow_me_destinations->count() > 0) {
-            if($follow_me_destinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
-                $follow_me_ring_my_phone_timeout = $follow_me_destinations[0]->destination_timeout;
-                unset($follow_me_destinations[0]);
+        $ringGroupRingMyPhoneTimeout = 0;
+        $ringGroupDestinations = $ringGroup->getGroupDestinations();
+        if($ringGroupDestinations->count() > 0) {
+            if($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
+                $ringGroupRingMyPhoneTimeout = $ringGroupDestinations[0]->destination_timeout;
+                unset($ringGroupDestinations[0]);
             }
         }
 
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)
             ->with('extensions', $this->getDestinationExtensions())
-            ->with('follow_me_ring_my_phone_timeout', $follow_me_ring_my_phone_timeout)
-            ->with('follow_me_destinations', $follow_me_destinations);
+            ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
+            ->with('ringGroupDestinations', $ringGroupDestinations);
     }
 
     /**

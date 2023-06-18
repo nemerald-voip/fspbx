@@ -280,17 +280,17 @@
                                                             <div class="text-danger ring_group_follow_me_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="ring_group_follow_me_phone_number" class="row @if($ringGroup->ring_group_follow_me_enabled == "false") d-none @endif">
+                                                    <div id="ring_group_follow_me_phone_number" class="row @if($ringGroup->ring_group_follow_me_enabled !== "true") d-none @endif">
                                                         <div class="col-md-12">
                                                             <div class="row mb-3">
                                                                 <div class="col-5">
                                                                     <label class="form-label" style="padding-top: 10px;">Ring my main phone first for </label>
                                                                 </div>
                                                                 <div class="col-2">
-                                                                    <select data-toggle="select2" title="Ring my main phone first" name="follow_me_ring_my_phone_timeout">
+                                                                    <select data-toggle="select2" title="Ring my main phone first" name="ring_group_ring_my_phone_timeout">
                                                                         <option value="">Disabled</option>
                                                                         @for ($i = 1; $i < 20; $i++)
-                                                                            <option value="{{ $i * 5 }}" @if ($follow_me_ring_my_phone_timeout == $i*5) selected @endif>
+                                                                            <option value="{{ $i * 5 }}" @if ($ringGroupRingMyPhoneTimeout == $i*5) selected @endif>
                                                                                 {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
                                                                             </option>
                                                                         @endfor
@@ -313,7 +313,7 @@
                                                                     </thead>
                                                                     @php $b = 0 @endphp
                                                                     <tbody id="destination_sortable">
-                                                                    @foreach($follow_me_destinations as $destination)
+                                                                    @foreach($ringGroupDestinations as $destination)
                                                                         <tr id="row{{$destination->ring_group_destination_uuid}}">
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
