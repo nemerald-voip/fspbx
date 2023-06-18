@@ -61,14 +61,8 @@
                                     <i class="mdi mdi-settings-outline d-md-none d-block"></i>
                                     <span class="d-none d-md-block">Call Forward
                                         <span class="float-end text-end
-                                            forward_all_enabled_err_badge
-                                            forward_all_destination_err_badge
-                                            forward_busy_enabled_err_badge
-                                            forward_busy_destination_err_badge
-                                            forward_no_answer_enabled_err_badge
-                                            forward_no_answer_destination_err_badge
-                                            forward_user_not_registered_enabled_err_badge
-                                            forward_user_not_registered_destination_err_badge
+                                            ring_group_forward_enabled_err_badge
+                                            ring_group_forward_destination_err_badge
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                 </a>
@@ -148,28 +142,28 @@
                                         <div class="tab-pane show active">
                                             <div class="row">
                                                 <div class="col-lg-12">
-                                                    <h4 class="mb-2 mt-0">Forward all calls</h4>
+                                                    <h4 class="mb-2 mt-0">Forward calls</h4>
                                                     <p class="text-muted mb-2">Ensure customers and colleagues can reach you, regardless of your physical location. Automatically redirect all incoming calls to another phone number of your choice.</p>
                                                     <div class="row">
                                                         <div class="mb-2">
-                                                            <input type="hidden" name="forward_all_enabled" value="false">
-                                                            <input type="checkbox" id="forward_all_enabled" value="true" name="forward_all_enabled" data-option="forward_all" class="forward_checkbox"
-                                                                   @if ($ringGroup->forward_all_enabled == "true") checked @endif
+                                                            <input type="hidden" name="ring_group_forward_enabled" value="false">
+                                                            <input type="checkbox" id="ring_group_forward_enabled" value="true" name="ring_group_forward_enabled" data-option="ring_group_forward" class="forward_checkbox"
+                                                                   @if ($ringGroup->ring_group_forward_enabled == "true") checked @endif
                                                                    data-switch="primary"/>
-                                                            <label for="forward_all_enabled" data-on-label="On" data-off-label="Off"></label>
-                                                            <div class="text-danger forward_all_enabled_err error_message"></div>
+                                                            <label for="ring_group_forward_enabled" data-on-label="On" data-off-label="Off"></label>
+                                                            <div class="text-danger ring_group_forward_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_all_phone_number" class="row @if($ringGroup->forward_all_enabled == "false") d-none @endif">
+                                                    <div id="ring_group_forward_phone_number" class="row @if($ringGroup->ring_group_forward_enabled == "false") d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
                                                             @include('layouts.partials.destinationSelector', [
-                                                                                'type' => 'forward',
+                                                                                'type' => 'ring_group_forward',
                                                                                 'id' => 'all',
-                                                                                'value' => $ringGroup->forward_all_destination,
+                                                                                'value' => $ringGroup->ring_group_forward_destination,
                                                                                 'extensions' => $extensions
                                                             ])
-                                                            <div class="text-danger forward_all_destination_err error_message"></div>
+                                                            <div class="text-danger ring_group_forward_destination_err error_message"></div>
                                                             </p>
                                                         </div>
                                                     </div>
@@ -320,45 +314,45 @@
                                                                     @php $b = 0 @endphp
                                                                     <tbody id="destination_sortable">
                                                                     @foreach($follow_me_destinations as $destination)
-                                                                        <tr id="row{{$destination->follow_me_destination_uuid}}">
+                                                                        <tr id="row{{$destination->ring_group_destination_uuid}}">
                                                                             @php $b++ @endphp
                                                                             <td class="drag-handler"><i class="mdi mdi-drag"></i> <span>{{ $b }}</span></td>
                                                                             <td>
                                                                                 @include('layouts.partials.destinationSelector', [
-                                                                                    'type' => 'follow_me_destinations',
-                                                                                    'id' => $destination->follow_me_destination_uuid,
-                                                                                    'value' => $destination->follow_me_destination,
+                                                                                    'type' => 'ring_group_destinations',
+                                                                                    'id' => $destination->ring_group_destination_uuid,
+                                                                                    'value' => $destination->destination_number,
                                                                                     'extensions' => $extensions
                                                                                 ])
                                                                             </td>
                                                                             <td>
-                                                                                <select id="destination_delay_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][delay]">
+                                                                                <select id="destination_delay_{{$destination->ring_group_destination_uuid}}" name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][delay]">
                                                                                     @for ($i = 0; $i < 20; $i++)
-                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_delay == $i*5) selected @endif>
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->destination_delay == $i*5) selected @endif>
                                                                                             {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
                                                                                         </option>
                                                                                     @endfor
                                                                                 </select>
                                                                             </td>
                                                                             <td>
-                                                                                <select id="destination_timeout_{{$destination->follow_me_destination_uuid}}" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][timeout]">
+                                                                                <select id="destination_timeout_{{$destination->ring_group_destination_uuid}}" name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][timeout]">
                                                                                     @for ($i = 1; $i < 21; $i++)
-                                                                                        <option value="{{ $i * 5 }}" @if ($destination->follow_me_timeout == $i*5) selected @endif>
+                                                                                        <option value="{{ $i * 5 }}" @if ($destination->destination_timeout == $i*5) selected @endif>
                                                                                             {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec
                                                                                         </option>
                                                                                     @endfor
                                                                                 </select>
                                                                             </td>
                                                                             <td>
-                                                                                <input type="hidden" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]" value="false">
-                                                                                <input type="checkbox" id="destination_prompt_{{$destination->follow_me_destination_uuid}}" value="true" name="follow_me_destinations[{{$destination->follow_me_destination_uuid}}][prompt]"
-                                                                                       @if ($destination->follow_me_prompt == "1") checked @endif
+                                                                                <input type="hidden" name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][prompt]" value="false">
+                                                                                <input type="checkbox" id="destination_prompt_{{$destination->ring_group_destination_uuid}}" value="true" name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][prompt]"
+                                                                                       @if ($destination->destination_prompt == "1") checked @endif
                                                                                        data-switch="primary"/>
-                                                                                <label for="destination_prompt_{{$destination->follow_me_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
+                                                                                <label for="destination_prompt_{{$destination->ring_group_destination_uuid}}" data-on-label="On" data-off-label="Off"></label>
                                                                             </td>
                                                                             <td>
                                                                                 <div id="tooltip-container-actions">
-                                                                                    <a href="javascript:confirmDeleteDestinationAction('row{{$destination->follow_me_destination_uuid}}');" class="action-icon">
+                                                                                    <a href="javascript:confirmDeleteDestinationAction('row{{$destination->ring_group_destination_uuid}}');" class="action-icon">
                                                                                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                                                                                     </a>
                                                                                 </div>
@@ -397,10 +391,46 @@
 @endsection
 
 @push('scripts')
-
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        .input-group > .select2-container {
+            width: auto !important;
+            flex: 1 1 auto;
+        }
+        .select2-container--open {
+            z-index:10000;
+        }
+        /*
+        @media (min-width: 576px) {
+            #ForwardDestinationModal > .modal-dialog {
+                max-width: 800px;
+            }
+        }*/
+        .drag-handler {
+            cursor: all-scroll;
+        }
+        #addDestinationBar {
+            width: 75px;
+            text-align: center;
+        }
+        .destination_wrapper {
+            width: 415px;
+        }
+        @media (max-width: 1724px) {
+            .sequential-table {
+                width: 100%;
+            }
+            .sequential-table td .destination_wrapper {
+                width: auto !important;
+            }
+        }
+    </style>
 <script>
     $(document).ready(function() {
         const form = $('#ringGroupForm');
+
+        applyDestinationSelect2()
+
         $('#submitFormButton').on('click', function(e) {
             e.preventDefault();
             $('.loading').show();
@@ -451,6 +481,214 @@
                 }
             })
         });
+
+        $(document).on('click', '.forward_checkbox', function(e) {
+            var checkbox = $(this);
+            var cname = checkbox.data('option');
+            console.log(cname)
+            if (checkbox.is(':checked')) {
+                $('#' + cname + '_phone_number').removeClass('d-none');
+            } else {
+                $('#' + cname + '_phone_number').addClass('d-none');
+                $('#' + cname + '_phone_number').find('.mx-1').find('select').val('internal');
+                $('#' + cname + '_phone_number').find('.mx-1').find('select').trigger('change');
+            }
+        });
+
+        let sortable = new Sortable(document.getElementById('destination_sortable'), {
+            delay: 0, // time in milliseconds to define when the sorting should start
+            delayOnTouchOnly: false, // only delay if user is using touch
+            touchStartThreshold: 0, // px, how many pixels the point should move before cancelling a delayed drag event
+            disabled: false, // Disables the sortable if set to true.
+            store: null,  // @see Store
+            animation: 150,  // ms, animation speed moving items when sorting, `0` — without animation
+            easing: "cubic-bezier(1, 0, 0, 1)", // Easing for animation. Defaults to null. See https://easings.net/ for examples.
+            handle: ".drag-handler",  // Drag handle selector within list items
+            filter: ".ignore-elements",  // Selectors that do not lead to dragging (String or Function)
+            preventOnFilter: true, // Call `event.preventDefault()` when triggered `filter`
+
+            ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+            chosenClass: "sortable-chosen",  // Class name for the chosen item
+            dragClass: "sortable-drag",  // Class name for the dragging item
+
+            swapThreshold: 1, // Threshold of the swap zone
+            invertSwap: false, // Will always use inverted swap zone if set to true
+            invertedSwapThreshold: 1, // Threshold of the inverted swap zone (will be set to swapThreshold value by default)
+            direction: 'vertical', // Direction of Sortable (will be detected automatically if not given)
+
+            forceFallback: false,  // ignore the HTML5 DnD behaviour and force the fallback to kick in
+
+            fallbackClass: "sortable-fallback",  // Class name for the cloned DOM Element when using forceFallback
+            fallbackOnBody: false,  // Appends the cloned DOM Element into the Document's Body
+            fallbackTolerance: 0, // Specify in pixels how far the mouse should move before it's considered as a drag.
+
+            dragoverBubble: false,
+            removeCloneOnHide: true, // Remove the clone element when it is not showing, rather than just hiding it
+            emptyInsertThreshold: 5, // px, distance mouse must be from empty sortable to insert drag element into it
+
+
+            setData: function (/** DataTransfer */dataTransfer, /** HTMLElement*/dragEl) {
+                dataTransfer.setData('Text', dragEl.textContent); // `dataTransfer` object of HTML5 DragEvent
+            },
+
+            // Element is chosen
+            onChoose: function (/**Event*/evt) {
+                evt.oldIndex;  // element index within parent
+            },
+
+            // Element is unchosen
+            onUnchoose: function(/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Element dragging started
+            onStart: function (/**Event*/evt) {
+                evt.oldIndex;  // element index within parent
+            },
+
+            // Element dragging ended
+            onEnd: function (/**Event*/evt) {
+                var itemEl = evt.item;  // dragged HTMLElement
+                evt.to;    // target list
+                evt.from;  // previous list
+                evt.oldIndex;  // element's old index within old parent
+                evt.newIndex;  // element's new index within new parent
+                evt.oldDraggableIndex; // element's old index within old parent, only counting draggable elements
+                evt.newDraggableIndex; // element's new index within new parent, only counting draggable elements
+                evt.clone // the clone element
+                evt.pullMode;  // when item is in another sortable: `"clone"` if cloning, `true` if moving
+                updateDestinationOrder()
+            },
+
+            // Element is dropped into the list from another list
+            onAdd: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Changed sorting within list
+            onUpdate: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Called by any change to the list (add / update / remove)
+            onSort: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Element is removed from the list into another list
+            onRemove: function (/**Event*/evt) {
+                // same properties as onEnd
+            },
+
+            // Attempt to drag a filtered element
+            onFilter: function (/**Event*/evt) {
+                var itemEl = evt.item;  // HTMLElement receiving the `mousedown|tapstart` event.
+            },
+
+            // Event when you move an item in the list or between lists
+            onMove: function (/**Event*/evt, /**Event*/originalEvent) {
+                // Example: https://jsbin.com/nawahef/edit?js,output
+                evt.dragged; // dragged HTMLElement
+                evt.draggedRect; // DOMRect {left, top, right, bottom}
+                evt.related; // HTMLElement on which have guided
+                evt.relatedRect; // DOMRect
+                evt.willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
+                originalEvent.clientY; // mouse position
+                // return false; — for cancel
+                // return -1; — insert before target
+                // return 1; — insert after target
+                // return true; — keep default insertion point based on the direction
+                // return void; — keep default insertion point based on the direction
+            },
+
+            // Called when dragging element changes position
+            onChange: function(/**Event*/evt) {
+                evt.newIndex // most likely why this event is used is to get the dragging element's current index
+                // same properties as onEnd
+            }
+        });
+
+        $(`#ring_group_forward_target_internal_all`).select2();
+        $(`#ring_group_forward_type_all`).select2();
     });
+
+    function showHideAddDestination() {
+        if($('#destination_sortable > tr').length > 9) {
+            $('#addDestinationBar').hide();
+        } else {
+            $('#addDestinationBar').show();
+        }
+    }
+
+    function applyDestinationSelect2() {
+        $('#destination_sortable > tr').each(function (i, el) {
+            $(el).find('select').each(function(i, el2) {
+                if ($(el2).data('select2')) {
+                    $(el2).select2('destroy').hide()
+                    $(el2).select2({
+                        width: 'element'
+                    }).show()
+                } else {
+                    $(el2).select2({
+                        width: 'element'
+                    }).show()
+                }
+            });
+        })
+    }
+
+    function updateDestinationOrder() {
+        $('#destination_sortable > tr').each(function (i, el) {
+            $(el).find('.drag-handler').find('span').text(i + 1)
+        })
+    }
+
+    function addDestinationAction(el){
+        let wrapper = $(`#destination_sortable > tr`)
+        let count = wrapper.length
+        let newCount = (count + 1)
+        if(newCount > 10) {
+            return false;
+        }
+
+        let newRow = `
+        <tr id="row__NEWROWID__"><td class="drag-handler"><i class="mdi mdi-drag"></i> <span>__NEWROWID__</span></td>
+        <td>
+        @include('layouts.partials.destinationSelector', [
+            'type' => 'ring_group_destinations',
+            'id' => '__NEWROWID__',
+            'value' => '',
+            'extensions' => $extensions
+        ])
+        </td>
+        <td><select id="destination_delay___NEWROWID__" name="ring_group_destinations[newrow__NEWROWID__][delay]">
+@for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
+        {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
+        <td><select id="destination_timeout___NEWROWID__" name="ring_group_destinations[newrow__NEWROWID__][timeout]">
+        @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
+        {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td><td>
+        <input type="hidden" name="ring_group_destinations[newrow__NEWROWID__][prompt]" value="false">
+        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][prompt]" data-option="ring_group_follow_me_enabled" class="forward_checkbox" data-switch="primary"/>
+        <label for="destination_prompt___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
+        </td><td><div id="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
+        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+        </a></div></td></tr>`;
+        newRow = newRow.replaceAll('__NEWROWID__', Math.random().toString(16).slice(2))
+
+        $('#destination_sortable').append(newRow)
+
+        showHideAddDestination()
+        updateDestinationOrder()
+        applyDestinationSelect2()
+    }
+
+    function confirmDeleteDestinationAction(el){
+        if ($(`#${el}`).data('select2')) {
+            $(`#${el}`).select2('destroy').hide()
+        }
+        $(`#${el}`).remove();
+        updateDestinationOrder()
+        showHideAddDestination()
+    }
 </script>
 @endpush
