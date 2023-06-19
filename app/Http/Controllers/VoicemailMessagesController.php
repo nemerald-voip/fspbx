@@ -211,6 +211,13 @@ class VoicemailMessagesController extends Controller
 
             $file = Storage::disk('voicemail')->delete($path);
 
+            // Send notifications to subscribes phones
+            $fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
+            if ($fp) {
+                $switch_cmd = "luarun app.lua voicemail mwi ".$message->voicemail->voicemail_id."@".Session::get('domain_name');
+                $switch_result = event_socket_request($fp, 'api '.$switch_cmd);
+            }
+
             if ($deleted){
                 return response()->json([
                     'status' => 200,
