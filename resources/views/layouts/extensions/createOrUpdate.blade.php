@@ -349,7 +349,7 @@
                                                                                     phone($extension->outbound_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
                                                                                     selected
                                                                                 @endif>
-                                                                                {{ phone($destination->destination_number,"US",$national_phone_number_format) }}
+                                                                                {{ phone($destination->destination_number,"US",$national_phone_number_format) }} - {{ $destination->destination_description }}
                                                                             </option>
                                                                         @endforeach
                                                                     </select>
@@ -418,7 +418,7 @@
                                                                                     (phone($extension->emergency_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
                                                                                     selected
                                                                                 @endif>
-                                                                                {{ phone($destination->destination_number,"US",$national_phone_number_format) }}
+                                                                                {{ phone($destination->destination_number,"US",$national_phone_number_format) }} - {{ $destination->destination_description }}
                                                                             </option>
                                                                         @endforeach
                                                                     </select>
