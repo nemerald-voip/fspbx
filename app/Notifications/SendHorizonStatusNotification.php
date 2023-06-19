@@ -8,9 +8,9 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\SlackMessage;
 
-class SendHorizonStatusNotification extends Notification implements ShouldQueue
+class SendHorizonStatusNotification extends Notification 
 {
-    use Queueable;
+    // use Queueable;
 
     private $request;
 
