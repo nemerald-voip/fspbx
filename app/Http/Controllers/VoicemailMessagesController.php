@@ -198,6 +198,7 @@ class VoicemailMessagesController extends Controller
      */
     public function destroy($id)
     {
+
         $message = VoicemailMessages::findOrFail($id);
 
         if(isset($message)){
@@ -212,6 +213,7 @@ class VoicemailMessagesController extends Controller
             $file = Storage::disk('voicemail')->delete($path);
 
             // Send notifications to subscribes phones
+            session_start();
             $fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
             if ($fp) {
                 $switch_cmd = "luarun app.lua voicemail mwi ".$message->voicemail->voicemail_id."@".Session::get('domain_name');
