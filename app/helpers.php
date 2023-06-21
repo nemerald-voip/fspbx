@@ -692,8 +692,11 @@ if (!function_exists('get_registrations')) {
         //     return redirect()->route('logout');
         // }
 
+        // Get event socket credentials
+        $settings = Settings::first();
+
         //create the event socket connection
-        $fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
+        $fp = event_socket_create($settings->event_socket_ip_address, $settings->event_socket_port, $settings->event_socket_password);
 
         $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')
             ->get();
@@ -786,8 +789,8 @@ if (!function_exists('get_registrations')) {
 
                     //remove unrelated domains
                     if (!userCheckPermission('registration_all') || $show != 'all') {
-                        if ($registrations[$id]['sip-auth-realm'] == $_SESSION['domain_name']) {
-                        } else if ($user_array[1] == $_SESSION['domain_name']) {
+                        if ($registrations[$id]['sip-auth-realm'] == Session::get('domain_name')) {
+                        } else if ($user_array[1] == Session::get('domain_name')) {
                         } else {
                             unset($registrations[$id]);
                         }
