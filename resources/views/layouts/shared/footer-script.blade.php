@@ -125,9 +125,9 @@
                         //$(this).closest('tr').fadeOut("fast");
                     }
                 })
-                .fail(function(response) {
+                .fail(function(jqXHR, testStatus, error) {
                     $('.loading').hide();
-                    $.NotificationApp.send("Warning", response, "top-right", "#ff5b5b", "error");
+                    printErrorMsg(error);
                 });
         }
 

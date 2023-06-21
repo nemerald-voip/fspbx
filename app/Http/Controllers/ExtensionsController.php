@@ -6,6 +6,7 @@ use App\Http\Requests\AssignDeviceRequest;
 use App\Imports\ExtensionsImport;
 use App\Jobs\DeleteAppUser;
 use App\Jobs\UpdateAppSettings;
+use App\Jobs\SendEventNotify;
 use App\Models\DefaultSettings;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
@@ -36,6 +37,7 @@ use libphonenumber\PhoneNumberFormat;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 
@@ -119,6 +121,7 @@ class ExtensionsController extends Controller
         // $permissions['edit'] = userCheckPermission('voicemail_edit');
         $permissions['delete'] = userCheckPermission('extension_delete');
         $permissions['import'] = isSuperAdmin();
+        $permissions['device_restart'] = isSuperAdmin();
 
         $data['permissions'] = $permissions;
 
@@ -1299,6 +1302,66 @@ class ExtensionsController extends Controller
                 ]);
             }
         }
+    }
+
+
+    /**
+     * Restart devices for selected extensions.
+     *
+     * @param \App\Models\Extentions $extention
+     * @return \Illuminate\Http\Response
+     */
+    public function sendEventNotify(Request $request, Extensions $extension)
+    {
+
+        // Get all registered devices for this domain
+        $registrations = get_registrations();
+
+        //check against registrations and add them to array
+        $all_regs = [];
+        foreach ($registrations as $registration) {
+            if ($registration['sip-auth-user'] == $extension['extension']) {
+                array_push($all_regs, $registration);
+            }
+        }
+
+        // Log::alert($all_regs);
+
+        foreach ($all_regs as $reg) {
+            // Get the agent name
+            if (preg_match('/Bria|Push|Ringotel/i', $registration['agent']) > 0) {
+                $agent = "";
+            }
+            elseif (preg_match('/polycom|polyedge/i', $registration['agent']) > 0) {
+                $agent = "polycom";
+            }
+                                                
+            elseif (preg_match("/yealink/i", $registration['agent'])) {
+                $agent = "yealink";
+            }
+
+            elseif (preg_match("/grandstream/i", $registration['agent'])) {
+                $agent = "grandstream";
+            }                                
+
+            if ($agent != "") {
+                $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent. "'";
+
+                // Queue a job to restart the phone 
+                SendEventNotify::dispatch($command)->onQueue('default');
+            }
+           
+
+
+        }
+
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Successfully submitted restart request'
+            ]
+        ]);
     }
 
     public function assignDevice(AssignDeviceRequest $request, Extensions $extension)
