@@ -2,12 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Models\Commio\CommioInboundSMS;
+use Illuminate\Http\Request;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Commio\CommioOutboundSMS;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +15,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class ProcessCommioSMS implements ShouldQueue
+class SendSystemStatusNotificationToSlack implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -53,7 +52,7 @@ class ProcessCommioSMS implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 30;
+    public $backoff = 15;
 
     /**
      * Delete the job if its models no longer exist.
@@ -62,26 +61,15 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $to_did;
-    private $from_did;
-    private $message;
-
-    private $org_id;
-
-    private $message_uuid;
-
+    private $request;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct($message)
     {
-        $this->to_did = $data['to_did'];
-        $this->from_did = $data['from_did'];
-        $this->message = $data['message'];
-        $this->org_id = $data['org_id'];
-        $this->message_uuid = $data['message_uuid'];
+        $this->request['slack_message'] = $message;
     }
 
     /**
@@ -91,7 +79,7 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new RateLimitedWithRedis('messages'))];
+        return [(new RateLimitedWithRedis('slack'))];
     }
 
     /**
@@ -102,19 +90,15 @@ class ProcessCommioSMS implements ShouldQueue
     public function handle()
     {
         // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-
-            $sms = new CommioInboundSMS();
-            $sms->to_did = $this->to_did;
-            $sms->from_did = $this->from_did;
-            $sms->message = $this->message;
-            $sms->org_id = $this->org_id;
-            $sms->message_uuid = $this->message_uuid;
-            $sms->send();
+        Redis::throttle('slack')->allow(2)->every(1)->then(function () {
+            
+            Notification::route('slack', env('SLACK_SYSTEM_STATUS_HOOK'))
+                ->notify(new SendSlackNotification($this->request));
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
+
     }
 }

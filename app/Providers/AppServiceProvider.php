@@ -113,6 +113,24 @@ class AppServiceProvider extends ServiceProvider
                 return $found;
             }
         });
+
+        Validator::extend('RingGroupUnique', function ($attribute, $value, $parameters, $validator) {
+            if (!isset($parameters[0])) {
+                return false;
+            }
+            $domain = $parameters[0];
+            if (Extensions::where('extension', $value)->where('domain_uuid', $domain)->first()) {
+                return false;
+            }
+            if (RingGroups::where('ring_group_extension', $value)->where('domain_uuid', $domain)->first()) {
+                return false;
+            }
+            if (Voicemails::where('voicemail_id', $value)->where('domain_uuid', $domain)->first()) {
+                return false;
+            }
+
+            return true;
+        });
 /*
         Validator::extend('DeviceMacAddressNotExists', function ($attribute, $value, $parameters, $validator) {
             $value = str_replace([':', '-', '.'], '', $value);

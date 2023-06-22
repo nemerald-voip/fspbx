@@ -2,30 +2,33 @@
 
 namespace App\Jobs;
 
-use App\Models\Commio\CommioInboundSMS;
+use App\Mail\AppCredentials;
+use App\Models\DefaultSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Commio\CommioOutboundSMS;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Notifications\SendSlackNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
-class ProcessCommioSMS implements ShouldQueue
+class SendEventNotify implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $command;
 
     /**
      * The number of times the job may be attempted.
      *
      * @var int
      */
-    public $tries = 10;
+    public $tries = 3;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
@@ -53,7 +56,7 @@ class ProcessCommioSMS implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 30;
+    public $backoff = 15;
 
     /**
      * Delete the job if its models no longer exist.
@@ -62,26 +65,14 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $to_did;
-    private $from_did;
-    private $message;
-
-    private $org_id;
-
-    private $message_uuid;
-
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct($command)
     {
-        $this->to_did = $data['to_did'];
-        $this->from_did = $data['from_did'];
-        $this->message = $data['message'];
-        $this->org_id = $data['org_id'];
-        $this->message_uuid = $data['message_uuid'];
+        $this->command = $command;
     }
 
     /**
@@ -91,7 +82,7 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new RateLimitedWithRedis('messages'))];
+        return [(new RateLimitedWithRedis('eventNotify'))];
     }
 
     /**
@@ -101,20 +92,24 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public function handle()
     {
-        // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
+        // Allow only 5 job every 10 second
+        Redis::throttle('eventNotify')->allow(5)->every(10)->then(function () {
 
-            $sms = new CommioInboundSMS();
-            $sms->to_did = $this->to_did;
-            $sms->from_did = $this->from_did;
-            $sms->message = $this->message;
-            $sms->org_id = $this->org_id;
-            $sms->message_uuid = $this->message_uuid;
-            $sms->send();
+            $process = Process::fromShellCommandline($this->command);
+
+            try {
+                $process->mustRun();
+    
+                Log::alert($process->getOutput());
+    
+            } catch (ProcessFailedException $e) {
+                Log::alert($e->getMessage());
+            }
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
+
     }
 }
