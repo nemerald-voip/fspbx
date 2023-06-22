@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\Settings;
 use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use App\Models\VoicemailMessages;
@@ -22,19 +23,19 @@ class VoicemailMessagesController extends Controller
     public function index(Voicemails $voicemail)
     {
         // Check permissions
-        if (!userCheckPermission("voicemail_message_view")){
+        if (!userCheckPermission("voicemail_message_view")) {
             return redirect('/');
         }
 
         //Check FusionPBX login status
         session_start();
-        if(!isset($_SESSION['user'])) {
+        if (!isset($_SESSION['user'])) {
             return redirect()->route('logout');
         }
 
-        $data=array();
+        $data = array();
         $data['voicemail'] = $voicemail;
-        $messages = VoicemailMessages::where('voicemail_uuid',$voicemail->voicemail_uuid)->orderBy('created_epoch','desc')->get();
+        $messages = VoicemailMessages::where('voicemail_uuid', $voicemail->voicemail_uuid)->orderBy('created_epoch', 'desc')->get();
 
         //Get libphonenumber object
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
@@ -47,10 +48,10 @@ class VoicemailMessagesController extends Controller
             // Try to convert caller ID number to National format
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($message->caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                     $message->caller_id_number = $phoneNumberUtil
-                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
-                } 
+                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                }
             } catch (NumberParseException $e) {
                 // Do nothing and leave the numner as is
             }
@@ -59,9 +60,9 @@ class VoicemailMessagesController extends Controller
             $message->date = Carbon::createFromTimestamp($message->created_epoch, $time_zone)->toDayDateTimeString();
 
             // Get the path to message file
-            if (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav')){
+            if (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav')) {
                 $message->file = Storage::disk('voicemail')->path($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav');
-            } elseif (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3')){
+            } elseif (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3')) {
                 $message->file = Storage::disk('voicemail')->path($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3');
             }
             // $message->file = Storage::disk('voicemail') . '/' . $voicemail->domain_uuid . '/' . $voicemail->voicemail_id . 
@@ -78,7 +79,7 @@ class VoicemailMessagesController extends Controller
 
         return view('layouts.voicemails.messages.list')
             ->with($data)
-            ->with('permissions',$permissions);  
+            ->with('permissions', $permissions);
     }
 
 
@@ -89,15 +90,15 @@ class VoicemailMessagesController extends Controller
      */
     public function getVoicemailMessage(VoicemailMessages $message)
     {
-        $path = Session::get('domain_name') .'/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
+        $path = Session::get('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
 
-        if(!Storage::disk('voicemail')->exists($path)) {
-            $path = Session::get('domain_name') .'/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
+        if (!Storage::disk('voicemail')->exists($path)) {
+            $path = Session::get('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
             if (!Storage::disk('voicemail')->exists($path)) {
-                abort (404);
+                abort(404);
             }
         }
-  
+
         $file = Storage::disk('voicemail')->path($path);
         $type = Storage::disk('voicemail')->mimeType($path);
 
@@ -114,18 +115,18 @@ class VoicemailMessagesController extends Controller
     public function downloadVoicemailMessage(VoicemailMessages $message)
     {
 
-        $path = Session::get('domain_name') .'/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
+        $path = Session::get('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
 
-        if(!Storage::disk('voicemail')->exists($path)) {
-            $path = Session::get('domain_name') .'/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
+        if (!Storage::disk('voicemail')->exists($path)) {
+            $path = Session::get('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
             if (!Storage::disk('voicemail')->exists($path)) {
-                abort (404);
+                abort(404);
             }
         }
-  
+
         $file = Storage::disk('voicemail')->path($path);
         $type = Storage::disk('voicemail')->mimeType($path);
-        $headers = array (
+        $headers = array(
             'Content-Type: ' . $type,
         );
 
@@ -201,26 +202,28 @@ class VoicemailMessagesController extends Controller
 
         $message = VoicemailMessages::findOrFail($id);
 
-        if(isset($message)){
+        if (isset($message)) {
             $deleted = $message->delete();
 
-            $path = Session::get('domain_name') .'/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
+            $path = Session::get('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
 
-            if(!Storage::disk('voicemail')->exists($path)) {
-                $path = Session::get('domain_name') .'/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
+            if (!Storage::disk('voicemail')->exists($path)) {
+                $path = Session::get('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
             }
 
             $file = Storage::disk('voicemail')->delete($path);
 
+            // Get event socket credentials
+            $settings = Settings::first();
+
             // Send notifications to subscribes phones
-            session_start();
-            $fp = event_socket_create($_SESSION['event_socket_ip_address'], $_SESSION['event_socket_port'], $_SESSION['event_socket_password']);
+            $fp = event_socket_create($settings->event_socket_ip_address, $settings->event_socket_port, $settings->event_socket_password);
             if ($fp) {
-                $switch_cmd = "luarun app.lua voicemail mwi ".$message->voicemail->voicemail_id."@".Session::get('domain_name');
-                $switch_result = event_socket_request($fp, 'api '.$switch_cmd);
+                $switch_cmd = "luarun app.lua voicemail mwi " . $message->voicemail->voicemail_id . "@" . Session::get('domain_name');
+                $switch_result = event_socket_request($fp, 'api ' . $switch_cmd);
             }
 
-            if ($deleted){
+            if ($deleted) {
                 return response()->json([
                     'status' => 200,
                     'success' => [

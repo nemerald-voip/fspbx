@@ -158,7 +158,7 @@ class Faxes extends Model
 
 
         $this->fax_toll_allow = $this->fax_extension->fax_toll_allow;
-        $this->fax_accountcode = $this->fax_extension->fax_accountcode;
+        $this->fax_accountcode = $this->fax_extension->accountcode;
         $this->fax_send_greeting = $this->fax_extension->fax_send_greeting;
         $this->fax_uuid = $this->fax_extension->fax_uuid;
         $this->fax_caller_id_name = $this->fax_extension->fax_caller_id_name;
