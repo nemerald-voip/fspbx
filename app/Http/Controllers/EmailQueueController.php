@@ -46,10 +46,10 @@ class EmailQueueController extends Controller
         if ($searchString) {
             $emailQueuesQuery->where(function ($query) use ($searchString) {
                 return $query
-                    ->where('hostname', 'like', '%'.strtolower($searchString).'%')
-                    ->orWhere('email_from', 'like', '%'.strtolower($searchString).'%')
-                    ->orWhere('email_to', 'like', '%'.strtolower($searchString).'%')
-                    ->orWhere('email_subject', 'like', '%'.strtolower($searchString).'%');
+                    ->where('hostname', 'ilike', '%'.strtolower($searchString).'%')
+                    ->orWhere('email_from', 'ilike', '%'.strtolower($searchString).'%')
+                    ->orWhere('email_to', 'ilike', '%'.strtolower($searchString).'%')
+                    ->orWhere('email_subject', 'ilike', '%'.strtolower($searchString).'%');
             });
         }
 
