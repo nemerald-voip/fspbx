@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateRingGroupRequest;
 use App\Models\Extensions;
 use App\Models\FaxQueues;
 use App\Models\IvrMenus;
+use App\Models\MusicOnHold;
 use App\Models\RingGroups;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -99,8 +100,15 @@ class RingGroupsController extends Controller
             }
         }
 
+        $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
+            ->orWhere('domain_uuid', null)
+            ->orderBy('music_on_hold_name', 'ASC')
+            ->get()
+            ->unique('music_on_hold_name');
+
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)
+            ->with('moh', $moh)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
             ->with('ringGroupDestinations', $ringGroupDestinations);
@@ -164,20 +172,6 @@ class RingGroupsController extends Controller
                 unset($ringGroupDestinations[0]);
             }
         }
-
-        // Basic
-        /* name extension greeting destinations (withpopup)
-        timeoutdestination (with categories) calltimeout
-        cidnameprefix and number
-        enabled
-        discription
-
-        // call forward
-        ring group forward
-
-        // Advance
-        Startegy - enterprise by default calleridname and number disninctivering ringback callforward missedcall followme all is true
-*/
 
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)

@@ -40,6 +40,10 @@ class RingGroups extends Model
         $this->attributes['ring_group_enabled'] = "true";
         $this->attributes['ring_group_strategy'] = "enterprise";
         $this->attributes['ring_group_call_timeout'] = "30";
+        $this->attributes['ring_group_ringback'] = '${us-ring}';
+        $this->attributes['ring_group_call_forward_enabled'] = "true";
+        $this->attributes['ring_group_follow_me_enabled'] = "true";
+
         $this->fill($attributes);
     }
 
