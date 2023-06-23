@@ -149,45 +149,10 @@
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_strategy" class="form-label">Strategy</label>
-                                                                <select class="select2 form-control"
-                                                                        data-toggle="select2"
-                                                                        data-placeholder="Choose ..."
-                                                                        id="ring_group_strategy"
-                                                                        name="ring_group_strategy">
-                                                                    <option value="simultaneous"
-                                                                            @if($ringGroup->ring_group_strategy == 'simultaneous') selected="selected" @endif>
-                                                                        Simultaneous
-                                                                    </option>
-                                                                    <option value="sequence"
-                                                                            @if($ringGroup->ring_group_strategy == 'sequence') selected="selected" @endif>
-                                                                        Sequence
-                                                                    </option>
-                                                                    <option value="random"
-                                                                            @if($ringGroup->ring_group_strategy == 'random') selected="selected" @endif>
-                                                                        Random
-                                                                    </option>
-                                                                    <option value="enterprise"
-                                                                            @if($ringGroup->ring_group_strategy == 'enterprise') selected="selected" @endif>
-                                                                        Enterprise
-                                                                    </option>
-                                                                    <option value="rollover"
-                                                                            @if($ringGroup->ring_group_strategy == 'rollover') selected="selected" @endif>
-                                                                        Rollover
-                                                                    </option>
-                                                                </select>
-                                                                <div id="ring_group_strategy_err"
-                                                                     class="text-danger text-error error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
                                                     <hr />
                                                     <div class="row">
                                                         <h4 class="mt-2">Destinations</h4>
-                                                        <p class="text-muted mb-2">You can drag-n-drop lines to adjust current destinations.</p>
+                                                        <p class="text-muted mb-2">You can drag-n-drop lines to adjust current destinations order.</p>
                                                         <table class="table table-centered table-responsive table-sm mb-0 sequential-table">
                                                             <thead>
                                                             <tr>
@@ -287,7 +252,18 @@
                                                                    data-bs-container="#tooltip-container-actions"
                                                                    data-bs-toggle="tooltip"
                                                                    data-bs-placement="bottom"
-                                                                   title="Add destination"></i>
+                                                                   title="Add destination"></i> Add one
+                                                            </a>
+                                                        </div>
+                                                        <div id="addDestinationBarMultiple" class="my-1"
+                                                             @if($ringGroup->getGroupDestinations()->count() >= 10) style="display: none;" @endif>
+                                                            <a href="javascript:addDestinationAction(this);"
+                                                               class="btn btn-success">
+                                                                <i class="mdi mdi-plus"
+                                                                   data-bs-container="#tooltip-container-actions"
+                                                                   data-bs-toggle="tooltip"
+                                                                   data-bs-placement="bottom"
+                                                                   title="Add destination"></i> Add multiple
                                                             </a>
                                                         </div>
                                                     </div>
@@ -295,18 +271,7 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_timeout_data" class="form-label">Timeout Destination</label>
-                                                                <input class="form-control" type="text"
-                                                                       placeholder="" id="ring_group_timeout_data"
-                                                                       name="ring_group_timeout_data"
-                                                                       value="{{ $ringGroup->ring_group_timeout_data }}"
-                                                                />
-                                                                <div id="ring_group_timeout_data_err" class="text-danger error-text error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_call_timeout" class="form-label">Timeout</label>
+                                                                <label for="ring_group_call_timeout" class="form-label">Call timeout</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_call_timeout"
                                                                        name="ring_group_call_timeout"
@@ -319,24 +284,74 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_caller_id_name" class="form-label">Caller ID Name</label>
+                                                                <label for="ring_group_timeout_data" class="form-label">If not answered</label>
+                                                                <div class="row">
+                                                                    <div class="col-md-6">
+                                                                        <select class="select2 form-control"
+                                                                                data-toggle="select2"
+                                                                                data-placeholder="Choose ..."
+                                                                                id="ring_group_strategy"
+                                                                                name="ring_group_strategy">
+                                                                            <option value="" selected>
+
+                                                                            </option>
+                                                                            <option value="simultaneous">
+                                                                                Ring Groups
+                                                                            </option>
+                                                                            <option value="dialplans">
+                                                                                Dial Plans
+                                                                            </option>
+                                                                            <option value="extensions">
+                                                                                Extensions
+                                                                            </option>
+                                                                            <option value="timeconditions">
+                                                                                Time Conditions
+                                                                            </option>
+                                                                            <option value="voicemails">
+                                                                                Voicemails
+                                                                            </option>
+                                                                            <option value="others">
+                                                                                Others
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <select class="select2 form-control"
+                                                                                data-toggle="select2"
+                                                                                data-placeholder="Choose ..."
+                                                                                id="ring_group_timeout_data"
+                                                                                name="ring_group_timeout_data">
+                                                                            <option value="simultaneous">
+
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="ring_group_timeout_data_err" class="text-danger error-text error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_cid_name_prefix" class="form-label">CID Name Prefix</label>
                                                                 <input class="form-control" type="text"
-                                                                       placeholder="" id="ring_group_caller_id_name"
-                                                                       name="ring_group_caller_id_name"
-                                                                       value="{{ $ringGroup->ring_group_caller_id_name }}"
+                                                                       placeholder="" id="ring_group_cid_name_prefix"
+                                                                       name="ring_group_cid_name_prefix"
+                                                                       value="{{ $ringGroup->ring_group_cid_name_prefix }}"
                                                                 />
-                                                                <div id="ring_group_caller_id_name_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_cid_name_prefix_err" class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_caller_id_number" class="form-label">Caller ID Number</label>
+                                                                <label for="ring_group_cid_number_prefix" class="form-label">CID Number Prefix</label>
                                                                 <input class="form-control" type="text"
-                                                                       placeholder="" id="ring_group_caller_id_number"
-                                                                       name="ring_group_caller_id_number"
-                                                                       value="{{ $ringGroup->ring_group_caller_id_number }}"
+                                                                       placeholder="" id="ring_group_cid_number_prefix"
+                                                                       name="ring_group_cid_number_prefix"
+                                                                       value="{{ $ringGroup->ring_group_cid_number_prefix }}"
                                                                 />
-                                                                <div id="ring_group_caller_id_number_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_cid_number_prefix_err" class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -356,27 +371,26 @@
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Enabled </label>
+                                                                <label  class="form-label">Enabled</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
                                                                 <input type="hidden" name="ring_group_enabled" value="false">
                                                                 <input type="checkbox" id="enabled-switch" name="enabled"
-                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif
-                                                                       data-switch="primary"/>
+                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif data-switch="primary"  />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                            </div> <!-- end row-->
+                                            </div>
 
                                         </div>
                                         <div class="tab-pane fade" id="v-pills-callforward" role="tabpanel"
                                              aria-labelledby="v-pills-callforward-tab">
-                                            <!-- Settings Content-->
+
                                             <div class="tab-pane show active">
                                                 <div class="row">
                                                     <div class="col-lg-12">
@@ -393,8 +407,7 @@
                                                                        value="true" name="ring_group_forward_enabled"
                                                                        data-option="ring_group_forward"
                                                                        class="forward_checkbox"
-                                                                       @if ($ringGroup->ring_group_forward_enabled == "true") checked
-                                                                       @endif
+                                                                       @if ($ringGroup->ring_group_forward_enabled == "true") checked @endif
                                                                        data-switch="primary"/>
                                                                 <label for="ring_group_forward_enabled"
                                                                        data-on-label="On" data-off-label="Off"></label>
@@ -418,63 +431,14 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <!-- End Settings Content-->
+
                                         </div>
                                         <div class="tab-pane fade" id="v-pills-advanced" role="tabpanel"
                                              aria-labelledby="v-pills-home-tab">
-                                            <!-- Basic Info Content-->
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mt-2">Advanced</h4>
                                                     <p class="text-muted mb-4">Provide advanced information about the ring group</p>
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_extension" class="form-label">Ring
-                                                                    Group name <span
-                                                                            class="text-danger">*</span></label>
-                                                                <input class="form-control" type="text"
-                                                                       placeholder="xxx" id="ring_group_name"
-                                                                       name="ring_group_extension"
-                                                                       value="{{ $ringGroup->ring_group_name }}"
-                                                                />
-                                                                <div id="ring_group_name_err"
-                                                                     class="text-danger error-text error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_extension" class="form-label">Ring
-                                                                    Group number <span
-                                                                            class="text-danger">*</span></label>
-                                                                <input class="form-control" type="text"
-                                                                       placeholder="xxx" id="ring_group_extension"
-                                                                       name="ring_group_extension"
-                                                                       value="{{ $ringGroup->ring_group_extension }}"
-                                                                       @if ($ringGroup->exists) readonly @endif />
-                                                                <div id="ring_group_extension_err"
-                                                                     class="text-danger error-text error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_greeting" class="form-label">Greeting</label>
-                                                                <select class="select2 form-control"
-                                                                        data-toggle="select2"
-                                                                        data-placeholder="Choose ..."
-                                                                        id="ring_group_greeting"
-                                                                        name="ring_group_greeting">
-                                                                    <option value=""></option>
-                                                                </select>
-                                                                <div id="ring_group_greeting_err"
-                                                                     class="text-danger error-text error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -505,143 +469,27 @@
                                                                         Rollover
                                                                     </option>
                                                                 </select>
-                                                                <div id="ring_group_strategy_err"
-                                                                     class="text-danger text-error error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
-                                                    <hr />
-                                                    <div class="row">
-                                                        <h4 class="mt-2">Destinations</h4>
-                                                        <p class="text-muted mb-2">You can drag-n-drop lines to adjust current destinations.</p>
-                                                        <table class="table table-centered table-responsive table-sm mb-0 sequential-table">
-                                                            <thead>
-                                                            <tr>
-                                                                <th style="width: 20px;">Order</th>
-                                                                <th>Destination</th>
-                                                                <th style="width: 150px">Delay</th>
-                                                                <th style="width: 150px">Number of rings
-                                                                </th>
-                                                                <th style="width: 130px;">Answer
-                                                                    confirmation required
-                                                                </th>
-                                                                <th>Action</th>
-                                                            </tr>
-                                                            </thead>
-                                                            @php $b = 0 @endphp
-                                                            <tbody id="destination_sortable">
-                                                            @foreach($ringGroupDestinations as $destination)
-                                                                <tr id="row{{$destination->ring_group_destination_uuid}}">
-                                                                    @php $b++ @endphp
-                                                                    <td class="drag-handler"><i
-                                                                                class="mdi mdi-drag"></i>
-                                                                        <span>{{ $b }}</span></td>
-                                                                    <td>
-                                                                        @include('layouts.partials.destinationSelector', [
-                                                                            'type' => 'ring_group_destinations',
-                                                                            'id' => $destination->ring_group_destination_uuid,
-                                                                            'value' => $destination->destination_number,
-                                                                            'extensions' => $extensions
-                                                                        ])
-                                                                    </td>
-                                                                    <td>
-                                                                        <select id="destination_delay_{{$destination->ring_group_destination_uuid}}"
-                                                                                name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][delay]">
-                                                                            @for ($i = 0; $i < 20; $i++)
-                                                                                <option value="{{ $i * 5 }}"
-                                                                                        @if ($destination->destination_delay == $i*5) selected @endif>
-                                                                                    {{ $i }} @if ($i >1 )
-                                                                                        Rings
-                                                                                    @else
-                                                                                        Ring
-                                                                                    @endif - {{ $i * 5 }}Sec
-                                                                                </option>
-                                                                            @endfor
-                                                                        </select>
-                                                                    </td>
-                                                                    <td>
-                                                                        <select id="destination_timeout_{{$destination->ring_group_destination_uuid}}"
-                                                                                name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][timeout]">
-                                                                            @for ($i = 1; $i < 21; $i++)
-                                                                                <option value="{{ $i * 5 }}"
-                                                                                        @if ($destination->destination_timeout == $i*5) selected @endif>
-                                                                                    {{ $i }} @if ($i >1 )
-                                                                                        Rings
-                                                                                    @else
-                                                                                        Ring
-                                                                                    @endif - {{ $i * 5 }}Sec
-                                                                                </option>
-                                                                            @endfor
-                                                                        </select>
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="hidden"
-                                                                               name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][prompt]"
-                                                                               value="false">
-                                                                        <input type="checkbox"
-                                                                               id="destination_prompt_{{$destination->ring_group_destination_uuid}}"
-                                                                               value="true"
-                                                                               name="ring_group_destinations[{{$destination->ring_group_destination_uuid}}][prompt]"
-                                                                               @if ($destination->destination_prompt == "1") checked
-                                                                               @endif
-                                                                               data-switch="primary"/>
-                                                                        <label for="destination_prompt_{{$destination->ring_group_destination_uuid}}"
-                                                                               data-on-label="On"
-                                                                               data-off-label="Off"></label>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div id="tooltip-container-actions">
-                                                                            <a href="javascript:confirmDeleteDestinationAction('row{{$destination->ring_group_destination_uuid}}');"
-                                                                               class="action-icon">
-                                                                                <i class="mdi mdi-delete"
-                                                                                   data-bs-container="#tooltip-container-actions"
-                                                                                   data-bs-toggle="tooltip"
-                                                                                   data-bs-placement="bottom"
-                                                                                   title="Delete"></i>
-                                                                            </a>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            @endforeach
-                                                            </tbody>
-                                                        </table>
-                                                        <div id="addDestinationBar" class="my-1"
-                                                             @if($ringGroup->getGroupDestinations()->count() >= 10) style="display: none;" @endif>
-                                                            <a href="javascript:addDestinationAction(this);"
-                                                               class="btn btn-success">
-                                                                <i class="mdi mdi-plus"
-                                                                   data-bs-container="#tooltip-container-actions"
-                                                                   data-bs-toggle="tooltip"
-                                                                   data-bs-placement="bottom"
-                                                                   title="Add destination"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                    <hr class="mb-4" />
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_timeout_data" class="form-label">Timeout Destination</label>
-                                                                <input class="form-control" type="text"
-                                                                       placeholder="" id="ring_group_timeout_data"
-                                                                       name="ring_group_timeout_data"
-                                                                       value="{{ $ringGroup->ring_group_timeout_data }}"
-                                                                />
-                                                                <div id="ring_group_timeout_data_err" class="text-danger error-text error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_call_timeout" class="form-label">Timeout</label>
-                                                                <input class="form-control" type="text"
-                                                                       placeholder="" id="ring_group_call_timeout"
-                                                                       name="ring_group_call_timeout"
-                                                                       value="{{ $ringGroup->ring_group_call_timeout }}"
-                                                                />
-                                                                <div id="ring_group_call_timeout_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_strategy_err" class="text-danger text-error error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_greeting" class="form-label">Greeting</label>
+                                                                <select class="select2 form-control"
+                                                                        data-toggle="select2"
+                                                                        data-placeholder="Choose ..."
+                                                                        id="ring_group_greeting"
+                                                                        name="ring_group_greeting">
+                                                                    <option value=""></option>
+                                                                </select>
+                                                                <div id="ring_group_greeting_err" class="text-danger error-text error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -669,12 +517,42 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_description" class="form-label">Description</label>
+                                                                <label for="ring_group_distinctive_ring" class="form-label">Distinctive Ring</label>
                                                                 <input class="form-control" type="text"
-                                                                       placeholder="" id="ring_group_description"
-                                                                       name="ring_group_extension"
-                                                                       value="{{ $ringGroup->ring_group_description }}" />
-                                                                <div id="ring_group_description_err"
+                                                                       placeholder="" id="ring_group_distinctive_ring"
+                                                                       name="ring_group_distinctive_ring"
+                                                                       value="{{ $ringGroup->ring_group_distinctive_ring }}" />
+                                                                <div id="ring_group_distinctive_ring_err"
+                                                                     class="text-danger error-text error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_ringback" class="form-label">Ring Back</label>
+                                                                <select class="select2 form-control"
+                                                                        data-toggle="select2"
+                                                                        data-placeholder="Choose ..."
+                                                                        id="ring_group_ringback"
+                                                                        name="ring_group_ringback">
+                                                                    @if (!$moh->isEmpty())
+                                                                    <optgroup label="Music on Hold">
+                                                                        @foreach ($moh as $music)
+                                                                            <option value="local_stream://{{ $music->music_on_hold_name }}"
+                                                                                    @if("local_stream://" . $music->music_on_hold_name == $ringGroup->ring_group_ringback)
+                                                                                        selected
+                                                                                    @endif>
+                                                                                {{ $music->music_on_hold_name }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </optgroup>
+                                                                    @endif
+                                                                    <optgroup label="Ringtones">
+                                                                        <option value="${us-ring}" @if($ringGroup->ring_group_ringback == '${us-ring}') selected="selected" @endif>${us-ring}</option>
+                                                                    </optgroup>
+                                                                </select>
+                                                                <div id="ring_group_ringback_err"
                                                                      class="text-danger error-text error_message"></div>
                                                             </div>
                                                         </div>
@@ -682,36 +560,105 @@
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Enabled </label>
+                                                                <label  class="form-label">Call Forward</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
-                                                                <input type="hidden" name="ring_group_enabled" value="false">
-                                                                <input type="checkbox" id="enabled-switch" name="enabled"
-                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif
+                                                                <input type="hidden" name="ring_group_call_forward_enabled" value="false">
+                                                                <input type="checkbox" id="enabled-switch" name="ring_group_call_forward_enabled"
+                                                                       @if ($ringGroup->ring_group_call_forward_enabled == "true") checked @endif
                                                                        data-switch="primary"/>
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div class="row">
+                                                        <div class="col-4">
+                                                            <div class="mb-3">
+                                                                <label  class="form-label">Follow Me</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <div class="mb-3 text-sm-end">
+                                                                <input type="hidden" name="ring_group_follow_me_enabled" value="false">
+                                                                <input type="checkbox" id="enabled-switch" name="ring_group_follow_me_enabled"
+                                                                       @if ($ringGroup->ring_group_follow_me_enabled == "true") checked @endif
+                                                                       data-switch="primary"/>
+                                                                <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_missed_call_data" class="form-label">Missed Call</label>
+                                                                <div class="row">
+                                                                    <div class="col-md-6">
+                                                                        <select class="select2 form-control"
+                                                                                data-toggle="select2"
+                                                                                data-placeholder="Choose ..."
+                                                                                id="ring_group_strategy"
+                                                                                name="ring_group_strategy">
+                                                                            <option value="" selected>
+
+                                                                            </option>
+                                                                            <option value="email">
+                                                                                Email
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <select class="select2 form-control"
+                                                                                data-toggle="select2"
+                                                                                data-placeholder="Choose ..."
+                                                                                id="ring_group_missed_call_data"
+                                                                                name="ring_group_missed_call_data">
+                                                                            <option value="simultaneous">
+
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="ring_group_missed_call_data_err" class="text-danger error-text error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_forward_toll_allow" class="form-label">Forward Toll Allow</label>
+                                                                <input class="form-control" type="text"
+                                                                       placeholder="" id="ring_group_forward_toll_allow"
+                                                                       name="ring_group_forward_toll_allow"
+                                                                       value="{{ $ringGroup->ring_group_forward_toll_allow }}" />
+                                                                <div id="ring_group_forward_toll_allow_err" class="text-danger error-text error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="mb-3">
+                                                                <label for="ring_group_context" class="form-label">Context</label>
+                                                                <input class="form-control" type="text"
+                                                                       placeholder="" id="ring_group_context"
+                                                                       name="ring_group_forward_context"
+                                                                       value="{{ $ringGroup->ring_group_context }}" />
+                                                                <div id="ring_group_context_err" class="text-danger error-text error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-
-                                            </div> <!-- end row-->
-
+                                            </div>
                                         </div>
                                     </div> <!-- end tab-content-->
                                 </div> <!-- end col-->
                             </div>
-                            <!-- end row-->
                         </form>
-
                     </div> <!-- end card-body-->
                 </div> <!-- end card-->
             </div> <!-- end col -->
         </div>
-        <!-- end row-->
-
     </div> <!-- container -->
 
 @endsection
@@ -739,7 +686,12 @@
         }
 
         #addDestinationBar {
-            width: 75px;
+            width: auto;
+            text-align: center;
+        }
+
+        #addDestinationBarMultiple {
+            width: auto;
             text-align: center;
         }
 
