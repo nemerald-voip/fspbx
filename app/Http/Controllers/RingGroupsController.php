@@ -165,6 +165,20 @@ class RingGroupsController extends Controller
             }
         }
 
+        // Basic
+        /* name extension greeting destinations (withpopup)
+        timeoutdestination (with categories) calltimeout
+        cidnameprefix and number
+        enabled
+        discription
+
+        // call forward
+        ring group forward
+
+        // Advance
+        Startegy - enterprise by default calleridname and number disninctivering ringback callforward missedcall followme all is true
+*/
+
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)
             ->with('extensions', $this->getDestinationExtensions())

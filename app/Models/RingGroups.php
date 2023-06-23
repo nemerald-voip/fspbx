@@ -38,6 +38,8 @@ class RingGroups extends Model
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->attributes['ring_group_context'] = Session::get('domain_name');
         $this->attributes['ring_group_enabled'] = "true";
+        $this->attributes['ring_group_strategy'] = "enterprise";
+        $this->attributes['ring_group_call_timeout'] = "30";
         $this->fill($attributes);
     }
 
