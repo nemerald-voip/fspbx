@@ -94,8 +94,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
     public function prepareForValidation($data, $index)
     {
-        $data['device_mac_address'] = str_replace(':', '', $data['device_mac_address']);
-        $data['device_mac_address'] = str_replace('-', '', $data['device_mac_address']);
+        $data['device_mac_address'] = trim(str_replace(':', '', $data['device_mac_address']));
+        $data['device_mac_address'] = trim(str_replace('-', '', $data['device_mac_address']));
         $data['device_mac_address_modified'] =strtolower(trim($data['device_mac_address']));
         $data['extension'] = trim($data['extension']);
         $data['device_mac_address'] =strtolower(trim(implode(":", str_split($data['device_mac_address'], 2))));
