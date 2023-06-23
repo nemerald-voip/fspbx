@@ -79,7 +79,8 @@
                                 $.NotificationApp.send("Success", response.success.message, "top-right",
                                     "#10c469", "success");
                             }
-                            $("#id" + setting_id).fadeOut("slow");
+                            $("#id" + item).fadeOut("slow");
+                            // console.log(item);
                             //$(this).closest('tr').fadeOut("fast");
                         }
                     })
