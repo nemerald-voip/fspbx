@@ -245,7 +245,7 @@
                                                             </tbody>
                                                         </table>
                                                         <div id="addDestinationBar" class="my-1"
-                                                             @if($ringGroup->getGroupDestinations()->count() >= 10) style="display: none;" @endif>
+                                                             @if($ringGroup->getGroupDestinations()->count() >= 30) style="display: none;" @endif>
                                                             <a href="javascript:addDestinationAction(this);"
                                                                class="btn btn-success">
                                                                 <i class="mdi mdi-plus"
@@ -256,14 +256,14 @@
                                                             </a>
                                                         </div>
                                                         <div id="addDestinationBarMultiple" class="my-1"
-                                                             @if($ringGroup->getGroupDestinations()->count() >= 10) style="display: none;" @endif>
-                                                            <a href="javascript:addDestinationAction(this);"
+                                                             @if($ringGroup->getGroupDestinations()->count() >= 30) style="display: none;" @endif>
+                                                            <a href="javascript:addDestinationModal(this);"
                                                                class="btn btn-success">
                                                                 <i class="mdi mdi-plus"
                                                                    data-bs-container="#tooltip-container-actions"
                                                                    data-bs-toggle="tooltip"
                                                                    data-bs-placement="bottom"
-                                                                   title="Add destination"></i> Add multiple
+                                                                   title="Add multiple destinations"></i> Add multiple
                                                             </a>
                                                         </div>
                                                     </div>
@@ -661,6 +661,35 @@
         </div>
     </div> <!-- container -->
 
+    <div class="modal fade" id="addDestinationMultipleModal" role="dialog" aria-labelledby="addDestinationMultipleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDestinationMultipleModalLabel">Add Multiple Destinations</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Type up to 15 destinations in the inputs below and hit "Add". We will recognize either the destination is external or internal and fill up the form.</p>
+                    <form method="POST" id="addDestinationMultipleForm" action="#" class="form">
+                        @php
+                            for($i = 0; $i < 15; $i++) {
+                                print '<div class="row"><div class="col-md-12 mb-1">
+                                       <input class="form-control" type="text"
+                                       placeholder="Extension, voicemail, phone, etc..."
+                                       name="destination_multiple[]"
+                                       value="'.rand(300, 900).'" /></div></div>';
+                            }
+                        @endphp
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="fillDestinationForm($('#addDestinationMultipleForm'));" class="btn btn-success">Add</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -892,12 +921,43 @@
                 }
             });
 
+            /*$('#createDeviceModal').on('shown.bs.modal', function(e){
+                if(typeof e.relatedTarget.dataset.href !== 'undefined') {
+                    $('#createDeviceModalLabel').text('Edit Device')
+                    // Edit device
+                    $.ajax({
+                        url: e.relatedTarget.dataset.href,
+                        type: 'GET',
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.loading').show();
+                        },
+                        complete: function (xhr, status) {
+                            $('.btn').attr('disabled', false);
+                            $('.loading').hide();
+                        },
+                        success: function (result) {
+                            $('#device_mac_address').attr('readonly', true).val(result.device_mac_address)
+                            $('#template-select').val(result.device_template).trigger('change')
+                            $('#profile-select').val(result.device_profile_uuid).trigger('change')
+                            $('#device_uuid').val(result.device_uuid)
+                        }
+                    });
+                } else {
+                    $('#createDeviceModalLabel').text('Create New Device')
+                    $('#device_mac_address').attr('readonly', false).val('')
+                    $('#device_uuid').val('')
+                    $('#template-select').val('').trigger('change')
+                    $('#profile-select').val('').trigger('change')
+                }
+            });*/
+
             $(`#ring_group_forward_target_internal_all`).select2();
             $(`#ring_group_forward_type_all`).select2();
         });
 
         function showHideAddDestination() {
-            if ($('#destination_sortable > tr').length > 9) {
+            if ($('#destination_sortable > tr').length > 29) {
                 $('#addDestinationBar').hide();
             } else {
                 $('#addDestinationBar').show();
@@ -927,11 +987,17 @@
             })
         }
 
-        function addDestinationAction(el) {
+        function addDestinationModal(el) {
+            $('#addDestinationMultipleModal').modal('show');
+        }
+
+        function addDestinationAction(el, type, value) {
             let wrapper = $(`#destination_sortable > tr`)
             let count = wrapper.length
             let newCount = (count + 1)
-            if (newCount > 10) {
+            type = type || 'internal'
+            value = value || ''
+            if (newCount > 30) {
                 return false;
             }
 
@@ -973,6 +1039,17 @@
             $(`#${el}`).remove();
             updateDestinationOrder()
             showHideAddDestination()
+        }
+
+        function fillDestinationForm(form) {
+            const values = form.serializeArray()
+            for(let i = 0; i < values.length; i++) {
+                addDestinationAction(null, 'external', values[i].value)
+                //console.log(values[i])
+                values[i].value = '';
+            }
+            $('#addDestinationMultipleModal').modal('hide');
+            //console.log(form.serializeArray())
         }
     </script>
 @endpush
