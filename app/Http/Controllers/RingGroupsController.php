@@ -5,17 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
 use App\Models\Extensions;
-use App\Models\FaxQueues;
 use App\Models\IvrMenus;
 use App\Models\MusicOnHold;
+use App\Models\Recordings;
 use App\Models\RingGroups;
+use App\Models\Sounds;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
-use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
-use libphonenumber\PhoneNumberUtil;
 
 class RingGroupsController extends Controller
 {
@@ -106,9 +103,17 @@ class RingGroupsController extends Controller
             ->get()
             ->unique('music_on_hold_name');
 
+        $sounds = Sounds::list();
+
+        $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('recording_name', 'ASC')
+            ->get();
+
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)
             ->with('moh', $moh)
+            ->with('recordings', $recordings)
+            ->with('sounds', $sounds)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
             ->with('ringGroupDestinations', $ringGroupDestinations);
