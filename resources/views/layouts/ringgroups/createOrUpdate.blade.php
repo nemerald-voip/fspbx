@@ -168,18 +168,6 @@
                                                                             @endforeach
                                                                         </optgroup>
                                                                     @endif
-                                                                    @if ($sounds)
-                                                                        <optgroup label="Sounds">
-                                                                            @foreach ($sounds as $sound)
-                                                                                <option value="{{$sound}}"
-                                                                                    @if($sound == $ringGroup->ring_group_greeting)
-                                                                                        selected
-                                                                                    @endif>
-                                                                                    {{ $sound }}
-                                                                                </option>
-                                                                            @endforeach
-                                                                        </optgroup>
-                                                                    @endif
                                                                 </select>
                                                                 <div id="ring_group_greeting_err"
                                                                      class="text-danger error_message"></div>
@@ -332,7 +320,7 @@
                                                                             <option value="" selected>
 
                                                                             </option>
-                                                                            <option value="simultaneous">
+                                                                            <option value="ringgroup">
                                                                                 Ring Groups
                                                                             </option>
                                                                             <option value="dialplans">
@@ -398,7 +386,7 @@
                                                                 <label for="ring_group_description" class="form-label">Description</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_description"
-                                                                       name="ring_group_extension"
+                                                                       name="ring_group_description"
                                                                        value="{{ $ringGroup->ring_group_description }}" />
                                                                 <div id="ring_group_description_err"
                                                                      class="text-danger error_message"></div>
@@ -414,8 +402,8 @@
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
                                                                 <input type="hidden" name="ring_group_enabled" value="false">
-                                                                <input type="checkbox" id="enabled-switch" name="enabled"
-                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif data-switch="primary"  />
+                                                                <input type="checkbox" id="enabled-switch" name="ring_group_enabled"
+                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif data-switch="primary" value="true" />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -601,7 +589,7 @@
                                                                 <input type="hidden" name="ring_group_call_forward_enabled" value="false">
                                                                 <input type="checkbox" id="enabled-switch" name="ring_group_call_forward_enabled"
                                                                        @if ($ringGroup->ring_group_call_forward_enabled == "true") checked @endif
-                                                                       data-switch="primary"/>
+                                                                       data-switch="primary" value="true" />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -617,7 +605,7 @@
                                                                 <input type="hidden" name="ring_group_follow_me_enabled" value="false">
                                                                 <input type="checkbox" id="enabled-switch" name="ring_group_follow_me_enabled"
                                                                        @if ($ringGroup->ring_group_follow_me_enabled == "true") checked @endif
-                                                                       data-switch="primary"/>
+                                                                       data-switch="primary" value="true" />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -631,8 +619,8 @@
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
-                                                                                id="ring_group_strategy"
-                                                                                name="ring_group_strategy">
+                                                                                id="ring_group_missed_call_category"
+                                                                                name="ring_group_missed_call_category">
                                                                             <option value="" selected>
 
                                                                             </option>
@@ -642,15 +630,11 @@
                                                                         </select>
                                                                     </div>
                                                                     <div class="col-md-6">
-                                                                        <select class="select2 form-control"
-                                                                                data-toggle="select2"
-                                                                                data-placeholder="Choose ..."
-                                                                                id="ring_group_missed_call_data"
-                                                                                name="ring_group_missed_call_data">
-                                                                            <option value="simultaneous">
-
-                                                                            </option>
-                                                                        </select>
+                                                                        <input class="form-control" type="text"
+                                                                               placeholder="" id="ring_group_missed_call_data"
+                                                                               name="ring_group_missed_call_data"
+                                                                               value="{{ $ringGroup->ring_group_missed_call_data }}"
+                                                                        />
                                                                     </div>
                                                                 </div>
                                                                 <div id="ring_group_missed_call_data_err" class="text-danger error_message"></div>
