@@ -61,4 +61,9 @@ class RingGroups extends Model
     {
         return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->get();
     }
+
+    public function groupDestinations()
+    {
+        return $this->hasMany(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid');
+    }
 }
