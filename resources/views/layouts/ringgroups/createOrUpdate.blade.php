@@ -284,14 +284,14 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_timeout_data" class="form-label">If not answered</label>
+                                                                <label for="ring_group_timeout_action" class="form-label">If not answered</label>
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
-                                                                                id="ring_group_strategy"
-                                                                                name="ring_group_strategy">
+                                                                                id="ring_group_timeout_category"
+                                                                                name="ring_group_timeout_category">
                                                                             <option value="" selected>
 
                                                                             </option>
@@ -319,9 +319,9 @@
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
-                                                                                id="ring_group_timeout_data"
-                                                                                name="ring_group_timeout_data">
-                                                                            <option value="simultaneous">
+                                                                                id="ring_group_timeout_action"
+                                                                                name="ring_group_timeout_action">
+                                                                            <option value="">
 
                                                                             </option>
                                                                         </select>
@@ -921,50 +921,19 @@
                 }
             });
 
-            /*$('#createDeviceModal').on('shown.bs.modal', function(e){
-                if(typeof e.relatedTarget.dataset.href !== 'undefined') {
-                    $('#createDeviceModalLabel').text('Edit Device')
-                    // Edit device
-                    $.ajax({
-                        url: e.relatedTarget.dataset.href,
-                        type: 'GET',
-                        dataType: 'json',
-                        beforeSend: function () {
-                            $('.loading').show();
-                        },
-                        complete: function (xhr, status) {
-                            $('.btn').attr('disabled', false);
-                            $('.loading').hide();
-                        },
-                        success: function (result) {
-                            $('#device_mac_address').attr('readonly', true).val(result.device_mac_address)
-                            $('#template-select').val(result.device_template).trigger('change')
-                            $('#profile-select').val(result.device_profile_uuid).trigger('change')
-                            $('#device_uuid').val(result.device_uuid)
-                        }
-                    });
-                } else {
-                    $('#createDeviceModalLabel').text('Create New Device')
-                    $('#device_mac_address').attr('readonly', false).val('')
-                    $('#device_uuid').val('')
-                    $('#template-select').val('').trigger('change')
-                    $('#profile-select').val('').trigger('change')
-                }
-            });*/
-
             $(`#ring_group_forward_target_internal_all`).select2();
             $(`#ring_group_forward_type_all`).select2();
         });
 
         function showHideAddDestination() {
-            if ($('#destination_sortable > tr').length > 29) {
+            if ($('#destination_sortable > tr').length > 49) {
                 $('#addDestinationBar').hide();
             } else {
                 $('#addDestinationBar').show();
             }
         }
 
-        function applyDestinationSelect2() {
+        function applyDestinationSelect2(type = 'internal', value = '') {
             $('#destination_sortable > tr').each(function (i, el) {
                 $(el).find('select').each(function (i, el2) {
                     if ($(el2).data('select2')) {
@@ -991,13 +960,11 @@
             $('#addDestinationMultipleModal').modal('show');
         }
 
-        function addDestinationAction(el, type, value) {
+        function addDestinationAction(el, value = '') {
             let wrapper = $(`#destination_sortable > tr`)
             let count = wrapper.length
             let newCount = (count + 1)
-            type = type || 'internal'
-            value = value || ''
-            if (newCount > 30) {
+            if (newCount > 50) {
                 return false;
             }
 
@@ -1044,9 +1011,9 @@
         function fillDestinationForm(form) {
             const values = form.serializeArray()
             for(let i = 0; i < values.length; i++) {
-                addDestinationAction(null, 'external', values[i].value)
-                //console.log(values[i])
-                values[i].value = '';
+                addDestinationAction(null, values[i].value)
+                console.log(values[i])
+                //values[i].value = '';
             }
             $('#addDestinationMultipleModal').modal('hide');
             //console.log(form.serializeArray())
