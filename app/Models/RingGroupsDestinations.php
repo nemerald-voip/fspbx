@@ -43,6 +43,13 @@ class RingGroupsDestinations extends Model
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->attributes['update_date'] = date('Y-m-d H:i:s');
+        $this->attributes['update_user'] = Session::get('user_uuid');
         $this->fill($attributes);
+    }
+
+    public function ringGroups()
+    {
+        return $this->hasOne(RingGroups::class,'ring_group_uuid','ring_group_uuid');
     }
 }

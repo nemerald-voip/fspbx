@@ -30,7 +30,7 @@ class StoreRingGroupRequest extends FormRequest
                 'RingGroupUnique:'.Session::get('domain_uuid')
             ],
             'ring_group_greeting' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::exists('App\Models\Recordings', 'recording_name')
                     ->where('domain_uuid', Session::get('domain_uuid')),
@@ -61,12 +61,15 @@ class StoreRingGroupRequest extends FormRequest
                 'string'
             ],
             'ring_group_cid_name_prefix' => [
+                'nullable',
                 'string'
             ],
             'ring_group_cid_number_prefix' => [
+                'nullable',
                 'string'
             ],
             'ring_group_description' => [
+                'nullable',
                 'string'
             ],
             'ring_group_enabled' => 'in:true,false',
@@ -94,15 +97,19 @@ class StoreRingGroupRequest extends FormRequest
                 'in:simultaneous,sequence,random,enterprise,rollover'
             ],
             'ring_group_caller_id_name' => [
+                'nullable',
                 'string'
             ],
             'ring_group_caller_id_number' => [
+                'nullable',
                 'string'
             ],
             'ring_group_distinctive_ring' => [
+                'nullable',
                 'string'
             ],
             'ring_group_ringback' => [
+                'nullable',
                 'string'
             ],
             'ring_group_call_forward_enabled' => 'in:true,false',

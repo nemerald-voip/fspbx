@@ -789,7 +789,7 @@
                     success: function (result) {
                         $('.loading').hide();
                         $.NotificationApp.send("Success", result.message, "top-right", "#10c469", "success");
-                        //window.location.href = "{{ route('ring-groups.index')}}";
+                        window.location.href = "{{ route('ring-groups.index')}}";
                     },
                     error: function (error) {
                         $('.loading').hide();
