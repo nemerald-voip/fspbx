@@ -19,17 +19,6 @@ class StoreRingGroupRequest extends FormRequest
         return Auth::check();
     }
 
-    /*
-     *
-
-ring_group_timeout_category:
-
-ring_group_missed_call_category:
-ring_group_missed_call_data:
-ring_group_forward_toll_allow: Forwardtollallow
-ring_group_forward_context: api.us.nemerald.net
-     */
-
     public function rules(): array
     {
         return [
@@ -42,11 +31,13 @@ ring_group_forward_context: api.us.nemerald.net
             ],
             'ring_group_greeting' => [
                 'required',
-                'numeric',
+                'string',
                 Rule::exists('App\Models\Recordings', 'recording_name')
                     ->where('domain_uuid', Session::get('domain_uuid')),
             ],
-
+            'ring_group_destinations.*.type' => [
+                'in:external,internal'
+            ],
             'ring_group_destinations.*.target_external' => [
                 'required_if:ring_group_destinations.*.type,==,external',
                 'nullable',
@@ -66,6 +57,7 @@ ring_group_forward_context: api.us.nemerald.net
                 'numeric'
             ],
             'ring_group_timeout_action' => [
+                'nullable',
                 'string'
             ],
             'ring_group_cid_name_prefix' => [
@@ -95,6 +87,7 @@ ring_group_forward_context: api.us.nemerald.net
                 'ExtensionExists:'.Session::get('domain_uuid')
             ],
             'ring_group_timeout_category' => [
+                'nullable',
                 'in:ringgroup,dialplans,extensions,timeconditions,voicemails,others'
             ],
             'ring_group_strategy' => [
@@ -109,24 +102,27 @@ ring_group_forward_context: api.us.nemerald.net
             'ring_group_distinctive_ring' => [
                 'string'
             ],
-            /*'ring_group_ringback' => [
-
-            ],*/
+            'ring_group_ringback' => [
+                'string'
+            ],
             'ring_group_call_forward_enabled' => 'in:true,false',
             'ring_group_follow_me_enabled' => 'in:true,false',
             'ring_group_missed_call_category' => [
+                'nullable',
                 'in:email'
             ],
             'ring_group_missed_call_data' => [
+                'nullable',
                 'string'
             ],
             'ring_group_forward_toll_allow' => [
+                'nullable',
                 'string'
             ],
             'ring_group_forward_context' => [
                 'required',
                 'string',
-                Rule::exists('App\Models\Domains', 'domain_name'),
+                Rule::exists('App\Models\Domain', 'domain_name'),
             ],
         ];
     }
