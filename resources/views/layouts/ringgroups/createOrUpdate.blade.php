@@ -54,7 +54,13 @@
                                             <i class="mdi mdi-home-variant d-md-none d-block"></i>
                                             <span class="d-none d-md-block">Basic Information
                                         <span class="float-end text-end
+                                            ring_group_name_err_badge
                                             ring_group_extension_badge
+                                            ring_group_call_timeout_err_badge
+                                            ring_group_timeout_data_err_badge
+                                            ring_group_cid_name_prefix_err_badge
+                                            ring_group_cid_number_prefix_err_badge
+                                            ring_group_description_err_badge
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                         </a>
@@ -64,7 +70,7 @@
                                             <i class="mdi mdi-settings-outline d-md-none d-block"></i>
                                             <span class="d-none d-md-block">Call Forward
                                         <span class="float-end text-end
-                                            ring_group_forward_enabled_err_badge
+                                            ring_group_forward_all_target_external_err_badge
                                             ring_group_forward_destination_err_badge
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
@@ -77,6 +83,13 @@
                                         <span class="float-end text-end
                                             ring_group_forward_enabled_err_badge
                                             ring_group_forward_destination_err_badge
+                                            ring_group_strategy_err_badge
+                                            ring_group_caller_id_name_err_badge
+                                            ring_group_caller_id_number_err_badge
+                                            ring_group_distinctive_ring_err_badge
+                                            ring_group_missed_call_data_err_badge
+                                            ring_group_forward_toll_allow_err_badge
+                                            ring_group_context_err_badge
                                             " hidden><span class="badge badge-danger-lighten">error</span></span>
                                     </span>
                                         </a>
@@ -109,11 +122,11 @@
                                                                             class="text-danger">*</span></label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="xxx" id="ring_group_name"
-                                                                       name="ring_group_extension"
+                                                                       name="ring_group_name"
                                                                        value="{{ $ringGroup->ring_group_name }}"
                                                                 />
                                                                 <div id="ring_group_name_err"
-                                                                     class="text-danger error-text error_message"></div>
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -129,7 +142,7 @@
                                                                        value="{{ $ringGroup->ring_group_extension }}"
                                                                        @if ($ringGroup->exists) readonly @endif />
                                                                 <div id="ring_group_extension_err"
-                                                                     class="text-danger error-text error_message"></div>
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -143,9 +156,21 @@
                                                                         id="ring_group_greeting"
                                                                         name="ring_group_greeting">
                                                                     <option value=""></option>
+                                                                    @if (!$recordings->isEmpty())
+                                                                        <optgroup label="Recordings">
+                                                                            @foreach ($recordings as $recording)
+                                                                                <option value="{{ $recording->recording_name }}"
+                                                                                        @if($recording->recording_name == $ringGroup->ring_group_ringback)
+                                                                                            selected
+                                                                                        @endif>
+                                                                                    {{ $recording->recording_name }}
+                                                                                </option>
+                                                                            @endforeach
+                                                                        </optgroup>
+                                                                    @endif
                                                                 </select>
                                                                 <div id="ring_group_greeting_err"
-                                                                     class="text-danger error-text error_message"></div>
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
@@ -277,7 +302,7 @@
                                                                        name="ring_group_call_timeout"
                                                                        value="{{ $ringGroup->ring_group_call_timeout }}"
                                                                 />
-                                                                <div id="ring_group_call_timeout_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_call_timeout_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -295,7 +320,7 @@
                                                                             <option value="" selected>
 
                                                                             </option>
-                                                                            <option value="simultaneous">
+                                                                            <option value="ringgroup">
                                                                                 Ring Groups
                                                                             </option>
                                                                             <option value="dialplans">
@@ -327,7 +352,7 @@
                                                                         </select>
                                                                     </div>
                                                                 </div>
-                                                                <div id="ring_group_timeout_data_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_timeout_data_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -340,7 +365,7 @@
                                                                        name="ring_group_cid_name_prefix"
                                                                        value="{{ $ringGroup->ring_group_cid_name_prefix }}"
                                                                 />
-                                                                <div id="ring_group_cid_name_prefix_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_cid_name_prefix_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -351,7 +376,7 @@
                                                                        name="ring_group_cid_number_prefix"
                                                                        value="{{ $ringGroup->ring_group_cid_number_prefix }}"
                                                                 />
-                                                                <div id="ring_group_cid_number_prefix_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_cid_number_prefix_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -361,10 +386,10 @@
                                                                 <label for="ring_group_description" class="form-label">Description</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_description"
-                                                                       name="ring_group_extension"
+                                                                       name="ring_group_description"
                                                                        value="{{ $ringGroup->ring_group_description }}" />
                                                                 <div id="ring_group_description_err"
-                                                                     class="text-danger error-text error_message"></div>
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -377,8 +402,8 @@
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
                                                                 <input type="hidden" name="ring_group_enabled" value="false">
-                                                                <input type="checkbox" id="enabled-switch" name="enabled"
-                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif data-switch="primary"  />
+                                                                <input type="checkbox" id="enabled-switch" name="ring_group_enabled"
+                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif data-switch="primary" value="true" />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -469,23 +494,7 @@
                                                                         Rollover
                                                                     </option>
                                                                 </select>
-                                                                <div id="ring_group_strategy_err" class="text-danger text-error error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_greeting" class="form-label">Greeting</label>
-                                                                <select class="select2 form-control"
-                                                                        data-toggle="select2"
-                                                                        data-placeholder="Choose ..."
-                                                                        id="ring_group_greeting"
-                                                                        name="ring_group_greeting">
-                                                                    <option value=""></option>
-                                                                </select>
-                                                                <div id="ring_group_greeting_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_strategy_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -499,7 +508,7 @@
                                                                        name="ring_group_caller_id_name"
                                                                        value="{{ $ringGroup->ring_group_caller_id_name }}"
                                                                 />
-                                                                <div id="ring_group_caller_id_name_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_caller_id_name_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -510,7 +519,7 @@
                                                                        name="ring_group_caller_id_number"
                                                                        value="{{ $ringGroup->ring_group_caller_id_number }}"
                                                                 />
-                                                                <div id="ring_group_caller_id_number_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_caller_id_number_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -523,7 +532,7 @@
                                                                        name="ring_group_distinctive_ring"
                                                                        value="{{ $ringGroup->ring_group_distinctive_ring }}" />
                                                                 <div id="ring_group_distinctive_ring_err"
-                                                                     class="text-danger error-text error_message"></div>
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -537,7 +546,7 @@
                                                                         id="ring_group_ringback"
                                                                         name="ring_group_ringback">
                                                                     @if (!$moh->isEmpty())
-                                                                    <optgroup label="Music on Hold">
+                                                                        <optgroup label="Music on Hold">
                                                                         @foreach ($moh as $music)
                                                                             <option value="local_stream://{{ $music->music_on_hold_name }}"
                                                                                     @if("local_stream://" . $music->music_on_hold_name == $ringGroup->ring_group_ringback)
@@ -546,14 +555,26 @@
                                                                                 {{ $music->music_on_hold_name }}
                                                                             </option>
                                                                         @endforeach
-                                                                    </optgroup>
+                                                                        </optgroup>
                                                                     @endif
+                                                                    @if (!$recordings->isEmpty())
+                                                                        <optgroup label="Recordings">
+                                                                             @foreach ($recordings as $recording)
+                                                                                 <option value="{{ $recording->recording_name }}"
+                                                                                     @if($recording->recording_name == $ringGroup->ring_group_ringback)
+                                                                                         selected
+                                                                                     @endif>
+                                                                                 {{ $recording->recording_name }}
+                                                                                 </option>
+                                                                             @endforeach
+                                                                        </optgroup>
+                                                                        @endif
                                                                     <optgroup label="Ringtones">
                                                                         <option value="${us-ring}" @if($ringGroup->ring_group_ringback == '${us-ring}') selected="selected" @endif>${us-ring}</option>
                                                                     </optgroup>
                                                                 </select>
                                                                 <div id="ring_group_ringback_err"
-                                                                     class="text-danger error-text error_message"></div>
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -568,7 +589,7 @@
                                                                 <input type="hidden" name="ring_group_call_forward_enabled" value="false">
                                                                 <input type="checkbox" id="enabled-switch" name="ring_group_call_forward_enabled"
                                                                        @if ($ringGroup->ring_group_call_forward_enabled == "true") checked @endif
-                                                                       data-switch="primary"/>
+                                                                       data-switch="primary" value="true" />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -584,7 +605,7 @@
                                                                 <input type="hidden" name="ring_group_follow_me_enabled" value="false">
                                                                 <input type="checkbox" id="enabled-switch" name="ring_group_follow_me_enabled"
                                                                        @if ($ringGroup->ring_group_follow_me_enabled == "true") checked @endif
-                                                                       data-switch="primary"/>
+                                                                       data-switch="primary" value="true" />
                                                                 <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -598,8 +619,8 @@
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
-                                                                                id="ring_group_strategy"
-                                                                                name="ring_group_strategy">
+                                                                                id="ring_group_missed_call_category"
+                                                                                name="ring_group_missed_call_category">
                                                                             <option value="" selected>
 
                                                                             </option>
@@ -609,18 +630,14 @@
                                                                         </select>
                                                                     </div>
                                                                     <div class="col-md-6">
-                                                                        <select class="select2 form-control"
-                                                                                data-toggle="select2"
-                                                                                data-placeholder="Choose ..."
-                                                                                id="ring_group_missed_call_data"
-                                                                                name="ring_group_missed_call_data">
-                                                                            <option value="simultaneous">
-
-                                                                            </option>
-                                                                        </select>
+                                                                        <input class="form-control" type="text"
+                                                                               placeholder="" id="ring_group_missed_call_data"
+                                                                               name="ring_group_missed_call_data"
+                                                                               value="{{ $ringGroup->ring_group_missed_call_data }}"
+                                                                        />
                                                                     </div>
                                                                 </div>
-                                                                <div id="ring_group_missed_call_data_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_missed_call_data_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -632,7 +649,7 @@
                                                                        placeholder="" id="ring_group_forward_toll_allow"
                                                                        name="ring_group_forward_toll_allow"
                                                                        value="{{ $ringGroup->ring_group_forward_toll_allow }}" />
-                                                                <div id="ring_group_forward_toll_allow_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_forward_toll_allow_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -644,7 +661,7 @@
                                                                        placeholder="" id="ring_group_context"
                                                                        name="ring_group_forward_context"
                                                                        value="{{ $ringGroup->ring_group_context }}" />
-                                                                <div id="ring_group_context_err" class="text-danger error-text error_message"></div>
+                                                                <div id="ring_group_context_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
