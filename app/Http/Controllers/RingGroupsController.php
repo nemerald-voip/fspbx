@@ -9,7 +9,6 @@ use App\Models\IvrMenus;
 use App\Models\MusicOnHold;
 use App\Models\Recordings;
 use App\Models\RingGroups;
-use App\Models\Sounds;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Session;
@@ -103,8 +102,6 @@ class RingGroupsController extends Controller
             ->get()
             ->unique('music_on_hold_name');
 
-        $sounds = Sounds::list();
-
         $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
             ->orderBy('recording_name', 'ASC')
             ->get();
@@ -113,7 +110,6 @@ class RingGroupsController extends Controller
             ->with('ringGroup', $ringGroup)
             ->with('moh', $moh)
             ->with('recordings', $recordings)
-            ->with('sounds', $sounds)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
             ->with('ringGroupDestinations', $ringGroupDestinations);
@@ -139,13 +135,13 @@ class RingGroupsController extends Controller
         //$ringGroups->save();
 
 
+// 61-40-22
 
 
 
 
 
-
-        die;
+        die('2222');
         return response()->json([
             'status' => 'success',
             'ring_group' => $ringGroups,
