@@ -131,8 +131,16 @@ class RingGroupsController extends Controller
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
             'ring_group_strategy' => $attributes['ring_group_strategy']
         ]);
-        $ringGroups->save();
+        //$ringGroups->save();
 
+
+
+
+
+
+
+
+        die;
         return response()->json([
             'status' => 'success',
             'ring_group' => $ringGroups,
