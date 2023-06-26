@@ -38,9 +38,9 @@
                     <div class="col-sm-6 col-lg-3 ">
                         <div class="card rounded-0 shadow-none m-0 border-start border-light">
                             <div class="card-body text-center">
-                                    <button type="button" class="btn btn-primary rounded-pill">
+                                    <a href="{{ route('faxes.newfax') }}" button type="button" class="btn btn-primary rounded-pill">
                                         <span class=""> <i class="uil uil-plus me-1"></i><span>New Fax</span></span>
-                                    </button>
+                                    </a>
                             </div>
                         </div>
                     </div>
@@ -264,7 +264,7 @@
 
                     <div id="tooltip-container-actions text-center">
                         @if ($permissions['fax_send'])
-                            <a href="{{ url('faxes/new/') . '/' . $fax->fax_uuid }}"
+                            <a href="{{ route('faxes.newfax', ['id' =>  $fax->fax_uuid]) }}"
                                 class="btn btn-sm btn-link text-muted ps-2" title="New">
                                 <i class="mdi mdi-plus me-1" data-bs-container="#tooltip-container-actions"
                                     data-bs-toggle="tooltip" data-bs-placement="bottom" title="New">New Fax</i>

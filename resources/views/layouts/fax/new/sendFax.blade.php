@@ -36,6 +36,31 @@
                                     <form method="POST" id="new_fax_form" action="{{ route('faxes.sendFax') }}">
                                         @csrf
 
+                                        <div class="row @if ($fax) d-none @endif">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="sender_fax_number" class="form-label">Your Fax Number <span
+                                                            class="text-danger">*</span></label>
+        
+                                                    <select data-toggle="select2" title="Fax Number" id="sender_fax_number"
+                                                        name="sender_fax_number">
+        
+                                                        @foreach ($fax_numbers as $fax_number)
+                                                            <option
+                                                                value="{{ phone($fax_number->fax_caller_id_number, 'US')->formatE164() }}"
+                                                                @if ( $fax &&
+                                                                    $fax->fax_caller_id_number &&
+                                                                        phone($fax->fax_caller_id_number, 'US')->formatE164() ==
+                                                                            phone($fax_number->fax_caller_id_number, 'US')->formatE164()) selected @endif>
+                                                                {{ phone($fax_number->fax_caller_id_number, 'US', $national_phone_number_format) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="text-danger error_message sender_fax_number_err"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="row">
                                             <div class="col-4">
                                                 <div class="mb-3">
@@ -164,30 +189,6 @@
                                 </div>
                                 <!--end::Input group-->
 
-                                <div class="row d-none">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="sender_fax_number" class="form-label">Your Fax Number <span
-                                                    class="text-danger">*</span></label>
-
-                                            <select data-toggle="select2" title="Fax Number" id="sender_fax_number"
-                                                name="sender_fax_number">
-
-                                                @foreach ($destinations as $destination)
-                                                    <option
-                                                        value="{{ phone($destination->destination_number, 'US')->formatE164() }}"
-                                                        @if (
-                                                            $fax->fax_caller_id_number &&
-                                                                phone($fax->fax_caller_id_number, 'US')->formatE164() ==
-                                                                    phone($destination->destination_number, 'US')->formatE164()) selected @endif>
-                                                        {{ phone($destination->destination_number, 'US', $national_phone_number_format) }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <div class="text-danger error_message sender_fax_number_err"></div>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <div class="row d-none">
                                     <div class="col-md-6">
@@ -236,7 +237,9 @@
                                 <div class="row mt-4">
                                     <div class="col-sm-12">
                                         <div class="text-sm-end">
-                                            <input type="hidden" name="fax_uuid" value="{{ $fax->fax_uuid }}">
+                                            @if($fax)
+                                                <input type="hidden" name="fax_uuid" value="{{ $fax->fax_uuid }}">
+                                            @endif
                                             <input type="hidden" name="fax_subject" value="">
                                             <a href="{{ Route('faxes.index') }}" class="btn btn-light">Close</a>
                                             <button id="submitFormButton" class="btn btn-success" type="submit">Send

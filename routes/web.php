@@ -56,7 +56,7 @@ Route::resource('groups', 'GroupsController');
 
 //Fax
 Route::resource('faxes', 'FaxesController');
-Route::get('/faxes/new/{fax}', [FaxesController::class, 'new']) ->name('faxes.new');
+Route::get('/faxes/newfax/create', [FaxesController::class, 'new']) ->name('faxes.newfax');
 Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes.inbox.list');
 Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
 Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
