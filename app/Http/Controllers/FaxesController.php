@@ -1078,15 +1078,22 @@ class FaxesController extends Controller
     /**
      * Display new fax page
      *
-     * @param int $id
+     * 
      * @return \Illuminate\Http\Response
      */
 
-    public function new(Faxes $fax)
+    public function new(Request $request)
     {
         // Check permissions
         if (!userCheckPermission("fax_send")) {
             return redirect('/');
+        }
+
+        if ($request->get('id') != "") {
+            // logger($request->get('id'));
+            $fax = Faxes::find($request->get('id'));
+        } else {
+            $fax = null;
         }
 
         // Get all phone numbers
@@ -1101,10 +1108,15 @@ class FaxesController extends Controller
             ])
             ->sortBy('destination_number');
 
+        $fax_numbers = Faxes::where('domain_uuid', Session::get('domain_uuid'))
+            ->get(
+                ['fax_caller_id_number']
+            )
+            ->sortBy('fax_caller_id_number');
 
         $data = [];
         $data['domain'] = Session::get('domain_name');
-        $data['destinations'] = $destinations;
+        $data['fax_numbers'] = $fax_numbers;
         $data['fax'] = $fax;
         $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
 
@@ -1160,6 +1172,14 @@ class FaxesController extends Controller
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()]);
         }
+
+        if (!isset($data['fax_uuid'])) {
+            $fax = Faxes::where('domain_uuid', Session::get('domain_uuid'))
+                ->where ('fax_caller_id_number', $data['sender_fax_number'])
+                ->first();
+            $data['fax_uuid'] = $fax->fax_uuid;
+        }
+
 
         if (!isset($files) || sizeof($files) == 0) {
             return response()->json(['error' => ['files' => ['At least one file must be uploaded']]]);
