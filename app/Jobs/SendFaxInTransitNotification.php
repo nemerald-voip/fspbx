@@ -103,7 +103,9 @@ class SendFaxInTransitNotification implements ShouldQueue
             }
 
             // Send email notification to user that fax is in transit
-            Mail::to($this->request['FromFull']['Email'])->send(new FaxInTransit($this->request));
+            if ($this->request['FromFull']['Email'] != '') {
+                Mail::to($this->request['FromFull']['Email'])->send(new FaxInTransit($this->request));
+            }
 
 
         }, function () {
