@@ -1165,7 +1165,8 @@ class FaxesController extends Controller
 
         $validator = Validator::make($data, [
             'recipient' => 'numeric|required|phone:US',
-            'fax_message' => 'string|nullable'
+            'fax_message' => 'string|nullable',
+            'send_confirmation' => 'present',
 
         ], [], $attributes);
 
@@ -1188,7 +1189,7 @@ class FaxesController extends Controller
         $payload = array(
             'From' => Session::get('user.user_email'),
             'FromFull' => array(
-                'Email' => Session::get('user.user_email'),
+                'Email' => ($data['send_confirmation'] === 'on') ? Session::get('user.user_email') : '',
             ),
             'To' => $data['recipient'] . '@fax.domain.com',
             'Subject' => ($data['fax_message'] == "") ? $data['fax_subject'] : $data['fax_subject'] . " body",

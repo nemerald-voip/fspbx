@@ -233,6 +233,25 @@
                                     </div>
                                 </div>
 
+                                <div class="row">
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Send fax confirmation to my email </label>
+                                            <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                data-bs-content="You will receive a fax confirmation either when it is successfully sent or if it fails to send.">
+                                                <i class="dripicons-information"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="mb-3 text-sm-end">
+                                            <input type="hidden" name="send_confirmation" value="false">
+                                            <input type="checkbox" id="send_confirmation" name="send_confirmation" data-switch="primary"/>
+                                            <label for="send_confirmation" data-on-label="On" data-off-label="Off"></label>
+                                        </div>
+                                    </div>
+                                </div> <!-- end row -->
+
 
                                 <div class="row mt-4">
                                     <div class="col-sm-12">
