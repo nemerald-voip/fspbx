@@ -9,6 +9,7 @@ use App\Models\IvrMenus;
 use App\Models\MusicOnHold;
 use App\Models\Recordings;
 use App\Models\RingGroups;
+use App\Models\Sounds;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Session;
