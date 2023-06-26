@@ -15,7 +15,7 @@
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.75",
-        "laravel/horizon": "^5.9",
+        "laravel/horizon": "*",
         "laravel/sanctum": "^2.11",
         "laravel/slack-notification-channel": "^2.4",
         "laravel/tinker": "^2.5",
