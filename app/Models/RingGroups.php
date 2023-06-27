@@ -38,6 +38,12 @@ class RingGroups extends Model
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->attributes['ring_group_context'] = Session::get('domain_name');
         $this->attributes['ring_group_enabled'] = "true";
+        $this->attributes['ring_group_strategy'] = "enterprise";
+        $this->attributes['ring_group_call_timeout'] = "30";
+        $this->attributes['ring_group_ringback'] = '${us-ring}';
+        $this->attributes['ring_group_call_forward_enabled'] = "true";
+        $this->attributes['ring_group_follow_me_enabled'] = "true";
+
         $this->fill($attributes);
     }
 
@@ -54,5 +60,10 @@ class RingGroups extends Model
     public function getGroupDestinations()
     {
         return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->get();
+    }
+
+    public function groupDestinations()
+    {
+        return $this->hasMany(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid');
     }
 }
