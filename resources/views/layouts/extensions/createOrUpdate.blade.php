@@ -186,16 +186,14 @@
                                                         </div>
                                                     </div> <!-- end row -->
                                                     <div class="row">
-                                                        @if (userCheckPermission('extension_extension'))
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="extension" class="form-label">Extension number <span class="text-danger">*</span></label>
                                                                 <input class="form-control" type="text" placeholder="xxxx" id="extension"
-                                                                    name="extension" value="{{ $extension->extension }}"/>
+                                                                    name="extension" value="{{ $extension->extension }}" @if (!userCheckPermission('extension_extension')) disabled @endif/>
                                                                 <div class="text-danger error-text extension_err error_message"></div>
                                                             </div>
                                                         </div>
-                                                        @endif
                                                         @if (userCheckPermission('voicemail_edit'))
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
