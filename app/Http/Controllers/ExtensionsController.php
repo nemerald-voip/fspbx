@@ -1329,18 +1329,18 @@ class ExtensionsController extends Controller
 
         foreach ($all_regs as $reg) {
             // Get the agent name
-            if (preg_match('/Bria|Push|Ringotel/i', $registration['agent']) > 0) {
+            if (preg_match('/Bria|Push|Ringotel/i', $reg['agent']) > 0) {
                 $agent = "";
             }
-            elseif (preg_match('/polycom|polyedge/i', $registration['agent']) > 0) {
+            elseif (preg_match('/polycom|polyedge/i', $reg['agent']) > 0) {
                 $agent = "polycom";
             }
                                                 
-            elseif (preg_match("/yealink/i", $registration['agent'])) {
+            elseif (preg_match("/yealink/i", $reg['agent'])) {
                 $agent = "yealink";
             }
 
-            elseif (preg_match("/grandstream/i", $registration['agent'])) {
+            elseif (preg_match("/grandstream/i", $reg['agent'])) {
                 $agent = "grandstream";
             }                                
 
