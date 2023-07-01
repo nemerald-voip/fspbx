@@ -164,10 +164,11 @@
                             </a>
                         @endif
 
-                        @if (userCheckPermission('extension_advanced'))
+                        @if (userCheckPermission('extension_password'))
                             {{-- <div class="dropdown"> --}}
                             <a class="dropdown-toggle arrow-none card-drop" href="#" id="dropdownAdvancedOptions"
-                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                data-bs-toggle="dropdown" data-bs-auto-close="false" aria-haspopup="true"
+                                aria-expanded="false">
                                 <i class="mdi mdi-dots-vertical"></i>
                             </a>
 
@@ -175,6 +176,29 @@
                                 <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
                                     class="dropdown-item sipCredentialsButton">SIP
                                     Credentials</a>
+
+                                <div class="accordion custom-accordion" id="advancedOptionsAccordion">
+                                    <h6 class="dropdown-header" id="heading{{ $extension->extension_uuid }}">
+                                        <a class="custom-accordion-title d-block" data-bs-toggle="collapse"
+                                            href="#collapse{{ $extension->extension_uuid }}" aria-expanded="false"
+                                            aria-controls="collapse{{ $extension->extension_uuid }}">
+                                            Groups
+                                            <i class="mdi mdi-chevron-down accordion-arrow"></i>
+                                        </a>
+                                    </h6>
+
+                                    <div id="collapse{{ $extension->extension_uuid }}" class="collapse"
+                                        aria-labelledby="heading{{ $extension->extension_uuid }}" data-bs-parent="#advancedOptionsAccordion">
+                                        <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
+                                            class="dropdown-item">Make User</a>
+                                        <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
+                                            class="dropdown-item">Make Admin</a>
+                                    </div>
+
+                                    
+                                </div>
+
+
 
                             </div>
                             {{-- </div> --}}
@@ -201,6 +225,3 @@
     @include('layouts.extensions.extensionUploadResultModal');
     @include('layouts.extensions.extensionScripts');
 @endsection
-
-
-
