@@ -427,7 +427,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.all.target_internal' => [
-                'required_if:forward.all.type,==,internal',
+                'required_if:forward_all_enabled,==,true,forward.all.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -444,7 +444,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.busy.target_internal' => [
-                'required_if:forward.busy.type,==,internal',
+                'required_if:forward_busy_enabled,==,true,forward.busy.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -461,7 +461,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.no_answer.target_internal' => [
-                'required_if:forward.no_answer.type,==,internal',
+                'required_if:forward_no_answer_enabled,==,true,forward.no_answer.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -478,7 +478,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.user_not_registered.target_internal' => [
-                'required_if:forward.user_not_registered.type,==,internal',
+                'required_if:forward_user_not_registered_enabled,==,true,forward.user_not_registered.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -908,7 +908,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.all.target_internal' => [
-                'required_if:forward.all.type,==,internal',
+                'required_if:forward_all_enabled,==,true,forward.all.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -925,7 +925,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.busy.target_internal' => [
-                'required_if:forward.busy.type,==,internal',
+                'required_if:forward_busy_enabled,==,true,forward.busy.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -942,7 +942,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.no_answer.target_internal' => [
-                'required_if:forward.no_answer.type,==,internal',
+                'required_if:forward_no_answer_enabled,==,true,forward.no_answer.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -959,7 +959,7 @@ class ExtensionsController extends Controller
                 'phone:US',
             ],
             'forward.user_not_registered.target_internal' => [
-                'required_if:forward.user_not_registered.type,==,internal',
+                'required_if:forward_user_not_registered_enabled,==,true,forward.user_not_registered.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
@@ -1335,22 +1335,22 @@ class ExtensionsController extends Controller
             elseif (preg_match('/polycom|polyedge/i', $reg['agent']) > 0) {
                 $agent = "polycom";
             }
-                                                
+
             elseif (preg_match("/yealink/i", $reg['agent'])) {
                 $agent = "yealink";
             }
 
             elseif (preg_match("/grandstream/i", $reg['agent'])) {
                 $agent = "grandstream";
-            }                                
+            }
 
             if ($agent != "") {
                 $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent. "'";
 
-                // Queue a job to restart the phone 
+                // Queue a job to restart the phone
                 SendEventNotify::dispatch($command)->onQueue('default');
             }
-           
+
 
 
         }
