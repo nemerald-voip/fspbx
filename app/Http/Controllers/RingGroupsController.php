@@ -213,10 +213,10 @@ class RingGroupsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  UpdateRingGroupRequest  $request
-     * @param  RingGroups  $ringGroups
+     * @param  RingGroups  $ringGroup
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function update(UpdateRingGroupRequest $request, RingGroups $ringGroups)
+    public function update(UpdateRingGroupRequest $request, RingGroups $ringGroup)
     {
         if (!userCheckPermission('ring_group_add') && !userCheckPermission('ring_group_edit')) {
             return redirect('/');
@@ -224,9 +224,8 @@ class RingGroupsController extends Controller
 
         $attributes = $request->validated();
 
-        $ringGroups->update([
+        $ringGroup->update([
             'ring_group_name' => $attributes['ring_group_name'],
-            'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
             'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_action' => $attributes['ring_group_timeout_action'],
@@ -247,7 +246,9 @@ class RingGroupsController extends Controller
             'ring_group_forward_context' => $attributes['ring_group_forward_context']
         ]);
 
-        $ringGroups->save();
+        $ringGroup->groupDestinations()->delete();
+
+        $ringGroup->save();
 
         if (count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
@@ -267,14 +268,14 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_prompt = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                $ringGroups->groupDestinations()->save($groupsDestinations);
+                $ringGroup->groupDestinations()->save($groupsDestinations);
                 $i++;
             }
         }
 
         return response()->json([
             'status' => 'success',
-            'ring_group' => $ringGroups->ring_group_uuid,
+            'ring_group' => $ringGroup->ring_group_uuid,
             'message' => 'RingGroup has been saved'
         ]);
     }

@@ -85,7 +85,7 @@ class UpdateRingGroupRequest extends FormRequest
                 'phone:US',
             ],
             'ring_group_forward.all.target_internal' => [
-                'required_if:ring_group_forward.all.type,==,internal',
+                'required_if:ring_group_forward_enabled,==,true,ring_group_forward.all.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
