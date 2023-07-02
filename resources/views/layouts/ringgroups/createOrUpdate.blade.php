@@ -1032,13 +1032,16 @@
         function fillDestinationForm(form) {
             const values = form.serializeArray()
             for(let i = 0; i < values.length; i++) {
-                let addedRow = addDestinationAction(null)
-                if(values[i].value.length <= 5) {
-                    addedRow.find('.flex-fill').find('select').val(values[i].value).trigger('change')
-                    addedRow.find('.mx-1').find('select').val('internal').trigger('change')
-                } else {
-                    addedRow.find('.flex-fill').find('input').val(values[i].value)
-                    addedRow.find('.mx-1').find('select').val('external').trigger('change')
+                let value = values[i].value.trim()
+                if(value !== '') {
+                    let addedRow = addDestinationAction(null)
+                    if (value.length <= 5) {
+                        addedRow.find('.flex-fill').find('select').val(value).trigger('change')
+                        addedRow.find('.mx-1').find('select').val('internal').trigger('change')
+                    } else {
+                        addedRow.find('.flex-fill').find('input').val(value)
+                        addedRow.find('.mx-1').find('select').val('external').trigger('change')
+                    }
                 }
             }
             $('#addDestinationMultipleModal').modal('hide');
