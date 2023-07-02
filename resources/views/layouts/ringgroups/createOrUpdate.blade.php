@@ -694,7 +694,7 @@
                                        <input class="form-control" type="text"
                                        placeholder="Extension, voicemail, phone, etc..."
                                        name="destination_multiple[]"
-                                       value="'.rand(300, 900).'" /></div></div>';
+                                       value="" /></div></div>';
                             }
                         @endphp
                     </form>
