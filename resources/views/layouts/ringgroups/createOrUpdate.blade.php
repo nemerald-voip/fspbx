@@ -950,9 +950,9 @@
             }
         }
 
-        function applyDestinationSelect2(type = 'internal', value = '') {
+        function applyDestinationSelect2() {
             $('#destination_sortable > tr').each(function (i, el) {
-                $(el).find('select').each(function (i, el2) {
+                $(el).find('select').each(function(i, el2) {
                     if ($(el2).data('select2')) {
                         $(el2).select2('destroy').hide()
                         $(el2).select2({
@@ -977,11 +977,11 @@
             $('#addDestinationMultipleModal').modal('show');
         }
 
-        function addDestinationAction(el, value = '') {
+        function addDestinationAction(el){
             let wrapper = $(`#destination_sortable > tr`)
             let count = wrapper.length
             let newCount = (count + 1)
-            if (newCount > 50) {
+            if(newCount > 50) {
                 return false;
             }
 
@@ -1002,18 +1002,22 @@
         @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
         {{ $i }} @if ($i >1 ) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td><td>
         <input type="hidden" name="ring_group_destinations[newrow__NEWROWID__][prompt]" value="false">
-        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][prompt]" data-option="ring_group_follow_me_enabled" class="forward_checkbox" data-switch="primary"/>
+        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][prompt]" data-option="ring_group_destinations_enabled" class="forward_checkbox" data-switch="primary"/>
         <label for="destination_prompt___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
         </td><td><div id="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
         </a></div></td></tr>`;
             newRow = newRow.replaceAll('__NEWROWID__', Math.random().toString(16).slice(2))
 
+            newRow = $(newRow)
+
             $('#destination_sortable').append(newRow)
 
             showHideAddDestination()
             updateDestinationOrder()
             applyDestinationSelect2()
+
+            return newRow;
         }
 
         function confirmDeleteDestinationAction(el) {
@@ -1028,12 +1032,16 @@
         function fillDestinationForm(form) {
             const values = form.serializeArray()
             for(let i = 0; i < values.length; i++) {
-                addDestinationAction(null, values[i].value)
-                console.log(values[i])
-                //values[i].value = '';
+                let addedRow = addDestinationAction(null)
+                if(values[i].value.length <= 5) {
+                    addedRow.find('.flex-fill').find('select').val(values[i].value).trigger('change')
+                    addedRow.find('.mx-1').find('select').val('internal').trigger('change')
+                } else {
+                    addedRow.find('.flex-fill').find('input').val(values[i].value)
+                    addedRow.find('.mx-1').find('select').val('external').trigger('change')
+                }
             }
             $('#addDestinationMultipleModal').modal('hide');
-            //console.log(form.serializeArray())
         }
     </script>
 @endpush
