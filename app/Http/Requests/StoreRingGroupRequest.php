@@ -79,7 +79,7 @@ class StoreRingGroupRequest extends FormRequest
                 'in:external,internal'
             ],
             'ring_group_forward.all.target_external' => [
-                'required_if:ring_group_forward_enabled,==,true,ring_group_forward.all.type,==,external',
+                'required_if:ring_group_forward.all.type,==,external',
                 'nullable',
                 'phone:US',
             ],
