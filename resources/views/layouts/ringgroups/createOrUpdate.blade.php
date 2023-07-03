@@ -160,7 +160,7 @@
                                                                         <optgroup label="Recordings">
                                                                             @foreach ($recordings as $recording)
                                                                                 <option value="{{ $recording->recording_name }}"
-                                                                                        @if($recording->recording_name == $ringGroup->ring_group_ringback)
+                                                                                        @if($recording->recording_name == $ringGroup->ring_group_greeting)
                                                                                             selected
                                                                                         @endif>
                                                                                     {{ $recording->recording_name }}
@@ -174,10 +174,11 @@
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
-                                                    <hr />
+                                                    <hr/>
                                                     <div class="row">
                                                         <h4 class="mt-2">Destinations</h4>
-                                                        <p class="text-muted mb-2">You can drag-n-drop lines to adjust current destinations order.</p>
+                                                        <p class="text-muted mb-2">You can drag-n-drop lines to adjust
+                                                            current destinations order.</p>
                                                         <table class="table table-centered table-responsive table-sm mb-0 sequential-table">
                                                             <thead>
                                                             <tr>
@@ -292,26 +293,29 @@
                                                             </a>
                                                         </div>
                                                     </div>
-                                                    <hr class="mb-4" />
+                                                    <hr class="mb-4"/>
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_call_timeout" class="form-label">Call timeout</label>
+                                                                <label for="ring_group_call_timeout" class="form-label">Call
+                                                                    timeout</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_call_timeout"
                                                                        name="ring_group_call_timeout"
                                                                        value="{{ $ringGroup->ring_group_call_timeout }}"
                                                                 />
-                                                                <div id="ring_group_call_timeout_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_call_timeout_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-8">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_timeout_action" class="form-label">If not answered</label>
+                                                                <label for="ring_group_timeout_action"
+                                                                       class="form-label">If not answered</label>
                                                                 <div class="row">
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-4">
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
@@ -340,7 +344,7 @@
                                                                             </option>
                                                                         </select>
                                                                     </div>
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-8">
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
@@ -352,31 +356,36 @@
                                                                         </select>
                                                                     </div>
                                                                 </div>
-                                                                <div id="ring_group_timeout_data_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_timeout_data_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_cid_name_prefix" class="form-label">CID Name Prefix</label>
+                                                                <label for="ring_group_cid_name_prefix"
+                                                                       class="form-label">CID Name Prefix</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_cid_name_prefix"
                                                                        name="ring_group_cid_name_prefix"
                                                                        value="{{ $ringGroup->ring_group_cid_name_prefix }}"
                                                                 />
-                                                                <div id="ring_group_cid_name_prefix_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_cid_name_prefix_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_cid_number_prefix" class="form-label">CID Number Prefix</label>
+                                                                <label for="ring_group_cid_number_prefix"
+                                                                       class="form-label">CID Number Prefix</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_cid_number_prefix"
                                                                        name="ring_group_cid_number_prefix"
                                                                        value="{{ $ringGroup->ring_group_cid_number_prefix }}"
                                                                 />
-                                                                <div id="ring_group_cid_number_prefix_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_cid_number_prefix_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -387,7 +396,7 @@
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_description"
                                                                        name="ring_group_description"
-                                                                       value="{{ $ringGroup->ring_group_description }}" />
+                                                                       value="{{ $ringGroup->ring_group_description }}"/>
                                                                 <div id="ring_group_description_err"
                                                                      class="text-danger error_message"></div>
                                                             </div>
@@ -396,15 +405,19 @@
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Enabled</label>
+                                                                <label class="form-label">Enabled</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
-                                                                <input type="hidden" name="ring_group_enabled" value="false">
-                                                                <input type="checkbox" id="enabled-switch" name="ring_group_enabled"
-                                                                       @if ($ringGroup->ring_group_enabled == "true") checked @endif data-switch="primary" value="true" />
-                                                                <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
+                                                                <input type="hidden" name="ring_group_enabled"
+                                                                       value="false">
+                                                                <input type="checkbox" id="enabled-switch"
+                                                                       name="ring_group_enabled"
+                                                                       @if ($ringGroup->ring_group_enabled == "true") checked
+                                                                       @endif data-switch="primary" value="true"/>
+                                                                <label for="enabled-switch" data-on-label="On"
+                                                                       data-off-label="Off"></label>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -432,7 +445,8 @@
                                                                        value="true" name="ring_group_forward_enabled"
                                                                        data-option="ring_group_forward"
                                                                        class="forward_checkbox"
-                                                                       @if ($ringGroup->ring_group_forward_enabled == "true") checked @endif
+                                                                       @if ($ringGroup->ring_group_forward_enabled == "true") checked
+                                                                       @endif
                                                                        data-switch="primary"/>
                                                                 <label for="ring_group_forward_enabled"
                                                                        data-on-label="On" data-off-label="Off"></label>
@@ -463,7 +477,8 @@
                                             <div class="row">
                                                 <div class="col-lg-12">
                                                     <h4 class="mt-2">Advanced</h4>
-                                                    <p class="text-muted mb-4">Provide advanced information about the ring group</p>
+                                                    <p class="text-muted mb-4">Provide advanced information about the
+                                                        ring group</p>
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -494,7 +509,8 @@
                                                                         Rollover
                                                                     </option>
                                                                 </select>
-                                                                <div id="ring_group_strategy_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_strategy_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -502,35 +518,40 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_caller_id_name" class="form-label">Caller ID Name</label>
+                                                                <label for="ring_group_caller_id_name"
+                                                                       class="form-label">Caller ID Name</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_caller_id_name"
                                                                        name="ring_group_caller_id_name"
                                                                        value="{{ $ringGroup->ring_group_caller_id_name }}"
                                                                 />
-                                                                <div id="ring_group_caller_id_name_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_caller_id_name_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_caller_id_number" class="form-label">Caller ID Number</label>
+                                                                <label for="ring_group_caller_id_number"
+                                                                       class="form-label">Caller ID Number</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_caller_id_number"
                                                                        name="ring_group_caller_id_number"
                                                                        value="{{ $ringGroup->ring_group_caller_id_number }}"
                                                                 />
-                                                                <div id="ring_group_caller_id_number_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_caller_id_number_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_distinctive_ring" class="form-label">Distinctive Ring</label>
+                                                                <label for="ring_group_distinctive_ring"
+                                                                       class="form-label">Distinctive Ring</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_distinctive_ring"
                                                                        name="ring_group_distinctive_ring"
-                                                                       value="{{ $ringGroup->ring_group_distinctive_ring }}" />
+                                                                       value="{{ $ringGroup->ring_group_distinctive_ring }}"/>
                                                                 <div id="ring_group_distinctive_ring_err"
                                                                      class="text-danger error_message"></div>
                                                             </div>
@@ -539,7 +560,8 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_ringback" class="form-label">Ring Back</label>
+                                                                <label for="ring_group_ringback" class="form-label">Ring
+                                                                    Back</label>
                                                                 <select class="select2 form-control"
                                                                         data-toggle="select2"
                                                                         data-placeholder="Choose ..."
@@ -547,30 +569,33 @@
                                                                         name="ring_group_ringback">
                                                                     @if (!$moh->isEmpty())
                                                                         <optgroup label="Music on Hold">
-                                                                        @foreach ($moh as $music)
-                                                                            <option value="local_stream://{{ $music->music_on_hold_name }}"
-                                                                                    @if("local_stream://" . $music->music_on_hold_name == $ringGroup->ring_group_ringback)
-                                                                                        selected
-                                                                                    @endif>
-                                                                                {{ $music->music_on_hold_name }}
-                                                                            </option>
-                                                                        @endforeach
+                                                                            @foreach ($moh as $music)
+                                                                                <option value="local_stream://{{ $music->music_on_hold_name }}"
+                                                                                        @if("local_stream://" . $music->music_on_hold_name == $ringGroup->ring_group_ringback)
+                                                                                            selected
+                                                                                        @endif>
+                                                                                    {{ $music->music_on_hold_name }}
+                                                                                </option>
+                                                                            @endforeach
                                                                         </optgroup>
                                                                     @endif
                                                                     @if (!$recordings->isEmpty())
                                                                         <optgroup label="Recordings">
-                                                                             @foreach ($recordings as $recording)
-                                                                                 <option value="{{ $recording->recording_name }}"
-                                                                                     @if($recording->recording_name == $ringGroup->ring_group_ringback)
-                                                                                         selected
-                                                                                     @endif>
-                                                                                 {{ $recording->recording_name }}
-                                                                                 </option>
-                                                                             @endforeach
+                                                                            @foreach ($recordings as $recording)
+                                                                                <option value="{{ $recording->recording_name }}"
+                                                                                        @if($recording->recording_name == $ringGroup->ring_group_ringback)
+                                                                                            selected
+                                                                                        @endif>
+                                                                                    {{ $recording->recording_name }}
+                                                                                </option>
+                                                                            @endforeach
                                                                         </optgroup>
-                                                                        @endif
+                                                                    @endif
                                                                     <optgroup label="Ringtones">
-                                                                        <option value="${us-ring}" @if($ringGroup->ring_group_ringback == '${us-ring}') selected="selected" @endif>${us-ring}</option>
+                                                                        <option value="${us-ring}"
+                                                                                @if($ringGroup->ring_group_ringback == '${us-ring}') selected="selected" @endif>
+                                                                            ${us-ring}
+                                                                        </option>
                                                                     </optgroup>
                                                                 </select>
                                                                 <div id="ring_group_ringback_err"
@@ -581,39 +606,49 @@
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Call Forward</label>
+                                                                <label class="form-label">Call Forward</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
-                                                                <input type="hidden" name="ring_group_call_forward_enabled" value="false">
-                                                                <input type="checkbox" id="enabled-switch" name="ring_group_call_forward_enabled"
-                                                                       @if ($ringGroup->ring_group_call_forward_enabled == "true") checked @endif
-                                                                       data-switch="primary" value="true" />
-                                                                <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
+                                                                <input type="hidden"
+                                                                       name="ring_group_call_forward_enabled"
+                                                                       value="false">
+                                                                <input type="checkbox" id="enabled-switch"
+                                                                       name="ring_group_call_forward_enabled"
+                                                                       @if ($ringGroup->ring_group_call_forward_enabled == "true") checked
+                                                                       @endif
+                                                                       data-switch="primary" value="true"/>
+                                                                <label for="enabled-switch" data-on-label="On"
+                                                                       data-off-label="Off"></label>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Follow Me</label>
+                                                                <label class="form-label">Follow Me</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
-                                                                <input type="hidden" name="ring_group_follow_me_enabled" value="false">
-                                                                <input type="checkbox" id="enabled-switch" name="ring_group_follow_me_enabled"
-                                                                       @if ($ringGroup->ring_group_follow_me_enabled == "true") checked @endif
-                                                                       data-switch="primary" value="true" />
-                                                                <label for="enabled-switch" data-on-label="On" data-off-label="Off"></label>
+                                                                <input type="hidden" name="ring_group_follow_me_enabled"
+                                                                       value="false">
+                                                                <input type="checkbox" id="enabled-switch"
+                                                                       name="ring_group_follow_me_enabled"
+                                                                       @if ($ringGroup->ring_group_follow_me_enabled == "true") checked
+                                                                       @endif
+                                                                       data-switch="primary" value="true"/>
+                                                                <label for="enabled-switch" data-on-label="On"
+                                                                       data-off-label="Off"></label>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_missed_call_data" class="form-label">Missed Call</label>
+                                                                <label for="ring_group_missed_call_data"
+                                                                       class="form-label">Missed Call</label>
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <select class="select2 form-control"
@@ -631,25 +666,29 @@
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <input class="form-control" type="text"
-                                                                               placeholder="" id="ring_group_missed_call_data"
+                                                                               placeholder=""
+                                                                               id="ring_group_missed_call_data"
                                                                                name="ring_group_missed_call_data"
                                                                                value="{{ $ringGroup->ring_group_missed_call_data }}"
                                                                         />
                                                                     </div>
                                                                 </div>
-                                                                <div id="ring_group_missed_call_data_err" class="text-danger error_message"></div>
+                                                                <div id="ring_group_missed_call_data_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_forward_toll_allow" class="form-label">Forward Toll Allow</label>
+                                                                <label for="ring_group_forward_toll_allow"
+                                                                       class="form-label">Forward Toll Allow</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_forward_toll_allow"
                                                                        name="ring_group_forward_toll_allow"
-                                                                       value="{{ $ringGroup->ring_group_forward_toll_allow }}" />
-                                                                <div id="ring_group_forward_toll_allow_err" class="text-danger error_message"></div>
+                                                                       value="{{ $ringGroup->ring_group_forward_toll_allow }}"/>
+                                                                <div id="ring_group_forward_toll_allow_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -660,8 +699,9 @@
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_context"
                                                                        name="ring_group_forward_context"
-                                                                       value="{{ $ringGroup->ring_group_context }}" />
-                                                                <div id="ring_group_context_err" class="text-danger error_message"></div>
+                                                                       value="{{ $ringGroup->ring_group_context }}"/>
+                                                                <div id="ring_group_context_err"
+                                                                     class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -678,7 +718,8 @@
         </div>
     </div> <!-- container -->
 
-    <div class="modal fade" id="addDestinationMultipleModal" role="dialog" aria-labelledby="addDestinationMultipleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addDestinationMultipleModal" role="dialog"
+         aria-labelledby="addDestinationMultipleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -686,7 +727,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Type up to 15 destinations in the inputs below and hit "Add". We will recognize either the destination is external or internal and fill up the form.</p>
+                    <p>Type up to 15 destinations in the inputs below and hit "Add". We will recognize either the
+                        destination is external or internal and fill up the form.</p>
                     <form method="POST" id="addDestinationMultipleForm" action="#" class="form">
                         @php
                             for($i = 0; $i < 15; $i++) {
@@ -700,7 +742,9 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" onclick="fillDestinationForm($('#addDestinationMultipleForm'));" class="btn btn-success">Add</button>
+                    <button type="button" onclick="fillDestinationForm($('#addDestinationMultipleForm'));"
+                            class="btn btn-success">Add
+                    </button>
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </div>
@@ -758,8 +802,40 @@
     <script>
         $(document).ready(function () {
             const form = $('#ringGroupForm');
+            const ringGroupTimeoutAction = $('#ring_group_timeout_action');
 
             applyDestinationSelect2()
+
+            $('#ring_group_timeout_category').on('change', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    type: "GET",
+                    url: '/ring-groups-destination-category/' + e.target.value,
+                    cache: false,
+                    data: form.serialize(),
+                    beforeSend: function () {
+
+                    },
+                    complete: function (xhr, status) {
+
+                    },
+                    success: function (result) {
+                        ringGroupTimeoutAction.empty().trigger('change');
+                        if (result.list.length > 0) {
+                            for (let i = 0; i < result.list.length; i++) {
+                                var option = new Option(result.list[i].label, result.list[i].id);
+                                ringGroupTimeoutAction.append(option)
+                            }
+                            ringGroupTimeoutAction.trigger('change');
+                        }
+                        console.log(result)
+                    },
+                    error: function (error) {
+                        console.warn(error)
+                        alert('something went wrong')
+                    }
+                })
+            })
 
             $('#submitFormButton').on('click', function (e) {
                 e.preventDefault();
@@ -952,7 +1028,7 @@
 
         function applyDestinationSelect2() {
             $('#destination_sortable > tr').each(function (i, el) {
-                $(el).find('select').each(function(i, el2) {
+                $(el).find('select').each(function (i, el2) {
                     if ($(el2).data('select2')) {
                         $(el2).select2('destroy').hide()
                         $(el2).select2({
@@ -977,11 +1053,11 @@
             $('#addDestinationMultipleModal').modal('show');
         }
 
-        function addDestinationAction(el){
+        function addDestinationAction(el) {
             let wrapper = $(`#destination_sortable > tr`)
             let count = wrapper.length
             let newCount = (count + 1)
-            if(newCount > 50) {
+            if (newCount > 50) {
                 return false;
             }
 
@@ -1031,9 +1107,9 @@
 
         function fillDestinationForm(form) {
             const values = form.serializeArray()
-            for(let i = 0; i < values.length; i++) {
+            for (let i = 0; i < values.length; i++) {
                 let value = values[i].value.trim()
-                if(value !== '') {
+                if (value !== '') {
                     let addedRow = addDestinationAction(null)
                     if (value.length <= 5) {
                         addedRow.find('.flex-fill').find('select').val(value).trigger('change')

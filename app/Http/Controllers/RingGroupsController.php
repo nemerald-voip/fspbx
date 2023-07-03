@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetDestinationByCategoryRequest;
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
+use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\FollowMeDestinations;
 use App\Models\IvrMenus;
@@ -11,6 +13,7 @@ use App\Models\MusicOnHold;
 use App\Models\Recordings;
 use App\Models\RingGroups;
 use App\Models\RingGroupsDestinations;
+use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Session;
@@ -65,8 +68,8 @@ class RingGroupsController extends Controller
 
         $ringGroupRingMyPhoneTimeout = 0;
         $ringGroupDestinations = $ringGroup->getGroupDestinations();
-        if($ringGroupDestinations->count() > 0) {
-            if($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
+        if ($ringGroupDestinations->count() > 0) {
+            if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
                 $ringGroupDestinations = $ringGroupDestinations[0]->destination_timeout;
                 unset($ringGroupDestinations[0]);
             }
@@ -130,7 +133,9 @@ class RingGroupsController extends Controller
         if (count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             foreach ($attributes['ring_group_destinations'] as $destination) {
-                if ($i > 49) break;
+                if ($i > 49) {
+                    break;
+                }
                 $groupsDestinations = new RingGroupsDestinations();
                 if ($destination['type'] == 'external') {
                     $groupsDestinations->destination_number = format_phone_or_extension($destination['target_external']);
@@ -183,8 +188,8 @@ class RingGroupsController extends Controller
 
         $ringGroupRingMyPhoneTimeout = 0;
         $ringGroupDestinations = $ringGroup->getGroupDestinations();
-        if($ringGroupDestinations->count() > 0) {
-            if($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
+        if ($ringGroupDestinations->count() > 0) {
+            if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
                 $ringGroupRingMyPhoneTimeout = $ringGroupDestinations[0]->destination_timeout;
                 unset($ringGroupDestinations[0]);
             }
@@ -253,7 +258,9 @@ class RingGroupsController extends Controller
         if (count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             foreach ($attributes['ring_group_destinations'] as $destination) {
-                if ($i > 49) break;
+                if ($i > 49) {
+                    break;
+                }
                 $groupsDestinations = new RingGroupsDestinations();
                 if ($destination['type'] == 'external') {
                     $groupsDestinations->destination_number = format_phone_or_extension($destination['target_external']);
@@ -308,7 +315,8 @@ class RingGroupsController extends Controller
         }
     }
 
-    private function getDestinationExtensions() {
+    private function getDestinationExtensions()
+    {
         $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
             //->whereNotIn('extension_uuid', [$extension->extension_uuid])
             ->orderBy('extension')
@@ -333,5 +341,94 @@ class RingGroupsController extends Controller
             'Ring Groups' => $ringGroups,
             //'Voicemails' => $voicemails
         ];
+    }
+
+    public function getDestinationByCategory($category)
+    {
+        $output = [];
+        $rows = null;
+
+        switch ($category) {
+            case 'ringgroup':
+                $rows = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ring_group_extension')
+                    ->get();
+                break;
+            case 'dialplans':
+                $rows = Dialplans::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('dialplan_name')
+                    ->get();
+                break;
+            case 'extensions':
+                $rows = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('extension')
+                    ->get();
+                break;
+            case 'timeconditions':
+                $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('voicemail_id')
+                    ->get();
+                break;
+            case 'voicemails':
+                $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('voicemail_id')
+                    ->get();
+                break;
+            case 'others':
+
+                break;
+            default:
+
+        }
+
+        if ($rows) {
+            foreach ($rows as $row) {
+                switch ($category) {
+                    case 'ringgroup':
+                        $output[] = [
+                            'id' => $row->ring_group_uuid,
+                            'label' => $row->ring_group_name
+                        ];
+                        break;
+                    case 'dialplans':
+                        $output[] = [
+                            'id' => $row->dialplan_uuid,
+                            'label' => $row->dialplan_name
+                        ];
+                        break;
+                    case 'extensions':
+                        $output[] = [
+                            'id' => $row->extension_uuid,
+                            'label' => $row->extension
+                        ];
+                        break;
+                    case 'timeconditions':
+                        //$output[$row->ring_group_uuid] = $row->ring_group_name;
+                        break;
+                    case 'voicemails':
+                        $output[] = [
+                            'id' => $row->voicemail_uuid,
+                            'label' => $row->voicemail_id
+                        ];
+                        break;
+                    case 'others':
+                        //$output[$row->ring_group_uuid] = $row->ring_group_name;
+                        break;
+                    default:
+
+                }
+            }
+        }
+
+
+        return response()->json([
+            'status' => 'success',
+            'list' => $output
+        ]);
     }
 }
