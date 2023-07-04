@@ -191,8 +191,9 @@
                                 <div id="collapse{{ $extension->extension_uuid }}" class="collapse"
                                     aria-labelledby="heading{{ $extension->extension_uuid }}"
                                     data-bs-parent="#advancedOptionsAccordion">
-                                    <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
-                                        class="dropdown-item">Make User</a>
+                                    {{-- <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
+                                        class="dropdown-item">Make User</a> --}}
+                                    <livewire:extensions.make-user :extension="$extension"/>   
                                     <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
                                         class="dropdown-item">Make Admin</a>
                                 </div>
