@@ -311,7 +311,7 @@ class UsersController extends Controller
         $language->domain_uuid=Session::get('domain_uuid');;
         $language->user_setting_category='domain';
         $language->user_setting_subcategory='language';
-        $language->user_setting_name='system_default';
+        $language->user_setting_name='code';
         $language->user_setting_value=$attributes['language'];
         $language->user_setting_enabled='t';
         
@@ -319,7 +319,7 @@ class UsersController extends Controller
         $time_zone->domain_uuid=Session::get('domain_uuid');;
         $time_zone->user_setting_category='domain';
         $time_zone->user_setting_subcategory='time_zone';
-        $time_zone->user_setting_name='system_default';
+        $time_zone->user_setting_name='name';
         $time_zone->user_setting_value=$attributes['time_zone'];
         $time_zone->user_setting_enabled='t';
 
@@ -473,6 +473,13 @@ class UsersController extends Controller
 
         if(isset($user)){
             $deleted = $user->delete();
+            foreach ($user->setting as $setting) {
+                $setting->delete();
+            }
+
+            foreach ($user->user_groups as $group) {
+                $group->delete();
+            }
 
             if ($deleted){
                 return response()->json([
