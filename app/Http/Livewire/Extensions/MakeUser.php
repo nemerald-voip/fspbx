@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Session;
 class MakeUser extends Component
 {
     public $extension;
+    public $role;
 
     public function render()
     {
@@ -24,7 +25,7 @@ class MakeUser extends Component
 
     public function makeUser()
     {
-        $group_name = 'user';
+        $group_name = $this->role;
 
         try {
             //check if user exists

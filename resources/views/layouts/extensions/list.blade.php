@@ -193,9 +193,8 @@
                                     data-bs-parent="#accordion{{ $extension->extension_uuid }}">
                                     {{-- <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
                                         class="dropdown-item">Make User</a> --}}
-                                    <livewire:extensions.make-user :extension="$extension"/>   
-                                    <a href="#" data-attr="{{ route('extensions.sip.show', $extension) }}"
-                                        class="dropdown-item">Make Admin</a>
+                                    <livewire:extensions.make-user :extension="$extension" role="user"/>   
+                                    <livewire:extensions.make-user :extension="$extension" role="admin"/> 
                                 </div>
 
 
