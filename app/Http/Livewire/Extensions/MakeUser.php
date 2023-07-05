@@ -50,13 +50,11 @@ class MakeUser extends Component
         $user = new User();
         $user->fill($attributes);
         $user->save();
-        logger($user);
 
         $user_name_info = new UserAdvFields();
         $user_name_info->first_name = $attributes['first_name'];
         $user_name_info->last_name = $attributes['last_name'];
         $user->user_adv_fields()->save($user_name_info);
-        logger($user_name_info);
 
         // Add user to the group
         $group = Groups::where('group_name', $group_name)->first();
@@ -67,7 +65,6 @@ class MakeUser extends Component
         $user_group->insert_date = date('Y-m-d H:i:s');
         $user_group->insert_user = Session::get('user_uuid');
         $user->user_groups()->save($user_group);
-        logger($user_group);
 
         $language = new UserSetting();
         $language->domain_uuid = Session::get('domain_uuid');;
@@ -76,7 +73,6 @@ class MakeUser extends Component
         $language->user_setting_name = 'code';
         $language->user_setting_value = get_domain_setting('language');
         $language->user_setting_enabled = 't';
-        logger($language);
 
         $time_zone = new UserSetting();
         $time_zone->domain_uuid = Session::get('domain_uuid');;
@@ -86,8 +82,9 @@ class MakeUser extends Component
         $time_zone->user_setting_value = get_local_time_zone(Session::get('domain_uuid'));
         $time_zone->user_setting_enabled = 't';
 
-        logger($time_zone);
-
         $user->setting()->saveMany([$language,$time_zone]);
+
+        $this->emit('userCreated', $this->extension->extension_uuid);
+
     }
 }
