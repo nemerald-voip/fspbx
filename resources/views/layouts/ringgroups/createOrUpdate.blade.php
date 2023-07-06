@@ -278,12 +278,12 @@
                                                                    data-bs-container="#tooltip-container-actions"
                                                                    data-bs-toggle="tooltip"
                                                                    data-bs-placement="bottom"
-                                                                   title="Add destination"></i> Add one
+                                                                   title="Add destination"></i> Add destination
                                                             </a>
                                                         </div>
                                                         @if($ringGroup->getGroupDestinations()->count() < 30)
                                                             @include('layouts.partials.destinationExtensionsSelectorCheckboxModal', [
-                                                            'label' => 'Add multiple',
+                                                            'label' => 'Add multiple extensions',
                                                             'extensions' => $extensions['Extensions'],
                                                             'extensionsSelected' => $ringGroup->getGroupDestinations()->pluck('destination_number'),
                                                             'callbackOnClick' => "fillDestinationForm()"
