@@ -281,17 +281,13 @@
                                                                    title="Add destination"></i> Add one
                                                             </a>
                                                         </div>
-                                                        <div id="addDestinationBarMultiple" class="my-1"
-                                                             @if($ringGroup->getGroupDestinations()->count() >= 30) style="display: none;" @endif>
-                                                            <a href="javascript:addDestinationModal(this);"
-                                                               class="btn btn-success">
-                                                                <i class="mdi mdi-plus"
-                                                                   data-bs-container="#tooltip-container-actions"
-                                                                   data-bs-toggle="tooltip"
-                                                                   data-bs-placement="bottom"
-                                                                   title="Add multiple destinations"></i> Add multiple
-                                                            </a>
-                                                        </div>
+                                                        @if($ringGroup->getGroupDestinations()->count() < 30)
+                                                            @include('layouts.partials.destinationExtensionsSelectorCheckboxModal', [
+                                                            'label' => 'Add multiple',
+                                                            'extensions' => $extensions['Extensions'],
+                                                            'destinationTargetOnClick' => "fillDestinationForm($('#addDestinationMultipleForm'))"
+                                                            ])
+                                                        @endif
                                                     </div>
                                                     <hr class="mb-4"/>
                                                     <div class="row">
@@ -614,12 +610,12 @@
                                                                 <input type="hidden"
                                                                        name="ring_group_call_forward_enabled"
                                                                        value="false">
-                                                                <input type="checkbox" id="enabled-switch"
+                                                                <input type="checkbox" id="ring_group_call_forward_enabled"
                                                                        name="ring_group_call_forward_enabled"
                                                                        @if ($ringGroup->ring_group_call_forward_enabled == "true") checked
                                                                        @endif
                                                                        data-switch="primary" value="true"/>
-                                                                <label for="enabled-switch" data-on-label="On"
+                                                                <label for="ring_group_call_forward_enabled" data-on-label="On"
                                                                        data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -634,12 +630,12 @@
                                                             <div class="mb-3 text-sm-end">
                                                                 <input type="hidden" name="ring_group_follow_me_enabled"
                                                                        value="false">
-                                                                <input type="checkbox" id="enabled-switch"
+                                                                <input type="checkbox" id="ring_group_follow_me_enabled"
                                                                        name="ring_group_follow_me_enabled"
                                                                        @if ($ringGroup->ring_group_follow_me_enabled == "true") checked
                                                                        @endif
                                                                        data-switch="primary" value="true"/>
-                                                                <label for="enabled-switch" data-on-label="On"
+                                                                <label for="ring_group_follow_me_enabled" data-on-label="On"
                                                                        data-off-label="Off"></label>
                                                             </div>
                                                         </div>
@@ -717,40 +713,6 @@
             </div> <!-- end col -->
         </div>
     </div> <!-- container -->
-
-    <div class="modal fade" id="addDestinationMultipleModal" role="dialog"
-         aria-labelledby="addDestinationMultipleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addDestinationMultipleModalLabel">Add Multiple Destinations</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Type up to 15 destinations in the inputs below and hit "Add". We will recognize either the
-                        destination is external or internal and fill up the form.</p>
-                    <form method="POST" id="addDestinationMultipleForm" action="#" class="form">
-                        @php
-                            for($i = 0; $i < 15; $i++) {
-                                print '<div class="row"><div class="col-md-12 mb-1">
-                                       <input class="form-control" type="text"
-                                       placeholder="Extension, voicemail, phone, etc..."
-                                       name="destination_multiple[]"
-                                       value="" /></div></div>';
-                            }
-                        @endphp
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" onclick="fillDestinationForm($('#addDestinationMultipleForm'));"
-                            class="btn btn-success">Add
-                    </button>
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 @endsection
 
 @push('scripts')
@@ -1047,10 +1009,6 @@
             $('#destination_sortable > tr').each(function (i, el) {
                 $(el).find('.drag-handler').find('span').text(i + 1)
             })
-        }
-
-        function addDestinationModal(el) {
-            $('#addDestinationMultipleModal').modal('show');
         }
 
         function addDestinationAction(el) {
