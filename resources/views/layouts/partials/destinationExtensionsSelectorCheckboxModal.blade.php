@@ -1,6 +1,7 @@
 @php
     /**
      * @property array $extensions
+     * @property string $callbackOnClick
      * @property string $label
      */
 @endphp
@@ -24,41 +25,18 @@
             </div>
             <div class="modal-body">
                 <p>Select one or more extensions to be added.</p>
-                <form method="POST" id="addDestinationMultipleForm" action="#" class="form">
-                    <div class="mb-3">
-                        <input class="form-control" type="text" name="destination_multiple_search" placeholder="Search" value="" />
-                    </div>
-                    <div class="mb-3">
-                        <input class="form-control" type="button" onclick="triggerDestinationAll()" name="destination_multiple_search_select_all" value="Select All Extensions" />
-                    </div>
-                    <div class="destination_multiple_wrapper">
-                        <ul id="destinationMultipleListExtensions">
-                            @php
-                                foreach ($extensions as $extension) {
-                                    print '';
-                                    /*print '<div class="row"><div class="col-md-12 mb-1">
-                                           <input class="form-control" type="text"
-                                           placeholder="Extension, voicemail, phone, etc..."
-                                           name="destination_multiple[]"
-                                           value="" /></div></div>';*/
-
-                                }
-                                /*for($i = 0; $i < 15; $i++) {
-                                    print '<div class="row"><div class="col-md-12 mb-1">
-                                           <input class="form-control" type="text"
-                                           placeholder="Extension, voicemail, phone, etc..."
-                                           name="destination_multiple[]"
-                                           value="" /></div></div>';
-                                }*/
-                            @endphp
-                        </ul>
-                    </div>
-                </form>
+                <div class="mb-3">
+                    <input class="form-control" type="text" name="destination_multiple_search" placeholder="Search" value="" />
+                </div>
+                <div class="mb-3">
+                    <input class="form-control" type="button" onclick="triggerDestinationAll()" name="destination_multiple_search_select_all" value="Select All Extensions" />
+                </div>
+                <div class="destination_multiple_wrapper">
+                    <ul id="destinationMultipleListExtensions"></ul>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" onclick="{{ $destinationTargetOnClick }}"
-                        class="btn btn-success">Add<span id="destinationMultipleSelectedCountWrapper"></span>
-                </button>
+                <button type="button" onclick="{{ $callbackOnClick }}" class="btn btn-success">Add<span id="destinationMultipleSelectedCountWrapper"></span></button>
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -96,7 +74,7 @@
             {
                 label: "@if($extension->effective_caller_id_name) {{$extension->effective_caller_id_name}} @else Extension @endif - {{ $extension->extension}}",
                 checked: false,
-                value: "{{ $extension->extension_uuid }}"
+                value: "{{ $extension->extension }}"
             },
         @endforeach
     ];
