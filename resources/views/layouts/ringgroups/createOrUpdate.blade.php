@@ -285,6 +285,7 @@
                                                             @include('layouts.partials.destinationExtensionsSelectorCheckboxModal', [
                                                             'label' => 'Add multiple',
                                                             'extensions' => $extensions['Extensions'],
+                                                            'extensionsSelected' => $ringGroup->getGroupDestinations()->pluck('destination_number'),
                                                             'callbackOnClick' => "fillDestinationForm()"
                                                             ])
                                                         @endif
@@ -1067,11 +1068,12 @@
             const values = $('#destinationMultipleListExtensions').find('.action_checkbox:checked')
             for (let i = 0; i < values.length; i++) {
                 let value = values[i].value.trim()
-                if (value !== '') {
+                if (value !== '' && !destinationsSelected.includes(value)) {
                     let addedRow = addDestinationAction(null)
                     if (value.length <= 5) {
                         addedRow.find('.flex-fill').find('select').val(value).trigger('change')
                         addedRow.find('.mx-1').find('select').val('internal').trigger('change')
+                        destinationsSelected.push(value)
                     } else {
                         addedRow.find('.flex-fill').find('input').val(value)
                         addedRow.find('.mx-1').find('select').val('external').trigger('change')
