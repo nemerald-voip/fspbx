@@ -1,5 +1,6 @@
 @php
     /**
+     * @property array $extensionsSelected
      * @property array $extensions
      * @property string $callbackOnClick
      * @property string $label
@@ -36,7 +37,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" onclick="{{ $callbackOnClick }}" class="btn btn-success">Add<span id="destinationMultipleSelectedCountWrapper"></span></button>
+                <button type="button" onclick="{{ $callbackOnClick }}" class="btn btn-success">Add</button>
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -68,7 +69,11 @@
 </style>
 <script>
     const destinationMultipleListExtensions = document.getElementById('destinationMultipleListExtensions')
-    const destinationMultipleSelectedCountWrapper = document.getElementById('destinationMultipleSelectedCountWrapper')
+    let destinationsSelected = [
+        @foreach ($extensionsSelected as $extension)
+        "{{$extension}}",
+        @endforeach
+    ];
     let destinations = [
         @foreach ($extensions as $extension)
             {
@@ -80,7 +85,6 @@
     ];
 
     renderDestinations(destinations)
-    countSelected()
 
     function triggerDestinationSearch(elem) {
         if(elem.value.trim() !== '' && elem.value.trim().length > 0) {
@@ -95,7 +99,6 @@
             destinations[i].checked = true
         }
         renderDestinations(destinations)
-        countSelected()
     }
     function addDestinationMultipleModalShow() {
         $('#addDestinationMultipleModal').modal('show');
@@ -116,12 +119,11 @@
                 el.value = data[i].value
                 el.classList.add('form-check-input')
                 el.classList.add('action_checkbox')
-                if (data[i].checked) {
+                if (data[i].checked || destinationsSelected.includes(data[i].value)) {
                     el.checked = true
                 }
                 el.onclick = function (event) {
                     data[i].checked = event.target.checked
-                    countSelected()
                 }
                 let ellabel = document.createElement('label')
                 ellabel.classList.add('form-check-label')
@@ -132,17 +134,5 @@
                 destinationMultipleListExtensions.append(elli)
             }
         }
-        countSelected()
     }
-
-    function countSelected() {
-        let destinationMultipleSelectedCount = 0
-        for(let i = 0; i < destinations.length; i++) {
-            if(destinations[i].checked) {
-                destinationMultipleSelectedCount++
-            }
-        }
-        destinationMultipleSelectedCountWrapper.innerText = (destinationMultipleSelectedCount > 0) ? ` (${destinationMultipleSelectedCount})` : ''
-    }
-
 </script>
