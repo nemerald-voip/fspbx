@@ -285,7 +285,7 @@
                                                             @include('layouts.partials.destinationExtensionsSelectorCheckboxModal', [
                                                             'label' => 'Add multiple',
                                                             'extensions' => $extensions['Extensions'],
-                                                            'destinationTargetOnClick' => "fillDestinationForm($('#addDestinationMultipleForm'))"
+                                                            'callbackOnClick' => "fillDestinationForm()"
                                                             ])
                                                         @endif
                                                     </div>
@@ -1063,8 +1063,8 @@
             showHideAddDestination()
         }
 
-        function fillDestinationForm(form) {
-            const values = form.serializeArray()
+        function fillDestinationForm() {
+            const values = $('#destinationMultipleListExtensions').find('.action_checkbox:checked')
             for (let i = 0; i < values.length; i++) {
                 let value = values[i].value.trim()
                 if (value !== '') {
