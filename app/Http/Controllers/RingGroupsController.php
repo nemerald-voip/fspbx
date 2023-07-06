@@ -186,15 +186,6 @@ class RingGroupsController extends Controller
             return redirect('/');
         }
 
-        $ringGroupRingMyPhoneTimeout = 0;
-        $ringGroupDestinations = $ringGroup->getGroupDestinations();
-        if ($ringGroupDestinations->count() > 0) {
-            if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
-                $ringGroupRingMyPhoneTimeout = $ringGroupDestinations[0]->destination_timeout;
-                unset($ringGroupDestinations[0]);
-            }
-        }
-
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
             ->orWhere('domain_uuid', null)
             ->orderBy('music_on_hold_name', 'ASC')
@@ -210,8 +201,7 @@ class RingGroupsController extends Controller
             ->with('moh', $moh)
             ->with('recordings', $recordings)
             ->with('extensions', $this->getDestinationExtensions())
-            ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
-            ->with('ringGroupDestinations', $ringGroupDestinations);
+            ->with('ringGroupDestinations', $ringGroup->getGroupDestinations());
     }
 
     /**
