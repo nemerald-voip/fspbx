@@ -26,7 +26,7 @@
             <div class="modal-body">
                 <p>Select one or more extensions to be added.</p>
                 <div class="mb-3">
-                    <input class="form-control" type="text" name="destination_multiple_search" placeholder="Search" value="" />
+                    <input onkeyup="triggerDestinationSearch(this)" class="form-control" type="text" name="destination_multiple_search" placeholder="Search" value="" />
                 </div>
                 <div class="mb-3">
                     <input class="form-control" type="button" onclick="triggerDestinationAll()" name="destination_multiple_search_select_all" value="Select All Extensions" />
@@ -82,6 +82,14 @@
     renderDestinations(destinations)
     countSelected()
 
+    function triggerDestinationSearch(elem) {
+        if(elem.value.trim() !== '' && elem.value.trim().length > 0) {
+            renderDestinations(destinations.filter(s => s.label.includes(elem.value.trim())))
+        } else {
+            renderDestinations(destinations)
+        }
+    }
+
     function triggerDestinationAll() {
         for(let i = 0; i < destinations.length; i++) {
             destinations[i].checked = true
@@ -95,27 +103,34 @@
 
     function renderDestinations(data) {
         destinationMultipleListExtensions.innerHTML = '';
-        for(let i = 0; i < data.length; i++) {
-            let el = document.createElement('input')
-            el.type = 'checkbox'
-            el.name = 'destination_multiple[]'
-            el.value = data[i].value
-            el.classList.add('form-check-input')
-            el.classList.add('action_checkbox')
-            if(data[i].checked) {
-                el.checked = true
-            }
-            el.onclick = function (event) {
-                data[i].checked = event.target.checked
-                countSelected()
-            }
-            let ellabel = document.createElement('label')
-            ellabel.classList.add('form-check-label')
-            ellabel.innerText = data[i].label
+        if(data.length === 0) {
             let elli = document.createElement('li')
-            ellabel.prepend(el)
-            elli.append(ellabel)
+            elli.classList.add('text-center')
+            elli.innerText = 'No extensions found';
             destinationMultipleListExtensions.append(elli)
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                let el = document.createElement('input')
+                el.type = 'checkbox'
+                el.name = 'destination_multiple[]'
+                el.value = data[i].value
+                el.classList.add('form-check-input')
+                el.classList.add('action_checkbox')
+                if (data[i].checked) {
+                    el.checked = true
+                }
+                el.onclick = function (event) {
+                    data[i].checked = event.target.checked
+                    countSelected()
+                }
+                let ellabel = document.createElement('label')
+                ellabel.classList.add('form-check-label')
+                ellabel.innerText = data[i].label
+                let elli = document.createElement('li')
+                ellabel.prepend(el)
+                elli.append(ellabel)
+                destinationMultipleListExtensions.append(elli)
+            }
         }
         countSelected()
     }
