@@ -61,6 +61,7 @@ class UsersController extends Controller
         $permissions['add_new'] = userCheckPermission('user_add');
         $permissions['edit'] = userCheckPermission('user_edit');
         $permissions['delete'] = userCheckPermission('user_delete');
+        $permissions['add_user'] = userCheckPermission('user_add');
 
         return view('layouts.users.list')
             ->with($data)
