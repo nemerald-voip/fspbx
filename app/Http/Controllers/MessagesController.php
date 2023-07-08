@@ -15,8 +15,27 @@ class MessagesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        $statuses = ['all' => 'Show All', 'success' => 'Success', 'waiting' => 'Waiting', 'emailed' => 'Emailed'];
+        $selectedStatus = $request->get('status');
+        $searchString = $request->get('search');
+
+        $searchPeriod = $request->get('period');
+        
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
+
+        if (preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
+            $e = explode("-", $searchPeriod);
+            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
+            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
+        }
+
+        logger($searchString);
+
         $messages = Messages::latest()->paginate(50)->onEachSide(1);
 
         // Get local Time Zone
@@ -53,9 +72,21 @@ class MessagesController extends Controller
         $data['messages'] = $messages;
 
         //assign permissions
+        $permissions = array();
         // $permissions['add_new'] = userCheckPermission('voicemail_add');
         // $permissions['edit'] = userCheckPermission('voicemail_edit');
         // $permissions['delete'] = userCheckPermission('voicemail_delete');
+
+        $data['permissions'] = $permissions;
+
+        $data['searchString'] = $searchString;
+
+        $data['statuses'] = $statuses;
+        $data['selectedStatus'] = $selectedStatus;
+
+        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
+        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
+        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
 
         return view('layouts.messages.list')
             ->with($data);
