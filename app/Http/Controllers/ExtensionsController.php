@@ -122,6 +122,7 @@ class ExtensionsController extends Controller
         $permissions['delete'] = userCheckPermission('extension_delete');
         $permissions['import'] = isSuperAdmin();
         $permissions['device_restart'] = isSuperAdmin();
+        $permissions['add_user'] = userCheckPermission('user_add');
 
         $data['permissions'] = $permissions;
 
