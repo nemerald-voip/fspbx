@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Registered;
 use App\Events\FaxInvalidSignatureEvent;
 use App\Listeners\SendFaxInvalidSignatureNotification;
+use App\Listeners\UpdateUser;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -23,6 +25,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         Login::class => [
             'App\Listeners\SetUpUserSession',
+        ],
+        ExtensionUpdated::class => [
+            UpdateUser::class,
         ],
     ];
 
