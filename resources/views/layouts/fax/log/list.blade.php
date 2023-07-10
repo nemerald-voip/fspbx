@@ -147,12 +147,6 @@
             }
         });
 
-        $('#status-select').on('change', function () {
-            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
-            location += '?page=1&' + $('#filterForm').serialize();
-            window.location.href = location;
-        })
-
         $('#clearSearch').on('click', function () {
             $('#search').val('');
             var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
