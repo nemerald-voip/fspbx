@@ -205,6 +205,13 @@
             $('#domainSearchInput').focus();
         });
 
+        $('#status-select').on('change', function() {
+            var location = window.location.protocol + "//" + window.location.host + window.location
+                .pathname;
+            location += '?page=1&' + $('#filterForm').serialize();
+            window.location.href = location;
+        })
+
         // Action checkboxes on list pages
         $('#selectallCheckbox').on('change', function() {
             if ($(this).is(':checked')) {
