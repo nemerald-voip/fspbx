@@ -103,13 +103,18 @@
                     {{ $message['type'] }}
                 </td>
                 <td>
-                    @if ($message['status'] == 'success')
-                        <h5><span class="badge bg-success"></i>{{ $message['status'] }}</span>
-                        </h5>
-                    @else
-                        <h5><span class="badge bg-warning">{{ $message['status'] }}</span>
-                        </h5>
-                    @endif
+                    @switch($message['status'])
+                        @case('success')
+                            <h5><span class="badge bg-success">{{ $message['status'] }}</span></h5>
+                            @break
+
+                        @case('emailed')
+                            <h5><span class="badge bg-primary">{{ $message['status'] }}</span></h5>
+                            @break
+
+                        @default
+                            <h5><span class="badge bg-warning">{{ $message['status'] }}</span></h5>
+                    @endswitch
                 </td>
                 <td>
                     <a href="javascript:void(0);" class="action-icon"> <i class="mdi mdi-eye"></i></a>
@@ -120,3 +125,24 @@
         @endforeach
     @endif
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+
+        $('#period').daterangepicker({
+            timePicker: true,
+            startDate: '{{ $searchPeriodStart }}',//moment().subtract(1, 'months').startOf('month'),
+            endDate: '{{ $searchPeriodEnd }}',//moment().endOf('day'),
+            locale: {
+                format: 'MM/DD/YY hh:mm A'
+            }
+        }).on('apply.daterangepicker', function(e) {
+            var location = window.location.protocol +"//" + window.location.host + window.location.pathname;
+            location += '?page=1&' + $('#filterForm').serialize();
+            window.location.href = location;
+        });
+    });
+
+</script>
+@endpush
