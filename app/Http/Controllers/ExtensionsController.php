@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ExtensionUpdated;
 use App\Http\Requests\AssignDeviceRequest;
 use App\Imports\ExtensionsImport;
 use App\Jobs\DeleteAppUser;
@@ -1120,6 +1121,8 @@ class ExtensionsController extends Controller
         $followMe->save();
         $extension->follow_me_uuid = $followMe->follow_me_uuid;
         $extension->save();
+
+        ExtensionUpdated::dispatch($extension);
 
         if(!isset($attributes['follow_me_destinations'])) {
             $attributes['follow_me_destinations'] = [];
