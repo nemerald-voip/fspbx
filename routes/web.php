@@ -166,7 +166,6 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Ring Groups
     Route::resource('ring-groups', 'RingGroupsController');
-    Route::get('ring-groups-destination-category/{category}', [RingGroupsController::class, 'getDestinationByCategory'])->name('ring-groups.destinationByCategory');
 });
 
 // Route::group(['prefix' => '/'], function () {

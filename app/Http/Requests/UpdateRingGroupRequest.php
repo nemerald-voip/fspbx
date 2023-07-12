@@ -57,10 +57,6 @@ class UpdateRingGroupRequest extends FormRequest
                 'required',
                 'numeric'
             ],
-            'ring_group_timeout_action' => [
-                'nullable',
-                'string'
-            ],
             'ring_group_cid_name_prefix' => [
                 'nullable',
                 'string'
@@ -91,8 +87,31 @@ class UpdateRingGroupRequest extends FormRequest
                 'ExtensionExists:'.Session::get('domain_uuid')
             ],
             'ring_group_timeout_category' => [
-                'nullable',
-                'in:ringgroup,dialplans,extensions,timeconditions,voicemails,others'
+                'in:disabled,ringgroup,dialplans,extensions,timeconditions,voicemails,others'
+            ],
+            'ring_group_timeout_action_ringgroup' => [
+                'required_if:ring_group_timeout_category,==,ringgroup',
+                'string'
+            ],
+            'ring_group_timeout_action_dialplans' => [
+                'required_if:ring_group_timeout_category,==,dialplans',
+                'string'
+            ],
+            'ring_group_timeout_action_extensions' => [
+                'required_if:ring_group_timeout_category,==,extensions',
+                'string'
+            ],
+            'ring_group_timeout_action_voicemails' => [
+                'required_if:ring_group_timeout_category,==,voicemails',
+                'string'
+            ],
+            'ring_group_timeout_action_others' => [
+                'required_if:ring_group_timeout_category,==,others',
+                'string'
+            ],
+            'ring_group_timeout_data' => [
+              'nullable',
+              'string'
             ],
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
@@ -127,7 +146,7 @@ class UpdateRingGroupRequest extends FormRequest
                 'nullable',
                 'string'
             ],
-            'ring_group_forward_context' => [
+            'ring_group_context' => [
                 'required',
                 'string',
                 Rule::exists('App\Models\Domain', 'domain_name'),
@@ -143,5 +162,18 @@ class UpdateRingGroupRequest extends FormRequest
             'ring_group_destinations.*.target_external.required_if' => 'This is the required field',
             'ring_group_destinations.*.target_internal.ExtensionExists' => 'Should be valid destination',
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        if($this->get('ring_group_timeout_category') == 'disabled') {
+            $this->merge([
+                'ring_group_timeout_data' => null
+            ]);
+        } else {
+            $this->merge([
+                'ring_group_timeout_data' => $this->get('ring_group_timeout_action_'.$this->get('ring_group_timeout_category'))
+            ]);
+        }
     }
 }
