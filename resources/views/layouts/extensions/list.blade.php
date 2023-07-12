@@ -201,6 +201,7 @@
                                 </div>
                             @endif
 
+                            @stack('options_dropdown_end')
 
                         </div>
                         {{-- </div> --}}
