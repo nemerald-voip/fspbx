@@ -36,6 +36,7 @@ class RingGroups extends Model
         'ring_group_description',
         'ring_group_enabled',
         'ring_group_forward_enabled',
+        'ring_group_forward_destination',
         'ring_group_strategy',
         'ring_group_caller_id_name',
         'ring_group_caller_id_number',
