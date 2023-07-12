@@ -90,8 +90,7 @@ class StoreRingGroupRequest extends FormRequest
                 'ExtensionExists:'.Session::get('domain_uuid')
             ],
             'ring_group_timeout_category' => [
-                'nullable',
-                'in:ringgroup,dialplans,extensions,timeconditions,voicemails,others'
+                'in:disabled,ringgroup,dialplans,extensions,timeconditions,voicemails,others'
             ],
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
@@ -126,7 +125,7 @@ class StoreRingGroupRequest extends FormRequest
                 'nullable',
                 'string'
             ],
-            'ring_group_forward_context' => [
+            'ring_group_context' => [
                 'required',
                 'string',
                 Rule::exists('App\Models\Domain', 'domain_name'),
