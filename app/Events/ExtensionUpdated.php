@@ -16,6 +16,7 @@ class ExtensionUpdated
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $extension;
+    public $voicemail;
 
     /**
      * Create a new event instance.
@@ -25,7 +26,7 @@ class ExtensionUpdated
     public function __construct(Extensions $extension)
     {
         $this->extension = $extension;
-        logger ("Extension Updated event fired");
+        $this->voicemail = $extension->voicemail;
     }
 
     /**
