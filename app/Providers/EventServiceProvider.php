@@ -26,9 +26,9 @@ class EventServiceProvider extends ServiceProvider
         Login::class => [
             'App\Listeners\SetUpUserSession',
         ],
-        ExtensionUpdated::class => [
-            UpdateUser::class,
-        ],
+        // ExtensionUpdated::class => [
+        //     UpdateUser::class,
+        // ],
     ];
 
     /**
