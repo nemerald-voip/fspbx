@@ -667,8 +667,8 @@
                                                                                 data-placeholder="Choose ..."
                                                                                 id="ring_group_missed_call_category"
                                                                                 name="ring_group_missed_call_category">
-                                                                            <option value="" selected>
-
+                                                                            <option value="disabled" selected>
+                                                                                Disabled
                                                                             </option>
                                                                             <option value="email">
                                                                                 Email

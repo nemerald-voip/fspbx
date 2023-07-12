@@ -92,6 +92,30 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_timeout_category' => [
                 'in:disabled,ringgroup,dialplans,extensions,timeconditions,voicemails,others'
             ],
+            'ring_group_timeout_action_ringgroup' => [
+                'required_if:ring_group_timeout_category,==,ringgroup',
+                'string'
+            ],
+            'ring_group_timeout_action_dialplans' => [
+                'required_if:ring_group_timeout_category,==,dialplans',
+                'string'
+            ],
+            'ring_group_timeout_action_extensions' => [
+                'required_if:ring_group_timeout_category,==,extensions',
+                'string'
+            ],
+            'ring_group_timeout_action_voicemails' => [
+                'required_if:ring_group_timeout_category,==,voicemails',
+                'string'
+            ],
+            'ring_group_timeout_action_others' => [
+                'required_if:ring_group_timeout_category,==,others',
+                'string'
+            ],
+            'ring_group_timeout_data' => [
+                'nullable',
+                'string'
+            ],
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
             ],
@@ -101,7 +125,8 @@ class StoreRingGroupRequest extends FormRequest
             ],
             'ring_group_caller_id_number' => [
                 'nullable',
-                'string'
+                'string',
+                'phone:US'
             ],
             'ring_group_distinctive_ring' => [
                 'nullable',
@@ -114,12 +139,13 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_call_forward_enabled' => 'in:true,false',
             'ring_group_follow_me_enabled' => 'in:true,false',
             'ring_group_missed_call_category' => [
-                'nullable',
-                'in:email'
+                'in:disabled,email'
             ],
             'ring_group_missed_call_data' => [
+                'required_if:ring_group_missed_call_category,==,email',
                 'nullable',
-                'string'
+                'string',
+                'email'
             ],
             'ring_group_forward_toll_allow' => [
                 'nullable',
@@ -143,5 +169,18 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_destinations.*.target_internal.ExtensionExists' => 'Should be valid destination',
             'ring_group_forward.all.target_external' => 'Should be valid US phone number'
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        if($this->get('ring_group_timeout_category') == 'disabled') {
+            $this->merge([
+                'ring_group_timeout_data' => null
+            ]);
+        } else {
+            $this->merge([
+                'ring_group_timeout_data' => $this->get('ring_group_timeout_action_'.$this->get('ring_group_timeout_category'))
+            ]);
+        }
     }
 }

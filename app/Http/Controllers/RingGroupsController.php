@@ -17,6 +17,7 @@ use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Session;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class RingGroupsController extends Controller
 {
@@ -118,6 +119,15 @@ class RingGroupsController extends Controller
     {
         $attributes = $request->validated();
 
+        if ($attributes['ring_group_forward']['all']['type'] == 'external') {
+            $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
+        } else {
+            $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
+            if (empty($attributes['ring_group_forward_destination'])) {
+                $attributes['ring_group_forward_enabled'] = 'false';
+            }
+        }
+
         $ringGroups = new RingGroups();
         $ringGroups->fill([
             'ring_group_name' => $attributes['ring_group_name'],
@@ -125,12 +135,13 @@ class RingGroupsController extends Controller
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
             'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_app' => ($attributes['ring_group_timeout_category'] != 'disabled') ? 'transfer' : null,
-            'ring_group_timeout_data' => $attributes['ring_group_timeout_action'],
+            'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'],
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'],
             'ring_group_description' => $attributes['ring_group_description'],
             'ring_group_enabled' => $attributes['ring_group_enabled'],
             'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
+            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
             'ring_group_strategy' => $attributes['ring_group_strategy'],
             'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'],
             'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'],
@@ -145,7 +156,7 @@ class RingGroupsController extends Controller
 
         $ringGroups->save();
 
-        if (count($attributes['ring_group_destinations']) > 0) {
+        if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
@@ -254,6 +265,15 @@ class RingGroupsController extends Controller
 
         $attributes = $request->validated();
 
+        if ($attributes['ring_group_forward']['all']['type'] == 'external') {
+            $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
+        } else {
+            $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
+            if (empty($attributes['ring_group_forward_destination'])) {
+                $attributes['ring_group_forward_enabled'] = 'false';
+            }
+        }
+
         $ringGroup->update([
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
@@ -265,6 +285,7 @@ class RingGroupsController extends Controller
             'ring_group_description' => $attributes['ring_group_description'],
             'ring_group_enabled' => $attributes['ring_group_enabled'],
             'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
+            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
             'ring_group_strategy' => $attributes['ring_group_strategy'],
             'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'],
             'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'],
@@ -281,7 +302,7 @@ class RingGroupsController extends Controller
 
         $ringGroup->save();
 
-        if (count($attributes['ring_group_destinations']) > 0) {
+        if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {

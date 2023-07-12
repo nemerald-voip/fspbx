@@ -122,7 +122,8 @@ class UpdateRingGroupRequest extends FormRequest
             ],
             'ring_group_caller_id_number' => [
                 'nullable',
-                'string'
+                'string',
+                'phone:US'
             ],
             'ring_group_distinctive_ring' => [
                 'nullable',
@@ -136,11 +137,13 @@ class UpdateRingGroupRequest extends FormRequest
             'ring_group_follow_me_enabled' => 'in:true,false',
             'ring_group_missed_call_category' => [
                 'nullable',
-                'in:email'
+                'in:disabled,email'
             ],
             'ring_group_missed_call_data' => [
+                'required_if:ring_group_missed_call_category,==,email',
                 'nullable',
-                'string'
+                'string',
+                'email'
             ],
             'ring_group_forward_toll_allow' => [
                 'nullable',
