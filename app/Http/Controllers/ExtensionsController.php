@@ -1085,7 +1085,6 @@ class ExtensionsController extends Controller
         }
 
         //Schedule SuspendUser job that will check if suspension is required
-        // logger($extension);
         SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
 
         $extension->save();
@@ -1293,6 +1292,10 @@ class ExtensionsController extends Controller
             if ($deleted) {
                 // dispatch the job to remove app user
                 DeleteAppUser::dispatch($extension->mobile_app)->onQueue('default');
+
+                //Schedule SuspendUser job that will check if suspension is required
+                SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
+
                 return response()->json([
                     'status' => 'success',
                     'id' => $id,
