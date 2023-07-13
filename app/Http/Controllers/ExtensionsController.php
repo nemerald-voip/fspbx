@@ -125,6 +125,7 @@ class ExtensionsController extends Controller
         $permissions['import'] = isSuperAdmin();
         $permissions['device_restart'] = isSuperAdmin();
         $permissions['add_user'] = userCheckPermission('user_add');
+        $permissions['contact_center_agent_create'] = (isSuperAdmin() || userCheckPermission('contact_center_agent_create')) ? true : false;
 
         $data['permissions'] = $permissions;
 

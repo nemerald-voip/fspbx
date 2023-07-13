@@ -203,6 +203,13 @@
 
                             @stack('options_dropdown_end')
 
+                            @if (Module::find('ContactCenter') &&
+                                    Module::find('ContactCenter')->isEnabled() &&
+                                    $permissions['contact_center_agent_create']
+                            )
+                                @include('contactcenter::layouts.extensions.extension-options')
+                            @endif
+
                         </div>
                         {{-- </div> --}}
 
