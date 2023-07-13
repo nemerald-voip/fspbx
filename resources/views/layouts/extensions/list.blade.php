@@ -205,8 +205,9 @@
 
                             @if (Module::find('ContactCenter') &&
                                     Module::find('ContactCenter')->isEnabled() &&
-                                    $permissions['contact_center_agent_create']
-                            )
+                                    ($permissions['contact_center_agent_create'] ||
+                                        $permissions['contact_center_admin_create'] ||
+                                        $permissions['contact_center_supervisor_create']))
                                 @include('contactcenter::layouts.extensions.extension-options')
                             @endif
 
