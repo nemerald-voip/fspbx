@@ -406,7 +406,7 @@
                 </div>
             @endif
 
-
+            @stack('dashboard_tiles_end')
 
 
         </div>
