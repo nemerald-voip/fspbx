@@ -115,7 +115,7 @@
                                                     <h4 class="mt-2">Basic information</h4>
                                                     <p class="text-muted mb-4">Provide basic information about the ring group</p>
                                                     <div class="row">
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-5">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_extension" class="form-label">Ring
                                                                     Group name <span
@@ -131,7 +131,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-5">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_extension" class="form-label">Ring
                                                                     Group number <span
@@ -147,33 +147,80 @@
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-5">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_greeting" class="form-label">Greeting</label>
-                                                                <select class="select2 form-control"
-                                                                        data-toggle="select2"
-                                                                        data-placeholder="Choose ..."
-                                                                        id="ring_group_greeting"
-                                                                        name="ring_group_greeting">
-                                                                    <option value=""></option>
-                                                                    @if (!$recordings->isEmpty())
-                                                                        <optgroup label="Recordings">
-                                                                            @foreach ($recordings as $recording)
-                                                                                <option value="{{ $recording->recording_name }}"
-                                                                                        @if($recording->recording_name == $ringGroup->ring_group_greeting)
-                                                                                            selected
-                                                                                        @endif>
-                                                                                    {{ $recording->recording_name }}
-                                                                                </option>
-                                                                            @endforeach
-                                                                        </optgroup>
-                                                                    @endif
-                                                                </select>
-                                                                <div id="ring_group_greeting_err"
-                                                                     class="text-danger error_message"></div>
+                                                                <div class="d-flex flex-row">
+                                                                    <div>
+                                                                        <select class="select2 form-control"
+                                                                                data-toggle="select2"
+                                                                                data-placeholder="Choose ..."
+                                                                                id="ring_group_greeting"
+                                                                                name="ring_group_greeting">
+                                                                            <option value=""></option>
+                                                                            @if (!$recordings->isEmpty())
+                                                                                <optgroup label="Recordings">
+                                                                                    @foreach ($recordings as $recording)
+                                                                                        <option value="{{ $recording->recording_name }}"
+                                                                                                @if($recording->recording_name == $ringGroup->ring_group_greeting)
+                                                                                                    selected
+                                                                                                @endif>
+                                                                                            {{ $recording->recording_name }}
+                                                                                        </option>
+                                                                                    @endforeach
+                                                                                </optgroup>
+                                                                            @endif
+                                                                        </select>
+                                                                    </div>
+                                                                    <div>
+                                                                        <button type="button" class="btn btn-light" id="greeting_play_button" title="Play"><i class="uil uil-play"></i> </button>
+                                                                        <button type="button" class="btn btn-light" id="greeting_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
+                                                                    </div>
+                                                                    <audio id="greeting_audio_file"
+                                                                           @if ($ringGroup->ring_group_greeting)
+                                                                               src="{{ route('getVoicemailGreeting', ['voicemail' => $ringGroup->ring_group_greeting,'filename' => 'greeting_1.wav'] ) }}"
+                                                                            @endif
+                                                                    ></audio>
+                                                                </div>
+                                                                <div id="ring_group_greeting_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
+                                                    <div class="row">
+                                                        <div class="col-md-5">
+                                                            <div class="mb-1">
+                                                                <label for="ring_group_strategy" class="form-label">Strategy</label>
+                                                                <select class="select2 form-control"
+                                                                        data-toggle="select2"
+                                                                        data-placeholder="Choose ..."
+                                                                        id="ring_group_strategy"
+                                                                        name="ring_group_strategy">
+                                                                    <option value="simultaneous"
+                                                                            @if($ringGroup->ring_group_strategy == 'simultaneous') selected="selected" @endif>
+                                                                        Simultaneous
+                                                                    </option>
+                                                                    <option value="sequence"
+                                                                            @if($ringGroup->ring_group_strategy == 'sequence') selected="selected" @endif>
+                                                                        Sequence
+                                                                    </option>
+                                                                    <option value="random"
+                                                                            @if($ringGroup->ring_group_strategy == 'random') selected="selected" @endif>
+                                                                        Random
+                                                                    </option>
+                                                                    <option value="enterprise"
+                                                                            @if($ringGroup->ring_group_strategy == 'enterprise') selected="selected" @endif>
+                                                                        Enterprise
+                                                                    </option>
+                                                                    <option value="rollover"
+                                                                            @if($ringGroup->ring_group_strategy == 'rollover') selected="selected" @endif>
+                                                                        Rollover
+                                                                    </option>
+                                                                </select>
+                                                                <div id="ring_group_strategy_err"
+                                                                     class="text-danger error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <hr/>
                                                     <div class="row">
                                                         <h4 class="mt-2">Destinations</h4>
@@ -493,42 +540,6 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_strategy" class="form-label">Strategy</label>
-                                                                <select class="select2 form-control"
-                                                                        data-toggle="select2"
-                                                                        data-placeholder="Choose ..."
-                                                                        id="ring_group_strategy"
-                                                                        name="ring_group_strategy">
-                                                                    <option value="simultaneous"
-                                                                            @if($ringGroup->ring_group_strategy == 'simultaneous') selected="selected" @endif>
-                                                                        Simultaneous
-                                                                    </option>
-                                                                    <option value="sequence"
-                                                                            @if($ringGroup->ring_group_strategy == 'sequence') selected="selected" @endif>
-                                                                        Sequence
-                                                                    </option>
-                                                                    <option value="random"
-                                                                            @if($ringGroup->ring_group_strategy == 'random') selected="selected" @endif>
-                                                                        Random
-                                                                    </option>
-                                                                    <option value="enterprise"
-                                                                            @if($ringGroup->ring_group_strategy == 'enterprise') selected="selected" @endif>
-                                                                        Enterprise
-                                                                    </option>
-                                                                    <option value="rollover"
-                                                                            @if($ringGroup->ring_group_strategy == 'rollover') selected="selected" @endif>
-                                                                        Rollover
-                                                                    </option>
-                                                                </select>
-                                                                <div id="ring_group_strategy_err"
-                                                                     class="text-danger error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
                                                                 <label for="ring_group_caller_id_name"
                                                                        class="form-label">Caller ID Name</label>
                                                                 <input class="form-control" type="text"
@@ -781,6 +792,9 @@
             const form = $('#ringGroupForm');
             const ringGroupTimeoutAction = $('#ring_group_timeout_action');
             const ringGroupTimeoutActionWrapper = $('#ring_group_timeout_action_wrapper');
+
+            $('#greeting_pause_button').hide();
+           // $('#greeting_play_button').show();
 
             applyDestinationSelect2()
 

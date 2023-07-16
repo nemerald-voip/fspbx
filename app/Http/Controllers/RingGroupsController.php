@@ -17,6 +17,7 @@ use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
 class RingGroupsController extends Controller
@@ -514,5 +515,19 @@ class RingGroupsController extends Controller
             'selectedCategory' => $selectedCategory,
             'list' => $output
         ];
+    }
+
+    public function getRingGroupGreeting(string $filename)
+    {
+        $path = Session::get('domain_name') . '/' . $filename;
+
+        if (!Storage::disk('recordings')->exists($path)) abort(404);
+
+        $file = Storage::disk('recordings')->path($path);
+        $type = Storage::disk('recordings')->mimeType($path);
+
+        $response = \Illuminate\Support\Facades\Response::make(file_get_contents($file), 200);
+        $response->header("Content-Type", $type);
+        return $response;
     }
 }

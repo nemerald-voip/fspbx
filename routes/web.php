@@ -166,6 +166,7 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Ring Groups
     Route::resource('ring-groups', 'RingGroupsController');
+    Route::get('/ring-groups/greetings/{filename}', [RingGroupsController::class, 'getRingGroupGreeting']) ->name('getRingGroupGreeting');
 });
 
 // Route::group(['prefix' => '/'], function () {
