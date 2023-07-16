@@ -151,7 +151,7 @@
                                                             <div class="mb-3">
                                                                 <label for="ring_group_greeting" class="form-label">Greeting</label>
                                                                 <div class="d-flex flex-row">
-                                                                    <div>
+                                                                    <div class="w-100">
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
@@ -178,7 +178,7 @@
                                                                     </div>
                                                                     <audio id="greeting_audio_file"
                                                                            @if ($ringGroup->ring_group_greeting)
-                                                                               src="{{ route('getVoicemailGreeting', ['voicemail' => $ringGroup->ring_group_greeting,'filename' => 'greeting_1.wav'] ) }}"
+                                                                               src="{{ route('getRingGroupGreeting', ['filename' => $ringGroup->ring_group_greeting] ) }}"
                                                                             @endif
                                                                     ></audio>
                                                                 </div>
@@ -795,6 +795,24 @@
 
             $('#greeting_pause_button').hide();
            // $('#greeting_play_button').show();
+
+            $('#greeting_play_button').click(function(){
+                const audioElement = document.getElementById('greeting_audio_file');
+                $(this).hide();
+                $('#greeting_pause_button').show();
+                audioElement.play();
+                audioElement.addEventListener('ended', function() {
+                    $('#greeting_pause_button').hide();
+                    $('#greeting_play_button').show();
+                });
+            });
+
+            $('#greeting_pause_button').click(function(){
+                const audioElement = document.getElementById('greeting_audio_file');
+                $(this).hide();
+                $('#greeting_play_button').show();
+                audioElement.pause();
+            });
 
             applyDestinationSelect2()
 
