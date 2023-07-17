@@ -105,7 +105,7 @@ class RingGroupsController extends Controller
             ->with('recordings', $recordings)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('timeoutDestinationsByCategory', $timeoutDestinationsByCategory)
-            ->with('ringGroupDestinationsByCategory', 'disabled')
+            ->with('destinationsByCategory', 'disabled')
             ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
             ->with('ringGroupDestinations', $ringGroupDestinations);
     }
@@ -135,7 +135,7 @@ class RingGroupsController extends Controller
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
             'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
-            'ring_group_timeout_app' => ($attributes['ring_group_timeout_category'] != 'disabled') ? 'transfer' : null,
+            'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'],
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'],
@@ -223,7 +223,7 @@ class RingGroupsController extends Controller
             ->orderBy('recording_name', 'ASC')
             ->get();
 
-        $ringGroupDestinationsByCategory = 'disabled';
+        $destinationsByCategory = 'disabled';
         $timeoutDestinationsByCategory = [];
         foreach ([
                      'ringgroup',
@@ -235,7 +235,7 @@ class RingGroupsController extends Controller
                  ] as $category) {
             $c = $this->getDestinationByCategory($category, $ringGroup->ring_group_timeout_data);
             if($c['selectedCategory']) {
-                $ringGroupDestinationsByCategory = $c['selectedCategory'];
+                $destinationsByCategory = $c['selectedCategory'];
             }
             $timeoutDestinationsByCategory[$category] = $c['list'];
         }
@@ -246,7 +246,7 @@ class RingGroupsController extends Controller
             ->with('moh', $moh)
             ->with('recordings', $recordings)
             ->with('timeoutDestinationsByCategory', $timeoutDestinationsByCategory)
-            ->with('ringGroupDestinationsByCategory', $ringGroupDestinationsByCategory)
+            ->with('destinationsByCategory', $destinationsByCategory)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('ringGroupDestinations', $ringGroup->getGroupDestinations());
     }
@@ -265,6 +265,7 @@ class RingGroupsController extends Controller
         }
 
         $attributes = $request->validated();
+        // logger($attributes);
 
         if ($attributes['ring_group_forward']['all']['type'] == 'external') {
             $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
@@ -279,7 +280,7 @@ class RingGroupsController extends Controller
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
             'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
-            'ring_group_timeout_app' => ($attributes['ring_group_timeout_category'] != 'disabled') ? 'transfer' : null,
+            'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'],
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'],

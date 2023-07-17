@@ -353,72 +353,10 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="row">
-                                                        <div class="col-md-8">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_timeout_action"
-                                                                       class="form-label">If not answered</label>
-                                                                <div class="row">
-                                                                    <div class="col-md-4 col-sm-4">
-                                                                        <select class="select2 form-control"
-                                                                                data-toggle="select2"
-                                                                                data-placeholder="Choose ..."
-                                                                                id="ring_group_timeout_category"
-                                                                                name="ring_group_timeout_category">
-                                                                            <option value="disabled"
-                                                                                    @if($ringGroupDestinationsByCategory == 'disabled') selected="selected" @endif>
-                                                                                Disabled
-                                                                            </option>
-                                                                            <option value="ringgroup"
-                                                                                    @if($ringGroupDestinationsByCategory == 'ringgroup') selected="selected" @endif>
-                                                                                Ring Groups
-                                                                            </option>
-                                                                            <option value="dialplans"
-                                                                                    @if($ringGroupDestinationsByCategory == 'dialplans') selected="selected" @endif>
-                                                                                Dial Plans
-                                                                            </option>
-                                                                            <option value="extensions"
-                                                                                    @if($ringGroupDestinationsByCategory == 'extensions') selected="selected" @endif>
-                                                                                Extensions
-                                                                            </option>
-                                                                            <option value="timeconditions"
-                                                                                    @if($ringGroupDestinationsByCategory == 'timeconditions') selected="selected" @endif>
-                                                                                Time Conditions
-                                                                            </option>
-                                                                            <option value="voicemails"
-                                                                                    @if($ringGroupDestinationsByCategory == 'voicemails') selected="selected" @endif>
-                                                                                Voicemails
-                                                                            </option>
-                                                                            <option value="others"
-                                                                                    @if($ringGroupDestinationsByCategory == 'others') selected="selected" @endif>
-                                                                                Others
-                                                                            </option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div id="ring_group_timeout_action_wrapper" class="col-md-8 col-sm-8" @if($ringGroupDestinationsByCategory == 'disabled') style="display: none" @endif>
-                                                                        @foreach($timeoutDestinationsByCategory as $category => $items)
-                                                                            <div id="ring_group_timeout_action_wrapper_{{$category}}" @if($ringGroupDestinationsByCategory != $category) style="display: none" @endif>
-                                                                                <select class="select2 form-control"
-                                                                                        data-toggle="select2"
-                                                                                        data-placeholder="Choose ..."
-                                                                                        id="ring_group_timeout_action_{{$category}}"
-                                                                                        name="ring_group_timeout_action_{{$category}}">
-                                                                                    @foreach($items as $item)
-                                                                                        <option value="{{$item['id']}}"
-                                                                                                @if($ringGroup->ring_group_timeout_data == $item['id']) selected="selected" @endif>
-                                                                                            {{$item['label']}}
-                                                                                        </option>
-                                                                                    @endforeach
-                                                                                </select>
-                                                                            </div>
-                                                                        @endforeach
-                                                                    </div>
-                                                                </div>
-                                                                <div id="ring_group_timeout_data_err"
-                                                                     class="text-danger error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+
+                                                    @include('layouts.partials.timeoutDestinations')
+
+                                                    
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -790,8 +728,8 @@
     <script>
         $(document).ready(function () {
             const form = $('#ringGroupForm');
-            const ringGroupTimeoutAction = $('#ring_group_timeout_action');
-            const ringGroupTimeoutActionWrapper = $('#ring_group_timeout_action_wrapper');
+            const timeoutAction = $('#timeout_action');
+            const timeoutActionWrapper = $('#timeout_action_wrapper');
 
             $('#greeting_pause_button').hide();
            // $('#greeting_play_button').show();
@@ -816,17 +754,17 @@
 
             applyDestinationSelect2()
 
-            $('#ring_group_timeout_category').on('change', function (e) {
+            $('#timeout_category').on('change', function (e) {
                 e.preventDefault();
                 if(e.target.value === 'disabled') {
-                    ringGroupTimeoutActionWrapper.hide()
+                    timeoutActionWrapper.hide()
                     return;
                 } else {
-                    ringGroupTimeoutActionWrapper.show()
+                    timeoutActionWrapper.show()
                 }
 
-                ringGroupTimeoutActionWrapper.find('div').hide();
-                ringGroupTimeoutActionWrapper.find('div#ring_group_timeout_action_wrapper_'+e.target.value).show();
+                timeoutActionWrapper.find('div').hide();
+                timeoutActionWrapper.find('div#timeout_action_wrapper_'+e.target.value).show();
             })
 
             $('#submitFormButton').on('click', function (e) {
