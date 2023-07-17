@@ -2,14 +2,17 @@
 
 use App\Models\Settings;
 use App\Models\Dialplans;
+use App\Models\Extensions;
+use App\Models\RingGroups;
+use App\Models\Voicemails;
 use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
 use Illuminate\Support\Facades\Http;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Session;
@@ -804,6 +807,134 @@ if (!function_exists('get_registrations')) {
             }
         }
         return $registrations;
+    }
+}
+
+if (!function_exists('getDestinationByCategory')) {
+    function getDestinationByCategory($category, $data = null)
+    {
+        $output = [];
+        $selectedCategory = null;
+        $rows = null;
+
+        switch ($category) {
+            case 'ringgroup':
+                $rows = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('ring_group_enabled', 'true')
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ring_group_extension')
+                    ->get();
+                break;
+            case 'dialplans':
+                $rows = Dialplans::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('dialplan_enabled', 'true')
+                    ->where('dialplan_destination', 'true')
+                    ->where('dialplan_number', '<>', '')
+                    ->orderBy('dialplan_name')
+                    ->get();
+                break;
+            case 'extensions':
+                $rows = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('extension')
+                    ->get();
+                break;
+            case 'timeconditions':
+                $rows = [];
+                break;
+            case 'voicemails':
+                $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('voicemail_enabled', 'true')
+                    ->orderBy('voicemail_id')
+                    ->get();
+                break;
+            case 'others':
+                $rows = [
+                    [
+                        'id' => sprintf('*98 XML %s', Session::get('domain_name')),
+                        'label' => 'Check Voicemail'
+                    ], [
+                        'id' => sprintf('*411 XML %s', Session::get('domain_name')),
+                        'label' => 'Company Directory'
+                    ], [
+                        'id' => 'hangup',
+                        'label' => 'Hangup'
+                    ], [
+                        'id' => sprintf('*732 XML %s', Session::get('domain_name')),
+                        'label' => 'Record'
+                    ]
+                ];
+                break;
+            default:
+
+        }
+
+        if ($rows) {
+            foreach ($rows as $row) {
+                switch ($category) {
+                    case 'ringgroup':
+                        $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
+                        if($id == $data) {
+                            $selectedCategory = $category;
+                        }
+                        $output[] = [
+                            'id' => $id,
+                            'label' => $row->ring_group_name
+                        ];
+                        break;
+                    case 'dialplans':
+                        $id = sprintf('%s XML %s', $row->dialplan_number, Session::get('domain_name'));
+                        if($id == $data) {
+                            $selectedCategory = $category;
+                        }
+                        $output[] = [
+                            'id' => $id,
+                            'label' => $row->dialplan_name
+                        ];
+                        break;
+                    case 'extensions':
+                        $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
+                        if($id == $data) {
+                            $selectedCategory = $category;
+                        }
+                        $output[] = [
+                            'id' => $id,
+                            'label' => $row->extension
+                        ];
+                        break;
+                    case 'timeconditions':
+                        //$output[$row->ring_group_uuid] = $row->ring_group_name;
+                        break;
+                    case 'voicemails':
+                        $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
+                        if($id == $data) {
+                            $selectedCategory = $category;
+                        }
+                        $output[] = [
+                            'id' => $id,
+                            'label' => $row->voicemail_id
+                        ];
+                        break;
+                    case 'others':
+                        if($row['id'] == $data) {
+                            $selectedCategory = $category;
+                        }
+                        $output[] = [
+                            'id' => $row['id'],
+                            'label' => $row['label']
+                        ];
+                        break;
+                    default:
+
+                }
+            }
+        }
+
+
+        return [
+            'selectedCategory' => $selectedCategory,
+            'list' => $output
+        ];
     }
 }
 
