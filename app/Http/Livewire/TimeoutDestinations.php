@@ -31,15 +31,20 @@ class TimeoutDestinations extends Component
         }
         unset($c, $category);
 
-        // logger($this->timeoutDestinationsByCategory);
-        $this->emit('select2');
+        // logger($this->timeoutDestinationsByCategory['extensions']);
+                logger($this->timeoutCategory);
+
     }
 
-        // // lifecycle hook sometimes we require it for select2
-        // public function hydrate()
-        // {
-        //     $this->emit('select2');
-        // }
+    public function updatedTimeoutCategory($value)
+    {
+        logger($value);
+        // Put your desired code here that you want to execute when timeoutCategory is set.
+        // You can access the updated value of timeoutCategory through the $value variable.
+
+        // Example: You can call a method to handle the changes, like:
+        // $this->handleTimeoutCategoryChange($value);
+    }
 
     public function render()
     {

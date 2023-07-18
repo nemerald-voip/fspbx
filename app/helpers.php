@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\IvrMenus;
 use App\Models\Settings;
 use App\Models\Dialplans;
 use App\Models\Extensions;
@@ -9,9 +8,10 @@ use App\Models\Voicemails;
 use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-
 use App\Models\DomainSettings;
+
 use App\Models\DefaultSettings;
+use App\Models\IvrMenus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -840,20 +840,17 @@ if (!function_exists('getDestinationByCategory')) {
                     ->orderBy('extension')
                     ->get();
                 break;
-            case 'timeconditions':
-                $rows = [];
+            case 'ivrs':
+                $rows = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ivr_menu_extension')
+                    ->get();
                 break;
             case 'voicemails':
                 $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
                     ->where('voicemail_enabled', 'true')
                     ->orderBy('voicemail_id')
                     ->get();
-                break;
-            case 'ivrs':
-                $rows = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
-                ->where('ivr_menu_enabled', 'true')
-                ->orderBy('ivr_menu_extension')
-                ->get();
                 break;
             case 'others':
                 $rows = [
@@ -878,9 +875,6 @@ if (!function_exists('getDestinationByCategory')) {
 
         if ($rows) {
             foreach ($rows as $row) {
-                $id = '';
-                $label = '';
-            
                 switch ($category) {
                     case 'ringgroup':
                         $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
@@ -898,30 +892,33 @@ if (!function_exists('getDestinationByCategory')) {
                         $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
                         $label = $row->voicemail_id;
                         break;
+                    case 'ivrs':
+                            $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
+                            $label = $row->ivr_menu_extension;
+                            break;
                     case 'others':
                         $id = $row['id'];
                         $label = $row['label'];
                         break;
                     default:
-                        break; // Skip unknown category
+                        break; // Skip unknown categories
                 }
-            
-                // logger($id);
-                // logger($data);
+                
+                // Check if the id matches the data
                 if ($id == $data || 'transfer:'.$id == $data) {
-                    logger('true');
-                    logger($id);
-                logger($data);
                     $selectedCategory = $category;
                 }
             
+                // Add to the output array
                 $output[] = [
                     'id' => $id,
-                    'label' => $label
+                    'label' => $label,
                 ];
             }
-        
+            
         }
+
+        logger($selectedCategory);
 
         return [
             'selectedCategory' => $selectedCategory,
@@ -1118,7 +1115,7 @@ if (!function_exists('generate_password')) {
     /**
      * Generate a secure password
      *
-     * @return string 
+     * @return string
      */
     function generate_password()
     {
@@ -1204,5 +1201,33 @@ if (!function_exists('detect_if_phone_number')) {
         } catch (\Exception $e) {
             return false;
         }
+    }
+}
+
+if (!function_exists('parse_socket_response_to_array')) {
+    function parse_socket_response_to_array($tmp_str, $tmp_delimiter)
+    {
+        $tmp_array = explode ("\n", $tmp_str);
+        $result = array();
+        if (trim(strtoupper($tmp_array[0])) != "+OK") {
+            $tmp_field_name_array = explode ($tmp_delimiter, $tmp_array[0]);
+            $x = 0;
+            if (isset($tmp_array)) foreach ($tmp_array as $row) {
+                if ($x > 0) {
+                    $tmp_field_value_array = explode ($tmp_delimiter, $tmp_array[$x]);
+                    $y = 0;
+                    if (isset($tmp_field_value_array)) foreach ($tmp_field_value_array as $tmp_value) {
+                        $tmp_name = $tmp_field_name_array[$y];
+                        if (trim(strtoupper($tmp_value)) != "+OK") {
+                            $result[$x][$tmp_name] = $tmp_value;
+                        }
+                        $y++;
+                    }
+                }
+                $x++;
+            }
+            unset($row);
+        }
+        return $result;
     }
 }
