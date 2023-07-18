@@ -31,6 +31,7 @@ use App\Imports\ExtensionsImport;
 use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\VoicemailDestinations;
@@ -41,6 +42,7 @@ use Maatwebsite\Excel\HeadingRowImport;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\AssignDeviceRequest;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
 
 class ExtensionsController extends Controller
@@ -94,10 +96,14 @@ class ExtensionsController extends Controller
 
         foreach ($extensions as $extension) {
             if ($extension['outbound_caller_id_number']) {
-                $phoneNumberObject = $phoneNumberUtil->parse($extension['outbound_caller_id_number'], 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $extension->outbound_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                try {
+                    $phoneNumberObject = $phoneNumberUtil->parse($extension['outbound_caller_id_number'], 'US');
+                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                        $extension->outbound_caller_id_number = $phoneNumberUtil
+                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                    }
+                } catch (NumberParseException $e) {
+                    // Do nothing and leave the numner as is
                 }
             }
             //check against registrations and add them to array
@@ -301,6 +307,35 @@ class ExtensionsController extends Controller
                 DB::Raw("coalesce(destination_description , '') as destination_description"),
             ])
             ->sortBy('destination_number');
+
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+        foreach ($destinations as $destination) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $destination->destination_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+
+                // Set the label
+                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+                    ? $phoneNumber . " - " . $destination->destination_description
+                    : $phoneNumber;
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numbner as is
+
+                //Set the label
+                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+                    ? $destination->destination_number . " - " . $destination->destination_description
+                    : $destination->destination_number;
+            }
+
+            $destination->isCallerID = false;
+            $destination->isEmergencyCallerID = false;
+        }
 
         // Get music on hold
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
@@ -530,8 +565,8 @@ class ExtensionsController extends Controller
         $attributes['voicemail_password'] = $attributes['extension'];
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
         $attributes['password'] = generate_password();
-        if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
-        if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+        // if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
+        // if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
         $attributes['insert_date'] = date("Y-m-d H:i:s");
         $attributes['insert_user'] = Session::get('user_uuid');
 
@@ -758,6 +793,62 @@ class ExtensionsController extends Controller
                 DB::Raw("coalesce(destination_description , '') as destination_description"),
             ])
             ->sortBy('destination_number');
+
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+        //try to convert emergency caller ID to e164 format
+        if ($extension->emergency_caller_id_number) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($extension->emergency_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $extension->emergency_caller_id_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numbner as is
+            }
+        }
+
+        //try to convert caller ID to e164 format
+        if ($extension->caller_id_number) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $extension->outbound_caller_id_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numbner as is
+            }
+        }
+
+        foreach ($destinations as $destination) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $destination->destination_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+
+                // Set the label
+                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+                    ? $phoneNumber . " - " . $destination->destination_description
+                    : $phoneNumber;
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numbner as is
+
+                //Set the label
+                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+                    ? $destination->destination_number . " - " . $destination->destination_description
+                    : $destination->destination_number;
+            }
+
+            $destination->isCallerID = ($destination->destination_number === $extension->outbound_caller_id_number);
+            $destination->isEmergencyCallerID = ($destination->destination_number === $extension->emergency_caller_id_number);
+
+        }
 
         $vm_unavailable_file_exists = Storage::disk('voicemail')
             ->exists(Session::get('domain_name') . '/' . $extension->extension . '/greeting_1.wav');
@@ -1009,8 +1100,8 @@ class ExtensionsController extends Controller
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "on") $attributes['voicemail_local_after_email'] = "false";
         if (isset($attributes['voicemail_tutorial']) && $attributes['voicemail_tutorial'] == "on") $attributes['voicemail_tutorial'] = "true";
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
-        if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
-        if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
+        // if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
+        // if (isset($attributes['emergency_caller_id_number'])) $attributes['emergency_caller_id_number'] = PhoneNumber::make($attributes['emergency_caller_id_number'], "US")->formatE164();
 
         if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled'] == "true") $attributes['forward_all_enabled'] = "true";
 
