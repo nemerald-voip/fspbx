@@ -1126,7 +1126,7 @@ if (!function_exists('generate_password')) {
     /**
      * Generate a secure password
      *
-     * @return string 
+     * @return string
      */
     function generate_password()
     {
@@ -1212,5 +1212,33 @@ if (!function_exists('detect_if_phone_number')) {
         } catch (\Exception $e) {
             return false;
         }
+    }
+}
+
+if (!function_exists('parse_socket_response_to_array')) {
+    function parse_socket_response_to_array($tmp_str, $tmp_delimiter)
+    {
+        $tmp_array = explode ("\n", $tmp_str);
+        $result = array();
+        if (trim(strtoupper($tmp_array[0])) != "+OK") {
+            $tmp_field_name_array = explode ($tmp_delimiter, $tmp_array[0]);
+            $x = 0;
+            if (isset($tmp_array)) foreach ($tmp_array as $row) {
+                if ($x > 0) {
+                    $tmp_field_value_array = explode ($tmp_delimiter, $tmp_array[$x]);
+                    $y = 0;
+                    if (isset($tmp_field_value_array)) foreach ($tmp_field_value_array as $tmp_value) {
+                        $tmp_name = $tmp_field_name_array[$y];
+                        if (trim(strtoupper($tmp_value)) != "+OK") {
+                            $result[$x][$tmp_name] = $tmp_value;
+                        }
+                        $y++;
+                    }
+                }
+                $x++;
+            }
+            unset($row);
+        }
+        return $result;
     }
 }
