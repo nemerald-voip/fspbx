@@ -816,6 +816,7 @@ if (!function_exists('getDestinationByCategory')) {
     {
         $output = [];
         $selectedCategory = null;
+        $selectedDestination = null;
         $rows = null;
 
         switch ($category) {
@@ -870,7 +871,6 @@ if (!function_exists('getDestinationByCategory')) {
                 ];
                 break;
             default:
-
         }
 
         if ($rows) {
@@ -893,9 +893,9 @@ if (!function_exists('getDestinationByCategory')) {
                         $label = $row->voicemail_id;
                         break;
                     case 'ivrs':
-                            $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
-                            $label = $row->ivr_menu_extension;
-                            break;
+                        $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
+                        $label = $row->ivr_menu_extension;
+                        break;
                     case 'others':
                         $id = $row['id'];
                         $label = $row['label'];
@@ -903,25 +903,24 @@ if (!function_exists('getDestinationByCategory')) {
                     default:
                         break; // Skip unknown categories
                 }
-                
+
                 // Check if the id matches the data
-                if ($id == $data || 'transfer:'.$id == $data) {
+                if ($id == $data || 'transfer:' . $id == $data) {
                     $selectedCategory = $category;
+                    $selectedDestination = $id;
                 }
-            
+
                 // Add to the output array
                 $output[] = [
                     'id' => $id,
                     'label' => $label,
                 ];
             }
-            
         }
-
-        logger($selectedCategory);
 
         return [
             'selectedCategory' => $selectedCategory,
+            'selectedDestination' => $selectedDestination,
             'list' => $output
         ];
     }
@@ -1207,14 +1206,14 @@ if (!function_exists('detect_if_phone_number')) {
 if (!function_exists('parse_socket_response_to_array')) {
     function parse_socket_response_to_array($tmp_str, $tmp_delimiter)
     {
-        $tmp_array = explode ("\n", $tmp_str);
+        $tmp_array = explode("\n", $tmp_str);
         $result = array();
         if (trim(strtoupper($tmp_array[0])) != "+OK") {
-            $tmp_field_name_array = explode ($tmp_delimiter, $tmp_array[0]);
+            $tmp_field_name_array = explode($tmp_delimiter, $tmp_array[0]);
             $x = 0;
             if (isset($tmp_array)) foreach ($tmp_array as $row) {
                 if ($x > 0) {
-                    $tmp_field_value_array = explode ($tmp_delimiter, $tmp_array[$x]);
+                    $tmp_field_value_array = explode($tmp_delimiter, $tmp_array[$x]);
                     $y = 0;
                     if (isset($tmp_field_value_array)) foreach ($tmp_field_value_array as $tmp_value) {
                         $tmp_name = $tmp_field_name_array[$y];
