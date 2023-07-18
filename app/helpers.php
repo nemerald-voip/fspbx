@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\IvrMenus;
 use App\Models\Settings;
 use App\Models\Dialplans;
 use App\Models\Extensions;
@@ -8,8 +9,8 @@ use App\Models\Voicemails;
 use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\DomainSettings;
 
+use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -848,6 +849,12 @@ if (!function_exists('getDestinationByCategory')) {
                     ->orderBy('voicemail_id')
                     ->get();
                 break;
+            case 'ivrs':
+                $rows = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
+                ->where('ivr_menu_enabled', 'true')
+                ->orderBy('ivr_menu_extension')
+                ->get();
+                break;
             case 'others':
                 $rows = [
                     [
@@ -871,65 +878,50 @@ if (!function_exists('getDestinationByCategory')) {
 
         if ($rows) {
             foreach ($rows as $row) {
+                $id = '';
+                $label = '';
+            
                 switch ($category) {
                     case 'ringgroup':
                         $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
-                        if($id == $data) {
-                            $selectedCategory = $category;
-                        }
-                        $output[] = [
-                            'id' => $id,
-                            'label' => $row->ring_group_name
-                        ];
+                        $label = $row->ring_group_name;
                         break;
                     case 'dialplans':
                         $id = sprintf('%s XML %s', $row->dialplan_number, Session::get('domain_name'));
-                        if($id == $data) {
-                            $selectedCategory = $category;
-                        }
-                        $output[] = [
-                            'id' => $id,
-                            'label' => $row->dialplan_name
-                        ];
+                        $label = $row->dialplan_name;
                         break;
                     case 'extensions':
                         $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
-                        if($id == $data) {
-                            $selectedCategory = $category;
-                        }
-                        $output[] = [
-                            'id' => $id,
-                            'label' => $row->extension
-                        ];
-                        break;
-                    case 'timeconditions':
-                        //$output[$row->ring_group_uuid] = $row->ring_group_name;
+                        $label = $row->extension;
                         break;
                     case 'voicemails':
                         $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
-                        if($id == $data) {
-                            $selectedCategory = $category;
-                        }
-                        $output[] = [
-                            'id' => $id,
-                            'label' => $row->voicemail_id
-                        ];
+                        $label = $row->voicemail_id;
                         break;
                     case 'others':
-                        if($row['id'] == $data) {
-                            $selectedCategory = $category;
-                        }
-                        $output[] = [
-                            'id' => $row['id'],
-                            'label' => $row['label']
-                        ];
+                        $id = $row['id'];
+                        $label = $row['label'];
                         break;
                     default:
-
+                        break; // Skip unknown category
                 }
+            
+                // logger($id);
+                // logger($data);
+                if ($id == $data || 'transfer:'.$id == $data) {
+                    logger('true');
+                    logger($id);
+                logger($data);
+                    $selectedCategory = $category;
+                }
+            
+                $output[] = [
+                    'id' => $id,
+                    'label' => $label
+                ];
             }
+        
         }
-
 
         return [
             'selectedCategory' => $selectedCategory,
