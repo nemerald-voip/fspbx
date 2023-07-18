@@ -402,7 +402,6 @@
             data: $("#voicemail_form").serialize(),
         })
         .done(function(response) {
-                console.log(response);
                 $('.loading').hide();
 
                 if (response.error){
