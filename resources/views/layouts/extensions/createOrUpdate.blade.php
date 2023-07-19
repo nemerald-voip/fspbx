@@ -1,6 +1,9 @@
 @extends('layouts.horizontal', ["page_title"=> "Edit Extension"])
 
 @section('content')
+    @php
+        /** @var \App\Models\Extensions $extension */
+    @endphp
 <!-- Start Content-->
 <div class="container-fluid">
 
@@ -342,12 +345,11 @@
                                                                     <select data-toggle="select2" title="Outbound Caller ID" name="outbound_caller_id_number">
                                                                         <option value="">Main Company Number</option>
                                                                         @foreach ($destinations as $destination)
-                                                                            <option value="{{ phone($destination->destination_number, "US")->formatE164() }}"
-                                                                                @if (($extension->outbound_caller_id_number &&
-                                                                                    phone($extension->outbound_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
+                                                                            <option value="{{ $destination->destination_number }}"
+                                                                                @if ($destination->isCallerID)
                                                                                     selected
                                                                                 @endif>
-                                                                                {{ phone($destination->destination_number,"US",$national_phone_number_format) }} - {{ $destination->destination_description }}
+                                                                                {{ $destination->label }}
                                                                             </option>
                                                                         @endforeach
                                                                     </select>
@@ -411,12 +413,11 @@
                                                                     <select data-toggle="select2" title="Emergency Caller ID" name="emergency_caller_id_number">
                                                                         <option value="">Main Company Number</option>
                                                                         @foreach ($destinations as $destination)
-                                                                            <option value="{{ phone($destination->destination_number, "US")->formatE164() }}"
-                                                                                @if ($extension->emergency_caller_id_number &&
-                                                                                    (phone($extension->emergency_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
+                                                                            <option value="{{ $destination->destination_number }}"
+                                                                                @if (($destination->isEmergencyCallerID))
                                                                                     selected
                                                                                 @endif>
-                                                                                {{ phone($destination->destination_number,"US",$national_phone_number_format) }} - {{ $destination->destination_description }}
+                                                                                {{ $destination->label }}
                                                                             </option>
                                                                         @endforeach
                                                                     </select>
@@ -1226,13 +1227,13 @@
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_all_enabled" value="false">
                                                             <input type="checkbox" id="forward_all_enabled" value="true" name="forward_all_enabled" data-option="forward_all" class="forward_checkbox"
-                                                                   @if ($extension->forward_all_enabled == "true") checked @endif
+                                                                   @if ($extension->isForwardAllEnabled()) checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_all_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_all_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_all_phone_number" class="row @if($extension->forward_all_enabled == "false") d-none @endif">
+                                                    <div id="forward_all_phone_number" class="row @if(!$extension->isForwardAllEnabled()) d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
                                                                 @include('layouts.partials.destinationSelector', [
@@ -1270,13 +1271,13 @@
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_busy_enabled" value="false">
                                                             <input type="checkbox" id="forward_busy_enabled" value="true" name="forward_busy_enabled" data-option="forward_busy" class="forward_checkbox"
-                                                                   @if ($extension->forward_busy_enabled == "true") checked @endif
+                                                                   @if ($extension->isForwardBusyEnabled()) checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_busy_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_busy_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_busy_phone_number" class="row @if($extension->forward_busy_enabled == "false") d-none @endif">
+                                                    <div id="forward_busy_phone_number" class="row @if(!$extension->isForwardBusyEnabled()) d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
                                                                 @include('layouts.partials.destinationSelector', [
@@ -1315,13 +1316,13 @@
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_no_answer_enabled" value="false">
                                                             <input type="checkbox" id="forward_no_answer_enabled" value="true" name="forward_no_answer_enabled" data-option="forward_no_answer" class="forward_checkbox"
-                                                                   @if ($extension->forward_no_answer_enabled == "true") checked @endif
+                                                                   @if ($extension->isForwardNoAnswerEnabled()) checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_no_answer_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_no_answer_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_no_answer_phone_number" class="row @if($extension->forward_no_answer_enabled == "false") d-none @endif">
+                                                    <div id="forward_no_answer_phone_number" class="row @if(!$extension->isForwardNoAnswerEnabled()) d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
                                                                 @include('layouts.partials.destinationSelector', [
@@ -1361,13 +1362,13 @@
                                                         <div class="mb-2">
                                                             <input type="hidden" name="forward_user_not_registered_enabled" value="false">
                                                             <input type="checkbox" id="forward_user_not_registered_enabled" value="true" name="forward_user_not_registered_enabled" data-option="forward_user_not_registered" class="forward_checkbox"
-                                                                   @if ($extension->forward_user_not_registered_enabled == "true") checked @endif
+                                                                   @if ($extension->isForwardUserNotRegisteredEnabled()) checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="forward_user_not_registered_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger forward_user_not_registered_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="forward_user_not_registered_phone_number" class="row @if($extension->forward_user_not_registered_enabled == "false") d-none @endif">
+                                                    <div id="forward_user_not_registered_phone_number" class="row @if(!$extension->isForwardUserNotRegisteredEnabled()) d-none @endif">
                                                         <div class="col-md-12">
                                                             <p>
                                                             @include('layouts.partials.destinationSelector', [
@@ -1406,13 +1407,13 @@
                                                         <div class="mb-2">
                                                             <input type="hidden" name="follow_me_enabled" value="false">
                                                             <input type="checkbox" id="follow_me_enabled" value="true" name="follow_me_enabled" data-option="follow_me" class="forward_checkbox"
-                                                                   @if ($extension->follow_me_enabled == "true") checked @endif
+                                                                   @if ($extension->isFollowMeEnabled()) checked @endif
                                                                    data-switch="primary"/>
                                                             <label for="follow_me_enabled" data-on-label="On" data-off-label="Off"></label>
                                                             <div class="text-danger follow_me_enabled_err error_message"></div>
                                                         </div>
                                                     </div>
-                                                    <div id="follow_me_phone_number" class="row @if($extension->follow_me_enabled == "false") d-none @endif">
+                                                    <div id="follow_me_phone_number" class="row @if(!$extension->isFollowMeEnabled()) d-none @endif">
                                                         <div class="col-md-12">
                                                             <div class="row mb-3">
                                                                 <div class="col-5">

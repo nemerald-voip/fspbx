@@ -196,4 +196,30 @@ class Extensions extends Model
     {
         return $this->extension.' - '.((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
     }
+
+    public function isForwardAllEnabled(): bool
+    {
+        return $this->forward_all_enabled == "true";
+    }
+
+    public function isForwardBusyEnabled(): bool
+    {
+        return $this->forward_busy_enabled == "true";
+    }
+
+    public function isForwardNoAnswerEnabled(): bool
+    {
+        return $this->forward_no_answer_enabled == "true";
+    }
+
+    public function isForwardUserNotRegisteredEnabled(): bool
+    {
+        return $this->forward_user_not_registered_enabled == "true";
+    }
+
+    public function isFollowMeEnabled(): bool
+    {
+        return $this->follow_me_enabled == "true";
+    }
+
 }

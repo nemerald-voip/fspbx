@@ -47,6 +47,11 @@ return [
             'root' => '/var/lib/freeswitch/storage/voicemail/default',
         ],
 
+        'recordings' => [
+            'driver' => 'local',
+            'root' => '/var/lib/freeswitch/recordings',
+        ],
+
         'fax' => [
             'driver' => 'local',
             'root' => '/var/lib/freeswitch/storage/fax',

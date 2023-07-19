@@ -27,7 +27,26 @@ class RingGroups extends Model
         'ring_group_extension',
         'ring_group_greeting',
         'ring_group_strategy',
-        'ring_group_name'
+        'ring_group_name',
+        'ring_group_call_timeout',
+        'ring_group_timeout_app',
+        'ring_group_timeout_data',
+        'ring_group_cid_name_prefix',
+        'ring_group_cid_number_prefix',
+        'ring_group_description',
+        'ring_group_enabled',
+        'ring_group_forward_enabled',
+        'ring_group_forward_destination',
+        'ring_group_strategy',
+        'ring_group_caller_id_name',
+        'ring_group_caller_id_number',
+        'ring_group_distinctive_ring',
+        'ring_group_ringback',
+        'ring_group_call_forward_enabled',
+        'ring_group_follow_me_enabled',
+        'ring_group_missed_call_data',
+        'ring_group_forward_toll_allow',
+        'ring_group_forward_context'
     ];
 
     public function __construct(array $attributes = [])

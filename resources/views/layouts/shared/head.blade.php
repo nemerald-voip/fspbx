@@ -51,3 +51,5 @@ We can work around this with a simple addition to the <head> of the main layout 
     padding-left: 0px!important;
 }
 </style>
+
+@livewireStyles

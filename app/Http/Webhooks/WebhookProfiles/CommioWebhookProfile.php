@@ -8,6 +8,8 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
+use libphonenumber\PhoneNumberFormat;
 use App\Jobs\SendSmsNotificationToSlack;
 use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
 
@@ -18,6 +20,29 @@ class CommioWebhookProfile implements WebhookProfile
         try {
             $slack_message = 'SMS from ' . $request['from'] . ' to ' . $request['to'] . '\n';
             $slack_message = "*Commio SMS* From: " . $request['from'] . ", To:" . $request['to'] ."\n";
+
+            //convert all numbers to e.164 format
+            //Get libphonenumber object
+            $phoneNumberUtil = PhoneNumberUtil::getInstance();
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($request['from'], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $request['from'] = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
+
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($request['to'], 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $request['to'] = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numner as is
+            }
 
             // Get domain UUID using destination number from the request
             $smsDestinationModel = SmsDestinations::where('destination', $request['to'])
