@@ -2,14 +2,18 @@
 
 use App\Models\Settings;
 use App\Models\Dialplans;
+use App\Models\Extensions;
+use App\Models\RingGroups;
+use App\Models\Voicemails;
 use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+
 use App\Models\DefaultSettings;
+use App\Models\IvrMenus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
 use Illuminate\Support\Facades\Http;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Session;
@@ -807,6 +811,128 @@ if (!function_exists('get_registrations')) {
     }
 }
 
+if (!function_exists('getDestinationByCategory')) {
+    function getDestinationByCategory($category, $data = null)
+    {
+        $output = [];
+        $selectedCategory = null;
+        $selectedDestination = null;
+        $rows = null;
+
+        switch ($category) {
+            case 'ringgroup':
+                $rows = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('ring_group_enabled', 'true')
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ring_group_extension')
+                    ->get();
+                break;
+            case 'dialplans':
+                $rows = Dialplans::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('dialplan_enabled', 'true')
+                    ->where('dialplan_destination', 'true')
+                    ->where('dialplan_number', '<>', '')
+                    ->orderBy('dialplan_name')
+                    ->get();
+                break;
+            case 'extensions':
+                $rows = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('extension')
+                    ->get();
+                break;
+            case 'ivrs':
+                $rows = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ivr_menu_extension')
+                    ->get();
+                break;
+            case 'voicemails':
+                $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('voicemail_enabled', 'true')
+                    ->orderBy('voicemail_id')
+                    ->get();
+                break;
+            case 'others':
+                $rows = [
+                    [
+                        'id' => sprintf('*98 XML %s', Session::get('domain_name')),
+                        'label' => 'Check Voicemail'
+                    ], [
+                        'id' => sprintf('*411 XML %s', Session::get('domain_name')),
+                        'label' => 'Company Directory'
+                    ], [
+                        'id' => 'hangup',
+                        'label' => 'Hangup'
+                    ], [
+                        'id' => sprintf('*732 XML %s', Session::get('domain_name')),
+                        'label' => 'Record'
+                    ]
+                ];
+                break;
+            default:
+        }
+
+        if ($rows) {
+            foreach ($rows as $row) {
+                switch ($category) {
+                    case 'ringgroup':
+                        $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
+                        $label = $row->ring_group_extension . " - " . $row->ring_group_name;
+                        $app_name = "Ring Group";
+                        break;
+                    case 'extensions':
+                        $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
+                        $label = $row->extension . " - " . $row->effective_caller_id_name;
+                        $app_name = "Extension";
+                        break;
+                    case 'voicemails':
+                        $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
+                        $label = $row->voicemail_id;
+                        if ($row->extension) {
+                            $label .= " - " . $row->extension->effective_caller_id_name;
+                        } elseif ($row->voicemail_description != '') {
+                            $label .= " - " .$row->voicemail_description;
+                        }
+                        $app_name = "Voicemail";
+                        break;
+                    case 'ivrs':
+                        $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
+                        $label = $row->ivr_menu_extension . " - " . $row->ivr_menu_name;
+                        $app_name = "Auto Receptionist";
+                        break;
+                    case 'others':
+                        $id = $row['id'];
+                        $label = $row['label'];
+                        $app_name = "Miscellaneous";
+                        break;
+                    default:
+                        break; // Skip unknown categories
+                }
+
+                // Check if the id matches the data
+                if ($id == $data || 'transfer:' . $id == $data) {
+                    $selectedCategory = $category;
+                    $selectedDestination = $id;
+                }
+
+                // Add to the output array
+                $output[] = [
+                    'id' => $id,
+                    'label' => $label,
+                    'app_name' => $app_name,
+                ];
+            }
+        }
+
+        return [
+            'selectedCategory' => $selectedCategory,
+            'selectedDestination' => $selectedDestination,
+            'list' => $output
+        ];
+    }
+}
+
 if (!function_exists('pr')) {
     function pr($arr)
     {
@@ -995,7 +1121,7 @@ if (!function_exists('generate_password')) {
     /**
      * Generate a secure password
      *
-     * @return string 
+     * @return string
      */
     function generate_password()
     {
@@ -1081,5 +1207,33 @@ if (!function_exists('detect_if_phone_number')) {
         } catch (\Exception $e) {
             return false;
         }
+    }
+}
+
+if (!function_exists('parse_socket_response_to_array')) {
+    function parse_socket_response_to_array($tmp_str, $tmp_delimiter)
+    {
+        $tmp_array = explode("\n", $tmp_str);
+        $result = array();
+        if (trim(strtoupper($tmp_array[0])) != "+OK") {
+            $tmp_field_name_array = explode($tmp_delimiter, $tmp_array[0]);
+            $x = 0;
+            if (isset($tmp_array)) foreach ($tmp_array as $row) {
+                if ($x > 0) {
+                    $tmp_field_value_array = explode($tmp_delimiter, $tmp_array[$x]);
+                    $y = 0;
+                    if (isset($tmp_field_value_array)) foreach ($tmp_field_value_array as $tmp_value) {
+                        $tmp_name = $tmp_field_name_array[$y];
+                        if (trim(strtoupper($tmp_value)) != "+OK") {
+                            $result[$x][$tmp_name] = $tmp_value;
+                        }
+                        $y++;
+                    }
+                }
+                $x++;
+            }
+            unset($row);
+        }
+        return $result;
     }
 }

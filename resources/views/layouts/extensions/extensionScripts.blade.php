@@ -101,6 +101,23 @@
 
         $(document).ready(function() {
 
+            Livewire.on('userCreationCompleted', extensionUuid => {
+                // Successful Notification
+                $.NotificationApp.send("Success", "New User Added", "top-right",
+                    "#10c469",
+                    "success");
+
+                $('#options'+extensionUuid).dropdown("toggle");
+            })
+
+            Livewire.on('userCreationFailed', (extensionUuid,error) => {
+                // Fail Notification
+                printErrorMsg(error);
+
+                $('#options'+extensionUuid).dropdown("toggle");
+            })
+
+
             $("#connectionSelect2").select2({
                 dropdownParent: $("#createMobileAppModal")
             });

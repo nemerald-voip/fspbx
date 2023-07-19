@@ -84,14 +84,37 @@ class StoreRingGroupRequest extends FormRequest
                 'phone:US',
             ],
             'ring_group_forward.all.target_internal' => [
-                'required_if:ring_group_forward.all.type,==,internal',
+                'required_if:ring_group_forward_enabled,==,true,ring_group_forward.all.type,==,internal',
                 'nullable',
                 'numeric',
                 'ExtensionExists:'.Session::get('domain_uuid')
             ],
-            'ring_group_timeout_category' => [
+            'timeout_category' => [
+                'in:disabled,ringgroup,dialplans,extensions,timeconditions,voicemails,others'
+            ],
+            'timeout_action_ringgroup' => [
+                'required_if:timeout_category,==,ringgroup',
+                'string'
+            ],
+            'timeout_action_dialplans' => [
+                'required_if:timeout_category,==,dialplans',
+                'string'
+            ],
+            'timeout_action_extensions' => [
+                'required_if:timeout_category,==,extensions',
+                'string'
+            ],
+            'timeout_action_voicemails' => [
+                'required_if:timeout_category,==,voicemails',
+                'string'
+            ],
+            'timeout_action_others' => [
+                'required_if:timeout_category,==,others',
+                'string'
+            ],
+            'ring_group_timeout_data' => [
                 'nullable',
-                'in:ringgroup,dialplans,extensions,timeconditions,voicemails,others'
+                'string'
             ],
             'ring_group_strategy' => [
                 'in:simultaneous,sequence,random,enterprise,rollover'
@@ -102,7 +125,8 @@ class StoreRingGroupRequest extends FormRequest
             ],
             'ring_group_caller_id_number' => [
                 'nullable',
-                'string'
+                'string',
+                'phone:US'
             ],
             'ring_group_distinctive_ring' => [
                 'nullable',
@@ -115,18 +139,19 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_call_forward_enabled' => 'in:true,false',
             'ring_group_follow_me_enabled' => 'in:true,false',
             'ring_group_missed_call_category' => [
-                'nullable',
-                'in:email'
+                'in:disabled,email'
             ],
             'ring_group_missed_call_data' => [
+                'required_if:ring_group_missed_call_category,==,email',
                 'nullable',
-                'string'
+                'string',
+                'email'
             ],
             'ring_group_forward_toll_allow' => [
                 'nullable',
                 'string'
             ],
-            'ring_group_forward_context' => [
+            'ring_group_context' => [
                 'required',
                 'string',
                 Rule::exists('App\Models\Domain', 'domain_name'),
@@ -144,5 +169,19 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_destinations.*.target_internal.ExtensionExists' => 'Should be valid destination',
             'ring_group_forward.all.target_external' => 'Should be valid US phone number'
         ];
+    }
+
+    public function prepareForValidation()
+    {
+
+        if($this->get('timeout_category') == 'disabled') {
+            $this->merge([
+                'ring_group_timeout_data' => null
+            ]);
+        } else {
+            $this->merge([
+                'ring_group_timeout_data' => $this->get('timeout_action_'.$this->get('timeout_category'))
+            ]);
+        }
     }
 }

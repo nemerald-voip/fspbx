@@ -39,5 +39,6 @@
         @include('layouts.shared/right-sidebar')
 
         @include('layouts.shared/footer-script')
+        @livewireScripts
     </body>
 </html>

@@ -53,6 +53,9 @@
                 </td>
                 <td>
                     {{ $ringGroup->ring_group_name }}
+                    @if ($ringGroup['ring_group_forward_enabled'] == 'true')
+                        <small><span class="badge badge-outline-primary">FWD</span></small>
+                    @endif
                 </td>
                 <td>
                     {{ $ringGroup->ring_group_extension }}
