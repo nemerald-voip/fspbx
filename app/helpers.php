@@ -878,27 +878,33 @@ if (!function_exists('getDestinationByCategory')) {
                 switch ($category) {
                     case 'ringgroup':
                         $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
-                        $label = $row->ring_group_name;
-                        break;
-                    case 'dialplans':
-                        $id = sprintf('%s XML %s', $row->dialplan_number, Session::get('domain_name'));
-                        $label = $row->dialplan_name;
+                        $label = $row->ring_group_extension . " - " . $row->ring_group_name;
+                        $app_name = "Ring Group";
                         break;
                     case 'extensions':
                         $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
-                        $label = $row->extension;
+                        $label = $row->extension . " - " . $row->effective_caller_id_name;
+                        $app_name = "Extension";
                         break;
                     case 'voicemails':
                         $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
                         $label = $row->voicemail_id;
+                        if ($row->extension) {
+                            $label .= " - " . $row->extension->effective_caller_id_name;
+                        } elseif ($row->voicemail_description != '') {
+                            $label .= " - " .$row->voicemail_description;
+                        }
+                        $app_name = "Voicemail";
                         break;
                     case 'ivrs':
                         $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
-                        $label = $row->ivr_menu_extension;
+                        $label = $row->ivr_menu_extension . " - " . $row->ivr_menu_name;
+                        $app_name = "Auto Receptionist";
                         break;
                     case 'others':
                         $id = $row['id'];
                         $label = $row['label'];
+                        $app_name = "Miscellaneous";
                         break;
                     default:
                         break; // Skip unknown categories
@@ -914,6 +920,7 @@ if (!function_exists('getDestinationByCategory')) {
                 $output[] = [
                     'id' => $id,
                     'label' => $label,
+                    'app_name' => $app_name,
                 ];
             }
         }
