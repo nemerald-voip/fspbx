@@ -56,4 +56,9 @@ class CallCenterQueues extends Model
         'update_user',
         'queue_email_address'
     ];
+
+    public function agents()
+    {
+        return $this->belongsToMany(CallCenterAgents::class, 'v_call_center_tiers', 'call_center_queue_uuid', 'call_center_agent_uuid');
+    }
 }
