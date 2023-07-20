@@ -16,3 +16,4 @@ yarn-error.log
 /Modules/*
 public/resources/templates/provision/*
 public/app/provision/upload*
+public/envinfo.ini
