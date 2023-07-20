@@ -1,0 +1,43 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) -->
+<?Saved @ --2023-03-21T17:43:15-- ?>
+<directory>
+  <item_list>
+    <item>
+      <fn>Jocelyn</fn>
+      <ln>Enriquez</ln>
+      <lb>Beautiful</lb>
+      <ct>8483291820</ct>
+      <tl>Slave</tl>
+      <rt>ringer11</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Kate</fn>
+      <ln>Ugly</ln>
+      <ct>7322673243</ct>
+      <sd>1</sd>
+      <rt>ringer4</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Lizard</fn>
+      <ct>3476416136</ct>
+      <sd>2</sd>
+      <rt>default</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Manager</fn>
+      <ln>Jas</ln>
+      <ct>7323306164</ct>
+      <sd>3</sd>
+      <rt>default</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+  </item_list>
+</directory>

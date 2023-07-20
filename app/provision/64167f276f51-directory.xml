@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) -->
+<?Saved @ --2021-07-30T09:14:20-- ?>
+<directory>
+  <item_list>
+    <item>
+      <fn>Isaac</fn>
+      <ct>9172826363</ct>
+      <sd>1</sd>
+      <rt>ringerdefault</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Alex</fn>
+      <ct>303</ct>
+      <sd>2</sd>
+      <rt>ringerdefault</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Rosa</fn>
+      <ct>13474998022</ct>
+      <sd>3</sd>
+      <rt>default</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+  </item_list>
+</directory>
