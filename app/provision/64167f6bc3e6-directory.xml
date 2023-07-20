@@ -1,0 +1,59 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) -->
+<?Saved @ --2023-01-13T09:04:31-- ?>
+<directory>
+  <item_list>
+    <item>
+      <fn>Camille</fn>
+      <ct>17152978220</ct>
+      <sd>1</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+    <item>
+      <fn>Greg</fn>
+      <ln>Office</ln>
+      <ct>8101</ct>
+      <sd>2</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+    <item>
+      <fn>Greg</fn>
+      <ln>Mobile</ln>
+      <ct>17152128221</ct>
+      <sd>3</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+    <item>
+      <fn>Beth</fn>
+      <ct>17155740398</ct>
+      <sd>4</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+    <item>
+      <fn>Andrew</fn>
+      <ct>17155749471</ct>
+      <sd>5</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+  </item_list>
+</directory>

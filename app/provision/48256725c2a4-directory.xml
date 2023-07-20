@@ -1,0 +1,33 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) -->
+<?Saved @ --2023-04-28T08:43:01-- ?>
+<directory>
+  <item_list>
+    <item>
+      <fn>Sce</fn>
+      <ct>18005255770</ct>
+      <sd>3</sd>
+      <rt>ringerdefault</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Gas</fn>
+      <ln>Live</ln>
+      <ct>18004271687</ct>
+      <sd>1</sd>
+      <rt>ringerdefault</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+    <item>
+      <fn>Gas</fn>
+      <ln>Ivr</ln>
+      <ct>18884276244</ct>
+      <sd>2</sd>
+      <rt>ringerdefault</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+    </item>
+  </item_list>
+</directory>

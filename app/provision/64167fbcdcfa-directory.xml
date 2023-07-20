@@ -1,0 +1,29 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) -->
+<?Saved @ --2023-03-10T18:23:31-- ?>
+<directory>
+  <item_list>
+    <item>
+      <fn>Conference</fn>
+      <ln>Line</ln>
+      <ct>18662412226</ct>
+      <sd>10</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+    <item>
+      <fn>Ruth&apos;s</fn>
+      <ln>cell</ln>
+      <ct>8189745103</ct>
+      <sd>11</sd>
+      <rt>ringer2</rt>
+      <ad>0</ad>
+      <ar>0</ar>
+      <bw>0</bw>
+      <bb>0</bb>
+    </item>
+  </item_list>
+</directory>
