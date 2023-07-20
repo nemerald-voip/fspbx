@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\CallCenterQueues;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -38,8 +37,4 @@ class CallCenterQueueAgents extends Model
         'update_user'
     ];
 
-    public function queues()
-    {
-        return $this->belongsToMany(CallCenterQueues::class, 'v_call_center_tiers', 'call_center_agent_uuid', 'call_center_queue_uuid');
-    }
 }
