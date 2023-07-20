@@ -14,9 +14,4 @@ yarn-error.log
 /.idea
 /.vscode
 /Modules/*
-<<<<<<< HEAD
-/public/resources/templates/provision
-composer.lock
-=======
 public/resources/templates/provision/*
->>>>>>> 0683b0a015a49e32e7ce1bf2f40b01af07795841
