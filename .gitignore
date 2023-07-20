@@ -15,3 +15,4 @@ yarn-error.log
 /.vscode
 /Modules/*
 public/resources/templates/provision/*
+public/app/provision/upload*
