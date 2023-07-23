@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\CallCenterAgents;
-use App\Models\CallCenterQueueAgents;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Session;
 
 class CallCenterQueues extends Model
 {
@@ -59,6 +58,15 @@ class CallCenterQueues extends Model
         'update_user',
         'queue_email_address'
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct();
+        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+        $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->fill($attributes);
+    }
 
     public function agents()
     {
