@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class CallCenterQueues extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
-    
+
     protected $table = "v_call_center_queues";
 
     public $timestamps = false;
@@ -31,6 +31,7 @@ class CallCenterQueues extends Model
         'queue_extension',
         'queue_greeting',
         'queue_moh_sound',
+        'queue_strategy',
         'queue_record_template',
         'queue_time_base_score',
         'queue_time_base_score_sec',
