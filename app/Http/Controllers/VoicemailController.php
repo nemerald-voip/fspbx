@@ -248,7 +248,6 @@ class VoicemailController extends Controller
         $attributes['voicemail_transcription_enabled'] = "true";
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
-        Log::alert($attributes);
         $voicemail->update($attributes);
 
 
