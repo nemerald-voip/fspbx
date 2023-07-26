@@ -66,7 +66,7 @@ class CallCenterQueues extends Model
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->attributes['queue_strategy'] = 'ring-all';
-        $this->attributes['queue_record_template'] = false;
+        $this->attributes['queue_record_template'] = true;
         $this->attributes['queue_time_base_score'] = 'system';
         $this->attributes['queue_max_wait_time_with_no_agent_time_reached'] = '5';
         $this->attributes['queue_tier_rules_apply'] = false;
@@ -75,7 +75,7 @@ class CallCenterQueues extends Model
         $this->attributes['queue_discard_abandoned_after'] = 900;
         $this->attributes['queue_abandoned_resume_allowed'] = false;
         $this->attributes['queue_tier_rule_wait_multiply_level'] = false;
-        $this->attributes['queue_greeting'] = 'recording100.wav';
+        $this->attributes['queue_greeting'] = '';
         $this->attributes['queue_max_wait_time'] = 0;
         $this->attributes['queue_max_wait_time_with_no_agent'] = 90;
         $this->fill($attributes);

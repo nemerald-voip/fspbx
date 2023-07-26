@@ -1262,25 +1262,25 @@ if (!function_exists('parse_socket_response_to_array')) {
     }
 }
 
-if (!function_exists('array_to_xml')) {
-    function array_to_xml($array, $rootElement = null, $xml = null)
-    {
-        $_xml = $xml;
-        // If there is no Root Element then insert root
-        if ($_xml === null) {
-            $_xml = new SimpleXMLElement($rootElement !== null ? $rootElement : '<root/>');
-        }
-        // Visit all key value pair
-        foreach ($array as $k => $v) {
-            // If there is nested array then
-            if (is_array($v)) {
-                // Call function for nested array
-                array_to_xml($v, $k, $_xml->addChild($k));
-            } else {
-                // Simply add child element.
-                $_xml->addChild($k, $v);
-            }
-        }
-        return $_xml->asXML();
-    }
-}
+// if (!function_exists('array_to_xml')) {
+//     function array_to_xml($array, $rootElement = null, $xml = null)
+//     {
+//         $_xml = $xml;
+//         // If there is no Root Element then insert root
+//         if ($_xml === null) {
+//             $_xml = new SimpleXMLElement($rootElement !== null ? $rootElement : '<root/>');
+//         }
+//         // Visit all key value pair
+//         foreach ($array as $k => $v) {
+//             // If there is nested array then
+//             if (is_array($v)) {
+//                 // Call function for nested array
+//                 array_to_xml($v, $k, $_xml->addChild($k));
+//             } else {
+//                 // Simply add child element.
+//                 $_xml->addChild($k, $v);
+//             }
+//         }
+//         return $_xml->asXML();
+//     }
+// }
