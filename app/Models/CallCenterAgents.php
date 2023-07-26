@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\CallCenterQueues;
+use App\Models\CallCenterQueueAgents;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CallCenterAgents extends Model
 {
@@ -45,4 +47,9 @@ class CallCenterAgents extends Model
         'update_date',
         'update_user'
     ];
+
+    public function queues()
+    {
+        return $this->belongsToMany(CallCenterQueues::class, CallCenterQueueAgents::class, 'call_center_agent_uuid', 'call_center_queue_uuid');
+    }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Session;
 
 class CallCenterQueues extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
-    
     protected $table = "v_call_center_queues";
 
     public $timestamps = false;
@@ -29,6 +29,7 @@ class CallCenterQueues extends Model
         'queue_extension',
         'queue_greeting',
         'queue_moh_sound',
+        'queue_strategy',
         'queue_record_template',
         'queue_time_base_score',
         'queue_time_base_score_sec',
@@ -57,8 +58,30 @@ class CallCenterQueues extends Model
         'queue_email_address'
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct();
+        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+        $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->attributes['queue_strategy'] = 'ring-all';
+        $this->attributes['queue_record_template'] = true;
+        $this->attributes['queue_time_base_score'] = 'system';
+        $this->attributes['queue_max_wait_time_with_no_agent_time_reached'] = '5';
+        $this->attributes['queue_tier_rules_apply'] = false;
+        $this->attributes['queue_tier_rule_wait_second'] = 30;
+        $this->attributes['queue_tier_rule_no_agent_no_wait'] = false;
+        $this->attributes['queue_discard_abandoned_after'] = 900;
+        $this->attributes['queue_abandoned_resume_allowed'] = false;
+        $this->attributes['queue_tier_rule_wait_multiply_level'] = false;
+        $this->attributes['queue_greeting'] = '';
+        $this->attributes['queue_max_wait_time'] = 0;
+        $this->attributes['queue_max_wait_time_with_no_agent'] = 90;
+        $this->fill($attributes);
+    }
+
     public function agents()
     {
-        return $this->belongsToMany(CallCenterAgents::class, 'v_call_center_tiers', 'call_center_queue_uuid', 'call_center_agent_uuid');
+        return $this->belongsToMany(CallCenterAgents::class, CallCenterQueueAgents::class, 'call_center_queue_uuid', 'call_center_agent_uuid');
     }
 }

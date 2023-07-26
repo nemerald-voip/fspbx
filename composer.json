@@ -29,7 +29,8 @@
         "propaganistas/laravel-phone": "^4.3",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-webhook-client": "^2.8",
-        "wildbit/swiftmailer-postmark": "^3.3"
+        "wildbit/swiftmailer-postmark": "^3.3",
+        "ext-simplexml": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.7",
