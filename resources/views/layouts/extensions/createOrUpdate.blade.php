@@ -191,6 +191,7 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
+                                                                <input type="hidden" name="extension" value="{{ $extension->extension }}">
                                                                 <label for="extension" class="form-label">Extension number <span class="text-danger">*</span></label>
                                                                 <input class="form-control" type="text" placeholder="xxxx" id="extension"
                                                                     name="extension" value="{{ $extension->extension }}" @if (!userCheckPermission('extension_extension')) disabled @endif/>
