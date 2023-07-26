@@ -17,3 +17,4 @@ yarn-error.log
 public/resources/templates/provision/*
 public/app/provision/upload*
 public/envinfo.ini
+.stfolder
