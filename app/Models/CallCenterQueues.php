@@ -90,4 +90,9 @@ class CallCenterQueues extends Model
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
+
+    public function dialplan()
+    {
+        return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
+    }
 }
