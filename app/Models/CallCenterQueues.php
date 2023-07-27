@@ -85,4 +85,9 @@ class CallCenterQueues extends Model
     {
         return $this->belongsToMany(CallCenterAgents::class, CallCenterQueueAgents::class, 'call_center_queue_uuid', 'call_center_agent_uuid');
     }
+
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
 }

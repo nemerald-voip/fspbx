@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class CallCenterAgents extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
-    
+
     protected $table = "v_call_center_agents";
 
     public $timestamps = false;
@@ -51,5 +51,10 @@ class CallCenterAgents extends Model
     public function queues()
     {
         return $this->belongsToMany(CallCenterQueues::class, CallCenterQueueAgents::class, 'call_center_agent_uuid', 'call_center_queue_uuid');
+    }
+
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 }
