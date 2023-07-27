@@ -1179,7 +1179,9 @@ class ExtensionsController extends Controller
         }
 
         //Schedule SuspendUser job that will check if suspension is required
-        SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
+        if ($extension->voicemail) {
+            SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
+        }
 
         $extension->save();
 
