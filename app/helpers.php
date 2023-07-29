@@ -73,27 +73,27 @@ if (!function_exists('getFusionPBXPreviousURL')) {
     function getFusionPBXPreviousURL($previous_url)
     {
         if (strpos($previous_url, "time_condition_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "time_condition_edit.php"))."time_conditions.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "time_condition_edit.php")) . "time_conditions.php";
         } elseif (strpos($previous_url, "destination_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "destination_edit.php"))."destinations.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "destination_edit.php")) . "destinations.php";
         } elseif (strpos($previous_url, "extension_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "extension_edit.php"))."extensions.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "extension_edit.php")) . "extensions.php";
         } elseif (strpos($previous_url, "ring_group_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "ring_group_edit.php"))."ring_groups.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "ring_group_edit.php")) . "ring_groups.php";
         } elseif (strpos($previous_url, "device_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "device_edit.php"))."devices.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "device_edit.php")) . "devices.php";
         } elseif (strpos($previous_url, "dialplan_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "dialplan_edit.php"))."dialplans.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "dialplan_edit.php")) . "dialplans.php";
         } elseif (strpos($previous_url, "ivr_menu_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "ivr_menu_edit.php"))."ivr_menus.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";
         } elseif (strpos($previous_url, "voicemail_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "voicemail_edit.php"))."voicemails.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";
         } elseif (strpos($previous_url, "/extensions/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/extensions/"))."/extensions";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/extensions/")) . "/extensions";
         } elseif (strpos($previous_url, "/faxes/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/"))."/faxes";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/")) . "/faxes";
         } elseif (strpos($previous_url, "/voicemails/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/"))."/voicemails";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/")) . "/voicemails";
         } else {
             $url = $previous_url;
         }
@@ -556,8 +556,11 @@ if (!function_exists('event_socket_request_cmd')) {
         $settings = Settings::first();
 
         $esl = new event_socket;
-        if (!$esl->connect($settings->event_socket_ip_address, $settings->event_socket_port,
-            $settings->event_socket_password)) {
+        if (!$esl->connect(
+            $settings->event_socket_ip_address,
+            $settings->event_socket_port,
+            $settings->event_socket_password
+        )) {
             return false;
         }
         $response = $esl->request($cmd);
@@ -625,7 +628,7 @@ if (!function_exists('outbound_route_to_bridge')) {
                 if ($dialplan_detail['dialplan_detail_tag'] == "condition") {
 
                     if ($dialplan_detail['dialplan_detail_type'] == "destination_number") {
-                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
+                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
                         preg_match($pattern, $destination_number, $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
@@ -648,7 +651,7 @@ if (!function_exists('outbound_route_to_bridge')) {
                             }
                         }
                     } elseif ($dialplan_detail['dialplan_detail_type'] == "\${toll_allow}") {
-                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
+                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
                         preg_match($pattern, $channel_variables['toll_allow'], $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
@@ -707,8 +710,11 @@ if (!function_exists('get_registrations')) {
         $settings = Settings::first();
 
         //create the event socket connection
-        $fp = event_socket_create($settings->event_socket_ip_address, $settings->event_socket_port,
-            $settings->event_socket_password);
+        $fp = event_socket_create(
+            $settings->event_socket_ip_address,
+            $settings->event_socket_port,
+            $settings->event_socket_password
+        );
 
         $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')
             ->get();
@@ -716,14 +722,14 @@ if (!function_exists('get_registrations')) {
         $registrations = array();
         $id = 0;
         foreach ($sip_profiles as $sip_profile) {
-            $cmd = "api sofia xmlstatus profile '".$sip_profile['sip_profile_name']."' reg";
+            $cmd = "api sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
             $xml_response = trim(event_socket_request($fp, $cmd));
             if (function_exists('iconv')) {
                 $xml_response = iconv("utf-8", "utf-8//IGNORE", $xml_response);
             }
             $xml_response = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml_response);
             if ($xml_response == "Invalid Profile!") {
-                $xml_response = "<error_msg>".'Error'."</error_msg>";
+                $xml_response = "<error_msg>" . 'Error' . "</error_msg>";
             }
             $xml_response = str_replace("<profile-info>", "<profile_info>", $xml_response);
             $xml_response = str_replace("</profile-info>", "</profile_info>", $xml_response);
@@ -733,9 +739,9 @@ if (!function_exists('get_registrations')) {
                 try {
                     $xml = new SimpleXMLElement($xml_response);
                 } catch (Exception $e) {
-                    echo basename(__FILE__)."<br />\n";
-                    echo "line: ".__line__."<br />\n";
-                    echo "error: ".$e->getMessage()."<br />\n";
+                    echo basename(__FILE__) . "<br />\n";
+                    echo "line: " . __line__ . "<br />\n";
+                    echo "error: " . $e->getMessage() . "<br />\n";
                     //echo $xml_response;
                     exit;
                 }
@@ -890,27 +896,27 @@ if (!function_exists('getDestinationByCategory')) {
                 switch ($category) {
                     case 'ringgroup':
                         $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
-                        $label = $row->ring_group_extension." - ".$row->ring_group_name;
+                        $label = $row->ring_group_extension . " - " . $row->ring_group_name;
                         $app_name = "Ring Group";
                         break;
                     case 'extensions':
                         $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
-                        $label = $row->extension." - ".$row->effective_caller_id_name;
+                        $label = $row->extension . " - " . $row->effective_caller_id_name;
                         $app_name = "Extension";
                         break;
                     case 'voicemails':
                         $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
                         $label = $row->voicemail_id;
                         if ($row->extension) {
-                            $label .= " - ".$row->extension->effective_caller_id_name;
+                            $label .= " - " . $row->extension->effective_caller_id_name;
                         } elseif ($row->voicemail_description != '') {
-                            $label .= " - ".$row->voicemail_description;
+                            $label .= " - " . $row->voicemail_description;
                         }
                         $app_name = "Voicemail";
                         break;
                     case 'ivrs':
                         $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
-                        $label = $row->ivr_menu_extension." - ".$row->ivr_menu_name;
+                        $label = $row->ivr_menu_extension . " - " . $row->ivr_menu_name;
                         $app_name = "Auto Receptionist";
                         break;
                     case 'others':
@@ -923,7 +929,7 @@ if (!function_exists('getDestinationByCategory')) {
                 }
 
                 // Check if the id matches the data
-                if ($id == $data || 'transfer:'.$id == $data) {
+                if ($id == $data || 'transfer:' . $id == $data) {
                     $selectedCategory = $category;
                     $selectedDestination = $id;
                 }
@@ -1171,12 +1177,12 @@ if (!function_exists('get_fax_dial_plan')) {
     function get_fax_dial_plan($fax, $dialplan)
     {
         $last_fax = "last_fax=\${caller_id_number}-\${strftime(%Y-%m-%d-%H-%M-%S)}";
-        $rxfax_data = Storage::disk('fax')->path($fax->accountcode.'/'.$fax->fax_extension."/inbox/".$fax->forward_prefix.'${last_fax}.tif');
+        $rxfax_data = Storage::disk('fax')->path($fax->accountcode . '/' . $fax->fax_extension . "/inbox/" . $fax->forward_prefix . '${last_fax}.tif');
         //build the xml dialplan
-        $dialplan_xml = "<extension name=\"".$fax->fax_name."\" continue=\"false\" uuid=\"".$dialplan->dialplan_uuid."\">\n";
-        $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^".$fax->fax_destination_number."$\">\n";
+        $dialplan_xml = "<extension name=\"" . $fax->fax_name . "\" continue=\"false\" uuid=\"" . $dialplan->dialplan_uuid . "\">\n";
+        $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^" . $fax->fax_destination_number . "$\">\n";
         $dialplan_xml .= "		<action application=\"answer\" data=\"\"/>\n";
-        $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=".$fax->fax_uuid."\"/>\n";
+        $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=" . $fax->fax_uuid . "\"/>\n";
         $dialplan_xml .= "		<action application=\"set\" data=\"api_hangup_hook=lua app/fax/resources/scripts/hangup_rx.lua\"/>\n";
         $settings = \DB::table('v_default_settings')
             ->where('default_setting_category', 'fax')
@@ -1186,14 +1192,17 @@ if (!function_exists('get_fax_dial_plan')) {
 
         foreach ($settings as $data) {
             if (substr($data->default_setting_value, 0, 8) == "inbound:") {
-                $dialplan_xml .= "		<action application=\"set\" data=\"".substr($data->default_setting_value, 8,
-                        strlen($data->default_setting_value))."\"/>\n";
+                $dialplan_xml .= "		<action application=\"set\" data=\"" . substr(
+                    $data->default_setting_value,
+                    8,
+                    strlen($data->default_setting_value)
+                ) . "\"/>\n";
             } elseif (substr($data->default_setting_value, 0, 9) == "outbound:") {
             } else {
-                $dialplan_xml .= "		<action application=\"set\" data=\"".$data->default_setting_value."\"/>\n";
+                $dialplan_xml .= "		<action application=\"set\" data=\"" . $data->default_setting_value . "\"/>\n";
             }
         }
-        $dialplan_xml .= "		<action application=\"set\" data=\"".$last_fax."\"/>\n";
+        $dialplan_xml .= "		<action application=\"set\" data=\"" . $last_fax . "\"/>\n";
         $dialplan_xml .= "		<action application=\"rxfax\" data=\"$rxfax_data\"/>\n";
         $dialplan_xml .= "		<action application=\"hangup\" data=\"\"/>\n";
         $dialplan_xml .= "	</condition>\n";
@@ -1209,8 +1218,10 @@ if (!function_exists('format_phone_or_extension')) {
      */
     function format_phone_or_extension($value)
     {
-        return (strlen($value) <= 5) ? $value : \Propaganistas\LaravelPhone\PhoneNumber::make($value,
-            "US")->formatE164();
+        return (strlen($value) <= 5) ? $value : \Propaganistas\LaravelPhone\PhoneNumber::make(
+            $value,
+            "US"
+        )->formatE164();
     }
 }
 
@@ -1231,32 +1242,57 @@ if (!function_exists('detect_if_phone_number')) {
 }
 
 if (!function_exists('parse_socket_response_to_array')) {
-    function parse_socket_response_to_array($tmp_str, $tmp_delimiter)
+    function parse_socket_response_to_array($data)
     {
-        $tmp_array = explode("\n", $tmp_str);
-        $result = array();
-        if (trim(strtoupper($tmp_array[0])) != "+OK") {
-            $tmp_field_name_array = explode($tmp_delimiter, $tmp_array[0]);
-            $x = 0;
-            if (isset($tmp_array)) {
-                foreach ($tmp_array as $row) {
-                    if ($x > 0) {
-                        $tmp_field_value_array = explode($tmp_delimiter, $tmp_array[$x]);
-                        $y = 0;
-                        if (isset($tmp_field_value_array)) {
-                            foreach ($tmp_field_value_array as $tmp_value) {
-                                $tmp_name = $tmp_field_name_array[$y];
-                                if (trim(strtoupper($tmp_value)) != "+OK") {
-                                    $result[$x][$tmp_name] = $tmp_value;
-                                }
-                                $y++;
-                            }
-                        }
-                    }
-                    $x++;
-                }
-            }
-            unset($row);
+        // $tmp_array = explode("\n", $tmp_str);
+        // $result = array();
+        // if (trim(strtoupper($tmp_array[0])) != "+OK") {
+        //     $tmp_field_name_array = explode($tmp_delimiter, $tmp_array[0]);
+        //     $x = 0;
+        //     if (isset($tmp_array)) {
+        //         foreach ($tmp_array as $row) {
+        //             if ($x > 0) {
+        //                 $tmp_field_value_array = explode($tmp_delimiter, $tmp_array[$x]);
+        //                 $y = 0;
+        //                 if (isset($tmp_field_value_array)) {
+        //                     foreach ($tmp_field_value_array as $tmp_value) {
+        //                         $tmp_name = $tmp_field_name_array[$y];
+        //                         if (trim(strtoupper($tmp_value)) != "+OK") {
+        //                             $result[$x][$tmp_name] = $tmp_value;
+        //                         }
+        //                         $y++;
+        //                     }
+        //                 }
+        //             }
+        //             $x++;
+        //         }
+        //     }
+        //     unset($row);
+        // }
+        // return $result;
+
+        // Remove the "+OK" line if present
+        $data = trim(preg_replace('/^\+OK\s*$/m', '', $data));
+
+        // Explode the data by lines
+        $lines = explode(PHP_EOL, $data);
+
+        // Get the headers
+        $headers = str_getcsv(array_shift($lines), '|');
+
+        // Initialize the result array
+        $result = [];
+
+        // Process each line
+        foreach ($lines as $line) {
+            // Create an array with values for each row
+            $values = str_getcsv($line, '|');
+
+            // Combine headers and values into a single associative array
+            $row = array_combine($headers, $values);
+
+            // Add the row to the result array
+            $result[] = $row;
         }
         return $result;
     }
