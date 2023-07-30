@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\CallCenterQueues;
 use App\Models\CallCenterQueueAgents;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CallCenterAgents extends Model
@@ -66,5 +67,11 @@ class CallCenterAgents extends Model
     public function tier()
     {
         return $this->belongsTo(CallCenterQueueAgents::class, 'call_center_agent_uuid', 'call_center_agent_uuid');
+    }
+
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'agent_id', 'extension')
+        ->where('domain_uuid', Session::get('domain_uuid'));
     }
 }
