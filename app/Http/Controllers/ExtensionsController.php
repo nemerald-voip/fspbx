@@ -633,7 +633,6 @@ class ExtensionsController extends Controller
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
 
         $extension->fill($attributes);
-        $extension->save();
 
         if (isset($attributes['users'])) {
             foreach ($attributes['users'] as $ext_user) {
@@ -764,7 +763,7 @@ class ExtensionsController extends Controller
 
         //Check FusionPBX login status
         session_start();
-        if (session_status() === PHP_SESSION_NONE) {
+        if (!isset($_SESSION['user'])) {
             return redirect()->route('logout');
         }
 
@@ -847,7 +846,6 @@ class ExtensionsController extends Controller
 
             $destination->isCallerID = ($destination->destination_number === $extension->outbound_caller_id_number);
             $destination->isEmergencyCallerID = ($destination->destination_number === $extension->emergency_caller_id_number);
-
         }
 
         $vm_unavailable_file_exists = Storage::disk('voicemail')
@@ -1183,9 +1181,8 @@ class ExtensionsController extends Controller
             SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
         }
 
+        $extension->fill($attributes);
         $extension->save();
-
-        ExtensionUpdated::dispatch($extension);
 
         // Update Voicemail Destinations table
         if (isset($extension->voicemail)) {
@@ -1287,8 +1284,6 @@ class ExtensionsController extends Controller
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
         }
-
-        $extension->update($attributes);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {

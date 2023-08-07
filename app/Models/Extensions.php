@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ExtensionUpdated;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
@@ -18,7 +19,6 @@ class Extensions extends Model
     protected $primaryKey = 'extension_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
-
 
     /**
      * The attributes that are mass assignable.
@@ -95,14 +95,16 @@ class Extensions extends Model
         $this->fill($attributes);
     }
 
-    /**
-     * Get the voicemail associated with this extension.
-     *  returns Eloqeunt Object
-     */
-    // public function voicemail()
-    // {
-    //     return $this->hasOne(Voicemails::class,'voicemail_id','extension');
-    // }
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updated(function ($extension) {
+            $originalAttributes = $extension->getOriginal();
+            ExtensionUpdated::dispatch($extension,$originalAttributes);
+        });
+
+    }
 
     /**
      * Get the voicemail associated with this extension.
@@ -110,7 +112,7 @@ class Extensions extends Model
      */
     public function voicemail()
     {
-        return $this->hasOne(Voicemails::class,'voicemail_id','extension')
+        return $this->hasOne(Voicemails::class, 'voicemail_id', 'extension')
             ->where('domain_uuid', $this->domain_uuid);
     }
 
@@ -120,7 +122,7 @@ class Extensions extends Model
      */
     public function extension_users()
     {
-        return $this->hasMany(ExtensionUser::class,'extension_uuid','extension_uuid');
+        return $this->hasMany(ExtensionUser::class, 'extension_uuid', 'extension_uuid');
     }
 
     /**
@@ -129,7 +131,7 @@ class Extensions extends Model
      */
     public function mobile_app()
     {
-        return $this->hasOne(MobileAppUsers::class,'extension_uuid','extension_uuid');
+        return $this->hasOne(MobileAppUsers::class, 'extension_uuid', 'extension_uuid');
     }
 
     /**
@@ -145,7 +147,6 @@ class Extensions extends Model
         }
 
         return $users;
-
     }
 
     /**
@@ -153,7 +154,7 @@ class Extensions extends Model
      */
     public function domain()
     {
-        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
     /**
@@ -162,7 +163,7 @@ class Extensions extends Model
      */
     public function deviceLines()
     {
-        return $this->hasMany(DeviceLines::class,'user_id','extension');
+        return $this->hasMany(DeviceLines::class, 'user_id', 'extension');
     }
 
     public function devices()
@@ -172,19 +173,25 @@ class Extensions extends Model
             ->where('v_devices.domain_uuid', $this->domain_uuid);
     }
 
+    public function agent()
+    {
+        return $this->hasOne(CallCenterAgents::class, 'agent_id', 'extension')
+            ->where('v_call_center_agents.domain_uuid', $this->domain_uuid);
+    }
+
     public function followMe()
     {
-        return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid');
+        return $this->hasOne(FollowMe::class, 'follow_me_uuid', 'follow_me_uuid');
     }
 
     public function getFollowMe()
     {
-        return $this->hasOne(FollowMe::class,'follow_me_uuid','follow_me_uuid')->first();
+        return $this->hasOne(FollowMe::class, 'follow_me_uuid', 'follow_me_uuid')->first();
     }
 
     public function getFollowMeDestinations()
     {
-        return $this->belongsTo(FollowMeDestinations::class,'follow_me_uuid','follow_me_uuid')->orderBy('follow_me_order')->get();
+        return $this->belongsTo(FollowMeDestinations::class, 'follow_me_uuid', 'follow_me_uuid')->orderBy('follow_me_order')->get();
     }
 
     public function getId()
@@ -194,7 +201,7 @@ class Extensions extends Model
 
     public function getName()
     {
-        return $this->extension.' - '.((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
+        return $this->extension . ' - ' . ((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
     }
 
     public function isForwardAllEnabled(): bool
@@ -221,5 +228,4 @@ class Extensions extends Model
     {
         return $this->follow_me_enabled == "true";
     }
-
 }
