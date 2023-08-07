@@ -3,18 +3,19 @@
 namespace App\Providers;
 
 use App\Models\Devices;
-use App\Models\Extensions;
 use App\Models\IvrMenus;
+use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
-use Illuminate\Support\Facades\Validator;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
+use App\Observers\ExtensionObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
-use App\Models\Sanctum\PersonalAccessToken;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Sanctum\PersonalAccessToken;
 use Propaganistas\LaravelPhone\Validation\Phone;
 
 class AppServiceProvider extends ServiceProvider
@@ -61,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
                 return true;
             }
         });
+
+        Extensions::observe(ExtensionObserver::class);
 
         Builder::macro('orWhereLike', function(string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%'.trim($search).'%');

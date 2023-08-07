@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
@@ -95,16 +96,6 @@ class Extensions extends Model
         $this->fill($attributes);
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::updated(function ($extension) {
-            $originalAttributes = $extension->getOriginal();
-            ExtensionUpdated::dispatch($extension,$originalAttributes);
-        });
-
-    }
 
     /**
      * Get the voicemail associated with this extension.
