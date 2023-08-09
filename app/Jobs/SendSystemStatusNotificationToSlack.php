@@ -89,10 +89,11 @@ class SendSystemStatusNotificationToSlack implements ShouldQueue
      */
     public function handle()
     {
+
         // Allow only 2 tasks every 1 second
         Redis::throttle('slack')->allow(2)->every(1)->then(function () {
-            
-            Notification::route('slack', env('SLACK_SYSTEM_STATUS_HOOK'))
+
+            Notification::route('slack', config('slack.system_status'))
                 ->notify(new SendSlackNotification($this->request));
 
         }, function () {

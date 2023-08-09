@@ -36,7 +36,6 @@ class ExtensionDeleted
             ->first();
         }
 
-        logger('Extension Deleted Event');
     }
 
 }

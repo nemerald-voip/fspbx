@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\ExtensionCreated;
 use App\Models\Extensions;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
@@ -16,7 +17,7 @@ class ExtensionObserver
      */
     public function created(Extensions $extension)
     {
-        //
+        ExtensionCreated::dispatch($extension);
     }
 
     /**
