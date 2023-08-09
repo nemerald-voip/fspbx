@@ -124,4 +124,11 @@ return [
             'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessCommioWebhookJob::class,
         ],
     ],
+    
+    /*
+     * The number of days after which models should be deleted.
+     *
+     * Set to null if no models should be deleted.
+     */
+    'delete_after_days' => 30,
 ];

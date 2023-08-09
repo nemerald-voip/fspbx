@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
@@ -24,6 +25,11 @@ class Kernel extends ConsoleKernel
 
         // Check Horizon status
         $schedule->command('horizon:check-status')->everyTenMinutes();
+
+        // Delete Webhooks
+        $schedule->command('model:prune', [
+            '--model' => [WebhookCall::class],
+        ])->daily();
     }
 
     /**
