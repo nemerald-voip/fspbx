@@ -537,6 +537,34 @@ class FaxesController extends Controller
             ])
             ->sortBy('destination_number');
 
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+        foreach ($destinations as $destination) {
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                    $destination->destination_number = $phoneNumberUtil
+                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                }
+
+                // Set the label
+                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+                    ? $phoneNumber . " - " . $destination->destination_description
+                    : $phoneNumber;
+            } catch (NumberParseException $e) {
+                // Do nothing and leave the numbner as is
+
+                //Set the label
+                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+                    ? $destination->destination_number . " - " . $destination->destination_description
+                    : $destination->destination_number;
+            }
+
+            $destination->isCallerID = false;
+        }
+
 
         $data = [];
         $fax = new Faxes;
@@ -775,9 +803,6 @@ class FaxesController extends Controller
             return redirect()->route('logout');
         }
 
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))
@@ -789,6 +814,9 @@ class FaxesController extends Controller
                 DB::Raw("coalesce(destination_description , '') as destination_description"),
             ])
             ->sortBy('destination_number');
+
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
         //try to convert caller ID to e164 format
         if ($fax->fax_caller_id_number) {
