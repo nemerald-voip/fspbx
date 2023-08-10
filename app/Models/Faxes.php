@@ -264,8 +264,15 @@ class Faxes extends Model
             // Abort
             $this->message .= "Email has no attachments. Aborting";
             Log::alert($this->message);
-            SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
-            return "No attachements";
+            $this->payload = array_merge($this->payload, ['slack_message' => $this->message]);
+            $this->message = "We regret to inform you that the recent fax you attempted to send through our 
+            Email-to-Fax service was not successfully processed due to missing attachments. 
+            Our system requires the presence of attachments to accurately convert and deliver faxes to your recipients. 
+            Unfortunately, it appears that the attachments were not included in the fax transmission.";
+            $this->payload = array_merge($this->payload, ['email_message' => $this->message]);
+            SendFaxFailedNotification::dispatch(new Request($this->payload))->onQueue('emails');
+            // SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+            return "No attachments";
         }
 
         // Send notification to user that fax is in transit
