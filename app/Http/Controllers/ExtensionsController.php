@@ -810,7 +810,7 @@ class ExtensionsController extends Controller
         }
 
         //try to convert caller ID to e164 format
-        if ($extension->caller_id_number) {
+        if ($extension->outbound_caller_id_number) {
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {

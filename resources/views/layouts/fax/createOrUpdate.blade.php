@@ -99,12 +99,11 @@
                                                         <select data-toggle="select2" title="Fax Caller ID" name="fax_caller_id_number">
                                                             <option value="">Main Company Number</option>
                                                             @foreach ($destinations as $destination)
-                                                                <option value="{{ phone($destination->destination_number, "US")->formatE164() }}"
-                                                                    @if (($fax->fax_caller_id_number &&
-                                                                        phone($fax->fax_caller_id_number, "US")->formatE164() == phone($destination->destination_number, "US")->formatE164()))
-                                                                        selected 
+                                                                <option value="{{ $destination->destination_number }}"
+                                                                    @if ($destination->isCallerID)
+                                                                        selected
                                                                     @endif>
-                                                                    {{ phone($destination->destination_number,"US",$national_phone_number_format) }}
+                                                                    {{ $destination->label }}
                                                                 </option>
                                                             @endforeach
                                                         </select>    
