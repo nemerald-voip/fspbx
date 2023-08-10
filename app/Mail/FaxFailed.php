@@ -55,6 +55,6 @@ class FaxFailed extends Mailable
         $this->withSwiftMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->subject('Re: fax to '.$this->attributes['fax_destination'] . ' FAILED')->view('emails.fax.failed');
+        return $this->subject('Re: fax to '.$this->attributes['fax_destination'] . ' Failed')->view('emails.fax.failed');
     }
 }
