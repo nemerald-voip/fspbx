@@ -1385,7 +1385,9 @@ class ExtensionsController extends Controller
                 DeleteAppUser::dispatch($extension->mobile_app)->onQueue('default');
 
                 //Schedule SuspendUser job that will check if suspension is required
-                SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
+                if ($extension->voicemail) {
+                    SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
+                }
 
                 return response()->json([
                     'status' => 'success',

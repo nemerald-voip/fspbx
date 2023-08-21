@@ -31,17 +31,18 @@ class NotifySuperadminListener
         // Find the user who created this extension
         $user = User::find($event->extension->insert_user);
         if ($user) {
+            $userName = $user->user_adv_fields->first_name ?? ''; // Use '' as default if first_name doesn't exist
+            $userName = $userName ? "($userName)" : '';
+
             //Send Notification to Slack if user is not Superadmin
             $message = sprintf(
-                '*New Extension*: extension %s was created by %s (%s) in domain %s',
+                '*New Extension*: extension %s was created by %s %s in domain %s',
                 $event->extension->extension,
-                $user->user_adv_fields->first_name,
+                $userName,
                 $user->user_email,
                 $user->domain->domain_name,
             );
             
-            "*New Extension*: extension ". $event->extension->extension . " was created by " . $user->user_adv_fields->first_name . " in domain " . $user->domain->domain_name;
-
             SendSystemStatusNotificationToSlack::dispatchIf(!isSuperadmin($user), $message)->onQueue('slack');
         }
         // DeleteAgentJob::dispatch($event->agent);
