@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 use App\Models\Sanctum\PersonalAccessToken;
 use Propaganistas\LaravelPhone\Validation\Phone;
 
@@ -141,5 +142,16 @@ class AppServiceProvider extends ServiceProvider
             return !Devices::where('device_mac_address', $value)->exists();
         });
 */
+
+        Password::defaults(function () {
+            $rule = Password::min(8)
+                ->letters()
+                ->mixedCase()
+                ->numbers()
+                ->symbols()
+                ->uncompromised();
+
+            return $rule;
+        });
     }
 }
