@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\RingGroupsController;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -9,7 +8,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
+use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
@@ -19,8 +20,10 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
+use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SmsWebhookController;
 use App\Http\Controllers\UserApiKeyController;
+use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 /*
@@ -43,20 +46,21 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 // Route::get('/extensions', [ExtensionsController::class, 'index']) ->name('extensionsList');
 
 // Extensions
-Route::resource('extensions', 'ExtensionsController');
+Route::resource('extensions', ExtensionsController::class);
 Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
 Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
 Route::delete('/extensions/{extension}/unassign/{deviceLine}/device', [ExtensionsController::class, 'unAssignDevice'])->name('extensions.unassign-device');
 Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsController::class, 'clearCallforwardDestination'])->name('extensions.clear-callforward-destination');
 Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');
 
-
+// Call Detail Records
+// Route::livewire('/call-detail-records', 'show-cdrs');
 
 // Groups
-Route::resource('groups', 'GroupsController');
+Route::resource('groups', GroupsController::class);
 
 //Fax
-Route::resource('faxes', 'FaxesController');
+Route::resource('faxes', FaxesController::class);
 Route::get('/faxes/newfax/create', [FaxesController::class, 'new']) ->name('faxes.newfax');
 Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes.inbox.list');
 Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
@@ -71,7 +75,7 @@ Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateSta
 Route::post('/faxes/send', [FaxesController::class, 'sendFax']) -> name ('faxes.sendFax');
 
 // Domain Groups
-Route::resource('domaingroups', 'DomainGroupsController');
+Route::resource('domaingroups', DomainGroupsController::class);
 
 // Voicemail Messages
 Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index']) ->name('voicemails.messages.index');
@@ -89,9 +93,9 @@ Route::webhooks('webhook/postmark','postmark');
 Route::webhooks('webhook/commio/sms','commio_messaging');
 
 //Users
-Route::resource('users','UsersController');
+Route::resource('users', UsersController::class);
 
-Route::resource('voicemails','VoicemailController');
+Route::resource('voicemails', VoicemailController::class);
 
 Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
 Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
@@ -106,7 +110,7 @@ Route::group(['middleware' => 'auth'], function(){
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
-    Route::resource('devices', 'DeviceController');
+    Route::resource('devices', DeviceController::class);
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
         return redirect('/dashboard');
@@ -165,7 +169,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('faxqueue/{faxQueue}/{status?}', [FaxQueueController::class, 'updateStatus'])->name('faxQueue.updateStatus');
 
     // Ring Groups
-    Route::resource('ring-groups', 'RingGroupsController');
+    Route::resource('ring-groups', RingGroupsController::class);
     Route::get('/ring-groups/greetings/{filename}', [RingGroupsController::class, 'getRingGroupGreeting']) ->name('getRingGroupGreeting');
 });
 
