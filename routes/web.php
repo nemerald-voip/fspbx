@@ -26,6 +26,7 @@ use App\Http\Controllers\UserApiKeyController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
+use App\Http\Livewire\CallDetailRecords\ShowCdrs;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -54,7 +55,7 @@ Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsControlle
 Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');
 
 // Call Detail Records
-// Route::livewire('/call-detail-records', 'show-cdrs');
+Route::get('/call-detail-records', ShowCdrs::class);
 
 // Groups
 Route::resource('groups', GroupsController::class);
