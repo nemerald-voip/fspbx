@@ -1,7 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Cdrs;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
@@ -11,7 +10,6 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
-use App\Http\Controllers\RoutingController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
@@ -21,12 +19,9 @@ use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\RingGroupsController;
-use App\Http\Controllers\SmsWebhookController;
-use App\Http\Controllers\UserApiKeyController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
-use App\Http\Livewire\CallDetailRecords\ShowCdrs;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -55,7 +50,7 @@ Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsControlle
 Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');
 
 // Call Detail Records
-Route::get('/call-detail-records', ShowCdrs::class);
+Route::get('/call-detail-records', [Cdrs::class, 'index'])->name('cdrs.index');
 
 // Groups
 Route::resource('groups', GroupsController::class);

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Livewire\Livewire;
 use App\Models\Devices;
 use App\Models\IvrMenus;
 use App\Models\Extensions;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Sanctum\PersonalAccessToken;
 use Propaganistas\LaravelPhone\Validation\Phone;
+use App\Http\Livewire\CallDetailRecords\CdrTable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,8 @@ class AppServiceProvider extends ServiceProvider
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         Paginator::useBootstrap();
+
+        Livewire::component('cdr-table', CdrTable::class);
 
         // Ringotel
         Http::macro('ringotel', function () {

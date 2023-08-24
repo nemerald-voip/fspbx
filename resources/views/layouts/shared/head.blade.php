@@ -52,4 +52,10 @@ We can work around this with a simple addition to the <head> of the main layout 
 }
 </style>
 
+{{-- Sometimes, when you're using AlpineJS for a part of your template, there is a "blip" where you might see your uninitialized template after the page loads, but before Alpine loads.
+x-cloak addresses this scenario by hiding the element it's attached to until Alpine is fully loaded on the page. --}}
+<style>
+    [x-cloak] { display: none !important; }
+</style>
+
 @livewireStyles
