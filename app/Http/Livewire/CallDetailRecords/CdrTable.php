@@ -7,8 +7,11 @@ use App\Models\CDR;
 use Livewire\Component;
 use App\Models\Extensions;
 use Carbon\CarbonInterval;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectDropdownFilter;
@@ -16,6 +19,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectDropdownFilter;
 class CdrTable extends DataTableComponent
 {
     protected $model = CDR::class;
+    public $period;
 
     public function configure(): void
     {
@@ -87,6 +91,8 @@ class CdrTable extends DataTableComponent
 
     public function filters(): array
     {
+        $timezone = Cache::get(auth()->user()->user_uuid . '_timeZone');
+
         return [
             SelectFilter::make('Call Category')
                 ->options([
@@ -94,7 +100,14 @@ class CdrTable extends DataTableComponent
                     'Status' => [
                         1 => 'Missed',
                     ],
-                ]),
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === '1') {
+                        $builder->where('cc_side', 'agent')
+                            ->where('missed_call', true);
+                    }
+                }),
+
             MultiSelectDropdownFilter::make('Users and Groups')
                 ->options(
                     Extensions::query()
@@ -104,6 +117,29 @@ class CdrTable extends DataTableComponent
                         ->map(fn ($extension) => $extension->effective_caller_id_name)
                         ->toArray()
                 ),
+            DateFilter::make('Date From')
+                ->filter(function (Builder $builder, string $value) use ($timezone) {
+                    $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->startOfDay();
+                    $startUTC = $startLocal->setTimezone('UTC');
+                    $builder->where('start_stamp', '>=', $startUTC);
+                }),
+            DateFilter::make('Date To')
+                ->filter(function (Builder $builder, string $value) use ($timezone) {
+                    $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->endOfDay();
+                    $startUTC = $startLocal->setTimezone('UTC');
+                    $builder->where('start_stamp', '<=', $startUTC);
+                }),
         ];
+    }
+
+    public function mount($period)
+    {
+        $this->period = periodHelper($period);
+        $this->setFilter('date_from', $this->period[0]->format('Y-m-d'));
+        $this->setFilter('date_to', $this->period[1]->format('Y-m-d'));
+
+        $this->setFilter('call_category', '1');
+
+        // logger($this->period);
     }
 }

@@ -28,8 +28,20 @@
         </div>
         <!-- end page title -->
 
-        <livewire:cdr-table />
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
 
+                        <div class="row mt-3">
+                            <livewire:cdr-table :period="$period"/>
+                        </div>
+
+                    
+                    </div> <!-- end card-body-->
+                </div> <!-- end card-->
+            </div> <!-- end col -->
+        </div>
     </div> <!-- container -->
 
     
