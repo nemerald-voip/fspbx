@@ -7,7 +7,9 @@ use App\Models\CDR;
 use Livewire\Component;
 use App\Models\Extensions;
 use Carbon\CarbonInterval;
+use App\Models\CallCenterQueues;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -93,30 +95,7 @@ class CdrTable extends DataTableComponent
     {
         $timezone = Cache::get(auth()->user()->user_uuid . '_timeZone');
 
-        return [
-            SelectFilter::make('Call Category')
-                ->options([
-                    '' => 'All',
-                    'Status' => [
-                        1 => 'Missed',
-                    ],
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === '1') {
-                        $builder->where('cc_side', 'agent')
-                            ->where('missed_call', true);
-                    }
-                }),
-
-            MultiSelectDropdownFilter::make('Users and Groups')
-                ->options(
-                    Extensions::query()
-                        ->orderBy('effective_caller_id_name')
-                        ->get()
-                        ->keyBy('extension_uuid')
-                        ->map(fn ($extension) => $extension->effective_caller_id_name)
-                        ->toArray()
-                ),
+        $filters = [
             DateFilter::make('Date From')
                 ->filter(function (Builder $builder, string $value) use ($timezone) {
                     $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->startOfDay();
@@ -129,17 +108,62 @@ class CdrTable extends DataTableComponent
                     $startUTC = $startLocal->setTimezone('UTC');
                     $builder->where('start_stamp', '<=', $startUTC);
                 }),
+
+            SelectFilter::make('Call Category')
+                ->options([
+                    '' => 'All',
+                    'Status' => [
+                        1 => 'Missed',
+                        2 => 'Contact Center Missed',
+                    ],
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === '1') {
+                        $builder
+                            ->where('missed_call', true);
+                    } elseif ($value === '2') {
+                        $builder->where('cc_side', 'agent')
+                            ->where('missed_call', true);
+                    }
+                }),
+
+            MultiSelectDropdownFilter::make('Users and Groups')
+                ->options(
+                    Extensions::query()
+                        ->where('domain_uuid', Session::get('domain_uuid'))
+                        ->orderBy('effective_caller_id_name')
+                        ->get()
+                        ->keyBy('extension_uuid')
+                        ->map(fn ($extension) => $extension->effective_caller_id_name)
+                        ->toArray()
+                ),
         ];
+
+        // Conditionally add Contact Center filter based on a certain condition
+
+        // Fetch the call center queues
+        $callCenterQueues = CallCenterQueues::query()
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('queue_name')
+            ->get()
+            ->keyBy('call_center_queue_uuid')
+            ->map(fn ($queue) => $queue->queue_name)
+            ->toArray();
+
+        if (!empty($callCenterQueues)) {
+            $filters[] = MultiSelectDropdownFilter::make('Contact Centers')
+                ->options($callCenterQueues)
+                ->filter(function (Builder $builder, array $values) {
+                    $builder->wherein('call_center_queue_uuid', $values);
+                });
+        }
+
+
+        return $filters;
     }
 
-    public function mount($period)
-    {
-        $this->period = periodHelper($period);
-        $this->setFilter('date_from', $this->period[0]->format('Y-m-d'));
-        $this->setFilter('date_to', $this->period[1]->format('Y-m-d'));
+    // public function mount()
+    // {
 
-        $this->setFilter('call_category', '1');
-
-        // logger($this->period);
-    }
+    // }
 }

@@ -34,7 +34,7 @@
                     <div class="card-body">
 
                         <div class="row mt-3">
-                            <livewire:cdr-table :period="$period"/>
+                            <livewire:cdr-table/>
                         </div>
 
                     

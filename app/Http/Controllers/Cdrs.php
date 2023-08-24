@@ -26,7 +26,6 @@ class Cdrs extends Controller
             return redirect()->route('logout');
         }
 
-        logger(request()->all());
         $data = [];
         $data['page_title'] = "Call Detail Records";
         $data['breadcrumbs'] = [
@@ -43,8 +42,6 @@ class Cdrs extends Controller
             $data['breadcrumbs'] = request()->input('breadcrumbs');
             $data['breadcrumbs']['Call Detail Records'] = '';
         }
-
-        logger(request()->input('breadcrumbs'));
 
         return view('layouts.cdrs.index')->with($data);
     }
