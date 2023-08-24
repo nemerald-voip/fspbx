@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CDR;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class Cdrs extends Controller
 {
@@ -32,11 +33,15 @@ class Cdrs extends Controller
             'Dashboard' => 'dashboard',
             'Call Detail Records' => ''
         ];
+        $data['period'] = request()->get('period');
+        // $period = periodHelper(request()->get('period'), Cache::get(auth()->user()->user_uuid.'_timeZone'));
+
 
         // Check if the request has the 'breadcrumbs' variable
         if (request()->has('breadcrumbs')) {
             // If the 'breadcrumbs' variable exists in the request, update the $data array
             $data['breadcrumbs'] = request()->input('breadcrumbs');
+            $data['breadcrumbs']['Call Detail Records'] = '';
         }
 
         logger(request()->input('breadcrumbs'));
