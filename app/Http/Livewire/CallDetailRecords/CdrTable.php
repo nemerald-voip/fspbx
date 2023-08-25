@@ -58,9 +58,9 @@ class CdrTable extends DataTableComponent
                     function ($value, $row, Column $column) {
                         // Convert epoch timestamp to Los Angeles time zone
                         $utcDateTime = Carbon::createFromTimestamp($value, 'UTC');
-                        $losAngelesDateTime = $utcDateTime->setTimezone('America/Los_Angeles');
+                        $localDateTime = $utcDateTime->setTimezone(get_local_time_zone(Session::get('domain_uuid')));
 
-                        return $losAngelesDateTime->format('M d, Y');
+                        return $localDateTime->format('M d, Y');
                     }
                 ),
             Column::make('Time', 'start_epoch')
@@ -69,9 +69,9 @@ class CdrTable extends DataTableComponent
                     function ($value, $row, Column $column) {
                         // Convert epoch timestamp to Los Angeles time zone
                         $utcDateTime = Carbon::createFromTimestamp($value, 'UTC');
-                        $losAngelesDateTime = $utcDateTime->setTimezone('America/Los_Angeles');
+                        $localDateTime = $utcDateTime->setTimezone(get_local_time_zone(Session::get('domain_uuid')));
 
-                        return $losAngelesDateTime->format('g:i:s A');
+                        return $localDateTime->format('g:i:s A');
                     }
                 ),
             Column::make('Duration', 'duration')
