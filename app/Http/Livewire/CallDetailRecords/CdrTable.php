@@ -20,7 +20,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectDropdownFilter;
 
 class CdrTable extends DataTableComponent
 {
-    protected $model = CDR::class;
+    // protected $model = CDR::class;
     public $period;
 
     public function configure(): void
@@ -30,6 +30,13 @@ class CdrTable extends DataTableComponent
         $this->setEmptyMessage('No results found');
         $this->setFilterLayoutSlideDown();
         $this->setDefaultSort('start_epoch', 'desc');
+    }
+
+    public function builder(): Builder
+    {
+        return CDR::query()
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->select(); 
     }
 
     public function columns(): array
