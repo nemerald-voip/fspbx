@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\IvrMenus;
 use App\Models\Settings;
 use App\Models\Dialplans;
 use App\Models\Extensions;
@@ -8,15 +9,17 @@ use App\Models\Voicemails;
 use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\DomainSettings;
 
+use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
-use App\Models\IvrMenus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Http;
+use libphonenumber\PhoneNumberFormat;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Session;
+use libphonenumber\NumberParseException;
 
 if (!function_exists('userCheckPermission')) {
     function userCheckPermission($permission)
@@ -94,6 +97,8 @@ if (!function_exists('getFusionPBXPreviousURL')) {
             $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/")) . "/faxes";
         } elseif (strpos($previous_url, "/voicemails/")) {
             $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/")) . "/voicemails";
+        } elseif (strpos($previous_url, "/contact-center")) {
+            $url = "/dashboard";
         } else {
             $url = $previous_url;
         }
@@ -1320,3 +1325,22 @@ if (!function_exists('parse_socket_response_to_array')) {
 //         return $_xml->asXML();
 //     }
 // }
+
+
+if (!function_exists('formatPhoneNumber')) {
+    function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL) {
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+        
+        try {
+            $phoneNumberObject = $phoneNumberUtil->parse($phoneNumber, $countryCode);
+            
+            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                return $phoneNumberUtil->format($phoneNumberObject, $format);
+            }
+        } catch (NumberParseException $e) {
+            // If parsing fails, return the original number
+        }
+        
+        return $phoneNumber;
+    }
+}

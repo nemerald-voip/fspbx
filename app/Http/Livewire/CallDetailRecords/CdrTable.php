@@ -47,9 +47,19 @@ class CdrTable extends DataTableComponent
             Column::make('Caller Name', 'caller_id_name')
                 ->sortable(),
             Column::make('Caller ID', 'caller_id_number')
-                ->sortable(),
+                ->sortable()
+                ->format(
+                    function ($value, $row, Column $column) {
+                        return formatPhoneNumber($value);
+                    }
+                ),
             Column::make('Destination', 'caller_destination')
-                ->sortable(),
+                ->sortable()
+                ->format(
+                    function ($value, $row, Column $column) {
+                        return formatPhoneNumber($value);
+                    }
+                ),
             Column::make('Destination Number', 'destination_number')
                 ->sortable(),
             Column::make('Date', 'start_epoch')
