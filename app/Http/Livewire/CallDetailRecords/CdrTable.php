@@ -30,6 +30,7 @@ class CdrTable extends DataTableComponent
         $this->setEmptyMessage('No results found');
         $this->setFilterLayoutSlideDown();
         $this->setDefaultSort('start_epoch', 'desc');
+        $this->setSearchDebounce(1000);
     }
 
     public function builder(): Builder
@@ -45,9 +46,13 @@ class CdrTable extends DataTableComponent
             Column::make('Direction', 'direction')
                 ->sortable(),
             Column::make('Caller Name', 'caller_id_name')
-                ->sortable(),
+                ->sortable()
+                ->searchable(
+                    fn(Builder $query, $searchTerm) => $query->where('caller_id_name', 'iLIKE', '%'.$searchTerm.'%')
+                ),
             Column::make('Caller ID', 'caller_id_number')
                 ->sortable()
+                ->searchable()
                 ->format(
                     function ($value, $row, Column $column) {
                         return formatPhoneNumber($value);
@@ -55,13 +60,20 @@ class CdrTable extends DataTableComponent
                 ),
             Column::make('Destination', 'caller_destination')
                 ->sortable()
+                ->searchable()
                 ->format(
                     function ($value, $row, Column $column) {
                         return formatPhoneNumber($value);
                     }
                 ),
             Column::make('Destination Number', 'destination_number')
-                ->sortable(),
+                ->sortable()
+                ->searchable()
+                ->format(
+                    function ($value, $row, Column $column) {
+                        return formatPhoneNumber($value);
+                    }
+                ),
             Column::make('Date', 'start_epoch')
                 ->sortable()
                 ->format(
