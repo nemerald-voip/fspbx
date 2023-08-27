@@ -32,11 +32,11 @@ class CdrTable extends DataTableComponent
         $this->setDefaultSort('start_epoch', 'desc');
         $this->setSearchDebounce(1000);
 
-        $this->setConfigurableAreas([
-            'after-toolbar' => [
-                'layouts.cdrs.call-category-filter'
-            ],
-        ]);
+        // $this->setConfigurableAreas([
+        //     'after-toolbar' => [
+        //         'layouts.cdrs.call-category-filter'
+        //     ],
+        // ]);
     }
 
     public function builder(): Builder
