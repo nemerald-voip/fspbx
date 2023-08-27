@@ -31,13 +31,50 @@ class CdrTable extends DataTableComponent
         $this->setFilterLayoutSlideDown();
         $this->setDefaultSort('start_epoch', 'desc');
         $this->setSearchDebounce(1000);
+
+        $this->setConfigurableAreas([
+            'after-toolbar' => [
+                'layouts.cdrs.call-category-filter'
+            ],
+        ]);
     }
 
     public function builder(): Builder
     {
         return CDR::query()
             ->where('domain_uuid', Session::get('domain_uuid'))
-            ->select(); 
+            ->select(
+                'xml_cdr_uuid',
+                'domain_uuid',
+                'direction',
+                'caller_id_name',
+                'caller_id_number',
+                'caller_destination',
+                'source_number',
+                'destination_number',
+                'start_epoch',
+                'start_stamp',
+                'answer_stamp',
+                'answer_epoch',
+                'end_epoch',
+                'end_stamp',
+                'duration',
+                'record_path',
+                'record_name',
+                'leg',
+                'voicemail_message',
+                'missed_call',
+                'call_center_queue_uuid',
+                'cc_side',
+                'cc_queue_joined_epoch',
+                'cc_queue',
+                'cc_agent',
+                'cc_queue_answered_epoch',
+                'cc_queue_terminated_epoch',
+                'waitsec',
+                'hangup_cause',
+
+            ); 
     }
 
     public function columns(): array
