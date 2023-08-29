@@ -232,4 +232,10 @@ class CdrTable extends DataTableComponent
     // {
 
     // }
+
+    public function setDateRange($dateFrom,$dateTo)
+    {
+        $this->setFilter('date_from', $dateFrom);
+        $this->setFilter('date_to', $dateTo);
+    }
 }
