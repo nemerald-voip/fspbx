@@ -21,7 +21,7 @@
 
 
         {{-- <div class="card card-body"> --}}
-        <div class="dropdown">
+        {{-- <div class="dropdown">
             <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton"
                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
@@ -58,7 +58,9 @@
                 </form>
 
             </div>
-        </div>
+        </div> --}}
+
+
         {{-- </div> --}}
     </div>
 </div>
@@ -83,7 +85,7 @@
             const formattedDateFrom = `${dateFromParts[1]}/${dateFromParts[2]}/${dateFromParts[0].slice(-2)}`;
 
             // Split the date string by "-"
-            const dateToParts = dateFrom.split("-");
+            const dateToParts = dateTo.split("-");
             // Reformat the date
             const formattedDateTo = `${dateToParts[1]}/${dateToParts[2]}/${dateToParts[0].slice(-2)}`;
 

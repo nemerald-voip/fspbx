@@ -43,6 +43,7 @@ class CdrTable extends DataTableComponent
     {
         return CDR::query()
             ->where('domain_uuid', Session::get('domain_uuid'))
+            ->where('direction', '<>', 'outbound')
             ->select(
                 'xml_cdr_uuid',
                 'domain_uuid',
@@ -167,30 +168,46 @@ class CdrTable extends DataTableComponent
                     $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->startOfDay();
                     $startUTC = $startLocal->setTimezone('UTC');
                     $builder->where('start_stamp', '>=', $startUTC);
-                }),
+                })
+                ->hiddenFromMenus(),
             DateFilter::make('Date To')
                 ->filter(function (Builder $builder, string $value) use ($timezone) {
                     $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->endOfDay();
                     $startUTC = $startLocal->setTimezone('UTC');
                     $builder->where('start_stamp', '<=', $startUTC);
-                }),
+                })
+                ->hiddenFromMenus(),
 
-            SelectFilter::make('Call Category')
+            MultiSelectFilter::make('Call Category')
                 ->options([
-                    '' => 'All',
-                    'Status' => [
-                        1 => 'Missed',
-                        2 => 'Contact Center Missed',
-                    ],
+                    1 => 'Answered',
+                    2 => 'Missed',
+                    3 => 'Abandoned',
+                    4 => 'Agent Missed',
                 ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === '1') {
-                        $builder
-                            ->where('missed_call', true);
-                    } elseif ($value === '2') {
-                        $builder->where('cc_side', 'agent')
-                            ->where('missed_call', true);
-                    }
+                ->filter(function (Builder $builder, array $values) {
+                    logger($values);
+
+                    $builder->where(function ($query) use ($builder, $values) {
+                        foreach ($values as $value) {
+                            if ($value === '2') {
+                                    $builder
+                                        ->orWhere('missed_call', true);
+                                // } elseif ($value === '3') {
+                                //     $builder->where('cc_side', 'agent')
+                                //         ->where('missed_call', true);
+                                // }
+                            }
+                        }
+
+                    });
+                    // if ($value === '1') {
+                    //     $builder
+                    //         ->where('missed_call', true);
+                    // } elseif ($value === '2') {
+                    //     $builder->where('cc_side', 'agent')
+                    //         ->where('missed_call', true);
+                    // }
                 }),
 
             MultiSelectDropdownFilter::make('Users and Groups')
