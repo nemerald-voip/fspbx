@@ -1330,17 +1330,26 @@ if (!function_exists('parse_socket_response_to_array')) {
 if (!function_exists('formatPhoneNumber')) {
     function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL) {
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
-        
+
         try {
             $phoneNumberObject = $phoneNumberUtil->parse($phoneNumber, $countryCode);
-            
+
             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                 return $phoneNumberUtil->format($phoneNumberObject, $format);
             }
         } catch (NumberParseException $e) {
             // If parsing fails, return the original number
         }
-        
+
         return $phoneNumber;
+    }
+}
+
+if (!function_exists('debugEloquentSqlWithBindings')) {
+    function debugEloquentSqlWithBindings($query)
+    {
+        return vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
+            return is_numeric($binding) ? $binding : "'{$binding}'";
+        })->toArray());
     }
 }
