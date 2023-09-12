@@ -2,9 +2,6 @@
 
 namespace App\Models;
 
-use App\Events\ExtensionDeleted;
-use App\Events\ExtensionUpdated;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
