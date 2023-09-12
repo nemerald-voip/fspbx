@@ -168,7 +168,7 @@ class VoicemailController extends Controller
             'voicemail_tutorial' => 'present',
             'voicemail_alternate_greet_id' => 'nullable|numeric',
             'voicemail_description' => 'nullable|string|max:100',
-            'voicemail_transcription_enabled' => 'nullable',
+            'voicemail_transcription_enabled' => 'present',
             // 'voicemail_attach_file' => 'present',
             'voicemail_file' => 'present',
             'voicemail_local_after_email' => 'present',
@@ -183,7 +183,6 @@ class VoicemailController extends Controller
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
         $attributes['domain_uuid'] = Session::get('domain_uuid');
-        $attributes['voicemail_transcription_enabled'] = "true";
         $voicemail->fill($attributes);
         $voicemail->save();
 
@@ -244,8 +243,9 @@ class VoicemailController extends Controller
 
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();
+        if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "fasle") $attributes['voicemail_local_after_email'] = "true";
         // $attributes['domain_uuid'] = Session::get('domain_uuid');
-        $attributes['voicemail_transcription_enabled'] = "true";
+
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
         $voicemail->update($attributes);
