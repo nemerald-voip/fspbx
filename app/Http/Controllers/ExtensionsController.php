@@ -563,7 +563,11 @@ class ExtensionsController extends Controller
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";
         $attributes['voicemail_id'] = $attributes['extension'];
-        $attributes['voicemail_password'] = $attributes['extension'];
+        if (get_domain_setting('password_complexity')) {
+            $attributes['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        } else {
+            $attributes['voicemail_password'] = $attributes['extension'];
+        }
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
         $attributes['password'] = generate_password();
         // if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
