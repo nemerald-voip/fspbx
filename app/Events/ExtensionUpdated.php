@@ -14,27 +14,19 @@ class ExtensionUpdated
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $extension;
-    public $voicemail;
-    public $agent;
+    public $originalAttributes;
+    public $vmOriginalAttributes;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(Extensions $extension, array $originalAttributes)
+    public function __construct($extension, $originalAttributes, $vmOriginalAttributes)
     {
         $this->extension = $extension;
-        $this->voicemail = $extension->voicemail;
-
-        // Find agent relation if any
-        if ($originalAttributes['extension'] == $extension->extension) {
-            $this->agent = $extension->agent;
-        } else {
-            $this->agent = CallCenterAgents::where('agent_id', $originalAttributes['extension'])
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->first();
-        }
+        $this->originalAttributes = $originalAttributes;
+        $this->vmOriginalAttributes = $vmOriginalAttributes;
     }
 
 }

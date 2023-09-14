@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use App\Events\ExtensionCreated;
+use App\Events\ExtensionDeleted;
+use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use App\Listeners\NotifySuperadminListener;
+use App\Listeners\UpdateUserWhenExtensionIsUpdated;
+use App\Listeners\SuspendUserWhenExtensionIsDeleted;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -26,6 +30,12 @@ class EventServiceProvider extends ServiceProvider
         ExtensionCreated::class => [
             NotifySuperadminListener::class,
         ],
+        ExtensionUpdated::class => [
+            UpdateUserWhenExtensionIsUpdated::class
+        ],
+        ExtensionDeleted::class => [
+            SuspendUserWhenExtensionIsDeleted::class
+        ]
 
 
     ];

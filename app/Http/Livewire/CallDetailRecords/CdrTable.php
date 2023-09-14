@@ -31,13 +31,54 @@ class CdrTable extends DataTableComponent
         $this->setFilterLayoutSlideDown();
         $this->setDefaultSort('start_epoch', 'desc');
         $this->setSearchDebounce(1000);
+
+        $this->setConfigurableAreas([
+            'after-toolbar' => [
+                'layouts.cdrs.call-category-filter'
+            ],
+        ]);
     }
 
     public function builder(): Builder
     {
         return CDR::query()
             ->where('domain_uuid', Session::get('domain_uuid'))
-            ->select(); 
+            ->where('direction', '<>', 'outbound')
+            ->select(
+                'xml_cdr_uuid',
+                'domain_uuid',
+                'direction',
+                'caller_id_name',
+                'caller_id_number',
+                'caller_destination',
+                'source_number',
+                'destination_number',
+                'start_epoch',
+                'start_stamp',
+                'answer_stamp',
+                'answer_epoch',
+                'end_epoch',
+                'end_stamp',
+                'duration',
+                'record_path',
+                'record_name',
+                'leg',
+                'voicemail_message',
+                'missed_call',
+                'call_center_queue_uuid',
+                'cc_side',
+                'cc_queue_joined_epoch',
+                'cc_queue',
+                'cc_agent',
+                'cc_queue_answered_epoch',
+                'cc_queue_terminated_epoch',
+                'cc_queue_canceled_epoch',
+                'cc_cancel_reason',
+                'cc_cause',
+                'waitsec',
+                'hangup_cause',
+
+            )->distinct();
     }
 
     public function columns(): array
@@ -48,7 +89,7 @@ class CdrTable extends DataTableComponent
             Column::make('Caller Name', 'caller_id_name')
                 ->sortable()
                 ->searchable(
-                    fn(Builder $query, $searchTerm) => $query->where('caller_id_name', 'iLIKE', '%'.$searchTerm.'%')
+                    fn (Builder $query, $searchTerm) => $query->where('caller_id_name', 'iLIKE', '%' . $searchTerm . '%')
                 ),
             Column::make('Caller ID', 'caller_id_number')
                 ->sortable()
@@ -116,7 +157,15 @@ class CdrTable extends DataTableComponent
                     return $formattedDuration;
                 }),
             Column::make('Hangup Cause', 'hangup_cause')
-                ->sortable(),
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    if ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel'){
+                        return "Abandoned";
+                    } else {
+                        return $value;
+                    }
+                    
+                }),
         ];
     }
 
@@ -130,30 +179,55 @@ class CdrTable extends DataTableComponent
                     $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->startOfDay();
                     $startUTC = $startLocal->setTimezone('UTC');
                     $builder->where('start_stamp', '>=', $startUTC);
-                }),
+                })
+                ->hiddenFromMenus(),
             DateFilter::make('Date To')
                 ->filter(function (Builder $builder, string $value) use ($timezone) {
                     $startLocal = Carbon::createFromFormat('Y-m-d', $value, $timezone)->endOfDay();
                     $startUTC = $startLocal->setTimezone('UTC');
                     $builder->where('start_stamp', '<=', $startUTC);
-                }),
+                })
+                ->hiddenFromMenus(),
 
-            SelectFilter::make('Call Category')
+            MultiSelectFilter::make('Call Category')
                 ->options([
-                    '' => 'All',
-                    'Status' => [
-                        1 => 'Missed',
-                        2 => 'Contact Center Missed',
-                    ],
+                    1 => 'Answered',
+                    2 => 'Missed',
+                    3 => 'Abandoned',
+                    4 => 'Agent Missed',
                 ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === '1') {
-                        $builder
-                            ->where('missed_call', true);
-                    } elseif ($value === '2') {
-                        $builder->where('cc_side', 'agent')
-                            ->where('missed_call', true);
-                    }
+                ->filter(function (Builder $builder, array $values) {
+                    $builder->where(function ($query) use ($values) {
+                        foreach ($values as $value) {
+                            if ($value === '2') {
+                                $query
+                                    ->orWhere('missed_call', true);
+                                // } elseif ($value === '3') {
+                                //     $builder->where('cc_side', 'agent')
+                                //         ->where('missed_call', true);
+                                // }
+                            }
+                            if ($value === '3') {
+                                $query->orWhere(function ($subQuery) {
+                                    $subQuery->where('missed_call', true)
+                                        ->where('cc_side', 'member');
+                                });
+                            }
+                            if ($value === '4') {
+                                $query->orWhere(function ($subQuery) {
+                                    $subQuery->where('missed_call', true)
+                                        ->where('cc_side', 'agent')
+                                        ->where(function ($subQuery1) {
+                                            $subQuery1->where('hangup_cause', '!=', 'UNALLOCATED_NUMBER')
+                                                ->orWhere('hangup_cause_q850', '!=', 1)
+                                                ->orWhere('sip_hangup_disposition', '!=', 'recv_refuse');
+                                        });
+                                });
+                            }
+                        }
+                        // $query->groupBy('start_epoch', 'destination_number', 'sip_call_id', 'cc_agent');
+                        return $query;
+                    });
                 }),
 
             MultiSelectDropdownFilter::make('Users and Groups')
@@ -195,4 +269,10 @@ class CdrTable extends DataTableComponent
     // {
 
     // }
+
+    public function setDateRange($dateFrom, $dateTo)
+    {
+        $this->setFilter('date_from', $dateFrom);
+        $this->setFilter('date_to', $dateTo);
+    }
 }
