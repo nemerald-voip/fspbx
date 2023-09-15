@@ -159,12 +159,11 @@ class CdrTable extends DataTableComponent
             Column::make('Hangup Cause', 'hangup_cause')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    if ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel'){
+                    if ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
                         return "Abandoned";
                     } else {
                         return $value;
                     }
-                    
                 }),
         ];
     }
@@ -209,8 +208,10 @@ class CdrTable extends DataTableComponent
                             }
                             if ($value === '3') {
                                 $query->orWhere(function ($subQuery) {
-                                    $subQuery->where('missed_call', true)
-                                        ->where('cc_side', 'member');
+                                    $subQuery->where('cc_side', 'member')
+                                        ->where('voicemail_message', false)
+                                        ->where('cc_cause', 'cancel')
+                                        ->where('cc_cancel_reason', '<>', 'EXIT_WITH_KEY');
                                 });
                             }
                             if ($value === '4') {
