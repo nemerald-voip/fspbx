@@ -45,6 +45,5 @@ class NotifySuperadminListener
             
             SendSystemStatusNotificationToSlack::dispatchIf(!isSuperadmin($user), $message)->onQueue('slack');
         }
-        // DeleteAgentJob::dispatch($event->agent);
     }
 }

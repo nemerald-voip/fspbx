@@ -2,8 +2,9 @@
 
 namespace App\Observers;
 
-use App\Events\ExtensionCreated;
 use App\Models\Extensions;
+use Illuminate\Support\Arr;
+use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 
@@ -28,8 +29,25 @@ class ExtensionObserver
      */
     public function updated(Extensions $extension)
     {
-        $originalAttributes = $extension->getOriginal();
-        ExtensionUpdated::dispatch($extension, $originalAttributes);
+
+        // Get the attributes from the model
+        $extensionAttributes = $extension->only(['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']);
+
+        $originalAttributes = Arr::only(
+            $extension->getOriginal(),
+            ['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']
+        );
+
+        if ($extension->voicemail) {
+            $vmOriginalAttributes = Arr::only(
+                $extension->voicemail->getOriginal(),
+                ['voicemail_uuid', 'domain_uuid', 'voicmeail_id', 'voicemail_mail_to']
+            );
+        } else {
+            $vmOriginalAttributes = null;
+        }
+
+        ExtensionUpdated::dispatch($extensionAttributes, $originalAttributes, $vmOriginalAttributes);
     }
 
     /**
@@ -40,8 +58,23 @@ class ExtensionObserver
      */
     public function deleted(Extensions $extension)
     {
-        $originalAttributes = $extension->getOriginal();
-        ExtensionDeleted::dispatch($extension, $originalAttributes);
+        // Get the attributes from the model
+        $extensionAttributes = $extension->only(['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']);
+
+        $originalAttributes = Arr::only(
+            $extension->getOriginal(),
+            ['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']
+        );
+
+        if ($extension->voicemail) {
+            $vmOriginalAttributes = Arr::only(
+                $extension->voicemail->getOriginal(),
+                ['voicemail_uuid', 'domain_uuid', 'voicmeail_id', 'voicemail_mail_to']
+            );
+        } else {
+            $vmOriginalAttributes = null;
+        }
+        ExtensionDeleted::dispatch($extensionAttributes, $originalAttributes, $vmOriginalAttributes);
     }
 
     /**

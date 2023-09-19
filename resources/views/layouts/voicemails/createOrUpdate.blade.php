@@ -160,9 +160,9 @@
                                             </div>
                                             <div class="col-2">
                                                 <div class="mb-3 text-sm-end">
-                                                    <input type="hidden" name="voicemail_local_after_email" value="false">
-                                                    <input type="checkbox" id="voicemail_local_after_email" data-switch="primary" name="voicemail_local_after_email" value="true"
-                                                    @if (isset($voicemail->voicemail_local_after_email) && $voicemail->voicemail_local_after_email == "true") checked @endif />
+                                                    <input type="hidden" name="voicemail_local_after_email" value="true">
+                                                    <input type="checkbox" id="voicemail_local_after_email" data-switch="primary" name="voicemail_local_after_email" value="false"
+                                                    @if (isset($voicemail->voicemail_local_after_email) && $voicemail->voicemail_local_after_email == "false") checked @endif />
                                                     <label for="voicemail_local_after_email" data-on-label="On" data-off-label="Off"></label>
                                                 </div>
                                             </div>
