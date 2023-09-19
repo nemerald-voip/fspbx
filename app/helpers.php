@@ -933,18 +933,20 @@ if (!function_exists('getDestinationByCategory')) {
                         break; // Skip unknown categories
                 }
 
-                // Check if the id matches the data
-                if ($id == $data || 'transfer:' . $id == $data) {
-                    $selectedCategory = $category;
-                    $selectedDestination = $id;
-                }
+                if(isset($id)) {
+                    // Check if the id matches the data
+                    if ($id == $data || 'transfer:'.$id == $data) {
+                        $selectedCategory = $category;
+                        $selectedDestination = $id;
+                    }
 
-                // Add to the output array
-                $output[] = [
-                    'id' => $id,
-                    'label' => $label,
-                    'app_name' => $app_name,
-                ];
+                    // Add to the output array
+                    $output[] = [
+                        'id' => $id,
+                        'label' => $label,
+                        'app_name' => $app_name,
+                    ];
+                }
             }
         }
 
