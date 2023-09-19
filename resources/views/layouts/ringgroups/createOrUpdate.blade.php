@@ -150,38 +150,11 @@
                                                         <div class="col-md-5">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_greeting" class="form-label">Greeting</label>
-                                                                <div class="d-flex flex-row">
-                                                                    <div class="w-100">
-                                                                        <select class="select2 form-control"
-                                                                                data-toggle="select2"
-                                                                                data-placeholder="Choose ..."
-                                                                                id="ring_group_greeting"
-                                                                                name="ring_group_greeting">
-                                                                            <option value=""></option>
-                                                                            @if (!$recordings->isEmpty())
-                                                                                <optgroup label="Recordings">
-                                                                                    @foreach ($recordings as $recording)
-                                                                                        <option value="{{ $recording->recording_name }}"
-                                                                                                @if($recording->recording_name == $ringGroup->ring_group_greeting)
-                                                                                                    selected
-                                                                                                @endif>
-                                                                                            {{ $recording->recording_name }}
-                                                                                        </option>
-                                                                                    @endforeach
-                                                                                </optgroup>
-                                                                            @endif
-                                                                        </select>
-                                                                    </div>
-                                                                    <div>
-                                                                        <button type="button" class="btn btn-light" id="greeting_play_button" title="Play"><i class="uil uil-play"></i> </button>
-                                                                        <button type="button" class="btn btn-light" id="greeting_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
-                                                                    </div>
-                                                                    <audio id="greeting_audio_file"
-                                                                           @if ($ringGroup->ring_group_greeting)
-                                                                               src="{{ route('getRingGroupGreeting', ['filename' => $ringGroup->ring_group_greeting] ) }}"
-                                                                            @endif
-                                                                    ></audio>
-                                                                </div>
+                                                                @include('layouts.partials.greetingSelector', [
+                                                                    'id' => 'ring_group_greeting',
+                                                                    'allRecordings' => $recordings,
+                                                                    'value' => $ringGroup->ring_group_greeting ?? null
+                                                                ])
                                                                 <div id="ring_group_greeting_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
@@ -356,7 +329,7 @@
 
                                                     @include('layouts.partials.timeoutDestinations')
 
-                                                    
+
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -730,27 +703,6 @@
             const form = $('#ringGroupForm');
             const timeoutAction = $('#timeout_action');
             const timeoutActionWrapper = $('#timeout_action_wrapper');
-
-            $('#greeting_pause_button').hide();
-           // $('#greeting_play_button').show();
-
-            $('#greeting_play_button').click(function(){
-                const audioElement = document.getElementById('greeting_audio_file');
-                $(this).hide();
-                $('#greeting_pause_button').show();
-                audioElement.play();
-                audioElement.addEventListener('ended', function() {
-                    $('#greeting_pause_button').hide();
-                    $('#greeting_play_button').show();
-                });
-            });
-
-            $('#greeting_pause_button').click(function(){
-                const audioElement = document.getElementById('greeting_audio_file');
-                $(this).hide();
-                $('#greeting_play_button').show();
-                audioElement.pause();
-            });
 
             applyDestinationSelect2()
 

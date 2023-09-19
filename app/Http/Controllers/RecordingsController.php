@@ -35,16 +35,16 @@ class RecordingsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getRecording(string $filename)
+    public function getRecordings(string $filename)
     {
-        $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
+        $path = Session::get('domain_name') . '/' . $filename;
 
-        if (!Storage::disk('voicemail')->exists($path)) abort(404);
+        if (!Storage::disk('recordings')->exists($path)) abort(404);
 
-        $file = Storage::disk('voicemail')->path($path);
-        $type = Storage::disk('voicemail')->mimeType($path);
+        $file = Storage::disk('recordings')->path($path);
+        $type = Storage::disk('recordings')->mimeType($path);
 
-        $response = Response::make(file_get_contents($file), 200);
+        $response = \Illuminate\Support\Facades\Response::make(file_get_contents($file), 200);
         $response->header("Content-Type", $type);
         return $response;
     }

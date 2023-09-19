@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Cdrs;
+use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
@@ -166,7 +167,9 @@ Route::group(['middleware' => 'auth'], function(){
 
     // Ring Groups
     Route::resource('ring-groups', RingGroupsController::class);
-    Route::get('/ring-groups/greetings/{filename}', [RingGroupsController::class, 'getRingGroupGreeting']) ->name('getRingGroupGreeting');
+
+    // Recordings
+    Route::get('/recordings/{filename}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
 });
 
 // Route::group(['prefix' => '/'], function () {
