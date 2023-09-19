@@ -149,13 +149,11 @@
                                                     <div class="row">
                                                         <div class="col-md-5">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_greeting" class="form-label">Greeting</label>
                                                                 @include('layouts.partials.greetingSelector', [
                                                                     'id' => 'ring_group_greeting',
                                                                     'allRecordings' => $recordings,
                                                                     'value' => $ringGroup->ring_group_greeting ?? null
                                                                 ])
-                                                                <div id="ring_group_greeting_err" class="text-danger error_message"></div>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->

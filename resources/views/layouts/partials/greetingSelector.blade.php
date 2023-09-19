@@ -1,3 +1,4 @@
+<label for="{{$id}}" class="form-label">Greeting</label>
 <div class="d-flex flex-row">
     <div class="w-100">
         <select class="select2 form-control"
@@ -26,6 +27,7 @@
     </div>
     <audio id="{{$id}}_audio_file" @if ($value) src="{{ route('getRecordings', ['filename' => $value] ) }}" @endif ></audio>
 </div>
+<div id="{{$id}}_err" class="text-danger error_message"></div>
 @push('scripts')
     <script>
         $(document).ready(function () {
