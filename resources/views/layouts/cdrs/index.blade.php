@@ -31,17 +31,25 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-body">                          
+                    <div class="card-body">
                         <div class="row mt-3">
-                            <livewire:cdr-table/>
+                            <livewire:cdr-table />
                         </div>
 
-                    
+
                     </div> <!-- end card-body-->
                 </div> <!-- end card-->
             </div> <!-- end col -->
         </div>
     </div> <!-- container -->
 
-    
+
 @endsection
+
+@push('scripts')
+    <script>
+        window.addEventListener('initizalize-popovers', event => {
+            $('[data-bs-toggle="popover"]').popover();
+        })
+    </script>
+@endpush
