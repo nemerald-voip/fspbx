@@ -169,7 +169,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::resource('ring-groups', RingGroupsController::class);
 
     // Recordings
-    Route::get('/recordings/{filename}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
+    Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
 });
 
 // Route::group(['prefix' => '/'], function () {
