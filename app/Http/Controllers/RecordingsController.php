@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRecordingRequest;
 use App\Models\Recordings;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
@@ -34,6 +35,37 @@ class RecordingsController extends Controller
         }
 
         return response()->json(['collection' => $output]);
+    }
+
+    public function store(StoreRecordingRequest $request)
+    {
+        $attributes = $request->validated();
+        $path = $request->greeting_filename->store(
+            Session::get('domain_name'),
+            'recordings'
+        );
+        if (!Storage::disk('recordings')->exists($path)) {
+            return response()->json([
+                'error' => 401,
+                'message' => 'Failed to upload file'
+            ]);
+        }
+
+        $path = trim(str_replace(Session::get('domain_name'), "", $path), '/');
+
+        $recording = new Recordings();
+        $recording->recording_filename = $path;
+        $recording->recording_name = $attributes['greeting_name'];
+        $recording->recording_description = $attributes['greeting_description'];
+        $recording->save();
+
+        return response()->json([
+            'status' => "success",
+            'recording' => $recording->recording_uuid,
+            'name' => $recording->recording_name,
+            'filename' => $path,
+            'message' => 'Greeting created successfully'
+        ]);
     }
 
     /**

@@ -39,16 +39,16 @@
                     <h5 class="modal-title mb-3">Create New Greeting</h5>
                     <div class="mb-2">
                         <label for="{{$id}}_new_greeting_name" class="form-label">Name</label>
-                        <input type="text" id="{{$id}}_new_greeting_name" class="form-control" value="" />
+                        <input type="text" id="{{$id}}_new_greeting_name" name="greeting_name" class="form-control" value="" />
                     </div>
                     <div class="mb-2">
                         <label for="{{$id}}_new_greeting_description" class="form-label">Description</label>
-                        <textarea class="form-control" id="{{$id}}_new_greeting_description" rows="2"></textarea>
+                        <textarea class="form-control" id="{{$id}}_new_greeting_description" name="greeting_description" rows="2"></textarea>
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <label for="{{$id}}_new_greeting_filename" class="form-label">Upload File</label>
-                            <input type="file" id="{{$id}}_new_greeting_filename" class="form-control">
+                            <input type="file" id="{{$id}}_new_greeting_filename" name="greeting_filename" accept=".wav" class="form-control">
                         </div>
                         <div class="col-md-6">
                             <label for="{{$id}}_new_greeting_filename_record" class="form-label">Or Record a New One</label>
@@ -58,7 +58,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-success save-recording-btn">Save</button>
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
@@ -104,8 +104,8 @@
                                 let tr = $('<tr>').attr('data-uuid', item.id).
                                 attr('data-filename', item.filename).
                                 append(`<td>${item.name}</td><td>${item.description}</td><td>
-<a href="" class="action-icon">
-<i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play"></i>
+<a href="javascript:playCurrentRecording('${item.filename}')" class="action-icon">
+<i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
 <a href="javascript:confirmDeleteAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
 </td>`)
@@ -140,7 +140,69 @@
                     greetingPlayPauseButton.attr('disabled', false)
                     //greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
                 })
+
+                $('.save-recording-btn').on('click', function(e) {
+                    e.preventDefault();
+                    //$('.loading').show();
+
+                    //Reset error messages
+                    //$('.error_message').text("");
+
+                    var formData = new FormData();
+                    formData.append('greeting_filename', document.getElementById('{{$id}}_new_greeting_filename').files[0]);
+                    formData.append('greeting_name', $('#{{$id}}_new_greeting_name').val());
+                    formData.append('greeting_description', $('#{{$id}}_new_greeting_description').val());
+
+                    $.ajax({
+                        type : "POST",
+                        url: '{{ route('recordings.store') }}',
+                        cache: false,
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        beforeSend: function() {
+                            //Reset error messages
+                            /*form.find('.error').text('');
+
+                            $('.error_message').text("");
+                            $('.btn').attr('disabled', true);
+                            $('.loading').show();*/
+                        },
+                        complete: function (xhr,status) {
+                            /*$('.btn').attr('disabled', false);
+                            $('.loading').hide();*/
+                        },
+                        success: function(result) {
+                            //$('.loading').hide();
+                            $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                            //window.location.href = "{{ route('devices.index')}}";
+                        },
+                        error: function(error) {
+                            /*$('.loading').hide();
+                            $('.btn').attr('disabled', false);
+                            if(error.status == 422){
+                                if(error.responseJSON.errors) {
+                                    $.each( error.responseJSON.errors, function( key, value ) {
+                                        if (value != '') {
+                                            form.find('#'+key+'_error').text(value);
+                                            printErrorMsg(value);
+                                        }
+                                    });
+                                } else {
+                                    printErrorMsg(error.responseJSON.message);
+                                }
+                            } else {
+                                printErrorMsg(error.responseJSON.message);
+                            }*/
+                        }
+                    });
+                })
             });
+
+            function playCurrentRecording(filename) {
+                document.getElementById('{{$id}}_audio_file').setAttribute('src', '{{ route('recordings.file', ['filename' => '/'] ) }}/'+filename);
+                document.getElementById('{{$id}}_play_pause_button').click()
+            }
         </script>
     @endpush
 @endif
