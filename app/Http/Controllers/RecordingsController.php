@@ -2,23 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use cache;
-use App\Models\Domain;
-use App\Models\Extensions;
-use App\Models\Voicemails;
+use App\Models\Recordings;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use App\Models\VoicemailGreetings;
-use Illuminate\Support\Facades\Log;
-use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Validator;
 
 class RecordingsController extends Controller
 {
-
     /**
      * Store a newly created resource in storage.
      *
@@ -33,19 +23,38 @@ class RecordingsController extends Controller
     /**
      * Get recordings greeting.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
      */
-    public function getRecording(string $filename)
+    public function getRecordings(string $filename = null)
     {
-        $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
+        if ($filename) {
+            $path = Session::get('domain_name').'/'.$filename;
+            if (!Storage::disk('recordings')->exists($path)) {
+                abort(404);
+            }
+            $file = Storage::disk('recordings')->path($path);
+            $type = Storage::disk('recordings')->mimeType($path);
+            $response = \Illuminate\Support\Facades\Response::make(file_get_contents($file), 200);
+            $response->header("Content-Type", $type);
+            return $response;
+        } else {
+            $output = [];
+            $recordingsCollection = Recordings::where('domain_uuid', Session::get('domain_uuid'))->get();
+            if ($recordingsCollection) {
+                foreach ($recordingsCollection as $recording) {
+                    $path = Session::get('domain_name').'/'.$recording->recording_filename;
+                    if (Storage::disk('recordings')->exists($path)) {
+                        $output[] = [
+                            'id' => $recording->recording_uuid,
+                            'filename' => $recording->recording_filename,
+                            'name' => $recording->recording_name,
+                            'description' => $recording->recording_description,
+                        ];
+                    }
+                }
+            }
 
-        if (!Storage::disk('voicemail')->exists($path)) abort(404);
-
-        $file = Storage::disk('voicemail')->path($path);
-        $type = Storage::disk('voicemail')->mimeType($path);
-
-        $response = Response::make(file_get_contents($file), 200);
-        $response->header("Content-Type", $type);
-        return $response;
+            return response()->json(['collection' => $output]);
+        }
     }
 }

@@ -26,7 +26,7 @@ class CdrTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('xml_cdr_uuid');
-        $this->setAdditionalSelects(['xml_cdr_uuid']);
+        // $this->setAdditionalSelects(['xml_cdr_uuid']);
         $this->setEmptyMessage('No results found');
         $this->setFilterLayoutSlideDown();
         $this->setDefaultSort('start_epoch', 'desc');
@@ -41,25 +41,19 @@ class CdrTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return CDR::query()
+        $cdrs =  CDR::query()
             ->where('domain_uuid', Session::get('domain_uuid'))
             ->where('direction', '<>', 'outbound')
             ->select(
                 'xml_cdr_uuid',
                 'domain_uuid',
-                'direction',
-                'caller_id_name',
-                'caller_id_number',
-                'caller_destination',
+                'sip_call_id',
                 'source_number',
-                'destination_number',
-                'start_epoch',
                 'start_stamp',
                 'answer_stamp',
                 'answer_epoch',
                 'end_epoch',
                 'end_stamp',
-                'duration',
                 'record_path',
                 'record_name',
                 'leg',
@@ -70,22 +64,42 @@ class CdrTable extends DataTableComponent
                 'cc_queue_joined_epoch',
                 'cc_queue',
                 'cc_agent',
+                'cc_agent_bridged',
                 'cc_queue_answered_epoch',
                 'cc_queue_terminated_epoch',
                 'cc_queue_canceled_epoch',
                 'cc_cancel_reason',
                 'cc_cause',
                 'waitsec',
-                'hangup_cause',
+                'hangup_cause_q850',
+                'sip_hangup_disposition'
+            );
 
-            )->distinct();
+        //exclude legs that were not answered
+        if (!userCheckPermission('xml_cdr_lose_race')) {
+            $cdrs->where('hangup_cause', '!=', 'LOSE_RACE');
+        }
+
+        return $cdrs;
+
     }
 
     public function columns(): array
     {
         return [
             Column::make('Direction', 'direction')
-                ->sortable(),
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    if ($row->direction == "inbound") {
+                        $icon = "mdi-arrow-bottom-left-thick";
+                    } elseif ($row->direction == "outbound") {
+                        $icon = 'mdi-arrow-top-right-thick';
+                    } elseif ($row->direction == "local"){
+                        $icon = 'mdi-arrow-left-right-bold';
+                    }
+                    return  view('layouts.cdrs.call-direction', ['icon' => $icon, 'direction' => $row->direction])->render();
+                })
+                ->html(),
             Column::make('Caller Name', 'caller_id_name')
                 ->sortable()
                 ->searchable(
@@ -159,12 +173,16 @@ class CdrTable extends DataTableComponent
             Column::make('Hangup Cause', 'hangup_cause')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
+                    $hint=null;
                     if ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
                         return "Abandoned";
-                    } else {
-                        return $value;
-                    }
-                }),
+                    } elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->cc_cancel_reason == "EXIT_WITH_KEY" && $row->voicemail_message == true){
+                        $value = $row->cc_cancel_reason;
+                        $hint = "The caller exited the queue by pressing an exit digit";
+                    } 
+                    return  view('layouts.cdrs.hangup-cause', ['value' => $value, 'hint' => $hint])->render();
+                })
+                ->html(),
         ];
     }
 
@@ -275,5 +293,12 @@ class CdrTable extends DataTableComponent
     {
         $this->setFilter('date_from', $dateFrom);
         $this->setFilter('date_to', $dateTo);
+    }
+
+    public function dehydrate()
+    {
+        // $this->emit('initizalizePopovers');
+        $this->dispatchBrowserEvent('initizalize-popovers');
+
     }
 }
