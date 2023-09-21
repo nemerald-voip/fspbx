@@ -111,7 +111,7 @@
 </td>`)
                                 tb.append(tr)
                             })
-                            console.log(tb)
+                            //console.log(tb)
                             greetingManageModalBody.append(tb);
                         }
                     });
@@ -138,7 +138,7 @@
                 audioElement.addEventListener('canplay', (event) => {
                     console.log('Audio loaded '+event.target.src)
                     greetingPlayPauseButton.attr('disabled', false)
-                    greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
+                    //greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
                 })
             });
         </script>
