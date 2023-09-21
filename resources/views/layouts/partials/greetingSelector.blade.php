@@ -21,14 +21,9 @@
             @endif
         </select>
     </div>
-    <div id="{{$id}}_play_pause_wrapper" @if($value == null) class="d-none" @else class="me-1" @endif>
-        <button type="button" class="btn btn-light" id="{{$id}}_play_button" title="Play"><i class="uil uil-play"></i> </button>
-        <button type="button" class="btn btn-light" id="{{$id}}_pause_button" title="Pause"><i class="uil uil-pause"></i> </button>
-    </div>
-    <div id="{{$id}}_manage_greeting_wrapper">
-        <button type="button" class="btn btn-light" id="{{$id}}_manage_greeting_button" title="Manage greetings"><i class="uil uil-cog"></i> </button>
-    </div>
-    <audio id="{{$id}}_audio_file" @if ($value) src="{{ route('getRecordings', ['filename' => $value] ) }}" @endif ></audio>
+    <button disabled="true" type="button" class="btn btn-light me-1 @if($value == null) d-none @endif" id="{{$id}}_play_pause_button" title="Play/Pause"><i class="uil uil-play"></i></button>
+    <button type="button" class="btn btn-light" id="{{$id}}_manage_greeting_button" title="Manage greetings"><i class="uil uil-cog"></i> </button>
+    <audio id="{{$id}}_audio_file" @if ($value) src="{{ route('recordings.file', ['filename' => $value] ) }}" @endif ></audio>
 </div>
 <div class="modal fade" id="{{$id}}_manage_greeting_modal" role="dialog"
      aria-labelledby="{{$id}}_manage_greeting_modal" aria-hidden="true">
@@ -50,13 +45,15 @@
                         <label for="{{$id}}_new_greeting_description" class="form-label">Description</label>
                         <textarea class="form-control" id="{{$id}}_new_greeting_description" rows="2"></textarea>
                     </div>
-                    <div class="mb-2">
-                        <label for="{{$id}}_new_greeting_filename" class="form-label">Upload file</label>
-                        <input type="file" id="{{$id}}_new_greeting_filename" class="form-control">
-                    </div>
-                    <div class="mb-2">
-                        <label for="{{$id}}_new_greeting_filename_record" class="form-label">Or record new one</label>
-<div>TODO: recording feature</div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label for="{{$id}}_new_greeting_filename" class="form-label">Upload File</label>
+                            <input type="file" id="{{$id}}_new_greeting_filename" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{$id}}_new_greeting_filename_record" class="form-label">Or Record a New One</label>
+    <div>TODO: recording feature</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,21 +72,19 @@
     @push('scripts')
         <script>
             $(document).ready(function () {
-                const greetingBaseUrl = '{{ route('getRecordings', ['filename' => '/'] ) }}/';
-                const greetingPauseButton = $('#{{$id}}_pause_button');
-                const greetingPlayButton = $('#{{$id}}_play_button');
-                const greetingPlayPauseWrapper = $('#{{$id}}_play_pause_wrapper');
+                const greetingPlayPauseButton = $('#{{$id}}_play_pause_button');
                 const greetingManageButton = $('#{{$id}}_manage_greeting_button');
                 const greetingManageModal = $('#{{$id}}_manage_greeting_modal');
                 const greetingManageModalBody = $('#{{$id}}_manage_greeting_modal_body');
-                initGreetingPreview(document.getElementById('{{$id}}_audio_file'));
+                const audioElement = document.getElementById('{{$id}}_audio_file');
                 $('#{{$id}}').on('change', function (e) {
+                    greetingPlayPauseButton.attr('disabled', true)
                     if(e.target.value === '' || e.target.value === 'disabled') {
-                        greetingPlayPauseWrapper.addClass('d-none');
+                        greetingPlayPauseButton.addClass('d-none');
                     } else {
-                        greetingPlayPauseWrapper.removeClass('d-none');
-                        document.getElementById('{{$id}}_audio_file').setAttribute('src', greetingBaseUrl+e.target.value);
-                        initGreetingPreview(document.getElementById('{{$id}}_audio_file'));
+                        greetingPlayPauseButton.removeClass('d-none');
+                        document.getElementById('{{$id}}_audio_file').setAttribute('src', '{{ route('recordings.file', ['filename' => '/'] ) }}/'+e.target.value);
+                        audioElement.load();
                     }
                 })
                 greetingManageButton.on('click', function () {
@@ -98,19 +93,21 @@
                 greetingManageModal.on('shown.bs.modal', function(){
                     $.ajax({
                         type : "GET",
-                        url : greetingBaseUrl
+                        url : '{{ route('recordings.index' ) }}'
                     }).done(function(response) {
                         if(response.collection.length > 0) {
                             let tb = $('<table>');
-                            tb.addClass('table table-striped');
+                            tb.addClass('table');
                             tb.append('<thead><tr><th>Name</th><th>Description</th><th>Action</th></tr></thead>')
                             tb.append('<tbody>')
                             $.each(response.collection, function (i, item) {
                                 let tr = $('<tr>').attr('data-uuid', item.id).
                                 attr('data-filename', item.filename).
                                 append(`<td>${item.name}</td><td>${item.description}</td><td>
-<a href="" class="action-icon"><i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play"></i></a>
-<a href="" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
+<a href="" class="action-icon">
+<i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play"></i>
+</a>
+<a href="javascript:confirmDeleteAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
 </td>`)
                                 tb.append(tr)
                             })
@@ -122,23 +119,27 @@
                 greetingManageModal.on('hidden.bs.modal', function(){
                     greetingManageModalBody.empty()
                 });
-                function initGreetingPreview(audioElement) {
-                    greetingPauseButton.hide();
-                    greetingPlayButton.click(function(){
-                        $(this).hide();
-                        greetingPauseButton.show();
+                greetingPlayPauseButton.click(function () {
+                    if (audioElement.paused) {
+                        console.log('Audio paused. Start')
+                        greetingPlayPauseButton.find('i').removeClass('uil-play').addClass('uil-pause')
                         audioElement.play();
-                        audioElement.addEventListener('ended', function() {
-                            greetingPauseButton.hide();
-                            greetingPlayButton.show();
-                        });
-                    });
-                    greetingPauseButton.click(function(){
-                        $(this).hide();
-                        greetingPlayButton.show();
+                    } else {
+                        console.log('Audio playing. Pause')
+                        greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
+                        audioElement.currentTime = 0;
                         audioElement.pause();
-                    });
-                }
+                    }
+                });
+                audioElement.addEventListener('ended', (event) => {
+                    console.log('Audio ended '+event.target.src)
+                    greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
+                })
+                audioElement.addEventListener('canplay', (event) => {
+                    console.log('Audio loaded '+event.target.src)
+                    greetingPlayPauseButton.attr('disabled', false)
+                    greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
+                })
             });
         </script>
     @endpush

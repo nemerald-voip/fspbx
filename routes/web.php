@@ -169,7 +169,11 @@ Route::group(['middleware' => 'auth'], function(){
     Route::resource('ring-groups', RingGroupsController::class);
 
     // Recordings
-    Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
+    Route::get('recordings', [RecordingsController::class, 'index'])->name('recordings.index');
+    Route::get('recordings/{filename}', [RecordingsController::class, 'file'])->name('recordings.file');
+    Route::delete('recordings/{recording}',[RecordingsController::class, 'destroy'])->name('recordings.destroy');
+    //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
+    //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');
 });
 
 // Route::group(['prefix' => '/'], function () {
