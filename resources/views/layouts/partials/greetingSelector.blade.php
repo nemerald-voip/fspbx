@@ -38,28 +38,35 @@
                 <div class="border border-dark-subtle p-3">
                     <h5 class="modal-title mb-3">Create New Greeting</h5>
                     <div class="mb-2">
-                        <label for="{{$id}}_new_greeting_name" class="form-label">Name</label>
-                        <input type="text" id="{{$id}}_new_greeting_name" name="greeting_name" class="form-control" value="" />
+                        <label for="{{$id}}_name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" id="{{$id}}_name" name="greeting_name" class="form-control" value="" />
+                        <div class="text-danger error_message {{$id}}_greeting_name_err"></div>
                     </div>
                     <div class="mb-2">
-                        <label for="{{$id}}_new_greeting_description" class="form-label">Description</label>
-                        <textarea class="form-control" id="{{$id}}_new_greeting_description" name="greeting_description" rows="2"></textarea>
+                        <label for="{{$id}}_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="{{$id}}_description" name="greeting_description" rows="2"></textarea>
+                        <div class="text-danger error_message {{$id}}_greeting_description_err"></div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6">
-                            <label for="{{$id}}_new_greeting_filename" class="form-label">Upload File</label>
-                            <input type="file" id="{{$id}}_new_greeting_filename" name="greeting_filename" accept=".wav" class="form-control">
+                            <label for="{{$id}}_filename" class="form-label">Sound File <span class="text-danger">*</span></label>
+                            <input type="file" id="{{$id}}_filename" name="greeting_filename" accept=".wav" class="form-control" />
+                            <div class="text-danger error_message {{$id}}_greeting_filename_err"></div>
                         </div>
                         <div class="col-md-6">
-                            <label for="{{$id}}_new_greeting_filename_record" class="form-label">Or Record a New One</label>
+                            <label for="{{$id}}_filename_record" class="form-label">Or Record a New One</label>
     <div>TODO: recording feature</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-success save-recording-btn">Save new greeting</button>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success save-recording-btn">Save</button>
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -91,30 +98,7 @@
                    greetingManageModal.modal('show');
                 });
                 greetingManageModal.on('shown.bs.modal', function(){
-                    $.ajax({
-                        type : "GET",
-                        url : '{{ route('recordings.index' ) }}'
-                    }).done(function(response) {
-                        if(response.collection.length > 0) {
-                            let tb = $('<table>');
-                            tb.addClass('table');
-                            tb.append('<thead><tr><th>Name</th><th>Description</th><th>Action</th></tr></thead>')
-                            tb.append('<tbody>')
-                            $.each(response.collection, function (i, item) {
-                                let tr = $('<tr>').attr('data-uuid', item.id).
-                                attr('data-filename', item.filename).
-                                append(`<td>${item.name}</td><td>${item.description}</td><td>
-<a href="javascript:playCurrentRecording('${item.filename}')" class="action-icon">
-<i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
-</a>
-<a href="javascript:confirmDeleteAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
-</td>`)
-                                tb.append(tr)
-                            })
-                            //console.log(tb)
-                            greetingManageModalBody.append(tb);
-                        }
-                    });
+                    loadAllRecordings(greetingManageModalBody);
                 });
                 greetingManageModal.on('hidden.bs.modal', function(){
                     greetingManageModalBody.empty()
@@ -149,9 +133,9 @@
                     //$('.error_message').text("");
 
                     var formData = new FormData();
-                    formData.append('greeting_filename', document.getElementById('{{$id}}_new_greeting_filename').files[0]);
-                    formData.append('greeting_name', $('#{{$id}}_new_greeting_name').val());
-                    formData.append('greeting_description', $('#{{$id}}_new_greeting_description').val());
+                    formData.append('greeting_filename', document.getElementById('{{$id}}_filename').files[0]);
+                    formData.append('greeting_name', $('#{{$id}}_name').val());
+                    formData.append('greeting_description', $('#{{$id}}_description').val());
 
                     $.ajax({
                         type : "POST",
@@ -162,43 +146,70 @@
                         contentType: false,
                         beforeSend: function() {
                             //Reset error messages
-                            /*form.find('.error').text('');
-
-                            $('.error_message').text("");
-                            $('.btn').attr('disabled', true);
-                            $('.loading').show();*/
+                            greetingManageModal.find('.err').text('');
+                            greetingManageModal.find('.save-recording-btn').attr('disabled', true);
+                            $('.loading').show();
                         },
                         complete: function (xhr,status) {
-                            /*$('.btn').attr('disabled', false);
-                            $('.loading').hide();*/
+                            greetingManageModal.find('.save-recording-btn').attr('disabled', false);
+                            $('.loading').hide();
                         },
                         success: function(result) {
-                            //$('.loading').hide();
+                            $('.loading').hide();
+                            greetingManageModal.find('#{{$id}}_filename').val('');
+                            greetingManageModal.find('#{{$id}}_name').val('');
+                            greetingManageModal.find('#{{$id}}_description').val('');
                             $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
-                            //window.location.href = "{{ route('devices.index')}}";
+                            loadAllRecordings(greetingManageModalBody);
                         },
                         error: function(error) {
-                            /*$('.loading').hide();
-                            $('.btn').attr('disabled', false);
+                            $('.loading').hide();
+                            greetingManageModal.find('.btn').attr('disabled', false);
                             if(error.status == 422){
                                 if(error.responseJSON.errors) {
-                                    $.each( error.responseJSON.errors, function( key, value ) {
-                                        if (value != '') {
-                                            form.find('#'+key+'_error').text(value);
-                                            printErrorMsg(value);
-                                        }
-                                    });
+                                    let errors = {};
+                                    for (const key in error.responseJSON.errors) {
+                                        errors['{{$id}}_'+key] = error.responseJSON.errors[key];
+                                    }
+                                    printErrorMsg(errors);
                                 } else {
                                     printErrorMsg(error.responseJSON.message);
                                 }
                             } else {
                                 printErrorMsg(error.responseJSON.message);
-                            }*/
+                            }
                         }
                     });
                 })
             });
 
+            function loadAllRecordings(tgt) {
+                tgt.empty();
+                $.ajax({
+                    type : "GET",
+                    url : '{{ route('recordings.index' ) }}'
+                }).done(function(response) {
+                    if(response.collection.length > 0) {
+                        let tb = $('<table>');
+                        tb.addClass('table');
+                        tb.append('<thead><tr><th>Name</th><th>Description</th><th>Action</th></tr></thead>')
+                        tb.append('<tbody>')
+                        $.each(response.collection, function (i, item) {
+                            let tr = $('<tr>').attr('id', 'id'+item.id).
+                            attr('data-filename', item.filename).
+                            append(`<td>${item.name}</td><td>${item.description}</td><td>
+<a href="javascript:playCurrentRecording('${item.filename}')" class="action-icon">
+<i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
+</a>
+<a href="javascript:confirmDeleteAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
+</td>`)
+                            tb.append(tr)
+                        })
+                        //console.log(tb)
+                        tgt.append(tb);
+                    }
+                });
+            }
             function playCurrentRecording(filename) {
                 document.getElementById('{{$id}}_audio_file').setAttribute('src', '{{ route('recordings.file', ['filename' => '/'] ) }}/'+filename);
                 document.getElementById('{{$id}}_play_pause_button').click()
