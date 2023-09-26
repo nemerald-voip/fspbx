@@ -172,15 +172,53 @@ class CdrTable extends DataTableComponent
                 }),
             Column::make('Hangup Cause', 'hangup_cause')
                 ->sortable()
+                ->searchable()
                 ->format(function ($value, $row, Column $column) {
                     $hint=null;
-                    if ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
-                        return "Abandoned";
-                    } elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->cc_cancel_reason == "EXIT_WITH_KEY" && $row->voicemail_message == true){
+                    $color = 'primary';
+                    if ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'recv_bye' && $row->voicemail_message == false) {
+                        $value = $row->hangup_cause;
+                        $hint = "The caller requested to end the call. The call was successfully answered and successfully ended.";
+                    } 
+
+                    if ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'recv_bye' && $row->voicemail_message == true) {
+                        $value = "Voicemail";
+                        $hint = "The caller left a voicemail. The call was successfully ended.";
+                    } 
+
+                    elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'send_bye') {
+                        $value = $row->hangup_cause;
+                        $hint = "Recipient requested to end the call. The call was successfully answered and successfully ended.";
+                    }
+                    
+                    elseif ($row->hangup_cause == "ORIGINATOR_CANCEL") {
+                        $value = $row->hangup_cause;
+                        $hint = "The caller initiated a call and then hang up before the recipient picked up.";
+                        $color = 'secondary';
+                    } 
+
+                    elseif ($row->hangup_cause == "NO_ANSWER" && $row->sip_hangup_disposition == 'send_cancel') {
+                        $value = $row->hangup_cause;
+                        $hint = "This cause is used when the called party has been alerted but does not respond with a connect indication within a prescribed period of time.";
+                        $color = 'danger';
+                    } 
+
+                    elseif ($row->hangup_cause == "UNALLOCATED_NUMBER" && $row->sip_hangup_disposition == 'recv_refuse') {
+                        $value = $row->hangup_cause;
+                        $hint = "This cause indicates that the called party cannot be reached because, although the called party number is in a valid format, it is not currently allocated (assigned).";
+                        $color = "dark";
+                    }
+                    
+                    elseif ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
+                        $value =  "Abandoned";
+                        $color = 'danger';
+                    } 
+                    
+                    elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->cc_cancel_reason == "EXIT_WITH_KEY" && $row->voicemail_message == true){
                         $value = $row->cc_cancel_reason;
                         $hint = "The caller exited the queue by pressing an exit digit";
                     } 
-                    return  view('layouts.cdrs.hangup-cause', ['value' => $value, 'hint' => $hint])->render();
+                    return  view('layouts.cdrs.hangup-cause', ['value' => $value, 'hint' => $hint, 'color' => $color])->render();
                 })
                 ->html(),
         ];
