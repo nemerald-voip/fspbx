@@ -55,7 +55,11 @@
                         </div>
                         <div class="col-md-6">
                             <label for="{{$id}}_filename_record" class="form-label">Or Record a New One</label>
-    <div>TODO: recording feature</div>
+                            <div class="">
+                                <button type="button" id="{{$id}}_record_button" class="btn btn-light p-1 px-2 me-1 fs-4" title="Start/Stop recording"><i class="uil uil-record-audio"></i></button>
+                                <button disabled type="button" id="{{$id}}_recorded_play_pause_button" class="btn btn-light p-1 px-2 me-1 fs-4" title="Play/Pause recorded audio"><i class="uil uil-play-circle"></i></button>
+                                <button disabled type="button" id="{{$id}}_recorded_use_button" class="btn btn-light p-1 px-2 me-1 fs-4" title="Use recorded audio"><i class="uil uil-plus-circle"></i></button>
+                            </div>
                         </div>
                     </div>
                     <div class="row">
@@ -84,6 +88,10 @@
                 const greetingManageModal = $('#{{$id}}_manage_greeting_modal');
                 const greetingManageModalBody = $('#{{$id}}_manage_greeting_modal_body');
                 const audioElement = document.getElementById('{{$id}}_audio_file');
+                const greetingRecordButton = $('#{{$id}}_record_button');
+                const greetingRecordedPlayPauseButton = $('#{{$id}}_recorded_play_pause_button');
+                const greetingRecordedUseButton = $('#{{$id}}_recorded_use_button');
+
                 $('#{{$id}}').on('change', function (e) {
                     greetingPlayPauseButton.attr('disabled', true)
                     if(e.target.value === '' || e.target.value === 'disabled') {
@@ -122,15 +130,87 @@
                 audioElement.addEventListener('canplay', (event) => {
                     console.log('Audio loaded '+event.target.src)
                     greetingPlayPauseButton.attr('disabled', false)
-                    //greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
                 })
+                function startRecording() {
+                    console.log("recordButton clicked");
+
+                    /*
+                        Simple constraints object, for more advanced audio features see
+                        https://addpipe.com/blog/audio-constraints-getusermedia/
+                    */
+
+                    var constraints = {audio: true}
+
+                    /*
+                       Disable the record button until we get a success or fail from getUserMedia()
+                   */
+
+                    recordButton.disabled = true;
+                    stopButton.disabled = false;
+                    pauseButton.disabled = false
+
+                    /*
+                        We're using the standard promise based getUserMedia()
+                        https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+                    */
+
+                    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+                        console.log("getUserMedia() success, stream created, initializing MediaRecorder");
+
+                        /*  assign to gumStream for later use  */
+                        gumStream = stream;
+
+                        var options = {
+                            audioBitsPerSecond :  256000,
+                            videoBitsPerSecond : 2500000,
+                            bitsPerSecond:       2628000,
+                            mimeType : 'audio/'+extension+';codecs=opus'
+                        }
+
+                        //update the format
+                        document.getElementById("formats").innerHTML='Sample rate: 48kHz, MIME: audio/'+extension+';codecs=opus';
+
+                        /*
+                            Create the MediaRecorder object
+                        */
+                        recorder = new MediaRecorder(stream, options);
+
+                        //when data becomes available add it to our attay of audio data
+                        recorder.ondataavailable = function(e){
+                            console.log("recorder.ondataavailable:" + e.data);
+
+                            console.log ("recorder.audioBitsPerSecond:"+recorder.audioBitsPerSecond)
+                            console.log ("recorder.videoBitsPerSecond:"+recorder.videoBitsPerSecond)
+                            console.log ("recorder.bitsPerSecond:"+recorder.bitsPerSecond)
+                            // add stream data to chunks
+                            chunks.push(e.data);
+                            // if recorder is 'inactive' then recording has finished
+                            if (recorder.state == 'inactive') {
+                                // convert stream data chunks to a 'webm' audio format as a blob
+                                const blob = new Blob(chunks, { type: 'audio/'+extension, bitsPerSecond:128000});
+                                createDownloadLink(blob)
+                            }
+                        };
+
+                        recorder.onerror = function(e){
+                            console.log(e.error);
+                        }
+
+                        //start recording using 1 second chunks
+                        //Chrome and Firefox will record one long chunk if you do not specify the chunck length
+                        recorder.start(1000);
+
+                        //recorder.start();
+                    }).catch(function(err) {
+                        //enable the record button if getUserMedia() fails
+                        recordButton.disabled = false;
+                        stopButton.disabled = true;
+                        pauseButton.disabled = true
+                    });
+                }
 
                 $('.save-recording-btn').on('click', function(e) {
                     e.preventDefault();
-                    //$('.loading').show();
-
-                    //Reset error messages
-                    //$('.error_message').text("");
 
                     var formData = new FormData();
                     formData.append('greeting_filename', document.getElementById('{{$id}}_filename').files[0]);
@@ -160,12 +240,13 @@
                             greetingManageModal.find('#{{$id}}_name').val('');
                             greetingManageModal.find('#{{$id}}_description').val('');
                             $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                            $('#{{$id}}').append(new Option(result.name, result.filename, true, true)).trigger('change');
                             loadAllRecordings(greetingManageModalBody);
                         },
                         error: function(error) {
                             $('.loading').hide();
                             greetingManageModal.find('.btn').attr('disabled', false);
-                            if(error.status == 422){
+                            if(error.status === 422){
                                 if(error.responseJSON.errors) {
                                     let errors = {};
                                     for (const key in error.responseJSON.errors) {
@@ -201,19 +282,79 @@
 <a href="javascript:playCurrentRecording('${item.filename}')" class="action-icon">
 <i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
-<a href="javascript:confirmDeleteAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
+<a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
 </td>`)
                             tb.append(tr)
                         })
-                        //console.log(tb)
                         tgt.append(tb);
                     }
                 });
             }
             function playCurrentRecording(filename) {
-                document.getElementById('{{$id}}_audio_file').setAttribute('src', '{{ route('recordings.file', ['filename' => '/'] ) }}/'+filename);
-                document.getElementById('{{$id}}_play_pause_button').click()
+                $('#{{$id}}').val(filename);
+                $('#{{$id}}').trigger('change');
+                $('#{{$id}}_play_pause_button').click();
+            }
+            function confirmDeleteRecordingAction(url, setting_id) {
+                dataObj = new Object();
+                dataObj.url = url;
+                dataObj.setting_id = setting_id;
+                $('#confirmDeleteRecordingModal').data(dataObj).modal('show');
+                // deleteSetting(setting_id);
+            }
+            function performConfirmedDeleteRecordingAction() {
+                var confirmDeleteRecordingModal = $("#confirmDeleteRecordingModal");
+                var setting_id = confirmDeleteRecordingModal.data("setting_id");
+                confirmDeleteRecordingModal.modal('hide');
+                var url = confirmDeleteRecordingModal.data("url");
+                url = url.replace(':id', setting_id);
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    cache: false,
+                    data: {
+                        '_method': 'DELETE',
+                    }
+                }).done(function(response) {
+                    if (response.error) {
+                        $.NotificationApp.send("Warning", response.message, "top-right", "#ff5b5b", "error");
+                    } else {
+                        $.NotificationApp.send("Success", response.message, "top-right", "#10c469", "success");
+                        $("#{{$id}} option[value='"+response.filename+"']").remove();
+                        /*var newArray = [];
+                        let newData = $.grep($('#{{$id}}').select2('data'), function (value) {
+                            console.log(value)
+                            return value['id'] !== response.filename;
+                        });
+                        newData.forEach(function(data) {
+                            newArray.push(+data.id);
+                        });*/
+                        $("#{{$id}}")/*.val(newArray)*/.select2();
+                        $("#id" + setting_id).fadeOut("slow");
+                    }
+                }).fail(function(jqXHR, testStatus, error) {
+                    printErrorMsg(error);
+                });
             }
         </script>
     @endpush
 @endif
+
+<div class="modal fade" id="confirmDeleteRecordingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <div class="text-center">
+                    {{-- <i class=" dripicons-question h1 text-danger"></i> --}}
+                    <i class="uil uil-times-circle h1 text-danger"></i>
+                    <h3 class="mt-3">Are you sure?</h3>
+                    <p class="mt-3">Do you really want to delete this? This process cannot be undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                <a href="javascript:performConfirmedDeleteRecordingAction();" class="btn btn-danger me-2">Delete</a>
+            </div> <!-- end modal footer -->
+        </div> <!-- end modal content-->
+    </div> <!-- end modal dialog-->
+</div> <!-- end modal-->
