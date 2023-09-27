@@ -56,9 +56,9 @@
                         <div class="col-md-6">
                             <label for="{{$id}}_filename_record" class="form-label">Or Record a New One</label>
                             <div class="">
-                                <button type="button" id="{{$id}}_record_button" class="btn btn-light p-1 px-2 me-1 fs-2" title="Start/Stop recording"><i class="uil uil-record-audio"></i></button>
-                                <button disabled type="button" id="{{$id}}_recorded_play_button" class="btn btn-light p-1 px-2 me-1 fs-2" title="Play/Pause recorded audio"><i class="uil uil-play-circle"></i></button>
-                                <button disabled type="button" id="{{$id}}_recorded_use_button" class="btn btn-light p-1 px-2 me-1 fs-2" title="Use recorded audio"><i class="uil uil-plus-circle"></i></button>
+                                <button type="button" id="{{$id}}_record_button" class="btn btn-light p-1 px-2 me-1 fs-4" title="Start/Stop recording"><i class="uil uil-record-audio"></i></button>
+                                <button disabled type="button" id="{{$id}}_recorded_play_pause_button" class="btn btn-light p-1 px-2 me-1 fs-4" title="Play/Pause recorded audio"><i class="uil uil-play-circle"></i></button>
+                                <button disabled type="button" id="{{$id}}_recorded_use_button" class="btn btn-light p-1 px-2 me-1 fs-4" title="Use recorded audio"><i class="uil uil-plus-circle"></i></button>
                             </div>
                         </div>
                     </div>
@@ -88,13 +88,9 @@
                 const greetingManageModal = $('#{{$id}}_manage_greeting_modal');
                 const greetingManageModalBody = $('#{{$id}}_manage_greeting_modal_body');
                 const audioElement = document.getElementById('{{$id}}_audio_file');
-                /*const greetingRecorder = document.getElementById('{{$id}}_recorder');
-                const greetingRecorderPlayer = document.getElementById('{{$id}}_recorder_player');
-                greetingRecorder.addEventListener('change', function (e) {
-                    const file = e.target.files[0];
-                    // Do something with the audio file.
-                    greetingRecorderPlayer.src = URL.createObjectURL(file);
-                });*/
+                const greetingRecordButton = $('#{{$id}}_record_button');
+                const greetingRecordedPlayPauseButton = $('#{{$id}}_recorded_play_pause_button');
+                const greetingRecordedUseButton = $('#{{$id}}_recorded_use_button');
 
                 $('#{{$id}}').on('change', function (e) {
                     greetingPlayPauseButton.attr('disabled', true)
@@ -135,6 +131,83 @@
                     console.log('Audio loaded '+event.target.src)
                     greetingPlayPauseButton.attr('disabled', false)
                 })
+                function startRecording() {
+                    console.log("recordButton clicked");
+
+                    /*
+                        Simple constraints object, for more advanced audio features see
+                        https://addpipe.com/blog/audio-constraints-getusermedia/
+                    */
+
+                    var constraints = {audio: true}
+
+                    /*
+                       Disable the record button until we get a success or fail from getUserMedia()
+                   */
+
+                    recordButton.disabled = true;
+                    stopButton.disabled = false;
+                    pauseButton.disabled = false
+
+                    /*
+                        We're using the standard promise based getUserMedia()
+                        https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+                    */
+
+                    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+                        console.log("getUserMedia() success, stream created, initializing MediaRecorder");
+
+                        /*  assign to gumStream for later use  */
+                        gumStream = stream;
+
+                        var options = {
+                            audioBitsPerSecond :  256000,
+                            videoBitsPerSecond : 2500000,
+                            bitsPerSecond:       2628000,
+                            mimeType : 'audio/'+extension+';codecs=opus'
+                        }
+
+                        //update the format
+                        document.getElementById("formats").innerHTML='Sample rate: 48kHz, MIME: audio/'+extension+';codecs=opus';
+
+                        /*
+                            Create the MediaRecorder object
+                        */
+                        recorder = new MediaRecorder(stream, options);
+
+                        //when data becomes available add it to our attay of audio data
+                        recorder.ondataavailable = function(e){
+                            console.log("recorder.ondataavailable:" + e.data);
+
+                            console.log ("recorder.audioBitsPerSecond:"+recorder.audioBitsPerSecond)
+                            console.log ("recorder.videoBitsPerSecond:"+recorder.videoBitsPerSecond)
+                            console.log ("recorder.bitsPerSecond:"+recorder.bitsPerSecond)
+                            // add stream data to chunks
+                            chunks.push(e.data);
+                            // if recorder is 'inactive' then recording has finished
+                            if (recorder.state == 'inactive') {
+                                // convert stream data chunks to a 'webm' audio format as a blob
+                                const blob = new Blob(chunks, { type: 'audio/'+extension, bitsPerSecond:128000});
+                                createDownloadLink(blob)
+                            }
+                        };
+
+                        recorder.onerror = function(e){
+                            console.log(e.error);
+                        }
+
+                        //start recording using 1 second chunks
+                        //Chrome and Firefox will record one long chunk if you do not specify the chunck length
+                        recorder.start(1000);
+
+                        //recorder.start();
+                    }).catch(function(err) {
+                        //enable the record button if getUserMedia() fails
+                        recordButton.disabled = false;
+                        stopButton.disabled = true;
+                        pauseButton.disabled = true
+                    });
+                }
 
                 $('.save-recording-btn').on('click', function(e) {
                     e.preventDefault();
