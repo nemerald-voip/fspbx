@@ -211,6 +211,7 @@ class CdrTable extends DataTableComponent
                     
                     elseif ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
                         $value =  "Abandoned";
+                        $hint = "The call was initiated and ended before connecting with an agent";
                         $color = 'danger';
                     } 
                     
