@@ -122,15 +122,10 @@
                 audioElement.addEventListener('canplay', (event) => {
                     console.log('Audio loaded '+event.target.src)
                     greetingPlayPauseButton.attr('disabled', false)
-                    //greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
                 })
 
                 $('.save-recording-btn').on('click', function(e) {
                     e.preventDefault();
-                    //$('.loading').show();
-
-                    //Reset error messages
-                    //$('.error_message').text("");
 
                     var formData = new FormData();
                     formData.append('greeting_filename', document.getElementById('{{$id}}_filename').files[0]);
@@ -160,12 +155,13 @@
                             greetingManageModal.find('#{{$id}}_name').val('');
                             greetingManageModal.find('#{{$id}}_description').val('');
                             $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
+                            $('#{{$id}}').append(new Option(result.name, result.filename, true, true)).trigger('change');
                             loadAllRecordings(greetingManageModalBody);
                         },
                         error: function(error) {
                             $('.loading').hide();
                             greetingManageModal.find('.btn').attr('disabled', false);
-                            if(error.status == 422){
+                            if(error.status === 422){
                                 if(error.responseJSON.errors) {
                                     let errors = {};
                                     for (const key in error.responseJSON.errors) {
@@ -201,19 +197,79 @@
 <a href="javascript:playCurrentRecording('${item.filename}')" class="action-icon">
 <i class="uil uil-play-circle" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
-<a href="javascript:confirmDeleteAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
+<a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
 </td>`)
                             tb.append(tr)
                         })
-                        //console.log(tb)
                         tgt.append(tb);
                     }
                 });
             }
             function playCurrentRecording(filename) {
-                document.getElementById('{{$id}}_audio_file').setAttribute('src', '{{ route('recordings.file', ['filename' => '/'] ) }}/'+filename);
-                document.getElementById('{{$id}}_play_pause_button').click()
+                $('#{{$id}}').val(filename);
+                $('#{{$id}}').trigger('change');
+                $('#{{$id}}_play_pause_button').click();
+            }
+            function confirmDeleteRecordingAction(url, setting_id) {
+                dataObj = new Object();
+                dataObj.url = url;
+                dataObj.setting_id = setting_id;
+                $('#confirmDeleteRecordingModal').data(dataObj).modal('show');
+                // deleteSetting(setting_id);
+            }
+            function performConfirmedDeleteRecordingAction() {
+                var confirmDeleteRecordingModal = $("#confirmDeleteRecordingModal");
+                var setting_id = confirmDeleteRecordingModal.data("setting_id");
+                confirmDeleteRecordingModal.modal('hide');
+                var url = confirmDeleteRecordingModal.data("url");
+                url = url.replace(':id', setting_id);
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    cache: false,
+                    data: {
+                        '_method': 'DELETE',
+                    }
+                }).done(function(response) {
+                    if (response.error) {
+                        $.NotificationApp.send("Warning", response.message, "top-right", "#ff5b5b", "error");
+                    } else {
+                        $.NotificationApp.send("Success", response.message, "top-right", "#10c469", "success");
+                        $("#{{$id}} option[value='"+response.filename+"']").remove();
+                        /*var newArray = [];
+                        let newData = $.grep($('#{{$id}}').select2('data'), function (value) {
+                            console.log(value)
+                            return value['id'] !== response.filename;
+                        });
+                        newData.forEach(function(data) {
+                            newArray.push(+data.id);
+                        });*/
+                        $("#{{$id}}")/*.val(newArray)*/.select2();
+                        $("#id" + setting_id).fadeOut("slow");
+                    }
+                }).fail(function(jqXHR, testStatus, error) {
+                    printErrorMsg(error);
+                });
             }
         </script>
     @endpush
 @endif
+
+<div class="modal fade" id="confirmDeleteRecordingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <div class="text-center">
+                    {{-- <i class=" dripicons-question h1 text-danger"></i> --}}
+                    <i class="uil uil-times-circle h1 text-danger"></i>
+                    <h3 class="mt-3">Are you sure?</h3>
+                    <p class="mt-3">Do you really want to delete this? This process cannot be undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
+                <a href="javascript:performConfirmedDeleteRecordingAction();" class="btn btn-danger me-2">Delete</a>
+            </div> <!-- end modal footer -->
+        </div> <!-- end modal content-->
+    </div> <!-- end modal dialog-->
+</div> <!-- end modal-->

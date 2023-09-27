@@ -28,7 +28,7 @@ class RecordingsController extends Controller
                         'id' => $recording->recording_uuid,
                         'filename' => $recording->recording_filename,
                         'name' => $recording->recording_name,
-                        'description' => $recording->recording_description,
+                        'description' => (string)$recording->recording_description,
                     ];
                 }
             }
@@ -95,6 +95,7 @@ class RecordingsController extends Controller
             return response()->json([
                 'status' => 'success',
                 'id' => $recording->recording_uuid,
+                'filename' => $recording->recording_filename,
                 'message' => 'Recording have been deleted'
             ]);
         } else {
