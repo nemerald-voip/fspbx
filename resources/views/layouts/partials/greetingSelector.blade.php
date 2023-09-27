@@ -55,7 +55,11 @@
                         </div>
                         <div class="col-md-6">
                             <label for="{{$id}}_filename_record" class="form-label">Or Record a New One</label>
-    <div>TODO: recording feature</div>
+                            <div class="">
+                                <button type="button" id="{{$id}}_record_button" class="btn btn-light p-1 px-2 me-1 fs-2" title="Start/Stop recording"><i class="uil uil-record-audio"></i></button>
+                                <button disabled type="button" id="{{$id}}_recorded_play_button" class="btn btn-light p-1 px-2 me-1 fs-2" title="Play/Pause recorded audio"><i class="uil uil-play-circle"></i></button>
+                                <button disabled type="button" id="{{$id}}_recorded_use_button" class="btn btn-light p-1 px-2 me-1 fs-2" title="Use recorded audio"><i class="uil uil-plus-circle"></i></button>
+                            </div>
                         </div>
                     </div>
                     <div class="row">
@@ -84,6 +88,14 @@
                 const greetingManageModal = $('#{{$id}}_manage_greeting_modal');
                 const greetingManageModalBody = $('#{{$id}}_manage_greeting_modal_body');
                 const audioElement = document.getElementById('{{$id}}_audio_file');
+                /*const greetingRecorder = document.getElementById('{{$id}}_recorder');
+                const greetingRecorderPlayer = document.getElementById('{{$id}}_recorder_player');
+                greetingRecorder.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    // Do something with the audio file.
+                    greetingRecorderPlayer.src = URL.createObjectURL(file);
+                });*/
+
                 $('#{{$id}}').on('change', function (e) {
                     greetingPlayPauseButton.attr('disabled', true)
                     if(e.target.value === '' || e.target.value === 'disabled') {
