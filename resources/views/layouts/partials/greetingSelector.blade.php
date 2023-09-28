@@ -59,7 +59,7 @@
                                    class="form-control"/>
                             <div class="text-danger error_message {{$id}}_greeting_filename_err"></div>
                         </div>
-                        <div class="col-md-6 mb-2">
+                        <div id="{{$id}}_record_wrapper" class="col-md-6 mb-2 d-none">
                             <label for="{{$id}}_filename_record" class="form-label">Or Record a New One</label>
                             <div class="mb-1">
                                 <button type="button" id="{{$id}}_record_button"
@@ -120,6 +120,7 @@
     @push('scripts')
         <script>
             $(document).ready(function () {
+                const recordWrapper = $('#{{$id}}_record_wrapper');
                 const greetingPlayPauseButton = $('#{{$id}}_play_pause_button');
                 const greetingManageButton = $('#{{$id}}_manage_greeting_button');
                 const greetingManageModal = $('#{{$id}}_manage_greeting_modal');
@@ -143,8 +144,9 @@
                     extension="mp4";
                 } else {
                     extension="ogg"*/
+                    recordWrapper.removeClass('d-none');
                 } else {
-                    alert('Your browser does not support recording audio.');
+                    console.warn('Your browser does not support recording audio.');
                 }
 
                 greetingRecordButton.on('click', function () {
@@ -202,19 +204,21 @@
                                         greetingRecordedAudioFileStored.val(result.tempfile);
                                     },
                                     error: function (error) {
-                                        console.log(error);
+                                        console.err(error);
                                     }
                                 });
                             }
                         };
                         mediaRecorder.onerror = function (e) {
-                            console.log(e.error);
+                            console.err(e.error);
                         }
                         mediaRecorder.start(1000);
                     }).catch(function (err) {
                         greetingRecordButton.html('<i class="mdi mdi-record"></i>');
-                        console.log("navigator.mediaDevices.getUserMedia() error: " + err);
-                        alert("Something went wrong. Please try again.");
+                        greetingRecordIsDone.addClass('d-none');
+                        greetingRecordInProgress.addClass('d-none');
+                        console.err("navigator.mediaDevices.getUserMedia() error: " + err);
+                        alert("The unexpected issue is occurred. Probably we could not access to microphone. Please try again.");
                     });
                 })
 
