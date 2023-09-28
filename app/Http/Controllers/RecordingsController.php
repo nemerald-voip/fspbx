@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRecordingBlobRequest;
 use App\Http\Requests\StoreRecordingRequest;
 use App\Models\Recordings;
 use Illuminate\Support\Facades\Response;
@@ -28,7 +29,7 @@ class RecordingsController extends Controller
                         'id' => $recording->recording_uuid,
                         'filename' => $recording->recording_filename,
                         'name' => $recording->recording_name,
-                        'description' => (string)$recording->recording_description,
+                        'description' => (string) $recording->recording_description,
                     ];
                 }
             }
@@ -40,10 +41,20 @@ class RecordingsController extends Controller
     public function store(StoreRecordingRequest $request)
     {
         $attributes = $request->validated();
-        $path = $request->greeting_filename->store(
-            Session::get('domain_name'),
-            'recordings'
-        );
+
+        if ($request->greeting_filename) {
+            $path = $request->greeting_filename->store(
+                Session::get('domain_name'),
+                'recordings'
+            );
+        } else {
+            if (Storage::exists($request->greeting_recorded_file)) {
+                $path = Session::get('domain_name').'/recorded_'.md5($request->greeting_recorded_file).'.'.pathinfo($request->greeting_recorded_file,
+                        PATHINFO_EXTENSION);
+                Storage::disk('recordings')->put($path, Storage::get($request->greeting_recorded_file));
+            }
+        }
+
         if (!Storage::disk('recordings')->exists($path)) {
             return response()->json([
                 'error' => 401,
@@ -65,6 +76,18 @@ class RecordingsController extends Controller
             'name' => $recording->recording_name,
             'filename' => $path,
             'message' => 'Greeting created successfully'
+        ]);
+    }
+
+    public function storeBlob(StoreRecordingBlobRequest $request)
+    {
+        $request->validated();
+        $blobInput = $request->file('recorded_file');
+        $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+        Storage::put($filename, file_get_contents($blobInput));
+        return response()->json([
+            'status' => "success",
+            'tempfile' => $filename
         ]);
     }
 

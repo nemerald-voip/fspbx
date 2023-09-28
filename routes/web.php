@@ -173,6 +173,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('recordings/{filename}', [RecordingsController::class, 'file'])->name('recordings.file');
     Route::delete('recordings/{recording}',[RecordingsController::class, 'destroy'])->name('recordings.destroy');
     Route::post('recordings',[RecordingsController::class, 'store'])->name('recordings.store');
+    Route::post('recordings/storeBlob',[RecordingsController::class, 'storeBlob'])->name('recordings.storeBlob');
     //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
     //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');
 });

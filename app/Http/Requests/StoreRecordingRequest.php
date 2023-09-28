@@ -29,9 +29,14 @@ class StoreRecordingRequest extends FormRequest
                 'string'
             ],
             'greeting_filename' => [
-                'required',
+                'required_if:greeting_recorded_file,==,nullable',
+                'nullable',
                 'max:10000',
                 'mimes:wav'
+            ],
+            'greeting_recorded_file' => [
+                'nullable',
+                'string'
             ]
         ];
     }
@@ -43,5 +48,14 @@ class StoreRecordingRequest extends FormRequest
             'greeting_filename.required' => 'Filename is required',
             'greeting_filename.mimes' => 'Only wav files allowed'
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        if ($this->get('greeting_filename') == 'undefined') {
+            $this->merge([
+                'greeting_filename' => null
+            ]);
+        };
     }
 }
