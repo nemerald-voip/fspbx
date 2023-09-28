@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\CallDetailRecords;
 
+use App\Http\Controllers\Cdrs;
 use Carbon\Carbon;
 use App\Models\CDR;
 use Livewire\Component;
@@ -23,6 +24,12 @@ class CdrTable extends DataTableComponent
     // protected $model = CDR::class;
     public $period;
 
+    // To show/hide the modal
+    public bool $modalIsOpen = false;
+
+    // The information currently being displayed in the modal
+    public $currentRecord;
+
     public function configure(): void
     {
         $this->setPrimaryKey('xml_cdr_uuid');
@@ -37,6 +44,37 @@ class CdrTable extends DataTableComponent
                 'layouts.cdrs.call-category-filter'
             ],
         ]);
+
+        $this->setTrAttributes(function ($row, $index) {
+            return [
+                'default' => true,
+                'wire:click.prevent' => "viewModal('" . $row->xml_cdr_uuid . "')",
+            ];
+        });
+    }
+
+    // public function getTableRowUrl()
+    // {
+    //     return '#';
+    // }
+
+
+    public function viewModal($uuid): void
+    {
+        $this->modalIsOpen = true;
+        $this->currentRecord = CDR::findOrFail($uuid);
+
+        $this->dispatchBrowserEvent('open-module');
+    }
+
+    public function customView(): string
+    {
+        return 'layouts.cdrs.record-modal';
+    }
+
+    public function resetModal(): void
+    {
+        $this->reset('modalIsOpen', 'currentRecord');
     }
 
     public function builder(): Builder
@@ -81,7 +119,6 @@ class CdrTable extends DataTableComponent
         }
 
         return $cdrs;
-
     }
 
     public function columns(): array
@@ -94,7 +131,7 @@ class CdrTable extends DataTableComponent
                         $icon = "mdi-arrow-bottom-left-thick";
                     } elseif ($row->direction == "outbound") {
                         $icon = 'mdi-arrow-top-right-thick';
-                    } elseif ($row->direction == "local"){
+                    } elseif ($row->direction == "local") {
                         $icon = 'mdi-arrow-left-right-bold';
                     }
                     return  view('layouts.cdrs.call-direction', ['icon' => $icon, 'direction' => $row->direction])->render();
@@ -174,51 +211,39 @@ class CdrTable extends DataTableComponent
                 ->sortable()
                 ->searchable()
                 ->format(function ($value, $row, Column $column) {
-                    $hint=null;
+                    $hint = null;
                     $color = 'primary';
                     if ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'recv_bye' && $row->voicemail_message == false) {
                         $value = $row->hangup_cause;
                         $hint = "The caller requested to end the call. The call was successfully answered and successfully ended.";
-                    } 
+                    }
 
                     if ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'recv_bye' && $row->voicemail_message == true) {
                         $value = "Voicemail";
                         $hint = "The caller left a voicemail. The call was successfully ended.";
-                    } 
-
-                    elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'send_bye') {
+                    } elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->sip_hangup_disposition == 'send_bye') {
                         $value = $row->hangup_cause;
                         $hint = "Recipient requested to end the call. The call was successfully answered and successfully ended.";
-                    }
-                    
-                    elseif ($row->hangup_cause == "ORIGINATOR_CANCEL") {
+                    } elseif ($row->hangup_cause == "ORIGINATOR_CANCEL") {
                         $value = $row->hangup_cause;
                         $hint = "The caller initiated a call and then hang up before the recipient picked up.";
                         $color = 'secondary';
-                    } 
-
-                    elseif ($row->hangup_cause == "NO_ANSWER" && $row->sip_hangup_disposition == 'send_cancel') {
+                    } elseif ($row->hangup_cause == "NO_ANSWER" && $row->sip_hangup_disposition == 'send_cancel') {
                         $value = $row->hangup_cause;
                         $hint = "This cause is used when the called party has been alerted but does not respond with a connect indication within a prescribed period of time.";
                         $color = 'danger';
-                    } 
-
-                    elseif ($row->hangup_cause == "UNALLOCATED_NUMBER" && $row->sip_hangup_disposition == 'recv_refuse') {
+                    } elseif ($row->hangup_cause == "UNALLOCATED_NUMBER" && $row->sip_hangup_disposition == 'recv_refuse') {
                         $value = $row->hangup_cause;
                         $hint = "This cause indicates that the called party cannot be reached because, although the called party number is in a valid format, it is not currently allocated (assigned).";
                         $color = "dark";
-                    }
-                    
-                    elseif ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
+                    } elseif ($row->cc_cancel_reason == "BREAK_OUT" && $row->cc_cause == 'cancel') {
                         $value =  "Abandoned";
                         $hint = "The call was initiated and ended before connecting with an agent";
                         $color = 'danger';
-                    } 
-                    
-                    elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->cc_cancel_reason == "EXIT_WITH_KEY" && $row->voicemail_message == true){
+                    } elseif ($row->hangup_cause == "NORMAL_CLEARING" && $row->cc_cancel_reason == "EXIT_WITH_KEY" && $row->voicemail_message == true) {
                         $value = $row->cc_cancel_reason;
                         $hint = "The caller exited the queue by pressing an exit digit";
-                    } 
+                    }
                     return  view('layouts.cdrs.hangup-cause', ['value' => $value, 'hint' => $hint, 'color' => $color])->render();
                 })
                 ->html(),
@@ -338,6 +363,5 @@ class CdrTable extends DataTableComponent
     {
         // $this->emit('initizalizePopovers');
         $this->dispatchBrowserEvent('initizalize-popovers');
-
     }
 }
