@@ -64,6 +64,27 @@
                         <td>{{ $currentRecord->billsec }}</td>
                     </tr>
                     <tr>
+                        <td>Bridge</td>
+                        <td>{{ $currentRecord->bridge_uuid }}</td>
+                    </tr>
+                    <tr>
+                        <td>Read Codec</td>
+                        <td>{{ $currentRecord->read_codec }}</td>
+                    </tr>
+                    <tr>
+                        <td>Read Rate</td>
+                        <td>{{ $currentRecord->read_rate }}</td>
+                    </tr>
+                    <tr>
+                        <td>Write Codec</td>
+                        <td>{{ $currentRecord->write_codec }}</td>
+                    </tr>
+                    <tr>
+                        <td>Write Rate</td>
+                        <td>{{ $currentRecord->write_rate }}</td>
+                    </tr>
+
+                    <tr>
                         <td>Leg</td>
                         <td>{{ $currentRecord->leg }}</td>
                     </tr>
@@ -94,6 +115,66 @@
                     <tr>
                         <td>Missed Call</td>
                         <td>{{ $currentRecord->missed_call }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Queue ID</td>
+                        <td>{{ $currentRecord->call_center_queue_uuid }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Queue Name</td>
+                        <td>{{ $currentRecord->cc_queue }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Side</td>
+                        <td>{{ $currentRecord->cc_side }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Member</td>
+                        <td>{{ $currentRecord->cc_member_uuid }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Joined Time</td>
+                        <td>{{ $currentRecord->cc_queue_joined_epoch }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Member Session</td>
+                        <td>{{ $currentRecord->cc_member_session_uuid }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Agent ID</td>
+                        <td>{{ $currentRecord->cc_agent_uuid }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Agent</td>
+                        <td>{{ $currentRecord->cc_agent }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Agent Type</td>
+                        <td>{{ $currentRecord->cc_agent_type }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Agent Bridged</td>
+                        <td>{{ $currentRecord->cc_agent_bridged }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Queue Answer Time</td>
+                        <td>{{ $currentRecord->cc_queue_answered_epoch }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Queue End Time</td>
+                        <td>{{ $currentRecord->cc_queue_terminated_epoch }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Queue Cancel Time</td>
+                        <td>{{ $currentRecord->cc_queue_canceled_epoch }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Queue Cancel Reason</td>
+                        <td>{{ $currentRecord->cc_cancel_reason }}</td>
+                    </tr>
+                    <tr>
+                        <td>CC Cause</td>
+                        <td>{{ $currentRecord->cc_cause }}</td>
                     </tr>
 
 
