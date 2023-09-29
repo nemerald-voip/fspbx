@@ -64,6 +64,10 @@
                         <td>{{ $currentRecord->billsec }}</td>
                     </tr>
                     <tr>
+                        <td>Wait Time</td>
+                        <td>{{ $currentRecord->waitsec }}</td>
+                    </tr>
+                    <tr>
                         <td>Bridge</td>
                         <td>{{ $currentRecord->bridge_uuid }}</td>
                     </tr>
@@ -116,6 +120,24 @@
                         <td>Missed Call</td>
                         <td>{{ $currentRecord->missed_call }}</td>
                     </tr>
+                    <tr>
+                        <td>Hangup Cause</td>
+                        <td>{{ $currentRecord->hangup_cause }}</td>
+                    </tr>
+                    <tr>
+                        <td>Hangup Cause Q850</td>
+                        <td>{{ $currentRecord->hangup_cause_q850 }}</td>
+                    </tr>
+                    <tr>
+                        <td>SIP Hangup Disposition</td>
+                        <td>{{ $currentRecord->sip_hangup_disposition }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Dialed Digits</td>
+                        <td>{{ $currentRecord->digits_dialed }}</td>
+                    </tr>
+
                     <tr>
                         <td>CC Queue ID</td>
                         <td>{{ $currentRecord->call_center_queue_uuid }}</td>

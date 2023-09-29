@@ -45,12 +45,12 @@ class CdrTable extends DataTableComponent
             ],
         ]);
 
-        $this->setTrAttributes(function ($row, $index) {
-            return [
-                'default' => true,
-                'wire:click.prevent' => "viewModal('" . $row->xml_cdr_uuid . "')",
-            ];
-        });
+        // $this->setTrAttributes(function ($row, $index) {
+        //     return [
+        //         'default' => true,
+        //         'wire:click.prevent' => "viewModal('" . $row->xml_cdr_uuid . "')",
+        //     ];
+        // });
     }
 
     // public function getTableRowUrl()
@@ -247,6 +247,11 @@ class CdrTable extends DataTableComponent
                     return  view('layouts.cdrs.hangup-cause', ['value' => $value, 'hint' => $hint, 'color' => $color])->render();
                 })
                 ->html(),
+
+            Column::make('')
+                ->label(function ($row, $column) {
+                    return view('layouts.cdrs.actions', ['row' => $row]);
+                }),
         ];
     }
 
