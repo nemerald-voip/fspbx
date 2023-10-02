@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "^7.3|^8.0",
+        "ext-simplexml": "*",
         "aws/aws-sdk-php": "~3.0",
         "doctrine/dbal": "^3.4",
         "firebase/php-jwt": "^6.4",
@@ -27,10 +28,10 @@
         "nwidart/laravel-modules": "^8.3",
         "predis/predis": "^2.0",
         "propaganistas/laravel-phone": "^4.3",
+        "rappasoft/laravel-livewire-tables": "^2.15",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-webhook-client": "^2.8",
-        "wildbit/swiftmailer-postmark": "^3.3",
-        "ext-simplexml": "*"
+        "wildbit/swiftmailer-postmark": "^3.3"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.7",

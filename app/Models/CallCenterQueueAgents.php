@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class CallCenterQueueAgents extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
-    
+
     protected $table = "v_call_center_tiers";
 
     public $timestamps = false;
@@ -37,4 +37,13 @@ class CallCenterQueueAgents extends Model
         'update_user'
     ];
 
+    public function agent()
+    {
+        return $this->belongsTo(CallCenterAgents::class, 'call_center_agent_uuid', 'call_center_agent_uuid');
+    }
+
+    public function queue()
+    {
+        return $this->belongsTo(CallCenterQueues::class, 'call_center_queue_uuid', 'call_center_queue_uuid');
+    }
 }

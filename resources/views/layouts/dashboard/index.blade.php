@@ -193,11 +193,6 @@
                                         </div>
                                     @endif
                                 </div>
-                                {{-- <h2 class="my-2 text-success">{{ $extensions }}</h2>
-                <div class="mb-0 text-muted">
-                    <span class="text-success me-2"><i class="mdi mdi-arrow-up-bold"></i> 5</span>
-                    <span class="text-nowrap">online</span>  
-                </div> --}}
                                 <p class="mb-0 text-muted">
                                     <span class="text-nowrap">Total Extensions</span>
                                 </p>

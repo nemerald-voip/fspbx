@@ -39,6 +39,7 @@
         @include('layouts.shared/right-sidebar')
 
         @include('layouts.shared/footer-script')
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.3/dist/cdn.min.js"></script>
         @livewireScripts
     </body>
 </html>

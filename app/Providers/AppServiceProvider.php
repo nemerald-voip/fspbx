@@ -2,20 +2,24 @@
 
 namespace App\Providers;
 
+use Livewire\Livewire;
 use App\Models\Devices;
-use App\Models\Extensions;
 use App\Models\IvrMenus;
+use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
-use Illuminate\Support\Facades\Validator;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
+use App\Observers\ExtensionObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
-use App\Models\Sanctum\PersonalAccessToken;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
+use App\Models\Sanctum\PersonalAccessToken;
 use Propaganistas\LaravelPhone\Validation\Phone;
+use App\Http\Livewire\CallDetailRecords\CdrTable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
 
         Paginator::useBootstrap();
 
+        Livewire::component('cdr-table', CdrTable::class);
+
         // Ringotel
         Http::macro('ringotel', function () {
             return Http::withHeaders([
@@ -61,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
                 return true;
             }
         });
+
+        Extensions::observe(ExtensionObserver::class);
 
         Builder::macro('orWhereLike', function(string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%'.trim($search).'%');
@@ -138,5 +146,16 @@ class AppServiceProvider extends ServiceProvider
             return !Devices::where('device_mac_address', $value)->exists();
         });
 */
+
+        Password::defaults(function () {
+            $rule = Password::min(8)
+                ->letters()
+                ->mixedCase()
+                ->numbers()
+                ->symbols()
+                ->uncompromised();
+
+            return $rule;
+        });
     }
 }

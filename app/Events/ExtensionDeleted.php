@@ -3,13 +3,11 @@
 namespace App\Events;
 
 use App\Models\Extensions;
-use App\Models\CallCenterAgents;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 
-class ExtensionUpdated
+class ExtensionDeleted
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -27,6 +25,7 @@ class ExtensionUpdated
         $this->extension = $extension;
         $this->originalAttributes = $originalAttributes;
         $this->vmOriginalAttributes = $vmOriginalAttributes;
+
     }
 
 }

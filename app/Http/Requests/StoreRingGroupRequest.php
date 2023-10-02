@@ -32,7 +32,7 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_greeting' => [
                 'nullable',
                 'string',
-                Rule::exists('App\Models\Recordings', 'recording_name')
+                Rule::exists('App\Models\Recordings', 'recording_filename')
                     ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'ring_group_destinations.*.type' => [
@@ -173,7 +173,11 @@ class StoreRingGroupRequest extends FormRequest
 
     public function prepareForValidation()
     {
-
+        if($this->get('ring_group_greeting') == 'disabled') {
+            $this->merge([
+                'ring_group_greeting' => null
+            ]);
+        }
         if($this->get('timeout_category') == 'disabled') {
             $this->merge([
                 'ring_group_timeout_data' => null

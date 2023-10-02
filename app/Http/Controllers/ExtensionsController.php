@@ -14,6 +14,7 @@ use App\Models\RingGroups;
 use App\Models\Voicemails;
 use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
+use App\Models\FusionCache;
 use App\Models\MusicOnHold;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
@@ -562,7 +563,11 @@ class ExtensionsController extends Controller
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";
         $attributes['voicemail_id'] = $attributes['extension'];
-        $attributes['voicemail_password'] = $attributes['extension'];
+        if (get_domain_setting('password_complexity')) {
+            $attributes['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        } else {
+            $attributes['voicemail_password'] = $attributes['extension'];
+        }
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
         $attributes['password'] = generate_password();
         // if (isset($attributes['outbound_caller_id_number'])) $attributes['outbound_caller_id_number'] = PhoneNumber::make($attributes['outbound_caller_id_number'], "US")->formatE164();
@@ -633,7 +638,6 @@ class ExtensionsController extends Controller
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
 
         $extension->fill($attributes);
-        $extension->save();
 
         if (isset($attributes['users'])) {
             foreach ($attributes['users'] as $ext_user) {
@@ -764,7 +768,7 @@ class ExtensionsController extends Controller
 
         //Check FusionPBX login status
         session_start();
-        if (session_status() === PHP_SESSION_NONE) {
+        if (!isset($_SESSION['user'])) {
             return redirect()->route('logout');
         }
 
@@ -811,7 +815,7 @@ class ExtensionsController extends Controller
         }
 
         //try to convert caller ID to e164 format
-        if ($extension->caller_id_number) {
+        if ($extension->outbound_caller_id_number) {
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
@@ -847,7 +851,6 @@ class ExtensionsController extends Controller
 
             $destination->isCallerID = ($destination->destination_number === $extension->outbound_caller_id_number);
             $destination->isEmergencyCallerID = ($destination->destination_number === $extension->emergency_caller_id_number);
-
         }
 
         $vm_unavailable_file_exists = Storage::disk('voicemail')
@@ -1178,12 +1181,8 @@ class ExtensionsController extends Controller
             $attributes['voicemail_id'] = $attributes['extension'];
         }
 
-        //Schedule SuspendUser job that will check if suspension is required
-        SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
-
+        $extension->fill($attributes);
         $extension->save();
-
-        ExtensionUpdated::dispatch($extension);
 
         // Update Voicemail Destinations table
         if (isset($extension->voicemail)) {
@@ -1270,23 +1269,13 @@ class ExtensionsController extends Controller
                 $extension->extension_users()->save($extension_users);
             }
         }
-        // return response()->json([
-        //     'status' => 'success',
-        //     'message' => 'Extension has been saved'
-        // ]);
-        // Delete cache and update extension
-        if (session_status() == PHP_SESSION_NONE || session_id() == '') {
-            session_start();
-        }
 
-        $cache = new cache();
-        $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
+        //clear fusionpbx cache
+        FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
 
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
         }
-
-        $extension->update($attributes);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
@@ -1386,9 +1375,6 @@ class ExtensionsController extends Controller
             if ($deleted) {
                 // dispatch the job to remove app user
                 DeleteAppUser::dispatch($extension->mobile_app)->onQueue('default');
-
-                //Schedule SuspendUser job that will check if suspension is required
-                SuspendUser::dispatch($extension->voicemail->voicemail_mail_to)->onQueue('default');
 
                 return response()->json([
                     'status' => 'success',

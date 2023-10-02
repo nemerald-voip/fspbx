@@ -36,6 +36,11 @@
                                     <strong>{{ $message }}</strong>
                                 </span>
                             @enderror
+                            @if (session('error'))
+                                <span class="invalid-feedback" role="alert" style="display:block;">
+                                        {{ session('error') }}
+                                </span>
+                            @endif
                         </div>
                       <div class="mb-4">
                          <div class="d-flex align-items-center justify-content-between">

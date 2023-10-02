@@ -39,8 +39,6 @@ class MessagesController extends Controller
             $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($date[1]),$timeZone)->setTimezone('UTC');
         }
 
-        logger($selectedStatus);
-
         $messages = Messages::latest();
         if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
             $messages->where('status', $selectedStatus);
@@ -69,7 +67,6 @@ class MessagesController extends Controller
             });
         }
         $messages->whereBetween('created_at', $period);
-        logger($period);
         
         $messages = $messages->paginate(50)->onEachSide(1);
 

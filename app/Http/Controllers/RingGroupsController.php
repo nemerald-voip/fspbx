@@ -516,18 +516,4 @@ class RingGroupsController extends Controller
     //         'list' => $output
     //     ];
     // }
-
-    public function getRingGroupGreeting(string $filename)
-    {
-        $path = Session::get('domain_name') . '/' . $filename;
-
-        if (!Storage::disk('recordings')->exists($path)) abort(404);
-
-        $file = Storage::disk('recordings')->path($path);
-        $type = Storage::disk('recordings')->mimeType($path);
-
-        $response = \Illuminate\Support\Facades\Response::make(file_get_contents($file), 200);
-        $response->header("Content-Type", $type);
-        return $response;
-    }
 }
