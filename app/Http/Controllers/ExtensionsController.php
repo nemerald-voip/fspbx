@@ -560,6 +560,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['enabled']) && $attributes['enabled'] == "on") $attributes['enabled'] = "true";
         $attributes['voicemail_enabled'] = "true";
         $attributes['voicemail_transcription_enabled'] = "true";
+        $attributes['voicemail_file'] = "attach";
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";
         $attributes['voicemail_id'] = $attributes['extension'];

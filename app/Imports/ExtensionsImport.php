@@ -157,9 +157,14 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
             //Create voicemail
             $extension->voicemail = new Voicemails();
+            if (get_domain_setting('password_complexity')) {
+                $voicemail_password = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            } else {
+                $voicemail_password = $row['extension'];
+            }
             $extension->voicemail->fill([
                 'voicemail_id' => $row['extension'],
-                'voicemail_password' => $row['extension'],
+                'voicemail_password' => $voicemail_password,
                 'voicemail_mail_to' => $row['email'],
                 'voicemail_transcription_enabled' => 'true',
                 'voicemail_file' => 'attach',
