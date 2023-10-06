@@ -41,7 +41,7 @@ class CdrTable extends DataTableComponent
 
         $this->setConfigurableAreas([
             'after-toolbar' => [
-                'layouts.cdrs.call-category-filter'
+                'layouts.cdrs.filters'
             ],
         ]);
 
