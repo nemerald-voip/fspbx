@@ -22,7 +22,7 @@ class StoreRecordingBlobRequest extends FormRequest
         return [
             'recorded_file' => [
                 'required',
-                'mimes:webm'
+                //s'mimes:webm,mp4a'
             ]
         ];
     }

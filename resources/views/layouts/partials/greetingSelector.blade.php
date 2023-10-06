@@ -136,14 +136,15 @@
                 let mediaRecorder;
                 let chunks = [];
                 let extension;
+                let codec;
 
                 if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                    extension = "webm"
-                    /*extension="webm";
+                    extension = "webm";
+                    codec = "opus";
+                    recordWrapper.removeClass('d-none');
                 } else if (MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a')){
                     extension="mp4";
-                } else {
-                    extension="ogg"*/
+                    codec = "mp4a";
                     recordWrapper.removeClass('d-none');
                 } else {
                     console.warn('Your browser does not support recording audio.');
@@ -172,7 +173,7 @@
                             audioBitsPerSecond: 256000,
                             videoBitsPerSecond: 2500000,
                             bitsPerSecond: 2628000,
-                            mimeType: 'audio/' + extension + ';codecs=opus'
+                            mimeType: `audio/${extension};codecs=${codec}`
                         });
 
                         //when data becomes available add it to our attay of audio data
@@ -204,21 +205,21 @@
                                         greetingRecordedAudioFileStored.val(result.tempfile);
                                     },
                                     error: function (error) {
-                                        console.err(error);
+                                        console.error(error);
                                     }
                                 });
                             }
                         };
                         mediaRecorder.onerror = function (e) {
-                            console.err(e.error);
+                            console.error(e.error);
                         }
                         mediaRecorder.start(1000);
                     }).catch(function (err) {
                         greetingRecordButton.html('<i class="mdi mdi-record"></i>');
                         greetingRecordIsDone.addClass('d-none');
                         greetingRecordInProgress.addClass('d-none');
-                        console.err("navigator.mediaDevices.getUserMedia() error: " + err);
-                        alert("The unexpected issue is occurred. Probably we could not access to microphone. Please try again.");
+                        console.error("navigator.mediaDevices.getUserMedia() error: " + err);
+                        alert(`The unexpected issue is occurred ${err}. Please try again or use different browser.`);
                     });
                 })
 
