@@ -106,6 +106,8 @@ class RecordingsController extends Controller
         $type = Storage::disk('recordings')->mimeType($path);
         $response = Response::make(file_get_contents($file));
         $response->header("Content-Type", $type);
+        $response->header("Accept-Ranges", "bytes");
+        $response->header("Content-Length", Storage::disk('recordings')->size($path));
         return $response;
     }
 
