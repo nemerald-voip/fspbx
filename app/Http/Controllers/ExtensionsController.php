@@ -900,8 +900,7 @@ class ExtensionsController extends Controller
             ->with('recordings', $recordings)
             ->with('devices', $devices)
             ->with('vendors', $vendors)
-            ->with('profiles', $profiles)
-            ->with('national_phone_number_format', PhoneNumberFormat::NATIONAL);
+            ->with('profiles', $profiles);
     }
 
     /**
