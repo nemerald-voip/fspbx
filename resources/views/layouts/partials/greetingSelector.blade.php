@@ -276,6 +276,10 @@
                         audioElementRecorded.pause();
                     }
                 });
+                audioElementRecorded.addEventListener('ended', (event) => {
+                    console.log('Recorded audio ended ' + event.target.src)
+                    greetingRecordedPlayPauseButton.find('i').removeClass('mdi-pause').addClass('mdi-play')
+                });
                 $('.save-recording-btn').on('click', function (e) {
                     e.preventDefault();
 

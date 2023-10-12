@@ -83,7 +83,12 @@ class RecordingsController extends Controller
     {
         $request->validated();
         $blobInput = $request->file('recorded_file');
-        $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+        $mimeType = $blobInput->getMimeType();
+        if($mimeType == 'application/octet-stream') {
+            $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.mp4';
+        } else {
+            $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+        }
         Storage::put($filename, file_get_contents($blobInput));
         return response()->json([
             'status' => "success",
