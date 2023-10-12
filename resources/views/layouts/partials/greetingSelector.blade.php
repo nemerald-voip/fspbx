@@ -168,6 +168,7 @@
                     const constraints = {audio: true}
                     navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
                         console.log("getUserMedia() success, stream created, initializing MediaRecorder");
+                        let chunks = [];
                         gumStream = stream;
                         mediaRecorder = new MediaRecorder(stream, {
                             audioBitsPerSecond: 256000,
@@ -191,6 +192,7 @@
                                 console.log("Saving chunk : " + blob.size);
                                 const url = URL.createObjectURL(blob);
                                 audioElementRecorded.setAttribute('src', url);
+                                audioElementRecorded.load()
                                 const formData = new FormData();
                                 formData.append('recorded_file', blob, 'recordedAudio');
                                 $.ajax({
