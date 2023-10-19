@@ -259,6 +259,7 @@
                 audioElement.addEventListener('ended', (event) => {
                     console.log('Audio ended ' + event.target.src)
                     greetingPlayPauseButton.find('i').removeClass('uil-pause').addClass('uil-play')
+                    greetingManageModalBody.find('table').find('tr').find('i').removeClass('uil-pause').addClass('uil-play')
                 });
                 audioElement.addEventListener('canplay', (event) => {
                     console.log('Audio loaded ' + event.target.src)
@@ -354,7 +355,7 @@
                         tb.append('<tbody>')
                         $.each(response.collection, function (i, item) {
                             let tr = $('<tr>').attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td>
-<a href="javascript:playCurrentRecording('${item.filename}')" class="action-icon">
+<a href="javascript:playCurrentRecording('${item.id}', '${item.filename}')" class="action-icon">
 <i class="uil uil-play" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
 <a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
@@ -366,14 +367,24 @@
                 });
             }
 
-            function playCurrentRecording(filename) {
-                $('#{{$id}}').val(filename);
-                $('#{{$id}}').trigger('change');
-                $('#{{$id}}_play_pause_button').click();
+            function playCurrentRecording(id, filename) {
+                var body = $('#{{$id}}_manage_greeting_modal_body');
+                var id = body.find(`#id${id}`);
+                id.find('.action-icon').find('i').removeClass('uil-pause').addClass('uil-play')
+                var audioElement = document.getElementById('{{$id}}_audio_file');
+                if (!audioElement.paused) {
+                    body.find('tr').find('.action-icon').find('i').removeClass('uil-pause').addClass('uil-play')
+                    audioElement.pause();
+                } else {
+                    $('#{{$id}}').val(filename);
+                    $('#{{$id}}').trigger('change');
+                    $('#{{$id}}_play_pause_button').click();
+                    id.find('.action-icon').find('i').removeClass('uil-play').addClass('uil-pause')
+                }
             }
 
             function confirmDeleteRecordingAction(url, setting_id) {
-                dataObj = new Object();
+                var dataObj = {};
                 dataObj.url = url;
                 dataObj.setting_id = setting_id;
                 $('#confirmDeleteRecordingModal').data(dataObj).modal('show');
