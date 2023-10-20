@@ -30,7 +30,7 @@
 </div>
 <div class="modal fade" id="{{$id}}_manage_greeting_modal" role="dialog"
      aria-labelledby="{{$id}}_manage_greeting_modal" aria-hidden="true">
-    <div class="modal-dialog w-75" style="max-width: initial;">
+    <div class="modal-dialog w-50" style="max-width: initial;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Manage Greetings</h5>
@@ -40,19 +40,6 @@
                 <div id="{{$id}}_manage_greeting_modal_body"></div>
                 <div class="border border-dark-subtle p-3">
                     <h5 class="modal-title mb-3">Create New Greeting</h5>
-                    {{--
-                    <div class="mb-2">
-                        <label for="{{$id}}_name" class="form-label">Name <span class="text-danger">*</span></label>
-                        <input type="text" id="{{$id}}_name" name="greeting_name" class="form-control" value=""/>
-                        <div class="text-danger error_message {{$id}}_greeting_name_err"></div>
-                    </div>
-                    <div class="mb-2">
-                        <label for="{{$id}}_description" class="form-label">Description</label>
-                        <textarea class="form-control" id="{{$id}}_description" name="greeting_description"
-                                  rows="2"></textarea>
-                        <div class="text-danger error_message {{$id}}_greeting_description_err"></div>
-                    </div>
-                    --}}
                     <div class="row mb-2">
                         <div class="col-md-6 mb-2">
                             <label for="{{$id}}_filename" class="form-label">Sound File <span
@@ -135,6 +122,7 @@
                 const greetingRecordIsDone = $('#{{$id}}_record_is_done_status');
                 const audioElementRecorded = document.getElementById('{{$id}}_recorded_audio_file');
                 const greetingRecordedAudioFileStored = $('#{{$id}}_recorded_audio_file_stored');
+                const greetingEditRecordingModal = $('#{{$id}}_editRecordingModal');
                 let gumStream;
                 let mediaRecorder;
                 let chunks = [];
@@ -289,8 +277,8 @@
 
                     var formData = new FormData();
                     formData.append('greeting_filename', document.getElementById('{{$id}}_filename').files[0]);
-                    formData.append('greeting_name', $('#{{$id}}_name').val());
-                    formData.append('greeting_description', $('#{{$id}}_description').val());
+                    //formData.append('greeting_name', $('#{{$id}}_name').val());
+                    //formData.append('greeting_description', $('#{{$id}}_description').val());
                     formData.append('greeting_recorded_file', greetingRecordedAudioFileStored.val());
 
                     $.ajax({
@@ -313,8 +301,8 @@
                         success: function (result) {
                             $('.loading').hide();
                             greetingManageModal.find('#{{$id}}_filename').val('');
-                            greetingManageModal.find('#{{$id}}_name').val('');
-                            greetingManageModal.find('#{{$id}}_description').val('');
+                            //greetingManageModal.find('#{{$id}}_name').val('');
+                            //greetingManageModal.find('#{{$id}}_description').val('');
                             audioElementRecorded.src = '';
                             greetingRecordedAudioFileStored.val('');
                             greetingRecordedPlayPauseButton.attr('disabled', true);
@@ -322,6 +310,59 @@
                             greetingRecordInProgress.addClass('d-none');
                             $.NotificationApp.send("Success", result.message, "top-right", "#10c469", "success");
                             $('#{{$id}}').append(new Option(result.name, result.filename, true, true)).trigger('change');
+                            loadAllRecordings(greetingManageModalBody);
+                        },
+                        error: function (error) {
+                            $('.loading').hide();
+                            greetingManageModal.find('.btn').attr('disabled', false);
+                            if (error.status === 422) {
+                                if (error.responseJSON.errors) {
+                                    let errors = {};
+                                    for (const key in error.responseJSON.errors) {
+                                        errors['{{$id}}_' + key] = error.responseJSON.errors[key];
+                                    }
+                                    printErrorMsg(errors);
+                                } else {
+                                    printErrorMsg(error.responseJSON.message);
+                                }
+                            } else {
+                                printErrorMsg(error.responseJSON.message);
+                            }
+                        }
+                    });
+                });
+
+                $('.save-description-btn').on('click', function (e) {
+                    e.preventDefault();
+                    var formData = new FormData();
+                    formData.append('greeting_name', $('#{{$id}}_name').val());
+                    formData.append('greeting_description', $('#{{$id}}_description').val());
+                    formData.append('_method', 'PUT');
+                    var url = '{{ route('recordings.update', ':id' ) }}'
+                    url = url.replace(':id', $('#{{$id}}_id').val());
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        cache: false,
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        beforeSend: function () {
+                            //Reset error messages
+                            greetingEditRecordingModal.find('.error_message').text('');
+                            greetingEditRecordingModal.find('.save-description-btn').attr('disabled', true);
+                            $('.loading').show();
+                        },
+                        complete: function (xhr, status) {
+                            greetingEditRecordingModal.find('.save-description-btn').attr('disabled', false);
+                            $('.loading').hide();
+                        },
+                        success: function (result) {
+                            $('.loading').hide();
+                            greetingEditRecordingModal.find('#{{$id}}_name').val('');
+                            greetingEditRecordingModal.find('#{{$id}}_description').val('');
+                            greetingEditRecordingModal.modal('hide');
+                            $.NotificationApp.send("Success", result.message, "top-right", "#10c469", "success");
                             loadAllRecordings(greetingManageModalBody);
                         },
                         error: function (error) {
@@ -361,6 +402,7 @@
 <a href="javascript:playCurrentRecording('${item.id}', '${item.filename}')" class="action-icon">
 <i class="uil uil-play" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
+<a href="javascript:editRecordingAction('{{ route('recordings.show', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>
 <a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
 </td>`)
                             tb.append(tr)
@@ -428,6 +470,20 @@
                     printErrorMsg(error);
                 });
             }
+
+            function editRecordingAction(url, setting_id) {
+                url = url.replace(':id', setting_id);
+                $.ajax({
+                    type: 'GET',
+                    url: url,
+                    cache: false
+                }).done(function (response) {
+                    $('#{{$id}}_name').val(response.name);
+                    $('#{{$id}}_description').val(response.description);
+                    $('#{{$id}}_id').val(response.id);
+                    $('#{{$id}}_editRecordingModal').modal('show');
+                });
+            }
         </script>
     @endpush
 @endif
@@ -449,5 +505,37 @@
                 <a href="javascript:performConfirmedDeleteRecordingAction();" class="btn btn-danger me-2">Delete</a>
             </div> <!-- end modal footer -->
         </div> <!-- end modal content-->
+    </div> <!-- end modal dialog-->
+</div> <!-- end modal-->
+
+<div class="modal fade" id="{{$id}}_editRecordingModal" data-bs-backdrop="static" data-bs-keyboard="false"
+     tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Greeting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="greeting_id" id="{{$id}}_id" />
+                <div class="border border-dark-subtle p-3">
+                    <div class="mb-2">
+                        <label for="{{$id}}_name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" id="{{$id}}_name" name="greeting_name" class="form-control" value=""/>
+                        <div class="text-danger error_message {{$id}}_greeting_name_err"></div>
+                    </div>
+                    <div class="mb-2">
+                        <label for="{{$id}}_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="{{$id}}_description" name="greeting_description"
+                                  rows="2"></textarea>
+                        <div class="text-danger error_message {{$id}}_greeting_description_err"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success save-description-btn">Save</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div> <!-- end modal dialog-->
 </div> <!-- end modal-->
