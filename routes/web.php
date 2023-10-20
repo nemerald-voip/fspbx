@@ -176,6 +176,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('recordings',[RecordingsController::class, 'store'])->name('recordings.store');
     Route::post('recordings/storeBlob',[RecordingsController::class, 'storeBlob'])->name('recordings.storeBlob');
     Route::put('recordings/{recording}', [RecordingsController::class, 'update'])->name('recordings.update');
+    Route::put('recordings/{recording}/{entity}/{entityId}', [RecordingsController::class, 'use'])->name('recordings.use');
 
     //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
     //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');

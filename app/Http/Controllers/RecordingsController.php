@@ -137,6 +137,29 @@ class RecordingsController extends Controller
     }
 
     /**
+     * Update the specified resource in storage.
+     *
+     * @param  UpdateRecordingRequest $request
+     * @param  Recordings $recording
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function use(UpdateRecordingRequest $request, Recordings $recording)
+    {
+        $attributes = $request->validated();
+
+        $recording->recording_name = $attributes['greeting_name'];
+        $recording->recording_description = $attributes['greeting_description'];
+        $recording->save();
+
+        return response()->json([
+            'status' => "success",
+            'id' => $recording->recording_uuid,
+            'filename' => $recording->recording_filename,
+            'message' => 'Recording has been saved'
+        ]);
+    }
+
+    /**
      * Get recordings greeting.
      *
      * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse

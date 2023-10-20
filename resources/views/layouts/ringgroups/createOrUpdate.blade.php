@@ -152,7 +152,9 @@
                                                                 @include('layouts.partials.greetingSelector', [
                                                                     'id' => 'ring_group_greeting',
                                                                     'allRecordings' => $recordings,
-                                                                    'value' => $ringGroup->ring_group_greeting ?? null
+                                                                    'value' => $ringGroup->ring_group_greeting ?? null,
+                                                                    'entity' => 'ringGroup',
+                                                                    'entityId' => $ringGroup->id,
                                                                 ])
                                                             </div>
                                                         </div>
