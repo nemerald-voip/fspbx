@@ -40,6 +40,7 @@
                 <div id="{{$id}}_manage_greeting_modal_body"></div>
                 <div class="border border-dark-subtle p-3">
                     <h5 class="modal-title mb-3">Create New Greeting</h5>
+                    {{--
                     <div class="mb-2">
                         <label for="{{$id}}_name" class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" id="{{$id}}_name" name="greeting_name" class="form-control" value=""/>
@@ -51,6 +52,7 @@
                                   rows="2"></textarea>
                         <div class="text-danger error_message {{$id}}_greeting_description_err"></div>
                     </div>
+                    --}}
                     <div class="row mb-2">
                         <div class="col-md-6 mb-2">
                             <label for="{{$id}}_filename" class="form-label">Sound File <span
@@ -69,6 +71,7 @@
                                         class="btn btn-light p-1 px-2 me-1 fs-4" title="Play/Pause recorded audio"><i
                                             class="mdi mdi-play"></i></button>
                             </div>
+                            <div class="text-danger error_message {{$id}}_greeting_recorded_file_err"></div>
                             <div id="{{$id}}_record_in_progress_status" class="d-none recording-in-progress">
                                 Recording in progress... Please speak, hit "<b>Stop</b>" when done.
                             </div>
