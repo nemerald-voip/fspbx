@@ -410,7 +410,7 @@
 <a href="javascript:playCurrentRecording('${item.id}', '${item.filename}')" class="action-icon">
 <i class="uil uil-play" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
-{{--<a href="javascript:useRecordingAction('{{ route('recordings.use', ['id' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}','${item.id}','{{$entity}}','{{$entityId}}');" class="action-icon"><i class="mdi mdi-plus-box-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use this greeting"></i></a>--}}
+<a href="javascript:useRecordingAction('{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}','${item.id}','{{$entity}}','{{$entityId}}');" class="action-icon"><i class="mdi mdi-plus-box-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use this greeting"></i></a>
 <a href="javascript:editRecordingAction('{{ route('recordings.show', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>
 <a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id' ) }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
 </td>`)
@@ -506,10 +506,16 @@
                         '_method': 'PUT',
                     }
                 }).done(function (response) {
-                    /*$('#{{$id}}_name').val(response.name);
-                    $('#{{$id}}_description').val(response.description);
-                    $('#{{$id}}_id').val(response.id);
-                    $('#{{$id}}_editRecordingModal').modal('show');*/
+                    if (response.error) {
+                        $.NotificationApp.send("Warning", response.message, "top-right", "#ff5b5b", "error");
+                    } else {
+                        $.NotificationApp.send("Success", response.message, "top-right", "#10c469", "success");
+                        $('#{{$id}}').val(response.filename);
+                        $('#{{$id}}').trigger('change');
+                        $('#{{$id}}_manage_greeting_modal').modal('hide');
+                    }
+                }).fail(function (jqXHR, testStatus, error) {
+                    printErrorMsg(error);
                 });
             }
         </script>

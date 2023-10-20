@@ -6,6 +6,7 @@ use App\Http\Requests\StoreRecordingBlobRequest;
 use App\Http\Requests\StoreRecordingRequest;
 use App\Http\Requests\UpdateRecordingRequest;
 use App\Models\Recordings;
+use App\Models\RingGroups;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -139,23 +140,32 @@ class RecordingsController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  UpdateRecordingRequest $request
-     * @param  Recordings $recording
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @param  Recordings  $recording
+     * @param $entity
+     * @param $entityId
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function use(UpdateRecordingRequest $request, Recordings $recording)
+    public function use(Recordings $recording, $entity, $entityId)
     {
-        $attributes = $request->validated();
-
-        $recording->recording_name = $attributes['greeting_name'];
-        $recording->recording_description = $attributes['greeting_description'];
-        $recording->save();
+        switch ($entity) {
+            case 'ringGroup';
+                /** @var RingGroups $entity */
+                $entity = RingGroups::findOrFail($entityId);
+                $entity->ring_group_greeting = $recording->recording_filename;
+                $entity->save();
+                break;
+            default:
+                return response()->json([
+                    'error' => 401,
+                  'message' => 'Invalid entity'
+                ]);
+        }
 
         return response()->json([
             'status' => "success",
             'id' => $recording->recording_uuid,
             'filename' => $recording->recording_filename,
-            'message' => 'Recording has been saved'
+            'message' => 'Recording has been set'
         ]);
     }
 
