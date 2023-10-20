@@ -285,8 +285,6 @@
 
                     var formData = new FormData();
                     formData.append('greeting_filename', document.getElementById('{{$id}}_filename').files[0]);
-                    //formData.append('greeting_name', $('#{{$id}}_name').val());
-                    //formData.append('greeting_description', $('#{{$id}}_description').val());
                     formData.append('greeting_recorded_file', greetingRecordedAudioFileStored.val());
 
                     $.ajax({
@@ -309,8 +307,6 @@
                         success: function (result) {
                             $('.loading').hide();
                             greetingManageModal.find('#{{$id}}_filename').val('');
-                            //greetingManageModal.find('#{{$id}}_name').val('');
-                            //greetingManageModal.find('#{{$id}}_description').val('');
                             audioElementRecorded.src = '';
                             greetingRecordedAudioFileStored.val('');
                             greetingRecordedPlayPauseButton.attr('disabled', true);
