@@ -100,6 +100,14 @@
         display: flex;
     }
 
+    #{{$id}}_manage_greeting_modal_body {
+        min-height:50px;
+    }
+
+    #{{$id}}_editRecordingModal .modal-dialog, #{{$id}}_confirmDeleteRecordingModal .modal-dialog {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5)
+    }
+
     @keyframes blinker {
         50% {
             opacity: 0;
@@ -233,7 +241,7 @@
                     loadAllRecordings(greetingManageModalBody);
                 });
                 greetingManageModal.on('hidden.bs.modal', function () {
-                    greetingManageModalBody.empty()
+                    greetingManageModalBody.html($('<div class="loading loading-inline"></div>'))
                 });
                 greetingPlayPauseButton.click(function () {
                     if (audioElement.paused) {
@@ -387,7 +395,7 @@
             });
 
             function loadAllRecordings(tgt) {
-                tgt.empty();
+                tgt.html($('<div class="loading loading-inline"></div>'));
                 $.ajax({
                     type: "GET",
                     url: '{{ route('recordings.index' ) }}'
@@ -407,7 +415,7 @@
 </td>`)
                             tb.append(tr)
                         })
-                        tgt.append(tb);
+                        tgt.html(tb);
                     }
                 });
             }
@@ -432,12 +440,12 @@
                 var dataObj = {};
                 dataObj.url = url;
                 dataObj.setting_id = setting_id;
-                $('#confirmDeleteRecordingModal').data(dataObj).modal('show');
+                $('#{{$id}}_confirmDeleteRecordingModal').data(dataObj).modal('show');
                 // deleteSetting(setting_id);
             }
 
             function performConfirmedDeleteRecordingAction() {
-                var confirmDeleteRecordingModal = $("#confirmDeleteRecordingModal");
+                var confirmDeleteRecordingModal = $("#{{$id}}_confirmDeleteRecordingModal");
                 var setting_id = confirmDeleteRecordingModal.data("setting_id");
                 confirmDeleteRecordingModal.modal('hide');
                 var url = confirmDeleteRecordingModal.data("url");
@@ -488,7 +496,7 @@
     @endpush
 @endif
 
-<div class="modal fade" id="confirmDeleteRecordingModal" data-bs-backdrop="static" data-bs-keyboard="false"
+<div class="modal fade" id="{{$id}}_confirmDeleteRecordingModal" data-bs-backdrop="static" data-bs-keyboard="false"
      tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
