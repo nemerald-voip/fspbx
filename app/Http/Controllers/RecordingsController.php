@@ -74,7 +74,7 @@ class RecordingsController extends Controller
 
         return response()->json([
             'status' => "success",
-            'recording' => $recording->recording_uuid,
+            'id' => $recording->recording_uuid,
             'name' => $recording->recording_name,
             'filename' => $path,
             'message' => 'Greeting created successfully'

@@ -97,11 +97,36 @@
     .recording-in-progress {
         animation: blinker 1s linear infinite;
         color: red;
-        display: flex;
     }
 
     #{{$id}}_manage_greeting_modal_body {
-        min-height:50px;
+        height:300px;
+        overflow-y: scroll;
+        margin-bottom: 1em;
+    }
+
+    #{{$id}}_manage_greeting_modal_body .table {
+        margin-bottom: 0;
+    }
+
+    #{{$id}}_manage_greeting_modal_body::-webkit-scrollbar {
+      -webkit-appearance: none;
+      width: 10px;
+    }
+
+    #{{$id}}_manage_greeting_modal_body .loading.loading-inline {
+        top: 130px;
+    }
+
+    #{{$id}}_manage_greeting_modal_body tr.blink-it td {
+        background-color: #e7ecfb;
+        box-shadow: none;
+    }
+
+    #{{$id}}_manage_greeting_modal_body::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      background-color: rgba(0,0,0,.5);
+      -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
     }
 
     #{{$id}}_editRecordingModal .modal-dialog, #{{$id}}_confirmDeleteRecordingModal .modal-dialog {
@@ -314,7 +339,7 @@
                             greetingRecordInProgress.addClass('d-none');
                             $.NotificationApp.send("Success", result.message, "top-right", "#10c469", "success");
                             $('#{{$id}}').append(new Option(result.name, result.filename, true, true)).trigger('change');
-                            loadAllRecordings(greetingManageModalBody);
+                            loadAllRecordings(greetingManageModalBody, result.id);
                         },
                         error: function (error) {
                             $('.loading').hide();
@@ -390,7 +415,7 @@
                 })
             });
 
-            function loadAllRecordings(tgt) {
+            function loadAllRecordings(tgt, blinkId = null) {
                 tgt.html($('<div class="loading loading-inline"></div>'));
                 $.ajax({
                     type: "GET",
@@ -402,7 +427,11 @@
                         tb.append('<thead><tr><th>Name</th><th>Description</th><th>Action</th></tr></thead>')
                         tb.append('<tbody>')
                         $.each(response.collection, function (i, item) {
-                            let tr = $('<tr>').attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td>
+                            let tr = $('<tr>');
+                            if(blinkId == item.id) {
+                                tr.addClass('blink-it');
+                            }
+                            tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td>
 <a href="javascript:playCurrentRecording('${item.id}', '${item.filename}')" class="action-icon">
 <i class="uil uil-play" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
@@ -413,6 +442,9 @@
                             tb.append(tr)
                         })
                         tgt.html(tb);
+                        if(blinkId != null) {
+                            $('#id' +blinkId)[0].scrollIntoView();
+                        }
                     }
                 });
             }
