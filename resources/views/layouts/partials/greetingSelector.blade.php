@@ -118,8 +118,11 @@
         top: 130px;
     }
 
+    #{{$id}}_manage_greeting_modal_body tr td {
+        vertical-align: middle;
+    }
     #{{$id}}_manage_greeting_modal_body tr.blink-it td {
-        background-color: #e7ecfb;
+        animation: blinkingBackground 3s ease-in-out;
         box-shadow: none;
     }
 
@@ -137,6 +140,11 @@
         50% {
             opacity: 0;
         }
+    }
+
+    @keyframes blinkingBackground {
+        0% { background-color: #c1dcfa; }
+        100% { background-color: white; }
     }
 </style>
 @if($inlineScripts ?? true)
