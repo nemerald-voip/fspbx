@@ -74,7 +74,7 @@
                     </div>
                     <div class="row">
                         <div class="col-md-4">
-                            <button type="button" class="btn btn-success save-recording-btn">Save new greeting</button>
+                            <button type="button" id="{{$id}}_save_recording_btn" disabled="disabled" class="btn btn-success save-recording-btn">Save new greeting</button>
                         </div>
                     </div>
                 </div>
@@ -164,6 +164,8 @@
                 const audioElementRecorded = document.getElementById('{{$id}}_recorded_audio_file');
                 const greetingRecordedAudioFileStored = $('#{{$id}}_recorded_audio_file_stored');
                 const greetingEditRecordingModal = $('#{{$id}}_editRecordingModal');
+                const greetingRecorderSaveButton = $('#{{$id}}_save_recording_btn');
+                const greetingUploadButton = $('#{{$id}}_filename');
                 let gumStream;
                 let mediaRecorder;
                 let chunks = [];
@@ -181,6 +183,10 @@
                 } else {
                     console.warn('Your browser does not support recording audio.');
                 }
+
+                greetingUploadButton.on('change', function () {
+                    greetingRecorderSaveButton.attr('disabled', false);
+                });
 
                 greetingRecordButton.on('click', function () {
                     if (mediaRecorder instanceof MediaRecorder && mediaRecorder.state === "recording") {
@@ -237,6 +243,7 @@
                                     success: function (result) {
                                         console.log(result);
                                         greetingRecordedAudioFileStored.val(result.tempfile);
+                                        greetingRecorderSaveButton.attr('disabled', false);
                                     },
                                     error: function (error) {
                                         console.error(error);
@@ -313,7 +320,7 @@
                     console.log('Recorded audio ended ' + event.target.src)
                     greetingRecordedPlayPauseButton.find('i').removeClass('mdi-pause').addClass('mdi-play')
                 });
-                $('.save-recording-btn').on('click', function (e) {
+                greetingRecorderSaveButton.on('click', function (e) {
                     e.preventDefault();
 
                     var formData = new FormData();
@@ -330,11 +337,10 @@
                         beforeSend: function () {
                             //Reset error messages
                             greetingManageModal.find('.error_message').text('');
-                            greetingManageModal.find('.save-recording-btn').attr('disabled', true);
+                            greetingRecorderSaveButton.attr('disabled', true);
                             $('.loading').show();
                         },
                         complete: function (xhr, status) {
-                            greetingManageModal.find('.save-recording-btn').attr('disabled', false);
                             $('.loading').hide();
                         },
                         success: function (result) {
@@ -345,6 +351,7 @@
                             greetingRecordedPlayPauseButton.attr('disabled', true);
                             greetingRecordIsDone.addClass('d-none');
                             greetingRecordInProgress.addClass('d-none');
+                            greetingRecorderSaveButton.attr('disabled', true);
                             $.NotificationApp.send("Success", result.message, "top-right", "#10c469", "success");
                             $('#{{$id}}').append(new Option(result.name, result.filename, true, true)).trigger('change');
                             loadAllRecordings(greetingManageModalBody, result.id);
