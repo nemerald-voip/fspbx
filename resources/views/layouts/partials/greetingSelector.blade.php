@@ -477,7 +477,7 @@
                         tb.append('<tbody>')
                         $.each(response.collection, function(i, item) {
                             let tr = $('<tr>');
-                            if (blinkId === item.id) {
+                            if(blinkId === item.id) {
                                 tr.addClass('blink-it');
                             }
                             tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td>
