@@ -21,7 +21,7 @@
             @endif
         </select>
     </div>
-    <button disabled type="button" class="btn btn-light me-1 @if($value == null) d-none @endif"
+    <button type="button" class="btn btn-light me-1 @if($value == null) d-none @endif"
             id="{{$id}}_play_pause_button" title="Play/Pause"><i class="uil uil-play"></i></button>
     <button type="button" class="btn btn-light" id="{{$id}}_manage_greeting_button" title="Manage greetings"><i
                 class="uil uil-cog"></i></button>
