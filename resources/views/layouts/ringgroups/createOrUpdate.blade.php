@@ -923,6 +923,7 @@
                     }
                 });
             })
+            $('[data-bs-toggle="tooltip"]').tooltip();
         }
 
         function getDestinationByCategory(category, ringGroupTimeoutAction, ringGroupTimeoutActionWrapper) {
