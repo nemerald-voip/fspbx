@@ -174,6 +174,11 @@ class UpdateRingGroupRequest extends FormRequest
                 'ring_group_greeting' => null
             ]);
         }
+        if($this->get('ring_group_missed_call_category') == 'disabled') {
+            $this->merge([
+                'ring_group_missed_call_data' => null
+            ]);
+        }
         if($this->get('timeout_category') == 'disabled') {
             $this->merge([
                 'ring_group_timeout_data' => null
