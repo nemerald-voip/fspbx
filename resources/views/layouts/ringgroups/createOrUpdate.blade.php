@@ -334,7 +334,7 @@
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_cid_name_prefix"
-                                                                       class="form-label">CID Name Prefix</label>
+                                                                       class="form-label">Caller ID Name Prefix</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_cid_name_prefix"
                                                                        name="ring_group_cid_name_prefix"
@@ -347,7 +347,7 @@
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_cid_number_prefix"
-                                                                       class="form-label">CID Number Prefix</label>
+                                                                       class="form-label">Caller ID Number Prefix</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_cid_number_prefix"
                                                                        name="ring_group_cid_number_prefix"
