@@ -560,6 +560,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['enabled']) && $attributes['enabled'] == "on") $attributes['enabled'] = "true";
         $attributes['voicemail_enabled'] = "true";
         $attributes['voicemail_transcription_enabled'] = "true";
+        $attributes['voicemail_file'] = "attach";
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";
         $attributes['voicemail_id'] = $attributes['extension'];
@@ -899,8 +900,7 @@ class ExtensionsController extends Controller
             ->with('recordings', $recordings)
             ->with('devices', $devices)
             ->with('vendors', $vendors)
-            ->with('profiles', $profiles)
-            ->with('national_phone_number_format', PhoneNumberFormat::NATIONAL);
+            ->with('profiles', $profiles);
     }
 
     /**

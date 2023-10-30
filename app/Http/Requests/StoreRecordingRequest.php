@@ -29,12 +29,13 @@ class StoreRecordingRequest extends FormRequest
                 'string'
             ],
             'greeting_filename' => [
-                'required_if:greeting_recorded_file,==,nullable',
+                'required_without:greeting_recorded_file',
                 'nullable',
                 'max:10000',
                 'mimes:wav'
             ],
             'greeting_recorded_file' => [
+                'required_without:greeting_filename',
                 'nullable',
                 'string'
             ]
@@ -45,7 +46,8 @@ class StoreRecordingRequest extends FormRequest
     {
         return [
             'greeting_name.required' => 'Greeting name is required',
-            'greeting_filename.required' => 'Filename is required',
+            'greeting_filename.required_without' => 'Filename is required',
+            'greeting_recorded_file.required_without' => 'Recording is required',
             'greeting_filename.mimes' => 'Only wav files allowed'
         ];
     }
@@ -57,5 +59,9 @@ class StoreRecordingRequest extends FormRequest
                 'greeting_filename' => null
             ]);
         };
+        $this->merge([
+            'greeting_name' => 'Recording '.date('d/m/y H:i A'),
+            'greeting_description' => null
+        ]);
     }
 }

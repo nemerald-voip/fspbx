@@ -505,10 +505,10 @@
                                                             <div class="mb-3">
                                                                 <label class="form-label">Notification type</label>
                                                                 <select data-toggle="select2" title="Notification Type" name="voicemail_file">
-                                                                    <option value="attach" @if (isset($extension->voicemail) && $extension->voicemail->voicemail_file == "attach") selected @endif>
+                                                                    <option value="attach" @if (isset($voicemail) && $voicemail->voicemail_file == "attach") selected @endif>
                                                                         Email with audio file attachment
                                                                     </option>
-                                                                    <option value="link" @if (isset($extension->voicemail) && $extension->voicemail->voicemail_file == "link") selected @endif>
+                                                                    <option value="link" @if (isset($voicemail) && $voicemail->exists && ($voicemail->voicemail_file == "link" || $voicemail->voicemail_file == "")) selected @endif>
                                                                         Email with download link
                                                                     </option>
                                                                 </select>

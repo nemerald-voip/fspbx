@@ -23,6 +23,12 @@ class CdrTable extends DataTableComponent
 {
     // protected $model = CDR::class;
     public $period;
+    public $callCategories = [
+        1 => 'Answered',
+        2 => 'Missed',
+        3 => 'Abandoned',
+        4 => 'Agent Missed',
+    ];
 
     // To show/hide the modal
     public bool $modalIsOpen = false;
@@ -41,7 +47,7 @@ class CdrTable extends DataTableComponent
 
         $this->setConfigurableAreas([
             'after-toolbar' => [
-                'layouts.cdrs.call-category-filter'
+                'layouts.cdrs.filters'
             ],
         ]);
 
@@ -276,12 +282,7 @@ class CdrTable extends DataTableComponent
                 ->hiddenFromMenus(),
 
             MultiSelectFilter::make('Call Category')
-                ->options([
-                    1 => 'Answered',
-                    2 => 'Missed',
-                    3 => 'Abandoned',
-                    4 => 'Agent Missed',
-                ])
+                ->options($this->callCategories)
                 ->filter(function (Builder $builder, array $values) {
                     $builder->where(function ($query) use ($values) {
                         foreach ($values as $value) {

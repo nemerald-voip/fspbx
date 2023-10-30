@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class StoreRecordingBlobRequest extends FormRequest
+class UpdateRecordingRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,9 +20,13 @@ class StoreRecordingBlobRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'recorded_file' => [
+            'greeting_name' => [
                 'required',
-                //s'mimes:webm,mp4a'
+                'string',
+            ],
+            'greeting_description' => [
+                'nullable',
+                'string'
             ]
         ];
     }
@@ -30,8 +34,7 @@ class StoreRecordingBlobRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recorded_file.required' => 'File is required',
-            'recorded_file.mimes' => 'Only wav files allowed'
+            'greeting_name.required' => 'Greeting name is required'
         ];
     }
 }

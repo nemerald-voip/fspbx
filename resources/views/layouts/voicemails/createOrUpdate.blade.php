@@ -108,8 +108,7 @@
                                                         <option value="attach" @if (isset($voicemail) && $voicemail->voicemail_file == "attach") selected @endif>
                                                             Email with audio file attachment
                                                         </option>
-                                                        <option value="link" @if (isset($voicemail) && $voicemail->voicemail_file == "link") selected @endif
-                                                            @if ($voicemail->voicemail_file == "link") selected @endif>
+                                                        <option value="link" @if (isset($voicemail) && $voicemail->exists && ($voicemail->voicemail_file == "link" || $voicemail->voicemail_file == "")) selected @endif>
                                                             Email with download link
                                                         </option>
                                                     </select>

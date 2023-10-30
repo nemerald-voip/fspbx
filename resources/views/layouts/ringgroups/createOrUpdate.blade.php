@@ -152,7 +152,9 @@
                                                                 @include('layouts.partials.greetingSelector', [
                                                                     'id' => 'ring_group_greeting',
                                                                     'allRecordings' => $recordings,
-                                                                    'value' => $ringGroup->ring_group_greeting ?? null
+                                                                    'value' => $ringGroup->ring_group_greeting ?? null,
+                                                                    'entity' => 'ringGroup',
+                                                                    'entityId' => $ringGroup->ring_group_uuid,
                                                                 ])
                                                             </div>
                                                         </div>
@@ -332,7 +334,7 @@
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_cid_name_prefix"
-                                                                       class="form-label">CID Name Prefix</label>
+                                                                       class="form-label">Caller ID Name Prefix</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_cid_name_prefix"
                                                                        name="ring_group_cid_name_prefix"
@@ -345,7 +347,7 @@
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_cid_number_prefix"
-                                                                       class="form-label">CID Number Prefix</label>
+                                                                       class="form-label">Caller ID Number Prefix</label>
                                                                 <input class="form-control" type="text"
                                                                        placeholder="" id="ring_group_cid_number_prefix"
                                                                        name="ring_group_cid_number_prefix"
@@ -576,26 +578,26 @@
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-8">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_missed_call_data"
                                                                        class="form-label">Missed Call</label>
                                                                 <div class="row">
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-3">
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
                                                                                 id="ring_group_missed_call_category"
                                                                                 name="ring_group_missed_call_category">
-                                                                            <option value="disabled" selected>
-                                                                                Disabled
-                                                                            </option>
-                                                                            <option value="email">
-                                                                                Email
-                                                                            </option>
+                                                                            @foreach (['disabled','email'] as $missedCallCategory)
+                                                                                <option value="{{$missedCallCategory}}"
+                                                                                @if($ringGroup->ring_group_missed_call_app == $missedCallCategory) selected="selected" @endif>
+                                                                                    {{ucfirst($missedCallCategory)}}
+                                                                                </option>
+                                                                            @endforeach
                                                                         </select>
                                                                     </div>
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-9">
                                                                         <input class="form-control" type="text"
                                                                                placeholder=""
                                                                                id="ring_group_missed_call_data"
@@ -921,6 +923,7 @@
                     }
                 });
             })
+            $('[data-bs-toggle="tooltip"]').tooltip();
         }
 
         function getDestinationByCategory(category, ringGroupTimeoutAction, ringGroupTimeoutActionWrapper) {
