@@ -52,11 +52,11 @@
                             <label for="{{$id}}_filename_record" class="form-label">Or Record a New One</label>
                             <div class="mb-1">
                                 <button type="button" id="{{$id}}_record_button"
-                                        class="btn btn-light p-1 px-2 me-1 fs-4" title="Start/Stop recording"><i
-                                            class="mdi mdi-record"></i></button>
+                                        class="btn btn-light p-1 px-2 me-1 fs-4"
+                                        title="Start/Stop recording"><i class="mdi mdi-record"></i></button>
                                 <button disabled type="button" id="{{$id}}_recorded_play_pause_button"
-                                        class="btn btn-light p-1 px-2 me-1 fs-4" title="Play/Pause recorded audio"><i
-                                            class="mdi mdi-play"></i></button>
+                                        class="btn btn-light p-1 px-2 me-1 fs-4"
+                                        title="Play/Pause recorded audio"><i class="mdi mdi-play"></i></button>
                             </div>
                             <div class="text-danger error_message {{$id}}_greeting_recorded_file_err"></div>
                             <div id="{{$id}}_record_in_progress_status" class="d-none recording-in-progress">
@@ -443,7 +443,7 @@
                         tb.append('<tbody>')
                         $.each(response.collection, function (i, item) {
                             let tr = $('<tr>');
-                            if(blinkId == item.id) {
+                            if(blinkId === item.id) {
                                 tr.addClass('blink-it');
                             }
                             tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td>
@@ -460,6 +460,7 @@
                         if(blinkId != null) {
                             $('#id' +blinkId)[0].scrollIntoView();
                         }
+                        $('[data-bs-toggle="tooltip"]').tooltip();
                     }
                 });
             }
