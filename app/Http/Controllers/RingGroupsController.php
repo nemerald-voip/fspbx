@@ -151,6 +151,7 @@ class RingGroupsController extends Controller
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
             'ring_group_context' => $attributes['ring_group_context']
         ]);
@@ -295,6 +296,7 @@ class RingGroupsController extends Controller
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
             'ring_group_context' => $attributes['ring_group_context']
         ]);

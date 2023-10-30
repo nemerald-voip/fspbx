@@ -578,26 +578,26 @@
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-8">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_missed_call_data"
                                                                        class="form-label">Missed Call</label>
                                                                 <div class="row">
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-3">
                                                                         <select class="select2 form-control"
                                                                                 data-toggle="select2"
                                                                                 data-placeholder="Choose ..."
                                                                                 id="ring_group_missed_call_category"
                                                                                 name="ring_group_missed_call_category">
-                                                                            <option value="disabled" selected>
-                                                                                Disabled
-                                                                            </option>
-                                                                            <option value="email">
-                                                                                Email
-                                                                            </option>
+                                                                            @foreach (['disabled','email'] as $missedCallCategory)
+                                                                                <option value="{{$missedCallCategory}}"
+                                                                                @if($ringGroup->ring_group_missed_call_app == $missedCallCategory) selected="selected" @endif>
+                                                                                    {{ucfirst($missedCallCategory)}}
+                                                                                </option>
+                                                                            @endforeach
                                                                         </select>
                                                                     </div>
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-9">
                                                                         <input class="form-control" type="text"
                                                                                placeholder=""
                                                                                id="ring_group_missed_call_data"
