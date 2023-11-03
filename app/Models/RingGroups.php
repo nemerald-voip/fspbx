@@ -44,6 +44,7 @@ class RingGroups extends Model
         'ring_group_ringback',
         'ring_group_call_forward_enabled',
         'ring_group_follow_me_enabled',
+        'ring_group_missed_call_app',
         'ring_group_missed_call_data',
         'ring_group_forward_toll_allow',
         'ring_group_forward_context'

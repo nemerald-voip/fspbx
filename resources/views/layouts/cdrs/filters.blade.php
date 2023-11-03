@@ -29,17 +29,15 @@
                                 <input type="text" class="form-control" id="searchInput" placeholder="Search...">
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="allCheck">
-                                <label class="form-check-label" for="allCheck">All</label>
+                                <input type="checkbox" id="table-filter-call_category-select-all" wire:input="selectAllFilterOptions('call_category')" class="form-check-input" checked="">
+                                <label class="form-check-label" for="table-filter-call_category-select-all">All</label>
                             </div>
+                            @foreach ($component->callCategories as $category)
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="personalCheck">
-                                <label class="form-check-label" for="personalCheck">Personal</label>
+                                <input type="checkbox" class="form-check-input" id="check{{ ucfirst(Str::camel($category)) }}">
+                                <label class="form-check-label" for="check{{ ucfirst(Str::camel($category)) }}">{{ $category }}</label>
                             </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="professionalCheck">
-                                <label class="form-check-label" for="professionalCheck">Professional</label>
-                            </div>
+                            @endforeach
         
         
                             <div class="row mt-2">

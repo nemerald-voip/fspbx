@@ -24,7 +24,7 @@ class CheckUserEnabled
     
                 $request->session()->regenerateToken();
     
-                return redirect()->route('login')->with('error', 'Your cccount is suspended, please contact administrator.');
+                return redirect()->route('login')->with('error', 'Your account has been suspended, please contact your system administrator.');
     
         }
     

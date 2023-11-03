@@ -89,13 +89,13 @@ class RingGroupsController extends Controller
 
         $timeoutDestinationsByCategory = [];
         foreach ([
-                     'ringgroup',
-                     'dialplans',
-                     'extensions',
-                     'timeconditions',
-                     'voicemails',
-                     'others'
-                 ] as $category) {
+            'ringgroup',
+            'dialplans',
+            'extensions',
+            'timeconditions',
+            'voicemails',
+            'others'
+        ] as $category) {
             $timeoutDestinationsByCategory[$category] = getDestinationByCategory($category)['list'];
         }
 
@@ -129,8 +129,8 @@ class RingGroupsController extends Controller
             }
         }
 
-        $ringGroups = new RingGroups();
-        $ringGroups->fill([
+        $ringGroup = new RingGroups();
+        $ringGroup->fill([
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
@@ -151,11 +151,12 @@ class RingGroupsController extends Controller
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
             'ring_group_context' => $attributes['ring_group_context']
         ]);
 
-        $ringGroups->save();
+        $ringGroup->save();
 
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
@@ -177,16 +178,59 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_prompt = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                $ringGroups->groupDestinations()->save($groupsDestinations);
+                $ringGroup->groupDestinations()->save($groupsDestinations);
                 $i++;
             }
         }
 
+        // Generate Dialplan XML file
+        $xml = $this->generateDialPlanXML($ringGroup);
+
         return response()->json([
             'status' => 'success',
-            'ring_group' => $ringGroups,
+            'ring_group' => $ringGroup,
             'message' => 'RingGroup has been created.'
         ]);
+    }
+
+    public function generateDialPlanXML($ringGroup)
+    {
+        // Data to pass to the Blade template
+        $data = [
+            'ring_group' => $ringGroup,
+        ];
+
+        // Render the Blade template and get the XML content as a string
+        $xml = view('layouts.xml.ring-group-dial-plan-template', $data)->render();
+
+        $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
+
+        if (!$dialPlan) {
+            $dialPlan = new Dialplans();
+            $dialPlan->dialplan_uuid = $ringGroup->dialplan_uuid;
+            $dialPlan->app_uuid = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
+            $dialPlan->domain_uuid = Session::get('domain_uuid');
+            $dialPlan->dialplan_name = $ringGroup->ring_group_name;
+            $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
+            if (isset($ringGroup->ring_group_context)) {
+				$dialPlan->dialplan_context = $ringGroup->ring_group_context;
+			}
+            $dialPlan->dialplan_continue = 'false';
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_order = 101;
+            $dialPlan->dialplan_enabled = $ringGroup->ring_group_enabled;
+            $dialPlan->dialplan_description = $ringGroup->queue_description;
+            $dialPlan->insert_date = date('Y-m-d H:i:s');
+            $dialPlan->insert_user = Session::get('user_uuid');
+        } else {
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_name = $ringGroup->ring_group_name;
+            $dialPlan->dialplan_description = $ringGroup->queue_description;
+            $dialPlan->update_date = date('Y-m-d H:i:s');
+            $dialPlan->update_user = Session::get('user_uuid');
+        }
+
+        $dialPlan->save();
     }
 
     /**
@@ -226,14 +270,14 @@ class RingGroupsController extends Controller
         $destinationsByCategory = 'disabled';
         $timeoutDestinationsByCategory = [];
         foreach ([
-                     'ringgroup',
-                     'extensions',
-                     'timeconditions',
-                     'voicemails',
-                     'others'
-                 ] as $category) {
+            'ringgroup',
+            'extensions',
+            'timeconditions',
+            'voicemails',
+            'others'
+        ] as $category) {
             $c = getDestinationByCategory($category, $ringGroup->ring_group_timeout_data);
-            if($c['selectedCategory']) {
+            if ($c['selectedCategory']) {
                 $destinationsByCategory = $c['selectedCategory'];
             }
             $timeoutDestinationsByCategory[$category] = $c['list'];
@@ -295,6 +339,7 @@ class RingGroupsController extends Controller
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
             'ring_group_context' => $attributes['ring_group_context']
         ]);
@@ -327,6 +372,8 @@ class RingGroupsController extends Controller
                 $i++;
             }
         }
+
+        $this->generateDialPlanXML($ringGroup);
 
         return response()->json([
             'status' => 'success',
