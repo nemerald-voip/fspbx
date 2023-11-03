@@ -9,11 +9,7 @@
 <div id="addDestinationBarMultiple" class="my-1">
     <a href="javascript:addDestinationMultipleModalShow();"
        class="btn btn-success">
-        <i class="mdi mdi-plus"
-           data-bs-container="#tooltip-container-actions"
-           data-bs-toggle="tooltip"
-           data-bs-placement="bottom"
-           title="{{ $label }}"></i> {{ $label }}
+        <i class="mdi mdi-plus"></i> {{ $label }}
     </a>
 </div>
 <div class="modal fade" id="addDestinationMultipleModal" role="dialog"

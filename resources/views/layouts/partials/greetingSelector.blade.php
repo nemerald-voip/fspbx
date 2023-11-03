@@ -480,14 +480,14 @@
                             if(blinkId === item.id) {
                                 tr.addClass('blink-it');
                             }
-                            tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td>
+                            tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td><div class="tooltip-container-actions">
 <a href="javascript:playCurrentRecording('${item.id}', '${item.filename}')" class="action-icon">
-<i class="uil uil-play" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
+<i class="uil uil-play" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
 </a>
-<a href="javascript:useRecordingAction('{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}','${item.id}','{{ $entity }}','{{ $entityId }}');" class="action-icon"><i class="mdi mdi-plus-box-outline" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use this greeting"></i></a>
-<a href="javascript:editRecordingAction('{{ route('recordings.show', ':id') }}','${item.id}');" class="action-icon"><i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>
-<a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id') }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
-</td>`)
+<a href="javascript:useRecordingAction('{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}','${item.id}','{{ $entity }}','{{ $entityId }}');" class="action-icon"><i class="mdi mdi-plus-box-outline" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use this greeting"></i></a>
+<a href="javascript:editRecordingAction('{{ route('recordings.show', ':id') }}','${item.id}');" class="action-icon"><i class="mdi mdi-lead-pencil" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>
+<a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id') }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
+</div></td>`)
                             tb.append(tr)
                         })
                         tgt.html(tb);

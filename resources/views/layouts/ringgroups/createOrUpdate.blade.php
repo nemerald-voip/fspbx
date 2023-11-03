@@ -294,11 +294,7 @@
                                                              @if($ringGroup->getGroupDestinations()->count() >= 30) style="display: none;" @endif>
                                                             <a href="javascript:addDestinationAction(this);"
                                                                class="btn btn-success">
-                                                                <i class="mdi mdi-plus"
-                                                                   data-bs-container="#tooltip-container-actions"
-                                                                   data-bs-toggle="tooltip"
-                                                                   data-bs-placement="bottom"
-                                                                   title="Add destination"></i> Add destination
+                                                                <i class="mdi mdi-plus"></i> Add destination
                                                             </a>
                                                         </div>
                                                         @if($ringGroup->getGroupDestinations()->count() < 30)
@@ -988,8 +984,8 @@
         <input type="hidden" name="ring_group_destinations[newrow__NEWROWID__][prompt]" value="false">
         <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][prompt]" data-option="ring_group_destinations_enabled" class="forward_checkbox" data-switch="primary"/>
         <label for="destination_prompt___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
-        </td><td><div id="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
-        <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+        </td><td><div class="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
+        <i class="mdi mdi-delete" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
         </a></div></td></tr>`;
             newRow = newRow.replaceAll('__NEWROWID__', Math.random().toString(16).slice(2))
 
