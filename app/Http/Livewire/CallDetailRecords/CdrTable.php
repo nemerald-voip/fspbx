@@ -310,6 +310,11 @@ class CdrTable extends DataTableComponent
                                             $subQuery1->where('hangup_cause', '!=', 'UNALLOCATED_NUMBER')
                                                 ->orWhere('hangup_cause_q850', '!=', 1)
                                                 ->orWhere('sip_hangup_disposition', '!=', 'recv_refuse');
+                                        })
+                                        ->where(function ($subQuery1) {
+                                            $subQuery1->where('hangup_cause', '!=', 'USER_BUSY')
+                                                ->orWhere('hangup_cause_q850', '!=', 17)
+                                                ->orWhere('sip_hangup_disposition', '!=', 'recv_refuse');
                                         });
                                 });
                             }
