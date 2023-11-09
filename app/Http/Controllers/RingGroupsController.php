@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateRingGroupRequest;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\FollowMeDestinations;
+use App\Models\FreeswitchSettings;
 use App\Models\IvrMenus;
 use App\Models\MusicOnHold;
 use App\Models\Recordings;
@@ -231,6 +232,14 @@ class RingGroupsController extends Controller
         }
 
         $dialPlan->save();
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+        event_socket_request($fp, 'api reloadxml');
     }
 
     /**
