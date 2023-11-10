@@ -1,7 +1,9 @@
 @if ($useScriptTag ?? true)
 <script>
 @endif
+    @if ($useDocumentReadyTag ?? true)
     $(document).ready(function() {
+    @endif
         const recordWrapper = $('#{{ $id }}_record_wrapper');
         const greetingPlayPauseButton = $('#{{ $id }}_play_pause_button');
         const greetingManageButton = $('#{{ $id }}_manage_greeting_button');
@@ -16,10 +18,10 @@
         const greetingRecordedAudioFileStored = $('#{{ $id }}_recorded_audio_file_stored');
         const greetingEditRecordingModal = $('#{{ $id }}_editRecordingModal');
         const greetingRecorderSaveButton = $('#{{ $id }}_save_recording_btn');
-        const greetingPlayCurrentRecording = $('.{{$id}}_play_current_recording_action');
-        const greetingUseRecordingAction = $('.{{$id}}_use_recording_action');
-        const greetingEditRecordingAction = $('.{{$id}}_edit_recording_action');
-        const greetingConfirmDeleteRecordingAction = $('.{{$id}}_confirm_delete_recording_action');
+        //const greetingPlayCurrentRecording = $('.{{$id}}_play_current_recording_action');
+        //const greetingUseRecordingAction = $('.{{$id}}_use_recording_action');
+        //const greetingEditRecordingAction = $('.{{$id}}_edit_recording_action');
+        //const greetingConfirmDeleteRecordingAction = $('.{{$id}}_confirm_delete_recording_action');
         const greetingUploadButton = $('#{{ $id }}_filename');
         let gumStream;
         let mediaRecorder;
@@ -307,23 +309,29 @@
             });
         })
 
-        greetingPlayCurrentRecording.on('click', function(e) {
+        greetingManageModalBody.on('click', '.{{$id}}_play_current_recording_action', function(e) {
             e.preventDefault();
-            playCurrentRecording($(this).data('id'), $(this).data('filename'));
+            let a = $(e.target).closest('a')
+            playCurrentRecording(a.data('id'), a.data('filename'));
         })
-        greetingUseRecordingAction.on('click', function(e) {
+        greetingManageModalBody.on('click', '.{{$id}}_use_recording_action', function(e) {
             e.preventDefault();
-            useRecordingAction($(this).data('id'), $(this).data('filename'), $(this).data('entity'), $(this).data('entityId'));
+            let a = $(e.target).closest('a')
+            useRecordingAction(a.data('id'), a.data('filename'), a.data('entity'), a.data('entityId'));
         })
-        greetingEditRecordingAction.on('click', function(e) {
+        greetingManageModalBody.on('click', '.{{$id}}_edit_recording_action', function(e) {
             e.preventDefault();
-            editRecordingAction($(this).data('route'), $(this).data('id'));
+            let a = $(e.target).closest('a')
+            editRecordingAction(a.data('route'), a.data('id'));
         })
-        greetingConfirmDeleteRecordingAction.on('click', function(e) {
+        greetingManageModalBody.on('click', '.{{$id}}_confirm_delete_recording_action', function(e) {
             e.preventDefault();
-            confirmDeleteRecordingAction($(this).data('id'));
+            let a = $(e.target).closest('a')
+            confirmDeleteRecordingAction(a.data('id'));
         })
+    @if ($useDocumentReadyTag ?? true)
     });
+    @endif
 
     function loadAllRecordings(tgt, blinkId = null) {
         tgt.html($('<div class="loading loading-inline"></div>'));
