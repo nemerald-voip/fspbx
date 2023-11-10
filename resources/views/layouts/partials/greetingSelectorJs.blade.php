@@ -16,6 +16,10 @@
         const greetingRecordedAudioFileStored = $('#{{ $id }}_recorded_audio_file_stored');
         const greetingEditRecordingModal = $('#{{ $id }}_editRecordingModal');
         const greetingRecorderSaveButton = $('#{{ $id }}_save_recording_btn');
+        const greetingPlayCurrentRecording = $('.{{$id}}_play_current_recording_action');
+        const greetingUseRecordingAction = $('.{{$id}}_use_recording_action');
+        const greetingEditRecordingAction = $('.{{$id}}_edit_recording_action');
+        const greetingConfirmDeleteRecordingAction = $('.{{$id}}_confirm_delete_recording_action');
         const greetingUploadButton = $('#{{ $id }}_filename');
         let gumStream;
         let mediaRecorder;
@@ -302,6 +306,23 @@
                 }
             });
         })
+
+        greetingPlayCurrentRecording.on('click', function(e) {
+            e.preventDefault();
+            playCurrentRecording($(this).data('id'), $(this).data('filename'));
+        })
+        greetingUseRecordingAction.on('click', function(e) {
+            e.preventDefault();
+            useRecordingAction($(this).data('id'), $(this).data('filename'), $(this).data('entity'), $(this).data('entityId'));
+        })
+        greetingEditRecordingAction.on('click', function(e) {
+            e.preventDefault();
+            editRecordingAction($(this).data('route'), $(this).data('id'));
+        })
+        greetingConfirmDeleteRecordingAction.on('click', function(e) {
+            e.preventDefault();
+            confirmDeleteRecordingAction($(this).data('id'));
+        })
     });
 
     function loadAllRecordings(tgt, blinkId = null) {
@@ -320,14 +341,12 @@
                     if(blinkId === item.id) {
                         tr.addClass('blink-it');
                     }
-                    tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td><div class="tooltip-container-actions">
-<a href="javascript:playCurrentRecording('${item.id}', '${item.filename}')" class="action-icon">
-<i class="uil uil-play" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i>
-</a>
-<a href="javascript:useRecordingAction('{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}','${item.id}','{{ $entity }}','{{ $entityId }}');" class="action-icon"><i class="mdi mdi-plus-box-outline" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use this greeting"></i></a>
-<a href="javascript:editRecordingAction('{{ route('recordings.show', ':id') }}','${item.id}');" class="action-icon"><i class="mdi mdi-lead-pencil" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>
-<a href="javascript:confirmDeleteRecordingAction('{{ route('recordings.destroy', ':id') }}','${item.id}');" class="action-icon"><i class="mdi mdi-delete" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>
-</div></td>`)
+                    let trAction = '';
+                    trAction+= `<a class="action-icon {{$id}}_play_current_recording_action" href="#" data-id="${item.id}" data-filename="${item.filename}"><i class="uil uil-play" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i></a>`
+                    trAction+= `<a class="action-icon {{$id}}_use_recording_action" href="#" data-route="{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}" data-id="${item.id}" data-filename="${item.filename}" data-entity="{{ $entity }}" data-entityId="{{ $entityId }}"><i class="mdi mdi-plus-box-outline" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use it"></i></a>`
+                    trAction+= `<a class="action-icon {{$id}}_edit_recording_action" href="#" data-route="{{ route('recordings.show', ':id') }}" data-id="${item.id}"><i class="mdi mdi-lead-pencil" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>`
+                    trAction+= `<a class="action-icon {{$id}}_confirm_delete_recording_action" href="#" data-route="{{ route('recordings.destroy', ':id') }}" data-id="${item.id}"><i class="mdi mdi-delete" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>`
+                    tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td><div class="tooltip-container-actions">${trAction}</div></td>`)
                     tb.append(tr)
                 })
                 tgt.html(tb);
