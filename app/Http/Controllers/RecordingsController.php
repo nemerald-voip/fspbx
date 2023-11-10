@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRecordingBlobRequest;
 use App\Http\Requests\StoreRecordingRequest;
 use App\Http\Requests\UpdateRecordingRequest;
+use App\Models\CallCenterQueues;
 use App\Models\Recordings;
 use App\Models\RingGroups;
 use Illuminate\Support\Facades\Response;
@@ -152,6 +153,12 @@ class RecordingsController extends Controller
                 /** @var RingGroups $entity */
                 $entity = RingGroups::findOrFail($entityId);
                 $entity->ring_group_greeting = $recording->recording_filename;
+                $entity->save();
+                break;
+            case 'contactCenter';
+                /** @var CallCenterQueues $entity */
+                $entity = CallCenterQueues::findOrFail($entityId);
+                $entity->queue_greeting = $recording->recording_filename;
                 $entity->save();
                 break;
             default:
