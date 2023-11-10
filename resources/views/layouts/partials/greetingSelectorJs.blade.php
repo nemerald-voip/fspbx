@@ -1,4 +1,6 @@
+@if ($useScriptTag ?? true)
 <script>
+@endif
     $(document).ready(function() {
         const recordWrapper = $('#{{ $id }}_record_wrapper');
         const greetingPlayPauseButton = $('#{{ $id }}_play_pause_button');
@@ -434,4 +436,6 @@
             printErrorMsg(error);
         });
     }
+@if ($useScriptTag ?? true)
 </script>
+@endif

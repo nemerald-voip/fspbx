@@ -162,6 +162,8 @@
     @push('scripts')
         @include('layouts.partials.greetingSelectorJs', [
             'id' => $id,
+            'entity' => $entity,
+            'entityId' => $entityId
         ])
     @endpush
 @endif
