@@ -2,24 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\GetDestinationByCategoryRequest;
-use App\Http\Requests\StoreRingGroupRequest;
-use App\Http\Requests\UpdateRingGroupRequest;
+use App\Models\IvrMenus;
 use App\Models\Dialplans;
 use App\Models\Extensions;
-use App\Models\FollowMeDestinations;
-use App\Models\FreeswitchSettings;
-use App\Models\IvrMenus;
-use App\Models\MusicOnHold;
 use App\Models\Recordings;
 use App\Models\RingGroups;
-use App\Models\RingGroupsDestinations;
 use App\Models\Voicemails;
+use App\Models\FusionCache;
+use App\Models\MusicOnHold;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Models\FreeswitchSettings;
+use App\Models\FollowMeDestinations;
+use App\Models\RingGroupsDestinations;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use App\Http\Requests\StoreRingGroupRequest;
+use App\Http\Requests\UpdateRingGroupRequest;
+use App\Http\Requests\GetDestinationByCategoryRequest;
 
 class RingGroupsController extends Controller
 {
@@ -154,7 +156,8 @@ class RingGroupsController extends Controller
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
-            'ring_group_context' => $attributes['ring_group_context']
+            'ring_group_context' => $attributes['ring_group_context'],
+            'dialplan_uuid' => Str::uuid(),
         ]);
 
         $ringGroup->save();
@@ -214,8 +217,8 @@ class RingGroupsController extends Controller
             $dialPlan->dialplan_name = $ringGroup->ring_group_name;
             $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
             if (isset($ringGroup->ring_group_context)) {
-				$dialPlan->dialplan_context = $ringGroup->ring_group_context;
-			}
+                $dialPlan->dialplan_context = $ringGroup->ring_group_context;
+            }
             $dialPlan->dialplan_continue = 'false';
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_order = 101;
@@ -239,7 +242,10 @@ class RingGroupsController extends Controller
             $freeswitchSettings['event_socket_port'],
             $freeswitchSettings['event_socket_password']
         );
-        event_socket_request($fp, 'api reloadxml');
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
     }
 
     /**
@@ -382,7 +388,19 @@ class RingGroupsController extends Controller
             }
         }
 
+        logger("generating dialplan");
         $this->generateDialPlanXML($ringGroup);
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
 
         return response()->json([
             'status' => 'success',
@@ -404,17 +422,34 @@ class RingGroupsController extends Controller
         }
 
         $deleted = $ringGroup->delete();
+        $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
+        $dialPlan->delete();
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
 
         if ($deleted) {
             return response()->json([
-                'status' => 'success',
-                'id' => $ringGroup->ring_group_uuid,
-                'message' => 'Selected Ring Group have been deleted'
+                'status' => 200,
+                'success' => [
+                    'message' => 'Selected Ring Groups have been deleted'
+                ]
             ]);
         } else {
             return response()->json([
                 'error' => 401,
-                'message' => 'There was an error deleting this Ring Group'
+                'error' => [
+                    'message' => "There was an error deleting this Ring Group",
+                ],
             ]);
         }
     }

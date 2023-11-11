@@ -47,7 +47,12 @@ class RingGroups extends Model
         'ring_group_missed_call_app',
         'ring_group_missed_call_data',
         'ring_group_forward_toll_allow',
-        'ring_group_forward_context'
+        'ring_group_forward_context',
+        'dialplan_uuid',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user'
     ];
 
     public function __construct(array $attributes = [])
