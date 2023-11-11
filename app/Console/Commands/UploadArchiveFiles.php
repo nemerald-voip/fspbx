@@ -177,7 +177,8 @@ class UploadArchiveFiles extends Command
         ])
 
         ->where ('record_name','<>','')
-        ->whereDate('start_stamp', '<', Carbon::yesterday()->toDateTimeString())
+        ->whereDate('start_stamp', '<=', Carbon::today()->toDateTimeString())
+        ->where('hangup_cause', '<>', 'LOSE_RACE')
         ->take (2000)
         // ->toSql();
         ->get();
