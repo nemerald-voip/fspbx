@@ -140,7 +140,7 @@
                                                                        placeholder="xxx" id="ring_group_extension"
                                                                        name="ring_group_extension"
                                                                        value="{{ $ringGroup->ring_group_extension }}"
-                                                                       @if ($ringGroup->exists) readonly @endif />
+                                                                       />
                                                                 <div id="ring_group_extension_err"
                                                                      class="text-danger error_message"></div>
                                                             </div>
