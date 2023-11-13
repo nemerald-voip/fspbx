@@ -163,7 +163,8 @@
         @include('layouts.partials.greetingSelectorJs', [
             'id' => $id,
             'entity' => $entity,
-            'entityid' => $entityid
+            'entityid' => $entityid,
+            'showUseRecordingAction' => $showUseRecordingAction
         ])
     @endpush
 @endif

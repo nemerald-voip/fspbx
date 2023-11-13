@@ -155,6 +155,7 @@
                                                                     'value' => $ringGroup->ring_group_greeting ?? null,
                                                                     'entity' => 'ringGroup',
                                                                     'entityid' => $ringGroup->ring_group_uuid,
+                                                                    'showUseRecordingAction' => (bool)$ringGroup->ring_group_uuid
                                                                 ])
                                                             </div>
                                                         </div>
