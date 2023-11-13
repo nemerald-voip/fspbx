@@ -18,10 +18,6 @@
         const greetingRecordedAudioFileStored = $('#{{ $id }}_recorded_audio_file_stored');
         const greetingEditRecordingModal = $('#{{ $id }}_editRecordingModal');
         const greetingRecorderSaveButton = $('#{{ $id }}_save_recording_btn');
-        //const greetingPlayCurrentRecording = $('.{{$id}}_play_current_recording_action');
-        //const greetingUseRecordingAction = $('.{{$id}}_use_recording_action');
-        //const greetingEditRecordingAction = $('.{{$id}}_edit_recording_action');
-        //const greetingConfirmDeleteRecordingAction = $('.{{$id}}_confirm_delete_recording_action');
         const greetingUploadButton = $('#{{ $id }}_filename');
         let gumStream;
         let mediaRecorder;
