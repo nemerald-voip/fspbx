@@ -154,7 +154,7 @@
                                                                     'allRecordings' => $recordings,
                                                                     'value' => $ringGroup->ring_group_greeting ?? null,
                                                                     'entity' => 'ringGroup',
-                                                                    'entityId' => $ringGroup->ring_group_uuid,
+                                                                    'entityid' => $ringGroup->ring_group_uuid,
                                                                 ])
                                                             </div>
                                                         </div>

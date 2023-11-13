@@ -143,21 +143,21 @@ class RecordingsController extends Controller
      *
      * @param  Recordings  $recording
      * @param $entity
-     * @param $entityId
+     * @param $entityid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function use(Recordings $recording, $entity, $entityId)
+    public function use(Recordings $recording, $entity, $entityid)
     {
         switch ($entity) {
             case 'ringGroup';
                 /** @var RingGroups $entity */
-                $entity = RingGroups::findOrFail($entityId);
+                $entity = RingGroups::findOrFail($entityid);
                 $entity->ring_group_greeting = $recording->recording_filename;
                 $entity->save();
                 break;
             case 'contactCenter';
                 /** @var CallCenterQueues $entity */
-                $entity = CallCenterQueues::findOrFail($entityId);
+                $entity = CallCenterQueues::findOrFail($entityid);
                 $entity->queue_greeting = $recording->recording_filename;
                 $entity->save();
                 break;

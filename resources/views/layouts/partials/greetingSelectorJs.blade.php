@@ -317,7 +317,7 @@
         greetingManageModalBody.on('click', '.{{$id}}_use_recording_action', function(e) {
             e.preventDefault();
             let a = $(e.target).closest('a')
-            useRecordingAction(a.data('id'), a.data('filename'), a.data('entity'), a.data('entityId'));
+            useRecordingAction(a.data('route'), a.data('id'), a.data('entity'), a.data('entityid'));
         })
         greetingManageModalBody.on('click', '.{{$id}}_edit_recording_action', function(e) {
             e.preventDefault();
@@ -351,7 +351,7 @@
                     }
                     let trAction = '';
                     trAction+= `<a class="action-icon {{$id}}_play_current_recording_action" href="#" data-id="${item.id}" data-filename="${item.filename}"><i class="uil uil-play" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Play/Pause"></i></a>`
-                    trAction+= `<a class="action-icon {{$id}}_use_recording_action" href="#" data-route="{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityId' => ':entityId']) }}" data-id="${item.id}" data-filename="${item.filename}" data-entity="{{ $entity }}" data-entityId="{{ $entityId }}"><i class="mdi mdi-plus-box-outline" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use it"></i></a>`
+                    trAction+= `<a class="action-icon {{$id}}_use_recording_action" href="#" data-route="{{ route('recordings.use', ['recording' => ':id', 'entity' => ':entity', 'entityid' => ':entityid']) }}" data-id="${item.id}" data-filename="${item.filename}" data-entity="{{ $entity }}" data-entityid="{{ $entityid }}"><i class="mdi mdi-plus-box-outline" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Use it"></i></a>`
                     trAction+= `<a class="action-icon {{$id}}_edit_recording_action" href="#" data-route="{{ route('recordings.show', ':id') }}" data-id="${item.id}"><i class="mdi mdi-lead-pencil" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i></a>`
                     trAction+= `<a class="action-icon {{$id}}_confirm_delete_recording_action" href="#" data-route="{{ route('recordings.destroy', ':id') }}" data-id="${item.id}"><i class="mdi mdi-delete" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i></a>`
                     tr.attr('id', 'id' + item.id).attr('data-filename', item.filename).append(`<td>${item.name}</td><td>${item.description}</td><td><div class="tooltip-container-actions">${trAction}</div></td>`)
@@ -439,10 +439,10 @@
         });
     }
 
-    function useRecordingAction(url, setting_id, entity, entityId) {
+    function useRecordingAction(url, setting_id, entity, entityid) {
         url = url.replace(':id', setting_id);
         url = url.replace(':entity', entity);
-        url = url.replace(':entityId', entityId);
+        url = url.replace(':entityid', entityid);
         $.ajax({
             type: 'POST',
             url: url,
