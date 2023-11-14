@@ -84,19 +84,31 @@ class RecordingsController extends Controller
 
     public function storeBlob(StoreRecordingBlobRequest $request)
     {
-        $request->validated();
-        $blobInput = $request->file('recorded_file');
-        $mimeType = $blobInput->getMimeType();
-        if ($mimeType == 'application/octet-stream') {
-            $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.mp4';
-        } else {
-            $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+        try {
+            $request->validated();
+            $blobInput = $request->file('recorded_file');
+            $filename = 'input_'.Session::get('domain_name').'_'.uniqid();
+            $encodedFilename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+            if (Storage::put($filename, file_get_contents($blobInput))) {
+                $inputPath = Storage::path($filename);
+                $outputPath = Storage::path($encodedFilename);
+                shell_exec(base_path('ffmpeg').' -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$outputPath);
+                if (!Storage::exists($encodedFilename) || !Storage::size($encodedFilename)) {
+                    throw new \Exception('Failed to encode audio');
+                }
+                return response()->json([
+                    'status' => "success",
+                    'tempfile' => $encodedFilename
+                ]);
+            } else {
+                throw new \Exception("Failed to upload file");
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 500,
+                'message' => $e->getMessage()
+            ]);
         }
-        Storage::put($filename, file_get_contents($blobInput));
-        return response()->json([
-            'status' => "success",
-            'tempfile' => $filename
-        ]);
     }
 
     /**
