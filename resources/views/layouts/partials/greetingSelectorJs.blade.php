@@ -73,12 +73,6 @@
 
                 //when data becomes available add it to our attay of audio data
                 mediaRecorder.ondataavailable = function(e) {
-                    console.log("recorder.ondataavailable:" + e.data);
-                    console.log("recorder.audioBitsPerSecond:" + mediaRecorder
-                        .audioBitsPerSecond)
-                    console.log("recorder.videoBitsPerSecond:" + mediaRecorder
-                        .videoBitsPerSecond)
-                    console.log("recorder.bitsPerSecond:" + mediaRecorder.bitsPerSecond)
                     // add stream data to chunks
                     chunks.push(e.data);
                     // if recorder is 'inactive' then recording has finished
