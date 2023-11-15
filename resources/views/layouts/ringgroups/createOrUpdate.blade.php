@@ -162,33 +162,51 @@
                                                                         'entityId' => $ringGroup->ring_group_uuid,
                                                                     ]
                                                                 )
-                                                                <span class="help-block"><small>Turn ON this option if you want callers to hear a recorded greeting before being connected to a group member.</small></span>
+                                                                <span class="help-block"><small>Turn ON this option if you
+                                                                        want callers to hear a recorded greeting before
+                                                                        being connected to a group member.</small></span>
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
                                                     <div class="row">
                                                         <div class="col-md-5">
                                                             <div class="mb-1">
-                                                                <label for="ring_group_strategy"
-                                                                    class="form-label">Strategy</label>
+                                                                <label for="ring_group_strategy" class="form-label">Ring
+                                                                    Pattern</label>
+
+                                                                <a  href="javascript://" data-bs-toggle="popover"
+                                                                    data-bs-placement="right" data-bs-trigger="focus"
+                                                                    data-bs-html="true" 
+                                                                    data-bs-content="<div>
+                                                                        <ul>
+                                                                        <li><b>Sequential Ring:</b> This option rings one phone at a time in a specific order.</li>
+                                                                        <li><b>Simultaneous Ring:</b> This option rings all phones at once.</li>
+                                                                        <li><b>Random Ring:</b> This option rings one phone at a time in a random order. </li>
+                                                                        <li><b>Advanced (default):</b>  This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension. </li>
+                                                                        <li><b>Rollover:</b> This option rings each phone one at a time, but it skips busy phones.</li>
+                                                                        </ul>
+                                                                        </div>" title="">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
+
                                                                 <select class="select2 form-control" data-toggle="select2"
                                                                     data-placeholder="Choose ..." id="ring_group_strategy"
                                                                     name="ring_group_strategy">
                                                                     <option value="simultaneous"
                                                                         @if ($ringGroup->ring_group_strategy == 'simultaneous') selected="selected" @endif>
-                                                                        Simultaneous
+                                                                        Simultaneous Ring
                                                                     </option>
                                                                     <option value="sequence"
                                                                         @if ($ringGroup->ring_group_strategy == 'sequence') selected="selected" @endif>
-                                                                        Sequence
+                                                                        Sequential Ring
                                                                     </option>
                                                                     <option value="random"
                                                                         @if ($ringGroup->ring_group_strategy == 'random') selected="selected" @endif>
-                                                                        Random
+                                                                        Random Ring
                                                                     </option>
                                                                     <option value="enterprise"
                                                                         @if ($ringGroup->ring_group_strategy == 'enterprise') selected="selected" @endif>
-                                                                        Enterprise
+                                                                        Advanced
                                                                     </option>
                                                                     <option value="rollover"
                                                                         @if ($ringGroup->ring_group_strategy == 'rollover') selected="selected" @endif>
@@ -483,7 +501,8 @@
                                                                     value="{{ $ringGroup->ring_group_caller_id_name }}" />
                                                                 <div id="ring_group_caller_id_name_err"
                                                                     class="text-danger error_message"></div>
-                                                                    <span class="help-block"><small>Set the caller ID name for outbound external calls.</small></span>
+                                                                <span class="help-block"><small>Set the caller ID name for
+                                                                        outbound external calls.</small></span>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -496,7 +515,8 @@
                                                                     value="{{ $ringGroup->ring_group_caller_id_number }}" />
                                                                 <div id="ring_group_caller_id_number_err"
                                                                     class="text-danger error_message"></div>
-                                                                    <span class="help-block"><small>Set the caller ID number for outbound external calls.</small></span>
+                                                                <span class="help-block"><small>Set the caller ID number
+                                                                        for outbound external calls.</small></span>
 
                                                             </div>
                                                         </div>
@@ -519,7 +539,7 @@
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_ringback" class="form-label">Ring
-                                                                    Back</label>
+                                                                    Back Music</label>
                                                                 <select class="select2 form-control" data-toggle="select2"
                                                                     data-placeholder="Choose ..." id="ring_group_ringback"
                                                                     name="ring_group_ringback">
@@ -552,6 +572,7 @@
                                                                         </option>
                                                                     </optgroup>
                                                                 </select>
+                                                                <span class="help-block"><small>Ring back audio that the caller hears when calling the ring group</small></span>
                                                                 <div id="ring_group_ringback_err"
                                                                     class="text-danger error_message"></div>
                                                             </div>
@@ -600,7 +621,7 @@
                                                         <div class="col-8">
                                                             <div class="mb-3">
                                                                 <label for="ring_group_missed_call_data"
-                                                                    class="form-label">Missed Call</label>
+                                                                    class="form-label">Missed Call Notification</label>
                                                                 <div class="row">
                                                                     <div class="col-md-3">
                                                                         <select class="select2 form-control"
@@ -683,11 +704,11 @@
         }
 
         /*
-            @media (min-width: 576px) {
-                #ForwardDestinationModal > .modal-dialog {
-                    max-width: 800px;
-                }
-            }*/
+                @media (min-width: 576px) {
+                    #ForwardDestinationModal > .modal-dialog {
+                        max-width: 800px;
+                    }
+                }*/
         .drag-handler {
             cursor: all-scroll;
         }
@@ -836,7 +857,7 @@
 
                 setData: function( /** DataTransfer */ dataTransfer, /** HTMLElement*/ dragEl) {
                     dataTransfer.setData('Text', dragEl
-                    .textContent); // `dataTransfer` object of HTML5 DragEvent
+                        .textContent); // `dataTransfer` object of HTML5 DragEvent
                 },
 
                 // Element is chosen
@@ -862,12 +883,12 @@
                     evt.oldIndex; // element's old index within old parent
                     evt.newIndex; // element's new index within new parent
                     evt
-                    .oldDraggableIndex; // element's old index within old parent, only counting draggable elements
+                        .oldDraggableIndex; // element's old index within old parent, only counting draggable elements
                     evt
-                    .newDraggableIndex; // element's new index within new parent, only counting draggable elements
+                        .newDraggableIndex; // element's new index within new parent, only counting draggable elements
                     evt.clone // the clone element
                     evt
-                    .pullMode; // when item is in another sortable: `"clone"` if cloning, `true` if moving
+                        .pullMode; // when item is in another sortable: `"clone"` if cloning, `true` if moving
                     updateDestinationOrder()
                 },
 
@@ -904,7 +925,7 @@
                     evt.related; // HTMLElement on which have guided
                     evt.relatedRect; // DOMRect
                     evt
-                    .willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
+                        .willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
                     originalEvent.clientY; // mouse position
                     // return false; — for cancel
                     // return -1; — insert before target
