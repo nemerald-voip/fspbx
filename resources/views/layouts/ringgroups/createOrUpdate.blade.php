@@ -174,9 +174,9 @@
                                                                 <label for="ring_group_strategy" class="form-label">Ring
                                                                     Pattern</label>
 
-                                                                <a  href="javascript://" data-bs-toggle="popover"
+                                                                <a href="javascript://" data-bs-toggle="popover"
                                                                     data-bs-placement="right" data-bs-trigger="focus"
-                                                                    data-bs-html="true" 
+                                                                    data-bs-html="true"
                                                                     data-bs-content="<div>
                                                                         <ul>
                                                                         <li><b>Sequential Ring:</b> This option rings one phone at a time in a specific order.</li>
@@ -185,7 +185,8 @@
                                                                         <li><b>Advanced (default):</b>  This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension. </li>
                                                                         <li><b>Rollover:</b> This option rings each phone one at a time, but it skips busy phones.</li>
                                                                         </ul>
-                                                                        </div>" title="">
+                                                                        </div>"
+                                                                    title="">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
 
@@ -371,6 +372,15 @@
                                                             <div class="mb-3">
                                                                 <label for="ring_group_cid_name_prefix"
                                                                     class="form-label">Caller ID Name Prefix</label>
+                                                                <a href="javascript://" data-bs-toggle="popover"
+                                                                    data-bs-placement="right" data-bs-trigger="focus"
+                                                                    data-bs-html="true"
+                                                                    data-bs-content="<div>
+                                                                        The Caller ID Prefix field allows you to add characters to the Caller's ID. This can be useful if you have multiple DID's pointed to the same extension or ring group and you need to identify which number was dialed.
+                                                                        </div>"
+                                                                    title="">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
                                                                 <input class="form-control" type="text" placeholder=""
                                                                     id="ring_group_cid_name_prefix"
                                                                     name="ring_group_cid_name_prefix"
@@ -383,6 +393,15 @@
                                                             <div class="mb-3">
                                                                 <label for="ring_group_cid_number_prefix"
                                                                     class="form-label">Caller ID Number Prefix</label>
+                                                                <a href="javascript://" data-bs-toggle="popover"
+                                                                    data-bs-placement="right" data-bs-trigger="focus"
+                                                                    data-bs-html="true"
+                                                                    data-bs-content="<div>
+                                                                        The Caller ID Prefix field allows you to add characters to the Caller's ID. This can be useful if you have multiple DID's pointed to the same extension or ring group and you need to identify which number was dialed.
+                                                                        </div>"
+                                                                    title="">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
                                                                 <input class="form-control" type="text" placeholder=""
                                                                     id="ring_group_cid_number_prefix"
                                                                     name="ring_group_cid_number_prefix"
@@ -572,7 +591,9 @@
                                                                         </option>
                                                                     </optgroup>
                                                                 </select>
-                                                                <span class="help-block"><small>Ring back audio that the caller hears when calling the ring group</small></span>
+                                                                <span class="help-block"><small>Ring back audio that the
+                                                                        caller hears when calling the ring
+                                                                        group</small></span>
                                                                 <div id="ring_group_ringback_err"
                                                                     class="text-danger error_message"></div>
                                                             </div>
@@ -581,7 +602,17 @@
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Call Forward</label>
+                                                                <label class="form-label">Allow Destination Call Forwarding
+                                                                    Rules</label>
+                                                                <a href="javascript://" data-bs-toggle="popover"
+                                                                    data-bs-placement="right" data-bs-trigger="focus"
+                                                                    data-bs-html="true"
+                                                                    data-bs-content="<div>
+                                                                    Allow call forwarding rules for group destinations when the <b>Advanced ring pattern</b> is selected in a ring group.
+                                                                    </div>"
+                                                                    title="">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -601,7 +632,17 @@
                                                     <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Follow Me</label>
+                                                                <label class="form-label">Allow Destination Sequential Ring
+                                                                    Rules</label>
+                                                                <a href="javascript://" data-bs-toggle="popover"
+                                                                    data-bs-placement="right" data-bs-trigger="focus"
+                                                                    data-bs-html="true"
+                                                                    data-bs-content="<div>
+                                                                    Allow sequential ring rules for group destinations when the <b>Advanced ring pattern</b> is selected in a ring group.
+                                                                    </div>"
+                                                                    title="">
+                                                                    <i class="dripicons-information"></i>
+                                                                </a>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -704,11 +745,11 @@
         }
 
         /*
-                @media (min-width: 576px) {
-                    #ForwardDestinationModal > .modal-dialog {
-                        max-width: 800px;
-                    }
-                }*/
+                        @media (min-width: 576px) {
+                            #ForwardDestinationModal > .modal-dialog {
+                                max-width: 800px;
+                            }
+                        }*/
         .drag-handler {
             cursor: all-scroll;
         }
