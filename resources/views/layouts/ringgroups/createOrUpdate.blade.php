@@ -66,19 +66,23 @@
                                                     hidden><span class="badge badge-danger-lighten">error</span></span>
                                             </span>
                                         </a>
-                                        <a class="nav-link" id="v-pills-callforward-tab" data-bs-toggle="pill"
-                                            href="#v-pills-callforward" role="tab" aria-controls="v-pills-callforward"
-                                            aria-selected="false">
-                                            <i class="mdi mdi-settings-outline d-md-none d-block"></i>
-                                            <span class="d-none d-md-block">Call Forward
-                                                <span
-                                                    class="float-end text-end
+
+                                        @if (userCheckPermission('ring_group_forward'))
+                                            <a class="nav-link" id="v-pills-callforward-tab" data-bs-toggle="pill"
+                                                href="#v-pills-callforward" role="tab"
+                                                aria-controls="v-pills-callforward" aria-selected="false">
+                                                <i class="mdi mdi-settings-outline d-md-none d-block"></i>
+                                                <span class="d-none d-md-block">Call Forward
+                                                    <span
+                                                        class="float-end text-end
                                             ring_group_forward_all_target_external_err_badge
                                             ring_group_forward_destination_err_badge
                                             "
-                                                    hidden><span class="badge badge-danger-lighten">error</span></span>
-                                            </span>
-                                        </a>
+                                                        hidden><span class="badge badge-danger-lighten">error</span></span>
+                                                </span>
+                                            </a>
+                                        @endif
+
                                         <a class="nav-link" id="v-pills-advanced-tab" data-bs-toggle="pill"
                                             href="#v-pills-advanced" role="tab" aria-controls="v-pills-advanced"
                                             aria-selected="false">
@@ -368,48 +372,53 @@
 
 
                                                     <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_cid_name_prefix"
-                                                                    class="form-label">Caller ID Name Prefix</label>
-                                                                <a href="javascript://" data-bs-toggle="popover"
-                                                                    data-bs-placement="right" data-bs-trigger="focus"
-                                                                    data-bs-html="true"
-                                                                    data-bs-content="<div>
+                                                        @if (userCheckPermission('ring_group_cid_name_prefix'))
+                                                            <div class="col-md-4">
+                                                                <div class="mb-3">
+                                                                    <label for="ring_group_cid_name_prefix"
+                                                                        class="form-label">Caller ID Name Prefix</label>
+                                                                    <a href="javascript://" data-bs-toggle="popover"
+                                                                        data-bs-placement="right" data-bs-trigger="focus"
+                                                                        data-bs-html="true"
+                                                                        data-bs-content="<div>
                                                                         The Caller ID Prefix field allows you to add characters to the Caller's ID. This can be useful if you have multiple DID's pointed to the same extension or ring group and you need to identify which number was dialed.
                                                                         </div>"
-                                                                    title="">
-                                                                    <i class="dripicons-information"></i>
-                                                                </a>
-                                                                <input class="form-control" type="text" placeholder=""
-                                                                    id="ring_group_cid_name_prefix"
-                                                                    name="ring_group_cid_name_prefix"
-                                                                    value="{{ $ringGroup->ring_group_cid_name_prefix }}" />
-                                                                <div id="ring_group_cid_name_prefix_err"
-                                                                    class="text-danger error_message"></div>
+                                                                        title="">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
+                                                                    <input class="form-control" type="text"
+                                                                        placeholder="" id="ring_group_cid_name_prefix"
+                                                                        name="ring_group_cid_name_prefix"
+                                                                        value="{{ $ringGroup->ring_group_cid_name_prefix }}" />
+                                                                    <div id="ring_group_cid_name_prefix_err"
+                                                                        class="text-danger error_message"></div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_cid_number_prefix"
-                                                                    class="form-label">Caller ID Number Prefix</label>
-                                                                <a href="javascript://" data-bs-toggle="popover"
-                                                                    data-bs-placement="right" data-bs-trigger="focus"
-                                                                    data-bs-html="true"
-                                                                    data-bs-content="<div>
+                                                        @endif
+
+                                                        @if (userCheckPermission('ring_group_cid_number_prefix'))
+                                                            <div class="col-md-4">
+                                                                <div class="mb-3">
+                                                                    <label for="ring_group_cid_number_prefix"
+                                                                        class="form-label">Caller ID Number Prefix</label>
+                                                                    <a href="javascript://" data-bs-toggle="popover"
+                                                                        data-bs-placement="right" data-bs-trigger="focus"
+                                                                        data-bs-html="true"
+                                                                        data-bs-content="<div>
                                                                         The Caller ID Prefix field allows you to add characters to the Caller's ID. This can be useful if you have multiple DID's pointed to the same extension or ring group and you need to identify which number was dialed.
                                                                         </div>"
-                                                                    title="">
-                                                                    <i class="dripicons-information"></i>
-                                                                </a>
-                                                                <input class="form-control" type="text" placeholder=""
-                                                                    id="ring_group_cid_number_prefix"
-                                                                    name="ring_group_cid_number_prefix"
-                                                                    value="{{ $ringGroup->ring_group_cid_number_prefix }}" />
-                                                                <div id="ring_group_cid_number_prefix_err"
-                                                                    class="text-danger error_message"></div>
+                                                                        title="">
+                                                                        <i class="dripicons-information"></i>
+                                                                    </a>
+                                                                    <input class="form-control" type="text"
+                                                                        placeholder="" id="ring_group_cid_number_prefix"
+                                                                        name="ring_group_cid_number_prefix"
+                                                                        value="{{ $ringGroup->ring_group_cid_number_prefix }}" />
+                                                                    <div id="ring_group_cid_number_prefix_err"
+                                                                        class="text-danger error_message"></div>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        @endif
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-4">
@@ -449,59 +458,62 @@
                                             </div>
 
                                         </div>
-                                        <div class="tab-pane fade" id="v-pills-callforward" role="tabpanel"
-                                            aria-labelledby="v-pills-callforward-tab">
+                                        @if (userCheckPermission('ring_group_forward'))
+                                            <div class="tab-pane fade" id="v-pills-callforward" role="tabpanel"
+                                                aria-labelledby="v-pills-callforward-tab">
 
-                                            <div class="tab-pane show active">
-                                                <div class="row">
-                                                    <div class="col-lg-12">
-                                                        <h4 class="mt-2">Forward calls</h4>
-                                                        <p class="text-muted mb-2">Ensure customers and colleagues can
-                                                            reach you, regardless of your physical location.
-                                                            Automatically redirect all incoming calls to another phone
-                                                            number of your choice.</p>
-                                                        <div class="row">
-                                                            <div class="mb-2">
-                                                                <input type="hidden" name="ring_group_forward_enabled"
-                                                                    value="false">
-                                                                <input type="checkbox" id="ring_group_forward_enabled"
-                                                                    value="true" name="ring_group_forward_enabled"
-                                                                    data-option="ring_group_forward"
-                                                                    class="forward_checkbox"
-                                                                    @if ($ringGroup->ring_group_forward_enabled == 'true') checked @endif
-                                                                    data-switch="primary" />
-                                                                <label for="ring_group_forward_enabled" data-on-label="On"
-                                                                    data-off-label="Off"></label>
-                                                                <div
-                                                                    class="text-danger ring_group_forward_enabled_err error_message">
+                                                <div class="tab-pane show active">
+                                                    <div class="row">
+                                                        <div class="col-lg-12">
+                                                            <h4 class="mt-2">Forward calls</h4>
+                                                            <p class="text-muted mb-2">Ensure customers and colleagues can
+                                                                reach you, regardless of your physical location.
+                                                                Automatically redirect all incoming calls to another phone
+                                                                number of your choice.</p>
+                                                            <div class="row">
+                                                                <div class="mb-2">
+                                                                    <input type="hidden"
+                                                                        name="ring_group_forward_enabled" value="false">
+                                                                    <input type="checkbox" id="ring_group_forward_enabled"
+                                                                        value="true" name="ring_group_forward_enabled"
+                                                                        data-option="ring_group_forward"
+                                                                        class="forward_checkbox"
+                                                                        @if ($ringGroup->ring_group_forward_enabled == 'true') checked @endif
+                                                                        data-switch="primary" />
+                                                                    <label for="ring_group_forward_enabled"
+                                                                        data-on-label="On" data-off-label="Off"></label>
+                                                                    <div
+                                                                        class="text-danger ring_group_forward_enabled_err error_message">
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div id="ring_group_forward_phone_number"
-                                                            class="row @if ($ringGroup->ring_group_forward_enabled !== 'true') d-none @endif">
-                                                            <div class="col-md-12">
-                                                                <p>
-                                                                    @include(
-                                                                        'layouts.partials.destinationSelector',
-                                                                        [
-                                                                            'type' => 'ring_group_forward',
-                                                                            'id' => 'all',
-                                                                            'value' =>
-                                                                                $ringGroup->ring_group_forward_destination,
-                                                                            'extensions' => $extensions,
-                                                                        ]
-                                                                    )
-                                                                <div
-                                                                    class="text-danger ring_group_forward_destination_err error_message">
+                                                            <div id="ring_group_forward_phone_number"
+                                                                class="row @if ($ringGroup->ring_group_forward_enabled !== 'true') d-none @endif">
+                                                                <div class="col-md-12">
+                                                                    <p>
+                                                                        @include(
+                                                                            'layouts.partials.destinationSelector',
+                                                                            [
+                                                                                'type' => 'ring_group_forward',
+                                                                                'id' => 'all',
+                                                                                'value' =>
+                                                                                    $ringGroup->ring_group_forward_destination,
+                                                                                'extensions' => $extensions,
+                                                                            ]
+                                                                        )
+                                                                    <div
+                                                                        class="text-danger ring_group_forward_destination_err error_message">
+                                                                    </div>
+                                                                    </p>
                                                                 </div>
-                                                                </p>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                        </div>
+                                            </div>
+                                        @endif
+
                                         <div class="tab-pane fade" id="v-pills-advanced" role="tabpanel"
                                             aria-labelledby="v-pills-home-tab">
                                             <div class="row">
@@ -510,35 +522,43 @@
                                                     <p class="text-muted mb-4">Provide advanced information about the
                                                         ring group</p>
                                                     <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_caller_id_name"
-                                                                    class="form-label">Outbound Caller ID Name</label>
-                                                                <input class="form-control" type="text" placeholder=""
-                                                                    id="ring_group_caller_id_name"
-                                                                    name="ring_group_caller_id_name"
-                                                                    value="{{ $ringGroup->ring_group_caller_id_name }}" />
-                                                                <div id="ring_group_caller_id_name_err"
-                                                                    class="text-danger error_message"></div>
-                                                                <span class="help-block"><small>Set the caller ID name for
-                                                                        outbound external calls.</small></span>
+                                                        @if (userCheckPermission('ring_group_caller_id_name'))
+                                                            <div class="col-md-4">
+                                                                <div class="mb-3">
+                                                                    <label for="ring_group_caller_id_name"
+                                                                        class="form-label">Outbound Caller ID Name</label>
+                                                                    <input class="form-control" type="text"
+                                                                        placeholder="" id="ring_group_caller_id_name"
+                                                                        name="ring_group_caller_id_name"
+                                                                        value="{{ $ringGroup->ring_group_caller_id_name }}" />
+                                                                    <div id="ring_group_caller_id_name_err"
+                                                                        class="text-danger error_message"></div>
+                                                                    <span class="help-block"><small>Set the caller ID name
+                                                                            for
+                                                                            outbound external calls.</small></span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_caller_id_number"
-                                                                    class="form-label">Outbound Caller ID Number</label>
-                                                                <input class="form-control" type="text" placeholder=""
-                                                                    id="ring_group_caller_id_number"
-                                                                    name="ring_group_caller_id_number"
-                                                                    value="{{ $ringGroup->ring_group_caller_id_number }}" />
-                                                                <div id="ring_group_caller_id_number_err"
-                                                                    class="text-danger error_message"></div>
-                                                                <span class="help-block"><small>Set the caller ID number
-                                                                        for outbound external calls.</small></span>
+                                                        @endif
 
+                                                        @if (userCheckPermission('ring_group_caller_id_number'))
+                                                            <div class="col-md-4">
+                                                                <div class="mb-3">
+                                                                    <label for="ring_group_caller_id_number"
+                                                                        class="form-label">Outbound Caller ID
+                                                                        Number</label>
+                                                                    <input class="form-control" type="text"
+                                                                        placeholder="" id="ring_group_caller_id_number"
+                                                                        name="ring_group_caller_id_number"
+                                                                        value="{{ $ringGroup->ring_group_caller_id_number }}" />
+                                                                    <div id="ring_group_caller_id_number_err"
+                                                                        class="text-danger error_message"></div>
+                                                                    <span class="help-block"><small>Set the caller ID
+                                                                            number
+                                                                            for outbound external calls.</small></span>
+
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        @endif
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-4">
@@ -658,39 +678,46 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="row">
-                                                        <div class="col-8">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_missed_call_data"
-                                                                    class="form-label">Missed Call Notification</label>
-                                                                <div class="row">
-                                                                    <div class="col-md-3">
-                                                                        <select class="select2 form-control"
-                                                                            data-toggle="select2"
-                                                                            data-placeholder="Choose ..."
-                                                                            id="ring_group_missed_call_category"
-                                                                            name="ring_group_missed_call_category">
-                                                                            @foreach (['disabled', 'email'] as $missedCallCategory)
-                                                                                <option value="{{ $missedCallCategory }}"
-                                                                                    @if ($ringGroup->ring_group_missed_call_app == $missedCallCategory) selected="selected" @endif>
-                                                                                    {{ ucfirst($missedCallCategory) }}
-                                                                                </option>
-                                                                            @endforeach
-                                                                        </select>
+
+                                                    @if (userCheckPermission('ring_group_missed_call'))
+                                                        <div class="row">
+                                                            <div class="col-8">
+                                                                <div class="mb-3">
+                                                                    <label for="ring_group_missed_call_data"
+                                                                        class="form-label">Missed Call Notification</label>
+                                                                    <div class="row">
+                                                                        <div class="col-md-3">
+                                                                            <select class="select2 form-control"
+                                                                                data-toggle="select2"
+                                                                                data-placeholder="Choose ..."
+                                                                                id="ring_group_missed_call_category"
+                                                                                name="ring_group_missed_call_category">
+                                                                                @foreach (['disabled', 'email'] as $missedCallCategory)
+                                                                                    <option
+                                                                                        value="{{ $missedCallCategory }}"
+                                                                                        @if ($ringGroup->ring_group_missed_call_app == $missedCallCategory) selected="selected" @endif>
+                                                                                        {{ ucfirst($missedCallCategory) }}
+                                                                                    </option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="col-md-9">
+                                                                            <input class="form-control" type="text"
+                                                                                placeholder=""
+                                                                                id="ring_group_missed_call_data"
+                                                                                name="ring_group_missed_call_data"
+                                                                                value="{{ $ringGroup->ring_group_missed_call_data }}" />
+                                                                        </div>
                                                                     </div>
-                                                                    <div class="col-md-9">
-                                                                        <input class="form-control" type="text"
-                                                                            placeholder=""
-                                                                            id="ring_group_missed_call_data"
-                                                                            name="ring_group_missed_call_data"
-                                                                            value="{{ $ringGroup->ring_group_missed_call_data }}" />
-                                                                    </div>
+                                                                    <div id="ring_group_missed_call_data_err"
+                                                                        class="text-danger error_message"></div>
                                                                 </div>
-                                                                <div id="ring_group_missed_call_data_err"
-                                                                    class="text-danger error_message"></div>
                                                             </div>
-                                                        </div>
-                                                    </div>
+                                                    @endif
+
+                                                </div>
+
+                                                @if (userCheckPermission('ring_group_forward_toll_allow'))
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -705,6 +732,9 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                @endif
+
+                                                @if (userCheckPermission('ring_group_context'))
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
@@ -718,17 +748,21 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                @else
+                                                    <input type="hidden" name="ring_group_context"
+                                                        value="{{ Session::get('domain_name') }}">
+                                                @endif
                                             </div>
                                         </div>
-                                    </div> <!-- end tab-content-->
-                                </div> <!-- end col-->
-                            </div>
-                        </form>
-                    </div> <!-- end card-body-->
-                </div> <!-- end card-->
-            </div> <!-- end col -->
-        </div>
+                                    </div>
+                                </div> <!-- end tab-content-->
+                            </div> <!-- end col-->
+                    </div>
+                    </form>
+                </div> <!-- end card-body-->
+            </div> <!-- end card-->
+        </div> <!-- end col -->
+    </div>
     </div> <!-- container -->
 @endsection
 
@@ -745,11 +779,11 @@
         }
 
         /*
-                        @media (min-width: 576px) {
-                            #ForwardDestinationModal > .modal-dialog {
-                                max-width: 800px;
-                            }
-                        }*/
+                            @media (min-width: 576px) {
+                                #ForwardDestinationModal > .modal-dialog {
+                                    max-width: 800px;
+                                }
+                            }*/
         .drag-handler {
             cursor: all-scroll;
         }
