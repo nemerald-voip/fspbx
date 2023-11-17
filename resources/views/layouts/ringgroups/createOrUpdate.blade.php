@@ -163,7 +163,7 @@
                                                                             $ringGroup->ring_group_greeting ??
                                                                             null,
                                                                         'entity' => 'ringGroup',
-                                                                        'entityId' => $ringGroup->ring_group_uuid,
+                                                                        'entityid' => $ringGroup->ring_group_uuid,
                                                                     ]
                                                                 )
                                                                 <span class="help-block"><small>Turn ON this option if you
