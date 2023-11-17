@@ -164,6 +164,7 @@
                                                                             null,
                                                                         'entity' => 'ringGroup',
                                                                         'entityid' => $ringGroup->ring_group_uuid,
+                                                                        'showUseRecordingAction' => (bool)$ringGroup->ring_group_uuid
                                                                     ]
                                                                 )
                                                                 <span class="help-block"><small>Turn ON this option if you

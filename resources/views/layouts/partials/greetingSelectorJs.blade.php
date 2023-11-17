@@ -317,7 +317,7 @@
         greetingManageModalBody.on('click', '.{{$id}}_confirm_delete_recording_action', function(e) {
             e.preventDefault();
             let a = $(e.target).closest('a')
-            confirmDeleteRecordingAction(a.data('id'));
+            confirmDeleteRecordingAction(a.data('route'), a.data('id'));
         })
     @if ($useDocumentReadyTag ?? true)
     });
@@ -382,9 +382,10 @@
         // deleteSetting(setting_id);
     }
 
-    function performConfirmedDeleteRecordingAction() {
+    $('.delete-greeting-btn').click(function () {
         var confirmDeleteRecordingModal = $("#{{ $id }}_confirmDeleteRecordingModal");
         var setting_id = confirmDeleteRecordingModal.data("setting_id");
+        console.log(setting_id);
         confirmDeleteRecordingModal.modal('hide');
         var url = confirmDeleteRecordingModal.data("url");
         url = url.replace(':id', setting_id);
@@ -415,7 +416,7 @@
         }).fail(function(jqXHR, testStatus, error) {
             printErrorMsg(error);
         });
-    }
+    });
 
     function editRecordingAction(url, setting_id) {
         url = url.replace(':id', setting_id);

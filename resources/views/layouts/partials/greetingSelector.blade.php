@@ -164,7 +164,7 @@
             'id' => $id,
             'entity' => $entity,
             'entityid' => $entityid,
-            'showUseRecordingAction' => $showUseRecordingAction
+            'showUseRecordingAction' => $showUseRecordingAction ?? true
         ])
     @endpush
 @endif
@@ -183,7 +183,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</button>
-                <a href="javascript:performConfirmedDeleteRecordingAction();" class="btn btn-danger me-2">Delete</a>
+                <button type="button" class="btn btn-danger me-2 delete-greeting-btn">Delete</button>
             </div> <!-- end modal footer -->
         </div> <!-- end modal content-->
     </div> <!-- end modal dialog-->
