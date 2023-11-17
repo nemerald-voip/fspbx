@@ -92,7 +92,7 @@ class RecordingsController extends Controller
             if (Storage::put($filename, file_get_contents($blobInput))) {
                 $inputPath = Storage::path($filename);
                 $outputPath = Storage::path($encodedFilename);
-                shell_exec(base_path('ffmpeg').' -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$outputPath);
+                shell_exec('ffmpeg -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$outputPath);
                 if (!Storage::exists($encodedFilename) || !Storage::size($encodedFilename)) {
                     throw new \Exception('Failed to encode audio');
                 }
