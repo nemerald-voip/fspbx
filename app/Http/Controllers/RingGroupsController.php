@@ -336,6 +336,7 @@ class RingGroupsController extends Controller
 
         $ringGroup->update([
             'ring_group_name' => $attributes['ring_group_name'],
+            'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
             'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,

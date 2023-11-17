@@ -40,6 +40,7 @@
                             }
                         @endphp
                         <form method="POST" id="ringGroupForm" action="{{ $actionUrl }}" class="form">
+                            <input type="hidden" name="ring_group_uuid" value="{{ $ringGroup->ring_group_uuid }}" />
                             @if ($ringGroup->exists)
                                 @method('put')
                             @endif
