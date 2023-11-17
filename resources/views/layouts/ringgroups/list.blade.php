@@ -1,4 +1,4 @@
-@extends('layouts.partials.listing.layout', ["pageTitle"=> 'Ring Groups'])
+@extends('layouts.partials.listing.layout', ['pageTitle' => 'Ring Groups'])
 
 @section('pagination')
     @include('layouts.partials.listing.pagination', ['collection' => $ringGroups])
@@ -12,7 +12,8 @@
         </a>
     @endif
     @if ($permissions['delete'])
-        <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}');" id="deleteMultipleActionButton" class="btn btn-danger disabled">
+        <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}');" id="deleteMultipleActionButton"
+            class="btn btn-danger disabled">
             Delete Selected
         </a>
     @endif
@@ -31,28 +32,38 @@
         <th>Name</th>
         <th>Extension</th>
         <th>Strategy</th>
-        <!--th>Description</th-->
+        <th>Description</th>
         <!--th>Status</th-->
         <th>Action</th>
     </tr>
 @endsection
 
 @section('table-body')
-    @if($ringGroups->count() == 0)
-        @include('layouts.partials.listing.norecordsfound', ['colspan' => 7 ])
+    @if ($ringGroups->count() == 0)
+        @include('layouts.partials.listing.norecordsfound', ['colspan' => 7])
     @else
         @foreach ($ringGroups as $key => $ringGroup)
             <tr id="id{{ $ringGroup->ring_group_uuid }}">
                 <td>
                     @if ($permissions['delete'])
                         <div class="form-check">
-                            <input type="checkbox" name="action_box[]" value="{{ $ringGroup->ring_group_uuid }}" class="form-check-input action_checkbox">
-                            <label class="form-check-label" >&nbsp;</label>
+                            <input type="checkbox" name="action_box[]" value="{{ $ringGroup->ring_group_uuid }}"
+                                class="form-check-input action_checkbox">
+                            <label class="form-check-label">&nbsp;</label>
                         </div>
                     @endif
                 </td>
                 <td>
-                    {{ $ringGroup->ring_group_name }}
+                    @if ($permissions['edit'])
+                        <a href="{{ route('ring-groups.edit', $ringGroup) }}" class="text-body fw-bold">
+                            {{ $ringGroup->ring_group_name }}
+                        </a>
+                    @else
+                        <span class="text-body fw-bold">
+                            {{ $ringGroup->ring_group_name }}
+                        </span>
+                    @endif
+
                     @if ($ringGroup['ring_group_forward_enabled'] == 'true')
                         <small><span class="badge badge-outline-primary">FWD</span></small>
                     @endif
@@ -63,26 +74,28 @@
                 <td>
                     {{ $ringGroup->ring_group_strategy }}
                 </td>
-                <!--td>
+
+                <td>
                     {{ $ringGroup->ring_group_description }}
-                </td-->
+                </td>
+
                 <!--td>
-                    {{ $ringGroup->ring_group_enabled }}
-                </td-->
+                                        {{ $ringGroup->ring_group_enabled }}
+                                    </td-->
                 <td>
                     <div id="tooltip-container-actions">
                         @if ($permissions['edit'])
-                        <a href="{{ route('ring-groups.edit', $ringGroup) }}" class="action-icon" title="Edit">
-                            <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions"
-                               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i>
-                        </a>
+                            <a href="{{ route('ring-groups.edit', $ringGroup) }}" class="action-icon" title="Edit">
+                                <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit"></i>
+                            </a>
                         @endif
                         @if ($permissions['delete'])
-                        <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}','{{ $ringGroup->ring_group_uuid }}');"
-                           class="action-icon">
-                            <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions"
-                               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
-                        </a>
+                            <a href="javascript:confirmDeleteAction('{{ route('ring-groups.destroy', ':id') }}','{{ $ringGroup->ring_group_uuid }}');"
+                                class="action-icon">
+                                <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
+                            </a>
                         @endif
                     </div>
                 </td>
@@ -94,30 +107,30 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            $('#selectallCheckbox').on('change',function(){
-                if($(this).is(':checked')){
-                    $('.action_checkbox').prop('checked',true);
+            $('#selectallCheckbox').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('.action_checkbox').prop('checked', true);
                 } else {
-                    $('.action_checkbox').prop('checked',false);
+                    $('.action_checkbox').prop('checked', false);
                 }
             });
 
-            $('.action_checkbox').on('change',function(){
-                if(!$(this).is(':checked')){
-                    $('#selectallCheckbox').prop('checked',false);
+            $('.action_checkbox').on('change', function() {
+                if (!$(this).is(':checked')) {
+                    $('#selectallCheckbox').prop('checked', false);
                 } else {
-                    if(checkAllbox()){
-                        $('#selectallCheckbox').prop('checked',true);
+                    if (checkAllbox()) {
+                        $('#selectallCheckbox').prop('checked', true);
                     }
                 }
             });
         });
 
-        function checkAllbox(){
-            var checked=true;
-            $('.action_checkbox').each(function(key,val){
-                if(!$(this).is(':checked')){
-                    checked=false;
+        function checkAllbox() {
+            var checked = true;
+            $('.action_checkbox').each(function(key, val) {
+                if (!$(this).is(':checked')) {
+                    checked = false;
                 }
             });
             return checked;
