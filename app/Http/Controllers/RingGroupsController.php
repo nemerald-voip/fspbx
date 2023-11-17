@@ -147,8 +147,8 @@ class RingGroupsController extends Controller
             'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
             'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
             'ring_group_strategy' => $attributes['ring_group_strategy'],
-            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'],
-            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'],
+            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
+            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
             'ring_group_distinctive_ring' => $attributes['ring_group_distinctive_ring'],
             'ring_group_ringback' => $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
@@ -156,7 +156,7 @@ class RingGroupsController extends Controller
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
-            'ring_group_context' => $attributes['ring_group_context'],
+            'ring_group_context' => $attributes['ring_group_context'] ?? null,
             'dialplan_uuid' => Str::uuid(),
         ]);
 
@@ -348,8 +348,8 @@ class RingGroupsController extends Controller
             'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
             'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
             'ring_group_strategy' => $attributes['ring_group_strategy'],
-            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'],
-            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'],
+            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
+            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
             'ring_group_distinctive_ring' => $attributes['ring_group_distinctive_ring'],
             'ring_group_ringback' => $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
@@ -357,7 +357,7 @@ class RingGroupsController extends Controller
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
             'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
-            'ring_group_context' => $attributes['ring_group_context']
+            'ring_group_context' => $attributes['ring_group_context'] ?? null
         ]);
 
         $ringGroup->groupDestinations()->delete();
