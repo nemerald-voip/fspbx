@@ -26,6 +26,7 @@
         "livewire/livewire": "^2.12",
         "maatwebsite/excel": "^3.1",
         "nwidart/laravel-modules": "^8.3",
+        "php-ffmpeg/php-ffmpeg": "^0.19.0",
         "predis/predis": "^2.0",
         "propaganistas/laravel-phone": "^4.3",
         "rappasoft/laravel-livewire-tables": "^2.15",
