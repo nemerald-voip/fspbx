@@ -88,9 +88,6 @@ class UploadArchiveFiles extends Command
                 try {
                     // Run the FFmpeg command
                     $process->mustRun();
-
-                    logger($mp3File);
-
                 } catch (ProcessFailedException $e) {
                     logger($e->getMessage());
                 }
@@ -167,6 +164,12 @@ class UploadArchiveFiles extends Command
                         'SourceFile' => $mp3File,
                         'Key'        => $object_key
                     ));
+
+                    $call_recording->record_name = $path['ObjectURL'];
+                    $call_recording->save();
+
+                    unlink($mp3File);
+
                 }
             } catch (\Exception $ex) {
                 if (!empty($call_recording->record_name)) {
@@ -190,17 +193,6 @@ class UploadArchiveFiles extends Command
         // }
 
     }
-    public function sendFailEmail($failed, $success)
-    {
-        $view = view('emails.failed_upload')->with(['failed' => $failed, 'success' => $success]);
-        // sergei@nemerald.com
-        // sergei@nemerald.com
-        $emails = ['sergei@nemerald.com'];
-        foreach ($emails as $email) {
-            $mail = sendEmail(array('email_layout' => 'emails/content', 'content' => $view, 'subject' => 'Completed - failed uploads.', 'user' => (object) array('name' => '', 'email' => $email)));
-        }
-    }
-
 
 
     public function getDomainName($domain_id)
@@ -225,6 +217,7 @@ class UploadArchiveFiles extends Command
         ])
 
             ->where('record_name', '<>', '')
+            ->where('record_name', 'not like', '%amazonaws.com%') // New where clause
             ->whereDate('start_stamp', '<=', Carbon::today()->toDateTimeString())
             ->where('hangup_cause', '<>', 'LOSE_RACE')
             ->take(2000)
