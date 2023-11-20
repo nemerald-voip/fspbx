@@ -165,7 +165,8 @@ class UploadArchiveFiles extends Command
                         'Key'        => $object_key
                     ));
 
-                    $call_recording->record_name = $path['ObjectURL'];
+                    $call_recording->record_path = "S3";
+                    $call_recording->record_name = $object_key;
                     $call_recording->save();
 
                     unlink($mp3File);
