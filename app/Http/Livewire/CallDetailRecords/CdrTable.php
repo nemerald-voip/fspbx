@@ -29,6 +29,11 @@ class CdrTable extends DataTableComponent
         3 => 'Abandoned',
         4 => 'Agent Missed',
     ];
+    public $callDirections = [
+        1 => 'Inbound',
+        2 => 'Outbound',
+        3 => 'Local'
+    ];
 
     // To show/hide the modal
     public bool $modalIsOpen = false;
@@ -87,7 +92,6 @@ class CdrTable extends DataTableComponent
     {
         $cdrs =  CDR::query()
             ->where('domain_uuid', Session::get('domain_uuid'))
-            ->where('direction', '<>', 'outbound')
             ->select(
                 'xml_cdr_uuid',
                 'domain_uuid',
@@ -281,6 +285,29 @@ class CdrTable extends DataTableComponent
                 })
                 ->hiddenFromMenus(),
 
+            MultiSelectFilter::make('Direction')
+                ->options($this->callDirections)
+                ->filter(function (Builder $builder, array $values) {
+                    $builder->where(function ($query) use ($values) {
+                        foreach ($values as $value) {
+                            if ($value === '1') {
+                                $query
+                                    ->orWhere('direction', 'inbound');
+                            }
+                            if ($value === '2') {
+                                $query
+                                    ->orWhere('direction', 'outbound');
+                            }
+                            if ($value === '3') {
+                                $query
+                                    ->orWhere('direction', 'local');
+                            }
+                        }
+                        return $query;
+                    });
+                })
+                ->hiddenFromMenus(),
+
             MultiSelectFilter::make('Call Category')
                 ->options($this->callCategories)
                 ->filter(function (Builder $builder, array $values) {
@@ -322,7 +349,8 @@ class CdrTable extends DataTableComponent
                         // $query->groupBy('start_epoch', 'destination_number', 'sip_call_id', 'cc_agent');
                         return $query;
                     });
-                }),
+                })
+                ->hiddenFromMenus(),
 
             MultiSelectDropdownFilter::make('Users and Groups')
                 ->options(
