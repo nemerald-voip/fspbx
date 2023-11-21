@@ -248,7 +248,7 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Display contact in the company's dial by name directory </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="This user will appear in the company's dial by name directory">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
@@ -269,7 +269,7 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label  class="form-label">Announce extension in the the dial by name directory </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Announce user's extension when calling the dial by name directory">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
@@ -295,7 +295,7 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label  class="form-label">Enabled </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="This prevents devices from registering using this extension">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
@@ -551,7 +551,7 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Delete voicemail after sending email </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Enables email-only voicemail. Disables storing of voicemail messages for this mailbox in the cloud.">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
@@ -702,7 +702,7 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Play voicemail tutorial </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Play the voicemail tutorial after the next voicemail login.">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
@@ -950,7 +950,7 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Enable call screening</label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="You can use Call Screen to find out who’s calling and why before you pick up a call. ">
                                                                     <i class="dripicons-information"></i>
                                                                 </a>
@@ -1168,7 +1168,7 @@
                                                             <div class="col-4">
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Force ping </label>
-                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                    <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                         data-bs-content="Use OPTIONS to detect if extension is reachable">
                                                                         <i class="dripicons-information"></i>
                                                                     </a>
