@@ -123,13 +123,20 @@ class RingGroupsController extends Controller
     {
         $attributes = $request->validated();
 
-        if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-            $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
-        } else {
-            $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
-            if (empty($attributes['ring_group_forward_destination'])) {
-                $attributes['ring_group_forward_enabled'] = 'false';
+        if(isset($attributes['ring_group_forward'])) {
+            if ($attributes['ring_group_forward']['all']['type'] == 'external') {
+                $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'],
+                    "US")->formatE164();
+            } else {
+                $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
+                if (empty($attributes['ring_group_forward_destination'])) {
+                    $attributes['ring_group_forward_enabled'] = 'false';
+                }
             }
+        }
+
+        if(!isset($attributes['ring_group_missed_call_category'])) {
+            $attributes['ring_group_missed_call_category'] = null;
         }
 
         $ringGroup = new RingGroups();
@@ -144,8 +151,8 @@ class RingGroupsController extends Controller
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'] ?? null,
             'ring_group_description' => $attributes['ring_group_description'],
             'ring_group_enabled' => $attributes['ring_group_enabled'],
-            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
-            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
+            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'] ?? 'false',
+            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'] ?? null,
             'ring_group_strategy' => $attributes['ring_group_strategy'],
             'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
             'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
@@ -153,9 +160,9 @@ class RingGroupsController extends Controller
             'ring_group_ringback' => $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
-            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'] ?? null,
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
-            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
+            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'] ?? null,
             'ring_group_context' => $attributes['ring_group_context'] ?? null,
             'dialplan_uuid' => Str::uuid(),
         ]);
@@ -330,13 +337,20 @@ class RingGroupsController extends Controller
 
         $attributes = $request->validated();
 
-        if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-            $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
-        } else {
-            $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
-            if (empty($attributes['ring_group_forward_destination'])) {
-                $attributes['ring_group_forward_enabled'] = 'false';
+        if(isset($attributes['ring_group_forward'])) {
+            if ($attributes['ring_group_forward']['all']['type'] == 'external') {
+                $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'],
+                    "US")->formatE164();
+            } else {
+                $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
+                if (empty($attributes['ring_group_forward_destination'])) {
+                    $attributes['ring_group_forward_enabled'] = 'false';
+                }
             }
+        }
+
+        if(!isset($attributes['ring_group_missed_call_category'])) {
+            $attributes['ring_group_missed_call_category'] = null;
         }
 
         $ringGroup->update([
@@ -350,8 +364,8 @@ class RingGroupsController extends Controller
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'] ?? null,
             'ring_group_description' => $attributes['ring_group_description'],
             'ring_group_enabled' => $attributes['ring_group_enabled'],
-            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
-            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
+            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'] ?? 'false',
+            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'] ?? null,
             'ring_group_strategy' => $attributes['ring_group_strategy'],
             'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
             'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
@@ -359,9 +373,9 @@ class RingGroupsController extends Controller
             'ring_group_ringback' => $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
-            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'] ?? null,
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
-            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
+            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'] ?? null,
             'ring_group_context' => $attributes['ring_group_context'] ?? null
         ]);
 

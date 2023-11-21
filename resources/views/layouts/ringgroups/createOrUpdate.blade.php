@@ -955,7 +955,7 @@
                 dragoverBubble: false,
                 removeCloneOnHide: true, // Remove the clone element when it is not showing, rather than just hiding it
                 emptyInsertThreshold: 5, // px, distance mouse must be from empty sortable to insert drag element into it
-                
+
                 setData: function( /** DataTransfer */ dataTransfer, /** HTMLElement*/ dragEl) {
                     dataTransfer.setData('Text', dragEl
                         .textContent); // `dataTransfer` object of HTML5 DragEvent
