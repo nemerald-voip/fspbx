@@ -85,7 +85,7 @@ class RingGroups extends Model
 
     public function getGroupDestinations()
     {
-        return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->get();
+        return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->orderBy('destination_delay')->get();
     }
 
     public function groupDestinations()

@@ -164,6 +164,7 @@ class RingGroupsController extends Controller
 
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
+            $order = 5;
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
                     break;
@@ -174,7 +175,12 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
-                $groupsDestinations->destination_delay = $destination['delay'];
+                if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
+                    $groupsDestinations->destination_delay = $order;
+                    $order += 5;
+                } else {
+                    $groupsDestinations->destination_delay = $destination['delay'];
+                }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
                 if ($destination['prompt'] == 'true') {
                     $groupsDestinations->destination_prompt = 1;
@@ -323,7 +329,6 @@ class RingGroupsController extends Controller
         }
 
         $attributes = $request->validated();
-        // logger($attributes);
 
         if ($attributes['ring_group_forward']['all']['type'] == 'external') {
             $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
@@ -366,6 +371,7 @@ class RingGroupsController extends Controller
 
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
+            $order = 5;
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
                     break;
@@ -376,7 +382,12 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
-                $groupsDestinations->destination_delay = $destination['delay'];
+                if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
+                    $groupsDestinations->destination_delay = $order;
+                    $order += 5;
+                } else {
+                    $groupsDestinations->destination_delay = $destination['delay'];
+                }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
                 if ($destination['prompt'] == 'true') {
                     $groupsDestinations->destination_prompt = 1;
@@ -414,7 +425,7 @@ class RingGroupsController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  RingGroups  $ringGroup
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(RingGroups $ringGroup)
     {
@@ -447,8 +458,8 @@ class RingGroupsController extends Controller
             ]);
         } else {
             return response()->json([
-                'error' => 401,
-                'error' => [
+                'status' => 401,
+                'errors' => [
                     'message' => "There was an error deleting this Ring Group",
                 ],
             ]);
