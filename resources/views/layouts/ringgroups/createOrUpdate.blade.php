@@ -703,7 +703,8 @@
                                                                                 @endforeach
                                                                             </select>
                                                                         </div>
-                                                                        <div class="col-md-9">
+                                                                        <div id="missed_call_wrapper" class="col-md-9"
+                                                                             @if($ringGroup->ring_group_missed_call_app != 'email') style="display: none" @endif>
                                                                             <input class="form-control" type="text"
                                                                                 placeholder=""
                                                                                 id="ring_group_missed_call_data"
@@ -819,6 +820,7 @@
             const form = $('#ringGroupForm');
             const timeoutAction = $('#timeout_action');
             const timeoutActionWrapper = $('#timeout_action_wrapper');
+            const missedCallWrapper = $('#missed_call_wrapper');
 
             applyDestinationSelect2()
 
@@ -833,6 +835,15 @@
 
                 timeoutActionWrapper.find('div').hide();
                 timeoutActionWrapper.find('div#timeout_action_wrapper_' + e.target.value).show();
+            })
+
+            $('#ring_group_missed_call_category').on('change', function(e) {
+                e.preventDefault();
+                if (e.target.value === 'disabled') {
+                    missedCallWrapper.hide()
+                } else {
+                    missedCallWrapper.show()
+                }
             })
 
             $('#submitFormButton').on('click', function(e) {
