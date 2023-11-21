@@ -25,33 +25,45 @@
                     </button>
                     <div class="dropdown-menu " aria-labelledby="dropdownMenuButton">
                         <form class="px-4 py-3" wire:submit.prevent="applyFilters">
-                            <div class="form-group">
-                                <input type="text" class="form-control" id="searchInput" placeholder="Search...">
+                            <div class="form-group mb-1">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search..."
+                                    oninput="filterCategories()">
                             </div>
-                            <div class="form-check">
-                                <input type="checkbox" id="table-filter-call_category-select-all" wire:input="selectAllFilterOptions('call_category')" class="form-check-input" checked="">
+                            <div class="form-check category-item">
+                                <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }}@endif-select-all"
+                                    wire:input="selectAllFilterOptions('call_category')" class="form-check-input">
                                 <label class="form-check-label" for="table-filter-call_category-select-all">All</label>
                             </div>
-                            @foreach ($component->callCategories as $category)
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="check{{ ucfirst(Str::camel($category)) }}">
-                                <label class="form-check-label" for="check{{ ucfirst(Str::camel($category)) }}">{{ $category }}</label>
-                            </div>
+                           
+
+                            @foreach ($component->getFilterByKey('call_category')->getOptions() as $key => $value)
+                                <div class="form-check category-item"
+                                    wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-multiselect-{{ $key }}">
+                                    <input class="form-check-input" type="checkbox"
+                                        id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
+                                        value="{{ $key }}"
+                                        wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
+                                        wire:model.stop="table.filters.{{ $component->getFilterByKey('call_category')->getKey() }}">
+                                    <label class="form-check-label"
+                                        for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
+                                </div>
                             @endforeach
-        
-        
+
+                          
+
+
                             <div class="row mt-2">
                                 <div class="col-6">
                                     <button type="button" class="btn btn-link btn-warning"
                                         wire:click="clearCategories">Clear</button>
-        
+
                                 </div>
                                 <div class="col-6 text-end">
                                     <button type="submit" class="btn btn-primary">Apply</button>
                                 </div>
                             </div>
                         </form>
-        
+
                     </div>
                 </div>
             </div>
@@ -61,7 +73,7 @@
 
 
         {{-- <div class="card card-body"> --}}
-        
+
 
 
         {{-- </div> --}}
@@ -71,6 +83,22 @@
 
 @push('scripts')
     <script>
+        function filterCategories() {
+            var input, filter, categories, category;
+            input = document.getElementById('searchInput');
+            filter = input.value.toUpperCase();
+            categories = document.getElementsByClassName('category-item');
+
+            for (var i = 0; i < categories.length; i++) {
+                category = categories[i].getElementsByTagName('label')[0];
+                if (category.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                    categories[i].style.display = '';
+                } else {
+                    categories[i].style.display = 'none';
+                }
+            }
+        }
+
         $(document).ready(function() {
 
             // Get the current browser URL
@@ -101,7 +129,8 @@
                     format: 'MM/DD/YY'
                 }
             }).on('apply.daterangepicker', function(e, picker) {
-                @this.setDateRange(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'))
+                @this.setDateRange(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format(
+                    'YYYY-MM-DD'))
 
             });
         });
