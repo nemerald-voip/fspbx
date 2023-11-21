@@ -236,7 +236,7 @@
                                                                 <tr>
                                                                     <th style="width: 20px;">Order</th>
                                                                     <th>Destination</th>
-                                                                    <th style="width: 150px">Delay</th>
+                                                                    <th class="colDelay" style="width: 150px">Delay</th>
                                                                     <th style="width: 150px">Number of rings
                                                                     </th>
                                                                     <th style="width: 130px;">Answer
@@ -269,7 +269,7 @@
                                                                                 ]
                                                                             )
                                                                         </td>
-                                                                        <td>
+                                                                        <td class="colDelay">
                                                                             <select
                                                                                 id="destination_delay_{{ $destination->ring_group_destination_uuid }}"
                                                                                 name="ring_group_destinations[{{ $destination->ring_group_destination_uuid }}][delay]">
@@ -767,6 +767,11 @@
         </div> <!-- end col -->
     </div>
     </div> <!-- container -->
+    <div id="destinationColDelay">
+        @if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover')
+            <style>.colDelay { display: none; }</style>
+        @endif
+    </div>
 @endsection
 
 @push('scripts')
@@ -843,6 +848,15 @@
                     missedCallWrapper.hide()
                 } else {
                     missedCallWrapper.show()
+                }
+            })
+
+            $('#ring_group_strategy').on('change', function(e) {
+                e.preventDefault();
+                if (e.target.value === 'rollover' || e.target.value === 'sequence') {
+                    $('#destinationColDelay').append('<style>.colDelay { display: none; }</style>')
+                } else {
+                    $('#destinationColDelay').empty();
                 }
             })
 
@@ -1112,7 +1126,7 @@
             'extensions' => $extensions,
         ])
             </td>
-            <td><select id="destination_delay___NEWROWID__" name="ring_group_destinations[newrow__NEWROWID__][delay]">
+            <td class="colDelay"><select id="destination_delay___NEWROWID__" name="ring_group_destinations[newrow__NEWROWID__][delay]">
 @for ($i = 0; $i < 20; $i++) <option value="{{ $i * 5 }}" @if ($i == 0) selected @endif>
         {{ $i }} @if ($i > 1) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td>
         <td><select id="destination_timeout___NEWROWID__" name="ring_group_destinations[newrow__NEWROWID__][timeout]">
