@@ -95,6 +95,7 @@ class CdrTable extends DataTableComponent
             ->select(
                 'xml_cdr_uuid',
                 'domain_uuid',
+                'extension_uuid',
                 'sip_call_id',
                 'source_number',
                 'start_stamp',
