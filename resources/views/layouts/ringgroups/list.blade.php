@@ -31,7 +31,7 @@
         </th>
         <th>Name</th>
         <th>Extension</th>
-        <th>Strategy</th>
+        <th>Members</th>
         <th>Description</th>
         <!--th>Status</th-->
         <th>Action</th>
@@ -72,7 +72,10 @@
                     {{ $ringGroup->ring_group_extension }}
                 </td>
                 <td>
-                    {{ $ringGroup->ring_group_strategy }}
+                    @foreach ($ringGroup->getGroupDestinations() as $destination)
+                    <span class="badge bg-light text-dark">{{ $destination->destination_number }}</span>
+                    {{-- <span class="badge badge-outline-primary">{{ $destination->destination_number }}</span> --}}
+                    @endforeach
                 </td>
 
                 <td>

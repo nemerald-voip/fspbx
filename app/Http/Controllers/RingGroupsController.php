@@ -40,7 +40,7 @@ class RingGroupsController extends Controller
         $ringGroups = RingGroups::query();
         $ringGroups
             ->where('domain_uuid', Session::get('domain_uuid'));
-        $ringGroups = $ringGroups->orderBy('insert_date',)->paginate(10)->onEachSide(1);
+        $ringGroups = $ringGroups->orderBy('ring_group_extension')->paginate(10)->onEachSide(1);
 
         $permissions['delete'] = userCheckPermission('ring_group_delete');
         $permissions['view'] = userCheckPermission('ring_group_view');
