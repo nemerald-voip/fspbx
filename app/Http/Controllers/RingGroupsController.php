@@ -31,11 +31,8 @@ class RingGroupsController extends Controller
      */
     public function index(Request $request)
     {
-        //print '<pre>';
-        //print_r(Session::get('permissions', false));
-        //print '</pre>';
-        // Check permissions
-        if (!userCheckPermission("ring_group_all")) {
+
+        if (!userCheckPermission("ring_group_view")) {
             return redirect('/');
         }
 
