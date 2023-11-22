@@ -226,7 +226,7 @@
             @if ($permissions['ring_groups'])
                 <div class="col-md-4 col-lg-3 col-sm-6">
                     <div class="card">
-                        <a href="/app/ring_groups/ring_groups.php">
+                        <a href="/ring-groups">
                             <div class="card-body pt-2">
                                 <div class="d-flex justify-content-between align-items-center"
                                     style="border-bottom: 1px solid #f1f3fa;">
