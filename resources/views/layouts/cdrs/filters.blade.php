@@ -17,32 +17,36 @@
 
             <div class="col-md-1 col-lg-1 col-sm-3">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" id="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('direction')->getKey() }}"
+                    <button class="btn btn-light dropdown-toggle" type="button"
+                        id="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('direction')->getKey() }}"
                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {{ $component->getFilterByKey('direction')->getName() }}
                     </button>
-                    <div class="dropdown-menu " aria-labelledby="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('direction')->getKey() }}">
+                    <div class="dropdown-menu "
+                        aria-labelledby="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('direction')->getKey() }}">
                         <div class="px-4 py-3">
                             <div class="form-check">
-                                <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if($component->getFilterByKey('direction')->hasCustomPosition())-{{ $component->getFilterByKey('direction')->getCustomPosition() }}@endif-select-all"
+                                <input type="checkbox"
+                                    id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-select-all"
                                     wire:input="selectAllFilterOptions('direction')" class="form-check-input">
-                                <label class="form-check-label" for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if($component->getFilterByKey('direction')->hasCustomPosition())-{{ $component->getFilterByKey('direction')->getCustomPosition() }}@endif-select-all">All</label>
+                                <label class="form-check-label"
+                                    for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-select-all">All</label>
                             </div>
-                           
+
                             @foreach ($component->getFilterByKey('direction')->getOptions() as $key => $value)
                                 <div class="form-check"
-                                    wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition())-{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-multiselect-{{ $key }}">
+                                    wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-multiselect-{{ $key }}">
                                     <input class="form-check-input" type="checkbox"
-                                        id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition())-{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}"
+                                        id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}"
                                         value="{{ $key }}"
-                                        wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition())-{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}"
+                                        wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}"
                                         wire:model.stop="table.filters.{{ $component->getFilterByKey('direction')->getKey() }}">
                                     <label class="form-check-label"
-                                        for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition())-{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
+                                        for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
                                 </div>
                             @endforeach
 
-                          
+
                         </div>
 
                     </div>
@@ -51,36 +55,40 @@
 
             <div class="col-md-2 col-lg-2 col-sm-4">
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" id="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('call_category')->getKey() }}"
+                    <button class="btn btn-light dropdown-toggle" type="button"
+                        id="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('call_category')->getKey() }}"
                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {{ $component->getFilterByKey('call_category')->getName() }}
                     </button>
-                    <div class="dropdown-menu " aria-labelledby="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('call_category')->getKey() }}">
+                    <div class="dropdown-menu "
+                        aria-labelledby="{{ $component->getTableName() }}-dropdown-{{ $component->getFilterByKey('call_category')->getKey() }}">
                         <div class="px-4 py-3">
                             <div class="form-group mb-1">
                                 <input type="text" class="form-control" id="searchInput" placeholder="Search..."
                                     oninput="filterCategories()">
                             </div>
                             <div class="form-check category-item">
-                                <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }}@endif-select-all"
+                                <input type="checkbox"
+                                    id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-select-all"
                                     wire:input="selectAllFilterOptions('call_category')" class="form-check-input">
-                                <label class="form-check-label" for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }}@endif-select-all">All</label>
+                                <label class="form-check-label"
+                                    for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-select-all">All</label>
                             </div>
-                           
+
                             @foreach ($component->getFilterByKey('call_category')->getOptions() as $key => $value)
                                 <div class="form-check category-item"
-                                    wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-multiselect-{{ $key }}">
+                                    wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-multiselect-{{ $key }}">
                                     <input class="form-check-input" type="checkbox"
-                                        id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
+                                        id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
                                         value="{{ $key }}"
-                                        wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
+                                        wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
                                         wire:model.stop="table.filters.{{ $component->getFilterByKey('call_category')->getKey() }}">
                                     <label class="form-check-label"
-                                        for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition())-{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
+                                        for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
                                 </div>
                             @endforeach
 
-                          
+
                         </div>
 
                     </div>
@@ -129,16 +137,22 @@
             const dateFrom = url.searchParams.get("table[filters][date_from]");
             const dateTo = url.searchParams.get("table[filters][date_to]");
 
-            // Split the date string by "-"
-            const dateFromParts = dateFrom.split("-");
-            // Reformat the date
-            const formattedDateFrom = `${dateFromParts[1]}/${dateFromParts[2]}/${dateFromParts[0].slice(-2)}`;
+            // Initialize date variables with default values
+            const formattedDateFrom = '{{ now()->format("m/d/y") }}';
+            const formattedDateTo = '{{ now()->format("m/d/y") }}';
 
-            // Split the date string by "-"
-            const dateToParts = dateTo.split("-");
-            // Reformat the date
-            const formattedDateTo = `${dateToParts[1]}/${dateToParts[2]}/${dateToParts[0].slice(-2)}`;
+            // Check if dateFrom and dateTo are not null before proceeding
+            if (dateFrom !== null && dateTo !== null) {
+                // Split the date string by "-"
+                const dateFromParts = dateFrom.split("-");
+                // Reformat the date
+                const formattedDateFrom = `${dateFromParts[1]}/${dateFromParts[2]}/${dateFromParts[0].slice(-2)}`;
 
+                // Split the date string by "-"
+                const dateToParts = dateTo.split("-");
+                // Reformat the date
+                const formattedDateTo = `${dateToParts[1]}/${dateToParts[2]}/${dateToParts[0].slice(-2)}`;
+            }
 
             $('#dateRangeFilter').daterangepicker({
                 timePicker: false,
