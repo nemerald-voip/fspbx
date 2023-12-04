@@ -354,6 +354,8 @@
                     $('#id' + blinkId)[0].scrollIntoView();
                 }
                 $('[data-bs-toggle="tooltip"]').tooltip();
+            } else {
+                tgt.html('<div class="text-center">No matching records found</div>');
             }
         });
     }

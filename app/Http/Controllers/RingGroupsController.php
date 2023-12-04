@@ -202,6 +202,7 @@ class RingGroupsController extends Controller
 
         return response()->json([
             'status' => 'success',
+            'redirect_url' => route('ring-groups.edit', $ringGroup),
             'ring_group' => $ringGroup,
             'message' => 'RingGroup has been created.'
         ]);

@@ -886,10 +886,13 @@
                         $('.loading').hide();
                     },
                     success: function(result) {
-                        $('.loading').hide();
                         $.NotificationApp.send("Success", result.message, "top-right",
                             "#10c469", "success");
-                        window.location.href = "{{ route('ring-groups.index') }}";
+                        if(result.redirect_url){
+                            window.location=result.redirect_url;
+                        } else {
+                            $('.loading').hide();
+                        }
                     },
                     error: function(error) {
                         $('.loading').hide();
