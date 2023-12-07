@@ -58,7 +58,7 @@
                                         @foreach ($destinations as $destination)
                                             <tr>
                                                 <td>{{ $destination->destination_description }}</td>
-                                                <td>{{ phone($destination->destination_number,"US",$national_phone_number_format) }}</td>
+                                                <td>{{ $destination->destination_number }}</td>
                                                 <td>
                                                     <!-- Switch-->
                                                     <div>
