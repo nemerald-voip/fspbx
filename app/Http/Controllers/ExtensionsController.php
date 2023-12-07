@@ -183,11 +183,24 @@ class ExtensionsController extends Controller
             abort(403, 'Unauthorized extension. Contact your administrator');
         }
 
+        //Get libphonenumber object
+        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+
         //check if this extension already have caller IDs assigend to it
         // if yes, add TRUE column to the new array $phone_numbers
         $phone_numbers = array();
         foreach ($destinations as $destination) {
             if (isset($extension->outbound_caller_id_number) && $extension->outbound_caller_id_number <> "") {
+                try {
+                    $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
+                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                        $destination->destination_number = $phoneNumberUtil
+                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
+                    }
+                } catch (NumberParseException $e) {
+                    // Do nothing and leave the numner as is
+                }
+
                 if (PhoneNumber::make($destination->destination_number, "US")->formatE164() == PhoneNumber::make($extension->outbound_caller_id_number, "US")->formatE164()) {
                     $destination->isCallerID = true;
                 } else {
