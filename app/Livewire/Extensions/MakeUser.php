@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Extensions;
+namespace App\Livewire\Extensions;
 
 use App\Models\User;
 use App\Models\Groups;
@@ -31,7 +31,7 @@ class MakeUser extends Component
             //check if user exists
             $user = User::where('user_email', $this->extension->voicemail->voicemail_mail_to)->first();
             if ($user) {
-                $this->emit('userCreationFailed', $this->extension->extension_uuid,'User with this email already exists');
+                $this->dispatch('userCreationFailed', $this->extension->extension_uuid,'User with this email already exists');
                 return;
             }
 
@@ -93,9 +93,9 @@ class MakeUser extends Component
 
             $user->setting()->saveMany([$language, $time_zone]);
 
-            $this->emit('userCreationCompleted', $this->extension->extension_uuid);
+            $this->dispatch('userCreationCompleted', $this->extension->extension_uuid);
         } catch (\Exception $e) {
-            $this->emit('userCreationFailed', $e->getMessage());
+            $this->dispatch('userCreationFailed', $e->getMessage());
         }
     }
 }

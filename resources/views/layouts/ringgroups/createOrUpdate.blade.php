@@ -370,7 +370,7 @@
                                                         </div>
                                                     </div>
 
-                                                    @include('layouts.partials.timeoutDestinations')
+                                                    @include('layouts.partials.timeoutDestinations', ['entityUuid' => $ringGroup->ring_group_timeout_data])
 
 
                                                     <div class="row">
@@ -823,12 +823,12 @@
     <script>
         $(document).ready(function() {
             const form = $('#ringGroupForm');
-            const timeoutAction = $('#timeout_action');
-            const timeoutActionWrapper = $('#timeout_action_wrapper');
+            //const timeoutAction = $('#timeout_action');
+            //const timeoutActionWrapper = $('#timeout_action_wrapper');
             const missedCallWrapper = $('#missed_call_wrapper');
 
             applyDestinationSelect2()
-
+/* NOTE: not needed cause we moved it to separate blade resources/views/layouts/partials/timeoutDestinations.blade.php
             $('#timeout_category').on('change', function(e) {
                 e.preventDefault();
                 if (e.target.value === 'disabled') {
@@ -841,7 +841,7 @@
                 timeoutActionWrapper.find('div').hide();
                 timeoutActionWrapper.find('div#timeout_action_wrapper_' + e.target.value).show();
             })
-
+*/
             $('#ring_group_missed_call_category').on('change', function(e) {
                 e.preventDefault();
                 if (e.target.value === 'disabled') {

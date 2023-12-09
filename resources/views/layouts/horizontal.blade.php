@@ -1,45 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        @include('layouts.shared/head')
-        
 
-    </head>
+<head>
+    @include('layouts.shared/head')
 
-    <body class="loading" data-layout="topnav" data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}' >
-        <!-- Begin page -->
-        <div class="wrapper">
 
-            <!-- ============================================================== -->
-            <!-- Start Page Content here -->
-            <!-- ============================================================== -->
+</head>
 
-            <div class="content-page">
-                <div class="content">
-                    
-                    @include('layouts.shared/horizontal-nav')
-                    
-                    @yield('content')
+<body class="loading" data-layout="topnav"
+    data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}'>
+    @if (!empty($page))
+        @inertia
+    @endif
+    <!-- Begin page -->
+    <div id="app" class="wrapper">
 
-                </div>
-                <!-- content -->
+        <!-- ============================================================== -->
+        <!-- Start Page Content here -->
+        <!-- ============================================================== -->
 
-                @include('layouts.shared/footer')
+        <div class="content-page">
+            <div class="content">
+
+                @include('layouts.shared/horizontal-nav')
+
+                @yield('content')
 
             </div>
+            <!-- content -->
 
-            <!-- ============================================================== -->
-            <!-- End Page content -->
-            <!-- ============================================================== -->
-
+            @include('layouts.shared/footer')
 
         </div>
-        <!-- END wrapper -->
 
-        @include('layouts.shared/right-sidebar')
+        <!-- ============================================================== -->
+        <!-- End Page content -->
+        <!-- ============================================================== -->
 
-        @include('layouts.shared/footer-script')
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.3/dist/cdn.min.js"></script>
-        @livewireScripts
-    </body>
+
+    </div>
+    <!-- END wrapper -->
+
+    @include('layouts.shared/right-sidebar')
+
+    @include('layouts.shared/footer-script')
+
+</body>
+
 </html>

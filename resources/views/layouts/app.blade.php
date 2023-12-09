@@ -1,101 +1,62 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('layouts.shared/head')
 
-    <!--  If your homepage contains a login form, or a modal with login, then when the session ends (by default, after 2 hours) 
-    then the csrf token is no longer valid and the user sees a page expired warning after they have filled out their login details.
-    We can work around this with a simple addition to the <head> of the main layout template. -->
-    <meta http-equiv="refresh" content="{{ config('session.lifetime') * 60 }}">
-
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
-    <!-- App favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/storage/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/storage/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/storage/favicon-16x16.png">
-    <link rel="manifest" href="/storage/site.webmanifest">
-    <link rel="mask-icon" href="/storage/safari-pinned-tab.svg" color="#f08439">
-    <link rel="shortcut icon" href="/storage/favicon.ico">
-    <meta name="msapplication-TileColor" content="#00aba9">
-    <meta name="msapplication-config" content="/storage/browserconfig.xml">
-    <meta name="theme-color" content="#ffffff">
-
-    <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}" defer></script>
-
-    <!-- Fonts -->
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
-
-    <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
-<body>
-    <div id="app">
+
+<body
+    @auth
+class="loading" data-layout="topnav"
+data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}'
+@else
+data-layout-config='{"darkMode":false}' @endauth>
+
+    @if (!empty($page))
+        @inertia
+    @endif
+
+
+    <!-- Begin page -->
+    <div id="app" class="wrapper">
+
         @auth
-        <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
-            <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+            <!-- ============================================================== -->
+            <!-- Start Page Content here -->
+            <!-- ============================================================== -->
+            <div class="content-page">
+                <div class="content">
 
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Left Side Of Navbar -->
-                    <ul class="navbar-nav me-auto">
+                    @include('layouts.shared/horizontal-nav')
 
-                    </ul>
+                    @yield('content')
 
-                    <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ms-auto">
-                        <!-- Authentication Links -->
-                        @guest
-                            @if (Route::has('login'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                                </li>
-                            @endif
-
-                            @if (Route::has('register'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                                </li>
-                            @endif
-                        @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
-                        @endguest
-                    </ul>
                 </div>
-            </div>
-        </nav>
-        @endauth
+                <!-- content -->
 
-        <main class="py-4">
+                @include('layouts.shared/footer')
+
+            </div>
+        @else
             @yield('content')
-        </main>
+        @endauth
+        <!-- ============================================================== -->
+        <!-- End Page content -->
+        <!-- ============================================================== -->
+
+
     </div>
+    <!-- END wrapper -->
+
+    @auth
+        @include('layouts.shared/right-sidebar')
+    @endauth
+
+    @include('layouts.shared/footer-script')
 </body>
+
 </html>

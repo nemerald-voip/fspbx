@@ -40,7 +40,7 @@
                                         id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}"
                                         value="{{ $key }}"
                                         wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}"
-                                        wire:model.stop="table.filters.{{ $component->getFilterByKey('direction')->getKey() }}">
+                                        wire:model.live.stop="table.filters.{{ $component->getFilterByKey('direction')->getKey() }}">
                                     <label class="form-check-label"
                                         for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('direction')->getKey() }}@if ($component->getFilterByKey('direction')->hasCustomPosition()) -{{ $component->getFilterByKey('direction')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
                                 </div>
@@ -82,7 +82,7 @@
                                         id="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
                                         value="{{ $key }}"
                                         wire:key="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}"
-                                        wire:model.stop="table.filters.{{ $component->getFilterByKey('call_category')->getKey() }}">
+                                        wire:model.live.stop="table.filters.{{ $component->getFilterByKey('call_category')->getKey() }}">
                                     <label class="form-check-label"
                                         for="{{ $component->getTableName() }}-filter-{{ $component->getFilterByKey('call_category')->getKey() }}@if ($component->getFilterByKey('call_category')->hasCustomPosition()) -{{ $component->getFilterByKey('call_category')->getCustomPosition() }} @endif-{{ $loop->index }}">{{ $value }}</label>
                                 </div>

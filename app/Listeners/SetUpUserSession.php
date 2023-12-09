@@ -334,6 +334,7 @@ class SetUpUserSession
 
         //set the session variables
         $_SESSION["user_uuid"] = $event->user->user_uuid;
+        $_SESSION['username'] = $event->user->username;
 
         //user session array
         $_SESSION["user"]["user_uuid"] = $event->user->user_uuid;

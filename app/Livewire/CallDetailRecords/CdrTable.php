@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\CallDetailRecords;
+namespace App\Livewire\CallDetailRecords;
 
 use App\Http\Controllers\Cdrs;
 use Carbon\Carbon;
@@ -75,7 +75,7 @@ class CdrTable extends DataTableComponent
         $this->modalIsOpen = true;
         $this->currentRecord = CDR::findOrFail($uuid);
 
-        $this->dispatchBrowserEvent('open-module');
+        $this->dispatch('open-module');
     }
 
     public function customView(): string
@@ -401,7 +401,7 @@ class CdrTable extends DataTableComponent
 
     public function dehydrate()
     {
-        // $this->emit('initizalizePopovers');
-        $this->dispatchBrowserEvent('initizalize-popovers');
+        // $this->dispatch('initizalizePopovers');
+        $this->dispatch('initizalize-popovers');
     }
 }

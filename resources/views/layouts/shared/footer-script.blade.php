@@ -123,6 +123,10 @@
                                 "success");
                         }
                         $("#id" + setting_id).fadeOut("slow");
+
+                        if (response.redirect_url) {
+                            window.location.href = response.redirect_url;
+                        }
                         //$(this).closest('tr').fadeOut("fast");
                     }
                 })

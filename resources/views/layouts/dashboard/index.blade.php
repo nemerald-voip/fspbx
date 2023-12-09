@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ['page_title' => 'Dashboard'])
+@extends('layouts.app', ['page_title' => 'Dashboard'])
 @section('content')
     <div class="container-fluid">
 

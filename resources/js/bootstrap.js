@@ -1,8 +1,13 @@
-window._ = require('lodash');
+import loadash from 'lodash'
+window._ = loadash
 
-try {
-    require('bootstrap');
-} catch (e) {}
+
+import * as Popper from '@popperjs/core'
+window.Popper = Popper
+
+import bootstrap from 'bootstrap/dist/js/bootstrap.min';
+window.bootstrap = bootstrap;
+
 
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
@@ -10,11 +15,10 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = require('axios');
+import axios from 'axios'
+window.axios = axios
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-axios.defaults.withCredentials = true;
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Inertia\Inertia;
 use Livewire\Livewire;
 use App\Models\Devices;
 use App\Models\IvrMenus;
@@ -13,13 +14,14 @@ use Laravel\Sanctum\Sanctum;
 use App\Observers\ExtensionObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Sanctum\PersonalAccessToken;
+use App\Livewire\CallDetailRecords\CdrTable;
 use Propaganistas\LaravelPhone\Validation\Phone;
-use App\Http\Livewire\CallDetailRecords\CdrTable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -46,6 +48,12 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::component('cdr-table', CdrTable::class);
 
+        Vite::useHotFile(storage_path('vite.hot')) // Customize the "hot" file...
+            ->useBuildDirectory('assets/vite') // Customize the build directory...
+            ->withEntryPoints(['resources/js/app.js']);
+
+        // Inertia::setRootView('layouts.horizontal');
+
         // Ringotel
         Http::macro('ringotel', function () {
             return Http::withHeaders([
@@ -70,14 +78,14 @@ class AppServiceProvider extends ServiceProvider
 
         Extensions::observe(ExtensionObserver::class);
 
-        Builder::macro('orWhereLike', function(string $column, string $search) {
-            return $this->orWhere($column, 'ILIKE', '%'.trim($search).'%');
+        Builder::macro('orWhereLike', function (string $column, string $search) {
+            return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');
         });
 
-        Builder::macro('andWhereLike', function(string $column, string $search) {
-            return $this->where($column, 'ILIKE', '%'.trim($search).'%');
+        Builder::macro('andWhereLike', function (string $column, string $search) {
+            return $this->where($column, 'ILIKE', '%' . trim($search) . '%');
         });
-/* Note: Temporary commented. Not removed because it can be used in next updates
+        /* Note: Temporary commented. Not removed because it can be used in next updates
         Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
             $phoneFormat = 'US';
             if(isset($parameters[0])) {
@@ -95,26 +103,26 @@ class AppServiceProvider extends ServiceProvider
         });
 */
         Validator::extend('ExtensionExists', function ($attribute, $value, $parameters, $validator) {
-            if(!isset($parameters[0])) {
+            if (!isset($parameters[0])) {
                 return false;
             }
             $domain = $parameters[0];
-            if($value == '0') {
+            if ($value == '0') {
                 // Bypass validation if the extension is 0. Means we have not chosen an extension due
                 // the option is partially optional
                 return true;
             } else {
                 $found = false;
-                if(Extensions::where('extension', $value)->where('domain_uuid', $domain)->first()) {
+                if (Extensions::where('extension', $value)->where('domain_uuid', $domain)->first()) {
                     $found = true;
                 }
-                if(IvrMenus::where('ivr_menu_extension', $value)->where('domain_uuid', $domain)->first()) {
+                if (IvrMenus::where('ivr_menu_extension', $value)->where('domain_uuid', $domain)->first()) {
                     $found = true;
                 }
-                if(RingGroups::where('ring_group_extension', $value)->where('domain_uuid', $domain)->first()) {
+                if (RingGroups::where('ring_group_extension', $value)->where('domain_uuid', $domain)->first()) {
                     $found = true;
                 }
-                if(Voicemails::where('voicemail_id', $value)->where('domain_uuid', $domain)->first()) {
+                if (Voicemails::where('voicemail_id', $value)->where('domain_uuid', $domain)->first()) {
                     $found = true;
                 }
 
@@ -131,7 +139,7 @@ class AppServiceProvider extends ServiceProvider
                 return false;
             }
 
-            if(isset($parameters[1]) && !empty($parameters[1])) {
+            if (isset($parameters[1]) && !empty($parameters[1])) {
                 if (RingGroups::where('ring_group_extension', $value)->where('ring_group_uuid', '!=', $parameters[1])->where('domain_uuid', $domain)->first()) {
                     return false;
                 }
@@ -147,7 +155,7 @@ class AppServiceProvider extends ServiceProvider
 
             return true;
         });
-/*
+        /*
         Validator::extend('DeviceMacAddressNotExists', function ($attribute, $value, $parameters, $validator) {
             $value = str_replace([':', '-', '.'], '', $value);
             $value = strtolower($value);
