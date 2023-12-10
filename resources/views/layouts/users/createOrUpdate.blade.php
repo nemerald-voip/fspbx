@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Users"])
+@extends('layouts.app', ["page_title"=> "Users"])
 
 @section('content')
 <!-- Start Content-->

@@ -1,20 +1,24 @@
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-layout-mode="detached"  data-topbar-color="dark" data-menu-color="light" data-sidenav-user="true" data-sidenav-size="0px">
 
 <head>
-    <meta charset="utf-8">
+    {{-- <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    @include('layouts.shared/head')
-
+    @include('layouts.shared/head') --}}
+    @include('layouts.shared/title-meta', ['title' => $title ?? null])
+    @yield('css')
+    @include('layouts.shared/head-css', ['mode' => $mode ?? '', 'demo' => $demo ?? ''])
+    @vite(['resources/js/hyper-head.js', 'resources/js/hyper-config.js'])
 </head>
 
 <body
-    @auth
+    {{-- @auth
 class="loading" data-layout="topnav"
 data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}'
 @else
-data-layout-config='{"darkMode":false}' @endauth>
+data-layout-config='{"darkMode":false}' @endauth --}}
+>
 
     @if (!empty($page))
         @inertia
@@ -25,6 +29,7 @@ data-layout-config='{"darkMode":false}' @endauth>
     <div id="app" class="wrapper">
 
         @auth
+
             <!-- ============================================================== -->
             <!-- Start Page Content here -->
             <!-- ============================================================== -->
@@ -33,7 +38,9 @@ data-layout-config='{"darkMode":false}' @endauth>
 
                     @include('layouts.shared/horizontal-nav')
 
-                    @yield('content')
+                    {{-- <div class="container-fluid"> --}}
+                        @yield('content')
+                    {{-- </div> --}}
 
                 </div>
                 <!-- content -->
@@ -42,7 +49,9 @@ data-layout-config='{"darkMode":false}' @endauth>
 
             </div>
         @else
-            @yield('content')
+            {{-- <div class="container-fluid"> --}}
+                @yield('content')
+            {{-- </div> --}}
         @endauth
         <!-- ============================================================== -->
         <!-- End Page content -->
@@ -54,9 +63,12 @@ data-layout-config='{"darkMode":false}' @endauth>
 
     @auth
         @include('layouts.shared/right-sidebar')
+        @yield('modal')
+
     @endauth
 
-    @include('layouts.shared/footer-script')
+    @include('layouts.shared/footer-scripts')
+    @vite(['resources/js/hyper-main.js'])
 </body>
 
 </html>

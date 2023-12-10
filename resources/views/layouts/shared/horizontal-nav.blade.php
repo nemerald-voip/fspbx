@@ -1,8 +1,8 @@
 
 
-<div class="topnav shadow-sm">
+<div class="topnav shadow-sm" style="background: linear-gradient(180deg,#6379c3,#546ee5)">
     <div class="container-fluid">
-        <nav class="navbar navbar-dark navbar-expand-xxl topnav-menu">
+        <nav class="navbar navbar-dark navbar-expand-lg topnav-menu">
 
             <!-- LOGO -->
             <a href="/dashboard" class="topnav-logo me-3">
@@ -21,7 +21,8 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle arrow-none" href="@if ($menu->menu_item_link != '') {{ $menu->menu_item_link }} @else '' @endif" 
                             id="topnav-dashboards" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="uil-dashboard me-1"></i>{{ $menu->menu_item_title }} <div class="arrow-down"></div>
+                                <i class="uil-dashboard me-1"></i>{{ $menu->menu_item_title }} 
+                                <i class="mdi mdi-chevron-down d-none d-sm-inline-block align-middle"></i>
                             </a>
                             <div class="dropdown-menu" aria-labelledby="topnav-dashboards">
                                 @foreach ($menu->child_menu as $child_menu)

@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ['page_title' => 'Edit Ring Group'])
+@extends('layouts.app', ['page_title' => 'Edit Ring Group'])
 
 @section('content')
     <!-- Start Content-->

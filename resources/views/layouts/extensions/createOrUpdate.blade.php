@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Edit Extension"])
+@extends('layouts.app', ["page_title"=> "Edit Extension"])
 
 @section('content')
     @php

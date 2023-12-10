@@ -1,8 +1,11 @@
 @push('scripts')
     <!-- dropzone js -->
-    <script src="{{ asset('assets/libs/dropzone/dropzone.min.js') }}"></script>
+    {{-- <script src="{{ asset('assets/libs/dropzone/dropzone.min.js') }}"></script> --}}
 
-    <script>
+    @vite(['resources/js/ui/component.fileupload.js','resources/js/hyper-syntax.js'])
+
+
+    <script type="module">
         Dropzone.autoDiscover = false;
 
         // set the dropzone container id

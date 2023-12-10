@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Users"])
+@extends('layouts.app', ["page_title"=> "Users"])
 
 @section('content')
 
@@ -146,7 +146,7 @@
 
 
 @push('scripts')
-<script>
+<script type="module">
     $(document).ready(function() {
 
         localStorage.removeItem('activeTab');

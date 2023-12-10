@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Device"])
+@extends('layouts.app', ["page_title"=> "Device"])
 
 @section('content')
     <!-- Start Content-->

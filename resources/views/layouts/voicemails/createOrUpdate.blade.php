@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Voicemail"])
+@extends('layouts.app', ["page_title"=> "Voicemail"])
 
 @section('content')
 <!-- Start Content-->

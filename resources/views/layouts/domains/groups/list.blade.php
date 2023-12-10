@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Domain Groups"])
+@extends('layouts.app', ["page_title"=> "Domain Groups"])
 
 @section('content')
 <!-- Start Content-->

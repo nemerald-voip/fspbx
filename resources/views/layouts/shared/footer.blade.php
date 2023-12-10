@@ -1,5 +1,5 @@
 <!-- Footer Start -->
-      @include('layouts.shared/loading')
+      {{-- @include('layouts.shared/loading') --}}
 
 <!-- Confirm Delete Modal -->
 <div class="modal fade" id="confirmDeleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">

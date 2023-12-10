@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ['page_title' => 'New Fax'])
+@extends('layouts.app', ['page_title' => 'New Fax'])
 
 @section('content')
     <!-- Start Content-->

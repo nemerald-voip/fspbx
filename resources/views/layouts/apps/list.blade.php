@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Apps"])
+@extends('layouts.app', ["page_title"=> "Apps"])
 
 @section('content')
 <!-- Start Content-->
@@ -467,7 +467,7 @@
 
 @endsection
 @push('scripts')
-<script>
+<script type="module">
     $(document).ready(function() {
 
         $(".appDomainSelect2").select2({

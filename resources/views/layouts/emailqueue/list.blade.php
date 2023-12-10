@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Email Queues"])
+@extends('layouts.app', ["page_title"=> "Email Queues"])
 
 @section('content')
 

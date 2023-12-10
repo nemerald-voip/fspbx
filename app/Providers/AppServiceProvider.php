@@ -50,7 +50,9 @@ class AppServiceProvider extends ServiceProvider
 
         Vite::useHotFile(storage_path('vite.hot')) // Customize the "hot" file...
             ->useBuildDirectory('assets/vite') // Customize the build directory...
-            ->withEntryPoints(['resources/js/app.js']);
+            ->withEntryPoints([
+                'resources/js/app.js'
+            ]);
 
         // Inertia::setRootView('layouts.horizontal');
 
