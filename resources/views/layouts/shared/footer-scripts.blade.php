@@ -3,6 +3,9 @@
 @yield('script-bottom')
 @stack('scripts')
 
+@vite(['resources/js/ui/component.toastr.js','node_modules/jquery-toast-plugin/dist/jquery.toast.min.css'])
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Set the csrf token, and set dataType: 'json' for all ajax requests

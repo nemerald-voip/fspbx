@@ -50,6 +50,7 @@ export default defineConfig({
                 "resources/js/ui/component.fileupload.js",
                 "resources/js/ui/component.dragula.js",
                 "resources/js/ui/component.chat.js",
+                "resources/js/ui/component.toastr.js",
                 // "resources/js/ui/component.range-slider.js",
                 // "resources/js/ui/component.rating.js",
             ],

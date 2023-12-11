@@ -875,7 +875,7 @@
 
 @push('scripts')
 
-<script>
+<script type="module">
     var setting_validation;
     $(document).ready(function() {
         //Assign a value to Language field

@@ -1323,6 +1323,7 @@ class ExtensionsController extends Controller
     {
         try {
 
+            logger($request);
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
             // Excel::import(new ExtensionsImport, request()->file('file'));
