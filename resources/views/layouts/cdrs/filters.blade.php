@@ -126,7 +126,7 @@
             }
         }
 
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
 
             // Get the current browser URL
             const urlString = window.location.href;

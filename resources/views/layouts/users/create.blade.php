@@ -610,7 +610,7 @@
 {{-- @yield('script-bottom') --}}
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         $('#time_zone,#language,#group,#domain').select2();
         $('#domain_row').hide();
 

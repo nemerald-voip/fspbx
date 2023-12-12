@@ -1652,8 +1652,8 @@
             }
         }
     </style>
-<script type="module" >
-    $(document).ready(function() {
+<script  >
+    document.addEventListener('DOMContentLoaded', function() {
         // $("#template-select").select2({
         //     dropdownParent: $("#createDeviceModal")
         // });

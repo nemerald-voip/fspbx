@@ -2,7 +2,7 @@
 <script>
 @endif
     @if ($useDocumentReadyTag ?? true)
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
     @endif
         const recordWrapper = $('#{{ $id }}_record_wrapper');
         const greetingPlayPauseButton = $('#{{ $id }}_play_pause_button');

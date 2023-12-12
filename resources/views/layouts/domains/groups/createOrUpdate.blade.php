@@ -110,7 +110,7 @@
 
 <script>
     var setting_validation;
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
 
         
     });

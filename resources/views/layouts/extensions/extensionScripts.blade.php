@@ -4,7 +4,7 @@
 
     @vite(['resources/js/ui/component.fileupload.js', 'resources/js/hyper-syntax.js'])
 
-    <script type="module">
+    <script>
         document.addEventListener('dropzoneSuccessEvent', function() {
             // Handle success event here
             $('#extension-upload-modal').modal("hide");
@@ -34,7 +34,8 @@
 
 
 
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
+
 
             Livewire.on('userCreationCompleted', extensionUuid => {
                 // Successful Notification
@@ -113,7 +114,7 @@
                                     $("#appUserSetStatusButton").prop("disabled", false);
                                     $('#appUserResetPasswordButton').show();
                                 }
-                                dataObj = new Object();
+                                let dataObj = new Object();
                                 dataObj.mobile_app = response.mobile_app;
                                 $('#MobileAppModal').data(dataObj).modal("show");
                                 $('#mobileAppName').text(response.name);

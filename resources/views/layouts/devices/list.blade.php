@@ -77,7 +77,7 @@
 
 @push('scripts')
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
             $('#clearSearch').on('click', function () {
                 $('#search').val('');
                 var location = window.location.protocol + "//" + window.location.host + window.location.pathname;

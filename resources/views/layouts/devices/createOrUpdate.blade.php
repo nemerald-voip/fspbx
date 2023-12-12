@@ -55,7 +55,7 @@
 
 @push('scripts')
     <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         $('#extension-select').select2({
             //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });

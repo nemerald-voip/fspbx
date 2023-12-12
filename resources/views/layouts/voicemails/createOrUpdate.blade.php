@@ -383,7 +383,7 @@
 @push('scripts')
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
     });
 
 

@@ -146,8 +146,8 @@
 
 
 @push('scripts')
-<script type="module">
-    $(document).ready(function() {
+<script >
+    document.addEventListener('DOMContentLoaded', function() {
 
         localStorage.removeItem('activeTab');
 

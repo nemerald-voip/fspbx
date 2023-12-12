@@ -357,7 +357,7 @@
 @push('scripts')
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         $('#faxEmailButton').attr('disabled',true);
         $('#faxAllowedEmailButton').attr('disabled',true);
         $('#faxAllowedDomainButton').attr('disabled',true);

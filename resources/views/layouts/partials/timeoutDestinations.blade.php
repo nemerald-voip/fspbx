@@ -53,7 +53,7 @@
 
 @push('scripts')
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const timeoutCategory = $('#timeout_category');
             const timeoutActionWrapper = $('#timeout_action_wrapper');
 

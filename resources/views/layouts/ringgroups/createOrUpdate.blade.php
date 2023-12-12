@@ -821,7 +821,7 @@
         }
     </style>
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const form = $('#ringGroupForm');
             //const timeoutAction = $('#timeout_action');
             //const timeoutActionWrapper = $('#timeout_action_wrapper');

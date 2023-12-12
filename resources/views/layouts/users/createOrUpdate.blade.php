@@ -875,9 +875,9 @@
 
 @push('scripts')
 
-<script type="module">
+<script >
     var setting_validation;
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         //Assign a value to Language field
         $('#time_zone').val($('#time_zone_val').val());
         $('#time_zone').trigger('change');

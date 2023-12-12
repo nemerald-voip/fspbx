@@ -403,7 +403,7 @@
             textArea.style.display = (textArea.style.display === 'none') ? 'block' : 'none';
         });
 
-        $(document).ready(function() {});
+        document.addEventListener('DOMContentLoaded', function() {});
 
 
         $('#submitFormButton').on('click', function(e) {

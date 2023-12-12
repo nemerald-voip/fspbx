@@ -467,8 +467,8 @@
 
 @endsection
 @push('scripts')
-<script type="module">
-    $(document).ready(function() {
+<script >
+    document.addEventListener('DOMContentLoaded', function() {
 
         $(".appDomainSelect2").select2({
             dropdownParent: $("#appSyncModal")

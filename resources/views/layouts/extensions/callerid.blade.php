@@ -100,7 +100,7 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         //CallerID single page. 
         //uncheck all of the checkboxes, apart from the one checked
         // $('input.callerIdCheckbox').on('change', function() {
