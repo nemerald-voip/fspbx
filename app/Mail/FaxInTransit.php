@@ -8,6 +8,7 @@ use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Symfony\Component\Mime\Email;
 
 class FaxInTransit extends Mailable
 {
@@ -55,7 +56,7 @@ class FaxInTransit extends Mailable
      */
     public function build()
     {
-        $this->withSwiftMessage(function ($message) {
+        $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
         return $this->subject('Re: fax to '.$this->attributes['fax_destination'])->view('emails.fax.inTransit');

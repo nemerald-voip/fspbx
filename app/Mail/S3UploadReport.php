@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use App\Models\DefaultSettings;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Symfony\Component\Mime\Email;
 
 class S3UploadReport extends Mailable
 {
@@ -44,7 +45,7 @@ class S3UploadReport extends Mailable
      */
     public function build()
     {
-        $this->withSwiftMessage(function ($message) {
+        $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
         return $this->view('emails.s3.report');

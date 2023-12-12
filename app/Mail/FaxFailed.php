@@ -8,6 +8,7 @@ use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Symfony\Component\Mime\Email;
 
 class FaxFailed extends Mailable
 {
@@ -52,7 +53,7 @@ class FaxFailed extends Mailable
      */
     public function build()
     {
-        $this->withSwiftMessage(function ($message) {
+        $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
         return $this->subject('Re: fax to '.$this->attributes['fax_destination'] . ' Failed')->view('emails.fax.failed');
