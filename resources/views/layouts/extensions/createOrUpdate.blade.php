@@ -215,7 +215,7 @@
                                                             <div class="mb-3">
                                                                 <label for="users-select" class="form-label">Users</label>
                                                                 <!-- Multiple Select -->
-                                                                <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                                <select class="select2 form-control select2-multiple form-select form-select-sm" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
                                                                     id="users-select" @if (!userCheckPermission('extension_user_edit')) disabled @endif name="users[]">
 
                                                                         @foreach ($domain_users as $domain_user)
@@ -1509,7 +1509,7 @@
                                                                 </table>
                                                                 <div id="addDestinationBar" class="my-1" @if($extension->getFollowMeDestinations()->count() >= 10) style="display: none;" @endif>
                                                                     <a href="javascript:addDestinationAction(this);" class="btn btn-success">
-                                                                        <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
+                                                                        <i class="mdi mdi-plus" data-bs-container="#addDestinationBar" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
                                                                     </a>
                                                                 </div>
                                                             </div>
@@ -1644,7 +1644,7 @@
             }
         }
     </style>
-<script>
+<script type="module" >
     $(document).ready(function() {
         // $("#template-select").select2({
         //     dropdownParent: $("#createDeviceModal")
@@ -1717,7 +1717,7 @@
         $(document).on('click', '.forward_checkbox', function (e) {
             var checkbox = $(this);
             var cname = checkbox.data('option');
-            console.log(cname)
+            // console.log(cname)
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
             } else {
@@ -1953,9 +1953,9 @@
 
         // Extension Page
         // Sort Select2 for users
-        $('#users-select').select2({
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
-        });
+        // $('#users-select').select2({
+        //     sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        // });
 
         // Extension Page
         // Sort Select2 for voicemail destinations
