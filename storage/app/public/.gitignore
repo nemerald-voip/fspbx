@@ -1,3 +1,5 @@
 *
 !.gitignore
-!app/public/vite/
+!vite
+!vite/*
+!vite/assets/*
