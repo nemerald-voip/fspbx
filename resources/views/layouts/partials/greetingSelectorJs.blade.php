@@ -145,7 +145,7 @@
         });
         greetingPlayPauseButton.click(function() {
             if (audioElement.paused) {
-                console.log('Audio paused. Start')
+                // console.log('Audio paused. Start')
                 greetingPlayPauseButton.find('i').removeClass('uil-play').addClass('uil-pause')
                 audioElement.play();
             } else {
