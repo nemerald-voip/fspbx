@@ -384,6 +384,7 @@
         // deleteSetting(setting_id);
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
     $('.delete-greeting-btn').click(function () {
         var confirmDeleteRecordingModal = $("#{{ $id }}_confirmDeleteRecordingModal");
         var setting_id = confirmDeleteRecordingModal.data("setting_id");
@@ -419,6 +420,7 @@
             printErrorMsg(error);
         });
     });
+});
 
     function editRecordingAction(url, setting_id) {
         url = url.replace(':id', setting_id);
