@@ -31,7 +31,8 @@
         "rappasoft/laravel-livewire-tables": "^3.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-webhook-client": "^3.2",
-        "wildbit/swiftmailer-postmark": "^3.3"
+        "symfony/http-client": "^6.4",
+        "symfony/postmark-mailer": "^6.4"
     },
     "require-dev": {
         "spatie/laravel-ignition": "^2.0",
