@@ -1,6 +1,7 @@
 /node_modules
 /public/hot
-/storage
+!/storage
+/storage/*
 !/storage/app/public/vite
 /storage/*.key
 /vendor
