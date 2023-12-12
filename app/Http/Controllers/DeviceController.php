@@ -38,7 +38,7 @@ class DeviceController extends Controller
         if (!empty($searchStringKey)) {
             $devices->where(function ($query) use ($searchStringKey) {
                 $query
-                    ->orWhereLike('device_mac_address', str_replace([':', '-', '.'], '', $searchStringKey))
+                    ->orWhereLike('device_address', str_replace([':', '-', '.'], '', $searchStringKey))
                     ->orWhereLike('device_label', $searchStringKey)
                     ->orWhereLike('device_vendor', $searchStringKey)
                     ->orWhereLike('device_template', $searchStringKey);
@@ -93,7 +93,7 @@ class DeviceController extends Controller
 
         $device = new Devices();
         $device->fill([
-            'device_mac_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_mac_address']))),
+            'device_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_address']))),
             'device_label' => $extension->extension,
             'device_vendor' => explode("/", $inputs['device_template'])[0],
             'device_enabled' => 'true',

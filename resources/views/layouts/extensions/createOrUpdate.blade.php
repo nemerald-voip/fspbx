@@ -245,13 +245,17 @@
 
                                                     @if (userCheckPermission('extension_directory'))
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-lg-4 col-sm-8">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Display contact in the company's dial by name directory </label>
-                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                    data-bs-content="This user will appear in the company's dial by name directory">
-                                                                    <i class="dripicons-information"></i>
-                                                                </a>
+                                                                <label class="form-label">
+                                                                    Display contact in the company's dial by name directory&nbsp;
+                                                                    <span class="info-icon">
+                                                                        <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                            data-bs-content="This user will appear in the company's dial by name directory">
+                                                                            <i class="uil uil-info-circle"></i>
+                                                                        </a>
+                                                                    </span>
+                                                                </label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -266,13 +270,17 @@
                                                     </div> <!-- end row -->
 
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-lg-4 col-sm-8">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Announce extension in the the dial by name directory </label>
-                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                    data-bs-content="Announce user's extension when calling the dial by name directory">
-                                                                    <i class="dripicons-information"></i>
-                                                                </a>
+                                                                <label class="form-label">
+                                                                    Announce extension in the dial by name directory&nbsp;
+                                                                    <span class="info-icon">
+                                                                        <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                            data-bs-content="Announce user's extension when calling the dial by name directory">
+                                                                            <i class="uil uil-info-circle"></i>
+                                                                        </a>
+                                                                    </span>
+                                                                </label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -292,12 +300,12 @@
 
                                                     @if (userCheckPermission('extension_enabled'))
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-lg-4 col-sm-8">
                                                             <div class="mb-3">
                                                                 <label  class="form-label">Enabled </label>
                                                                 <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="This prevents devices from registering using this extension">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -319,7 +327,7 @@
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="description" class="form-label">Description</label>
-                                                                <input class="form-control" type="text" placeholder="" id="description" name="description"
+                                                                <input class="form-control" type="text" placeholder="" id="description" name="description" autocomplete="off"
                                                                     value="{{ $extension->description }}"/>
                                                                     <div class="text-danger description_err error_message"></div>
                                                             </div>
@@ -531,7 +539,7 @@
                                                                 <label class="form-label">Enable voicemail transcription </label>
                                                                 <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Send a text trancsript. Accuracy may vary based on call quality, accents, vocabulary, etc. ">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -553,7 +561,7 @@
                                                                 <label class="form-label">Delete voicemail after sending email </label>
                                                                 <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Enables email-only voicemail. Disables storing of voicemail messages for this mailbox in the cloud.">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -704,7 +712,7 @@
                                                                 <label class="form-label">Play voicemail tutorial </label>
                                                                 <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Play the voicemail tutorial after the next voicemail login.">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -952,7 +960,7 @@
                                                                 <label class="form-label">Enable call screening</label>
                                                                 <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="You can use Call Screen to find out who’s calling and why before you pick up a call. ">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -1170,7 +1178,7 @@
                                                                     <label class="form-label">Force ping </label>
                                                                     <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                         data-bs-content="Use OPTIONS to detect if extension is reachable">
-                                                                        <i class="dripicons-information"></i>
+                                                                        <i class="uil uil-info-circle"></i>
                                                                     </a>
                                                                 </div>
                                                             </div>
@@ -1735,7 +1743,7 @@
             var method = 'POST'
             var action = form.attr('action')
 
-            if(form.find('#device_mac_address').attr('readonly') !== undefined) {
+            if(form.find('#device_address').attr('readonly') !== undefined) {
                 method = 'PUT'
                 action = '{{route('devices.update', ['device' => ':device'])}}'.replace(':device', form.find('#device_uuid').val())
             }
@@ -1761,7 +1769,7 @@
                     form[0].reset();
                     $('#createDeviceModal').modal('hide');
                     /*$('#device-select').append(
-                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address + ' - ' + result.device.device_template)
+                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_address + ' - ' + result.device.device_template)
                     );*/
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                     window.location.reload();
@@ -1803,7 +1811,7 @@
                         $('.loading').hide();
                     },
                     success: function (result) {
-                        $('#device_mac_address').attr('readonly', true).val(result.device_mac_address)
+                        $('#device_address').attr('readonly', true).val(result.device_address)
                         $('#template-select').val(result.device_template).trigger('change')
                         $('#profile-select').val(result.device_profile_uuid).trigger('change')
                         $('#device_uuid').val(result.device_uuid)
@@ -1811,7 +1819,7 @@
                 });
             } else {
                 $('#createDeviceModalLabel').text('Create New Device')
-                $('#device_mac_address').attr('readonly', false).val('')
+                $('#device_address').attr('readonly', false).val('')
                 $('#device_uuid').val('')
                 $('#template-select').val('').trigger('change')
                 $('#profile-select').val('').trigger('change')

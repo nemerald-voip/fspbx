@@ -27,7 +27,7 @@ class Devices extends Model
     protected $fillable = [
         'domain_uuid',
         'device_profile_uuid',
-        'device_mac_address',
+        'device_address',
         'device_label',
         'device_vendor',
         'device_model',

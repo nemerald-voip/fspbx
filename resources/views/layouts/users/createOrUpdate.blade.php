@@ -596,7 +596,7 @@
                                                     <label  class="form-label">Enabled </label>
                                                     <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                         data-bs-content="This deactivates the user">
-                                                        <i class="dripicons-information"></i>
+                                                        <i class="uil uil-info-circle"></i>
                                                     </a>
                                                 </div>
                                             </div>
@@ -829,7 +829,7 @@
                                                     <label  class="form-label">Enabled <span class="text-danger">*</label>
                                                     {{-- <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                         data-bs-content="This deactivates the user">
-                                                        <i class="dripicons-information"></i> --}}
+                                                        <i class="uil uil-info-circle"></i> --}}
                                                     </a>
                                                 </div>
                                             </div>

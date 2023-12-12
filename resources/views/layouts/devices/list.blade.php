@@ -41,7 +41,7 @@
         @foreach ($devices as $key => $device)
             <tr id="id{{ $device->device_uuid }}">
                 <td>
-                    {{ $device->device_mac_address }}
+                    {{ $device->device_address }}
                 </td>
                 <td>
                     {{ $device->device_label }}

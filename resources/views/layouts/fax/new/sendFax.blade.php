@@ -70,7 +70,7 @@
                                                         data-bs-trigger="focus" title="How to format your fax number?"
                                                         data-bs-content="Enter your number as follows: area code + number.
                                                     For example: the number 1 323-212-6688 should be entered as 3232126688">
-                                                        <i class="dripicons-information"></i>
+                                                        <i class="uil uil-info-circle"></i>
                                                     </a>
 
                                                     <input class="form-control" type="text"
@@ -89,7 +89,7 @@
                                                     <a href="#" data-bs-toggle="popover" data-bs-placement="right"
                                                         data-bs-trigger="focus"
                                                         data-bs-content="Entered text will be used a cover page">
-                                                        <i class="dripicons-information"></i>
+                                                        <i class="uil uil-info-circle"></i>
                                                     </a>
 
                                                 </div>
@@ -239,7 +239,7 @@
                                             <label class="form-label">Send fax confirmation to my email </label>
                                             <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                 data-bs-content="You will receive a fax confirmation either when it is successfully sent or if it fails to send.">
-                                                <i class="dripicons-information"></i>
+                                                <i class="uil uil-info-circle"></i>
                                             </a>
                                         </div>
                                     </div>

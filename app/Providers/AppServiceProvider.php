@@ -161,7 +161,7 @@ class AppServiceProvider extends ServiceProvider
         Validator::extend('DeviceMacAddressNotExists', function ($attribute, $value, $parameters, $validator) {
             $value = str_replace([':', '-', '.'], '', $value);
             $value = strtolower($value);
-            return !Devices::where('device_mac_address', $value)->exists();
+            return !Devices::where('device_address', $value)->exists();
         });
 */
 

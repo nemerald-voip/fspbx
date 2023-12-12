@@ -193,7 +193,7 @@
                                                                         </ul>
                                                                         </div>"
                                                                     title="">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
 
                                                                 <select class="select2 form-control" data-toggle="select2"
@@ -386,7 +386,7 @@
                                                                         The Caller ID Prefix field allows you to add characters to the Caller's ID. This can be useful if you have multiple DID's pointed to the same extension or ring group and you need to identify which number was dialed.
                                                                         </div>"
                                                                         title="">
-                                                                        <i class="dripicons-information"></i>
+                                                                        <i class="uil uil-info-circle"></i>
                                                                     </a>
                                                                     <input class="form-control" type="text"
                                                                         placeholder="" id="ring_group_cid_name_prefix"
@@ -410,7 +410,7 @@
                                                                         The Caller ID Prefix field allows you to add characters to the Caller's ID. This can be useful if you have multiple DID's pointed to the same extension or ring group and you need to identify which number was dialed.
                                                                         </div>"
                                                                         title="">
-                                                                        <i class="dripicons-information"></i>
+                                                                        <i class="uil uil-info-circle"></i>
                                                                     </a>
                                                                     <input class="form-control" type="text"
                                                                         placeholder="" id="ring_group_cid_number_prefix"
@@ -633,7 +633,7 @@
                                                                     Allow call forwarding rules for group destinations when the <b>Advanced ring pattern</b> is selected in a ring group.
                                                                     </div>"
                                                                     title="">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -663,7 +663,7 @@
                                                                     Allow sequential ring rules for group destinations when the <b>Advanced ring pattern</b> is selected in a ring group.
                                                                     </div>"
                                                                     title="">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>

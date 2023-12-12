@@ -6,6 +6,7 @@
 @vite([
     "node_modules/select2/dist/css/select2.min.css",
     "resources/scss/app-modern.scss",
+    "resources/scss/icons.scss",
     'resources/js/ui/component.toastr.js',
     'node_modules/jquery-toast-plugin/dist/jquery.toast.min.css', 
     ])

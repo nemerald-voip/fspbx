@@ -29,7 +29,7 @@
             <div class="modal-body p-4">
                 <div class="text-center">
                     {{-- <i class=" dripicons-question h1 text-danger"></i> --}}
-                    <i class="dripicons-information h1 text-warning"></i>
+                    <i class="uil uil-info-circle h1 text-warning"></i>
                     <h3 class="mt-3">Are you sure?</h3>
                     <p class="mt-3">Do you really want to reset this user's password? The user get an email with a password reset link</p>
                 </div>

@@ -15,12 +15,12 @@
         <input type="hidden" id="device_uuid" name="device_uuid" value="" />
     @endif
     <div class="mb-3">
-        <label for="device_mac_address" class="col-form-label">Mac Address</label>
-        <input type="text" class="form-control" id="device_mac_address" name="device_mac_address" placeholder="Enter the MAC address" value="{{$device->device_mac_address ?? ''}}"
+        <label for="device_address" class="col-form-label">Mac Address</label>
+        <input type="text" class="form-control" id="device_address" name="device_address" placeholder="Enter the MAC address" value="{{$device->device_address ?? ''}}"
         @if (isset($device) && $device) readonly @endif
         />
-        <div class="error text-danger" id="device_mac_address_error"></div>
-        <div class="error text-danger" id="device_mac_address_modified_error"></div>
+        <div class="error text-danger" id="device_address_error"></div>
+        <div class="error text-danger" id="device_address_modified_error"></div>
     </div>
     <div class="mb-3 position-relative">
         <label for="template-select" class="col-form-label">Template</label>
