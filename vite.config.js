@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [
         laravel({
             hotFile: 'storage/vite.hot', // Customize the "hot" file...
-            buildDirectory: 'assets/vite', // Customize the build directory...
+            buildDirectory: 'storage/vite', // Customize the build directory...
             input: [
 
                 "resources/js/app.js",
@@ -76,7 +76,7 @@ export default defineConfig({
         }),
     ],
     build: { 
-        outDir: 'public/assets/vite', 
+        outDir: 'storage/app/public/vite', 
         emptyOutDir: true 
     },
     resolve: {
