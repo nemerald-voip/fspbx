@@ -279,7 +279,11 @@ class ExtensionsController extends Controller
 
         $cache = new cache;
         if ($request->set == "true") {
-            $extension->outbound_caller_id_number = PhoneNumber::make($destination->destination_number, "US")->formatE164();
+            try {
+                $extension->outbound_caller_id_number = PhoneNumber::make($destination->destination_number, "US")->formatE164();
+            } catch (NumberParseException $e) {
+                $extension->outbound_caller_id_number = $destination->destination_number;
+            }
         } else {
             $extension->outbound_caller_id_number = null;
         }
@@ -1323,7 +1327,6 @@ class ExtensionsController extends Controller
     {
         try {
 
-            logger($request);
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
             // Excel::import(new ExtensionsImport, request()->file('file'));
