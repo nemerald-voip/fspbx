@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 
-use cache;
 use Throwable;
 use Carbon\Carbon;
 use App\Models\Faxes;
@@ -27,6 +26,7 @@ use App\Jobs\SendFaxNotificationToSlack;
 use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Validator;
+use App\Models\FusionCache;
 
 class FaxesController extends Controller
 {
@@ -736,30 +736,17 @@ class FaxesController extends Controller
                 $allowed_domain->save();
             }
         }
-        if (session_status() == PHP_SESSION_NONE || session_id() == '') {
-            $method_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'method')
-                ->get()
-                ->first();
 
-            $location_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'location')
-                ->get()
-                ->first();
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
 
-            $freeswitch_settings = FreeswitchSettings::first();
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $domain_name);
 
-            session_start();
-            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
-            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
-            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
-            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
-            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
-        }
-        $cache = new cache;
-        $cache->delete("dialplan:" . $domain_name);
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
@@ -999,30 +986,16 @@ class FaxesController extends Controller
             }
         }
 
-        if (session_status() == PHP_SESSION_NONE || session_id() == '') {
-            $method_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'method')
-                ->get()
-                ->first();
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
 
-            $location_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'location')
-                ->get()
-                ->first();
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $domain_name);
 
-            $freeswitch_settings = FreeswitchSettings::first();
-
-            session_start();
-            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
-            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
-            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
-            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
-            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
-        }
-        $cache = new cache;
-        $cache->delete("dialplan:" . $domain_name);
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
