@@ -219,7 +219,7 @@ if (!function_exists('appsGetOrganizations')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive organizations",
+                        'message' => "Unable to retrieve organizations",
                     ],
                 ])->getData(true);
             })
@@ -1225,10 +1225,10 @@ if (!function_exists('format_phone_or_extension')) {
      */
     function format_phone_or_extension($value)
     {
-        return (strlen($value) <= 5) ? $value : \Propaganistas\LaravelPhone\PhoneNumber::make(
+        return (strlen($value) <= 5) ? $value : (new \Propaganistas\LaravelPhone\PhoneNumber(
             $value,
             "US"
-        )->formatE164();
+        ))->formatE164();
     }
 }
 
@@ -1240,7 +1240,7 @@ if (!function_exists('detect_if_phone_number')) {
     function detect_if_phone_number($value)
     {
         try {
-            \Propaganistas\LaravelPhone\PhoneNumber::make($value, "US")->formatE164();
+            (\Propaganistas\LaravelPhone\PhoneNumber($value, "US"))->formatE164();
             return true;
         } catch (\Exception $e) {
             return false;
