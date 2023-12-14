@@ -12,13 +12,7 @@
     @vite(['resources/js/hyper-head.js', 'resources/js/hyper-config.js'])
 </head>
 
-<body
-    {{-- @auth
-class="loading" data-layout="topnav"
-data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}'
-@else
-data-layout-config='{"darkMode":false}' @endauth --}}
->
+<body>
 
     @if (!empty($page))
         @inertia

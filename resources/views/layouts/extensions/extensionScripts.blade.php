@@ -36,7 +36,6 @@
 
         document.addEventListener('DOMContentLoaded', function() {
 
-
             Livewire.on('userCreationCompleted', extensionUuid => {
                 // Successful Notification
                 $.NotificationApp.send("Success", "New User Added", "top-right",
