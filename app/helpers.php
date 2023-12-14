@@ -1240,8 +1240,10 @@ if (!function_exists('detect_if_phone_number')) {
     function detect_if_phone_number($value)
     {
         try {
-            (\Propaganistas\LaravelPhone\PhoneNumber($value, "US"))->formatE164();
-            return true;
+            return (new \Propaganistas\LaravelPhone\PhoneNumber(
+                $value,
+                "US"
+            ))->isValid();
         } catch (\Exception $e) {
             return false;
         }
