@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use cache;
 use Throwable;
 use App\Models\Devices;
 use App\Models\FollowMe;
@@ -201,7 +200,7 @@ class ExtensionsController extends Controller
                     // Do nothing and leave the numner as is
                 }
 
-                if (PhoneNumber::make($destination->destination_number, "US")->formatE164() == PhoneNumber::make($extension->outbound_caller_id_number, "US")->formatE164()) {
+                if ($phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164) == PhoneNumber::make($extension->outbound_caller_id_number, "US")->formatE164()) {
                     $destination->isCallerID = true;
                 } else {
                     $destination->isCallerID = false;
@@ -253,41 +252,20 @@ class ExtensionsController extends Controller
 
         // Update the caller ID field for user's extension
         // If successful delete cache
-        if (session_status() == PHP_SESSION_NONE || session_id() == '') {
-            $method_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'method')
-                ->get()
-                ->first();
-
-            $location_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'location')
-                ->get()
-                ->first();
-
-            $freeswitch_settings = FreeswitchSettings::first();
-
-            session_start();
-            //  dd($freeswitch_settings);
-            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
-            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
-            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
-            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
-            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
-        }
-
-        $cache = new cache;
         if ($request->set == "true") {
-            $extension->outbound_caller_id_number = PhoneNumber::make($destination->destination_number, "US")->formatE164();
+            try {
+                $extension->outbound_caller_id_number = PhoneNumber::make($destination->destination_number, "US")->formatE164();
+            } catch (NumberParseException $e) {
+                $extension->outbound_caller_id_number = $destination->destination_number;
+            }
         } else {
             $extension->outbound_caller_id_number = null;
         }
         $extension->save();
-        // dd($extension);
-        $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
 
-        session_destroy();
+        //clear fusionpbx cache
+        FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
+
 
         // If successful return success status
         return response()->json([
@@ -718,9 +696,9 @@ class ExtensionsController extends Controller
             session_start();
         }
 
-        if (isset($extension->extension)) {
-            $cache = new cache;
-            $cache->delete("directory:" . $extension->extension . "@" . $extension->user_context);
+        if (isset($extension->extension)) {    
+            //clear fusionpbx cache
+            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
         }
 
         //clear the destinations session array
@@ -1323,7 +1301,6 @@ class ExtensionsController extends Controller
     {
         try {
 
-            logger($request);
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
             // Excel::import(new ExtensionsImport, request()->file('file'));
