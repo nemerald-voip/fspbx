@@ -54,7 +54,6 @@ class AppServiceProvider extends ServiceProvider
                 'resources/js/app.js'
             ]);
 
-        // Inertia::setRootView('layouts.horizontal');
 
         // Ringotel
         Http::macro('ringotel', function () {
