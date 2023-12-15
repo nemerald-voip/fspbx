@@ -353,22 +353,7 @@
                                                             )
                                                         @endif
                                                     </div>
-                                                    <hr class="mb-4" />
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="mb-3">
-                                                                <label for="ring_group_call_timeout"
-                                                                    class="form-label">Call
-                                                                    timeout</label>
-                                                                <input class="form-control" type="text" placeholder=""
-                                                                    id="ring_group_call_timeout"
-                                                                    name="ring_group_call_timeout"
-                                                                    value="{{ $ringGroup->ring_group_call_timeout }}" />
-                                                                <div id="ring_group_call_timeout_err"
-                                                                    class="text-danger error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    <br /><br />
 
                                                     @include('layouts.partials.timeoutDestinations', ['entityUuid' => $ringGroup->ring_group_timeout_data])
 

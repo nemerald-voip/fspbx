@@ -7,21 +7,17 @@ use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\RingGroups;
-use App\Models\Voicemails;
 use App\Models\FusionCache;
 use App\Models\MusicOnHold;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\FreeswitchSettings;
-use App\Models\FollowMeDestinations;
 use App\Models\RingGroupsDestinations;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
-use App\Http\Requests\GetDestinationByCategoryRequest;
 
 class RingGroupsController extends Controller
 {
@@ -141,7 +137,6 @@ class RingGroupsController extends Controller
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
-            'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'] ?? null,
@@ -166,6 +161,7 @@ class RingGroupsController extends Controller
 
         $ringGroup->save();
 
+        $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             $order = 5;
@@ -186,6 +182,11 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
+                $sumDestinationsTimeout += $destination['timeout'];
+                // Save the longest timeout
+                if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                    $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
+                }
                 if ($destination['prompt'] == 'true') {
                     $groupsDestinations->destination_prompt = 1;
                 } else {
@@ -197,8 +198,15 @@ class RingGroupsController extends Controller
             }
         }
 
-        // Generate Dialplan XML file
-        $xml = $this->generateDialPlanXML($ringGroup);
+        $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
+            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous' => $longestDestinationsTimeout,
+            default => 0,
+        };
+
+        $ringGroup->save();
+
+        $this->generateDialPlanXML($ringGroup);
 
         return response()->json([
             'status' => 'success',
@@ -208,7 +216,7 @@ class RingGroupsController extends Controller
         ]);
     }
 
-    public function generateDialPlanXML($ringGroup)
+    public function generateDialPlanXML($ringGroup): void
     {
         // Data to pass to the Blade template
         $data = [
@@ -355,7 +363,6 @@ class RingGroupsController extends Controller
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
-            'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'] ?? null,
@@ -381,6 +388,7 @@ class RingGroupsController extends Controller
 
         $ringGroup->save();
 
+        $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             $order = 5;
@@ -401,6 +409,11 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
+                $sumDestinationsTimeout =+ $destination['timeout'];
+                // Save the longest timeout
+                if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                    $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
+                }
                 if ($destination['prompt'] == 'true') {
                     $groupsDestinations->destination_prompt = 1;
                 } else {
@@ -412,7 +425,14 @@ class RingGroupsController extends Controller
             }
         }
 
-        logger("generating dialplan");
+        $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
+            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous' => $longestDestinationsTimeout,
+            default => 0,
+        };
+
+        $ringGroup->save();
+
         $this->generateDialPlanXML($ringGroup);
 
         $freeswitchSettings = FreeswitchSettings::first();

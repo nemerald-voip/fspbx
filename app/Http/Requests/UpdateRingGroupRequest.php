@@ -52,10 +52,6 @@ class UpdateRingGroupRequest extends FormRequest
             'ring_group_destinations.*.delay' => 'numeric',
             'ring_group_destinations.*.timeout' => 'numeric',
             'ring_group_destinations.*.prompt' => 'in:true,false',
-            'ring_group_call_timeout' => [
-                'required',
-                'numeric'
-            ],
             'ring_group_cid_name_prefix' => [
                 'nullable',
                 'string'
