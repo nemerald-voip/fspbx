@@ -409,7 +409,7 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
-                $sumDestinationsTimeout =+ $destination['timeout'];
+                $sumDestinationsTimeout += $destination['timeout'];
                 // Save the longest timeout
                 if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);

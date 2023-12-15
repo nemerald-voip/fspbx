@@ -753,7 +753,7 @@
     </div>
     </div> <!-- container -->
     <div id="destinationColDelay">
-        @if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover')
+        @if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover' || $ringGroup->ring_group_strategy == 'random')
             <style>.colDelay { display: none; }</style>
         @endif
     </div>
@@ -838,7 +838,7 @@
 
             $('#ring_group_strategy').on('change', function(e) {
                 e.preventDefault();
-                if (e.target.value === 'rollover' || e.target.value === 'sequence') {
+                if (e.target.value === 'rollover' || e.target.value === 'sequence' || e.target.value === 'random') {
                     $('#destinationColDelay').append('<style>.colDelay { display: none; }</style>')
                 } else {
                     $('#destinationColDelay').empty();
