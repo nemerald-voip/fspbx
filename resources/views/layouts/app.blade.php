@@ -9,18 +9,14 @@
     @include('layouts.shared/title-meta', ['title' => $title ?? null])
     @yield('css')
     @include('layouts.shared/head-css', ['mode' => $mode ?? '', 'demo' => $demo ?? ''])
-    @vite(['resources/js/hyper-head.js', 'resources/js/hyper-config.js'])
+    @vite(['resources/js/app.js','resources/js/hyper-head.js', 'resources/js/hyper-config.js'])
+
+    @stack('head.end')
 </head>
 
 <body>
-
-    @if (!empty($page))
-        @inertia
-    @endif
-
-
     <!-- Begin page -->
-    <div id="app" class="wrapper">
+    <div class="wrapper">
 
         @auth
 

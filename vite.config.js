@@ -11,6 +11,7 @@ export default defineConfig({
             input: [
 
                 "resources/js/app.js",
+                "resources/js/vue.js",
 
                 // css
                 "resources/scss/app-modern.scss",
