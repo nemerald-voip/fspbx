@@ -34,6 +34,8 @@ use App\Http\Controllers\VoicemailMessagesController;
 |
 */
 
+Route::get('vue', [DashboardController::class,'vue']);
+
 Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth','web']) ->name('callerID');
 Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth','web']) ->name('updateCallerID');
 

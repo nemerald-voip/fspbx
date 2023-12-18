@@ -1,12 +1,58 @@
 {
+  "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.css": {
+    "file": "assets/Dashboard-e3b0c442.css",
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.css"
+  },
+  "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue": {
+    "css": [
+      "assets/Dashboard-e3b0c442.css"
+    ],
+    "file": "assets/Dashboard-8883b51d.js",
+    "imports": [
+      "__plugin-vue_export-helper-c27b6911.js",
+      "_index.esm-a251ecdb.js",
+      "_axios-19cb682b.js",
+      "__commonjsHelpers-de833af9.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue"
+  },
+  "Modules/ContactCenter/Resources/assets/js/app.js": {
+    "dynamicImports": [
+      "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue"
+    ],
+    "file": "assets/app-aeca595a.js",
+    "imports": [
+      "_index.esm-a251ecdb.js",
+      "_axios-19cb682b.js",
+      "__commonjsHelpers-de833af9.js"
+    ],
+    "isEntry": true,
+    "src": "Modules/ContactCenter/Resources/assets/js/app.js"
+  },
+  "Modules/ContactCenter/Resources/assets/sass/app.scss": {
+    "file": "assets/app-4ed993c7.js",
+    "isEntry": true,
+    "src": "Modules/ContactCenter/Resources/assets/sass/app.scss"
+  },
   "__commonjs-dynamic-modules-302442b1.js": {
     "file": "assets/_commonjs-dynamic-modules-302442b1.js"
   },
   "__commonjsHelpers-de833af9.js": {
     "file": "assets/_commonjsHelpers-de833af9.js"
   },
+  "__plugin-vue_export-helper-c27b6911.js": {
+    "file": "assets/_plugin-vue_export-helper-c27b6911.js"
+  },
   "_axios-19cb682b.js": {
     "file": "assets/axios-19cb682b.js"
+  },
+  "_index.esm-a251ecdb.js": {
+    "file": "assets/index.esm-a251ecdb.js",
+    "imports": [
+      "_axios-19cb682b.js",
+      "__commonjsHelpers-de833af9.js"
+    ]
   },
   "_jquery-f66a0d01.js": {
     "file": "assets/jquery-f66a0d01.js",
@@ -191,9 +237,10 @@
     "src": "resources/fonts/unicons.woff2"
   },
   "resources/js/Pages/Test.vue": {
-    "file": "assets/Test-c9df9d49.js",
+    "file": "assets/Test-653c0d96.js",
     "imports": [
-      "resources/js/vue.js",
+      "__plugin-vue_export-helper-c27b6911.js",
+      "_index.esm-a251ecdb.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -274,10 +321,12 @@
   },
   "resources/js/vue.js": {
     "dynamicImports": [
+      "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue",
       "resources/js/Pages/Test.vue"
     ],
-    "file": "assets/vue-e8e7a6c9.js",
+    "file": "assets/vue-fd2c1ee3.js",
     "imports": [
+      "_index.esm-a251ecdb.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],

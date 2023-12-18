@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
 use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
 class DashboardController extends Controller
@@ -201,5 +202,10 @@ class DashboardController extends Controller
         }
 
         return view('layouts.dashboard.index')->with($data);
+    }
+
+    public function vue ()
+    {
+        return Inertia::render('Test');
     }
 }

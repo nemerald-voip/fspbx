@@ -1,0 +1,1 @@
+import{_ as e}from"./_plugin-vue_export-helper-c27b6911.js";import{o,a as _}from"./index.esm-a251ecdb.js";import"./axios-19cb682b.js";import"./_commonjsHelpers-de833af9.js";const a={};function t(c,r){return o(),_("h1",null,"HOHOHO")}const f=e(a,[["render",t],["__scopeId","data-v-10c7f43a"]]);export{f as default};
