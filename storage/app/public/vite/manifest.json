@@ -1,11 +1,16 @@
 {
+  "DateFilter.css": {
+    "file": "assets/DateFilter-200df78e.css",
+    "src": "DateFilter.css"
+  },
   "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue": {
-    "file": "assets/Dashboard-ddb3a9fd.js",
+    "file": "assets/Dashboard-787172a1.js",
     "imports": [
+      "_index.esm-c392a11a.js",
       "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue",
       "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue",
-      "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue",
-      "_index.esm-5a51f0ee.js",
+      "_DateFilter-4cd3883f.js",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/HandledCallsWidgit.vue",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -13,9 +18,9 @@
     "src": "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue"
   },
   "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue": {
-    "file": "assets/AgentFilter-fc751145.js",
+    "file": "assets/AgentFilter-f68ba4ea.js",
     "imports": [
-      "_index.esm-5a51f0ee.js",
+      "_index.esm-c392a11a.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -23,42 +28,36 @@
     "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue"
   },
   "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue": {
-    "file": "assets/ContactCenterFilter-949fffa3.js",
+    "file": "assets/ContactCenterFilter-602ea787.js",
     "imports": [
-      "_index.esm-5a51f0ee.js",
+      "_index.esm-c392a11a.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
     "isDynamicEntry": true,
     "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue"
   },
-  "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.css": {
-    "file": "assets/DateFilter-200df78e.css",
-    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.css"
-  },
-  "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue": {
-    "css": [
-      "assets/DateFilter-200df78e.css"
-    ],
-    "file": "assets/DateFilter-0dfa8d5b.js",
+  "Modules/ContactCenter/Resources/assets/js/Pages/components/HandledCallsWidgit.vue": {
+    "file": "assets/HandledCallsWidgit-8dd2e16e.js",
     "imports": [
-      "_index.esm-5a51f0ee.js",
+      "_index.esm-c392a11a.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
     "isDynamicEntry": true,
-    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue"
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/HandledCallsWidgit.vue"
   },
   "Modules/ContactCenter/Resources/assets/js/app.js": {
     "dynamicImports": [
       "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue",
       "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue",
       "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue",
-      "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue"
+      "_DateFilter-4cd3883f.js",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/HandledCallsWidgit.vue"
     ],
-    "file": "assets/app-7cb26df3.js",
+    "file": "assets/app-85f6d713.js",
     "imports": [
-      "_index.esm-5a51f0ee.js",
+      "_index.esm-c392a11a.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -70,6 +69,16 @@
     "isEntry": true,
     "src": "Modules/ContactCenter/Resources/assets/sass/app.scss"
   },
+  "_DateFilter-4cd3883f.js": {
+    "css": [
+      "assets/DateFilter-200df78e.css"
+    ],
+    "file": "assets/DateFilter-4cd3883f.js",
+    "imports": [
+      "_index.esm-c392a11a.js"
+    ],
+    "isDynamicEntry": true
+  },
   "__commonjs-dynamic-modules-302442b1.js": {
     "file": "assets/_commonjs-dynamic-modules-302442b1.js"
   },
@@ -79,8 +88,8 @@
   "_axios-19cb682b.js": {
     "file": "assets/axios-19cb682b.js"
   },
-  "_index.esm-5a51f0ee.js": {
-    "file": "assets/index.esm-5a51f0ee.js",
+  "_index.esm-c392a11a.js": {
+    "file": "assets/index.esm-c392a11a.js",
     "imports": [
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
@@ -269,9 +278,9 @@
     "src": "resources/fonts/unicons.woff2"
   },
   "resources/js/Pages/Test.vue": {
-    "file": "assets/Test-5b8c112e.js",
+    "file": "assets/Test-af035b43.js",
     "imports": [
-      "_index.esm-5a51f0ee.js",
+      "_index.esm-c392a11a.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -355,12 +364,13 @@
       "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue",
       "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue",
       "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue",
-      "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue",
+      "_DateFilter-4cd3883f.js",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/HandledCallsWidgit.vue",
       "resources/js/Pages/Test.vue"
     ],
-    "file": "assets/vue-3a6d6736.js",
+    "file": "assets/vue-531b7f8a.js",
     "imports": [
-      "_index.esm-5a51f0ee.js",
+      "_index.esm-c392a11a.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
