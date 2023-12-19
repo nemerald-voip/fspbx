@@ -1,5 +1,2 @@
 *
 !.gitignore
-!vite
-!vite/*
-!vite/assets/*

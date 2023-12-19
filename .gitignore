@@ -2,10 +2,6 @@
 /public/hot
 !/storage
 /storage/*
-!storage/app
-storage/app/*
-!/storage/app/public
-/storage/app/public/*
 !/storage/app/public/vite
 /storage/*.key
 /vendor
