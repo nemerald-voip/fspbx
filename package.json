@@ -21,6 +21,7 @@
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/vue3": "^1.0.14",
         "@vitejs/plugin-vue": "^4.5.2",
+        "@vuepic/vue-datepicker": "^7.4.0",
         "bootstrap-datepicker": "^1.10.0",
         "bootstrap-timepicker": "^0.5.2",
         "britecharts": "^2.18.2",

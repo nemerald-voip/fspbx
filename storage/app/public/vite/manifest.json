@@ -1,41 +1,64 @@
 {
-  "Modules/ContactCenter/Resources/assets/js/Pages/ContacCenterFilter.vue": {
-    "file": "assets/ContacCenterFilter-314be563.js",
-    "imports": [
-      "_index.esm-40369b6e.js",
-      "__plugin-vue_export-helper-c27b6911.js",
-      "_axios-19cb682b.js",
-      "__commonjsHelpers-de833af9.js"
-    ],
-    "isDynamicEntry": true,
-    "src": "Modules/ContactCenter/Resources/assets/js/Pages/ContacCenterFilter.vue"
-  },
-  "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.css": {
-    "file": "assets/Dashboard-e3b0c442.css",
-    "src": "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.css"
-  },
   "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue": {
-    "css": [
-      "assets/Dashboard-e3b0c442.css"
-    ],
-    "file": "assets/Dashboard-5998e218.js",
+    "file": "assets/Dashboard-ddb3a9fd.js",
     "imports": [
-      "__plugin-vue_export-helper-c27b6911.js",
-      "_index.esm-40369b6e.js",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue",
+      "_index.esm-5a51f0ee.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
     "isDynamicEntry": true,
     "src": "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue"
   },
+  "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue": {
+    "file": "assets/AgentFilter-fc751145.js",
+    "imports": [
+      "_index.esm-5a51f0ee.js",
+      "_axios-19cb682b.js",
+      "__commonjsHelpers-de833af9.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue"
+  },
+  "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue": {
+    "file": "assets/ContactCenterFilter-949fffa3.js",
+    "imports": [
+      "_index.esm-5a51f0ee.js",
+      "_axios-19cb682b.js",
+      "__commonjsHelpers-de833af9.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue"
+  },
+  "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.css": {
+    "file": "assets/DateFilter-200df78e.css",
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.css"
+  },
+  "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue": {
+    "css": [
+      "assets/DateFilter-200df78e.css"
+    ],
+    "file": "assets/DateFilter-0dfa8d5b.js",
+    "imports": [
+      "_index.esm-5a51f0ee.js",
+      "_axios-19cb682b.js",
+      "__commonjsHelpers-de833af9.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue"
+  },
   "Modules/ContactCenter/Resources/assets/js/app.js": {
     "dynamicImports": [
-      "Modules/ContactCenter/Resources/assets/js/Pages/ContacCenterFilter.vue",
-      "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue"
+      "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue"
     ],
-    "file": "assets/app-5159dafe.js",
+    "file": "assets/app-7cb26df3.js",
     "imports": [
-      "_index.esm-40369b6e.js",
+      "_index.esm-5a51f0ee.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -53,21 +76,18 @@
   "__commonjsHelpers-de833af9.js": {
     "file": "assets/_commonjsHelpers-de833af9.js"
   },
-  "__plugin-vue_export-helper-c27b6911.js": {
-    "file": "assets/_plugin-vue_export-helper-c27b6911.js"
-  },
   "_axios-19cb682b.js": {
     "file": "assets/axios-19cb682b.js"
   },
-  "_index.esm-40369b6e.js": {
-    "file": "assets/index.esm-40369b6e.js",
+  "_index.esm-5a51f0ee.js": {
+    "file": "assets/index.esm-5a51f0ee.js",
     "imports": [
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ]
   },
-  "_jquery-2e737b56.js": {
-    "file": "assets/jquery-2e737b56.js",
+  "_jquery-f66a0d01.js": {
+    "file": "assets/jquery-f66a0d01.js",
     "imports": [
       "__commonjsHelpers-de833af9.js"
     ]
@@ -75,11 +95,11 @@
   "_moment-e9e012b5.js": {
     "file": "assets/moment-e9e012b5.js"
   },
-  "_select2-41b1cbab.js": {
-    "file": "assets/select2-41b1cbab.js",
+  "_select2-09f14948.js": {
+    "file": "assets/select2-09f14948.js",
     "imports": [
       "__commonjsHelpers-de833af9.js",
-      "_jquery-2e737b56.js"
+      "_jquery-f66a0d01.js"
     ]
   },
   "node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css": {
@@ -249,10 +269,9 @@
     "src": "resources/fonts/unicons.woff2"
   },
   "resources/js/Pages/Test.vue": {
-    "file": "assets/Test-aa725b46.js",
+    "file": "assets/Test-5b8c112e.js",
     "imports": [
-      "__plugin-vue_export-helper-c27b6911.js",
-      "_index.esm-40369b6e.js",
+      "_index.esm-5a51f0ee.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
@@ -273,23 +292,23 @@
     "src": "resources/js/hyper-config.js"
   },
   "resources/js/hyper-head.js": {
-    "file": "assets/hyper-head-cf10542c.js",
+    "file": "assets/hyper-head-aebf2867.js",
     "imports": [
+      "_jquery-f66a0d01.js",
       "__commonjsHelpers-de833af9.js",
-      "_jquery-2e737b56.js",
       "_moment-e9e012b5.js"
     ],
     "isEntry": true,
     "src": "resources/js/hyper-head.js"
   },
   "resources/js/hyper-main.js": {
-    "file": "assets/hyper-main-6798f5e3.js",
+    "file": "assets/hyper-main-bec4f215.js",
     "imports": [
-      "_select2-41b1cbab.js",
+      "_select2-09f14948.js",
       "_moment-e9e012b5.js",
       "__commonjsHelpers-de833af9.js",
       "__commonjs-dynamic-modules-302442b1.js",
-      "_jquery-2e737b56.js"
+      "_jquery-f66a0d01.js"
     ],
     "isEntry": true,
     "src": "resources/js/hyper-main.js"
@@ -317,10 +336,10 @@
     "src": "resources/js/ui/component.dragula.js"
   },
   "resources/js/ui/component.fileupload.js": {
-    "file": "assets/component.fileupload-7086b6db.js",
+    "file": "assets/component.fileupload-a5b2ccdc.js",
     "imports": [
-      "_select2-41b1cbab.js",
-      "_jquery-2e737b56.js",
+      "_select2-09f14948.js",
+      "_jquery-f66a0d01.js",
       "__commonjsHelpers-de833af9.js"
     ],
     "isEntry": true,
@@ -333,13 +352,15 @@
   },
   "resources/js/vue.js": {
     "dynamicImports": [
-      "Modules/ContactCenter/Resources/assets/js/Pages/ContacCenterFilter.vue",
       "Modules/ContactCenter/Resources/assets/js/Pages/Dashboard.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/AgentFilter.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/ContactCenterFilter.vue",
+      "Modules/ContactCenter/Resources/assets/js/Pages/components/DateFilter.vue",
       "resources/js/Pages/Test.vue"
     ],
-    "file": "assets/vue-aadaea5e.js",
+    "file": "assets/vue-3a6d6736.js",
     "imports": [
-      "_index.esm-40369b6e.js",
+      "_index.esm-5a51f0ee.js",
       "_axios-19cb682b.js",
       "__commonjsHelpers-de833af9.js"
     ],
