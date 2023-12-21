@@ -242,6 +242,7 @@
                                                                     <th style="width: 130px;">Answer
                                                                         confirmation required
                                                                     </th>
+                                                                    <th style="width: 130px;">Status</th>
                                                                     <th>Action</th>
                                                                 </tr>
                                                             </thead>
@@ -315,6 +316,21 @@
                                                                                 data-switch="primary" />
                                                                             <label
                                                                                 for="destination_prompt_{{ $destination->ring_group_destination_uuid }}"
+                                                                                data-on-label="On"
+                                                                                data-off-label="Off"></label>
+                                                                        </td>
+                                                                        <td>
+                                                                            <input type="hidden"
+                                                                                   name="ring_group_destinations[{{ $destination->ring_group_destination_uuid }}][status]"
+                                                                                   value="false">
+                                                                            <input type="checkbox"
+                                                                                   id="destination_status_{{ $destination->ring_group_destination_uuid }}"
+                                                                                   value="true"
+                                                                                   name="ring_group_destinations[{{ $destination->ring_group_destination_uuid }}][status]"
+                                                                                   @if ($destination->destination_enabled) checked @endif
+                                                                                   data-switch="primary" />
+                                                                            <label
+                                                                                for="destination_status_{{ $destination->ring_group_destination_uuid }}"
                                                                                 data-on-label="On"
                                                                                 data-off-label="Off"></label>
                                                                         </td>
@@ -1044,8 +1060,12 @@
         @for ($i = 1; $i < 21; $i++) <option value="{{ $i * 5 }}" @if ($i == 5) selected @endif>
         {{ $i }} @if ($i > 1) Rings @else Ring @endif - {{ $i * 5 }} Sec</option> @endfor </select></td><td>
         <input type="hidden" name="ring_group_destinations[newrow__NEWROWID__][prompt]" value="false">
-        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][prompt]" data-option="ring_group_destinations_enabled" class="forward_checkbox" data-switch="primary"/>
+        <input type="checkbox" id="destination_prompt___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][prompt]" data-option="ring_group_destinations_prompt" class="forward_checkbox" data-switch="primary"/>
         <label for="destination_prompt___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
+        </td>
+        <td><input type="hidden" name="ring_group_destinations[newrow__NEWROWID__][status]" value="false">
+        <input type="checkbox" id="destination_status___NEWROWID__" value="true" name="ring_group_destinations[newrow__NEWROWID__][status]" data-option="ring_group_destinations_enabled" class="forward_checkbox" data-switch="primary" checked />
+        <label for="destination_status___NEWROWID__" data-on-label="On" data-off-label="Off"></label>
         </td><td><div class="tooltip-container-actions"><a href="javascript:confirmDeleteDestinationAction('row__NEWROWID__');" class="action-icon">
         <i class="mdi mdi-delete" data-bs-container=".tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
         </a></div></td></tr>`;

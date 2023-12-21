@@ -192,6 +192,11 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_prompt = null;
                 }
+                if ($destination['status'] == 'true') {
+                    $groupsDestinations->destination_enabled = true;
+                } else {
+                    $groupsDestinations->destination_enabled = null;
+                }
                 //$groupsDestinations->follow_me_order = $i;
                 $ringGroup->groupDestinations()->save($groupsDestinations);
                 $i++;
@@ -418,6 +423,11 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_prompt = 1;
                 } else {
                     $groupsDestinations->destination_prompt = null;
+                }
+                if ($destination['status'] == 'true') {
+                    $groupsDestinations->destination_enabled = true;
+                } else {
+                    $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
                 $ringGroup->groupDestinations()->save($groupsDestinations);

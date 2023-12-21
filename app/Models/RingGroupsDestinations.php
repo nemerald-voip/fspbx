@@ -31,6 +31,7 @@ class RingGroupsDestinations extends Model
         'destination_delay',
         'destination_timeout',
         'destination_prompt',
+        'destination_enabled',
         'insert_date',
         'insert_user',
         'update_date',
