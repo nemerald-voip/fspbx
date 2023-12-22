@@ -66,6 +66,16 @@
                         <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
                     </a>
 
+                    @if($device->lines()->first() && $device->lines()->first()->extension())
+                        @if ($permissions['device_restart'])
+                            <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','{{ $device->lines()->first()->extension()->extension_uuid }}');"
+                               class="action-icon">
+                                <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions"
+                                   data-bs-toggle="tooltip" data-bs-placement="bottom" title="Restart Devices"></i>
+                            </a>
+                        @endif
+                    @endif
+
                     <a href="javascript:confirmDeleteAction('{{ route('devices.destroy', ':id') }}','{{ $device->device_uuid }}');" class="action-icon">
                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                     </a>
@@ -76,14 +86,11 @@
 @endsection
 
 @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            $('#clearSearch').on('click', function () {
-                $('#search').val('');
-                var location = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                location += '?page=1';
-                window.location.href = location;
-            })
-        });
-    </script>
+    @vite(['resources/js/ui/page.devices.js'])
+
+
+
+
+
+
 @endpush

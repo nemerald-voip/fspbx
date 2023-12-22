@@ -49,6 +49,7 @@ class DeviceController extends Controller
         $data = array();
         $data['devices'] = $devices;
         $data['searchString'] = $searchString;
+        $data['permissions']['device_restart'] = isSuperAdmin();
 
         return view('layouts.devices.list')->with($data);
 

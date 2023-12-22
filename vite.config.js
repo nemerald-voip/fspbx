@@ -51,6 +51,9 @@ async function getConfig() {
         "resources/js/ui/component.toastr.js",
         // "resources/js/ui/component.range-slider.js",
         // "resources/js/ui/component.rating.js",
+
+        // specific pages
+        "resources/js/ui/page.devices.js",
     ];
 
     const allPaths = await collectModuleAssetsPaths(paths, 'Modules');
