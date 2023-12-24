@@ -204,7 +204,7 @@
                                                             <div class="mb-3">
                                                                 <label for="voicemail_mail_to" class="form-label">Email Address </label>
                                                                 <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to" 
-                                                                    @if (!$extension->voicemail || !$extension->voicemail->voicmeail_uuid)
+                                                                    @if (!$extension->voicemail || !$extension->voicemail->voicemail_uuid)
                                                                         disabled
                                                                     @endif
                                                                     name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
@@ -214,38 +214,7 @@
                                                         @endif
                                                     </div> <!-- end row -->
 
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <div class="mb-3">
-                                                                <label for="users-select" class="form-label">Users</label>
-                                                                <!-- Multiple Select -->
-                                                                <select class="select2 form-control select2-multiple form-select form-select-sm" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
-                                                                    id="users-select" @if (!userCheckPermission('extension_user_edit')) disabled @endif name="users[]">
-
-                                                                        @foreach ($domain_users as $domain_user)
-                                                                            <option value="{{ $domain_user->user_uuid }}"
-                                                                                @if(isset($extension_users) && $extension_users->contains($domain_user))
-                                                                                    selected
-                                                                                @endif>
-                                                                                @if (isset($domain_user->user_adv_fields->first_name) || isset($domain_user->user_adv_fields->last_name))
-                                                                                    @if ($domain_user->user_adv_fields->first_name)
-                                                                                        {{ $domain_user->user_adv_fields->first_name }}
-                                                                                    @endif
-                                                                                    @if ($domain_user->user_adv_fields->last_name)
-                                                                                        {{ $domain_user->user_adv_fields->last_name }}
-                                                                                    @endif
-                                                                                @elseif ($domain_user->description)
-                                                                                    {{ $domain_user->description }}
-                                                                                @else
-                                                                                    {{ $domain_user->username }}
-                                                                                @endif
-                                                                            </option>
-                                                                        @endforeach
-                                                                </select>
-                                                                <div class="text-danger users_err error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
+                                            
 
                                                     @if (userCheckPermission('extension_directory'))
                                                     <div class="row">
@@ -857,6 +826,39 @@
                                                         @else
                                                             <input type="hidden" name="user_context" value="{{ Session::get('domain_name') }}">
                                                         @endif
+                                                    </div> <!-- end row -->
+
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="users-select" class="form-label">Users</label>
+                                                                <!-- Multiple Select -->
+                                                                <select class="select2 form-control select2-multiple form-select form-select-sm" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                                    id="users-select" @if (!userCheckPermission('extension_user_edit')) disabled @endif name="users[]">
+
+                                                                        @foreach ($domain_users as $domain_user)
+                                                                            <option value="{{ $domain_user->user_uuid }}"
+                                                                                @if(isset($extension_users) && $extension_users->contains($domain_user))
+                                                                                    selected
+                                                                                @endif>
+                                                                                @if (isset($domain_user->user_adv_fields->first_name) || isset($domain_user->user_adv_fields->last_name))
+                                                                                    @if ($domain_user->user_adv_fields->first_name)
+                                                                                        {{ $domain_user->user_adv_fields->first_name }}
+                                                                                    @endif
+                                                                                    @if ($domain_user->user_adv_fields->last_name)
+                                                                                        {{ $domain_user->user_adv_fields->last_name }}
+                                                                                    @endif
+                                                                                @elseif ($domain_user->description)
+                                                                                    {{ $domain_user->description }}
+                                                                                @else
+                                                                                    {{ $domain_user->username }}
+                                                                                @endif
+                                                                            </option>
+                                                                        @endforeach
+                                                                </select>
+                                                                <div class="text-danger users_err error_message"></div>
+                                                            </div>
+                                                        </div>
                                                     </div> <!-- end row -->
 
                                                     <div class="row">
