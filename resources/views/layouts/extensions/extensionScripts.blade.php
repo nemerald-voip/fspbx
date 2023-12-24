@@ -45,12 +45,14 @@
                 $('#options' + extensionUuid).dropdown("toggle");
             })
 
-            Livewire.on('userCreationFailed', (extensionUuid, error) => {
-                // Fail Notification
+            Livewire.on('userCreationFailed', (params) => {
+                let extensionUuid = params[0];
+                let error = params[1];
+
                 printErrorMsg(error);
 
                 $('#options' + extensionUuid).dropdown("toggle");
-            })
+            });
 
 
             $("#connectionSelect2").select2({
