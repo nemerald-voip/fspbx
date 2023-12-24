@@ -204,8 +204,4 @@ class DashboardController extends Controller
         return view('layouts.dashboard.index')->with($data);
     }
 
-    public function vue ()
-    {
-        return Inertia::render('Test');
-    }
 }
