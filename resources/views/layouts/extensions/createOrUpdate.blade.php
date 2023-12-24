@@ -199,10 +199,14 @@
                                                             </div>
                                                         </div>
                                                         @if (userCheckPermission('voicemail_edit'))
+                                                        
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="voicemail_mail_to" class="form-label">Email Address </label>
-                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to"
+                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to" 
+                                                                    @if (!$extension->voicemail || !$extension->voicemail->voicmeail_uuid)
+                                                                        disabled
+                                                                    @endif
                                                                     name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
                                                                 <div class="text-danger error-text voicemail_mail_to_err error_message"></div>
                                                             </div>
