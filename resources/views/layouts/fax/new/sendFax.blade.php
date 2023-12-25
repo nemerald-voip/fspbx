@@ -64,7 +64,7 @@
                                         </div>
 
                                         <div class="row">
-                                            <div class="col-4">
+                                            <div class="col-md-6">
                                                 <div class="mb-3">
                                                     <label for="recipient" class="form-label me-1">Add Fax Recipient
                                                         <span
@@ -187,13 +187,13 @@
                                                 <!--end::Dropzone--> --}}
 
                                                 <!-- File Upload -->
-                                                <div action="{{ route('extensions.import') }}"
+                                                <div action="{{ route('faxes.sendFax') }}"
                                                       class="dropzone" id="file_dropzone" data-plugin="dropzone"
                                                       data-previews-container="#file-previews"
                                                       data-upload-preview-template="#uploadPreviewTemplate"
-                                                      data-auto-process-queue="false" data-upload-multiple="false"
-                                                      data-parallel-uploads="5" data-max-filesize="5" data-max-files="1"
-                                                      data-thumbnail-width="200" data-accepted-files=".csv,.xls,.xlsx">
+                                                      data-auto-process-queue="false" data-upload-multiple="true"
+                                                      data-parallel-uploads="5" data-max-filesize="5" data-max-files="5"
+                                                      data-thumbnail-width="200" data-accepted-files=".pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg">
                                                     <div class="fallback">
                                                         <input name="file" type="file" multiple/>
                                                     </div>
@@ -205,9 +205,10 @@
                                                                 class="dropzone-select btn btn-sm btn-primary me-2">Browse
                                                                 files</a>
                                                         </div>
-                                                        <span class="text-muted font-13">Supported file types: .csv, .xls, .xlsx</span>
+                                                        <span class="text-muted font-13">Supported file types: .pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg</span>
 
                                                     </div>
+                                                   
                                                 </div>
 
                                                 <!-- Preview -->
@@ -311,7 +312,6 @@
                                             </div>
                                             <div class="col-2">
                                                 <div class="mb-3 text-sm-end">
-                                                    <input type="hidden" name="send_confirmation" value="false">
                                                     <input type="checkbox" id="send_confirmation"
                                                            name="send_confirmation" data-switch="primary"/>
                                                     <label for="send_confirmation" data-on-label="On"
@@ -322,7 +322,7 @@
 
 
                                         <div class="row mt-4">
-                                            <div class="col-sm-12">
+                                            <div class="col-sm-6">
                                                 <div class="text-sm-end">
                                                     @if($fax)
                                                         <input type="hidden" name="fax_uuid"
@@ -330,7 +330,7 @@
                                                     @endif
                                                     <input type="hidden" name="fax_subject" value="">
                                                     <a href="{{ Route('faxes.index') }}" class="btn btn-light">Close</a>
-                                                    <button id="submitFormButton" class="btn btn-success" type="submit">
+                                                    <button id="dropzoneSubmit" class="btn btn-success">
                                                         Send
                                                         Fax
                                                     </button>
@@ -357,111 +357,7 @@
     @vite(['resources/js/ui/component.fileupload.js', 'resources/js/hyper-syntax.js'])
 
     <script>
-        {{--
-        Dropzone.autoDiscover = false;
-
-        // set the dropzone container id
-        const id = "#file_dropzone";
-        const dropzone = document.querySelector(id);
-
-        // set the preview element template
-        var previewNode = dropzone.querySelector(".dropzone-item");
-        previewNode.id = "";
-        var previewTemplate = previewNode.parentNode.innerHTML;
-        previewNode.parentNode.removeChild(previewNode);
-        var files = [];
-
-        var fileDropzone = new Dropzone(id, {
-            url: "https://fakeurl.com", // Set the url for your upload script location
-            autoProcessQueue: false,
-            uploadMultiple: true,
-            parallelUploads: 5,
-            maxFilesize: 5, // Max filesize in MB
-            maxFiles: 5,
-            previewTemplate: previewTemplate,
-            previewsContainer: id + " .dropzone-items", // Define the container to display the previews
-            clickable: id +
-                " .dropzone-select", // Define the element that should be used as click trigger to select files.
-            thumbnailWidth: 200,
-            acceptedFiles: "{{ $fax_allowed_extensions }}",
-            accept: function(file, done) {
-                var reader = new FileReader();
-                reader.onload = handleReaderLoad;
-                reader.readAsDataURL(file);
-
-                function handleReaderLoad(e) {
-                    var filePayload = e.target.result;
-                    files.push({
-                        'name': file.upload.filename,
-                        'data': filePayload
-                    })
-                    // file.upload.filename:
-                }
-
-                done();
-            }
-
-        });
-
-        fileDropzone.on("addedfile", function(file) {
-            // Hookup the start button
-            const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
-            dropzoneItems.forEach(dropzoneItem => {
-                dropzoneItem.style.display = '';
-            });
-        });
-
-        fileDropzone.on("removedfile", function(file) {
-
-            var reader = new FileReader();
-            reader.onload = handleReaderLoad;
-            reader.readAsDataURL(file);
-
-            function handleReaderLoad(e) {
-                var filePayload = e.target.result;
-
-                files = files.filter(function(value, index, arr) {
-                    return value.data != filePayload;
-                });
-
-            }
-
-        });
-
-        fileDropzone.on("error", function(file, message) {
-            //console.log("error: " + message);
-        });
-
-        // Update the total progress bar
-        fileDropzone.on("totaluploadprogress", function(progress) {
-            const progressBars = dropzone.querySelectorAll('.progress-bar');
-            progressBars.forEach(progressBar => {
-                progressBar.style.width = progress + "%";
-            });
-        });
-
-        fileDropzone.on("sending", function(file) {
-            // Show the total progress bar when upload starts
-            const progressBars = dropzone.querySelectorAll('.progress-bar');
-            progressBars.forEach(progressBar => {
-                progressBar.style.opacity = "1";
-            });
-        });
-
-        // Hide the total progress bar when nothing"s uploading anymore
-        fileDropzone.on("complete", function(progress) {
-            const progressBars = dropzone.querySelectorAll('.dz-complete');
-
-            setTimeout(function() {
-                progressBars.forEach(progressBar => {
-                    progressBar.querySelector('.progress-bar').style.opacity = "0";
-                    progressBar.querySelector('.progress').style.opacity = "0";
-                });
-            }, 300);
-        });--}}
-
-
-        {{--
+    
         const link = document.getElementById('addNoteButton');
         const textArea = document.getElementById('fax_message');
 
@@ -469,55 +365,25 @@
             textArea.style.display = (textArea.style.display === 'none') ? 'block' : 'none';
         });
 
-        document.addEventListener('DOMContentLoaded', function() {});
+        document.addEventListener('dropzoneSuccessEvent', function() {
+            // Handle success event here
 
+            // Successful Notification
+            $.NotificationApp.send("Success", "Extensions have been successfully imported", "top-right", "#10c469",
+                "success");
 
-        $('#submitFormButton').on('click', function(e) {
-            e.preventDefault();
-            $('.loading').show();
+            // setTimeout(function() {
+            //     window.location.reload();
+            // }, 1000);
+        });
 
-            //Reset error messages
-            $('.error_message').text("");
+        document.addEventListener('dropzoneErrorEvent', function(event) {
+            // Handle error event here
 
-            //         var fileString = "";
-            //         files.forEach (function(item){
-            //             fileString = fileString + "&file="+item;
-            //         });
-            //         console.log($("#new_fax_form").serialize());
-            //  console.log(fileString);
+            // Warning Notification
+            $.NotificationApp.send("Warning", event.detail.errorMessage, "top-right", "#ff5b5b", "error");
+        });
 
-            $.ajax({
-                    type: "POST",
-                    url: $('#new_fax_form').attr('action'),
-                    cache: false,
-                    data: {
-                        data: $("#new_fax_form").serialize(),
-                        files: files,
-                    }
-
-                })
-                .done(function(response) {
-                    // console.log(response);
-                    $('.loading').hide();
-
-                    if (response.error) {
-                        printErrorMsg(response.error);
-
-                    } else {
-                        $.NotificationApp.send("Success", response.success.message, "top-right", "#10c469",
-                            "success");
-                        setTimeout(function() {
-                            window.location.href = response.redirect_url;
-                        }, 1000);
-
-                    }
-                })
-                .fail(function(response) {
-                    $('.loading').hide();
-                    printErrorMsg(response.responseText);
-                });
-
-        })--}}
     </script>
 @endpush
 

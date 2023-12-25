@@ -61,31 +61,31 @@ import Dropzone from 'dropzone';
 
             var parallelUploads = $(this).data("parallelUploads");
             if (parallelUploads) {
-                opts['parallelUploads'] = parallelUploads; 
+                opts['parallelUploads'] = parallelUploads;
             }
 
             var maxFilesize = $(this).data("maxFilesize");
             if (maxFilesize) {
-                opts['maxFilesize'] = maxFilesize; 
+                opts['maxFilesize'] = maxFilesize;
             }
 
             var maxFiles = $(this).data("maxFiles");
             if (maxFiles) {
-                opts['maxFiles'] = maxFiles; 
+                opts['maxFiles'] = maxFiles;
             }
 
             var thumbnailWidth = $(this).data("thumbnailWidth");
             if (thumbnailWidth) {
-                opts['thumbnailWidth'] = thumbnailWidth; 
+                opts['thumbnailWidth'] = thumbnailWidth;
             }
 
             var acceptedFiles = $(this).data("acceptedFiles");
             if (acceptedFiles) {
-                opts['acceptedFiles'] = acceptedFiles; 
+                opts['acceptedFiles'] = acceptedFiles;
             }
 
-             // Add the init function to the options array
-             opts['init'] = function () {
+            // Add the init function to the options array
+            opts['init'] = function () {
                 var myDropzone = this;
 
                 var submitButton = document.getElementById('dropzoneSubmit');
@@ -99,6 +99,22 @@ import Dropzone from 'dropzone';
                     });
                 }
 
+                myDropzone.on("sending", function (file, xhr, formData) {
+                    // Find the form that contains the Dropzone
+                    var form = this.element.closest('form');
+
+                    // Iterate over all form elements
+                    Array.from(form.elements).forEach(function (element) {
+                        // Check if the element has a name and value
+                        if (element.type === 'checkbox') {
+                            formData.append(element.name, element.checked ? 'true' : 'false');
+                        } else {
+                            formData.append(element.name, element.value);
+                        }
+                    });
+
+                });
+
                 myDropzone.on("success", function () {
                     this.removeAllFiles(true);
 
@@ -109,9 +125,14 @@ import Dropzone from 'dropzone';
                 });
                 myDropzone.on("error", function (files, message) {
                     this.removeAllFiles(true);
+                    if(message.error) {
+                        var error = message.error;
+                    } else {
+                        var error = message;
+                    }
 
                     // Dispatch a custom event for error
-                    var errorEvent = new CustomEvent('dropzoneErrorEvent', { detail: { errorMessage: message.error } });
+                    var errorEvent = new CustomEvent('dropzoneErrorEvent', { detail: { errorMessage: error } });
                     document.dispatchEvent(errorEvent);
                 });
 
@@ -128,8 +149,8 @@ import Dropzone from 'dropzone';
 
 }(window.jQuery),
 
-//initializing FileUpload
-function ($) {
-"use strict";
-    $.FileUpload.init()
-}(window.jQuery);
+    //initializing FileUpload
+    function ($) {
+        "use strict";
+        $.FileUpload.init()
+    }(window.jQuery);

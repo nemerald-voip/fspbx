@@ -1191,16 +1191,16 @@ class FaxesController extends Controller
 
     public function sendFax(Request $request)
     {
-        // Log::alert($request->all());
+        Log::alert($request->send_confirmation);
         $data = $request->all();
 
         // If files attached
-        if (isset($data['files'])) {
-            $files = $data['files'];
+        if (isset($data['file'])) {
+            $files = $data['file'];
         }
 
         // Convert form fields to associative array
-        parse_str($data['data'], $data);
+        // parse_str($data['data'], $data);
 
         // Validate the input
         $attributes = [
@@ -1215,8 +1215,14 @@ class FaxesController extends Controller
         ], [], $attributes);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
+            // return response()->json(['error' => $validator->errors()]);
+            return response()->json([
+                'error' => $validator->errors()->first() // Sending the first error message for simplicity
+            ], 400); // Bad Request status code
         }
+
+        $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'on';
+        // logger($data['send_confirmation']);
 
         if (!isset($data['fax_uuid'])) {
             $fax = Faxes::where('domain_uuid', Session::get('domain_uuid'))
@@ -1227,8 +1233,9 @@ class FaxesController extends Controller
 
 
         if (!isset($files) || sizeof($files) == 0) {
-            return response()->json(['error' => ['files' => ['At least one file must be uploaded']]]);
+            return response()->json(['error' => 'At least one file must be uploaded'], 400);
         }
+        
         // Start creating the payload variable that will be passed to next step
         $payload = array(
             'From' => Session::get('user.user_email'),
@@ -1248,21 +1255,34 @@ class FaxesController extends Controller
 
         // Parse files
         foreach ($files as $file) {
-            $splited = explode(',', substr($file['data'], 5), 2);
-            $mime = $splited[0];
-            $data = $splited[1];
-            $mime_split_without_base64 = explode(';', $mime, 2);
-            $mime = $mime_split_without_base64[0];
-            // $mime_split=explode('/', $mime_split_without_base64[0],2);
+            // $splited = explode(',', substr($file['data'], 5), 2);
+            // $mime = $splited[0];
+            // $data = $splited[1];
+            // $mime_split_without_base64 = explode(';', $mime, 2);
+            // $mime = $mime_split_without_base64[0];
+            // // $mime_split=explode('/', $mime_split_without_base64[0],2);
+
+            $mime = $file->getClientMimeType();
+
+            // Get original file name
+            $fileName = $file->getClientOriginalName();
+
+            // Read the file content
+            $content = file_get_contents($file->getRealPath());
+
+            // Encode the content to base64 if needed
+            $base64Content = base64_encode($content);
 
             array_push(
                 $payload['Attachments'],
                 array(
-                    'Content' => $data,
+                    'Content' => $base64Content,
                     'ContentType' => $mime,
-                    'Name' => $file['name'],
+                    'Name' => $fileName,
                 )
             );
+
+
         }
 
         $fax = new Faxes();
