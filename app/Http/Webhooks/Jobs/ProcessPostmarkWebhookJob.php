@@ -2,14 +2,11 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Models\DefaultSettings;
-use App\Models\Domain;
 use App\Models\Faxes;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
-use Spatie\WebhookClient\ProcessWebhookJob as SpatieProcessWebhookJob;
+use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
 {

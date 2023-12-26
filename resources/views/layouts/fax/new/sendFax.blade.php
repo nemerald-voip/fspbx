@@ -193,7 +193,7 @@
                                                       data-upload-preview-template="#uploadPreviewTemplate"
                                                       data-auto-process-queue="false" data-upload-multiple="true"
                                                       data-parallel-uploads="5" data-max-filesize="5" data-max-files="5"
-                                                      data-thumbnail-width="200" data-accepted-files=".pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg">
+                                                      data-thumbnail-width="200" data-accepted-files=".pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg, .jpeg">
                                                     <div class="fallback">
                                                         <input name="file" type="file" multiple/>
                                                     </div>
@@ -369,12 +369,12 @@
             // Handle success event here
 
             // Successful Notification
-            $.NotificationApp.send("Success", "Extensions have been successfully imported", "top-right", "#10c469",
+            $.NotificationApp.send("Success", "Fax transmission has been successfully scheduled", "top-right", "#10c469",
                 "success");
 
-            // setTimeout(function() {
-            //     window.location.reload();
-            // }, 1000);
+            setTimeout(function() {
+                window.location.href = '{{ route("faxes.index") }}';
+            }, 1000);
         });
 
         document.addEventListener('dropzoneErrorEvent', function(event) {

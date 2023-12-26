@@ -1191,7 +1191,6 @@ class FaxesController extends Controller
 
     public function sendFax(Request $request)
     {
-        Log::alert($request->send_confirmation);
         $data = $request->all();
 
         // If files attached
