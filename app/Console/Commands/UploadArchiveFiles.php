@@ -218,7 +218,7 @@ class UploadArchiveFiles extends Command
         ])
 
             ->where('record_name', '<>', '')
-            ->where('record_name', 'not like', '%amazonaws.com%') // New where clause
+            ->where('record_path', 'not like', '%S3%') // New where clause
             ->whereDate('start_stamp', '<=', Carbon::today()->toDateTimeString())
             ->where('hangup_cause', '<>', 'LOSE_RACE')
             ->take(2000)
