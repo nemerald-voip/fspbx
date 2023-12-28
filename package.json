@@ -33,6 +33,8 @@
         "highlightjs": "^9.16.2",
         "jquery": "^3.7.1",
         "jquery-toast-plugin": "^1.3.2",
+        "primeicons": "^6.0.1",
+        "primevue": "^3.45.0",
         "select2": "^4.1.0-rc.0",
         "simplebar": "^6.2.5",
         "vue": "^3.3.11",

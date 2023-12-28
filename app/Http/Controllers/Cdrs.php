@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CDR;
+use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -43,7 +44,16 @@ class Cdrs extends Controller
             $data['breadcrumbs']['Call Detail Records'] = '';
         }
 
-        return view('layouts.cdrs.index')->with($data);
+        // return view('layouts.cdrs.index')->with($data);
+
+        return Inertia::render(
+            'Cdrs',
+            [
+                'data' => function () {
+                    return "";
+                },
+            ]
+            );
     }
 
     /**
