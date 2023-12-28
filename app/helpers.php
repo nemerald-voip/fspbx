@@ -885,7 +885,7 @@ if (!function_exists('getDestinationByCategory')) {
                         'id' => sprintf('*411 XML %s', Session::get('domain_name')),
                         'label' => 'Company Directory'
                     ], [
-                        'id' => 'hangup',
+                        'id' => 'hangup:',
                         'label' => 'Hangup'
                     ], [
                         'id' => sprintf('*732 XML %s', Session::get('domain_name')),

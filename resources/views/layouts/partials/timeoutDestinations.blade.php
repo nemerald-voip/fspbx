@@ -18,9 +18,9 @@
                         <option value="extensions" @if($destinationsByCategory == 'extensions') selected="selected" @endif>
                             Extensions
                         </option>
-                        <option value="timeconditions" @if($destinationsByCategory == 'timeconditions') selected="selected" @endif>
+                        {{--<option value="timeconditions" @if($destinationsByCategory == 'timeconditions') selected="selected" @endif>
                             Time Conditions
-                        </option>
+                        </option>--}}
                         <option value="voicemails" @if($destinationsByCategory == 'voicemails') selected="selected" @endif>
                             Voicemails
                         </option>
