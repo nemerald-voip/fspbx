@@ -3,12 +3,7 @@
 @yield('script-bottom')
 @stack('scripts')
 
-@vite([
-    "node_modules/select2/dist/css/select2.min.css",
-    'resources/js/ui/component.toastr.js',
-    'node_modules/jquery-toast-plugin/dist/jquery.toast.min.css', 
-
-    ])
+@vite(['node_modules/select2/dist/css/select2.min.css', 'resources/js/ui/component.toastr.js', 'node_modules/jquery-toast-plugin/dist/jquery.toast.min.css'])
 
 
 <script>
@@ -255,5 +250,28 @@
         } catch (error) {
             return false;
         }
+    }
+
+    function selectDomain(domain_uuid) {
+        event.preventDefault();
+
+        axios.post("{{ route('switchDomain') }}", {
+                    timeout: 5000, // Set the timeout to 5 seconds (adjust as needed)
+                    domain_uuid: domain_uuid,
+                })
+                .then(response => {
+                    const redirectUrl = response.data.redirectUrl;
+
+                    window.location.href = redirectUrl;
+                })
+                .catch(error => {
+                    if (axios.isCancel(error)) {
+                        console.error('Request canceled:', error.message);
+                    } else {
+                        console.error('Error fetching data:', error);
+                    }
+                });
+
+
     }
 </script>

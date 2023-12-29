@@ -50,7 +50,13 @@ class DomainController extends Controller
             unset($_SESSION["destinations"]["array"]);
 
             $url = getFusionPBXPreviousURL(url()->previous());
-            return redirect($url);
+            return response()->json([
+                'status' => 200,
+                'redirectUrl' => $url, 
+                'success' => [
+                    'message' => 'Domain has been switched'
+                ]
+            ]);
         }
         
     }

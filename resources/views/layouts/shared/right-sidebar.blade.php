@@ -20,9 +20,7 @@
                         <div class="listgroup">
                             <a href="#" class="list-group-item list-group-item-action
                                 @if (Session::get("domain_uuid") === $domain->domain_uuid ) active @endif "
-                                onclick="event.preventDefault();
-                                    document.getElementById('form_input_domain_uuid').value = '{{ $domain->domain_uuid }}';
-                                    document.getElementById('domain-search-form').submit();">
+                                onclick="selectDomain('{{ $domain->domain_uuid }}')">
     
                                 <div class="d-flex w-100 justify-content-between text-break">
                                     <h5 class="mb-1">{{ $domain->domain_description }}</h5>
@@ -33,11 +31,7 @@
                     @endforeach
                 </div>
                 @endif
-                
-                <form id="domain-search-form" action="{{ route('switchDomain') }}" method="POST" style="display: none;">
-                    @csrf
-                    <input type="hidden" name="domain_uuid" id="form_input_domain_uuid" value="">
-                </form>
+            
                 
                
             </div>
