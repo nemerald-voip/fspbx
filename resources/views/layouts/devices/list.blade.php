@@ -5,8 +5,17 @@
 @endsection
 
 @section('actionbar')
-    <a href="{{ route('devices.create') }}" class="btn btn-success mb-2 me-2">
+    <a href="{{ route('devices.create') }}" class="btn btn-sm btn-success mb-2 me-2">
         <i class="mdi mdi-plus-circle me-1"></i> Add New
+    </a>
+    <a href="{{ route('devices.index', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
+        Show {{ (($selectedScope == 'local')?'global':'local') }} devices
+    </a>
+    <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','');" class="btn btn-danger btn-sm mb-2 me-2 disabled">
+        Restart selected devices
+    </a>
+    <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','');" class="btn btn-danger btn-sm mb-2 me-2">
+        Restart all {{$devices->total()}} devices
     </a>
 @endsection
 
@@ -25,6 +34,17 @@
 
 @section('table-head')
     <tr>
+        @if ($permissions['device_restart'])
+            <th>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="selectallCheckbox">
+                    <label class="form-check-label" for="selectallCheckbox">&nbsp;</label>
+                </div>
+            </th>
+        @endif
+        @if($selectedScope == 'global')
+            <th>Domain</th>
+        @endif
         <th>MAC Address</th>
         <th>Name</th>
         <th>Template</th>
@@ -36,10 +56,21 @@
 
 @section('table-body')
     @if($devices->count() == 0)
-        @include('layouts.partials.listing.norecordsfound', ['colspan' => 6 ])
+        @include('layouts.partials.listing.norecordsfound', ['colspan' => (($selectedScope == 'global') ? 8 : 7) ])
     @else
         @foreach ($devices as $key => $device)
             <tr id="id{{ $device->device_uuid }}">
+                <td>
+                    @if ($permissions['device_restart'] && $device->lines()->first() && $device->lines()->first()->extension())
+                        <div class="form-check">
+                            <input type="checkbox" name="action_box[]" value="{{ $device->device_uuid }}" class="form-check-input action_checkbox">
+                            <label class="form-check-label" >&nbsp;</label>
+                        </div>
+                    @endif
+                </td>
+                @if($selectedScope == 'global')
+                    <th>{{ $device->domain_name }}</th>
+                @endif
                 <td>
                     {{ $device->device_address }}
                 </td>

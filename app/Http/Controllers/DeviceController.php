@@ -31,10 +31,18 @@ class DeviceController extends Controller
             return redirect('/');
         }
 
+        $scopes = ['global', 'local'];
         $searchString = $request->get('search');
         $searchStringKey = strtolower(trim($searchString));
+        $selectedScope = $request->get('scope', 'local');
         $devices = Devices::query();
-        $devices->where('domain_uuid', Session::get('domain_uuid'));
+        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
+            $devices
+                ->where('domain_uuid', Session::get('domain_uuid'));
+        } else {
+            $devices
+                ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
+        }
         if (!empty($searchStringKey)) {
             $devices->where(function ($query) use ($searchStringKey) {
                 $query
@@ -44,12 +52,13 @@ class DeviceController extends Controller
                     ->orWhereLike('device_template', $searchStringKey);
             });
         }
-        $devices = $devices->orderBy('device_label')->paginate(10)->onEachSide(1);
+        $devices = $devices->orderBy('device_label')->paginate(3)->onEachSide(1);
 
         $data = array();
         $data['devices'] = $devices;
         $data['searchString'] = $searchString;
         $data['permissions']['device_restart'] = isSuperAdmin();
+        $data['selectedScope'] = $selectedScope;
 
         return view('layouts.devices.list')->with($data);
 

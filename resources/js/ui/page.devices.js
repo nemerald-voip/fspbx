@@ -1,7 +1,7 @@
 !function($) {
     "use strict";
 
-    var Devices = function() {
+    const Devices = function () {
         this.$body = $("body")
 
     };
@@ -10,7 +10,6 @@
         console.log("init devices page")
     }
 
-    //init TodoApp
     $.Devices = new Devices
     $.Devices.Constructor = Devices
 
