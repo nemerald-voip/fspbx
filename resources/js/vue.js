@@ -1,13 +1,8 @@
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import PrimeVue from 'primevue/config';
-// import 'primevue/resources/themes/bootstrap4-light-blue/theme.css';
-// import 'primevue/resources/themes/lara-light-blue/theme.css';
-// import 'primevue/resources/themes/mdc-light-indigo/theme.css';
-// import 'primevue/resources/themes/nova-vue/theme.css';
-// import 'primevue/resources/themes/tailwind-light/theme.css';
-import 'primeicons/primeicons.css'
+     
+import './bootstrap';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 
@@ -38,7 +33,6 @@ createInertiaApp({
     setup({el, App, props, plugin}) {
         return createApp({ render: () => h(App, props) })
         .use(plugin)
-        .use(PrimeVue, { ripple: true, unstyled: true  })
         .mount(el)
     },
 });

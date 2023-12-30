@@ -11,6 +11,7 @@ async function getConfig() {
         "resources/js/vue.js",
 
         // css
+        'resources/scss/tailwind.css',
         "node_modules/primevue/resources/themes/bootstrap4-light-blue/theme.css",
         "resources/scss/app-modern.scss",
         "resources/scss/icons.scss",

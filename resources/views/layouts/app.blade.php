@@ -26,7 +26,9 @@
             <div class="content-page">
                 <div class="content">
 
+
                     @include('layouts.shared/horizontal-nav')
+           
 
                     {{-- <div class="container-fluid"> --}}
                         @yield('content')

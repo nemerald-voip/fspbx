@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-sm modal-right" style="flex-flow:initial !important; ">
         <div class="modal-content">
             <div class="modal-header border-0 modal-colored-header bg-secondary">
-                <h5 class="modal-title" id="right-modal-modalLabel">Select company</h5>
+                <h5 class="modal-title text-white" id="right-modal-modalLabel">Select company</h5>
 
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
             </div>
