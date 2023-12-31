@@ -42,6 +42,7 @@
         <th>Organization</th>
         <th>Phone Number</th>
         <th>Speed Dial</th>
+        <th>Assigned Users</th>
         <th style="width: 125px;">Actions</th>
     </tr>
 @endsection
@@ -66,6 +67,14 @@
                 <td>{{ $contactPhone->phone_number ?? '' }}</td>
                 <td>
                     {{ $contactPhone->phone_speed_dial ?? '' }}
+                </td>
+
+                <td>
+                    {{-- @dd($contactPhone->contact->contact_users); --}}
+                    @foreach ($contactPhone->contact->contact_users as $contact_user)
+                    <span class="badge bg-light text-dark">{{ $contact_user->user->username }}</span>
+                    {{-- <span class="badge badge-outline-primary">{{ $destination->destination_number }}</span> --}}
+                    @endforeach
                 </td>
 
                 <td>

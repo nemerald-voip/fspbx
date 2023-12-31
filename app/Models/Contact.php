@@ -62,10 +62,14 @@ class Contact extends Model
 
     ];
 
-    public function user()
-    {
-        return $this->hasOne(User::class,'contact_uuid','contact_uuid');
-    }
+    /**
+     * Get the Contact Users objects associated with this contact.
+     *  returns Eloquent Object
+     */
+    // public function user()
+    // {
+    //     return $this->hasOne(User::class,'contact_uuid','contact_uuid');
+    // }
 
     /**
      * Get the Contact Phones objects associated with this contact.
@@ -74,6 +78,15 @@ class Contact extends Model
     public function phones()
     {
         return $this->hasMany(ContactPhones::class, 'contact_uuid', 'contact_uuid');
+    }
+
+    /**
+     * Get the Contact Users objects associated with this contact.
+     *  returns Eloquent Object
+     */
+    public function contact_users()
+    {
+        return $this->hasMany(ContactUsers::class, 'contact_uuid', 'contact_uuid');
     }
 
 
