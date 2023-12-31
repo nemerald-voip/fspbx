@@ -519,7 +519,6 @@ if (!function_exists('appsDeleteOrganization')) {
         Log::info($response);
 
         if (!isset($array) || empty($array)) {
-            Log::info("here");
             return response()->json([
                 'status' => 401,
                 'error' => [
