@@ -118,8 +118,8 @@ class RingGroupsController extends Controller
 
         if(isset($attributes['ring_group_forward'])) {
             if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-                $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'],
-                    "US")->formatE164();
+                $attributes['ring_group_forward_destination'] = (new PhoneNumber($attributes['ring_group_forward']['all']['target_external'],
+                    "US"))->formatE164();
             } else {
                 $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
                 if (empty($attributes['ring_group_forward_destination'])) {
@@ -350,8 +350,8 @@ class RingGroupsController extends Controller
 
         if(isset($attributes['ring_group_forward'])) {
             if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-                $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'],
-                    "US")->formatE164();
+                $attributes['ring_group_forward_destination'] = (new PhoneNumber($attributes['ring_group_forward']['all']['target_external'],
+                    "US"))->formatE164();
             } else {
                 $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
                 if (empty($attributes['ring_group_forward_destination'])) {

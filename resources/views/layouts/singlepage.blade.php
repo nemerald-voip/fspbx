@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        @include('layouts.shared/head')
+        @include('layouts.shared/head-css', ['mode' => $mode ?? '', 'demo' => $demo ?? ''])
+        @vite(['resources/js/app.js','resources/js/hyper-head.js', 'resources/js/hyper-config.js'])
     </head>
 
     <body class="loading" data-layout="topnav" data-layout-config='{"layoutBoxed":false,"darkMode":false,"showRightSidebarOnStart": false}' >
@@ -33,6 +34,7 @@
         <!-- END wrapper -->
 
 
-        @include('layouts.shared/footer-script')
+        @include('layouts.shared/footer-scripts')
+        @vite(['resources/js/hyper-main.js'])
     </body>
 </html>
