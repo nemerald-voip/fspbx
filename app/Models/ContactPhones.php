@@ -2,21 +2,19 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Contact extends Model
+class ContactPhones extends Model
 {
-    use HasApiTokens, HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_contacts";
+    protected $table = "v_contact_phones";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'contact_uuid';
+    protected $primaryKey = 'contact_phone_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -27,17 +25,15 @@ class Contact extends Model
      */
     protected $fillable = [
         'domain_uuid',
-        'contact_parent_uuid',
-        'contact_type',
-        'contact_organization',
-        'contact_name_given',
-        'contact_name_family',
+        'contact_uuid',
+        'phone_type_voice',
+        'phone_number',
+        'phone_speed_dial',
         'insert_date',
         'insert_user',
         'update_date',
         'update_user'
     ];
-
 
     public function __construct(array $attributes = [])
     {
@@ -47,34 +43,13 @@ class Contact extends Model
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->fill($attributes);
     }
-    
-    /**
-     * Get the settings for the domain.
-     */
-
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-
-    ];
-
-    public function user()
-    {
-        return $this->hasOne(User::class,'contact_uuid','contact_uuid');
-    }
-
-    /**
-     * Get the Contact Phones objects associated with this contact.
+     * Get the Device Lines objects associated with this device.
      *  returns Eloquent Object
      */
-    public function phones()
+    public function contact()
     {
-        return $this->hasMany(ContactPhones::class, 'contact_uuid', 'contact_uuid');
+        return $this->hasOne(Contact::class, 'contact_uuid', 'contact_uuid');
     }
-
-
 }

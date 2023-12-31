@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
@@ -148,6 +149,10 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('/apps/users/{extension}/resetpassword', [AppsController::class, 'ResetPassword']) ->name('appsResetPassword');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus']) ->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser']) ->name('emailUser');
+
+    // Contacts
+    Route::get('/contacts', [ContactsController::class, 'index']) ->name('contacts.list');
+    Route::delete('/contacts/{id}',[ContactsController::class, 'destroy'])->name('contacts.destroy');
 
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
