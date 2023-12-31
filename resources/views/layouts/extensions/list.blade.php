@@ -233,6 +233,6 @@
     @include('layouts.extensions.createMobileAppSuccessModal')
     @include('layouts.extensions.createMobileAppDeactivatedSuccessModal')
     @include('layouts.extensions.sipCredentialsModal')
-    @include('layouts.extensions.extensionUploadResultModal');
-    @include('layouts.extensions.extensionScripts');
+    @include('layouts.extensions.extensionUploadResultModal')
+    @include('layouts.extensions.extensionScripts')
 @endsection
