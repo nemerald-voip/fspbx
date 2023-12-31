@@ -204,7 +204,7 @@
                                                             <div class="mb-3">
                                                                 <label for="voicemail_mail_to" class="form-label">Email Address </label>
                                                                 <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to" 
-                                                                    @if (!$extension->voicemail || !$extension->voicemail->voicemail_uuid)
+                                                                    @if ($extension->exists && (!$extension->voicemail || !$extension->voicemail->voicemail_uuid))
                                                                         disabled
                                                                     @endif
                                                                     name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
