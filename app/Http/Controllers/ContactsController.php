@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Throwable;
 use App\Models\Contact;
-use App\Models\ContactPhones;
 use Illuminate\Http\Request;
+use App\Models\ContactPhones;
+use App\Imports\ContactsImport;
 use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\HeadingRowImport;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
 class ContactsController extends Controller
@@ -66,30 +69,6 @@ class ContactsController extends Controller
             }
         }
 
-        // foreach ($extensions as $extension) {
-        //     if ($extension['outbound_caller_id_number']) {
-        //         try {
-        //             $phoneNumberObject = $phoneNumberUtil->parse($extension['outbound_caller_id_number'], 'US');
-        //             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-        //                 $extension->outbound_caller_id_number = $phoneNumberUtil
-        //                     ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
-        //             }
-        //         } catch (NumberParseException $e) {
-        //             // Do nothing and leave the numner as is
-        //         }
-        //     }
-        //     //check against registrations and add them to array
-        //     $all_regs = [];
-        //     foreach ($registrations as $registration) {
-        //         if ($registration['sip-auth-user'] == $extension['extension']) {
-        //             array_push($all_regs, $registration);
-        //         }
-        //     }
-        //     if (count($all_regs) > 0) {
-        //         $extension->setAttribute("registrations", $all_regs);
-        //         unset($all_regs);
-        //     }
-        // }
 
         $data = array();
         // $domain_uuid=Session::get('domain_uuid');
@@ -107,4 +86,103 @@ class ContactsController extends Controller
             ->with($data);
         // ->with("conn_params", $conn_params);
     }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param \App\Models\ContactPhones $contact_phone_uuid
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($contact_phone_uuid)
+    {
+        $contactPhone = ContactPhones::findOrFail($contact_phone_uuid);
+
+
+        if (isset($contactPhone)) {
+            if (isset($contactPhone->contact)) {
+
+                // Delete all contact users assosiated with this contact
+                if (isset($contactPhone->contact->contact_users)) {
+                    $contactPhone->contact->contact_users->each(function($contactUser) {
+                        $contactUser->delete();
+                    });
+                }
+
+                // Delete contact
+                $contactPhone->contact->delete();
+            }
+
+            // Delete contact phone
+            $deleted =  $contactPhone->delete();
+
+
+            if ($deleted) {
+
+                return response()->json([
+                    'status' => 200,
+                    'id' => $contact_phone_uuid,
+                    'success' => [
+                        'message' => 'Selected contacts have been deleted'
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => 'There was an error deleting selected contacts'
+                    ],
+
+                ]);
+            }
+        }
+    }
+
+        /**
+     * Import the specified resource
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function import(Request $request)
+    {
+        try {
+
+            $headings = (new HeadingRowImport)->toArray(request()->file('file'));
+
+            $import = new ContactsImport;
+            $import->import(request()->file('file'));
+
+            // Get array of failures and combine into html
+            if ($import->failures()->isNotEmpty()) {
+                $errormessage = 'Some errors were detected. Please, check the details: <ul>';
+                foreach ($import->failures() as $failure) {
+                    foreach ($failure->errors() as $error) {
+                        $value = (isset($failure->values()[$failure->attribute()]) ? $failure->values()[$failure->attribute()] : "NULL");
+                        $errormessage .= "<li>Skipping row <strong>" . $failure->row() . "</strong>. Invalid value <strong>'" . $value . "'</strong> for field <strong>'" . $failure->attribute() . "'</strong>. " . $error . "</li>";
+                    }
+                }
+                $errormessage .= '</ul>';
+
+                // Send response in format that Dropzone understands
+                return response()->json([
+                    'error' => $errormessage,
+                ], 400);
+            }
+        } catch (Throwable $e) {
+            // Log::alert($e);
+            // Send response in format that Dropzone understands
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Extensions were successfully uploaded'
+            ]
+        ]);
+    }
+
 }

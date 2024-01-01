@@ -153,6 +153,8 @@ Route::group(['middleware' => 'auth'], function(){
     // Contacts
     Route::get('/contacts', [ContactsController::class, 'index']) ->name('contacts.list');
     Route::delete('/contacts/{id}',[ContactsController::class, 'destroy'])->name('contacts.destroy');
+    Route::post('/contacts/import',[ContactsController::class, 'import']) ->name('contacts.import');
+
 
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
