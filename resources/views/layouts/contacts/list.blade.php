@@ -83,8 +83,9 @@
                 <td>
                     {{-- @dd($contactPhone->contact->contact_users); --}}
                     @foreach ($contactPhone->contact->contact_users as $contact_user)
-                        <span class="badge bg-light text-dark">{{ $contact_user->user->username }}</span>
-                        {{-- <span class="badge badge-outline-primary">{{ $destination->destination_number }}</span> --}}
+                        @if ($contact_user->user)
+                            <span class="badge bg-light text-dark">{{ $contact_user->user->username }}</span>
+                        @endif
                     @endforeach
                 </td>
 

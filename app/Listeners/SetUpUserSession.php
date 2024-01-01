@@ -174,29 +174,29 @@ class SetUpUserSession
         Session::put('permissions', $permissions);
 
         // Set up permissions for FusionPBX
-        // if (!empty($groups)) {
-        //     $domain_uuid = $domain->domain_uuid;
+        if (!empty($groups)) {
+            $domain_uuid = $domain->domain_uuid;
 
-        //     // Get the permissions assigned to the user through the assigned groups
-        //     $query = DB::table('v_group_permissions')
-        //         ->select('permission_name')
-        //         ->distinct()
-        //         ->where(function ($query) use ($domain_uuid) {
-        //             $query->where('domain_uuid', $domain_uuid)
-        //                 ->orWhereNull('domain_uuid');
-        //         })
-        //         ->where('permission_assigned', 'true')
-        //         ->whereIn('group_name', $groups->pluck('group_name'));
+            // Get the permissions assigned to the user through the assigned groups
+            $query = DB::table('v_group_permissions')
+                ->select('permission_name')
+                ->distinct()
+                ->where(function ($query) use ($domain_uuid) {
+                    $query->where('domain_uuid', $domain_uuid)
+                        ->orWhereNull('domain_uuid');
+                })
+                ->where('permission_assigned', 'true')
+                ->whereIn('group_name', $groups->pluck('group_name'));
 
-        //     $fusionPbxPermissions = $query->get();
-        //     // Store permissions in the session
-        //     if (!empty($permissions)) {
-        //         foreach ($fusionPbxPermissions as $row) {
-        //             $_SESSION['permissions'][$row->permission_name] = true;
-        //             $_SESSION["user"]["permissions"][$row->permission_name] = true;
-        //         }
-        //     }
-        // }
+            $fusionPbxPermissions = $query->get();
+            // Store permissions in the session
+            if (!empty($permissions)) {
+                foreach ($fusionPbxPermissions as $row) {
+                    $_SESSION['permissions'][$row->permission_name] = true;
+                    $_SESSION["user"]["permissions"][$row->permission_name] = true;
+                }
+            }
+        }
 
         // Build domains.
         // get the domains that the user is allowed to see and save in $_SESSION['domains']
