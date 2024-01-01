@@ -35,6 +35,7 @@ class ContactsController extends Controller
 
         // Get all contact phones
         $contactPhones =  ContactPhones::select('contact_phone_uuid','v_contact_phones.contact_uuid', 'phone_number', 'phone_speed_dial')
+            ->where('v_contact_phones.domain_uuid', Session::get('domain_uuid'))
             ->with(['contact' => function ($query) {
                 $query->select('contact_uuid', 'contact_organization');
             }])
