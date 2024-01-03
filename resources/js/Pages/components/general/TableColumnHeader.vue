@@ -1,0 +1,28 @@
+<template>
+    <th :class="class" :style="style">{{ header }}</th>
+</template>
+
+  
+<script setup>
+import { defineProps } from 'vue';
+
+// Define the props for the Column component
+const props = defineProps({
+    header: {
+        type: null,
+        default: null
+    },
+    style: {
+        type: null,
+        default: null
+    },
+    class: {
+        type: String,
+        default: null
+    },
+    hidden: {
+        type: Boolean,
+        default: false
+    }
+});
+</script>

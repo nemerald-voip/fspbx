@@ -9,15 +9,17 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
-class Cdrs extends Controller
+class CdrsController extends Controller
 {
     public $filters;
+    public $sortField;
+    public $sortOrder;
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         // Check permissions
         if (!userCheckPermission("extension_view")) {
@@ -30,28 +32,28 @@ class Cdrs extends Controller
             return redirect()->route('logout');
         }
 
-        $data = [];
-        $data['page_title'] = "Call Detail Records";
-        $data['breadcrumbs'] = [
-            'Dashboard' => 'dashboard',
-            'Call Detail Records' => ''
-        ];
-        $data['period'] = request()->get('period');
-        // $period = periodHelper(request()->get('period'), Cache::get(auth()->user()->user_uuid.'_timeZone'));
 
-
-        // Check if the request has the 'breadcrumbs' variable
-        if (request()->has('breadcrumbs')) {
-            // If the 'breadcrumbs' variable exists in the request, update the $data array
-            $data['breadcrumbs'] = request()->input('breadcrumbs');
-            $data['breadcrumbs']['Call Detail Records'] = '';
+        if (!empty($request->filterData['dateRange'])) {
+            $startPeriod = $request->filterData['dateRange'][0];
+            $endPeriod = $request->filterData['dateRange'][1];
+        } else {
+            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
         }
 
         $this->filters = [
-            'sourceNumber' => '123456789',
-            'dateFrom' => '2023-12-25',
-            'dateTo' => '2023-12-31'
+            'startPeriod' => $startPeriod,
+            'endPeriod' => $endPeriod
         ];
+
+        // Check if search parameter is present and not empty
+        if (!empty($request->filterData['search'])) {
+            $this->filters['search'] = $request->filterData['search'];
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
 
 
         // return view('layouts.cdrs.index')->with($data);
@@ -78,7 +80,15 @@ class Cdrs extends Controller
                 'domains' => function () {
                     return Session::get("domains");
                 },
-
+                'startPeriod' => function () {
+                    return $this->filters['startPeriod'];
+                },
+                'endPeriod' => function () {
+                    return $this->filters['endPeriod'];
+                },
+                'timezone' => function () {
+                    return $this->getTimezone();
+                }
 
             ]
         );
@@ -86,7 +96,23 @@ class Cdrs extends Controller
 
     public function getCdrs()
     {
-        return $this->builder($this->filters)->get();
+        $cdrs = $this->builder($this->filters)->get();
+        // foreach ($cdrs as $cdr) {
+        //     logger($cdr->start_date);
+
+        // }
+
+        $cdrs = $cdrs->map(function ($cdr) {
+            // Perform any additional processing on start_date if needed
+            // For example, format start_date or add additional data
+
+            // Add or modify attributes as needed
+            $cdr->start_date = $cdr->start_date;
+            $cdr->start_time = $cdr->start_time;
+
+            return $cdr;
+        });
+        return $cdrs;
     }
 
     public function builder($filters = [])
@@ -131,7 +157,8 @@ class Cdrs extends Controller
                 'waitsec',
                 'hangup_cause',
                 'hangup_cause_q850',
-                'sip_hangup_disposition'
+                'sip_hangup_disposition',
+                'status'
             );
 
         //exclude legs that were not answered
@@ -144,6 +171,10 @@ class Cdrs extends Controller
                 $this->$method($cdrs, $value);
             }
         }
+
+        // Apply sorting
+        $cdrs->orderBy($this->sortField, $this->sortOrder);
+
         return $cdrs;
     }
 
@@ -155,20 +186,28 @@ class Cdrs extends Controller
         } else {
             $timezone = Cache::get(auth()->user()->user_uuid . '_timeZone');
         }
+        return $timezone;
     }
 
-    protected function filterDateFrom($query, $value)
+    protected function filterStartPeriod($query, $value)
     {
-        $startLocal = Carbon::createFromFormat('Y-m-d', $value, $this->getTimezone())->startOfDay();
-        $startUTC = $startLocal->setTimezone('UTC');
-        $query->where('start_stamp', '>=', $startUTC);
+        $query->where('start_stamp', '>=', $value);
     }
 
-    protected function filterDateTo($query, $value)
+    protected function filterEndPeriod($query, $value)
     {
-        $endLocal = Carbon::createFromFormat('Y-m-d', $value, $this->getTimezone())->endOfDay();
-        $endUTC = $endLocal->setTimezone('UTC');
-        $query->where('start_stamp', '<=', $endUTC);
+        $query->where('start_stamp', '<=', $value);
+    }
+
+    protected function filterSearch($query, $value)
+    {
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value) {
+            $query->where('caller_id_name', 'ilike', '%' . $value . '%')
+                ->orWhere('caller_id_number', 'ilike', '%' . $value . '%')
+                ->orWhere('caller_destination', 'ilike', '%' . $value . '%')
+                ->orWhere('destination_number', 'ilike', '%' . $value . '%');
+        });
     }
 
     /**

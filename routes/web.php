@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Cdrs;
+use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
@@ -52,7 +52,7 @@ Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsControlle
 Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');
 
 // Call Detail Records
-Route::get('/call-detail-records', [Cdrs::class, 'index'])->name('cdrs.index');
+Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
 
 // Groups
 Route::resource('groups', GroupsController::class);

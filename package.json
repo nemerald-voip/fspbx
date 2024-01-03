@@ -24,6 +24,7 @@
         "@heroicons/vue": "^2.1.1",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/vue3": "^1.0.14",
+        "@tailwindcss/forms": "^0.5.7",
         "@vitejs/plugin-vue": "^4.5.2",
         "@vuepic/vue-datepicker": "^7.4.0",
         "bootstrap-datepicker": "^1.10.0",
