@@ -56,13 +56,13 @@
                 </div>
 
                 <div class="relative w-full sm:w-1/5 max-w-sm mb-2 sm:mb-0 sm:ml-4">
-                    <button type="button" @click="onSearchClick"
+                    <button type="button" @click.prevent="onSearchClick"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm sm:ml-4 font-semibold text-white shadow-sm hover:bg-indigo-500 
                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         Search
                     </button>
 
-                    <button type="button"
+                    <button type="button" @click.prevent="onResetClick"
                         class="rounded-md bg-white px-2.5 py-1.5 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Reset
                     </button>
@@ -164,6 +164,17 @@ const onSearchClick = () => {
     const searchData = {
         dateRange: dateRange.value,
         searchQuery: searchQuery.value
+    };
+    emit('search-action', searchData);
+};
+
+// Method to handle reset button click
+const onResetClick = () => {
+    dateRange.value = [startOfDay(today), endOfDay(today)];
+    searchQuery.value = null;
+    const searchData = {
+        dateRange: [startOfDay(today), endOfDay(today)],
+        searchQuery: null
     };
     emit('search-action', searchData);
 };
