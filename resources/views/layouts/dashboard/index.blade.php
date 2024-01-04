@@ -325,7 +325,7 @@
             @if ($permissions['cdr'])
                 <div class="col-md-4 col-lg-3 col-sm-6">
                     <div class="card">
-                        <a href="/app/xml_cdr/xml_cdr.php">
+                        <a href="/call-detail-records">
                             <div class="card-body pt-2">
                                 <div class="d-flex justify-content-between align-items-center"
                                     style="border-bottom: 1px solid #f1f3fa;">
