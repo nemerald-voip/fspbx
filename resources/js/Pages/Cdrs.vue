@@ -44,7 +44,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template v-if="row.record_name && row.record_path" #action-buttons>
+                        <template v-if="(row.record_name && row.record_path) || row.record_path==='S3'" #action-buttons>
                             <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying"
                                 @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
                                 class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />

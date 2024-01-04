@@ -107,7 +107,7 @@ class CdrsController extends Controller
     public function getRecording($callUuid)
     {
         try {
-            $recording = CDR::where('xml_cdr_uuid', $callUuid)->select('record_path', 'record_name')->firstOrFail();
+            $recording = CDR::where('xml_cdr_uuid', $callUuid)->select('xml_cdr_uuid','record_path', 'record_name')->firstOrFail();
             // You can use $call here
         } catch (ModelNotFoundException $e) {
             // Handle the case when the model is not found
@@ -115,52 +115,60 @@ class CdrsController extends Controller
             return response()->json(['error' => 'Record not found'], 404);
         }
 
+        logger($recording);
+
         //-----For local files------
-        $filePath = str_replace('/var/lib/freeswitch/recordings/','',$recording->record_path . '/' . $recording->record_name);
+        if ($recording->record_path != 'S3') {
 
-        // Encrypt the file path
-        $encryptedFilePath = encrypt($filePath);
-        // logger($encryptedFilePath);
+            $filePath = str_replace('/var/lib/freeswitch/recordings/','',$recording->record_path . '/' . $recording->record_name);
 
-        // Generate the URL
-        $url = route('serve.recording', ['filePath' => $encryptedFilePath]);
+            // Encrypt the file path
+            $encryptedFilePath = encrypt($filePath);
+            // logger($encryptedFilePath);
+
+            // Generate the URL
+            $url = route('serve.recording', ['filePath' => $encryptedFilePath]);
+            logger('here');
+            logger($url);
+
+            if (isset($url)) return $url;
+        }
         // -----End for local files----
 
         // -----For S3 files-----
-        $setting = getS3Setting(Session::get('domain_uuid'));
-    
+        if ($recording->record_path == 'S3') {
+            $setting = getS3Setting(Session::get('domain_uuid'));
+        
 
-        $disk = Storage::build([
-            'driver' => 's3',
-            'key' => $setting['key'],
-            'secret' => $setting['secret'],
-            'region' => $setting['region'],
-            'bucket' => $setting['bucket'],
-        ]);
+            $disk = Storage::build([
+                'driver' => 's3',
+                'key' => $setting['key'],
+                'secret' => $setting['secret'],
+                'region' => $setting['region'],
+                'bucket' => $setting['bucket'],
+            ]);
 
-        // $s3 = new \Aws\S3\S3Client([
-        //     'region'  => $setting['region'],
-        //     'version' => 'latest',
-        //     'credentials' => [
-        //         'key'    => $setting['key'],
-        //         'secret' => $setting['secret']
-        //     ]
-        // ]);
+             //Special case when recording name is not set. 
+             if (!isset($recording->record_name)) {
+                // Check if archive recording is set
+                if($recording->archive_recording) {
+                    $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10));
+                }
+                logger($url);
+                if (isset($url)) return $url;
+             }
 
-        // 's3' => [
-        //     'driver' => 's3',
-        //     'key' => env('AWS_ACCESS_KEY_ID'),
-        //     'secret' => env('AWS_SECRET_ACCESS_KEY'),
-        //     'region' => env('AWS_DEFAULT_REGION'),
-        //     'bucket' => env('AWS_BUCKET'),
-        //     'url' => env('AWS_URL'),
-        //     'endpoint' => env('AWS_ENDPOINT'),
-        //     'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-        // ],
+            if (isset($recording->record_name)) {
+                $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10));
+                logger($url);
+                if (isset($url)) return $url;
+            }
 
-        $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(5));
+            // logger($url);
+            if (isset($url)) return $url;
+        }
 
-        return $url;
+        return null;
     }
 
     public function serveRecording($filePath)
@@ -168,9 +176,8 @@ class CdrsController extends Controller
         $filePath = decrypt($filePath); // Assuming the path is encrypted for security
 
         if (!Storage::disk('recordings')->exists($filePath)) {
-            abort(404, 'File not found');
+            return null;
         }
-
         // return response($fileContent, 200)->header('Content-Type', $mimeType);
         return response()->file(Storage::disk('recordings')->path($filePath));
     }
