@@ -107,7 +107,7 @@ class SetUpUserSession
             // Add variables required by Fusion to built the menu
             $_SESSION['domain']['menu']['uuid'] = $menu_uuid;
             $_SESSION['domain']['language']['code'] = get_domain_setting('language');
-            // $_SESSION['groups'][0]['group_name'] = Session::get('user.group_name');
+            $_SESSION['groups'][0]['group_name'] = Session::get('user.group_name');
         }
 
         // Build top level menu
