@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CdrsController extends Controller
 {
@@ -32,6 +34,9 @@ class CdrsController extends Controller
             return redirect()->route('logout');
         }
 
+        if ($request->callUuid) {
+            $callUuid = $request->callUuid;
+        }
 
         if (!empty($request->filterData['dateRange'])) {
             $startPeriod = $request->filterData['dateRange'][0];
@@ -88,11 +93,88 @@ class CdrsController extends Controller
                 },
                 'timezone' => function () {
                     return $this->getTimezone();
-                }
+                },
+                'recording' => Inertia::lazy(
+                    fn () =>
+                    $this->getRecording($callUuid)
+                ),
+
 
             ]
         );
     }
+
+    public function getRecording($callUuid)
+    {
+        try {
+            $recording = CDR::where('xml_cdr_uuid', $callUuid)->select('record_path', 'record_name')->firstOrFail();
+            // You can use $call here
+        } catch (ModelNotFoundException $e) {
+            // Handle the case when the model is not found
+            // For example, return a response or redirect
+            return response()->json(['error' => 'Record not found'], 404);
+        }
+
+        //-----For local files------
+        $filePath = str_replace('/var/lib/freeswitch/recordings/','',$recording->record_path . '/' . $recording->record_name);
+
+        // Encrypt the file path
+        $encryptedFilePath = encrypt($filePath);
+        // logger($encryptedFilePath);
+
+        // Generate the URL
+        $url = route('serve.recording', ['filePath' => $encryptedFilePath]);
+        // -----End for local files----
+
+        // -----For S3 files-----
+        $setting = getS3Setting(Session::get('domain_uuid'));
+    
+
+        $disk = Storage::build([
+            'driver' => 's3',
+            'key' => $setting['key'],
+            'secret' => $setting['secret'],
+            'region' => $setting['region'],
+            'bucket' => $setting['bucket'],
+        ]);
+
+        // $s3 = new \Aws\S3\S3Client([
+        //     'region'  => $setting['region'],
+        //     'version' => 'latest',
+        //     'credentials' => [
+        //         'key'    => $setting['key'],
+        //         'secret' => $setting['secret']
+        //     ]
+        // ]);
+
+        // 's3' => [
+        //     'driver' => 's3',
+        //     'key' => env('AWS_ACCESS_KEY_ID'),
+        //     'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        //     'region' => env('AWS_DEFAULT_REGION'),
+        //     'bucket' => env('AWS_BUCKET'),
+        //     'url' => env('AWS_URL'),
+        //     'endpoint' => env('AWS_ENDPOINT'),
+        //     'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+        // ],
+
+        $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(5));
+
+        return $url;
+    }
+
+    public function serveRecording($filePath)
+    {
+        $filePath = decrypt($filePath); // Assuming the path is encrypted for security
+
+        if (!Storage::disk('recordings')->exists($filePath)) {
+            abort(404, 'File not found');
+        }
+
+        // return response($fileContent, 200)->header('Content-Type', $mimeType);
+        return response()->file(Storage::disk('recordings')->path($filePath));
+    }
+
 
     public function getCdrs()
     {
@@ -129,32 +211,32 @@ class CdrsController extends Controller
                 'destination_number',
                 'domain_uuid',
                 'extension_uuid',
-                'sip_call_id',
+                // 'sip_call_id',
                 'source_number',
-                'start_stamp',
+                // 'start_stamp',
                 'start_epoch',
-                'answer_stamp',
-                'answer_epoch',
+                // 'answer_stamp',
+                // 'answer_epoch',
                 'end_epoch',
-                'end_stamp',
+                // 'end_stamp',
                 'duration',
                 'record_path',
                 'record_name',
-                'leg',
-                'voicemail_message',
-                'missed_call',
-                'call_center_queue_uuid',
-                'cc_side',
-                'cc_queue_joined_epoch',
-                'cc_queue',
-                'cc_agent',
-                'cc_agent_bridged',
-                'cc_queue_answered_epoch',
-                'cc_queue_terminated_epoch',
-                'cc_queue_canceled_epoch',
+                // 'leg',
+                // 'voicemail_message',
+                // 'missed_call',
+                // 'call_center_queue_uuid',
+                // 'cc_side',
+                // 'cc_queue_joined_epoch',
+                // 'cc_queue',
+                // 'cc_agent',
+                // 'cc_agent_bridged',
+                // 'cc_queue_answered_epoch',
+                // 'cc_queue_terminated_epoch',
+                // 'cc_queue_canceled_epoch',
                 'cc_cancel_reason',
                 'cc_cause',
-                'waitsec',
+                // 'waitsec',
                 'hangup_cause',
                 'hangup_cause_q850',
                 'sip_hangup_disposition',

@@ -1,5 +1,8 @@
 <template>
-    <td :class="class" :style="style">{{ text }}</td>
+    <td :class="class" :style="style">
+        {{ text }}
+        <slot name="action-buttons"></slot>
+    </td>
   </template>
   
   <script setup>
