@@ -654,8 +654,8 @@ class ExtensionsController extends Controller
         if ($attributes['follow_me_ring_my_phone_timeout'] && $attributes['follow_me_ring_my_phone_timeout'] > 0) {
             $attributes['follow_me_destinations'] = array_merge([
                 $extension->extension_uuid => [
-                    'type' => 'internal',
                     'target_internal' => $extension->extension,
+                    'target_external' => null,
                     'delay' => 0,
                     'timeout' => $attributes['follow_me_ring_my_phone_timeout'],
                     'prompt' => 'false'
@@ -668,7 +668,7 @@ class ExtensionsController extends Controller
             foreach ($attributes['follow_me_destinations'] as $destination) {
                 if ($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                if ($destination['type'] == 'external') {
+                if ($destination['target_external'] == 'external') {
                     $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
                 } else {
                     $followMeDest->follow_me_destination = $destination['target_internal'];
@@ -1212,7 +1212,7 @@ class ExtensionsController extends Controller
         if ($attributes['follow_me_ring_my_phone_timeout'] && $attributes['follow_me_ring_my_phone_timeout'] > 0) {
             $attributes['follow_me_destinations'] = array_merge([
                 $extension->extension_uuid => [
-                    'type' => 'internal',
+                    'target_external' => null,
                     'target_internal' => $extension->extension,
                     'delay' => 0,
                     'timeout' => $attributes['follow_me_ring_my_phone_timeout'],
@@ -1226,7 +1226,7 @@ class ExtensionsController extends Controller
             foreach ($attributes['follow_me_destinations'] as $destination) {
                 if ($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                if ($destination['type'] == 'external') {
+                if ($destination['target_external'] == 'external') {
                     $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
                 } else {
                     $followMeDest->follow_me_destination = $destination['target_internal'];
