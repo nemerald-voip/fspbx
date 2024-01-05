@@ -44,13 +44,18 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template v-if="(row.record_name && row.record_path) || row.record_path==='S3'" #action-buttons>
-                            <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying"
-                                @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
-                                class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-                            <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
-                                @click="pauseAudio"
-                                class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+                        <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'" #action-buttons>
+                            <div class="flex items-center space-x-2 whitespace-nowrap">
+                                <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying"
+                                    @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
+                                    class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+                                <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
+                                    @click="pauseAudio"
+                                    class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+
+                                <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
+                                    class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
+                            </div>
                         </template>
 
                     </TableField>
@@ -66,14 +71,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref } from 'vue';
 import { router } from '@inertiajs/vue3'
 import Menu from './components/Menu.vue';
 import DataTable from './components/general/DataTable.vue';
 import TableColumnHeader from './components/general/TableColumnHeader.vue';
 import TableField from './components/general/TableField.vue';
-import { PlayCircleIcon } from "@heroicons/vue/24/solid"
-import { PauseCircleIcon } from "@heroicons/vue/24/solid"
+import { PlayCircleIcon, PauseCircleIcon, CloudArrowDownIcon } from "@heroicons/vue/24/solid"
 
 
 
@@ -88,7 +92,7 @@ const props = defineProps({
     endPeriod: Date,
     search: String,
     timezone: String,
-    recording: String,
+    recordingUrl: String,
 });
 
 const filterData = ref({
@@ -97,21 +101,25 @@ const filterData = ref({
     timezone: props.timezone,
 });
 
-console.log(props.data);
+// onMounted(() => {
+//     isAudioPlaying.value = false;
+//     currentAudioUuid.value = null;
+// });
 
-const handleDateRangeUpdate = (dateRange) => {
-    filterData.value.dateRange = dateRange;
-    router.visit('/call-detail-records', {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            'data',
-        ],
-    })
-};
+
+// const handleDateRangeUpdate = (dateRange) => {
+//     filterData.value.dateRange = dateRange;
+//     router.visit('/call-detail-records', {
+//         data: {
+//             filterData: filterData._rawValue,
+//         },
+//         preserveScroll: true,
+//         preserveState: true,
+//         only: [
+//             'data',
+//         ],
+//     })
+// };
 
 const handleSearchButtonClick = (searchData) => {
     filterData.value.search = searchData.searchQuery;
@@ -134,19 +142,17 @@ const currentAudioUuid = ref(null);
 const isAudioPlaying = ref(false);
 
 const fetchAndPlayAudio = (uuid) => {
-
     router.visit('/call-detail-records', {
         data: {
+            filterData: filterData._rawValue,
             callUuid: uuid,
         },
         preserveScroll: true,
         preserveState: true,
         only: [
-            'recording',
+            'recordingUrl',
         ],
         onSuccess: (page) => {
-            console.log(props.recording);
-
             // Stop the currently playing audio (if any)
             if (currentAudio.value) {
                 currentAudio.value.pause();
@@ -156,7 +162,7 @@ const fetchAndPlayAudio = (uuid) => {
             currentAudioUuid.value = uuid;
             isAudioPlaying.value = true;
 
-            currentAudio.value = new Audio(props.recording);
+            currentAudio.value = new Audio(props.recordingUrl);
             currentAudio.value.play();
 
             // Add an event listener for when the audio ends
@@ -164,6 +170,47 @@ const fetchAndPlayAudio = (uuid) => {
                 isAudioPlaying.value = false;
                 currentAudioUuid.value = null;
             });
+        },
+
+    });
+
+}
+
+const downloadAudio = (uuid) => {
+    router.visit('/call-detail-records', {
+        data: {
+            filterData: filterData._rawValue,
+            callUuid: uuid,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: [
+            'recordingUrl',
+        ],
+        onSuccess: (page) => {
+            // console.log(props.recordingUrl);
+
+            let fileName;
+
+            if (props.recordingUrl.includes("call-detail-records/file")) {
+                // Shorten the name 
+                fileName = uuid;
+            } else {
+                // If the substring is not present, use the original URL 
+                fileName = props.recordingUrl;
+            }
+
+            // Create an anchor element and set the attributes for downloading
+            const anchor = document.createElement('a');
+            anchor.href = props.recordingUrl;
+            anchor.download = fileName; // You can set a specific filename here if desired
+            document.body.appendChild(anchor);
+
+            // Trigger the download
+            anchor.click();
+
+            // Clean up by removing the anchor element
+            document.body.removeChild(anchor);
         },
 
     });
