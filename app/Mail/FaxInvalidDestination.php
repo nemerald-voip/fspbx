@@ -28,8 +28,6 @@ class FaxInvalidDestination extends Mailable
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == "smtp_from") {
                     $attributes['unsubscribe_email'] = $setting->default_setting_value;
-                } else {
-                    $attributes['unsubscribe_email'] = "";
                 }
                 if ($setting->default_setting_subcategory == "support_email") {
                     $attributes['support_email'] = $setting->default_setting_value;
@@ -40,6 +38,9 @@ class FaxInvalidDestination extends Mailable
                 if ($setting->default_setting_subcategory == "email_company_name") {
                     $attributes['company_name'] = $setting->default_setting_value;
                 }
+            }
+            if (!isset($attributes['unsubscribe_email'])) {
+                $attributes['unsubscribe_email'] = "";
             }
         }
         $this->attributes = $attributes;

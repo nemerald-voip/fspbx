@@ -124,7 +124,6 @@ class SendAppCredentials implements ShouldQueue
         // Allow only 2 emails every 1 second
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
 
-            // $recipient = 'dimon.sm1@gmail.com';
 		    Mail::to($this->attributes['email'])->send(new AppCredentials($this->attributes));
 		    // Log::info('Emailed credentials');
 
