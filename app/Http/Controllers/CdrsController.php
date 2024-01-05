@@ -143,20 +143,22 @@ class CdrsController extends Controller
                 'bucket' => $setting['bucket'],
             ]);
 
-            $options = [
-                'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->archive_recording->object_key) . '"'
-            ];
-
             //Special case when recording name is not set. 
             if (!isset($recording->record_name)) {
                 // Check if archive recording is set
                 if ($recording->archive_recording) {
+                    $options = [
+                        'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->archive_recording->object_key) . '"'
+                    ];
                     $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10),$options);
                 }
                 if (isset($url)) return $url;
             }
 
             if (isset($recording->record_name)) {
+                $options = [
+                    'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->record_name) . '"'
+                ];
                 $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10),$options);
                 if (isset($url)) return $url;
             }
