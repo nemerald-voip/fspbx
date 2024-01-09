@@ -26,6 +26,9 @@ class Kernel extends ConsoleKernel
         // Check Horizon status
         $schedule->command('horizon:check-status')->everyTenMinutes();
 
+        // clear Redis cache
+        $schedule->command('cache:prune-stale-tags')->hourly();
+
         // Delete Webhooks
         $schedule->command('model:prune', [
             '--model' => [WebhookCall::class],

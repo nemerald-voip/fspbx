@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Users"])
+@extends('layouts.app', ["page_title"=> "Users"])
 
 @section('content')
 
@@ -146,8 +146,8 @@
 
 
 @push('scripts')
-<script>
-    $(document).ready(function() {
+<script >
+    document.addEventListener('DOMContentLoaded', function() {
 
         localStorage.removeItem('activeTab');
 

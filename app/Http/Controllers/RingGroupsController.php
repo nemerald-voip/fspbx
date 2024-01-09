@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\GetDestinationByCategoryRequest;
-use App\Http\Requests\StoreRingGroupRequest;
-use App\Http\Requests\UpdateRingGroupRequest;
+use App\Models\IvrMenus;
 use App\Models\Dialplans;
 use App\Models\Extensions;
-use App\Models\FollowMeDestinations;
-use App\Models\IvrMenus;
-use App\Models\MusicOnHold;
 use App\Models\Recordings;
 use App\Models\RingGroups;
-use App\Models\RingGroupsDestinations;
-use App\Models\Voicemails;
+use App\Models\FusionCache;
+use App\Models\MusicOnHold;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Models\FreeswitchSettings;
+use App\Models\RingGroupsDestinations;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 use Propaganistas\LaravelPhone\PhoneNumber;
+use App\Http\Requests\StoreRingGroupRequest;
+use App\Http\Requests\UpdateRingGroupRequest;
 
 class RingGroupsController extends Controller
 {
@@ -28,11 +27,8 @@ class RingGroupsController extends Controller
      */
     public function index(Request $request)
     {
-        //print '<pre>';
-        //print_r(Session::get('permissions', false));
-        //print '</pre>';
-        // Check permissions
-        if (!userCheckPermission("ring_group_all")) {
+
+        if (!userCheckPermission("ring_group_view")) {
             return redirect('/');
         }
 
@@ -40,7 +36,7 @@ class RingGroupsController extends Controller
         $ringGroups = RingGroups::query();
         $ringGroups
             ->where('domain_uuid', Session::get('domain_uuid'));
-        $ringGroups = $ringGroups->orderBy('insert_date',)->paginate(10)->onEachSide(1);
+        $ringGroups = $ringGroups->orderBy('ring_group_extension')->paginate(10)->onEachSide(1);
 
         $permissions['delete'] = userCheckPermission('ring_group_delete');
         $permissions['view'] = userCheckPermission('ring_group_view');
@@ -120,13 +116,20 @@ class RingGroupsController extends Controller
     {
         $attributes = $request->validated();
 
-        if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-            $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
-        } else {
-            $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
-            if (empty($attributes['ring_group_forward_destination'])) {
-                $attributes['ring_group_forward_enabled'] = 'false';
+        if(isset($attributes['ring_group_forward'])) {
+            if ($attributes['ring_group_forward']['all']['type'] == 'external') {
+                $attributes['ring_group_forward_destination'] = (new PhoneNumber($attributes['ring_group_forward']['all']['target_external'],
+                    "US"))->formatE164();
+            } else {
+                $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
+                if (empty($attributes['ring_group_forward_destination'])) {
+                    $attributes['ring_group_forward_enabled'] = 'false';
+                }
             }
+        }
+
+        if(!isset($attributes['ring_group_missed_call_category'])) {
+            $attributes['ring_group_missed_call_category'] = null;
         }
 
         $ringGroup = new RingGroups();
@@ -134,32 +137,34 @@ class RingGroupsController extends Controller
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
-            'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
-            'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'],
-            'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'],
+            'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'] ?? null,
+            'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'] ?? null,
             'ring_group_description' => $attributes['ring_group_description'],
             'ring_group_enabled' => $attributes['ring_group_enabled'],
-            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
-            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
+            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'] ?? 'false',
+            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'] ?? null,
             'ring_group_strategy' => $attributes['ring_group_strategy'],
-            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'],
-            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'],
+            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
+            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
             'ring_group_distinctive_ring' => $attributes['ring_group_distinctive_ring'],
             'ring_group_ringback' => $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
-            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'] ?? null,
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
-            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
-            'ring_group_context' => $attributes['ring_group_context']
+            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'] ?? null,
+            'ring_group_context' => $attributes['ring_group_context'] ?? null,
+            'dialplan_uuid' => Str::uuid(),
         ]);
 
         $ringGroup->save();
 
+        $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
+            $order = 5;
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
                     break;
@@ -170,12 +175,27 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
-                $groupsDestinations->destination_delay = $destination['delay'];
+                if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
+                    $groupsDestinations->destination_delay = $order;
+                    $order += 5;
+                } else {
+                    $groupsDestinations->destination_delay = $destination['delay'];
+                }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
+                $sumDestinationsTimeout += $destination['timeout'];
+                // Save the longest timeout
+                if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                    $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
+                }
                 if ($destination['prompt'] == 'true') {
                     $groupsDestinations->destination_prompt = 1;
                 } else {
                     $groupsDestinations->destination_prompt = null;
+                }
+                if ($destination['status'] == 'true') {
+                    $groupsDestinations->destination_enabled = true;
+                } else {
+                    $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
                 $ringGroup->groupDestinations()->save($groupsDestinations);
@@ -183,17 +203,25 @@ class RingGroupsController extends Controller
             }
         }
 
-        // Generate Dialplan XML file
-        $xml = $this->generateDialPlanXML($ringGroup);
+        $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
+            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous' => $longestDestinationsTimeout,
+            default => 0,
+        };
+
+        $ringGroup->save();
+
+        $this->generateDialPlanXML($ringGroup);
 
         return response()->json([
             'status' => 'success',
+            'redirect_url' => route('ring-groups.edit', $ringGroup),
             'ring_group' => $ringGroup,
             'message' => 'RingGroup has been created.'
         ]);
     }
 
-    public function generateDialPlanXML($ringGroup)
+    public function generateDialPlanXML($ringGroup): void
     {
         // Data to pass to the Blade template
         $data = [
@@ -213,8 +241,8 @@ class RingGroupsController extends Controller
             $dialPlan->dialplan_name = $ringGroup->ring_group_name;
             $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
             if (isset($ringGroup->ring_group_context)) {
-				$dialPlan->dialplan_context = $ringGroup->ring_group_context;
-			}
+                $dialPlan->dialplan_context = $ringGroup->ring_group_context;
+            }
             $dialPlan->dialplan_continue = 'false';
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_order = 101;
@@ -231,6 +259,17 @@ class RingGroupsController extends Controller
         }
 
         $dialPlan->save();
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
     }
 
     /**
@@ -308,48 +347,56 @@ class RingGroupsController extends Controller
         }
 
         $attributes = $request->validated();
-        // logger($attributes);
 
-        if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-            $attributes['ring_group_forward_destination'] = PhoneNumber::make($attributes['ring_group_forward']['all']['target_external'], "US")->formatE164();
-        } else {
-            $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
-            if (empty($attributes['ring_group_forward_destination'])) {
-                $attributes['ring_group_forward_enabled'] = 'false';
+        if(isset($attributes['ring_group_forward'])) {
+            if ($attributes['ring_group_forward']['all']['type'] == 'external') {
+                $attributes['ring_group_forward_destination'] = (new PhoneNumber($attributes['ring_group_forward']['all']['target_external'],
+                    "US"))->formatE164();
+            } else {
+                $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
+                if (empty($attributes['ring_group_forward_destination'])) {
+                    $attributes['ring_group_forward_enabled'] = 'false';
+                }
             }
+        }
+
+        if(!isset($attributes['ring_group_missed_call_category'])) {
+            $attributes['ring_group_missed_call_category'] = null;
         }
 
         $ringGroup->update([
             'ring_group_name' => $attributes['ring_group_name'],
+            'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
-            'ring_group_call_timeout' => $attributes['ring_group_call_timeout'],
             'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
-            'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'],
-            'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'],
+            'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'] ?? null,
+            'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'] ?? null,
             'ring_group_description' => $attributes['ring_group_description'],
             'ring_group_enabled' => $attributes['ring_group_enabled'],
-            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'],
-            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'],
+            'ring_group_forward_enabled' => $attributes['ring_group_forward_enabled'] ?? 'false',
+            'ring_group_forward_destination' => $attributes['ring_group_forward_destination'] ?? null,
             'ring_group_strategy' => $attributes['ring_group_strategy'],
-            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'],
-            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'],
+            'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
+            'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
             'ring_group_distinctive_ring' => $attributes['ring_group_distinctive_ring'],
             'ring_group_ringback' => $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
-            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'],
+            'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'] ?? null,
             'ring_group_missed_call_app' => ($attributes['ring_group_missed_call_category'] == 'disabled') ? null : $attributes['ring_group_missed_call_category'],
-            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'],
-            'ring_group_context' => $attributes['ring_group_context']
+            'ring_group_forward_toll_allow' => $attributes['ring_group_forward_toll_allow'] ?? null,
+            'ring_group_context' => $attributes['ring_group_context'] ?? null
         ]);
 
         $ringGroup->groupDestinations()->delete();
 
         $ringGroup->save();
 
+        $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
+            $order = 5;
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
                     break;
@@ -360,12 +407,27 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
-                $groupsDestinations->destination_delay = $destination['delay'];
+                if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
+                    $groupsDestinations->destination_delay = $order;
+                    $order += 5;
+                } else {
+                    $groupsDestinations->destination_delay = $destination['delay'];
+                }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
+                $sumDestinationsTimeout += $destination['timeout'];
+                // Save the longest timeout
+                if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                    $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
+                }
                 if ($destination['prompt'] == 'true') {
                     $groupsDestinations->destination_prompt = 1;
                 } else {
                     $groupsDestinations->destination_prompt = null;
+                }
+                if ($destination['status'] == 'true') {
+                    $groupsDestinations->destination_enabled = true;
+                } else {
+                    $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
                 $ringGroup->groupDestinations()->save($groupsDestinations);
@@ -373,7 +435,26 @@ class RingGroupsController extends Controller
             }
         }
 
+        $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
+            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous' => $longestDestinationsTimeout,
+            default => 0,
+        };
+
+        $ringGroup->save();
+
         $this->generateDialPlanXML($ringGroup);
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
 
         return response()->json([
             'status' => 'success',
@@ -386,7 +467,7 @@ class RingGroupsController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  RingGroups  $ringGroup
-     * @return Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(RingGroups $ringGroup)
     {
@@ -395,17 +476,34 @@ class RingGroupsController extends Controller
         }
 
         $deleted = $ringGroup->delete();
+        $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
+        $dialPlan->delete();
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
 
         if ($deleted) {
             return response()->json([
-                'status' => 'success',
-                'id' => $ringGroup->ring_group_uuid,
-                'message' => 'Selected Ring Group have been deleted'
+                'status' => 200,
+                'success' => [
+                    'message' => 'Selected Ring Groups have been deleted'
+                ]
             ]);
         } else {
             return response()->json([
-                'error' => 401,
-                'message' => 'There was an error deleting this Ring Group'
+                'status' => 401,
+                'errors' => [
+                    'message' => "There was an error deleting this Ring Group",
+                ],
             ]);
         }
     }

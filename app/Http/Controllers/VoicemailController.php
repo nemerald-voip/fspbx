@@ -251,16 +251,19 @@ class VoicemailController extends Controller
         $voicemail->update($attributes);
 
 
+        //delete destinations before updating
+        $voicemail->voicemail_destinations()->delete();
+
         if ($request->has('voicemail_destinations')) {
             $voicemail_destinations = $request->voicemail_destinations;
-            //delete destinations before updating
-            $voicemail->voicemail_destinations()->delete();
             //updating destinations
             foreach ($voicemail_destinations as $des) {
                 $vm_des = new VoicemailDestinations();
                 $vm_des->domain_uuid = Session::get('domain_uuid');
                 // $vm_des->voicemail_destination_uuid=$des;
                 $vm_des->voicemail_uuid_copy = $des;
+                $vm_des->update_date = date("Y-m-d H:i:s");
+                $vm_des->update_user = Session::get('user_uuid');
                 $voicemail->voicemail_destinations()->save($vm_des);
             }
         }

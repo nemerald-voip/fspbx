@@ -47,7 +47,12 @@ class RingGroups extends Model
         'ring_group_missed_call_app',
         'ring_group_missed_call_data',
         'ring_group_forward_toll_allow',
-        'ring_group_forward_context'
+        'ring_group_forward_context',
+        'dialplan_uuid',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user'
     ];
 
     public function __construct(array $attributes = [])
@@ -63,6 +68,7 @@ class RingGroups extends Model
         $this->attributes['ring_group_ringback'] = '${us-ring}';
         $this->attributes['ring_group_call_forward_enabled'] = "true";
         $this->attributes['ring_group_follow_me_enabled'] = "true";
+        $this->attributes['ring_group_extension'] = $this->generateUniqueSequenceNumber();
 
         $this->fill($attributes);
     }
@@ -79,11 +85,41 @@ class RingGroups extends Model
 
     public function getGroupDestinations()
     {
-        return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->get();
+        return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->orderBy('destination_delay')->get();
     }
 
     public function groupDestinations()
     {
         return $this->hasMany(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid');
+    }
+
+    /**
+     * Generates a unique sequence number.
+     *
+     * @return int|null The generated sequence number, or null if unable to generate.
+     */
+    private function generateUniqueSequenceNumber() {
+        // Create an array to store the existing numbers
+        $existingNumbers = [];
+
+        // Get all extension, ring group and voicemail numbers from the database tables and add them to the array
+        $existingNumbers = array_merge(
+            $existingNumbers,
+            RingGroups::where('domain_uuid', Session::get('domain_uuid'))->pluck('ring_group_extension')->all(),
+            Extensions::where('domain_uuid', Session::get('domain_uuid'))->pluck('extension')->all(),
+            Voicemails::where('domain_uuid', Session::get('domain_uuid'))->pluck('voicemail_id')->all()
+        );
+
+        // Generate a sequence number starting from 1
+        for ($i = 1; $i <= PHP_INT_MAX; $i++) {
+            // Check if the generated number is not in the existing numbers array
+            if (!in_array($i, $existingNumbers)) {
+                // Return the generated number if it is unique
+                return $i;
+            }
+        }
+
+        // Return null if unable to generate a unique sequence number
+        return null;
     }
 }

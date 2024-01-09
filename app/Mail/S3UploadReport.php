@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use App\Models\DefaultSettings;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Symfony\Component\Mime\Email;
 
 class S3UploadReport extends Mailable
 {
@@ -26,12 +27,13 @@ class S3UploadReport extends Mailable
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == "smtp_from") {
                     $attributes['unsubscribe_email'] = $setting->default_setting_value;
-                } else {
-                    $attributes['unsubscribe_email'] = "";
                 }
                 if ($setting->default_setting_subcategory == "support_email") {
                     $attributes['support_email'] = $setting->default_setting_value;
                 }
+            }
+            if (!isset($attributes['unsubscribe_email'])) {
+                $attributes['unsubscribe_email'] = "";
             }
         }
         $this->attributes = $attributes;
@@ -44,7 +46,7 @@ class S3UploadReport extends Mailable
      */
     public function build()
     {
-        $this->withSwiftMessage(function ($message) {
+        $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
         return $this->view('emails.s3.report');

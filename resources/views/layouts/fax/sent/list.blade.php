@@ -144,8 +144,9 @@
 @endsection
 
 @push('scripts')
+@vite(["node_modules/daterangepicker/daterangepicker.css", "node_modules/daterangepicker/daterangepicker.js?commonjs-entry"])
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
 
         localStorage.removeItem('activeTab');
 
@@ -204,69 +205,7 @@
         return checked;
     }
 
-    function confirmPasswordResetAction(user_email){
-        $('#confirmPasswordResetModal').data("user_email",user_email).modal('show');
-
-    }
-
-    function performConfirmedPasswordResetAction(){
-        var user_email = $("#confirmPasswordResetModal").data("user_email");
-        $('#confirmPasswordResetModal').modal('hide');
-
-        $.ajax({
-            type: 'POST',
-            url: "{{ url('password/email') }}",
-            cache: false,
-            data: {
-                email:user_email
-                }
-            })
-            .done(function(response) {
-
-                if (response.error){
-                    $.NotificationApp.send("Warning",response.message,"top-right","#ff5b5b","error");
-
-                } else {
-                    $.NotificationApp.send("Success",response.message,"top-right","#10c469","success");
-                    //$(this).closest('tr').fadeOut("fast");
-                }
-            })
-            .fail(function (response){
-
-                $.NotificationApp.send("Warning",response,"top-right","#ff5b5b","error");
-            });
-    }
-
-    function deleteUser(user_id){
-         $('.loading').show();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-        $.ajax({
-            url: "{{ Route('deleteUser') }}", // point to server-side PHP script
-            dataType: "json",
-            cache: false,
-            data: {
-                contact_id:user_id
-            },
-            type: 'post',
-            success: function(res) {
-                $('.loading').hide();
-                if (res.success) {
-                    toastr.success('Deleted Successfully!');
-                       setTimeout(function (){
-                        window.location.reload();
-                    }, 2000);
-                }
-            },
-            error: function(res){
-                $('.loading').hide();
-                toastr.error('Something went wrong!');
-            }
-        });
-    }
+    
     function checkSelectedBoxAvailable(){
         var has=false;
         $('.action_checkbox').each(function(key,val){

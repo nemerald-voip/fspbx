@@ -1,77 +1,16 @@
 @push('scripts')
     <!-- dropzone js -->
-    <script src="{{ asset('assets/libs/dropzone/dropzone.min.js') }}"></script>
+    {{-- <script src="{{ asset('assets/libs/dropzone/dropzone.min.js') }}"></script> --}}
+
+    @vite(['resources/js/ui/component.fileupload.js', 'resources/js/hyper-syntax.js'])
 
     <script>
-        Dropzone.autoDiscover = false;
-
-        // set the dropzone container id
-        const id = "#file_dropzone";
-        const dropzone = document.querySelector(id);
-
-        // set the preview element template
-        var previewNode = dropzone.querySelector(".dropzone-item");
-        previewNode.id = "";
-        var previewTemplate = previewNode.parentNode.innerHTML;
-        previewNode.parentNode.removeChild(previewNode);
-
-        var fileDropzone = new Dropzone(id, {
-            url: '{{ route('extensions.import') }}', // Set the url for your upload script location
-            autoProcessQueue: false,
-            uploadMultiple: false,
-            parallelUploads: 5,
-            maxFilesize: 5, // Max filesize in MB
-            maxFiles: 1,
-            previewTemplate: previewTemplate,
-            previewsContainer: id + " .dropzone-items", // Define the container to display the previews
-            clickable: id +
-                " .dropzone-select", // Define the element that should be used as click trigger to select files.
-            thumbnailWidth: 200,
-            acceptedFiles: ".csv,.xls,.xlsx",
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-            // accept: function(file, done) {
-            //     var reader = new FileReader();
-            //     reader.onload = handleReaderLoad;
-            //     reader.readAsDataURL(file);
-
-            //     function handleReaderLoad(e) {
-            //         var filePayload = e.target.result;
-            //         files.push ({'name': file.upload.filename,  'data': filePayload})
-            //         // file.upload.filename: 
-            //     }
-
-            //     done();
-            // }
-
-        });
-
-        fileDropzone.on("addedfile", function(file) {
-            // Hookup the start button
-            const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
-            dropzoneItems.forEach(dropzoneItem => {
-                dropzoneItem.style.display = '';
-            });
-
-        });
-
-        fileDropzone.on("removedfile", function(file) {
-            //
-        });
-
-        fileDropzone.on("success", function(file) {
-            this.removeAllFiles(true);
+        document.addEventListener('dropzoneSuccessEvent', function() {
+            // Handle success event here
             $('#extension-upload-modal').modal("hide");
             $('#extensionUploadResultModal').modal("show");
             $('#dropzoneSuccess').show();
             $('#dropzoneError').hide();
-
-            // if (fileDropzone.getRejectedFiles().length == 0) {
-            // //No errors
-            // } else {
-            //     console.log("Errors");
-            // }
 
             // Successful Notification
             $.NotificationApp.send("Success", "Extensions have been successfully imported", "top-right", "#10c469",
@@ -80,26 +19,22 @@
             setTimeout(function() {
                 window.location.reload();
             }, 1000);
-
-        });
-        fileDropzone.on("complete", function(file) {
-            //
         });
 
-        fileDropzone.on("error", function(file, message) {
-            this.removeAllFiles(true);
+        document.addEventListener('dropzoneErrorEvent', function(event) {
+            // Handle error event here
             $('#extension-upload-modal').modal("hide");
             $('#extensionUploadResultModal').modal("show");
-            $('#dropzoneError').html(message.error);
+            $('#dropzoneError').html(event.detail.errorMessage);
             $('#dropzoneError').show();
             $('#dropzoneSuccess').hide();
             // Warning Notification
-            $.NotificationApp.send("Warning", message.error, "top-right", "#ff5b5b", "error");
+            $.NotificationApp.send("Warning", event.detail.errorMessage, "top-right", "#ff5b5b", "error");
         });
 
 
 
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
 
             Livewire.on('userCreationCompleted', extensionUuid => {
                 // Successful Notification
@@ -107,15 +42,17 @@
                     "#10c469",
                     "success");
 
-                $('#options'+extensionUuid).dropdown("toggle");
+                $('#options' + extensionUuid).dropdown("toggle");
             })
 
-            Livewire.on('userCreationFailed', (extensionUuid,error) => {
-                // Fail Notification
+            Livewire.on('userCreationFailed', (params) => {
+                let extensionUuid = params[0];
+                let error = params[1];
+
                 printErrorMsg(error);
 
-                $('#options'+extensionUuid).dropdown("toggle");
-            })
+                $('#options' + extensionUuid).dropdown("toggle");
+            });
 
 
             $("#connectionSelect2").select2({
@@ -178,7 +115,7 @@
                                     $("#appUserSetStatusButton").prop("disabled", false);
                                     $('#appUserResetPasswordButton').show();
                                 }
-                                dataObj = new Object();
+                                let dataObj = new Object();
                                 dataObj.mobile_app = response.mobile_app;
                                 $('#MobileAppModal').data(dataObj).modal("show");
                                 $('#mobileAppName').text(response.name);
@@ -207,13 +144,6 @@
 
                     });
             });
-
-            // Extension import submit form
-            $('#importExtensionsSubmit').on('click', function(e) {
-                e.preventDefault();
-                fileDropzone.processQueue();
-
-            })
 
 
             // Open Modal to show SIP credentials

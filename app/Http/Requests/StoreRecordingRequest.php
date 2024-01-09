@@ -60,7 +60,7 @@ class StoreRecordingRequest extends FormRequest
             ]);
         };
         $this->merge([
-            'greeting_name' => 'Recording '.date('d/m/y H:i A'),
+            'greeting_name' => 'Recording '.date('m/d/y h:i A'),
             'greeting_description' => null
         ]);
     }

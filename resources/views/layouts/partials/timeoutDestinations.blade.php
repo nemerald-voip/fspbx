@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-md-8">
         <div class="mb-3">
-            <label for="timeout_action" class="form-label">If not answered, calls will be sent</label>
+            <label for="timeout_category" class="form-label">If not answered, calls will be sent</label>
             <div class="row">
                 <div class="col-md-4 col-sm-4">
                     <select class="select2 form-control" data-toggle="select2" data-placeholder="Choose ..."
@@ -18,9 +18,9 @@
                         <option value="extensions" @if($destinationsByCategory == 'extensions') selected="selected" @endif>
                             Extensions
                         </option>
-                        <option value="timeconditions" @if($destinationsByCategory == 'timeconditions') selected="selected" @endif>
+                        {{--<option value="timeconditions" @if($destinationsByCategory == 'timeconditions') selected="selected" @endif>
                             Time Conditions
-                        </option>
+                        </option>--}}
                         <option value="voicemails" @if($destinationsByCategory == 'voicemails') selected="selected" @endif>
                             Voicemails
                         </option>
@@ -37,7 +37,7 @@
                                     id="timeout_action_{{$category}}" name="timeout_action_{{$category}}">
                                 @foreach($items as $item)
                                     <option value="{{$item['id']}}"
-                                            @if($ringGroup->ring_group_timeout_data == $item['id']) selected="selected" @endif>
+                                            @if($entityUuid == $item['id']) selected="selected" @endif>
                                         {{$item['label']}}
                                     </option>
                                 @endforeach
@@ -50,3 +50,25 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeoutCategory = $('#timeout_category');
+            const timeoutActionWrapper = $('#timeout_action_wrapper');
+
+            timeoutCategory.on('change', function(e) {
+                e.preventDefault();
+                if (e.target.value === 'disabled') {
+                    timeoutActionWrapper.hide()
+                    return;
+                } else {
+                    timeoutActionWrapper.show()
+                }
+
+                timeoutActionWrapper.find('div').hide();
+                timeoutActionWrapper.find('div#timeout_action_wrapper_' + e.target.value).show();
+            })
+        });
+    </script>
+@endpush

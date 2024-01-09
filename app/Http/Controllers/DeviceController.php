@@ -31,24 +31,34 @@ class DeviceController extends Controller
             return redirect('/');
         }
 
+        $scopes = ['global', 'local'];
         $searchString = $request->get('search');
         $searchStringKey = strtolower(trim($searchString));
+        $selectedScope = $request->get('scope', 'local');
         $devices = Devices::query();
-        $devices->where('domain_uuid', Session::get('domain_uuid'));
+        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
+            $devices
+                ->where('domain_uuid', Session::get('domain_uuid'));
+        } else {
+            $devices
+                ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
+        }
         if (!empty($searchStringKey)) {
             $devices->where(function ($query) use ($searchStringKey) {
                 $query
-                    ->orWhereLike('device_mac_address', str_replace([':', '-', '.'], '', $searchStringKey))
+                    ->orWhereLike('device_address', str_replace([':', '-', '.'], '', $searchStringKey))
                     ->orWhereLike('device_label', $searchStringKey)
                     ->orWhereLike('device_vendor', $searchStringKey)
                     ->orWhereLike('device_template', $searchStringKey);
             });
         }
-        $devices = $devices->orderBy('device_label')->paginate(10)->onEachSide(1);
+        $devices = $devices->orderBy('device_label')->paginate(3)->onEachSide(1);
 
         $data = array();
         $data['devices'] = $devices;
         $data['searchString'] = $searchString;
+        $data['permissions']['device_restart'] = isSuperAdmin();
+        $data['selectedScope'] = $selectedScope;
 
         return view('layouts.devices.list')->with($data);
 
@@ -93,7 +103,7 @@ class DeviceController extends Controller
 
         $device = new Devices();
         $device->fill([
-            'device_mac_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_mac_address']))),
+            'device_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_address']))),
             'device_label' => $extension->extension,
             'device_vendor' => explode("/", $inputs['device_template'])[0],
             'device_enabled' => 'true',

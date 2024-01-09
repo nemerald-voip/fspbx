@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Voicemail"])
+@extends('layouts.app', ["page_title"=> "Voicemail"])
 
 @section('content')
 <!-- Start Content-->
@@ -91,7 +91,7 @@
                                                         <label for="alternate_greet_id" class="form-label">Alternate Greet ID </label>
                                                         <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                             data-bs-content="The parameter allows you to override the default extension or phone number spoken by the system in the voicemail greeting. This controls system greetings that read back a phone number, not user recorded greetings.">
-                                                            <i class="dripicons-information"></i>
+                                                            <i class="uil uil-info-circle"></i>
                                                         </a>
                                                         <input class="form-control"  type="text" value="{{ $voicemail->voicemail_alternate_greet_id ?? ''}}"
                                                             placeholder="Enter your Alternate Greet ID" id="voicemail_alternate_greet_id" name="voicemail_alternate_greet_id" autocomplete="off"/>
@@ -131,7 +131,7 @@
                                                     <label class="form-label">Enable voicemail transcription </label>
                                                     <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                         data-bs-content="Send a text trancsript. Accuracy may vary based on call quality, accents, vocabulary, etc. ">
-                                                        <i class="dripicons-information"></i>
+                                                        <i class="uil uil-info-circle"></i>
                                                     </a>
                                                 </div>
                                             </div>
@@ -153,7 +153,7 @@
                                                     <label class="form-label">Delete voicemail after sending email </label>
                                                     <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                         data-bs-content="Enables email-only voicemail. Disables storing of voicemail messages for this mailbox in the cloud.">
-                                                        <i class="dripicons-information"></i>
+                                                        <i class="uil uil-info-circle"></i>
                                                     </a>
                                                 </div>
                                             </div>
@@ -173,7 +173,7 @@
                                                     <label class="form-label">Play voicemail tutorial </label>
                                                     <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                         data-bs-content="Play the voicemail tutorial after the next voicemail login.">
-                                                        <i class="dripicons-information"></i>
+                                                        <i class="uil uil-info-circle"></i>
                                                     </a>
                                                 </div>
                                             </div>
@@ -383,7 +383,7 @@
 @push('scripts')
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
     });
 
 

@@ -331,8 +331,10 @@
 @endsection
 
 @push('scripts')
+@vite(["node_modules/daterangepicker/daterangepicker.css", "node_modules/daterangepicker/daterangepicker.js?commonjs-entry"])
+
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
 
             localStorage.removeItem('activeTab');
 

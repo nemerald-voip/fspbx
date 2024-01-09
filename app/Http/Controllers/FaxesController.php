@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 
-use cache;
 use Throwable;
 use Carbon\Carbon;
 use App\Models\Faxes;
@@ -27,6 +26,7 @@ use App\Jobs\SendFaxNotificationToSlack;
 use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Validator;
+use App\Models\FusionCache;
 
 class FaxesController extends Controller
 {
@@ -736,30 +736,17 @@ class FaxesController extends Controller
                 $allowed_domain->save();
             }
         }
-        if (session_status() == PHP_SESSION_NONE || session_id() == '') {
-            $method_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'method')
-                ->get()
-                ->first();
 
-            $location_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'location')
-                ->get()
-                ->first();
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
 
-            $freeswitch_settings = FreeswitchSettings::first();
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $domain_name);
 
-            session_start();
-            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
-            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
-            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
-            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
-            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
-        }
-        $cache = new cache;
-        $cache->delete("dialplan:" . $domain_name);
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
@@ -999,30 +986,16 @@ class FaxesController extends Controller
             }
         }
 
-        if (session_status() == PHP_SESSION_NONE || session_id() == '') {
-            $method_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'method')
-                ->get()
-                ->first();
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
 
-            $location_setting = DefaultSettings::where('default_setting_enabled', 'true')
-                ->where('default_setting_category', 'cache')
-                ->where('default_setting_subcategory', 'location')
-                ->get()
-                ->first();
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $domain_name);
 
-            $freeswitch_settings = FreeswitchSettings::first();
-
-            session_start();
-            $_SESSION['cache']['method']['text'] = $method_setting->default_setting_value;
-            $_SESSION['cache']['location']['text'] = $location_setting->default_setting_value;
-            $_SESSION['event_socket_ip_address'] = $freeswitch_settings['event_socket_ip_address'];
-            $_SESSION['event_socket_port'] = $freeswitch_settings['event_socket_port'];
-            $_SESSION['event_socket_password'] = $freeswitch_settings['event_socket_password'];
-        }
-        $cache = new cache;
-        $cache->delete("dialplan:" . $domain_name);
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
             unset($_SESSION['destinations']['array']);
@@ -1218,16 +1191,15 @@ class FaxesController extends Controller
 
     public function sendFax(Request $request)
     {
-        // Log::alert($request->all());
         $data = $request->all();
 
         // If files attached
-        if (isset($data['files'])) {
-            $files = $data['files'];
+        if (isset($data['file'])) {
+            $files = $data['file'];
         }
 
         // Convert form fields to associative array
-        parse_str($data['data'], $data);
+        // parse_str($data['data'], $data);
 
         // Validate the input
         $attributes = [
@@ -1242,8 +1214,14 @@ class FaxesController extends Controller
         ], [], $attributes);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
+            // return response()->json(['error' => $validator->errors()]);
+            return response()->json([
+                'error' => $validator->errors()->first() // Sending the first error message for simplicity
+            ], 400); // Bad Request status code
         }
+
+        $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'on';
+        // logger($data['send_confirmation']);
 
         if (!isset($data['fax_uuid'])) {
             $fax = Faxes::where('domain_uuid', Session::get('domain_uuid'))
@@ -1254,8 +1232,9 @@ class FaxesController extends Controller
 
 
         if (!isset($files) || sizeof($files) == 0) {
-            return response()->json(['error' => ['files' => ['At least one file must be uploaded']]]);
+            return response()->json(['error' => 'At least one file must be uploaded'], 400);
         }
+        
         // Start creating the payload variable that will be passed to next step
         $payload = array(
             'From' => Session::get('user.user_email'),
@@ -1275,21 +1254,34 @@ class FaxesController extends Controller
 
         // Parse files
         foreach ($files as $file) {
-            $splited = explode(',', substr($file['data'], 5), 2);
-            $mime = $splited[0];
-            $data = $splited[1];
-            $mime_split_without_base64 = explode(';', $mime, 2);
-            $mime = $mime_split_without_base64[0];
-            // $mime_split=explode('/', $mime_split_without_base64[0],2);
+            // $splited = explode(',', substr($file['data'], 5), 2);
+            // $mime = $splited[0];
+            // $data = $splited[1];
+            // $mime_split_without_base64 = explode(';', $mime, 2);
+            // $mime = $mime_split_without_base64[0];
+            // // $mime_split=explode('/', $mime_split_without_base64[0],2);
+
+            $mime = $file->getClientMimeType();
+
+            // Get original file name
+            $fileName = $file->getClientOriginalName();
+
+            // Read the file content
+            $content = file_get_contents($file->getRealPath());
+
+            // Encode the content to base64 if needed
+            $base64Content = base64_encode($content);
 
             array_push(
                 $payload['Attachments'],
                 array(
-                    'Content' => $data,
+                    'Content' => $base64Content,
                     'ContentType' => $mime,
-                    'Name' => $file['name'],
+                    'Name' => $fileName,
                 )
             );
+
+
         }
 
         $fax = new Faxes();

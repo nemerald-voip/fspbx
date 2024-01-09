@@ -58,25 +58,24 @@ class LoginController extends Controller
         //Support for legacy authentication using domain user
         // Find the user in DB with submitted values and replace the username with the request
         //if (str_contains($request->user_email,"nemerald.net")) {
-            $userid = explode("@",$request->user_email);
-            $domain = Domain::where('domain_name', $userid[1])->first();
+        $userid = explode("@", $request->user_email);
+        $domain = Domain::where('domain_name', $userid[1])->first();
 
-            if (isset($domain)){
-                $params = [
-                    'domain_uuid' => $domain->domain_uuid,
-                    'username' => $userid[0],
-                ];
-                $user= User::where('domain_uuid', $domain->domain_uuid)
-                    ->where ('username', 'ilike', '%' . $userid[0] . '%')
-                    ->first();
+        if (isset($domain)) {
+            $params = [
+                'domain_uuid' => $domain->domain_uuid,
+                'username' => $userid[0],
+            ];
+            $user = User::where('domain_uuid', $domain->domain_uuid)
+                ->where('username', 'ilike', '%' . $userid[0] . '%')
+                ->first();
 
-                if(isset($user)){
-                    $request->merge([
-                        'user_email' => $user->user_email,
-                    ]);
-                }
-
+            if (isset($user)) {
+                $request->merge([
+                    'user_email' => $user->user_email,
+                ]);
             }
+        }
 
         //}
 
@@ -85,8 +84,10 @@ class LoginController extends Controller
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
         // the login attempts for this application. We'll key this by the username and
         // the IP address of the client making these requests into this application.
-        if (method_exists($this, 'hasTooManyLoginAttempts') &&
-            $this->hasTooManyLoginAttempts($request)) {
+        if (
+            method_exists($this, 'hasTooManyLoginAttempts') &&
+            $this->hasTooManyLoginAttempts($request)
+        ) {
             $this->fireLockoutEvent($request);
 
             return $this->sendLockoutResponse($request);
@@ -110,19 +111,13 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
-        $user= User::where('user_email', $request->user_email)->first();
+        $user = User::where('user_email', $request->user_email)->first();
         $domain = Domain::where('domain_uuid', $user->domain_uuid)->first();
 
-        //if (session_status()!==PHP_SESSION_ACTIVE){
-            //session_start();
-            $_SESSION['LARAVEL_UN'] = $user->username;// . "@" . $domain->domain_name;
-            $_SESSION['LARAVEL_PW'] = $request->password;
-            $_SESSION['user']['domain_name'] = Session::get('user.domain_name');
-            $_SESSION['user']['domain_uuid'] = Session::get('user.domain_uuid');
-        //}
+        $_SESSION['user']['domain_name'] = Session::get('user.domain_name');
+        $_SESSION['user']['domain_uuid'] = Session::get('user.domain_uuid');
 
-        return redirect('/core/dashboard');
-
+        return redirect('/dashboard');
     }
 
     /**

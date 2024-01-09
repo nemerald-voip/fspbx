@@ -1,11 +1,12 @@
 <?php
 
-use App\Http\Controllers\Cdrs;
+use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
@@ -51,7 +52,9 @@ Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsControlle
 Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');
 
 // Call Detail Records
-Route::get('/call-detail-records', [Cdrs::class, 'index'])->name('cdrs.index');
+Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
+Route::get('/call-detail-records/file/{filePath}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
+
 
 // Groups
 Route::resource('groups', GroupsController::class);
@@ -149,6 +152,12 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus']) ->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser']) ->name('emailUser');
 
+    // Contacts
+    Route::get('/contacts', [ContactsController::class, 'index']) ->name('contacts.list');
+    Route::delete('/contacts/{id}',[ContactsController::class, 'destroy'])->name('contacts.destroy');
+    Route::post('/contacts/import',[ContactsController::class, 'import']) ->name('contacts.import');
+
+
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
@@ -176,7 +185,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::post('recordings',[RecordingsController::class, 'store'])->name('recordings.store');
     Route::post('recordings/storeBlob',[RecordingsController::class, 'storeBlob'])->name('recordings.storeBlob');
     Route::put('recordings/{recording}', [RecordingsController::class, 'update'])->name('recordings.update');
-    Route::put('recordings/{recording}/{entity}/{entityId}', [RecordingsController::class, 'use'])->name('recordings.use');
+    Route::put('recordings/{recording}/{entity}/{entityid}', [RecordingsController::class, 'use'])->name('recordings.use');
 
     //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
     //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');

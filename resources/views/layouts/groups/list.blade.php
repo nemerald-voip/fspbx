@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Group Manager"])
+@extends('layouts.app', ["page_title"=> "Group Manager"])
 
 @section('content')
 <!-- Start Content-->
@@ -155,7 +155,7 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
 
     });
 

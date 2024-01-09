@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Edit Extension"])
+@extends('layouts.app', ["page_title"=> "Edit Extension"])
 
 @section('content')
     @php
@@ -199,10 +199,14 @@
                                                             </div>
                                                         </div>
                                                         @if (userCheckPermission('voicemail_edit'))
+                                                        
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="voicemail_mail_to" class="form-label">Email Address </label>
-                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to"
+                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to" 
+                                                                    @if ($extension->exists && (!$extension->voicemail || !$extension->voicemail->voicemail_uuid))
+                                                                        disabled
+                                                                    @endif
                                                                     name="voicemail_mail_to" value="{{ $extension->voicemail->voicemail_mail_to ?? '' }}"/>
                                                                 <div class="text-danger error-text voicemail_mail_to_err error_message"></div>
                                                             </div>
@@ -210,48 +214,21 @@
                                                         @endif
                                                     </div> <!-- end row -->
 
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <div class="mb-3">
-                                                                <label for="users-select" class="form-label">Users</label>
-                                                                <!-- Multiple Select -->
-                                                                <select class="select2 form-control select2-multiple" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
-                                                                    id="users-select" @if (!userCheckPermission('extension_user_edit')) disabled @endif name="users[]">
-
-                                                                        @foreach ($domain_users as $domain_user)
-                                                                            <option value="{{ $domain_user->user_uuid }}"
-                                                                                @if(isset($extension_users) && $extension_users->contains($domain_user))
-                                                                                    selected
-                                                                                @endif>
-                                                                                @if (isset($domain_user->user_adv_fields->first_name) || isset($domain_user->user_adv_fields->last_name))
-                                                                                    @if ($domain_user->user_adv_fields->first_name)
-                                                                                        {{ $domain_user->user_adv_fields->first_name }}
-                                                                                    @endif
-                                                                                    @if ($domain_user->user_adv_fields->last_name)
-                                                                                        {{ $domain_user->user_adv_fields->last_name }}
-                                                                                    @endif
-                                                                                @elseif ($domain_user->description)
-                                                                                    {{ $domain_user->description }}
-                                                                                @else
-                                                                                    {{ $domain_user->username }}
-                                                                                @endif
-                                                                            </option>
-                                                                        @endforeach
-                                                                </select>
-                                                                <div class="text-danger users_err error_message"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end row -->
+                                            
 
                                                     @if (userCheckPermission('extension_directory'))
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-lg-4 col-sm-8">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Display contact in the company's dial by name directory </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                    data-bs-content="This user will appear in the company's dial by name directory">
-                                                                    <i class="dripicons-information"></i>
-                                                                </a>
+                                                                <label class="form-label">
+                                                                    Display contact in the company's dial by name directory&nbsp;
+                                                                    <span class="info-icon">
+                                                                        <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                            data-bs-content="This user will appear in the company's dial by name directory">
+                                                                            <i class="uil uil-info-circle"></i>
+                                                                        </a>
+                                                                    </span>
+                                                                </label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -266,13 +243,17 @@
                                                     </div> <!-- end row -->
 
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-lg-4 col-sm-8">
                                                             <div class="mb-3">
-                                                                <label  class="form-label">Announce extension in the the dial by name directory </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
-                                                                    data-bs-content="Announce user's extension when calling the dial by name directory">
-                                                                    <i class="dripicons-information"></i>
-                                                                </a>
+                                                                <label class="form-label">
+                                                                    Announce extension in the dial by name directory&nbsp;
+                                                                    <span class="info-icon">
+                                                                        <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                            data-bs-content="Announce user's extension when calling the dial by name directory">
+                                                                            <i class="uil uil-info-circle"></i>
+                                                                        </a>
+                                                                    </span>
+                                                                </label>
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -292,12 +273,12 @@
 
                                                     @if (userCheckPermission('extension_enabled'))
                                                     <div class="row">
-                                                        <div class="col-4">
+                                                        <div class="col-lg-4 col-sm-8">
                                                             <div class="mb-3">
                                                                 <label  class="form-label">Enabled </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="This prevents devices from registering using this extension">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -319,7 +300,7 @@
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="description" class="form-label">Description</label>
-                                                                <input class="form-control" type="text" placeholder="" id="description" name="description"
+                                                                <input class="form-control" type="text" placeholder="" id="description" name="description" autocomplete="off"
                                                                     value="{{ $extension->description }}"/>
                                                                     <div class="text-danger description_err error_message"></div>
                                                             </div>
@@ -531,7 +512,7 @@
                                                                 <label class="form-label">Enable voicemail transcription </label>
                                                                 <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Send a text trancsript. Accuracy may vary based on call quality, accents, vocabulary, etc. ">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -551,9 +532,9 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Delete voicemail after sending email </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Enables email-only voicemail. Disables storing of voicemail messages for this mailbox in the cloud.">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -702,9 +683,9 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Play voicemail tutorial </label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="Play the voicemail tutorial after the next voicemail login.">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -848,6 +829,39 @@
                                                     </div> <!-- end row -->
 
                                                     <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="mb-3">
+                                                                <label for="users-select" class="form-label">Users</label>
+                                                                <!-- Multiple Select -->
+                                                                <select class="select2 form-control select2-multiple form-select form-select-sm" data-toggle="select2" multiple="multiple" data-placeholder="Choose ..."
+                                                                    id="users-select" @if (!userCheckPermission('extension_user_edit')) disabled @endif name="users[]">
+
+                                                                        @foreach ($domain_users as $domain_user)
+                                                                            <option value="{{ $domain_user->user_uuid }}"
+                                                                                @if(isset($extension_users) && $extension_users->contains($domain_user))
+                                                                                    selected
+                                                                                @endif>
+                                                                                @if (isset($domain_user->user_adv_fields->first_name) || isset($domain_user->user_adv_fields->last_name))
+                                                                                    @if ($domain_user->user_adv_fields->first_name)
+                                                                                        {{ $domain_user->user_adv_fields->first_name }}
+                                                                                    @endif
+                                                                                    @if ($domain_user->user_adv_fields->last_name)
+                                                                                        {{ $domain_user->user_adv_fields->last_name }}
+                                                                                    @endif
+                                                                                @elseif ($domain_user->description)
+                                                                                    {{ $domain_user->description }}
+                                                                                @else
+                                                                                    {{ $domain_user->username }}
+                                                                                @endif
+                                                                            </option>
+                                                                        @endforeach
+                                                                </select>
+                                                                <div class="text-danger users_err error_message"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+
+                                                    <div class="row">
                                                         @if (userCheckPermission('number_alias'))
                                                         <div class="col-6">
                                                             <div class="mb-3">
@@ -950,9 +964,9 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Enable call screening</label>
-                                                                <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                     data-bs-content="You can use Call Screen to find out who’s calling and why before you pick up a call. ">
-                                                                    <i class="dripicons-information"></i>
+                                                                    <i class="uil uil-info-circle"></i>
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -1168,9 +1182,9 @@
                                                             <div class="col-4">
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Force ping </label>
-                                                                    <a href="#"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                    <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
                                                                         data-bs-content="Use OPTIONS to detect if extension is reachable">
-                                                                        <i class="dripicons-information"></i>
+                                                                        <i class="uil uil-info-circle"></i>
                                                                     </a>
                                                                 </div>
                                                             </div>
@@ -1509,7 +1523,7 @@
                                                                 </table>
                                                                 <div id="addDestinationBar" class="my-1" @if($extension->getFollowMeDestinations()->count() >= 10) style="display: none;" @endif>
                                                                     <a href="javascript:addDestinationAction(this);" class="btn btn-success">
-                                                                        <i class="mdi mdi-plus" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
+                                                                        <i class="mdi mdi-plus" data-bs-container="#addDestinationBar" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add destination"></i>
                                                                     </a>
                                                                 </div>
                                                             </div>
@@ -1644,8 +1658,8 @@
             }
         }
     </style>
-<script>
-    $(document).ready(function() {
+<script  >
+    document.addEventListener('DOMContentLoaded', function() {
         // $("#template-select").select2({
         //     dropdownParent: $("#createDeviceModal")
         // });
@@ -1717,7 +1731,7 @@
         $(document).on('click', '.forward_checkbox', function (e) {
             var checkbox = $(this);
             var cname = checkbox.data('option');
-            console.log(cname)
+            // console.log(cname)
             if(checkbox.is(':checked')) {
                 $('#'+cname+'_phone_number').removeClass('d-none');
             } else {
@@ -1735,7 +1749,7 @@
             var method = 'POST'
             var action = form.attr('action')
 
-            if(form.find('#device_mac_address').attr('readonly') !== undefined) {
+            if(form.find('#device_address').attr('readonly') !== undefined) {
                 method = 'PUT'
                 action = '{{route('devices.update', ['device' => ':device'])}}'.replace(':device', form.find('#device_uuid').val())
             }
@@ -1761,7 +1775,7 @@
                     form[0].reset();
                     $('#createDeviceModal').modal('hide');
                     /*$('#device-select').append(
-                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_mac_address + ' - ' + result.device.device_template)
+                        $('<option></option>').val(result.device.device_uuid).html(result.device.device_address + ' - ' + result.device.device_template)
                     );*/
                     $.NotificationApp.send("Success",result.message,"top-right","#10c469","success");
                     window.location.reload();
@@ -1803,7 +1817,7 @@
                         $('.loading').hide();
                     },
                     success: function (result) {
-                        $('#device_mac_address').attr('readonly', true).val(result.device_mac_address)
+                        $('#device_address').attr('readonly', true).val(result.device_address)
                         $('#template-select').val(result.device_template).trigger('change')
                         $('#profile-select').val(result.device_profile_uuid).trigger('change')
                         $('#device_uuid').val(result.device_uuid)
@@ -1811,7 +1825,7 @@
                 });
             } else {
                 $('#createDeviceModalLabel').text('Create New Device')
-                $('#device_mac_address').attr('readonly', false).val('')
+                $('#device_address').attr('readonly', false).val('')
                 $('#device_uuid').val('')
                 $('#template-select').val('').trigger('change')
                 $('#profile-select').val('').trigger('change')
@@ -1953,9 +1967,9 @@
 
         // Extension Page
         // Sort Select2 for users
-        $('#users-select').select2({
-            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
-        });
+        // $('#users-select').select2({
+        //     sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        // });
 
         // Extension Page
         // Sort Select2 for voicemail destinations

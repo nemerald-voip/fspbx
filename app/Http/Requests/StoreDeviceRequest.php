@@ -22,13 +22,13 @@ class StoreDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_mac_address' => [
+            'device_address' => [
                 'required',
                 'mac_address',
             ],
-            'device_mac_address_modified' => [
+            'device_address_modified' => [
                 'nullable',
-                Rule::unique('App\Models\Devices', 'device_mac_address')
+                Rule::unique('App\Models\Devices', 'device_address')
             ],
             'device_profile_uuid' => [
                 'nullable',
@@ -50,7 +50,7 @@ class StoreDeviceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'device_mac_address_modified.unique' => 'This MAC address is already used',
+            'device_address_modified.unique' => 'This MAC address is already used',
             'device_profile_uuid.required' => 'Profile is required',
             'device_template.required' => 'Template is required',
             'extension_uuid.required' => 'Extension is required'
@@ -59,10 +59,10 @@ class StoreDeviceRequest extends FormRequest
 
     public function prepareForValidation()
     {
-        $macAddress = str_replace([':', '.', '-'], '', trim(strtolower($this->get('device_mac_address'))));
+        $macAddress = str_replace([':', '.', '-'], '', trim(strtolower($this->get('device_address'))));
         $this->merge([
-            'device_mac_address' => implode(":", str_split($macAddress, 2)),
-            'device_mac_address_modified' => $macAddress
+            'device_address' => implode(":", str_split($macAddress, 2)),
+            'device_address_modified' => $macAddress
         ]);
     }
 }

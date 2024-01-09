@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRecordingBlobRequest;
 use App\Http\Requests\StoreRecordingRequest;
 use App\Http\Requests\UpdateRecordingRequest;
+use App\Models\CallCenterQueues;
 use App\Models\Recordings;
 use App\Models\RingGroups;
 use Illuminate\Support\Facades\Response;
@@ -40,23 +41,53 @@ class RecordingsController extends Controller
         return response()->json(['collection' => $output]);
     }
 
+    /**
+     * Store a new recording.
+     *
+     * @param StoreRecordingRequest $request The request object.
+     * @return \Illuminate\Http\JsonResponse The JSON response.
+     */
     public function store(StoreRecordingRequest $request)
     {
+        // Validate the request
         $attributes = $request->validated();
 
+        // Process the greeting file if it exists
         if ($request->greeting_filename) {
-            $path = $request->greeting_filename->store(
-                Session::get('domain_name'),
-                'recordings'
+            // Store the greeting file temporarily
+            $tempPath = $request->greeting_filename->store(
+                Session::get('domain_name')
             );
+
+            // Get the input file path
+            $inputPath = Storage::path($tempPath);
+
+            // Generate the encoded filename
+            $encodedFilename = Session::get('domain_name').'/uploaded_'.md5(Session::get('domain_name').'_'.uniqid()).'.wav';
+
+            // Get the output file path
+            $path = Storage::disk('recordings')->path($encodedFilename);
+
+            // Convert the input file to the desired format
+            shell_exec('ffmpeg -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$path);
+
+            // Delete the temporary file
+            Storage::delete($tempPath);
+
+            // Update the path variable with the encoded filename
+            $path = $encodedFilename;
         } else {
+            // Process the recorded greeting file
             if (Storage::exists($request->greeting_recorded_file)) {
-                $path = Session::get('domain_name').'/recorded_'.md5($request->greeting_recorded_file).'.'.pathinfo($request->greeting_recorded_file,
-                        PATHINFO_EXTENSION);
+                // Generate the path for the recorded greeting file
+                $path = Session::get('domain_name').'/recorded_'.md5($request->greeting_recorded_file).'.'.pathinfo($request->greeting_recorded_file, PATHINFO_EXTENSION);
+
+                // Store the recorded greeting file
                 Storage::disk('recordings')->put($path, Storage::get($request->greeting_recorded_file));
             }
         }
 
+        // Check if the recording file exists
         if (!Storage::disk('recordings')->exists($path)) {
             return response()->json([
                 'error' => 401,
@@ -64,14 +95,17 @@ class RecordingsController extends Controller
             ]);
         }
 
+        // Remove the domain name from the path
         $path = trim(str_replace(Session::get('domain_name'), "", $path), '/');
 
+        // Create a new recording
         $recording = new Recordings();
         $recording->recording_filename = $path;
         $recording->recording_name = $attributes['greeting_name'];
         $recording->recording_description = $attributes['greeting_description'];
         $recording->save();
 
+        // Return the JSON response
         return response()->json([
             'status' => "success",
             'id' => $recording->recording_uuid,
@@ -83,19 +117,31 @@ class RecordingsController extends Controller
 
     public function storeBlob(StoreRecordingBlobRequest $request)
     {
-        $request->validated();
-        $blobInput = $request->file('recorded_file');
-        $mimeType = $blobInput->getMimeType();
-        if ($mimeType == 'application/octet-stream') {
-            $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.mp4';
-        } else {
-            $filename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+        try {
+            $request->validated();
+            $blobInput = $request->file('recorded_file');
+            $filename = 'input_'.Session::get('domain_name').'_'.uniqid();
+            $encodedFilename = 'recorded_'.Session::get('domain_name').'_'.uniqid().'.wav';
+            if (Storage::put($filename, file_get_contents($blobInput))) {
+                $inputPath = Storage::path($filename);
+                $outputPath = Storage::path($encodedFilename);
+                shell_exec('ffmpeg -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$outputPath);
+                if (!Storage::exists($encodedFilename) || !Storage::size($encodedFilename)) {
+                    throw new \Exception('Failed to encode audio');
+                }
+                return response()->json([
+                    'status' => "success",
+                    'tempfile' => $encodedFilename
+                ]);
+            } else {
+                throw new \Exception("Failed to upload file");
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 500,
+                'message' => $e->getMessage()
+            ]);
         }
-        Storage::put($filename, file_get_contents($blobInput));
-        return response()->json([
-            'status' => "success",
-            'tempfile' => $filename
-        ]);
     }
 
     /**
@@ -142,16 +188,22 @@ class RecordingsController extends Controller
      *
      * @param  Recordings  $recording
      * @param $entity
-     * @param $entityId
+     * @param $entityid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function use(Recordings $recording, $entity, $entityId)
+    public function use(Recordings $recording, $entity, $entityid)
     {
         switch ($entity) {
             case 'ringGroup';
                 /** @var RingGroups $entity */
-                $entity = RingGroups::findOrFail($entityId);
+                $entity = RingGroups::findOrFail($entityid);
                 $entity->ring_group_greeting = $recording->recording_filename;
+                $entity->save();
+                break;
+            case 'contactCenter';
+                /** @var CallCenterQueues $entity */
+                $entity = CallCenterQueues::findOrFail($entityid);
+                $entity->queue_greeting = $recording->recording_filename;
                 $entity->save();
                 break;
             default:

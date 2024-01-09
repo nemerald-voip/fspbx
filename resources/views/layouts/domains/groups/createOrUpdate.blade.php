@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Edit Domain Group"])
+@extends('layouts.app', ["page_title"=> "Edit Domain Group"])
 
 @section('content')
 <!-- Start Content-->
@@ -110,7 +110,7 @@
 
 <script>
     var setting_validation;
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
 
         
     });

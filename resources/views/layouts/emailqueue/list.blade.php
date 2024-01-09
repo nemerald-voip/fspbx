@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Email Queues"])
+@extends('layouts.app', ["page_title"=> "Email Queues"])
 
 @section('content')
 
@@ -215,7 +215,7 @@
 
 @push('scripts')
     <script>
-        $(document).ready(function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
             localStorage.removeItem('activeTab');
 

@@ -8,7 +8,7 @@ use App\Jobs\ProcessCommioSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
-use Spatie\WebhookClient\ProcessWebhookJob as SpatieProcessWebhookJob;
+use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
 {

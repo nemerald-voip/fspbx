@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ['page_title' => $page_title])
+@extends('layouts.app', ['page_title' => $page_title])
 
 @section('content')
     <!-- Start Content-->

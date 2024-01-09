@@ -8,6 +8,7 @@ use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Symfony\Component\Mime\Email;
 
 class FaxInTransit extends Mailable
 {
@@ -27,8 +28,6 @@ class FaxInTransit extends Mailable
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == "smtp_from") {
                     $attributes['unsubscribe_email'] = $setting->default_setting_value;
-                } else {
-                    $attributes['unsubscribe_email'] = "";
                 }
                 if ($setting->default_setting_subcategory == "support_email") {
                     $attributes['support_email'] = $setting->default_setting_value;
@@ -43,6 +42,9 @@ class FaxInTransit extends Mailable
                     $attributes['help_url'] = $setting->default_setting_value;
                 }
             }
+            if (!isset($attributes['unsubscribe_email'])) {
+                $attributes['unsubscribe_email'] = "";
+            }
         }
         $this->attributes = $attributes;
 
@@ -55,7 +57,7 @@ class FaxInTransit extends Mailable
      */
     public function build()
     {
-        $this->withSwiftMessage(function ($message) {
+        $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
         return $this->subject('Re: fax to '.$this->attributes['fax_destination'])->view('emails.fax.inTransit');

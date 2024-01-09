@@ -1,4 +1,4 @@
-@extends('layouts.horizontal', ["page_title"=> "Voicemail Messages"])
+@extends('layouts.app', ["page_title"=> "Voicemail Messages"])
 
 @section('content')
 
@@ -139,7 +139,7 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         $('#selectallCheckbox').on('change',function(){
             if($(this).is(':checked')){
                 $('.action_checkbox').prop('checked',true);

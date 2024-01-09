@@ -60,13 +60,13 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'nullable',
                 'email:rfc,dns',
             ],
-            '*.device_mac_address' => [
+            '*.device_address' => [
                 'mac_address',
                 'nullable',
             ],
-            '*.device_mac_address_modified' => [
+            '*.device_address_modified' => [
                 'nullable',
-                Rule::unique('App\Models\Devices','device_mac_address')
+                Rule::unique('App\Models\Devices','device_address')
             ],
             '*.device_vendor' => [
                 'string',
@@ -87,18 +87,18 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         return [
             'extension.numeric' => 'Extension must only contain numeric values',
             'outbound_caller_id_number.phone' => 'The :attribute is not a valid US number',
-            'device_mac_address_modified.unique' => 'Duplicate MAC address has been found',
+            'device_address_modified.unique' => 'Duplicate MAC address has been found',
         ];
     }
 
 
     public function prepareForValidation($data, $index)
     {
-        $data['device_mac_address'] = trim(str_replace(':', '', $data['device_mac_address']));
-        $data['device_mac_address'] = trim(str_replace('-', '', $data['device_mac_address']));
-        $data['device_mac_address_modified'] =strtolower(trim($data['device_mac_address']));
+        $data['device_address'] = trim(str_replace(':', '', $data['device_address']));
+        $data['device_address'] = trim(str_replace('-', '', $data['device_address']));
+        $data['device_address_modified'] =strtolower(trim($data['device_address']));
         $data['extension'] = trim($data['extension']);
-        $data['device_mac_address'] =strtolower(trim(implode(":", str_split($data['device_mac_address'], 2))));
+        $data['device_address'] =strtolower(trim(implode(":", str_split($data['device_address'], 2))));
         $data['extension'] = trim($data['extension']);
         $data['first_name'] = trim($data['first_name']);
         $data['last_name'] = trim($data['last_name']);
@@ -114,7 +114,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
     public function customValidationAttributes()
     {
         return [
-            'device_mac_address_modified' => 'device_mac_address',
+            'device_address_modified' => 'device_address',
         ];
     }
 
@@ -175,13 +175,13 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
 
             //Convert Mac address xx:xx:xx:xx:xx:xx to string xxxxxxxxxxxx
-            $row['device_mac_address'] = str_replace(':', '', $row['device_mac_address']);
+            $row['device_address'] = str_replace(':', '', $row['device_address']);
 
             //Create device
-            if (isset($row['device_mac_address']) && !empty($row['device_mac_address'])) {
+            if (isset($row['device_address']) && !empty($row['device_address'])) {
                 $device = new Devices();
                 $device->fill([
-                    'device_mac_address' => $row['device_mac_address'],
+                    'device_address' => $row['device_address'],
                     'device_label' => $row['extension'],
                     'device_vendor' => $row['device_vendor'],
                     'device_enabled' => 'true',
