@@ -45,7 +45,7 @@
 
                 <div class="relative w-full sm:w-3/5 max-w-md mb-2 sm:mb-0 sm:ml-4">
                     <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }"
-                        :preset-dates="presetDates" :enable-time-picker="true" :timezone="America/Denver" auto-apply>
+                        :preset-dates="presetDates" :enable-time-picker="false" auto-apply>
                         <template #preset-date-range-button="{ label, value, presetDate }">
                             <span role="button" :tabindex="0" @click="presetDate(value)"
                                 @keyup.enter.prevent="presetDate(value)" @keyup.space.prevent="presetDate(value)">
@@ -119,6 +119,8 @@ import { defineProps, ref } from 'vue';
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import moment from 'moment-timezone';
+
 
 
 import {
@@ -135,8 +137,9 @@ const props = defineProps({
 
 // Initial date range
 const dateRange = ref();
-dateRange.value = props.filterData.dateRange;
+dateRange.value = [moment(props.filterData.dateRange[0]).startOf('day'), moment(props.filterData.dateRange[1]).endOf('day')];
 
+console.log(dateRange.value);
 // Initial search
 const searchQuery = ref();
 searchQuery.value = props.filterData.search;
@@ -166,10 +169,17 @@ const emit = defineEmits(['update:dateRange', 'search-action']);
 // const onDateChange = (newDateRange) => {
 // };
 
+const convertToNewTimezoneAndKeepTime = (date) => {
+    let localTime = moment(date);
+    let convertedDate = moment.tz(localTime.format('YYYY-MM-DDTHH:mm:ss'), props.filterData['timezone']);
+    return convertedDate.format();
+}
+
 // Method to handle search button click
 const onSearchClick = () => {
     const searchData = {
-        dateRange: dateRange.value,
+        // dateRange: dateRange.value,
+        dateRange: [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])],
         searchQuery: searchQuery.value
     };
     emit('search-action', searchData);

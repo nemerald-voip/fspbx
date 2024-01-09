@@ -176,28 +176,12 @@ const props = defineProps({
 
 const filterData = ref({
   search: props.search,
-  dateRange: [props.startPeriod, props.endPeriod],
+//   dateRange: [props.startPeriod, props.endPeriod],
+    dateRange: ['2024-01-09 00:00:00', '2024-01-09 23:59:59'],
   timezone: props.timezone,
 });
 
-// onMounted(() => {
-//     isAudioPlaying.value = false;
-//     currentAudioUuid.value = null;
-// });
-
-// const handleDateRangeUpdate = (dateRange) => {
-//     filterData.value.dateRange = dateRange;
-//     router.visit('/call-detail-records', {
-//         data: {
-//             filterData: filterData._rawValue,
-//         },
-//         preserveScroll: true,
-//         preserveState: true,
-//         only: [
-//             'data',
-//         ],
-//     })
-// };
+console.log (filterData.value['dateRange']);
 
 const handleSearchButtonClick = (searchData) => {
   filterData.value.search = searchData.searchQuery;
