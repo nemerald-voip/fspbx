@@ -139,7 +139,6 @@ const props = defineProps({
 const dateRange = ref();
 dateRange.value = [moment(props.filterData.dateRange[0]).startOf('day'), moment(props.filterData.dateRange[1]).endOf('day')];
 
-console.log(dateRange.value);
 // Initial search
 const searchQuery = ref();
 searchQuery.value = props.filterData.search;

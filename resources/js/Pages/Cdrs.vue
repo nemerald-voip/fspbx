@@ -181,8 +181,6 @@ const filterData = ref({
   timezone: props.timezone,
 });
 
-console.log (filterData.value['dateRange']);
-
 const handleSearchButtonClick = (searchData) => {
   filterData.value.search = searchData.searchQuery;
   filterData.value.dateRange = searchData.dateRange;
