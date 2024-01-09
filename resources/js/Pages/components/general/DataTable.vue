@@ -87,6 +87,7 @@
                                 <slot name="table-body"></slot>
                             </tbody>
                         </table>
+                        <slot name="empty"></slot>
                     </div>
                 </div>
             </div>
