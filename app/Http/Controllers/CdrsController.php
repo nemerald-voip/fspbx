@@ -39,11 +39,13 @@ class CdrsController extends Controller
         }
 
         if (!empty($request->filterData['dateRange'])) {
-            $startPeriod = $request->filterData['dateRange'][0];
-            $endPeriod = $request->filterData['dateRange'][1];
+            $startPeriod = Carbon::parse($request->filterData['dateRange'][0]);
+            $endPeriod = Carbon::parse($request->filterData['dateRange'][1]);
+
         } else {
             $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
             $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+            
         }
 
         $this->filters = [
@@ -170,6 +172,7 @@ class CdrsController extends Controller
         return null;
     }
 
+
     public function serveRecording($filePath)
     {
         $filePath = decrypt($filePath); // Assuming the path is encrypted for security
@@ -268,23 +271,24 @@ class CdrsController extends Controller
 
     protected function getTimezone()
     {
-        if (!Cache::has(auth()->user()->user_uuid . '_timeZone')) {
+
+        if (!Cache::has(auth()->user()->user_uuid . '_' . Session::get('domain_uuid') . '_timeZone')) {
             $timezone = get_local_time_zone(Session::get('domain_uuid'));
-            Cache::put(auth()->user()->user_uuid . '_timeZone', $timezone, 600);
+            Cache::put(auth()->user()->user_uuid . Session::get('domain_uuid') .  '_timeZone', $timezone, 600);
         } else {
-            $timezone = Cache::get(auth()->user()->user_uuid . '_timeZone');
+            $timezone = Cache::get(auth()->user()->user_uuid . '_' . Session::get('domain_uuid') . '_timeZone');
         }
         return $timezone;
     }
 
     protected function filterStartPeriod($query, $value)
     {
-        $query->where('start_stamp', '>=', $value);
+        $query->where('start_epoch', '>=', $value->getTimestamp());
     }
 
     protected function filterEndPeriod($query, $value)
     {
-        $query->where('start_stamp', '<=', $value);
+        $query->where('start_epoch', '<=', $value->getTimestamp());
     }
 
     protected function filterSearch($query, $value)

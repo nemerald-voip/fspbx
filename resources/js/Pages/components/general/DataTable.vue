@@ -45,7 +45,7 @@
 
                 <div class="relative w-full sm:w-3/5 max-w-md mb-2 sm:mb-0 sm:ml-4">
                     <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }"
-                         :preset-dates="presetDates" :timezone="timezone">
+                        :preset-dates="presetDates" :enable-time-picker="true" :timezone="America/Denver" auto-apply>
                         <template #preset-date-range-button="{ label, value, presetDate }">
                             <span role="button" :tabindex="0" @click="presetDate(value)"
                                 @keyup.enter.prevent="presetDate(value)" @keyup.space.prevent="presetDate(value)">
@@ -70,30 +70,30 @@
             </div>
         </div>
 
-            <!-- Table -->
+        <!-- Table -->
 
-            <div class="mt-8 flow-root">
-                <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                    <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                            <table class="min-w-full divide-y divide-gray-300">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <slot name="table-header"></slot>
+        <div class="mt-8 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <slot name="table-header"></slot>
 
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 bg-white">
-                                    <slot name="table-body"></slot>
-                                </tbody>
-                            </table>
-                        </div>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <slot name="table-body"></slot>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </div>
 
 
-            <!-- <div v-if="$slots.header" :class="cx('header')" v-bind="ptm('header')">
+        <!-- <div v-if="$slots.header" :class="cx('header')" v-bind="ptm('header')">
             <slot name="header"></slot>
         </div>
         <div :class="cx('body')" v-bind="ptm('body')">
@@ -110,7 +110,7 @@
                 <slot name="footer"></slot>
             </div>
         </div> -->
-        </div>
+    </div>
 </template>
 
 <script setup>
@@ -119,6 +119,7 @@ import { defineProps, ref } from 'vue';
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+
 
 import {
     startOfDay, endOfDay,
@@ -140,7 +141,12 @@ dateRange.value = props.filterData.dateRange;
 const searchQuery = ref();
 searchQuery.value = props.filterData.search;
 
+
+// const today = moment().tz(props.filterData['timezone']).toDate();
+// console.log(dateRange.value[0]);
 const today = new Date();
+// console.log(today);
+// console.log(startOfDay(today));
 
 const presetDates = ref([
     { label: 'Today', value: [startOfDay(today), endOfDay(today)] },
@@ -151,7 +157,8 @@ const presetDates = ref([
     { label: 'Last Month', value: [startOfMonth(subMonths(startOfDay(today), 1)), endOfMonth(subMonths(endOfDay(today), 1))] }
 ]);
 
-// console.log(dateRange);
+
+// console.log(props.filterData['timezone']);
 
 const emit = defineEmits(['update:dateRange', 'search-action']);
 
@@ -178,5 +185,10 @@ const onResetClick = () => {
     };
     emit('search-action', searchData);
 };
+
+
+
+// registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
+
 
 </script>
