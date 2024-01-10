@@ -143,7 +143,7 @@ const props = defineProps({
 
 const filterData = ref({
     search: props.search,
-    dateRange: [moment(props.startPeriod).startOf('day'), moment(props.endPeriod).endOf('day')],
+    dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
 });
 
