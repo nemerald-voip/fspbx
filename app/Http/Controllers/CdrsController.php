@@ -41,8 +41,8 @@ class CdrsController extends Controller
         if (!empty($request->filterData['dateRange'])) {
             $startPeriod = Carbon::parse($request->filterData['dateRange'][0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse($request->filterData['dateRange'][1])->setTimeZone('UTC');
-            logger($startPeriod);
-            logger($endPeriod);
+            // logger($startPeriod);
+            // logger($endPeriod);
         } else {
             $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
             $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
