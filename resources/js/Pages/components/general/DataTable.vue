@@ -91,7 +91,8 @@
                         </table>
                         <slot name="empty"></slot>
                         
-                        <!-- <slot name="loading"></slot> -->
+                        <slot name="footer" />
+
                     </div>
                 </div>
             </div>

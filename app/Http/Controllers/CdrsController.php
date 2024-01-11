@@ -23,6 +23,7 @@ class CdrsController extends Controller
      */
     public function index(Request $request)
     {
+        // logger($request->all());
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
@@ -150,8 +151,8 @@ class CdrsController extends Controller
                 'bucket' => $setting['bucket'],
             ]);
 
-            //Special case when recording name is not set. 
-            if (!isset($recording->record_name)) {
+            //Special case when recording name is empty. 
+            if (empty($recording->record_name)) {
                 // Check if archive recording is set
                 if ($recording->archive_recording) {
                     $options = [
@@ -162,7 +163,7 @@ class CdrsController extends Controller
                 if (isset($url)) return $url;
             }
 
-            if (isset($recording->record_name)) {
+            if (!empty($recording->record_name)) {
                 $options = [
                     'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->record_name) . '"'
                 ];
@@ -192,13 +193,9 @@ class CdrsController extends Controller
 
     public function getCdrs()
     {
-        $cdrs = $this->builder($this->filters)->get();
-        // foreach ($cdrs as $cdr) {
-        //     logger($cdr->start_date);
+        $cdrs = $this->builder($this->filters)->paginate(50);
 
-        // }
-
-        $cdrs = $cdrs->map(function ($cdr) {
+        $cdrs->transform(function ($cdr) {
             // Perform any additional processing on start_date if needed
             // For example, format start_date or add additional data
 
