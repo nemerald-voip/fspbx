@@ -30,7 +30,7 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data" :key="row.xml_cdr_uuid">
+                <tr v-for="row in data.data" :key="row.xml_cdr_uuid">
                     <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
                         :text="row.direction" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
@@ -69,6 +69,40 @@
                     </p>
                 </div>
             </template>
+
+            <template #loading>
+                <TransitionRoot as="template" :show="loading" enter="transition-opacity duration-500 ease-out"
+                    enter-from="opacity-0" enter-to="opacity-100" leave="transition-opacity duration-300 ease-in"
+                    leave-from="opacity-100" leave-to="opacity-0">
+                    <!-- Backdrop -->
+                    <div class="absolute w-full h-full bg-gray-400 bg-opacity-30">
+                        <div class="flex justify-center items-center space-x-3 mt-20">
+                            <div>
+                                <svg class="animate-spin  h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4">
+                                    </circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                        </div>
+                    </div>
+                    <!-- End Backdrop -->
+
+                </TransitionRoot>
+            </template>
+
+            <template #footer>
+                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
+                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links" :filterData="filterData"/>
+            </template>
+
+
         </DataTable>
 
 
@@ -84,12 +118,21 @@ import Menu from "./components/Menu.vue";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
+import Paginator from "./components/general/Paginator.vue";
+import moment from 'moment-timezone';
 import {
     PlayCircleIcon,
     PauseCircleIcon,
     CloudArrowDownIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
+
+import {
+    TransitionRoot,
+} from '@headlessui/vue'
+
+const loading = ref(false)
+
 
 const props = defineProps({
     data: Array,
@@ -105,14 +148,16 @@ const props = defineProps({
     recordingUrl: String,
 });
 
+console.log(props.data);
+
 const filterData = ref({
     search: props.search,
-    //   dateRange: [props.startPeriod, props.endPeriod],
-    dateRange: ['2024-01-09 00:00:00', '2024-01-09 23:59:59'],
+    dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
 });
 
 const handleSearchButtonClick = (searchData) => {
+    loading.value = true;
     filterData.value.search = searchData.searchQuery;
     filterData.value.dateRange = searchData.dateRange;
     router.visit("/call-detail-records", {
@@ -122,6 +167,10 @@ const handleSearchButtonClick = (searchData) => {
         preserveScroll: true,
         preserveState: true,
         only: ["data"],
+        onSuccess: (page) => {
+            loading.value = false;
+        }
+
     });
 };
 
@@ -132,7 +181,7 @@ const isAudioPlaying = ref(false);
 const fetchAndPlayAudio = (uuid) => {
     router.visit("/call-detail-records", {
         data: {
-            filterData: filterData._rawValue,
+            // filterData: filterData._rawValue,
             callUuid: uuid,
         },
         preserveScroll: true,

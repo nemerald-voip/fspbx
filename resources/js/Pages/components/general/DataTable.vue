@@ -75,7 +75,9 @@
         <div class="mt-8 flow-root">
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                    <div class="relative overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                        <slot name="loading"></slot>
+                        <!-- <div class="absolute w-full h-full bg-gray-500 bg-opacity-30"></div> -->
                         <table class="min-w-full divide-y divide-gray-300">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -88,6 +90,9 @@
                             </tbody>
                         </table>
                         <slot name="empty"></slot>
+                        
+                        <slot name="footer" />
+
                     </div>
                 </div>
             </div>
@@ -122,8 +127,6 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import moment from 'moment-timezone';
 
-
-
 import {
     startOfDay, endOfDay,
     startOfWeek, endOfWeek,
@@ -138,7 +141,7 @@ const props = defineProps({
 
 // Initial date range
 const dateRange = ref();
-dateRange.value = [moment(props.filterData.dateRange[0]).startOf('day'), moment(props.filterData.dateRange[1]).endOf('day')];
+dateRange.value = props.filterData.dateRange;
 
 // Initial search
 const searchQuery = ref();
