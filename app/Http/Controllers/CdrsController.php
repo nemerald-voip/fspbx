@@ -25,7 +25,7 @@ class CdrsController extends Controller
     {
         // logger($request->all());
         // Check permissions
-        if (!userCheckPermission("extension_view")) {
+        if (!userCheckPermission("xml_cdr_view")) {
             return redirect('/');
         }
 

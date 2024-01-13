@@ -73,9 +73,11 @@
         <!-- Table -->
 
         <div class="mt-8 flow-root">
+            
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <div class="relative overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                        <slot name="navigation"></slot>
                         <slot name="loading"></slot>
                         <!-- <div class="absolute w-full h-full bg-gray-500 bg-opacity-30"></div> -->
                         <table class="min-w-full divide-y divide-gray-300">
@@ -199,9 +201,6 @@ const onResetClick = () => {
     emit('search-action', searchData);
 };
 
-
-
-// registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 
 </script>
