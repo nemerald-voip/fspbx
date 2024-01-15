@@ -52,10 +52,15 @@ class DeviceController extends Controller
                     ->orWhereLike('device_template', $searchStringKey);
             });
         }
-        $devices = $devices->orderBy('device_label')->paginate(3)->onEachSide(1);
+        $devices = $devices->orderBy('device_label');
+
+        $devicesToRestart = $devices->get()->filter(function ($device) {
+            return $device->extension();
+        });
 
         $data = array();
-        $data['devices'] = $devices;
+        $data['devices'] = $devices->paginate(5)->onEachSide(1);;
+        $data['devicesToRestartCount'] = $devicesToRestart->count();
         $data['searchString'] = $searchString;
         $data['permissions']['device_restart'] = isSuperAdmin();
         $data['selectedScope'] = $selectedScope;
