@@ -7,7 +7,7 @@
     };
 
     Devices.prototype.init = function () {
-        console.log("init devices page")
+        console.log("init devices page11")
     }
 
     $.Devices = new Devices

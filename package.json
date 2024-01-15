@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --https",
         "build": "vite build"
     },
     "devDependencies": {
@@ -16,6 +16,7 @@
         "sass": "^1.69.5",
         "sass-loader": "^11.0.1",
         "tailwindcss": "^3.4.0",
+        "@vitejs/plugin-basic-ssl": "^1.0.2",
         "vite": "^4.5.1"
     },
     "type": "module",
