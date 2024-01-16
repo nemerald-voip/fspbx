@@ -2,11 +2,11 @@
 
 namespace App\Imports;
 
-use cache;
 use App\Models\Devices;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Models\DeviceLines;
+use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
@@ -34,10 +34,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             '*.extension' => [
                 'required',
                 'numeric',
-                Rule::unique('App\Models\Extensions','extension')
+                Rule::unique('App\Models\Extensions', 'extension')
                     // ->ignore($extension->extension_uuid,'extension_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid')),
-                Rule::unique('App\Models\Voicemails','voicemail_id')
+                Rule::unique('App\Models\Voicemails', 'voicemail_id')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
             '*.first_name' => [
@@ -66,7 +66,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             ],
             '*.device_address_modified' => [
                 'nullable',
-                Rule::unique('App\Models\Devices','device_address')
+                Rule::unique('App\Models\Devices', 'device_address')
             ],
             '*.device_vendor' => [
                 'string',
@@ -96,9 +96,9 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
     {
         $data['device_address'] = trim(str_replace(':', '', $data['device_address']));
         $data['device_address'] = trim(str_replace('-', '', $data['device_address']));
-        $data['device_address_modified'] =strtolower(trim($data['device_address']));
+        $data['device_address_modified'] = strtolower(trim($data['device_address']));
         $data['extension'] = trim($data['extension']);
-        $data['device_address'] =strtolower(trim(implode(":", str_split($data['device_address'], 2))));
+        $data['device_address'] = strtolower(trim(implode(":", str_split($data['device_address'], 2))));
         $data['extension'] = trim($data['extension']);
         $data['first_name'] = trim($data['first_name']);
         $data['last_name'] = trim($data['last_name']);
@@ -119,10 +119,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
     }
 
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @param array $row
+     *
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function collection(Collection $rows)
     {
 
@@ -130,8 +130,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         //     '*.extension' => 'required|numeric',
         // ])->validate();
 
-        foreach ($rows as $row)
-        {
+        foreach ($rows as $row) {
 
             //Create extension
             $extension = Extensions::create([
@@ -173,12 +172,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             ]);
             $extension->voicemail->save();
 
-
-            //Convert Mac address xx:xx:xx:xx:xx:xx to string xxxxxxxxxxxx
-            $row['device_address'] = str_replace(':', '', $row['device_address']);
-
             //Create device
             if (isset($row['device_address']) && !empty($row['device_address'])) {
+                //Convert Mac address xx:xx:xx:xx:xx:xx to string xxxxxxxxxxxx
+                $row['device_address'] = str_replace(':', '', $row['device_address']);
                 $device = new Devices();
                 $device->fill([
                     'device_address' => $row['device_address'],
@@ -216,9 +213,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             if (session_status() == PHP_SESSION_NONE  || session_id() == '') {
                 session_start();
             }
-            $cache = new cache;
-            $cache->delete("directory:".$extension->extension."@".$extension->user_context);
 
+            //clear fusionpbx cache
+            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
+            
             //clear the destinations session array
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);
@@ -232,5 +230,4 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         // return $extension;
 
     }
-
 }
