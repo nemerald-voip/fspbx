@@ -43,7 +43,7 @@
                 </div>
 
 
-                <div class="relative w-full sm:w-3/5 max-w-md mb-2 sm:mb-0 sm:ml-4">
+                <div class="relative -mt-0.5 mb-2 sm:mb-0 sm:ml-4 shrink-0">
                     <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }"
                         :preset-dates="presetDates" :enable-time-picker="false" auto-apply>
                         <template #preset-date-range-button="{ label, value, presetDate }">
@@ -55,17 +55,20 @@
                     </VueDatePicker>
                 </div>
 
-                <div class="relative w-full sm:w-1/5 max-w-sm mb-2 sm:mb-0 sm:ml-4">
-                    <button type="button" @click.prevent="onSearchClick"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm sm:ml-4 font-semibold text-white shadow-sm hover:bg-indigo-500 
-                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                        Search
-                    </button>
+                <div class="relative mb-2 sm:mb-0 sm:ml-4">
+                    <div class="flex justify-between">
 
-                    <button type="button" @click.prevent="onResetClick"
-                        class="rounded-md bg-white px-2.5 py-1.5 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Reset
-                    </button>
+                        <button type="button" @click.prevent="onSearchClick"
+                            class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm sm:ml-4 font-semibold text-white shadow-sm hover:bg-indigo-500 
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            Search
+                        </button>
+
+                        <button type="button" @click.prevent="onResetClick"
+                            class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Reset
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,7 +76,7 @@
         <!-- Table -->
 
         <div class="mt-8 flow-root">
-            
+
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <div class="relative overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
@@ -92,7 +95,7 @@
                             </tbody>
                         </table>
                         <slot name="empty"></slot>
-                        
+
                         <slot name="footer" />
 
                     </div>
@@ -123,7 +126,7 @@
 
 <script setup>
 
-import { defineProps, ref } from 'vue';
+import { ref } from 'vue';
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';

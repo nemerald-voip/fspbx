@@ -77,7 +77,7 @@
             </template>
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.length === 0" class="text-center my-5 ">
+                <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                     <p class="mt-1 text-sm text-gray-500">
@@ -165,8 +165,8 @@ const props = defineProps({
     selectedDomain: String,
     selectedDomainUuid: String,
     domains: Array,
-    startPeriod: Date,
-    endPeriod: Date,
+    startPeriod: String,
+    endPeriod: String,
     search: String,
     timezone: String,
     recordingUrl: String,
