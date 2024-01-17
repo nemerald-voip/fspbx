@@ -85,7 +85,7 @@ class CdrsController extends Controller
                     return Session::get('domain_select');
                 },
                 'selectedDomain' => function () {
-                    return Session::get('domain_name');
+                    return Session::get('domain_description');
                 },
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
