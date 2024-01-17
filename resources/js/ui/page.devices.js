@@ -9,10 +9,12 @@
         this.$restartSelectedDevices = $(".btn-restart-selected-devices")
         this.$restartAllDevices = $('.btn-restart-all-devices')
         this.$selectallCheckbox = $('#selectallCheckbox')
+        this.$restartedWrapper = $('#restartedWrapper')
     };
 
     Devices.prototype.init = function () {
         var $this = this;
+        $('body').append('<div id="restartedWrapper" class="jq-toast-wrap bottom-right hidden"><div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>Restarted <span id="restartedCount"></span></div></div>');
         this.$restartDeviceBtn.on("click", function (e) {
             e.preventDefault();
             //let extension_id = [];
@@ -20,6 +22,17 @@
             //if (extension_id.length > 0) {
 
                 $this.sendRequest(e.currentTarget.href.replace(':id', e.currentTarget.dataset.extensionId));
+            //}
+            return false;
+        });
+        this.$restartSelectedDevices.on("click", function (e) {
+            e.preventDefault();
+            console.log($this.$actionCheckbox.filter(':checked'));
+            //let extension_id = [];
+            //extension_id.push(e.currentTarget.dataset.extensionId);
+            //if (extension_id.length > 0) {
+
+            //$this.sendRequest(e.currentTarget.href.replace(':id', e.currentTarget.dataset.extensionId));
             //}
             return false;
         });
