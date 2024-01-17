@@ -159,7 +159,7 @@ const loading = ref(false)
 
 
 const props = defineProps({
-    data: Array,
+    data: Object,
     menus: Array,
     domainSelectPermission: Boolean,
     selectedDomain: String,
