@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
+use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDomainRequest;
@@ -161,4 +162,38 @@ class DomainController extends Controller
     {
         //
     }
+
+    /**
+     * get extension count for all domains.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function countExtensionsInDomains()
+    {
+        if (isSuperAdmin()) {
+
+
+            $domains = Domain::get();
+
+
+            foreach ($domains as $domain) {
+                print $domain->domain_description;
+                print "<br>";
+
+                $extensions = Extensions::where('domain_uuid', $domain->domain_uuid)->get()->count();
+
+                print $extensions;
+                print "<br><br>";
+            }
+
+        } else {
+             return redirect('dashboard');
+        }
+
+
+
+    }
+
+    
 }
