@@ -63,7 +63,7 @@
     </Disclosure>
 
     <TransitionRoot as="template" :show="isDomainPanelVisible">
-        <Dialog as="div" class="relative z-10" @close="isDomainPanelVisible = false">
+        <Dialog as="div" class="relative z-10" :initialFocus="searchFieldRef" @close="isDomainPanelVisible = false">
             <div class="fixed inset-0" />
             <div class="fixed inset-0 overflow-hidden">
                 <div class="absolute inset-0 overflow-hidden">
@@ -92,7 +92,7 @@
                                     </div>
                                     <!-- SEARCH BUTTON -->
                                     <div class="relative mt-6 px-4 sm:px-6">
-                                        <input type="text" v-model="searchQuery" placeholder="Search ..."
+                                        <input type="text" v-model="searchQuery" placeholder="Search ..." ref="searchFieldRef"
                                             class="mt-2 mb-4 w-full rounded-md border-gray-300 shadow-sm" />
                                     </div>
                                     <!-- End SEARCH BUTTON -->
@@ -148,6 +148,8 @@ const isDomainPanelVisible = ref(false);
 const openDomainPanel = () => {
     isDomainPanelVisible.value = true;
 };
+
+const searchFieldRef = ref(null);
 
 const searchQuery = ref('');
 
