@@ -59,6 +59,9 @@ Route::get('/call-detail-records/file/{filePath}', [CdrsController::class, 'serv
 // Groups
 Route::resource('groups', GroupsController::class);
 
+//Domains
+Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
+
 //Fax
 Route::resource('faxes', FaxesController::class);
 Route::get('/faxes/newfax/create', [FaxesController::class, 'new']) ->name('faxes.newfax');
