@@ -5,6 +5,10 @@
         this.$body = $("body")
         this.$restartDeviceBtn = $(".btn-restart-device")
         this.$deleteDeviceBtn = $(".btn-delete-device")
+        this.$actionCheckbox = $(".action_checkbox")
+        this.$restartSelectedDevices = $(".btn-restart-selected-devices")
+        this.$restartAllDevices = $('.btn-restart-all-devices')
+        this.$selectallCheckbox = $('#selectallCheckbox')
     };
 
     Devices.prototype.init = function () {
@@ -28,6 +32,36 @@
             //$this.sendRequest(e.currentTarget.href, null, 'DELETE');
             return false;
         });
+        this.$restartAllDevices.on('click', function(e) {
+            e.preventDefault();
+
+        })
+        this.$restartSelectedDevices.on('click', function(e) {
+            e.preventDefault();
+
+        })
+        this.$actionCheckbox.on('click', function(e) {
+            if($this.$actionCheckbox.filter(':checked').length > 0) {
+                $this.enableRestartSelectedDevices()
+            } else {
+                $this.disableRestartSelectedDevices()
+            }
+        })
+        this.$selectallCheckbox.on('click', function() {
+            if($(this).prop('checked')) {
+                $this.enableRestartSelectedDevices()
+            } else {
+                $this.disableRestartSelectedDevices()
+            }
+        })
+    }
+
+    Devices.prototype.enableRestartSelectedDevices = function() {
+        this.$restartSelectedDevices.removeClass('disabled');
+    }
+
+    Devices.prototype.disableRestartSelectedDevices = function() {
+        this.$restartSelectedDevices.addClass('disabled');
     }
 
     Devices.prototype.sendRequest = function (url) {

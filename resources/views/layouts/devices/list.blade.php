@@ -12,10 +12,10 @@
         Show {{ (($selectedScope == 'local')?'global':'local') }} devices
     </a>
     @if($permissions['device_restart'])
-        <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','');" class="btn btn-danger btn-sm mb-2 me-2 disabled">
+        <a href="#" class="btn btn-danger btn-restart-selected-devices btn-sm mb-2 me-2 disabled">
             Restart selected devices
         </a>
-        <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','');" class="btn btn-danger btn-sm mb-2 me-2">
+        <a href="#" class="btn btn-danger btn-restart-all-devices btn-sm mb-2 me-2">
             Restart all {{$devicesToRestartCount}} devices
         </a>
     @endif
