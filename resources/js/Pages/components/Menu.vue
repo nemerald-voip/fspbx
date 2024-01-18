@@ -1,6 +1,5 @@
 
 <template>
-
     <Disclosure as="nav" class="bg-white shadow" v-slot="{ open }">
         <div class="mx-auto max-w-9xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 justify-between">
@@ -55,7 +54,17 @@
                     <div class="flex-shrink-0">
                         <button type="button" @click="openDomainPanel"
                             class="relative inline-flex items-center gap-x-1.5 rounded-md  px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer ">
-                            {{ selectedDomain }}
+                            <span class="hidden sm:block lg:hidden xl:block">{{ selectedDomain }}</span> <!-- Hide text on small screens -->
+
+                            <svg class="h-5 w-5 sm:hidden lg:block xl:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                                height="24"  fill="none" stroke="currentColor"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="2" x2="22" y1="12" y2="12" />
+                                <path
+                                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                            </svg>
+
                         </button>
                     </div>
 
@@ -67,28 +76,35 @@
             <nav class="flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-7 mx-3">
                     <li>
-                    <ul role="list" class="-mx-2 space-y-1">
-                        <li v-for="item in menus" :key="menus.menu_item_id">
-                        <a v-if="!item.child_menu" :href="item.href" :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{ item.menu_item_title }}</a>
-                        <Disclosure as="div" v-else v-slot="{ open }">
-                            <DisclosureButton :class="'hover:bg-gray-50 flex items-center w-full text-left rounded-md p-2 gap-x-3 text-sm leading-6 font-semibold text-gray-700'">
-                            <ChevronRightIcon :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'h-5 w-5 shrink-0']" aria-hidden="true" />
-                            {{ item.menu_item_title }}
-                            </DisclosureButton>
-                            <DisclosurePanel as="ul" class="mt-1 px-2">
+                        <ul role="list" class="-mx-2 space-y-1">
+                            <li v-for="item in menus" :key="menus.menu_item_id">
+                                <a v-if="!item.child_menu" :href="item.href"
+                                    :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{
+                                        item.menu_item_title }}</a>
+                                <Disclosure as="div" v-else v-slot="{ open }">
+                                    <DisclosureButton
+                                        :class="'hover:bg-gray-50 flex items-center w-full text-left rounded-md p-2 gap-x-3 text-sm leading-6 font-semibold text-gray-700'">
+                                        <ChevronRightIcon
+                                            :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'h-5 w-5 shrink-0']"
+                                            aria-hidden="true" />
+                                        {{ item.menu_item_title }}
+                                    </DisclosureButton>
+                                    <DisclosurePanel as="ul" class="mt-1 px-2">
                             <li v-for="child in item.child_menu" :key="child.menu_item_uuid">
-                                <DisclosureButton as="a" :href="child.menu_item_link" :class="'hover:bg-gray-50 block rounded-md py-2 pr-2 pl-9 text-sm leading-6 text-gray-700'">{{ child.menu_item_title  }}</DisclosureButton>
+                                <DisclosureButton as="a" :href="child.menu_item_link"
+                                    :class="'hover:bg-gray-50 block rounded-md py-2 pr-2 pl-9 text-sm leading-6 text-gray-700'">
+                                    {{ child.menu_item_title }}</DisclosureButton>
                             </li>
-                            </DisclosurePanel>
-                        </Disclosure>
-                        </li>
-                    </ul>
-                    </li>
-                    
-                </ul>
-                </nav>
-
         </DisclosurePanel>
+    </Disclosure>
+    </li>
+    </ul>
+    </li>
+
+    </ul>
+    </nav>
+
+    </DisclosurePanel>
     </Disclosure>
 
     <TransitionRoot as="template" :show="isDomainPanelVisible">
