@@ -12,7 +12,9 @@
                     <div class="input-group input-group-merge">
                         <input type="username" id="sip_username" name="sip_username" class="form-control" readonly="" placeholder="">
                         <div class="input-group-text" id="copyUsernameToClipboardButton">
-                            <span class="dripicons-copy" data-bs-container="#copyUsernameToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
+                            <span data-bs-container="#copyUsernameToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard" role="button">
+                                <i class="mdi mdi-content-copy"></i>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -26,7 +28,9 @@
                             <span class="password-eye" data-bs-container="#showPasswordButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Show Password"></span>
                         </div>
                         <div class="input-group-text" id="copyPasswordToClipboardButton">
-                            <span class="dripicons-copy" data-bs-container="#copyPasswordToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
+                            <span data-bs-container="#copyPasswordToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard" role="button">
+                                <i class="mdi mdi-content-copy"></i>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -36,7 +40,9 @@
                     <div class="input-group input-group-merge">
                         <input type="domain" id="sip_domain" name="sip_domain" class="form-control" readonly="" placeholder="">
                         <div class="input-group-text" id="copyDomainToClipboardButton">
-                            <span class="dripicons-copy" data-bs-container="#copyDomainToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard"></span>
+                            <span data-bs-container="#copyDomainToClipboardButton" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Copy to Clipboard" role="button">
+                                <i class="mdi mdi-content-copy"></i>
+                            </span>
                         </div>
                     </div>
                 </div>
