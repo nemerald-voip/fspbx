@@ -65,7 +65,9 @@
                 <td>
                     @if ($permissions['device_restart'] && $device->lines()->first() && $device->lines()->first()->extension())
                         <div class="form-check">
-                            <input type="checkbox" name="action_box[]" value="{{ $device->device_uuid }}" class="form-check-input action_checkbox">
+                            <input type="checkbox" name="action_box[]" value="{{ $device->device_uuid }}"
+                                   data-restart-url="{{route('extensions.send-event-notify', $device->lines()->first()->extension()->extension_uuid)}}"
+                                   class="form-check-input action_checkbox">
                             <label class="form-check-label" >&nbsp;</label>
                         </div>
                     @endif
