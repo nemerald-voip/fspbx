@@ -1599,7 +1599,7 @@
 </div>
 
 @if($extension->exists)
-<div class="modal fade" id="createDeviceModal" role="dialog" aria-labelledby="createDeviceModalLabel" aria-hidden="true">
+<div class="modal fade" id="createDeviceModal" role="dialog" aria-labelledby="createDeviceModalLabel" aria-hidden="true" data-bs-focus="false">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
