@@ -29,8 +29,8 @@
         <div class="mt-3 sm:ml-4">
             <label for="mobile-search-candidate" class="sr-only">Search</label>
             <label for="desktop-search-candidate" class="sr-only">Search</label>
-            <div class="flex flex-col sm:flex-row">
-                <div class="relative focus-within:z-10 mb-2 sm:mb-0">
+            <div class="flex flex-col sm:flex-row sm:flex-wrap">
+                <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </div>
@@ -43,7 +43,7 @@
                 </div>
 
 
-                <div class="relative -mt-0.5 mb-2 sm:mb-0 sm:ml-4 shrink-0">
+                <div class="relative min-w-64 -mt-0.5 mb-2 shrink-0 sm:mr-4">
                     <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }"
                         :preset-dates="presetDates" :enable-time-picker="false" auto-apply>
                         <template #preset-date-range-button="{ label, value, presetDate }">
@@ -55,11 +55,11 @@
                     </VueDatePicker>
                 </div>
 
-                <div class="relative mb-2 sm:mb-0 sm:ml-4">
+                <div class="relative mb-2 ">
                     <div class="flex justify-between">
 
                         <button type="button" @click.prevent="onSearchClick"
-                            class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm sm:ml-4 font-semibold text-white shadow-sm hover:bg-indigo-500 
+                            class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 
                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             Search
                         </button>
@@ -75,7 +75,7 @@
 
         <!-- Table -->
 
-        <div class="mt-8 flow-root">
+        <div class="mt-6 flow-root">
 
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">

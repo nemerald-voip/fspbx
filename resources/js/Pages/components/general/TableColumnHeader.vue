@@ -4,7 +4,6 @@
 
   
 <script setup>
-import { defineProps } from 'vue';
 
 // Define the props for the Column component
 const props = defineProps({
