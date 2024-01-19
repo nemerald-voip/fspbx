@@ -16,12 +16,7 @@
             </div>
             <div v-if="$slots.action">
                 <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                    <slot name="action">
-                        <!-- Default Action Button -->
-                        <button type="button"
-                            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Add
-                            user</button>
-                    </slot>
+                    <slot name="action"></slot>
                 </div>
             </div>
         </div>
@@ -44,15 +39,8 @@
 
 
                 <div class="relative min-w-64 -mt-0.5 mb-2 shrink-0 sm:mr-4">
-                    <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }"
-                        :preset-dates="presetDates" :enable-time-picker="false" auto-apply>
-                        <template #preset-date-range-button="{ label, value, presetDate }">
-                            <span role="button" :tabindex="0" @click="presetDate(value)"
-                                @keyup.enter.prevent="presetDate(value)" @keyup.space.prevent="presetDate(value)">
-                                {{ label }}
-                            </span>
-                        </template>
-                    </VueDatePicker>
+                    <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                        @update:date-range="handleUpdateDateRange" />
                 </div>
 
                 <div class="relative mb-2 ">
@@ -128,23 +116,13 @@
 
 import { ref } from 'vue';
 import { MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import VueDatePicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
-import moment from 'moment-timezone';
-
-import {
-    startOfDay, endOfDay,
-    startOfWeek, endOfWeek,
-    subDays,
-    startOfMonth, endOfMonth,
-    subMonths
-} from 'date-fns';
+import DatePicker from "./DatePicker.vue";
 
 const props = defineProps({
     filterData: Object // 
 });
 
-// Initial date range
+// Initial search
 const dateRange = ref();
 dateRange.value = props.filterData.dateRange;
 
@@ -153,41 +131,16 @@ const searchQuery = ref();
 searchQuery.value = props.filterData.search;
 
 
-// const today = moment().tz(props.filterData['timezone']).toDate();
-// console.log(dateRange.value[0]);
-const today = new Date();
-// console.log(today);
-// console.log(startOfDay(today));
-
-const presetDates = ref([
-    { label: 'Today', value: [startOfDay(today), endOfDay(today)] },
-    { label: 'This Week', value: [startOfWeek(startOfDay(today)), endOfWeek(endOfDay(today))] },
-    { label: 'Past 7 Days', value: [subDays(startOfDay(today), 6), endOfDay(today)] },
-    { label: 'Past 30 Days', value: [subDays(startOfDay(today), 29), endOfDay(today)] },
-    { label: 'This Month', value: [startOfMonth(startOfDay(today)), endOfMonth(endOfDay(today))] },
-    { label: 'Last Month', value: [startOfMonth(subMonths(startOfDay(today), 1)), endOfMonth(subMonths(endOfDay(today), 1))] }
-]);
-
-
 // console.log(props.filterData['timezone']);
 
-const emit = defineEmits(['update:dateRange', 'search-action']);
+const emit = defineEmits(['search-action']);
 
-// Method to handle date changes
-// const onDateChange = (newDateRange) => {
-// };
-
-const convertToNewTimezoneAndKeepTime = (date) => {
-    let localTime = moment(date);
-    let convertedDate = moment.tz(localTime.format('YYYY-MM-DDTHH:mm:ss'), props.filterData['timezone']);
-    return convertedDate.format();
-}
 
 // Method to handle search button click
 const onSearchClick = () => {
     const searchData = {
         // dateRange: dateRange.value,
-        dateRange: [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])],
+        dateRange: dateRange.value,
         searchQuery: searchQuery.value
     };
     emit('search-action', searchData);
@@ -204,6 +157,9 @@ const onResetClick = () => {
     emit('search-action', searchData);
 };
 
+const handleUpdateDateRange = (newDateRange) => {
+    dateRange.value = newDateRange;
+}
 
 
 </script>
