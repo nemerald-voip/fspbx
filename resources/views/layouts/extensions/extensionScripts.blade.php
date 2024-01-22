@@ -272,7 +272,7 @@
                                 $('#createMobileAppSuccessModal').modal("show");
                                 $('#createMobileAppSuccessModalLabel').text("Create mobile app user");
                                 $('#createMobileAppSuccessModalTitle').text(
-                                    'New mobile app was user sucessfully created.');
+                                    'New mobile app user was sucessfully created.');
                                 $('#usernameSpan').text(response.user.username);
                                 $('#extensionSpan').text(response.user.username);
                                 $('#passwordSpan').text(response.user.password);
