@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --https",
         "build": "vite build"
     },
     "devDependencies": {
@@ -16,6 +16,7 @@
         "sass": "^1.69.5",
         "sass-loader": "^11.0.1",
         "tailwindcss": "^3.4.0",
+        "@vitejs/plugin-basic-ssl": "^1.0.2",
         "vite": "^4.5.1"
     },
     "type": "module",
@@ -24,6 +25,7 @@
         "@heroicons/vue": "^2.1.1",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/vue3": "^1.0.14",
+        "@syncfusion/ej2-vue-popups": "^24.1.44",
         "@tailwindcss/forms": "^0.5.7",
         "@vitejs/plugin-vue": "^4.5.2",
         "@vuepic/vue-datepicker": "^7.4.0",

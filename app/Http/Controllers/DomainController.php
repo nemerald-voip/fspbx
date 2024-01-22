@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
+use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDomainRequest;
@@ -39,8 +40,10 @@ class DomainController extends Controller
             }
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
+            Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);
             $_SESSION["domain_name"] = $domain->domain_name;
             $_SESSION["domain_uuid"] = $domain->domain_uuid;
+            $_SESSION["domain_description"] = !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name;
 
             //set the context
             Session::put('context', $_SESSION["domain_name"]);
@@ -76,8 +79,10 @@ class DomainController extends Controller
             session_start();
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
+            Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);
             $_SESSION["domain_name"] = $domain->domain_name;
             $_SESSION["domain_uuid"] = $domain->domain_uuid;
+            $_SESSION["domain_description"] = !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name;
 
             //set the context
             Session::put('context', $_SESSION["domain_name"]);
@@ -157,4 +162,38 @@ class DomainController extends Controller
     {
         //
     }
+
+    /**
+     * get extension count for all domains.
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function countExtensionsInDomains()
+    {
+        if (isSuperAdmin()) {
+
+
+            $domains = Domain::get();
+
+
+            foreach ($domains as $domain) {
+                print $domain->domain_description;
+                print "<br>";
+
+                $extensions = Extensions::where('domain_uuid', $domain->domain_uuid)->get()->count();
+
+                print $extensions;
+                print "<br><br>";
+            }
+
+        } else {
+             return redirect('dashboard');
+        }
+
+
+
+    }
+
+    
 }

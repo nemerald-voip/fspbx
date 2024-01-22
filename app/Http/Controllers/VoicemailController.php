@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use cache;
+// use cache;
 use App\Models\Domain;
 use App\Models\Extensions;
 use App\Models\Voicemails;

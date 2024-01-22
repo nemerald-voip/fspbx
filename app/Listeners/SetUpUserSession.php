@@ -266,9 +266,9 @@ class SetUpUserSession
         if (userCheckPermission("domain_select")) {
             //if user is in the reseller group check if he is allowed to see his own domain
             $self_domain = false;
-            if (Session::get('domains')->isNotEmpty()) {
-                foreach ($_SESSION['domains'] as $key => $val) {
-                    if ($key == $domain->domain_uuid) {
+            if (Session::get('domains')) {
+                foreach (Session::get('domains') as $session_domain) {
+                    if ($session_domain->domain_uuid == $domain->domain_uuid) {
                         $self_domain = true;
                         break;
                     }
@@ -276,19 +276,21 @@ class SetUpUserSession
             }
 
             if ($self_domain) {
-                Session::put('domain_uuid', $val['domain_uuid']);
-                Session::put('domain_name', $val['domain_name']);
-                $_SESSION["domain_name"] = $val['domain_name'];
-                $_SESSION["user"]["domain_name"] = $val['domain_name'];
-                $_SESSION["domain_uuid"] = $val['domain_uuid'];
-                $_SESSION["context"] = $val['domain_name'];
-                $_SESSION["user"]["domain_uuid"] = $val['domain_uuid'];
+                Session::put('domain_uuid', $session_domain->domain_uuid);
+                Session::put('domain_name', $session_domain->domain_name);
+                Session::put('domain_description', !empty($session_domain->domain_description) ? $session_domain->domain_description : $session_domain->domain_name);
+                $_SESSION["domain_name"] = $session_domain->domain_name;
+                $_SESSION["user"]["domain_name"] = $session_domain->domain_name;
+                $_SESSION["domain_uuid"] = $session_domain->domain_uuid;
+                $_SESSION["context"] = $session_domain->domain_name;
+                $_SESSION["user"]["domain_uuid"] = $session_domain->domain_uuid;
             } else {
                 // if not then grab first domain from the list of allowed domains
                 if (Session::get('domains')->isNotEmpty()) {
                     $first_domain = reset($_SESSION['domains']);
                     Session::put('domain_uuid', $first_domain['domain_uuid']);
                     Session::put('domain_name', $first_domain['domain_name']);
+                    Session::put('domain_description', !empty($first_domain['domain_description']) ? $first_domain['domain_description'] : $first_domain['domain_name']);
                     $_SESSION["domain_name"] = $first_domain['domain_name'];
                     $_SESSION["user"]["domain_name"] = $first_domain['domain_name'];
                     $_SESSION["domain_uuid"] = $first_domain['domain_uuid'];
@@ -298,6 +300,7 @@ class SetUpUserSession
         } else {
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
+            Session::put('domain_description', $domain->domain_description);
             $_SESSION["domain_name"] = $domain->domain_name;
             $_SESSION["user"]["domain_name"] = $domain->domain_name;
             $_SESSION["domain_uuid"] = $domain->domain_uuid;

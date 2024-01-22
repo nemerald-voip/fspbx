@@ -11,12 +11,14 @@
     <a href="{{ route('devices.index', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
         Show {{ (($selectedScope == 'local')?'global':'local') }} devices
     </a>
-    <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','');" class="btn btn-danger btn-sm mb-2 me-2 disabled">
-        Restart selected devices
-    </a>
-    <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','');" class="btn btn-danger btn-sm mb-2 me-2">
-        Restart all {{$devices->total()}} devices
-    </a>
+    @if($permissions['device_restart'])
+        <a href="#" class="btn btn-danger btn-restart-selected-devices btn-sm mb-2 me-2 disabled">
+            Restart selected devices
+        </a>
+        <a href="#" class="btn btn-danger btn-restart-all-devices btn-sm mb-2 me-2">
+            Restart all {{$devicesToRestartCount}} devices
+        </a>
+    @endif
 @endsection
 
 @section('searchbar')
@@ -63,7 +65,9 @@
                 <td>
                     @if ($permissions['device_restart'] && $device->lines()->first() && $device->lines()->first()->extension())
                         <div class="form-check">
-                            <input type="checkbox" name="action_box[]" value="{{ $device->device_uuid }}" class="form-check-input action_checkbox">
+                            <input type="checkbox" name="action_box[]" value="{{ $device->device_uuid }}"
+                                   data-restart-url="{{route('extensions.send-event-notify', $device->lines()->first()->extension()->extension_uuid)}}"
+                                   class="form-check-input action_checkbox">
                             <label class="form-check-label" >&nbsp;</label>
                         </div>
                     @endif
@@ -99,15 +103,14 @@
 
                     @if($device->lines()->first() && $device->lines()->first()->extension())
                         @if ($permissions['device_restart'])
-                            <a href="javascript:sendEventNotify('{{ route('extensions.send-event-notify', ':id') }}','{{ $device->lines()->first()->extension()->extension_uuid }}');"
-                               class="action-icon">
+                            <a href="{{route('extensions.send-event-notify', ':id')}}" data-extension-id="{{$device->lines()->first()->extension()->extension_uuid}}" class="action-icon btn-restart-device">
                                 <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions"
                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Restart Devices"></i>
                             </a>
                         @endif
                     @endif
 
-                    <a href="javascript:confirmDeleteAction('{{ route('devices.destroy', ':id') }}','{{ $device->device_uuid }}');" class="action-icon">
+                    <a href="{{ route('devices.destroy', $device->device_uuid) }}" data-id="{{$device->device_uuid}}" class="action-icon btn-delete-device">
                         <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
                     </a>
                 </td>

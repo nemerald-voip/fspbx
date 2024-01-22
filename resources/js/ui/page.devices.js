@@ -1,13 +1,139 @@
-!function($) {
+!function ($) {
     "use strict";
 
     const Devices = function () {
         this.$body = $("body")
-
+        this.$restartDeviceBtn = $(".btn-restart-device")
+        this.$deleteDeviceBtn = $(".btn-delete-device")
+        this.$actionCheckbox = $(".action_checkbox")
+        this.$restartSelectedDevices = $(".btn-restart-selected-devices")
+        this.$restartAllDevices = $('.btn-restart-all-devices')
+        this.$selectallCheckbox = $('#selectallCheckbox')
+        this.$restartedWrapper = '<div id="restartedWrapper" class="jq-toast-wrap bottom-right">' +
+            '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>Restarted ' +
+            '<span id="restartedCount">:count</span></div></div>'
     };
 
     Devices.prototype.init = function () {
-        console.log("init devices page")
+        var $this = this;
+        this.$restartDeviceBtn.on("click", function (e) {
+            e.preventDefault();
+            $this.sendRequest(e.currentTarget.href.replace(':id', e.currentTarget.dataset.extensionId));
+            return false;
+        });
+        this.$restartSelectedDevices.on("click", function (e) {
+            e.preventDefault();
+            $this.removeRestartedWrapper(false)
+            let devices = $this.$actionCheckbox.filter(':checked');
+            let devicesTotal = devices.length;
+            $this.$restartedWrapper.replace(":count", `0 of ${devicesTotal}`)
+            $('body').append($this.$restartedWrapper);
+            $.each(devices, (i, device) => {
+                $this.sendRequest(device.dataset.restartUrl, true)
+                $('#restartedCount').text(`${i + 1} of ${devicesTotal}`)
+                if ((i + 1) === devicesTotal) {
+                    setTimeout(() => {
+                        $this.removeRestartedWrapper()
+                    }, 4000)
+                }
+            })
+            return false;
+        });
+        this.$deleteDeviceBtn.on("click", function (e) {
+            e.preventDefault();
+            let dataObj = {};
+            dataObj.url = e.currentTarget.href;
+            dataObj.setting_id = e.currentTarget.dataset.id;
+            $('#confirmDeleteModal').data(dataObj).modal('show');
+            //$this.sendRequest(e.currentTarget.href, null, 'DELETE');
+            return false;
+        });
+        this.$restartAllDevices.on('click', function (e) {
+            e.preventDefault();
+
+        })
+        this.$restartSelectedDevices.on('click', function (e) {
+            e.preventDefault();
+
+        })
+        this.$actionCheckbox.on('click', function (e) {
+            if ($this.$actionCheckbox.filter(':checked').length > 0) {
+                $this.enableRestartSelectedDevices()
+            } else {
+                $this.disableRestartSelectedDevices()
+            }
+        })
+        this.$selectallCheckbox.on('click', function () {
+            if ($(this).prop('checked')) {
+                $this.enableRestartSelectedDevices()
+            } else {
+                $this.disableRestartSelectedDevices()
+            }
+        })
+    }
+
+    Devices.prototype.enableRestartSelectedDevices = function () {
+        this.$restartSelectedDevices.removeClass('disabled');
+    }
+
+    Devices.prototype.disableRestartSelectedDevices = function () {
+        this.$restartSelectedDevices.addClass('disabled');
+    }
+
+    Devices.prototype.removeRestartedWrapper = function (fadeOut = true) {
+        if(fadeOut) {
+            $('body').find('#restartedWrapper').fadeOut(function () {
+                $(this).remove();
+            });
+        } else {
+            $('body').find('#restartedWrapper').remove()
+        }
+    }
+
+    Devices.prototype.sendRequest = function (url, hideNotifyOnSuccess = false) {
+        let ajaxData = {
+            type: 'POST',
+            url: url,
+            cache: false,
+        };
+        $.ajax(ajaxData).done(function (response) {
+            //$('.loading').hide();
+            if (response.error) {
+                if (response.message) {
+                    $.NotificationApp.send(
+                        "Warning",
+                        response.message,
+                        "top-right",
+                        "#ff5b5b",
+                        "error"
+                    );
+                }
+                if (response.error.message) {
+                    $.NotificationApp.send(
+                        "Warning",
+                        response.error.message,
+                        "top-right",
+                        "#ff5b5b",
+                        "error"
+                    );
+                }
+            } else {
+                if (response.success && response.success.message) {
+                    if (!hideNotifyOnSuccess) {
+                        $.NotificationApp.send(
+                            "Success",
+                            response.success.message,
+                            "top-right",
+                            "#10c469",
+                            "success"
+                        );
+                    }
+                }
+            }
+        }).fail(function (jqXHR, testStatus, error) {
+            $('.loading').hide();
+            printErrorMsg(error);
+        });
     }
 
     $.Devices = new Devices

@@ -1,12 +1,14 @@
 <template>
     <td :class="class" :style="style">
-        {{ text }}
-        <slot name="action-buttons"></slot>
+      <!-- Default slot next to the text -->
+      <slot>{{ text }}</slot>
+  
+      <!-- Named slot for action-buttons -->
+      <slot name="action-buttons"></slot>
     </td>
   </template>
   
   <script setup>
-  import { defineProps } from 'vue';
   
   const props = defineProps({
     text: {
@@ -14,8 +16,8 @@
       default: ''
     },
     style: {
-      type: null,
-      default: null
+      type: Object,  
+      default: () => ({})
     },
     class: {
       type: String,
