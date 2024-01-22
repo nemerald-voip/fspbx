@@ -53,7 +53,7 @@ Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::
 
 // Call Detail Records
 Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
-Route::get('/call-detail-records/file/{filePath}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
+Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
 
 
 // Groups

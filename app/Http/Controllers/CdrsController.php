@@ -25,7 +25,7 @@ class CdrsController extends Controller
     {
         // logger($request->all());
         // Check permissions
-        if (!userCheckPermission("xml_cdr_view")) {
+        if (!userCheckPermission("extension_view")) {
             return redirect('/');
         }
 
@@ -85,7 +85,7 @@ class CdrsController extends Controller
                     return Session::get('domain_select');
                 },
                 'selectedDomain' => function () {
-                    return Session::get('domain_description');
+                    return Session::get('domain_name');
                 },
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
@@ -125,14 +125,23 @@ class CdrsController extends Controller
         //-----For local files------
         if ($recording->record_path != 'S3') {
 
-            $filePath = str_replace('/var/lib/freeswitch/recordings/', '', $recording->record_path . '/' . $recording->record_name);
+            // $filePath = str_replace('/var/lib/freeswitch/recordings/', '', $recording->record_path . '/' . $recording->record_name);
+            $filePath = $recording->record_path;
+            $fileName = $recording->record_name;
 
             // Encrypt the file path
             $encryptedFilePath = encrypt($filePath);
+            // Encrypt the file name
+            $encryptedFileName = encrypt($fileName);
+
             // logger($encryptedFilePath);
+            // logger($encryptedFileName);
 
             // Generate the URL
-            $url = route('serve.recording', ['filePath' => $encryptedFilePath]);
+            $url = route('serve.recording', [
+                'filePath' => $encryptedFilePath,
+                'fileName' => $encryptedFileName,
+            ]);
 
             if (isset($url)) return $url;
         }
@@ -179,15 +188,22 @@ class CdrsController extends Controller
     }
 
 
-    public function serveRecording($filePath)
+    public function serveRecording($filePath, $fileName)
     {
         $filePath = decrypt($filePath); // Assuming the path is encrypted for security
+        $fileName = decrypt($fileName); // Assuming the name is encrypted for security
 
-        if (!Storage::disk('recordings')->exists($filePath)) {
+        $disk = Storage::build([
+            'driver' => 'local',
+            'root' => $filePath,
+        ]);
+
+        if (!$disk->exists($fileName)) {
             return null;
         }
+
         // return response($fileContent, 200)->header('Content-Type', $mimeType);
-        return response()->file(Storage::disk('recordings')->path($filePath));
+        return response()->file($disk->path($fileName));
     }
 
 
