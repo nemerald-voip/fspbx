@@ -695,7 +695,7 @@ class ExtensionsController extends Controller
             session_start();
         }
 
-        if (isset($extension->extension)) {    
+        if (isset($extension->extension)) {
             //clear fusionpbx cache
             FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
         }
@@ -1421,6 +1421,37 @@ class ExtensionsController extends Controller
             }
         }
 
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Successfully submitted restart request'
+            ]
+        ]);
+    }
+
+    public function sendEventNotifyAll(Request $request)
+    {
+        $all_regs = get_registrations();
+        foreach ($all_regs as $i => $reg) {
+            // Get the agent name
+            if (preg_match('/Bria|Push|Ringotel/i', $reg['agent']) > 0) {
+                $agent = "";
+            } elseif (preg_match('/polycom|polyedge/i', $reg['agent']) > 0) {
+                $agent = "polycom";
+            } elseif (preg_match("/yealink/i", $reg['agent'])) {
+                $agent = "yealink";
+            } elseif (preg_match("/grandstream/i", $reg['agent'])) {
+                $agent = "grandstream";
+            }
+
+            if ($agent != "") {
+                $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
+                // Queue a job to restart the phone
+                SendEventNotify::dispatch($command)->delay($i * 2)->onQueue('default');
+                logger('Job delay '.$command.' is '.($i * 2));
+            }
+        }
 
         return response()->json([
             'status' => 200,

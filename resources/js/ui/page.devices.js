@@ -56,7 +56,12 @@
         });
         this.$restartAllDevices.on('click', function (e) {
             e.preventDefault();
+            $this.removeRestartedWrapper(false)
+            $('body').append($this.$restartedWrapper);
+            $('#restartedCount').text(`0 of ${e.currentTarget.dataset.totalDevicesCount}`)
+            $this.sendRequest(e.currentTarget.dataset.restartUrl, false)
 
+            return false;
         })
         this.$restartSelectedDevices.on('click', function (e) {
             e.preventDefault();

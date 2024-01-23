@@ -15,7 +15,7 @@
         <a href="#" class="btn btn-danger btn-restart-selected-devices btn-sm mb-2 me-2 disabled">
             Restart selected devices
         </a>
-        <a href="#" class="btn btn-danger btn-restart-all-devices btn-sm mb-2 me-2">
+        <a href="#" data-restart-url="{{route('extensions.send-event-notify-all')}}" data-total-devices-count="{{$devicesToRestartCount}}" class="btn btn-danger btn-restart-all-devices btn-sm mb-2 me-2">
             Restart all {{$devicesToRestartCount}} devices
         </a>
     @endif
