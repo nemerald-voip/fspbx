@@ -10,8 +10,8 @@
         this.$restartAllDevices = $('.btn-restart-all-devices')
         this.$selectallCheckbox = $('#selectallCheckbox')
         this.$restartedWrapper = '<div id="restartedWrapper" class="jq-toast-wrap bottom-right">' +
-            '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>Restarted ' +
-            '<span id="restartedCount">:count</span></div></div>'
+            '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>' +
+            '<span id="restartedCount"></span></div></div>'
     };
 
     Devices.prototype.init = function () {
@@ -26,17 +26,23 @@
             $this.removeRestartedWrapper(false)
             let devices = $this.$actionCheckbox.filter(':checked');
             let devicesTotal = devices.length;
-            $this.$restartedWrapper.replace(":count", `0 of ${devicesTotal}`)
+            $('#restartedCount').text(`0 of ${devicesTotal}`)
             $('body').append($this.$restartedWrapper);
-            $.each(devices, (i, device) => {
-                $this.sendRequest(device.dataset.restartUrl, true)
+
+            var i = 0;
+            var interval = setInterval(function(){
+                var obj = devices[i];
+                $this.sendRequest(obj.dataset.restartUrl, true)
                 $('#restartedCount').text(`${i + 1} of ${devicesTotal}`)
-                if ((i + 1) === devicesTotal) {
+                i++;
+                if(i === devices.length) {
+                    clearInterval(interval);
                     setTimeout(() => {
                         $this.removeRestartedWrapper()
                     }, 4000)
                 }
-            })
+            }, 2000)
+
             return false;
         });
         this.$deleteDeviceBtn.on("click", function (e) {
