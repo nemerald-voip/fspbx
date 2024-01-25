@@ -875,8 +875,6 @@ class ExtensionsController extends Controller
             }
         }
 
-        logger($follow_me_destinations);
-
         return view('layouts.extensions.createOrUpdate')
             ->with('extension', $extension)
             ->with('domain_users', $extension->domain->users)
@@ -1223,8 +1221,6 @@ class ExtensionsController extends Controller
             ], $attributes['follow_me_destinations']);
         }
 
-        logger($attributes['follow_me_destinations']);
-
         if (count($attributes['follow_me_destinations']) > 0) {
             $i = 0;
             foreach ($attributes['follow_me_destinations'] as $destination) {
@@ -1235,7 +1231,7 @@ class ExtensionsController extends Controller
                 } else {
                     $followMeDest->follow_me_destination = $destination['target_internal'];
                 }
-                logger($followMeDest);
+
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 if ($destination['prompt'] == 'true') {
@@ -1484,6 +1480,8 @@ class ExtensionsController extends Controller
             'device_uuid' => $inputs['device_uuid'],
             'line_number' => $inputs['line_number'] ?? '1',
             'server_address' => Session::get('domain_name'),
+            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
             'server_address_primary' => get_domain_setting('server_address_primary'),
             'server_address_secondary' => get_domain_setting('server_address_secondary'),
             'display_name' => $extension->extension,
@@ -1509,6 +1507,11 @@ class ExtensionsController extends Controller
 
     public function unAssignDevice(Extensions $extension, DeviceLines $deviceLine)
     {
+        if ($deviceLine->device->device_label == $extension->extension) {
+            $deviceLine->device->device_label = "";
+            $deviceLine->device->save();
+        }
+
         $deviceLine->delete();
 
         return response()->json([
