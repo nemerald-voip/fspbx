@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,watch } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import moment from 'moment-timezone';
 
@@ -31,13 +31,12 @@ const props = defineProps({
 // Initial date range
 const dateRange = ref();
 dateRange.value = props.dateRange;
+// Watch for changes in the dateRange prop and update the local dateRange state
+watch(() => props.dateRange, (newDateRange) => {
+    dateRange.value = [...newDateRange]; // Create a new array to ensure reactivity
+});
 
-
-// const today = moment().tz(props.filterData['timezone']).toDate();
-// console.log(dateRange.value[0]);
 const today = new Date();
-// console.log(today);
-// console.log(startOfDay(today));
 
 const presetDates = ref([
     { label: 'Today', value: [startOfDay(today), endOfDay(today)] },

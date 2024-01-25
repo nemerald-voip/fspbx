@@ -4,8 +4,31 @@
         :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
 
     <div class="m-3">
-        <DataTable :filterData="filterData" @search-action="handleSearchButtonClick">
+        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>Call History</template>
+
+            <template #filters>
+                <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </div>
+                    <input type="text" v-model="filterData.search" name="mobile-search-candidate"
+                        id="mobile-search-candidate"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:hidden"
+                        placeholder="Search" />
+                    <input type="text" v-model="filterData.search" name="desktop-search-candidate"
+                        id="desktop-search-candidate"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:block"
+                        placeholder="Search" />
+                </div>
+
+
+                <div class="relative min-w-64 -mt-0.5 mb-2 shrink-0 sm:mr-4">
+                    <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                        @update:date-range="handleUpdateDateRange" />
+                </div>
+            </template>
+
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
@@ -40,7 +63,8 @@
                         :text="row.direction" /> -->
                     <TableField :text="row.direction"
                         class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                        <ejs-tooltip :content="row.direction + ' call'" position='TopLeft' target="#destination_tooltip_target">
+                        <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
+                            target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
                                 <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
@@ -142,8 +166,7 @@ import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
-
-
+import DatePicker from "./components/general/DatePicker.vue";
 import {
     PlayCircleIcon,
     PauseCircleIcon,
@@ -154,6 +177,12 @@ import {
 import {
     TransitionRoot,
 } from '@headlessui/vue'
+
+import {
+    startOfDay, endOfDay,
+} from 'date-fns';
+
+const today = new Date();
 
 const loading = ref(false)
 
@@ -180,10 +209,10 @@ const filterData = ref({
     timezone: props.timezone,
 });
 
-const handleSearchButtonClick = (searchData) => {
+
+const handleSearchButtonClick = () => {
     loading.value = true;
-    filterData.value.search = searchData.searchQuery;
-    filterData.value.dateRange = searchData.dateRange;
+
     router.visit("/call-detail-records", {
         data: {
             filterData: filterData._rawValue,
@@ -197,6 +226,17 @@ const handleSearchButtonClick = (searchData) => {
 
     });
 };
+
+const handleFiltersReset = () => {
+    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
+
+    filterData.value.search = null;
+
+    console.log(filterData.value);
+    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
+    handleSearchButtonClick();
+}
+
 const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
@@ -220,7 +260,6 @@ const isAudioPlaying = ref(false);
 const fetchAndPlayAudio = (uuid) => {
     router.visit("/call-detail-records", {
         data: {
-            // filterData: filterData._rawValue,
             callUuid: uuid,
         },
         preserveScroll: true,
@@ -293,6 +332,10 @@ const pauseAudio = () => {
     }
 };
 
+const handleUpdateDateRange = (newDateRange) => {
+    filterData.value.dateRange = newDateRange;
+}
+
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
@@ -302,5 +345,4 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
