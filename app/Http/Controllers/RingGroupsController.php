@@ -31,11 +31,21 @@ class RingGroupsController extends Controller
         if (!userCheckPermission("ring_group_view")) {
             return redirect('/');
         }
+        $searchString = $request->get('search');
 
         //$timeZone = get_local_time_zone(Session::get('domain_uuid'));
         $ringGroups = RingGroups::query();
         $ringGroups
             ->where('domain_uuid', Session::get('domain_uuid'));
+
+        if ($searchString) {
+            $ringGroups->where(function ($query) use ($searchString) {
+                $query->where('ring_group_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('ring_group_extension', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+                    ->orWhere('ring_group_description', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
+            });
+        }
+
         $ringGroups = $ringGroups->orderBy('ring_group_extension')->paginate(10)->onEachSide(1);
 
         $permissions['delete'] = userCheckPermission('ring_group_delete');
@@ -44,6 +54,7 @@ class RingGroupsController extends Controller
         $permissions['add'] = userCheckPermission('ring_group_add');
         $data = [];
         $data['ringGroups'] = $ringGroups;
+        $data['searchString'] = $searchString;
 
         return view('layouts.ringgroups.list')
             ->with($data)
@@ -116,10 +127,12 @@ class RingGroupsController extends Controller
     {
         $attributes = $request->validated();
 
-        if(isset($attributes['ring_group_forward'])) {
+        if (isset($attributes['ring_group_forward'])) {
             if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-                $attributes['ring_group_forward_destination'] = (new PhoneNumber($attributes['ring_group_forward']['all']['target_external'],
-                    "US"))->formatE164();
+                $attributes['ring_group_forward_destination'] = (new PhoneNumber(
+                    $attributes['ring_group_forward']['all']['target_external'],
+                    "US"
+                ))->formatE164();
             } else {
                 $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
                 if (empty($attributes['ring_group_forward_destination'])) {
@@ -128,7 +141,7 @@ class RingGroupsController extends Controller
             }
         }
 
-        if(!isset($attributes['ring_group_missed_call_category'])) {
+        if (!isset($attributes['ring_group_missed_call_category'])) {
             $attributes['ring_group_missed_call_category'] = null;
         }
 
@@ -175,7 +188,7 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
-                if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
+                if ($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
                     $groupsDestinations->destination_delay = $order;
                     $order += 5;
                 } else {
@@ -184,7 +197,7 @@ class RingGroupsController extends Controller
                 $groupsDestinations->destination_timeout = $destination['timeout'];
                 $sumDestinationsTimeout += $destination['timeout'];
                 // Save the longest timeout
-                if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
                 }
                 if ($destination['prompt'] == 'true') {
@@ -348,10 +361,12 @@ class RingGroupsController extends Controller
 
         $attributes = $request->validated();
 
-        if(isset($attributes['ring_group_forward'])) {
+        if (isset($attributes['ring_group_forward'])) {
             if ($attributes['ring_group_forward']['all']['type'] == 'external') {
-                $attributes['ring_group_forward_destination'] = (new PhoneNumber($attributes['ring_group_forward']['all']['target_external'],
-                    "US"))->formatE164();
+                $attributes['ring_group_forward_destination'] = (new PhoneNumber(
+                    $attributes['ring_group_forward']['all']['target_external'],
+                    "US"
+                ))->formatE164();
             } else {
                 $attributes['ring_group_forward_destination'] = ($attributes['ring_group_forward']['all']['target_internal'] == '0') ? '' : $attributes['ring_group_forward']['all']['target_internal'];;
                 if (empty($attributes['ring_group_forward_destination'])) {
@@ -360,7 +375,7 @@ class RingGroupsController extends Controller
             }
         }
 
-        if(!isset($attributes['ring_group_missed_call_category'])) {
+        if (!isset($attributes['ring_group_missed_call_category'])) {
             $attributes['ring_group_missed_call_category'] = null;
         }
 
@@ -407,7 +422,7 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
-                if($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
+                if ($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
                     $groupsDestinations->destination_delay = $order;
                     $order += 5;
                 } else {
@@ -416,7 +431,7 @@ class RingGroupsController extends Controller
                 $groupsDestinations->destination_timeout = $destination['timeout'];
                 $sumDestinationsTimeout += $destination['timeout'];
                 // Save the longest timeout
-                if(($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
                 }
                 if ($destination['prompt'] == 'true') {
