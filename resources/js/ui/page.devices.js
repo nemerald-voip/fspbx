@@ -9,9 +9,9 @@
         this.$restartSelectedDevices = $(".btn-restart-selected-devices")
         this.$restartAllDevices = $('.btn-restart-all-devices')
         this.$selectallCheckbox = $('#selectallCheckbox')
-        this.$restartedWrapper = '<div id="restartedWrapper" class="jq-toast-wrap bottom-right">' +
-            '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>' +
-            '<span id="restartedCount"></span></div></div>'
+        //this.$restartedWrapper = '<div id="restartedWrapper" class="jq-toast-wrap bottom-right">' +
+        //    '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>' +
+        //    '<span id="restartedCount"></span></div></div>'
     };
 
     Devices.prototype.init = function () {
@@ -23,25 +23,17 @@
         });
         this.$restartSelectedDevices.on("click", function (e) {
             e.preventDefault();
-            $this.removeRestartedWrapper(false)
+            //$this.removeRestartedWrapper(false)
             let devices = $this.$actionCheckbox.filter(':checked');
-            let devicesTotal = devices.length;
-            $('#restartedCount').text(`0 of ${devicesTotal}`)
-            $('body').append($this.$restartedWrapper);
+            //let devicesTotal = devices.length;
+            //$('#restartedCount').text(`0 of ${devicesTotal}`)
+            //$('body').append($this.$restartedWrapper);
 
-            var i = 0;
-            var interval = setInterval(function(){
-                var obj = devices[i];
-                $this.sendRequest(obj.dataset.restartUrl, true)
-                $('#restartedCount').text(`${i + 1} of ${devicesTotal}`)
-                i++;
-                if(i === devices.length) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        $this.removeRestartedWrapper()
-                    }, 4000)
-                }
-            }, 2000)
+            let extensionIds = [];
+            devices.each(function(key, val) {
+                extensionIds.push($(this).data('extension-uuid'));
+            });
+            $this.sendRequest(e.currentTarget.dataset.restartUrl, extensionIds)
 
             return false;
         });
@@ -56,10 +48,10 @@
         });
         this.$restartAllDevices.on('click', function (e) {
             e.preventDefault();
-            $this.removeRestartedWrapper(false)
-            $('body').append($this.$restartedWrapper);
-            $('#restartedCount').text(`0 of ${e.currentTarget.dataset.totalDevicesCount}`)
-            $this.sendRequest(e.currentTarget.dataset.restartUrl, false)
+            //$this.removeRestartedWrapper(false)
+            //$('#restartedCount').text(`0 of ${e.currentTarget.dataset.totalDevicesCount}`)
+            //$('body').append($this.$restartedWrapper);
+            $this.sendRequest(e.currentTarget.dataset.restartUrl)
 
             return false;
         })
@@ -101,11 +93,14 @@
         }
     }
 
-    Devices.prototype.sendRequest = function (url, hideNotifyOnSuccess = false) {
+    Devices.prototype.sendRequest = function (url, devicesData = null, hideNotifyOnSuccess = false) {
         let ajaxData = {
             type: 'POST',
             url: url,
             cache: false,
+            data: {
+                extensionIds: devicesData
+            }
         };
         $.ajax(ajaxData).done(function (response) {
             //$('.loading').hide();

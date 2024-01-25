@@ -1384,7 +1384,7 @@ class ExtensionsController extends Controller
      * Restart devices for selected extensions.
      *
      * @param \App\Models\Extentions $extention
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sendEventNotify(Request $request, Extensions $extension)
     {
@@ -1399,8 +1399,6 @@ class ExtensionsController extends Controller
                 array_push($all_regs, $registration);
             }
         }
-
-        // Log::alert($all_regs);
 
         foreach ($all_regs as $reg) {
             // Get the agent name
@@ -1431,10 +1429,30 @@ class ExtensionsController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function sendEventNotifyAll(Request $request)
     {
-        $all_regs = get_registrations();
-        foreach ($all_regs as $i => $reg) {
+        $selectedExtensionIds = $request->get('extensionIds') ?? [];
+        $registrations = get_registrations();
+
+        $all_regs = [];
+        if(!empty($selectedExtensionIds)) {
+            foreach($selectedExtensionIds as $extensionId) {
+                $extension = Extensions::find($extensionId);
+                foreach ($registrations as $registration) {
+                    if ($registration['sip-auth-user'] == $extension['extension']) {
+                        array_push($all_regs, $registration);
+                    }
+                }
+            }
+        } else {
+            $all_regs = $registrations;
+        }
+
+        foreach ($all_regs as $reg) {
             // Get the agent name
             if (preg_match('/Bria|Push|Ringotel/i', $reg['agent']) > 0) {
                 $agent = "";
@@ -1449,15 +1467,14 @@ class ExtensionsController extends Controller
             if ($agent != "") {
                 $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
                 // Queue a job to restart the phone
-                SendEventNotify::dispatch($command)->delay($i * 2)->onQueue('default');
-                logger('Job delay '.$command.' is '.($i * 2));
+                SendEventNotify::dispatch($command)->onQueue('default');
             }
         }
 
         return response()->json([
             'status' => 200,
             'success' => [
-                'message' => 'Successfully submitted restart request'
+                'message' => 'Successfully submitted bulk restart request'
             ]
         ]);
     }
