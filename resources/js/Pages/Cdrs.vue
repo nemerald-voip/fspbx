@@ -14,19 +14,24 @@
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
                         placeholder="Search" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" />
                 </div>
 
 
-                <div class="relative min-w-64 -mt-0.5 mb-2 shrink-0 sm:mr-4">
+                <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
                     <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
                         @update:date-range="handleUpdateDateRange" />
                 </div>
+
+                <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+                    <SelectBox :data="callDirections" @update:selected-item="handleUpdateCallDirectionFilter"/>
+                </div>
+
             </template>
 
             <template #navigation>
@@ -163,6 +168,7 @@ import Paginator from "./components/general/Paginator.vue";
 import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
+import SelectBox from "./components/general/SelectBox.vue"
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
@@ -207,7 +213,19 @@ const filterData = ref({
     search: props.search,
     dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
+    direction: null,
 });
+
+const callDirections = [
+    { value: null, name: 'All' },
+    { value: 'outbound', name: 'Outbound' },
+    { value: 'inbound', name: 'Inbound' },
+    { value: 'local', name: 'Local' },
+]
+
+const handleUpdateCallDirectionFilter = (newValue) => {
+    console.log(newValue);
+}
 
 
 const handleSearchButtonClick = () => {
@@ -231,8 +249,8 @@ const handleFiltersReset = () => {
     filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
 
     filterData.value.search = null;
+    filterData.value.direction = null;
 
-    console.log(filterData.value);
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
