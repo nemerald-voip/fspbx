@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CDR;
 use App\Models\DeviceLines;
 use App\Models\DeviceProfile;
 use App\Models\Devices;
@@ -36,7 +37,7 @@ class DeviceController extends Controller
             return redirect('/');
         }
 
-        $scopes = ['global', 'local'];
+        /*$scopes = ['global', 'local'];
         $searchString = $request->get('search');
         $searchStringKey = strtolower(trim($searchString));
         $selectedScope = $request->get('scope', 'local');
@@ -61,16 +62,24 @@ class DeviceController extends Controller
 
         $devicesToRestart = $devices->get()->filter(function ($device) {
             return $device->extension();
-        });
+        });*/
 
-        $data = array();
-        $data['devices'] = $devices->paginate(5)->onEachSide(1);;
-        $data['devicesToRestartCount'] = $devicesToRestart->count();
-        $data['searchString'] = $searchString;
-        $data['permissions']['device_restart'] = isSuperAdmin();
-        $data['selectedScope'] = $selectedScope;
+        //$data = array();
+        //$data['devices'] = $devices->paginate(5)->onEachSide(1);;
+        //$data['devicesToRestartCount'] = $devicesToRestart->count();
+        //$data['searchString'] = $searchString;
+        //$data['permissions']['device_restart'] = isSuperAdmin();
+        //$data['selectedScope'] = $selectedScope;
 
         //return view('layouts.devices.list')->with($data);
+
+        $this->filters = [
+
+        ];
+
+        if (!empty($request->filterData['search'])) {
+            $this->filters['search'] = $request->filterData['search'];
+        }
 
         return Inertia::render(
             'devices',
@@ -84,28 +93,19 @@ class DeviceController extends Controller
                 'domainSelectPermission' => function () {
                     return Session::get('domain_select');
                 },
+                'domains' => function () {
+                    return Session::get("domains");
+                },
+                'deviceRestartPermission' => function () {
+                    return isSuperAdmin();
+                },
                 'selectedDomain' => function () {
                     return Session::get('domain_name');
                 },
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
                 },
-                'domains' => function () {
-                    return Session::get("domains");
-                },
-                'startPeriod' => function () {
-                    return $this->filters['startPeriod'];
-                },
-                'endPeriod' => function () {
-                    return $this->filters['endPeriod'];
-                },
-                'timezone' => function () {
-                    return $this->getTimezone();
-                },
-                'recordingUrl' => Inertia::lazy(
-                    fn () =>
-                    $this->getRecordingUrl($callUuid)
-                ),
+                'deviceGlobalView' => false
             ]
         );
 
@@ -115,6 +115,13 @@ class DeviceController extends Controller
     public function getDevices()
     {
         $devices = $this->builder($this->filters)->paginate(50);
+        foreach($devices as $device) {
+            $device->profile_name = $device->profile()->first()->device_profile_name ?? '';
+            if($device->lines()->first() && $device->lines()->first()->extension()) {
+                $device->extension = $device->lines()->first()->extension()->extension;
+                $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
+            }
+        }
 
 /*        $devices->transform(function ($cdr) {
             // Perform any additional processing on start_date if needed
@@ -126,6 +133,43 @@ class DeviceController extends Controller
 
             return $cdr;
         });*/
+        return $devices;
+    }
+
+    public function builder($filters = [])
+    {
+
+        $devices = Devices::query();
+        //if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
+            $devices
+                ->where('domain_uuid', Session::get('domain_uuid'));
+        /*} else {
+            $devices
+                ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
+        }*/
+
+        foreach ($filters as $field => $value) {
+            if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                $this->$method($devices, $value);
+            }
+        }
+
+        /*
+        if (!empty($searchStringKey)) {
+            $devices->where(function ($query) use ($searchStringKey) {
+                $query
+                    ->orWhereLike('device_address', str_replace([':', '-', '.'], '', $searchStringKey))
+                    ->orWhereLike('device_label', $searchStringKey)
+                    ->orWhereLike('device_vendor', $searchStringKey)
+                    ->orWhereLike('device_template', $searchStringKey);
+            });
+        }*/
+        $devices->orderBy('device_label');
+
+
+        // Apply sorting
+        //$cdrs->orderBy($this->sortField, $this->sortOrder);
+
         return $devices;
     }
 

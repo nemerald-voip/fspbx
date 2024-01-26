@@ -1,7 +1,7 @@
 
 <template>
-    <!--Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-        :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu-->
+    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+        :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -29,35 +29,40 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header=" "
-                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
-                <TableColumnHeader header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="MAC Address"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader v-if="deviceRestartPermission" header=" "
+                    class="py-3.5 text-sm font-semibold text-gray-900 text-center">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="selectallCheckbox">
+                        <label class="form-check-label" for="selectallCheckbox">&nbsp;</label>
+                    </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Template"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Assigned extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
+                <TableColumnHeader  v-if="deviceGlobalView" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="MAC Address" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Assigned extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.device_uuid">
                     <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
                         :text="row.direction" /> -->
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center" v-if="deviceRestartPermission">
+                        <div v-if="row.extension" class="form-check">
+                            <input type="checkbox" name="action_box[]" value=""
+                                   data-extension-uuid=""
+                                   class="form-check-input action_checkbox">
+                            <label class="form-check-label" >&nbsp;</label>
+                        </div>
+                    </TableField>
+                    <TableField v-if="deviceGlobalView" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_address" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_label" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.profile_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.extension" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             actions
@@ -108,12 +113,7 @@
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
                     @pagination-change-page="renderRequestedPage" />
             </template>
-
-
         </DataTable>
-
-
-
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 </template>
@@ -157,7 +157,10 @@ const loading = ref(false)
 const props = defineProps({
     data: Object,
     menus: Array,
+    domains: Array,
     domainSelectPermission: Boolean,
+    deviceRestartPermission: Boolean,
+    deviceGlobalView: Boolean,
     selectedDomain: String,
     selectedDomainUuid: String,
     search: String
