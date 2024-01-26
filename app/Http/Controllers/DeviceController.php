@@ -17,6 +17,7 @@ use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class DeviceController extends Controller
 {
@@ -65,7 +66,45 @@ class DeviceController extends Controller
         $data['permissions']['device_restart'] = isSuperAdmin();
         $data['selectedScope'] = $selectedScope;
 
-        return view('layouts.devices.list')->with($data);
+        //return view('layouts.devices.list')->with($data);
+
+        return Inertia::render(
+            'Cdrs',
+            [
+                'data' => function () {
+                    return $this->getCdrs();
+                },
+                'menus' => function () {
+                    return Session::get('menu');
+                },
+                'domainSelectPermission' => function () {
+                    return Session::get('domain_select');
+                },
+                'selectedDomain' => function () {
+                    return Session::get('domain_name');
+                },
+                'selectedDomainUuid' => function () {
+                    return Session::get('domain_uuid');
+                },
+                'domains' => function () {
+                    return Session::get("domains");
+                },
+                'startPeriod' => function () {
+                    return $this->filters['startPeriod'];
+                },
+                'endPeriod' => function () {
+                    return $this->filters['endPeriod'];
+                },
+                'timezone' => function () {
+                    return $this->getTimezone();
+                },
+                'recordingUrl' => Inertia::lazy(
+                    fn () =>
+                    $this->getRecordingUrl($callUuid)
+                ),
+            ]
+        );
+
 
     }
 
