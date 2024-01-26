@@ -21,6 +21,10 @@ use Inertia\Inertia;
 
 class DeviceController extends Controller
 {
+    public $filters;
+    public $sortField;
+    public $sortOrder;
+
     /**
      * Display a listing of the resource.
      *
@@ -69,10 +73,10 @@ class DeviceController extends Controller
         //return view('layouts.devices.list')->with($data);
 
         return Inertia::render(
-            'Cdrs',
+            'devices',
             [
                 'data' => function () {
-                    return $this->getCdrs();
+                    return $this->getDevices();
                 },
                 'menus' => function () {
                     return Session::get('menu');
@@ -106,6 +110,23 @@ class DeviceController extends Controller
         );
 
 
+    }
+
+    public function getDevices()
+    {
+        $devices = $this->builder($this->filters)->paginate(50);
+
+/*        $devices->transform(function ($cdr) {
+            // Perform any additional processing on start_date if needed
+            // For example, format start_date or add additional data
+
+            // Add or modify attributes as needed
+            $cdr->start_date = $cdr->start_date;
+            $cdr->start_time = $cdr->start_time;
+
+            return $cdr;
+        });*/
+        return $devices;
     }
 
     /**

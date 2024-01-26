@@ -1,11 +1,11 @@
 
 <template>
-    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-        :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
+    <!--Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+        :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu-->
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Call History</template>
+            <template #title>Devices</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -21,17 +21,6 @@
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" />
                 </div>
-
-
-                <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
-                    <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
-                        @update:date-range="handleUpdateDateRange" />
-                </div>
-
-                <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :data="callDirections" @update:selected-item="handleUpdateCallDirectionFilter"/>
-                </div>
-
             </template>
 
             <template #navigation>
@@ -42,64 +31,36 @@
             <template #table-header>
                 <TableColumnHeader header=" "
                     class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
-                <TableColumnHeader header="Caller ID Name"
+                <TableColumnHeader header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Caller ID Number"
+                <TableColumnHeader header="MAC Address"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Destination Number"
+                <TableColumnHeader header="Template"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Assigned extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.xml_cdr_uuid">
+                <tr v-for="row in data.data" :key="row.device_uuid">
                     <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
                         :text="row.direction" /> -->
-                    <TableField :text="row.direction"
-                        class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                        <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
-                            target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                                <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
-                                <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
-                            </div>
-                        </ejs-tooltip>
-
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_number" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_destination" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_number" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_address" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_label" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
-                            " #action-buttons>
-                            <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying
-                                    " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
-                                    class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-                                <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
-                                    @click="pauseAudio"
-                                    class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-
-                                <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
-                                    class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
-                            </div>
+                        <template #action-buttons>
+                            actions
                         </template>
                     </TableField>
                 </tr>
@@ -199,29 +160,14 @@ const props = defineProps({
     domainSelectPermission: Boolean,
     selectedDomain: String,
     selectedDomainUuid: String,
-    domains: Array,
-    startPeriod: String,
-    endPeriod: String,
-    search: String,
-    timezone: String,
-    recordingUrl: String,
+    search: String
 });
 
 // console.log(props.data);
 
 const filterData = ref({
-    search: props.search,
-    dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
-    timezone: props.timezone,
-    direction: null,
+    search: props.search
 });
-
-const callDirections = [
-    { value: null, name: 'All' },
-    { value: 'outbound', name: 'Outbound' },
-    { value: 'inbound', name: 'Inbound' },
-    { value: 'local', name: 'Local' },
-]
 
 const handleUpdateCallDirectionFilter = (newValue) => {
     console.log(newValue);
@@ -231,7 +177,7 @@ const handleUpdateCallDirectionFilter = (newValue) => {
 const handleSearchButtonClick = () => {
     loading.value = true;
 
-    router.visit("/call-detail-records", {
+    router.visit("/devices", {
         data: {
             filterData: filterData._rawValue,
         },
@@ -246,11 +192,7 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
-    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
-
     filterData.value.search = null;
-    filterData.value.direction = null;
-
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
@@ -271,93 +213,11 @@ const renderRequestedPage = (url) => {
     });
 };
 
-const currentAudio = ref(null);
-const currentAudioUuid = ref(null);
-const isAudioPlaying = ref(false);
-
-const fetchAndPlayAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            // Stop the currently playing audio (if any)
-            if (currentAudio.value) {
-                currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
-            }
-
-            currentAudioUuid.value = uuid;
-            isAudioPlaying.value = true;
-
-            currentAudio.value = new Audio(props.recordingUrl);
-            currentAudio.value.play();
-
-            // Add an event listener for when the audio ends
-            currentAudio.value.addEventListener("ended", () => {
-                isAudioPlaying.value = false;
-                currentAudioUuid.value = null;
-            });
-        },
-    });
-};
-
-const downloadAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            filterData: filterData._rawValue,
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            // console.log(props.recordingUrl);
-
-            let fileName;
-
-            if (props.recordingUrl.includes("call-detail-records/file")) {
-                // Shorten the name
-                fileName = uuid;
-            } else {
-                // If the substring is not present, use the original URL
-                fileName = props.recordingUrl;
-            }
-
-            // Create an anchor element and set the attributes for downloading
-            const anchor = document.createElement("a");
-            anchor.href = props.recordingUrl;
-            anchor.download = fileName; // You can set a specific filename here if desired
-            document.body.appendChild(anchor);
-
-            // Trigger the download
-            anchor.click();
-
-            // Clean up by removing the anchor element
-            document.body.removeChild(anchor);
-        },
-    });
-};
-
-const pauseAudio = () => {
-    // Check if currentAudio has an Audio object before calling pause
-    if (currentAudio.value) {
-        currentAudio.value.pause();
-        isAudioPlaying.value = false;
-    }
-};
-
 const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
 }
 
-
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
-
-
 
 </script>
 
