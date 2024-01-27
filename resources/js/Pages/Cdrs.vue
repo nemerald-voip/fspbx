@@ -29,7 +29,7 @@
                 </div>
 
                 <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :data="callDirections" @update:selected-item="handleUpdateCallDirectionFilter"/>
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  @update:call-direction-filter="handleUpdateCallDirectionFilter"/>
                 </div>
 
             </template>
@@ -204,6 +204,7 @@ const props = defineProps({
     endPeriod: String,
     search: String,
     timezone: String,
+    direction: String,
     recordingUrl: String,
 });
 
@@ -213,7 +214,7 @@ const filterData = ref({
     search: props.search,
     dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
-    direction: null,
+    direction: props.direction,
 });
 
 const callDirections = [
@@ -223,10 +224,14 @@ const callDirections = [
     { value: 'local', name: 'Local' },
 ]
 
-const handleUpdateCallDirectionFilter = (newValue) => {
-    console.log(newValue);
-}
+const handleUpdateCallDirectionFilter = (newSelectedItem) => {
+    if (newSelectedItem.value == "all") {
+        filterData.value.direction = null;
+    } else {
+        filterData.value.direction = newSelectedItem.value;
+    }
 
+}
 
 const handleSearchButtonClick = () => {
     loading.value = true;

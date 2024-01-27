@@ -1,10 +1,10 @@
 <template>
-    <Listbox v-model="selectedItem" @update:modelValue="$emit('update:selected-item',selectedItem.value)">
+    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:call-direction-filter', value)">
         <div class="relative">
             <ListboxButton
                 class="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-gray-300 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm">
-                <span :class="{ 'text-gray-400': !selectedItem }" class="block truncate">
-                    {{ selectedItem ? selectedItem.name : 'Call Direction' }}
+                <span :class="{ 'text-gray-400': !currentItem }" class="block truncate">
+                    {{ currentItem ? currentItem.name : 'Call Direction' }}
                 </span> 
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                     <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -15,7 +15,7 @@
                 leave-to-class="opacity-0">
                 <ListboxOptions
                     class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                    <ListboxOption v-slot="{ active, selected }" v-for="item in data" :key="item.value"
+                    <ListboxOption v-slot="{ active, selected }" v-for="item in options" :key="item.value"
                         :value="item" as="template">
                         <li :class="[
                             active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
@@ -37,7 +37,7 @@
 </template>
   
 <script setup>
-import { ref } from 'vue'
+import { ref,watch } from 'vue'
 import {
     Listbox,
     ListboxLabel,
@@ -48,13 +48,17 @@ import {
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps({
-    data: Object,
+    options: Array,
+    selectedItem: [String, null],
 });
 
-const selectedItem = ref()
+const emit = defineEmits(['update:call-direction-filter'])
 
-// const handleSelectBoxUpdate = (newValue) => {
-//     console.log(selectedDirection.value);
-// }
+let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
+
+watch(() => props.selectedItem, (newValue) => {
+    currentItem = props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem);
+}, { immediate: true });
+
 </script>
   

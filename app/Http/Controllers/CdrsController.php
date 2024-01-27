@@ -56,8 +56,13 @@ class CdrsController extends Controller
 
         $this->filters = [
             'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod
+            'endPeriod' => $endPeriod,
+            'direction' => $request->filterData['direction']
         ];
+
+        if (!empty($request->filterData['direction'])) {
+            $this->filters['direction'] = $request->filterData['direction'];
+        }
 
         // Check if search parameter is present and not empty
         if (!empty($request->filterData['search'])) {
@@ -101,6 +106,9 @@ class CdrsController extends Controller
                 },
                 'timezone' => function () {
                     return $this->getTimezone();
+                },
+                'direction' => function () {
+                    return $this->filters['direction'];
                 },
                 'recordingUrl' => Inertia::lazy(
                     fn () =>
@@ -307,6 +315,11 @@ class CdrsController extends Controller
     protected function filterEndPeriod($query, $value)
     {
         $query->where('start_epoch', '<=', $value->getTimestamp());
+    }
+
+    protected function filterDirection($query, $value)
+    {
+        $query->where('direction', 'ilike', '%' . $value . '%');
     }
 
     protected function filterSearch($query, $value)
