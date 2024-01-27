@@ -57,7 +57,6 @@ class CdrsController extends Controller
         $this->filters = [
             'startPeriod' => $startPeriod,
             'endPeriod' => $endPeriod,
-            'direction' => $request->filterData['direction']
         ];
 
         if (!empty($request->filterData['direction'])) {
@@ -67,7 +66,7 @@ class CdrsController extends Controller
         // Check if search parameter is present and not empty
         if (!empty($request->filterData['search'])) {
             $this->filters['search'] = $request->filterData['search'];
-        }
+        } 
 
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
@@ -108,7 +107,7 @@ class CdrsController extends Controller
                     return $this->getTimezone();
                 },
                 'direction' => function () {
-                    return $this->filters['direction'];
+                    return isset($this->filters['direction']) ? $this->filters['direction'] : null;
                 },
                 'recordingUrl' => Inertia::lazy(
                     fn () =>
