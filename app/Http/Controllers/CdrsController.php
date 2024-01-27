@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CallCenterQueues;
 use App\Models\CDR;
+use App\Models\Extensions;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -113,10 +115,32 @@ class CdrsController extends Controller
                     fn () =>
                     $this->getRecordingUrl($callUuid)
                 ),
+                'entities' => Inertia::lazy(
+                    fn () =>
+                    $this->getEntities()
+                ),
 
             ]
         );
     }
+
+    public function getEntities()
+    {
+        $contactCenters = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))
+            ->select([
+                'call_center_queue_uuid as value', 
+                'queue_name as name'
+            ])
+            ->get();
+
+        // $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+        //     ->get(['extension_uuid', 'effective_caller_id_name', 'extension', 'description']);
+
+            // logger($contactCenters);
+
+        return $contactCenters;
+    }
+
 
     public function getRecordingUrl($callUuid)
     {

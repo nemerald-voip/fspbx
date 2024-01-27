@@ -32,6 +32,10 @@
                     <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:call-direction-filter="handleUpdateCallDirectionFilter"/>
                 </div>
 
+                <div class="relative min-w-48 mb-2 shrink-0 sm:mr-4">
+                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :placeholder="'User or Groups'" @update:user-or-group-filter="handleUpdateUserOrGroupFilter"/>
+                </div>
+
             </template>
 
             <template #navigation>
@@ -158,7 +162,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
 import DataTable from "./components/general/DataTable.vue";
@@ -206,7 +210,14 @@ const props = defineProps({
     timezone: String,
     direction: String,
     recordingUrl: String,
+    entities: Array,
+    selectedEntity: String,
 });
+
+onMounted(() => {
+    //request list of entities
+    getEntities();
+})
 
 // console.log(props.data);
 
@@ -215,6 +226,7 @@ const filterData = ref({
     dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
     direction: props.direction,
+    entity: props.selectedEntity
 });
 
 const callDirections = [
@@ -224,13 +236,33 @@ const callDirections = [
     { value: 'local', name: 'Local' },
 ]
 
+const getEntities = () =>{
+    router.visit("/call-detail-records", {
+        preserveScroll: true,
+        preserveState: true,
+        only: ["entities"],
+        onSuccess: (page) => {
+            // console.log('loaded');
+            // console.log(props.entities);
+        }
+
+    });
+}
+
 const handleUpdateCallDirectionFilter = (newSelectedItem) => {
     if (newSelectedItem.value == "all") {
         filterData.value.direction = null;
     } else {
         filterData.value.direction = newSelectedItem.value;
     }
+}
 
+const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
+    // if (newSelectedItem.value == "all") {
+    //     filterData.value.direction = null;
+    // } else {
+    //     filterData.value.direction = newSelectedItem.value;
+    // }
 }
 
 const handleSearchButtonClick = () => {
