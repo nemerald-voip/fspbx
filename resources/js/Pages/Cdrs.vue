@@ -29,7 +29,7 @@
                 </div>
 
                 <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  @update:call-direction-filter="handleUpdateCallDirectionFilter"/>
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:call-direction-filter="handleUpdateCallDirectionFilter"/>
                 </div>
 
             </template>

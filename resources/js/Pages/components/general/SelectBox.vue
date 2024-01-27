@@ -4,7 +4,7 @@
             <ListboxButton
                 class="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-gray-300 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm">
                 <span :class="{ 'text-gray-400': !currentItem }" class="block truncate">
-                    {{ currentItem ? currentItem.name : 'Call Direction' }}
+                    {{ currentItem ? currentItem.name : placeholder }}
                 </span> 
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                     <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -50,6 +50,7 @@ import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 const props = defineProps({
     options: Array,
     selectedItem: [String, null],
+    placeholder: [String, null],
 });
 
 const emit = defineEmits(['update:call-direction-filter'])
