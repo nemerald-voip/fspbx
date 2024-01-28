@@ -29,11 +29,11 @@
                 </div>
 
                 <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:call-direction-filter="handleUpdateCallDirectionFilter"/>
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter"/>
                 </div>
 
                 <div class="relative min-w-48 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :placeholder="'User or Groups'" @update:user-or-group-filter="handleUpdateUserOrGroupFilter"/>
+                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :placeholder="'User or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter"/>
                 </div>
 
             </template>
@@ -219,7 +219,7 @@ onMounted(() => {
     getEntities();
 })
 
-// console.log(props.data);
+// console.log(props.selectedEntity);
 
 const filterData = ref({
     search: props.search,
@@ -242,6 +242,10 @@ const getEntities = () =>{
         preserveState: true,
         only: ["entities"],
         onSuccess: (page) => {
+            // console.log(filterData.value.entity);
+            filterData.value.entity = props.selectedEntity;
+            // console.log(filterData.value.entity);
+            // console.log(props.selectedEntity);
             // console.log('loaded');
             // console.log(props.entities);
         }
@@ -258,11 +262,7 @@ const handleUpdateCallDirectionFilter = (newSelectedItem) => {
 }
 
 const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
-    // if (newSelectedItem.value == "all") {
-    //     filterData.value.direction = null;
-    // } else {
-    //     filterData.value.direction = newSelectedItem.value;
-    // }
+    filterData.value.entity = newSelectedItem.value;
 }
 
 const handleSearchButtonClick = () => {
@@ -352,8 +352,6 @@ const downloadAudio = (uuid) => {
         preserveState: true,
         only: ["recordingUrl"],
         onSuccess: (page) => {
-            // console.log(props.recordingUrl);
-
             let fileName;
 
             if (props.recordingUrl.includes("call-detail-records/file")) {

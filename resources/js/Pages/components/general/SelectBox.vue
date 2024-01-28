@@ -1,5 +1,5 @@
 <template>
-    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:call-direction-filter', value)">
+    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:modal-value', value)">
         <div class="relative">
             <ListboxButton
                 class="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-gray-300 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm">
@@ -53,13 +53,22 @@ const props = defineProps({
     placeholder: [String, null],
 });
 
-const emit = defineEmits(['update:call-direction-filter'])
+const emit = defineEmits(['update:modal-value'])
 
-let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
+// let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
+let currentItem = ref(props.selectedItem);
 
+// console.log(props.selectedItem);
+
+// Watch for changes in selectedItem and update currentItem accordingly
 watch(() => props.selectedItem, (newValue) => {
-    currentItem = props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem);
+    if (newValue === null || newValue === undefined) {
+        currentItem.value = null;
+    } else {
+        currentItem.value = props.options.find(option => option.value === newValue);
+    }
 }, { immediate: true });
+
 
 </script>
   

@@ -25,7 +25,7 @@ class CdrsController extends Controller
      */
     public function index(Request $request)
     {
-        // logger($request->all());
+        logger($request->all());
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
@@ -61,6 +61,7 @@ class CdrsController extends Controller
             'endPeriod' => $endPeriod,
         ];
 
+        // Check if direction parameter is present and not empty
         if (!empty($request->filterData['direction'])) {
             $this->filters['direction'] = $request->filterData['direction'];
         }
@@ -68,6 +69,11 @@ class CdrsController extends Controller
         // Check if search parameter is present and not empty
         if (!empty($request->filterData['search'])) {
             $this->filters['search'] = $request->filterData['search'];
+        } 
+
+        // Check if search parameter is present and not empty
+        if (!empty($request->filterData['selectedEntity'])) {
+            $this->filters['selectedEntity'] = $request->filterData['selectedEntity'];
         } 
 
         // Add sorting criteria
@@ -110,6 +116,9 @@ class CdrsController extends Controller
                 },
                 'direction' => function () {
                     return isset($this->filters['direction']) ? $this->filters['direction'] : null;
+                },
+                'selectedEntity' => function () {
+                    return isset($this->filters['selectedEntity']) ? $this->filters['selectedEntity'] : null;
                 },
                 'recordingUrl' => Inertia::lazy(
                     fn () =>
