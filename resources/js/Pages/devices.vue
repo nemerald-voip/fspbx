@@ -187,7 +187,14 @@ const handleEdit = (url) => {
 }
 
 const handleDestroy = (url) => {
-    window.location = url;
+    router.delete(url, {
+        preserveScroll: true,
+        preserveState: true,
+        only: ["data"],
+        onSuccess: (page) => {
+            console.log(page)
+        }
+    });
 }
 
 const handleRestart = (url) => {

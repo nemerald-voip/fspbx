@@ -73,9 +73,7 @@ class DeviceController extends Controller
 
         //return view('layouts.devices.list')->with($data);
 
-        $this->filters = [
-
-        ];
+        $this->filters = [];
 
         if (!empty($request->filterData['search'])) {
             $this->filters['search'] = $request->filterData['search'];
@@ -151,9 +149,11 @@ class DeviceController extends Controller
                 ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
         }*/
 
-        foreach ($filters as $field => $value) {
-            if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                $this->$method($devices, $value);
+        if(is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter".ucfirst($field))) {
+                    $this->$method($devices, $value);
+                }
             }
         }
 
@@ -360,7 +360,10 @@ class DeviceController extends Controller
         }
         $device->delete();
 
-        return response()->json([
+        return Inertia::render('devices', [
+            'data' => function () {
+                return $this->getDevices();
+            },
             'status' => 'success',
             'device' => $device,
             'message' => 'Device has been deleted'
