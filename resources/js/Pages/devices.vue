@@ -21,6 +21,25 @@
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" />
                 </div>
+
+                <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
+                    <input type="text" name="add-new"
+                           id="add-new"
+                           class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                           placeholder="Search" />
+                    <input type="text" name="add-new"
+                           id="add-new"
+                           class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                           placeholder="Search" />
+                </div>
+
+                <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+
+                </div>
+
+                <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+
+                </div>
             </template>
 
             <template #navigation>
