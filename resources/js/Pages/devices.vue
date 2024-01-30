@@ -62,10 +62,16 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_label" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.extension" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <a v-if="row.extension_edit_path" :href="row.extension_edit_path">{{row.extension}}</a>
+                    </TableField>
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            actions
+                            <div class="flex items-center space-x-2 whitespace-nowrap">
+                                <DocumentTextIcon v-if="row.edit_path" @click="handleEdit(row.edit_path)" class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer" />
+                                <CogIcon v-if="row.send_notify_path" @click="handleRestart(row.send_notify_path)" class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer" />
+                                <TrashIcon v-if="row.destroy_path" @click="handleDestroy(row.destroy_path)" class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer" />
+                            </div>
                         </template>
                     </TableField>
                 </tr>
@@ -135,9 +141,9 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import {
-    PlayCircleIcon,
-    PauseCircleIcon,
-    CloudArrowDownIcon,
+    DocumentTextIcon,
+    TrashIcon,
+    CogIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
 
@@ -176,6 +182,24 @@ const handleUpdateCallDirectionFilter = (newValue) => {
     console.log(newValue);
 }
 
+const handleEdit = (url) => {
+    window.location = url;
+}
+
+const handleDestroy = (url) => {
+    window.location = url;
+}
+
+const handleRestart = (url) => {
+    router.post(url, {
+        preserveScroll: true,
+        preserveState: true,
+        only: ["data"],
+        onSuccess: (page) => {
+            console.log(page)
+        }
+    });
+}
 
 const handleSearchButtonClick = () => {
     loading.value = true;

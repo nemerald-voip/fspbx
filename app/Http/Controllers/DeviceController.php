@@ -120,7 +120,11 @@ class DeviceController extends Controller
             if($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
                 $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
+                $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
+                $device->send_notify_path = route('extensions.send-event-notify', $device->lines()->first()->extension());
             }
+            $device->edit_path = route('devices.edit', $device);
+            $device->destroy_path = route('devices.destroy', $device);
         }
 
 /*        $devices->transform(function ($cdr) {
@@ -138,7 +142,6 @@ class DeviceController extends Controller
 
     public function builder($filters = [])
     {
-
         $devices = Devices::query();
         //if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
             $devices
