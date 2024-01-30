@@ -25,7 +25,7 @@ class CdrsController extends Controller
      */
     public function index(Request $request)
     {
-        logger($request->all());
+        // logger($request->all());
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
@@ -44,16 +44,9 @@ class CdrsController extends Controller
         if (!empty($request->filterData['dateRange'])) {
             $startPeriod = Carbon::parse($request->filterData['dateRange'][0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse($request->filterData['dateRange'][1])->setTimeZone('UTC');
-            // logger($startPeriod);
-            // logger($endPeriod);
         } else {
             $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
             $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
-            // $startPeriod = null;
-            // $endPeriod = null;
-            // logger($startPeriod);
-            // logger($endPeriod);
-            
         }
 
         $this->filters = [
@@ -69,12 +62,17 @@ class CdrsController extends Controller
         // Check if search parameter is present and not empty
         if (!empty($request->filterData['search'])) {
             $this->filters['search'] = $request->filterData['search'];
-        } 
+        }
 
         // Check if search parameter is present and not empty
-        if (!empty($request->filterData['selectedEntity'])) {
-            $this->filters['selectedEntity'] = $request->filterData['selectedEntity'];
-        } 
+        if (!empty($request->filterData['entity'])) {
+            $this->filters['entity'] = $request->filterData['entity'];
+        }
+
+        // Check if search parameter is present and not empty
+        if (!empty($request->filterData['entityType'])) {
+            $this->filters['entityType'] = $request->filterData['entityType'];
+        }
 
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
@@ -118,7 +116,12 @@ class CdrsController extends Controller
                     return isset($this->filters['direction']) ? $this->filters['direction'] : null;
                 },
                 'selectedEntity' => function () {
-                    return isset($this->filters['selectedEntity']) ? $this->filters['selectedEntity'] : null;
+                    logger($this->filters);
+                    return isset($this->filters['entity']) ? $this->filters['entity'] : null;
+                },
+                'selectedEntityType' => function () {
+                    logger($this->filters);
+                    return isset($this->filters['entityType']) ? $this->filters['entityType'] : null;
                 },
                 'recordingUrl' => Inertia::lazy(
                     fn () =>
@@ -137,15 +140,16 @@ class CdrsController extends Controller
     {
         $contactCenters = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))
             ->select([
-                'call_center_queue_uuid as value', 
+                'call_center_queue_uuid as value',
                 'queue_name as name'
             ])
+            ->selectRaw("'queue' as type")
             ->get();
 
         // $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
         //     ->get(['extension_uuid', 'effective_caller_id_name', 'extension', 'description']);
 
-            // logger($contactCenters);
+        // logger($contactCenters);
 
         return $contactCenters;
     }
@@ -207,7 +211,7 @@ class CdrsController extends Controller
                     $options = [
                         'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->archive_recording->object_key) . '"'
                     ];
-                    $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10),$options);
+                    $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10), $options);
                 }
                 if (isset($url)) return $url;
             }
@@ -216,7 +220,7 @@ class CdrsController extends Controller
                 $options = [
                     'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->record_name) . '"'
                 ];
-                $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10),$options);
+                $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10), $options);
                 if (isset($url)) return $url;
             }
 
@@ -363,6 +367,24 @@ class CdrsController extends Controller
                 ->orWhere('caller_destination', 'ilike', '%' . $value . '%')
                 ->orWhere('destination_number', 'ilike', '%' . $value . '%');
         });
+    }
+
+    protected function filterEntity($query, $value)
+    {
+        if (!isset($this->filters['entityType'])) {
+            return;
+        }
+        switch ($this->filters['entityType']) {
+            case 'queue':
+                $query->where('call_center_queue_uuid', 'ilike', '%' . $value . '%');
+                break;
+            // case 1:
+            //     echo "i equals 1";
+            //     break;
+            // case 2:
+            //     echo "i equals 2";
+            //     break;
+        }
     }
 
     /**

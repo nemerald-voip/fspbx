@@ -50,9 +50,9 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                 <TableColumnHeader header="Caller ID Number"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Dialed Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Destination Number"
+                <TableColumnHeader header="Recipient"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                 <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
@@ -212,6 +212,7 @@ const props = defineProps({
     recordingUrl: String,
     entities: Array,
     selectedEntity: String,
+    selectedEntityType: String,
 });
 
 onMounted(() => {
@@ -219,14 +220,14 @@ onMounted(() => {
     getEntities();
 })
 
-// console.log(props.selectedEntity);
 
 const filterData = ref({
     search: props.search,
     dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
     direction: props.direction,
-    entity: props.selectedEntity
+    entity: props.selectedEntity,
+    entityType: props.selectedEntityType,
 });
 
 const callDirections = [
@@ -237,20 +238,20 @@ const callDirections = [
 ]
 
 const getEntities = () =>{
+    filterData.value.entity = null;
     router.visit("/call-detail-records", {
         preserveScroll: true,
         preserveState: true,
+        data: {
+            filterData: filterData._rawValue,
+        },
         only: ["entities"],
         onSuccess: (page) => {
-            // console.log(filterData.value.entity);
             filterData.value.entity = props.selectedEntity;
-            // console.log(filterData.value.entity);
-            // console.log(props.selectedEntity);
-            // console.log('loaded');
-            // console.log(props.entities);
         }
 
     });
+
 }
 
 const handleUpdateCallDirectionFilter = (newSelectedItem) => {
@@ -263,6 +264,7 @@ const handleUpdateCallDirectionFilter = (newSelectedItem) => {
 
 const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
     filterData.value.entity = newSelectedItem.value;
+    filterData.value.entityType = newSelectedItem.type;
 }
 
 const handleSearchButtonClick = () => {
@@ -287,6 +289,8 @@ const handleFiltersReset = () => {
 
     filterData.value.search = null;
     filterData.value.direction = null;
+    filterData.value.entity = null;
+    filterData.value.entityType = null;
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();

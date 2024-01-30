@@ -48,7 +48,7 @@ import {
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps({
-    options: Array,
+    options: [Array, null],
     selectedItem: [String, null],
     placeholder: [String, null],
 });
@@ -56,17 +56,17 @@ const props = defineProps({
 const emit = defineEmits(['update:modal-value'])
 
 // let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
-let currentItem = ref(props.selectedItem);
+let currentItem = ref(null);
 
-// console.log(props.selectedItem);
 
 // Watch for changes in selectedItem and update currentItem accordingly
 watch(() => props.selectedItem, (newValue) => {
-    if (newValue === null || newValue === undefined) {
+    if (newValue === null || newValue === undefined || props.options === null || props.options === undefined) {
         currentItem.value = null;
     } else {
         currentItem.value = props.options.find(option => option.value === newValue);
     }
+
 }, { immediate: true });
 
 
