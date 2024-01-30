@@ -116,11 +116,9 @@ class CdrsController extends Controller
                     return isset($this->filters['direction']) ? $this->filters['direction'] : null;
                 },
                 'selectedEntity' => function () {
-                    logger($this->filters);
                     return isset($this->filters['entity']) ? $this->filters['entity'] : null;
                 },
                 'selectedEntityType' => function () {
-                    logger($this->filters);
                     return isset($this->filters['entityType']) ? $this->filters['entityType'] : null;
                 },
                 'recordingUrl' => Inertia::lazy(
@@ -138,6 +136,21 @@ class CdrsController extends Controller
 
     public function getEntities()
     {
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+            ->selectRaw("
+            extension_uuid as value, 
+            CASE
+                WHEN directory_first_name IS NOT NULL AND TRIM(directory_first_name) != '' 
+                     AND directory_last_name IS NOT NULL AND TRIM(directory_last_name) != '' THEN CONCAT(directory_first_name, ' ', directory_last_name, ' - ', extension)
+                WHEN directory_first_name IS NOT NULL AND TRIM(directory_first_name) != '' THEN CONCAT(directory_first_name, ' - ', extension)
+                WHEN description IS NOT NULL AND TRIM(description) != '' THEN CONCAT(description, ' - ', extension)
+                ELSE CONCAT(extension, ' - ', extension)
+            END as name,
+            'extension' as type
+        ")
+            ->get();
+
+
         $contactCenters = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))
             ->select([
                 'call_center_queue_uuid as value',
@@ -146,12 +159,20 @@ class CdrsController extends Controller
             ->selectRaw("'queue' as type")
             ->get();
 
-        // $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-        //     ->get(['extension_uuid', 'effective_caller_id_name', 'extension', 'description']);
+        // Initialize an empty collection for entities
+        $entities = collect();
 
-        // logger($contactCenters);
+        // Merge extensions into entities if extensions is not empty
+        if (!$extensions->isEmpty()) {
+            $entities = $entities->merge($extensions);
+        }
 
-        return $contactCenters;
+        // Merge contactCenters into entities if contactCenters is not empty
+        if (!$contactCenters->isEmpty()) {
+            $entities = $entities->merge($contactCenters);
+        }
+
+        return $entities;
     }
 
 
@@ -378,12 +399,24 @@ class CdrsController extends Controller
             case 'queue':
                 $query->where('call_center_queue_uuid', 'ilike', '%' . $value . '%');
                 break;
-            // case 1:
-            //     echo "i equals 1";
-            //     break;
-            // case 2:
-            //     echo "i equals 2";
-            //     break;
+            case 'extension':
+
+                $extention = Extensions::find($value);
+                // logger($extention);
+
+                $query->where(function ($query) use ($extention) {
+                    $query->where('extension_uuid', 'ilike', '%' . $extention->extension . '%')
+                        ->orWhere('caller_id_number', $extention->extension)
+                        ->orWhere('caller_destination', $extention->extension)
+                        ->orWhere('source_number', $extention->extension)
+                        ->orWhere('destination_number', $extention->extension);
+                });
+
+
+                break;
+                // case 2:
+                //     echo "i equals 2";
+                //     break;
         }
     }
 

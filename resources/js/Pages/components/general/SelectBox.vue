@@ -5,7 +5,7 @@
                 class="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-gray-300 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm">
                 <span :class="{ 'text-gray-400': !currentItem }" class="block truncate">
                     {{ currentItem ? currentItem.name : placeholder }}
-                </span> 
+                </span>
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                     <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </span>
@@ -14,9 +14,13 @@
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
                 leave-to-class="opacity-0">
                 <ListboxOptions
-                    class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                    <ListboxOption v-slot="{ active, selected }" v-for="item in options" :key="item.value"
-                        :value="item" as="template">
+                    class="absolute z-10 mt-1 px-2 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                    <input v-if="search" v-model="searchKeyword"
+                        class="w-full rounded-md border-0 py-1.5 pl-10 shadow-md mb-1 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        placeholder="Search" type="search"/>
+
+                    <ListboxOption v-slot="{ active, selected }" v-for="item in filteredOptions" :key="item.value" :value="item"
+                        as="template">
                         <li :class="[
                             active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
                             'relative cursor-default select-none py-2 pl-10 pr-4',
@@ -37,7 +41,7 @@
 </template>
   
 <script setup>
-import { ref,watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import {
     Listbox,
     ListboxLabel,
@@ -51,6 +55,7 @@ const props = defineProps({
     options: [Array, null],
     selectedItem: [String, null],
     placeholder: [String, null],
+    search: [Boolean, null],
 });
 
 const emit = defineEmits(['update:modal-value'])
@@ -58,6 +63,8 @@ const emit = defineEmits(['update:modal-value'])
 // let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
 let currentItem = ref(null);
 
+// Initialize searchKeyword
+let searchKeyword = ref('');
 
 // Watch for changes in selectedItem and update currentItem accordingly
 watch(() => props.selectedItem, (newValue) => {
@@ -69,6 +76,13 @@ watch(() => props.selectedItem, (newValue) => {
 
 }, { immediate: true });
 
+// Computed property to filter options based on search keyword
+const filteredOptions = computed(() => {
+    if (!searchKeyword.value) return props.options;
+    return props.options.filter(item =>
+        item.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+    );
+});
 
 </script>
   

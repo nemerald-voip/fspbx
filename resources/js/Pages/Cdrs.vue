@@ -12,11 +12,11 @@
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </div>
-                    <input type="text" v-model="filterData.search" name="mobile-search-candidate"
+                    <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
                         placeholder="Search" />
-                    <input type="text" v-model="filterData.search" name="desktop-search-candidate"
+                    <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" />
@@ -32,8 +32,8 @@
                     <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter"/>
                 </div>
 
-                <div class="relative min-w-48 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :placeholder="'User or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter"/>
+                <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :search="true" :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter"/>
                 </div>
 
             </template>
