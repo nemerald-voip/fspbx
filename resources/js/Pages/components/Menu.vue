@@ -108,7 +108,7 @@
     </Disclosure>
 
     <TransitionRoot as="template" :show="isDomainPanelVisible">
-        <Dialog as="div" class="relative z-10" :initialFocus="searchFieldRef" @close="isDomainPanelVisible = false">
+        <Dialog as="div" class="relative z-20" :initialFocus="searchFieldRef" @close="isDomainPanelVisible = false">
             <div class="fixed inset-0" />
             <div class="fixed inset-0 overflow-hidden">
                 <div class="absolute inset-0 overflow-hidden">

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CallCenterQueues;
 use App\Models\CDR;
+use App\Models\Extensions;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -42,26 +44,34 @@ class CdrsController extends Controller
         if (!empty($request->filterData['dateRange'])) {
             $startPeriod = Carbon::parse($request->filterData['dateRange'][0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse($request->filterData['dateRange'][1])->setTimeZone('UTC');
-            // logger($startPeriod);
-            // logger($endPeriod);
         } else {
             $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
             $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
-            // $startPeriod = null;
-            // $endPeriod = null;
-            // logger($startPeriod);
-            // logger($endPeriod);
-            
         }
 
         $this->filters = [
             'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod
+            'endPeriod' => $endPeriod,
         ];
+
+        // Check if direction parameter is present and not empty
+        if (!empty($request->filterData['direction'])) {
+            $this->filters['direction'] = $request->filterData['direction'];
+        }
 
         // Check if search parameter is present and not empty
         if (!empty($request->filterData['search'])) {
             $this->filters['search'] = $request->filterData['search'];
+        }
+
+        // Check if search parameter is present and not empty
+        if (!empty($request->filterData['entity'])) {
+            $this->filters['entity'] = $request->filterData['entity'];
+        }
+
+        // Check if search parameter is present and not empty
+        if (!empty($request->filterData['entityType'])) {
+            $this->filters['entityType'] = $request->filterData['entityType'];
         }
 
         // Add sorting criteria
@@ -102,14 +112,69 @@ class CdrsController extends Controller
                 'timezone' => function () {
                     return $this->getTimezone();
                 },
+                'direction' => function () {
+                    return isset($this->filters['direction']) ? $this->filters['direction'] : null;
+                },
+                'selectedEntity' => function () {
+                    return isset($this->filters['entity']) ? $this->filters['entity'] : null;
+                },
+                'selectedEntityType' => function () {
+                    return isset($this->filters['entityType']) ? $this->filters['entityType'] : null;
+                },
                 'recordingUrl' => Inertia::lazy(
                     fn () =>
                     $this->getRecordingUrl($callUuid)
+                ),
+                'entities' => Inertia::lazy(
+                    fn () =>
+                    $this->getEntities()
                 ),
 
             ]
         );
     }
+
+    public function getEntities()
+    {
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+            ->selectRaw("
+            extension_uuid as value, 
+            CASE
+                WHEN directory_first_name IS NOT NULL AND TRIM(directory_first_name) != '' 
+                     AND directory_last_name IS NOT NULL AND TRIM(directory_last_name) != '' THEN CONCAT(directory_first_name, ' ', directory_last_name, ' - ', extension)
+                WHEN directory_first_name IS NOT NULL AND TRIM(directory_first_name) != '' THEN CONCAT(directory_first_name, ' - ', extension)
+                WHEN description IS NOT NULL AND TRIM(description) != '' THEN CONCAT(description, ' - ', extension)
+                ELSE CONCAT(extension, ' - ', extension)
+            END as name,
+            'extension' as type
+        ")
+            ->get();
+
+
+        $contactCenters = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))
+            ->select([
+                'call_center_queue_uuid as value',
+                'queue_name as name'
+            ])
+            ->selectRaw("'queue' as type")
+            ->get();
+
+        // Initialize an empty collection for entities
+        $entities = collect();
+
+        // Merge extensions into entities if extensions is not empty
+        if (!$extensions->isEmpty()) {
+            $entities = $entities->merge($extensions);
+        }
+
+        // Merge contactCenters into entities if contactCenters is not empty
+        if (!$contactCenters->isEmpty()) {
+            $entities = $entities->merge($contactCenters);
+        }
+
+        return $entities;
+    }
+
 
     public function getRecordingUrl($callUuid)
     {
@@ -167,7 +232,7 @@ class CdrsController extends Controller
                     $options = [
                         'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->archive_recording->object_key) . '"'
                     ];
-                    $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10),$options);
+                    $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10), $options);
                 }
                 if (isset($url)) return $url;
             }
@@ -176,7 +241,7 @@ class CdrsController extends Controller
                 $options = [
                     'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->record_name) . '"'
                 ];
-                $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10),$options);
+                $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10), $options);
                 if (isset($url)) return $url;
             }
 
@@ -309,6 +374,11 @@ class CdrsController extends Controller
         $query->where('start_epoch', '<=', $value->getTimestamp());
     }
 
+    protected function filterDirection($query, $value)
+    {
+        $query->where('direction', 'ilike', '%' . $value . '%');
+    }
+
     protected function filterSearch($query, $value)
     {
         // Case-insensitive partial string search in the specified fields
@@ -318,6 +388,36 @@ class CdrsController extends Controller
                 ->orWhere('caller_destination', 'ilike', '%' . $value . '%')
                 ->orWhere('destination_number', 'ilike', '%' . $value . '%');
         });
+    }
+
+    protected function filterEntity($query, $value)
+    {
+        if (!isset($this->filters['entityType'])) {
+            return;
+        }
+        switch ($this->filters['entityType']) {
+            case 'queue':
+                $query->where('call_center_queue_uuid', 'ilike', '%' . $value . '%');
+                break;
+            case 'extension':
+
+                $extention = Extensions::find($value);
+                // logger($extention);
+
+                $query->where(function ($query) use ($extention) {
+                    $query->where('extension_uuid', 'ilike', '%' . $extention->extension . '%')
+                        ->orWhere('caller_id_number', $extention->extension)
+                        ->orWhere('caller_destination', $extention->extension)
+                        ->orWhere('source_number', $extention->extension)
+                        ->orWhere('destination_number', $extention->extension);
+                });
+
+
+                break;
+                // case 2:
+                //     echo "i equals 2";
+                //     break;
+        }
     }
 
     /**
