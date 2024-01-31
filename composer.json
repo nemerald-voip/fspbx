@@ -15,6 +15,7 @@
         "firebase/php-jwt": "^6.4",
         "guzzlehttp/guzzle": "^7.0.1",
         "inertiajs/inertia-laravel": "^0.6.11",
+        "laravel/fortify": "^1.20",
         "laravel/framework": "^10",
         "laravel/horizon": "*",
         "laravel/sanctum": "^3.2",
