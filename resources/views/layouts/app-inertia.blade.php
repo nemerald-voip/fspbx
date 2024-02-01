@@ -87,12 +87,12 @@ $hideHorizontalNav = true;
     </body>
 @endif
 
-@if (!request()->is('contact-center*'))
+@if (request()->is('login'))
 
     <body class="m-0 font-nunito text-gray-600 bg-gray-100">
         <div class="max-w-95 mx-auto">
 
-            @auth
+            {{-- @auth --}}
 
                 <div class=" px-3">
                     <div class="content">
@@ -104,10 +104,38 @@ $hideHorizontalNav = true;
                     </div>
 
                 </div>
-            @else
+            {{-- @else
                 @yield('content')
 
-            @endauth
+            @endauth --}}
+
+        </div>
+
+    </body>
+@endif
+
+
+@if (!request()->is('contact-center*') && !request()->is('login'))
+
+    <body class="m-0 font-nunito text-gray-600 bg-gray-100">
+        <div class="max-w-95 mx-auto">
+
+            {{-- @auth --}}
+
+                <div class=" px-3">
+                    <div class="content">
+
+
+                        @yield('content')
+                        @inertia
+
+                    </div>
+
+                </div>
+            {{-- @else
+                @yield('content')
+
+            @endauth --}}
 
         </div>
 
