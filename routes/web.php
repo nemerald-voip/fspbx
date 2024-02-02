@@ -54,6 +54,7 @@ Route::post('/extensions/send-event-notify-all', [ExtensionsController::class, '
 
 // Call Detail Records
 Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
+Route::post('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.download');
 Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
 
 
