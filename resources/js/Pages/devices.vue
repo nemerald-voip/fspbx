@@ -68,7 +68,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
                                 v-if="deviceRestartPermission">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.device_uuid" :data-extension-uuid="row.device_uuid"
+                               :value="row.device_uuid" :data-extension-uuid="row.extension_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="deviceGlobalView" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -158,6 +158,7 @@
 
 <script setup>
 import {ref} from "vue";
+import axios from 'axios';
 import {router} from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
 import DataTable from "./components/general/DataTable.vue";
@@ -190,12 +191,12 @@ const props = defineProps({
     search: String,
     routeDevicesCreate: String,
     routeDevices: String,
-    routeSendEventNotifyAll: String
+    routeSendEventNotifyAll: String,
 });
 
 const handleSelectAll = () => {
     if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItems.value = props.data.data.map(item => item.extension_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -221,25 +222,23 @@ const handleDestroy = (url) => {
 }
 
 const handleRestart = (url) => {
-    router.post(url, {
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            console.log(page)
-        }
+    axios.post(url).then((response) => {
+        loading.value = false;
+        restartRequestNotificationSuccessShow.value = true;
+    }).catch((error) => {
+        console.error('Failed to restart selected:', error);
     });
 }
 
 const handleRestartSelected = () => {
     if (selectedItems.value.length > 0) {
-        router.visit(routeSendEventNotifyAll, {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: (page) => {
-                loading.value = false
-                restartRequestNotificationSuccessShow.value = true
-            }
+        axios.post(props.routeSendEventNotifyAll, {
+            extensionIds: selectedItems.value,
+        }).then((response) => {
+            loading.value = false;
+            restartRequestNotificationSuccessShow.value = true;
+        }).catch((error) => {
+            console.error('Failed to restart selected:', error);
         });
     } else {
         restartRequestNotificationErrorShow.value = true
@@ -247,20 +246,18 @@ const handleRestartSelected = () => {
 }
 
 const handleRestartAll = () => {
-    router.visit(routeSendEventNotifyAll, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            loading.value = false
-            restartRequestNotificationSuccessShow.value = true
-        }
+    axios.post(props.routeSendEventNotifyAll).then((response) => {
+        loading.value = false;
+        restartRequestNotificationSuccessShow.value = true;
+    }).catch((error) => {
+        console.error('Failed to restart selected:', error);
     });
 }
 
 const handleSearchButtonClick = () => {
     loading.value = true;
 
-    router.visit(routeDevices, {
+    router.visit(props.routeDevices, {
         data: {
             filterData: filterData._rawValue,
         },

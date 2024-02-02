@@ -1442,15 +1442,19 @@ class ExtensionsController extends Controller
         if(!empty($selectedExtensionIds)) {
             foreach($selectedExtensionIds as $extensionId) {
                 $extension = Extensions::find($extensionId);
-                foreach ($registrations as $registration) {
-                    if ($registration['sip-auth-user'] == $extension['extension']) {
-                        array_push($all_regs, $registration);
+                if($extension) {
+                    foreach ($registrations as $registration) {
+                        if ($registration['sip-auth-user'] == $extension['extension']) {
+                            array_push($all_regs, $registration);
+                        }
                     }
                 }
             }
         } else {
             $all_regs = $registrations;
         }
+
+        logger($all_regs);
 
         foreach ($all_regs as $reg) {
             // Get the agent name
@@ -1464,9 +1468,10 @@ class ExtensionsController extends Controller
                 $agent = "grandstream";
             }
 
-            if ($agent != "") {
+            if (!empty($agent)) {
                 $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
                 // Queue a job to restart the phone
+                logger($command);
                 SendEventNotify::dispatch($command)->onQueue('default');
             }
         }
