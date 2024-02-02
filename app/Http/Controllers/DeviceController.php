@@ -104,7 +104,9 @@ class DeviceController extends Controller
                     return Session::get('domain_uuid');
                 },
                 'deviceGlobalView' => false,
-                'routeDevicesCreate' => route('devices.create')
+                'routeDevicesCreate' => route('devices.create'),
+                'routeDevices' => route('devices.index'),
+                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
         );
 

@@ -68,7 +68,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
                                 v-if="deviceRestartPermission">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.extension_uuid" :data-extension-uuid="row.device_uuid"
+                               :value="row.device_uuid" :data-extension-uuid="row.device_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="deviceGlobalView" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -188,12 +188,14 @@ const props = defineProps({
     selectedDomain: String,
     selectedDomainUuid: String,
     search: String,
-    routeDevicesCreate: String
+    routeDevicesCreate: String,
+    routeDevices: String,
+    routeSendEventNotifyAll: String
 });
 
 const handleSelectAll = () => {
     if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.extension_uuid);
+        selectedItems.value = props.data.data.map(item => item.device_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -202,10 +204,6 @@ const handleSelectAll = () => {
 const filterData = ref({
     search: props.search
 });
-
-const handleAdd = (url) => {
-    window.location = url;
-}
 
 const handleEdit = (url) => {
     window.location = url;
@@ -234,22 +232,35 @@ const handleRestart = (url) => {
 }
 
 const handleRestartSelected = () => {
-    if (selectedItems.length > 0) {
-
+    if (selectedItems.value.length > 0) {
+        router.visit(routeSendEventNotifyAll, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (page) => {
+                loading.value = false
+                restartRequestNotificationSuccessShow.value = true
+            }
+        });
     } else {
-        console.log('sssss');
         restartRequestNotificationErrorShow.value = true
     }
 }
 
 const handleRestartAll = () => {
-    console.log('Handle restart all')
+    router.visit(routeSendEventNotifyAll, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            loading.value = false
+            restartRequestNotificationSuccessShow.value = true
+        }
+    });
 }
 
 const handleSearchButtonClick = () => {
     loading.value = true;
 
-    router.visit("/devices", {
+    router.visit(routeDevices, {
         data: {
             filterData: filterData._rawValue,
         },
