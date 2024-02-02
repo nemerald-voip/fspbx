@@ -107,7 +107,7 @@ const submit = () => {
                     <div>
                         <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
                         <div class="mt-2">
-                            <input v-model="email" id="email" name="email" type="email" autocomplete="email" required
+                            <input v-model="form.email" id="email" name="email" type="email" autocomplete="email" required
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
                         </div>
                     </div>
@@ -115,7 +115,7 @@ const submit = () => {
                     <div>
                         <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password</label>
                         <div class="mt-2">
-                            <input v-model="password" id="password" name="password" type="password"
+                            <input v-model="form.password" id="password" name="password" type="password"
                                 autocomplete="current-password" required
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
                         </div>
@@ -123,7 +123,7 @@ const submit = () => {
 
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <input v-model="remember" id="remember" name="remember" type="checkbox"
+                            <input v-model="form.remember" id="remember" name="remember" type="checkbox"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
                             <label for="remember" class="ml-3 block text-sm leading-6 text-gray-900">Remember me</label>
                         </div>
@@ -162,11 +162,12 @@ const submit = () => {
 <script setup>
 import { ref, computed } from 'vue';
 import { router } from "@inertiajs/vue3";
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import route from 'ZiggyVue';
 
-defineProps({ 
+const props = defineProps({ 
     errors: Object 
 })
-
 
 
 const logoUrl = ref('/storage/logo.png');
@@ -174,36 +175,46 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 
 // Reactive variables for form inputs
-const email = ref('');
-const password = ref('');
-const remember = ref(false);
+const form = useForm({
+    email: '',
+    password: '',
+    remember: false,
+});
+// const email = ref('');
+// const password = ref('');
+// const remember = ref(false);
 
 // Function to handle form submission
 const submitForm = () => {
 
     isLoading.value = true;
 
-    router.visit("/login", {
-        method: 'post',
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-            email: email.value,
-            password: password.value,
-            remember: remember.value,
-        },
-        onSuccess: (page) => {
-            // Once the operation is complete, set isLoading to false
-            isLoading.value = false;
-        },
-        onError: errors => {
-            // Handle the error
-            isLoading.value = false;
-            console.log(errors);
-            errorMessage.value = 'An error occurred: ' + (errors || 'Unknown error');
-        }
-
+    form.post(route('login'), {
+        onFinish: () => console.log("success"),
     });
+
+    // router.visit("/login", {
+    //     method: 'post',
+    //     preserveScroll: true,
+    //     preserveState: true,
+    //     data: {
+    //         user_email: email.value,
+    //         password: password.value,
+    //         remember: remember.value,
+    //     },
+    //     onSuccess: (page) => {
+    //         console.log("Success");
+    //         // Once the operation is complete, set isLoading to false
+    //         isLoading.value = false;
+    //     },
+    //     onError: errors => {
+    //         // Handle the error
+    //         isLoading.value = false;
+    //         console.log(errors);
+    //         // errorMessage.value = 'An error occurred: ' + (errors || 'Unknown error');
+    //     }
+
+    // });
 
     // Handle form submission logic here
     // For example, send data to your server
@@ -212,21 +223,21 @@ const submitForm = () => {
     // console.log('Remember Me:', remember.value);
 };
 
-() => {
-    filterData.value.entity = null;
-    router.visit("/call-detail-records", {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-            filterData: filterData._rawValue,
-        },
-        only: ["entities"],
-        onSuccess: (page) => {
-            filterData.value.entity = props.selectedEntity;
-        }
+// () => {
+//     filterData.value.entity = null;
+//     router.visit("/call-detail-records", {
+//         preserveScroll: true,
+//         preserveState: true,
+//         data: {
+//             filterData: filterData._rawValue,
+//         },
+//         only: ["entities"],
+//         onSuccess: (page) => {
+//             filterData.value.entity = props.selectedEntity;
+//         }
 
-    });
+//     });
 
-}
+// }
 
 </script>
