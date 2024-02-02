@@ -103,7 +103,8 @@ class DeviceController extends Controller
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
                 },
-                'deviceGlobalView' => false
+                'deviceGlobalView' => false,
+                'routeDevicesCreate' => route('devices.create')
             ]
         );
 
