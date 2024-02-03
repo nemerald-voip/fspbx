@@ -7,6 +7,16 @@
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>Call History</template>
 
+            <template #action>
+
+                <button type="button" @click.prevent="exportCsv"
+                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                    <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
+                    Export CSV
+                </button>
+
+            </template>
+
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -29,11 +39,13 @@
                 </div>
 
                 <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter"/>
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"
+                        :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
                 </div>
 
                 <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :search="true" :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter"/>
+                    <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                        :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
                 </div>
 
             </template>
@@ -52,8 +64,8 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                 <TableColumnHeader header="Dialed Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Recipient"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
+                <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                </TableColumnHeader>
                 <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
                 <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -183,6 +195,8 @@ import {
     CloudArrowDownIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
+import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+
 
 import {
     TransitionRoot,
@@ -213,6 +227,7 @@ const props = defineProps({
     entities: Array,
     selectedEntity: String,
     selectedEntityType: String,
+    csvUrl: Object,
 });
 
 onMounted(() => {
@@ -237,7 +252,7 @@ const callDirections = [
     { value: 'local', name: 'Local' },
 ]
 
-const getEntities = () =>{
+const getEntities = () => {
     filterData.value.entity = null;
     router.visit("/call-detail-records", {
         preserveScroll: true,
@@ -393,6 +408,75 @@ const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
 }
 
+const exportCsv = () => {
+
+    filterData.value.download = true;
+
+    let url = `/call-detail-records`;
+
+    axios.post(url, {
+        filterData: filterData._rawValue,
+    }, {
+        responseType: 'blob' // Important to handle the binary response for file download
+    })
+        .then(response => {
+            // Create a blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'call-detail-records.xlsx'); // Set the file name for the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Clean up
+            window.URL.revokeObjectURL(url); // Free up memory
+        })
+        .catch(error => {
+            console.error('There was an error with the request:', error);
+        });
+
+    // let paramString = new URLSearchParams(filterData._rawValue);
+
+    // console.log(paramString.toString());
+
+    // window.open(`/call-detail-records?download=true&${paramString.toString()}`);
+
+
+    // router.visit("/call-detail-records", {
+    //     data: {
+    //         filterData: filterData._rawValue,
+    //     },
+    //     preserveScroll: true,
+    //     preserveState: true,
+    //     only: ["csvUrl"],
+    //     onSuccess: (page) => {
+
+    //         console.log(props.csvUrl);
+
+    // let fileName;
+
+    // if (props.csvUrl.includes("call-detail-records/file")) {
+    //     // Shorten the name
+    //     fileName = uuid;
+    // } else {
+    //     // If the substring is not present, use the original URL
+    //     fileName = props.csvUrl;
+    // }
+
+    // // Create an anchor element and set the attributes for downloading
+    // const anchor = document.createElement("a");
+    // anchor.href = props.csvUrl;
+    // anchor.download = fileName; // You can set a specific filename here if desired
+    // document.body.appendChild(anchor);
+
+    // // Trigger the download
+    // anchor.click();
+
+    // // Clean up by removing the anchor element
+    // document.body.removeChild(anchor);
+    //     },
+    // });
+};
+
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
@@ -402,4 +486,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>
