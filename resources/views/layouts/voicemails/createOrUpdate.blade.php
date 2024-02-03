@@ -425,7 +425,7 @@
                                                 <input type="hidden" name="voicemail_uuid"
                                                     value="{{ $voicemail->voicemail_uuid }}">
                                                 <a href="{{ Route('voicemails.index') }}" class="btn btn-light">Close</a>
-                                                <button id="submitFormButton" class="btn btn-danger" type="submit">Save
+                                                <button id="submitFormButton" class="btn btn-success" type="submit">Save
                                                 </button>
                                             </div>
                                         </div> <!-- end col -->
@@ -457,310 +457,318 @@
         document.addEventListener('DOMContentLoaded', function() {
 
 
-        $('#submitFormButton').on('click', function(e) {
-            e.preventDefault();
-            $('.loading').show();
+            $('#submitFormButton').on('click', function(e) {
+                e.preventDefault();
+                $('.loading').show();
 
-            //Reset error messages
-            $('.error_message').text("");
+                //Reset error messages
+                $('.error_message').text("");
 
-            $.ajax({
-                    type: "POST",
-                    url: $('#voicemail_form').attr('action'),
-                    cache: false,
-                    data: $("#voicemail_form").serialize(),
-                })
-                .done(function(response) {
-                    $('.loading').hide();
+                $.ajax({
+                        type: "POST",
+                        url: $('#voicemail_form').attr('action'),
+                        cache: false,
+                        data: $("#voicemail_form").serialize(),
+                    })
+                    .done(function(response) {
+                        $('.loading').hide();
 
-                    if (response.error) {
-                        printErrorMsg(response.error);
+                        if (response.error) {
+                            printErrorMsg(response.error);
 
-                    } else {
-                        $.NotificationApp.send("Success", response.message, "top-right", "#10c469", "success");
-                        setTimeout(function() {
-                            window.location.href = response.redirect_url;
-                        }, 1000);
+                        } else {
+                            $.NotificationApp.send("Success", response.message, "top-right", "#10c469",
+                                "success");
+                            location.reload();
 
-                    }
-                })
-                .fail(function(response) {
-                    $('.loading').hide();
-                    printErrorMsg(response.responseText);
+                        }
+                    })
+                    .fail(function(response) {
+                        $('.loading').hide();
+                        printErrorMsg(response.responseText);
+                    });
+
+            })
+
+            // Upload voicemail unavailable file
+            $('#voicemail_unavailable_upload_file_button').on('click', function() {
+                $('#voicemail_unavailable_upload_file').trigger('click');
+            });
+
+            $('#voicemail_unavailable_upload_file').on('change', function(e) {
+                e.preventDefault();
+
+                var formData = new FormData();
+                formData.append('voicemail_unavailable_upload_file', $(this)[0].files[0]);
+                formData.append('greeting_type', 'unavailable');
+
+                // Add spinner
+                $("#voicemail_unavailable_upload_file_button_icon").hide();
+                $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", false);
+
+                var url = $('#voicemail_unavailable_upload_file_button').data('url');
+
+                $.ajax({
+                        type: "POST",
+                        url: url,
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        headers: {
+                            'X-CSRF-Token': '{{ csrf_token() }}',
+                        },
+                    })
+                    .done(function(response) {
+                        // remove the spinner and change button to default
+                        $("#voicemail_unavailable_upload_file_button_icon").show();
+                        $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", true);
+
+                        //Enable play button
+                        $("#voicemail_unavailable_play_button").attr("disabled", false);
+                        //Enable download button
+                        $("#voicemail_unavailable_download_file_button").attr("disabled", false);
+                        //Enable delete button
+                        $("#voicemail_unavailable_delete_file_button").attr("disabled", false);
+
+                        @if ($voicemail->exists)
+                            //Update audio file
+                            $("#voicemail_unavailable_audio_file").attr("src",
+                                "{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid, 'filename' => 'greeting_1.wav']) }}"
+                            );
+                        @endif
+
+                        $("#voicemail_unavailable_audio_file")[0].pause();
+                        $("#voicemail_unavailable_audio_file")[0].load();
+
+                        $("#voicemailUnavailableFilename").html('<strong>' + response.filename +
+                            '</strong>');
+
+                        if (response.error) {
+                            $.NotificationApp.send("Warning",
+                                "There was a error uploading this greeting",
+                                "top-right", "#ff5b5b", "error")
+                            $("#voicemailUnvaialableGreetingError").text(response.message);
+                        } else {
+                            $.NotificationApp.send("Success",
+                                "The greeeting has been uploaded successfully",
+                                "top-right", "#10c469", "success")
+                        }
+                    })
+                    .fail(function(response) {
+                        //
+                    });
+            });
+
+
+
+            // Upload voicemail name file
+            $('#voicemail_name_upload_file_button').on('click', function() {
+                $('#voicemail_name_upload_file').trigger('click');
+            });
+
+            $('#voicemail_name_upload_file').on('change', function(e) {
+                e.preventDefault();
+
+                var formData = new FormData();
+                formData.append('voicemail_name_upload_file', $(this)[0].files[0]);
+                formData.append('greeting_type', 'name');
+
+                // Add spinner
+                $("#voicemail_name_upload_file_button_icon").hide();
+                $("#voicemail_name_upload_file_button_spinner").attr("hidden", false);
+
+                var url = $('#voicemail_name_upload_file').data('url');
+
+                $.ajax({
+                        type: "POST",
+                        url: url,
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        headers: {
+                            'X-CSRF-Token': '{{ csrf_token() }}',
+                        },
+                    })
+                    .done(function(response) {
+                        // remove the spinner and change button to default
+                        $("#voicemail_name_upload_file_button_icon").show();
+                        $("#voicemail_name_upload_file_button_spinner").attr("hidden", true);
+
+                        //Enable play button
+                        $("#voicemail_name_play_button").attr("disabled", false);
+                        //Enable download button
+                        $("#voicemail_name_download_file_button").attr("disabled", false);
+                        //Enable delete button
+                        $("#voicemail_name_delete_file_button").attr("disabled", false);
+
+
+                        @if ($voicemail->exists)
+                            //Update audio file
+                            $("#voicemail_name_audio_file").attr("src",
+                                "{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid, 'filename' => 'greeting_1.wav']) }}"
+                            );
+                        @endif
+                        $("#voicemail_name_audio_file")[0].pause();
+                        $("#voicemail_name_audio_file")[0].load();
+
+                        $("#voicemailNameFilename").html('<strong>' + response.filename + '</strong>');
+
+                        if (response.error) {
+                            $.NotificationApp.send("Warning",
+                                "There was a error uploading this greeting",
+                                "top-right", "#ff5b5b", "error")
+                            $("#voicemailNameGreetingError").text(response.message);
+                        } else {
+                            $.NotificationApp.send("Success",
+                                "The greeeting has been uploaded successfully",
+                                "top-right", "#10c469", "success")
+                        }
+                    })
+                    .fail(function(response) {
+                        //
+                    });
+            });
+
+
+            // Delete unavailable voicemail file
+            $('#voicemail_unavailable_delete_file_button').on('click', function(e) {
+                e.preventDefault();
+
+                var url = $('#voicemail_unavailable_delete_file_button').data('url');
+
+                // Add spinner
+                $("#voicemail_unavailable_delete_file_button_icon").hide();
+                $("#voicemail_unavailable_delete_file_button_spinner").attr("hidden", false);
+
+                $.ajax({
+                        type: "GET",
+                        url: url,
+                        headers: {
+                            'X-CSRF-Token': '{{ csrf_token() }}',
+                        },
+                    })
+                    .done(function(response) {
+                        // remove the spinner and change button to default
+                        $("#voicemail_unavailable_delete_file_button_icon").show();
+                        $("#voicemail_unavailable_delete_file_button_spinner").attr("hidden", true);
+
+                        //Disable play button
+                        $("#voicemail_unavailable_play_button").attr("disabled", true);
+                        //Disable download button
+                        $("#voicemail_unavailable_download_file_button").attr("disabled", true);
+                        //Disable delete button
+                        $("#voicemail_unavailable_delete_file_button").attr("disabled", true);
+
+                        $("#voicemailUnavailableFilename").html('<strong>generic greeeting</strong>');
+
+                        if (response.error) {
+                            $.NotificationApp.send("Warning",
+                                "There was a error deleting this greeting",
+                                "top-right", "#ff5b5b", "error")
+                            $("#voicemailGreetingError").text(response.message);
+                        } else {
+                            $.NotificationApp.send("Success",
+                                "The greeeting has been deleted successfully",
+                                "top-right", "#10c469", "success")
+                        }
+                    })
+                    .fail(function(response) {
+                        //
+                    });
+            });
+
+            // Delete name voicemail file
+            $('#voicemail_name_delete_file_button').on('click', function(e) {
+                e.preventDefault();
+
+                var url = $('#voicemail_name_delete_file_button').data('url');
+
+                // Add spinner
+                $("#voicemail_name_delete_file_button_icon").hide();
+                $("#voicemail_name_delete_file_button_spinner").attr("hidden", false);
+
+                $.ajax({
+                        type: "GET",
+                        url: url,
+                        headers: {
+                            'X-CSRF-Token': '{{ csrf_token() }}',
+                        },
+                    })
+                    .done(function(response) {
+                        // remove the spinner and change button to default
+                        $("#voicemail_name_delete_file_button_icon").show();
+                        $("#voicemail_name_delete_file_button_spinner").attr("hidden", true);
+
+                        //Disable play button
+                        $("#voicemail_name_play_button").attr("disabled", true);
+                        //Disable download button
+                        $("#voicemail_name_download_file_button").attr("disabled", true);
+                        //Disable delete button
+                        $("#voicemail_name_delete_file_button").attr("disabled", true);
+
+                        $("#voicemailNameFilename").html('<strong>generic greeeting</strong>');
+
+                        if (response.error) {
+                            $.NotificationApp.send("Warning",
+                                "There was a error deleting this greeting",
+                                "top-right", "#ff5b5b", "error")
+                            $("#voicemailGreetingError").text(response.message);
+                        } else {
+                            $.NotificationApp.send("Success",
+                                "The greeeting has been deleted successfully",
+                                "top-right", "#10c469", "success")
+                        }
+                    })
+                    .fail(function(response) {
+                        //
+                    });
+            });
+
+            // hide pause button
+            $('#voicemail_unavailable_pause_button').hide();
+            $('#voicemail_name_pause_button').hide();
+
+            // Play unavailable audio file
+            $('#voicemail_unavailable_play_button').click(function() {
+                var audioElement = document.getElementById('voicemail_unavailable_audio_file');
+                $(this).hide();
+                $('#voicemail_unavailable_pause_button').show();
+                audioElement.play();
+                audioElement.addEventListener('ended', function() {
+                    $('#voicemail_unavailable_pause_button').hide();
+                    $('#voicemail_unavailable_play_button').show();
                 });
+            });
 
-        })
-
-        // Upload voicemail unavailable file
-        $('#voicemail_unavailable_upload_file_button').on('click', function() {
-            $('#voicemail_unavailable_upload_file').trigger('click');
-        });
-
-        $('#voicemail_unavailable_upload_file').on('change', function(e) {
-            e.preventDefault();
-
-            var formData = new FormData();
-            formData.append('voicemail_unavailable_upload_file', $(this)[0].files[0]);
-            formData.append('greeting_type', 'unavailable');
-
-            // Add spinner
-            $("#voicemail_unavailable_upload_file_button_icon").hide();
-            $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", false);
-
-            var url = $('#voicemail_unavailable_upload_file_button').data('url');
-
-            $.ajax({
-                    type: "POST",
-                    url: url,
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-Token': '{{ csrf_token() }}',
-                    },
-                })
-                .done(function(response) {
-                    // remove the spinner and change button to default
-                    $("#voicemail_unavailable_upload_file_button_icon").show();
-                    $("#voicemail_unavailable_upload_file_button_spinner").attr("hidden", true);
-
-                    //Enable play button
-                    $("#voicemail_unavailable_play_button").attr("disabled", false);
-                    //Enable download button
-                    $("#voicemail_unavailable_download_file_button").attr("disabled", false);
-                    //Enable delete button
-                    $("#voicemail_unavailable_delete_file_button").attr("disabled", false);
-
-                    @if ($voicemail->exists)
-                        //Update audio file
-                        $("#voicemail_unavailable_audio_file").attr("src",
-                            "{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid, 'filename' => 'greeting_1.wav']) }}"
-                        );
-                    @endif
-
-                    $("#voicemail_unavailable_audio_file")[0].pause();
-                    $("#voicemail_unavailable_audio_file")[0].load();
-
-                    $("#voicemailUnavailableFilename").html('<strong>' + response.filename + '</strong>');
-
-                    if (response.error) {
-                        $.NotificationApp.send("Warning", "There was a error uploading this greeting",
-                            "top-right", "#ff5b5b", "error")
-                        $("#voicemailUnvaialableGreetingError").text(response.message);
-                    } else {
-                        $.NotificationApp.send("Success", "The greeeting has been uploaded successfully",
-                            "top-right", "#10c469", "success")
-                    }
-                })
-                .fail(function(response) {
-                    //
-                });
-        });
-
-
-
-        // Upload voicemail name file
-        $('#voicemail_name_upload_file_button').on('click', function() {
-            $('#voicemail_name_upload_file').trigger('click');
-        });
-
-        $('#voicemail_name_upload_file').on('change', function(e) {
-            e.preventDefault();
-
-            var formData = new FormData();
-            formData.append('voicemail_name_upload_file', $(this)[0].files[0]);
-            formData.append('greeting_type', 'name');
-
-            // Add spinner
-            $("#voicemail_name_upload_file_button_icon").hide();
-            $("#voicemail_name_upload_file_button_spinner").attr("hidden", false);
-
-            var url = $('#voicemail_name_upload_file').data('url');
-
-            $.ajax({
-                    type: "POST",
-                    url: url,
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-Token': '{{ csrf_token() }}',
-                    },
-                })
-                .done(function(response) {
-                    // remove the spinner and change button to default
-                    $("#voicemail_name_upload_file_button_icon").show();
-                    $("#voicemail_name_upload_file_button_spinner").attr("hidden", true);
-
-                    //Enable play button
-                    $("#voicemail_name_play_button").attr("disabled", false);
-                    //Enable download button
-                    $("#voicemail_name_download_file_button").attr("disabled", false);
-                    //Enable delete button
-                    $("#voicemail_name_delete_file_button").attr("disabled", false);
-
-
-                    @if ($voicemail->exists)
-                        //Update audio file
-                        $("#voicemail_name_audio_file").attr("src",
-                            "{{ route('getVoicemailGreeting', ['voicemail' => $voicemail->voicemail_uuid, 'filename' => 'greeting_1.wav']) }}"
-                        );
-                    @endif
-                    $("#voicemail_name_audio_file")[0].pause();
-                    $("#voicemail_name_audio_file")[0].load();
-
-                    $("#voicemailNameFilename").html('<strong>' + response.filename + '</strong>');
-
-                    if (response.error) {
-                        $.NotificationApp.send("Warning", "There was a error uploading this greeting",
-                            "top-right", "#ff5b5b", "error")
-                        $("#voicemailNameGreetingError").text(response.message);
-                    } else {
-                        $.NotificationApp.send("Success", "The greeeting has been uploaded successfully",
-                            "top-right", "#10c469", "success")
-                    }
-                })
-                .fail(function(response) {
-                    //
-                });
-        });
-
-
-        // Delete unavailable voicemail file
-        $('#voicemail_unavailable_delete_file_button').on('click', function(e) {
-            e.preventDefault();
-
-            var url = $('#voicemail_unavailable_delete_file_button').data('url');
-
-            // Add spinner
-            $("#voicemail_unavailable_delete_file_button_icon").hide();
-            $("#voicemail_unavailable_delete_file_button_spinner").attr("hidden", false);
-
-            $.ajax({
-                    type: "GET",
-                    url: url,
-                    headers: {
-                        'X-CSRF-Token': '{{ csrf_token() }}',
-                    },
-                })
-                .done(function(response) {
-                    // remove the spinner and change button to default
-                    $("#voicemail_unavailable_delete_file_button_icon").show();
-                    $("#voicemail_unavailable_delete_file_button_spinner").attr("hidden", true);
-
-                    //Disable play button
-                    $("#voicemail_unavailable_play_button").attr("disabled", true);
-                    //Disable download button
-                    $("#voicemail_unavailable_download_file_button").attr("disabled", true);
-                    //Disable delete button
-                    $("#voicemail_unavailable_delete_file_button").attr("disabled", true);
-
-                    $("#voicemailUnavailableFilename").html('<strong>generic greeeting</strong>');
-
-                    if (response.error) {
-                        $.NotificationApp.send("Warning", "There was a error deleting this greeting",
-                            "top-right", "#ff5b5b", "error")
-                        $("#voicemailGreetingError").text(response.message);
-                    } else {
-                        $.NotificationApp.send("Success", "The greeeting has been deleted successfully",
-                            "top-right", "#10c469", "success")
-                    }
-                })
-                .fail(function(response) {
-                    //
-                });
-        });
-
-        // Delete name voicemail file
-        $('#voicemail_name_delete_file_button').on('click', function(e) {
-            e.preventDefault();
-
-            var url = $('#voicemail_name_delete_file_button').data('url');
-
-            // Add spinner
-            $("#voicemail_name_delete_file_button_icon").hide();
-            $("#voicemail_name_delete_file_button_spinner").attr("hidden", false);
-
-            $.ajax({
-                    type: "GET",
-                    url: url,
-                    headers: {
-                        'X-CSRF-Token': '{{ csrf_token() }}',
-                    },
-                })
-                .done(function(response) {
-                    // remove the spinner and change button to default
-                    $("#voicemail_name_delete_file_button_icon").show();
-                    $("#voicemail_name_delete_file_button_spinner").attr("hidden", true);
-
-                    //Disable play button
-                    $("#voicemail_name_play_button").attr("disabled", true);
-                    //Disable download button
-                    $("#voicemail_name_download_file_button").attr("disabled", true);
-                    //Disable delete button
-                    $("#voicemail_name_delete_file_button").attr("disabled", true);
-
-                    $("#voicemailNameFilename").html('<strong>generic greeeting</strong>');
-
-                    if (response.error) {
-                        $.NotificationApp.send("Warning", "There was a error deleting this greeting",
-                            "top-right", "#ff5b5b", "error")
-                        $("#voicemailGreetingError").text(response.message);
-                    } else {
-                        $.NotificationApp.send("Success", "The greeeting has been deleted successfully",
-                            "top-right", "#10c469", "success")
-                    }
-                })
-                .fail(function(response) {
-                    //
-                });
-        });
-
-        // hide pause button
-        $('#voicemail_unavailable_pause_button').hide();
-        $('#voicemail_name_pause_button').hide();
-
-        // Play unavailable audio file
-        $('#voicemail_unavailable_play_button').click(function() {
-            var audioElement = document.getElementById('voicemail_unavailable_audio_file');
-            $(this).hide();
-            $('#voicemail_unavailable_pause_button').show();
-            audioElement.play();
-            audioElement.addEventListener('ended', function() {
-                $('#voicemail_unavailable_pause_button').hide();
+            // Pause unavailable audio file
+            $('#voicemail_unavailable_pause_button').click(function() {
+                var audioElement = document.getElementById('voicemail_unavailable_audio_file');
+                $(this).hide();
                 $('#voicemail_unavailable_play_button').show();
+                audioElement.pause();
             });
-        });
 
-        // Pause unavailable audio file
-        $('#voicemail_unavailable_pause_button').click(function() {
-            var audioElement = document.getElementById('voicemail_unavailable_audio_file');
-            $(this).hide();
-            $('#voicemail_unavailable_play_button').show();
-            audioElement.pause();
-        });
+            // Play name audio file
+            $('#voicemail_name_play_button').click(function() {
+                var audioElement = document.getElementById('voicemail_name_audio_file');
+                $(this).hide();
+                $('#voicemail_name_pause_button').show();
+                audioElement.play();
+                audioElement.addEventListener('ended', function() {
+                    $('#voicemail_name_pause_button').hide();
+                    $('#voicemail_name_play_button').show();
+                });
+            });
 
-        // Play name audio file
-        $('#voicemail_name_play_button').click(function() {
-            var audioElement = document.getElementById('voicemail_name_audio_file');
-            $(this).hide();
-            $('#voicemail_name_pause_button').show();
-            audioElement.play();
-            audioElement.addEventListener('ended', function() {
-                $('#voicemail_name_pause_button').hide();
+            // Pause name audio file
+            $('#voicemail_name_pause_button').click(function() {
+                var audioElement = document.getElementById('voicemail_name_audio_file');
+                $(this).hide();
                 $('#voicemail_name_play_button').show();
+                audioElement.pause();
             });
+
+
         });
-
-        // Pause name audio file
-        $('#voicemail_name_pause_button').click(function() {
-            var audioElement = document.getElementById('voicemail_name_audio_file');
-            $(this).hide();
-            $('#voicemail_name_play_button').show();
-            audioElement.pause();
-        });
-
-
-    });
     </script>
 @endpush
