@@ -1436,7 +1436,7 @@ class ExtensionsController extends Controller
     public function sendEventNotifyAll(Request $request)
     {
         $selectedExtensionIds = $request->get('extensionIds') ?? [];
-        $registrations = get_registrations();
+        $registrations = get_registrations('all');
 
         $all_regs = [];
         if(!empty($selectedExtensionIds)) {
