@@ -410,71 +410,36 @@ const handleUpdateDateRange = (newDateRange) => {
 
 const exportCsv = () => {
 
-    filterData.value.download = true;
+    filterData.value.download = 'true';
 
     let url = `/call-detail-records`;
 
     axios.post(url, {
         filterData: filterData._rawValue,
     }, {
-        responseType: 'blob' // Important to handle the binary response for file download
+        responseType: 'blob'
     })
         .then(response => {
             // Create a blob link to download
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'call-detail-records.xlsx'); // Set the file name for the download
+            link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link); // Clean up
             window.URL.revokeObjectURL(url); // Free up memory
+
+            filterData.value.download = 'false'; // Reset download flag on success
+
         })
         .catch(error => {
             console.error('There was an error with the request:', error);
+            filterData.value.download = 'false'; // Reset download flag on error
+
         });
 
-    // let paramString = new URLSearchParams(filterData._rawValue);
 
-    // console.log(paramString.toString());
-
-    // window.open(`/call-detail-records?download=true&${paramString.toString()}`);
-
-
-    // router.visit("/call-detail-records", {
-    //     data: {
-    //         filterData: filterData._rawValue,
-    //     },
-    //     preserveScroll: true,
-    //     preserveState: true,
-    //     only: ["csvUrl"],
-    //     onSuccess: (page) => {
-
-    //         console.log(props.csvUrl);
-
-    // let fileName;
-
-    // if (props.csvUrl.includes("call-detail-records/file")) {
-    //     // Shorten the name
-    //     fileName = uuid;
-    // } else {
-    //     // If the substring is not present, use the original URL
-    //     fileName = props.csvUrl;
-    // }
-
-    // // Create an anchor element and set the attributes for downloading
-    // const anchor = document.createElement("a");
-    // anchor.href = props.csvUrl;
-    // anchor.download = fileName; // You can set a specific filename here if desired
-    // document.body.appendChild(anchor);
-
-    // // Trigger the download
-    // anchor.click();
-
-    // // Clean up by removing the anchor element
-    // document.body.removeChild(anchor);
-    //     },
-    // });
 };
 
 

@@ -2,9 +2,11 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\WithProperties;
 
-class CdrsExport implements FromCollection
+class CdrsExport implements FromView, WithProperties
 {
     protected $cdrs;
 
@@ -13,11 +15,31 @@ class CdrsExport implements FromCollection
         $this->cdrs = $cdrs;
     }
 
-    /**
-    * @return \Illuminate\Support\Collection
-    */
-    public function collection()
+    public function view(): View
     {
-        return $this->cdrs;
+        return view('layouts.cdrs.export', [
+            'cdrs' => $this->cdrs
+        ]);
+    }
+
+    // /**
+    // * @return \Illuminate\Support\Collection
+    // */
+    // public function collection()
+    // {
+    //     return $this->cdrs;
+    // }
+
+    public function properties(): array
+    {
+        return [
+            'creator'        => 'Nemerald',
+            'lastModifiedBy' => 'Nemerald',
+            'title'          => 'Call Record Export',
+            'description'    => 'Exported call records',
+            'subject'        => 'Call Records',
+            'keywords'       => 'calls,export,spreadsheet',
+            'category'       => 'Call Records',
+        ];
     }
 }

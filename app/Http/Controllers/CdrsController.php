@@ -27,7 +27,7 @@ class CdrsController extends Controller
      */
     public function index(Request $request)
     {
-        logger($request->all());
+        // logger($request->all());
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
@@ -80,12 +80,12 @@ class CdrsController extends Controller
         $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
         $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
 
-        if ($request->download) {
+        if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
             $cdrs = $this->getCdrs(false);
-            logger($cdrs->count());
             $export = new CdrsExport($cdrs);
 
-            return Excel::download($export, 'call-detail-records.xlsx');
+            return Excel::download($export, 'call-detail-records.csv');
+            
         }
 
 
