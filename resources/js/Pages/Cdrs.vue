@@ -9,8 +9,10 @@
 
             <template #action>
 
-                <button type="button" @click.prevent="exportCsv"
-                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                <button type="button" @click.prevent="exportCsv" :disabled="data.data.length === 0"
+                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm 
+                    disabled:ring-0 disabled:text-blue-700/50
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
                     <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
                     Export CSV
                 </button>
