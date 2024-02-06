@@ -105,9 +105,9 @@ const submit = () => {
             <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
                 <form class="space-y-6" action="#" method="POST">
                     <div>
-                        <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
+                        <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
                         <div class="mt-2">
-                            <input v-model="form.email" id="email" name="email" type="email" autocomplete="email" required
+                            <input v-model="form.user_email" id="user_email" name="user_email" type="email" autocomplete="email" required
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
                         </div>
                     </div>
@@ -163,7 +163,7 @@ const submit = () => {
 import { ref, computed } from 'vue';
 import { router } from "@inertiajs/vue3";
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import route from 'ZiggyVue';
+// import route from 'ZiggyVue';
 
 const props = defineProps({ 
     errors: Object 
@@ -176,7 +176,7 @@ const errorMessage = ref('');
 
 // Reactive variables for form inputs
 const form = useForm({
-    email: '',
+    user_email: '',
     password: '',
     remember: false,
 });
@@ -189,8 +189,8 @@ const submitForm = () => {
 
     isLoading.value = true;
 
-    form.post(route('login'), {
-        onFinish: () => console.log("success"),
+    form.post('/login', {
+        onFinish: () => form.reset('password'),
     });
 
     // router.visit("/login", {
