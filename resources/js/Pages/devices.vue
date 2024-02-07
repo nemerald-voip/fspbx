@@ -35,6 +35,16 @@
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart all devices
                 </button>
+
+                <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show global
+                </button>
+
+                <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show local
+                </button>
             </template>
 
             <template #navigation>
@@ -49,7 +59,7 @@
                     <input type="checkbox" v-model="selectAll" @change="handleSelectAll"
                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                 </TableColumnHeader>
-                <TableColumnHeader v-if="deviceGlobalView" header="Domain"
+                <TableColumnHeader v-if="showGlobal" header="Domain"
                                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="MAC Address"
                                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
@@ -71,8 +81,7 @@
                                :value="row.device_uuid" :data-extension-uuid="row.extension_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
-                    <TableField v-if="deviceGlobalView" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                                :text="row.domain_name"/>
+                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_address"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_label"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
@@ -157,7 +166,7 @@
 </template>
 
 <script setup>
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import axios from 'axios';
 import {router} from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
@@ -178,6 +187,7 @@ const selectAll = ref(false);
 const selectedItems = ref([]);
 const restartRequestNotificationSuccessShow = ref(false);
 const restartRequestNotificationErrorShow = ref(false);
+const showGlobal = ref(false);
 
 const props = defineProps({
     data: Object,
@@ -194,6 +204,10 @@ const props = defineProps({
     routeSendEventNotifyAll: String,
 });
 
+onMounted(() => {
+    showGlobal.value = props.deviceGlobalView;
+})
+
 const handleSelectAll = () => {
     if (selectAll.value) {
         selectedItems.value = props.data.data.map(item => item.extension_uuid);
@@ -203,7 +217,8 @@ const handleSelectAll = () => {
 };
 
 const filterData = ref({
-    search: props.search
+    search: props.search,
+    showGlobal: props.deviceGlobalView,
 });
 
 const handleEdit = (url) => {
@@ -254,9 +269,20 @@ const handleRestartAll = () => {
     });
 }
 
+const handleShowGlobal = () => {
+    filterData.value.showGlobal = true;
+    showGlobal.value = true;
+    handleSearchButtonClick();
+}
+
+const handleShowLocal = () => {
+    filterData.value.showGlobal = false;
+    showGlobal.value = false;
+    handleSearchButtonClick();
+}
+
 const handleSearchButtonClick = () => {
     loading.value = true;
-
     router.visit(props.routeDevices, {
         data: {
             filterData: filterData._rawValue,
@@ -267,7 +293,6 @@ const handleSearchButtonClick = () => {
         onSuccess: (page) => {
             loading.value = false;
         }
-
     });
 };
 

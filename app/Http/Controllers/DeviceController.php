@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CDR;
+use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Requests\UpdateDeviceRequest;
 use App\Models\DeviceLines;
 use App\Models\DeviceProfile;
 use App\Models\Devices;
@@ -12,12 +13,9 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\StoreDeviceRequest;
-use App\Http\Requests\UpdateDeviceRequest;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 
 class DeviceController extends Controller
@@ -116,28 +114,30 @@ class DeviceController extends Controller
     public function getDevices()
     {
         $devices = $this->builder($this->filters)->paginate(50);
-        foreach($devices as $device) {
+        foreach ($devices as $device) {
             $device->profile_name = $device->profile()->first()->device_profile_name ?? '';
-            if($device->lines()->first() && $device->lines()->first()->extension()) {
+            if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
                 $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
                 $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
-                $device->send_notify_path = route('extensions.send-event-notify', $device->lines()->first()->extension());
+                $device->send_notify_path = route('extensions.send-event-notify',
+                    $device->lines()->first()->extension());
             }
+            //$device->domain_name = Session::get('domain_name');
             $device->edit_path = route('devices.edit', $device);
             $device->destroy_path = route('devices.destroy', $device);
         }
 
-/*        $devices->transform(function ($cdr) {
-            // Perform any additional processing on start_date if needed
-            // For example, format start_date or add additional data
+        /*        $devices->transform(function ($cdr) {
+                    // Perform any additional processing on start_date if needed
+                    // For example, format start_date or add additional data
 
-            // Add or modify attributes as needed
-            $cdr->start_date = $cdr->start_date;
-            $cdr->start_time = $cdr->start_time;
+                    // Add or modify attributes as needed
+                    $cdr->start_date = $cdr->start_date;
+                    $cdr->start_time = $cdr->start_time;
 
-            return $cdr;
-        });*/
+                    return $cdr;
+                });*/
         return $devices;
     }
 
@@ -145,38 +145,43 @@ class DeviceController extends Controller
     {
         $devices = Devices::query();
         //if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
-            $devices
-                ->where('domain_uuid', Session::get('domain_uuid'));
+        //  $devices
+        //    ->where('domain_uuid', Session::get('domain_uuid'));
         /*} else {
             $devices
                 ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
         }*/
+        $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
 
-        if(is_array($filters)) {
+
+        if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
                     $this->$method($devices, $value);
                 }
             }
         }
-
-        /*
-        if (!empty($searchStringKey)) {
-            $devices->where(function ($query) use ($searchStringKey) {
-                $query
-                    ->orWhereLike('device_address', str_replace([':', '-', '.'], '', $searchStringKey))
-                    ->orWhereLike('device_label', $searchStringKey)
-                    ->orWhereLike('device_vendor', $searchStringKey)
-                    ->orWhereLike('device_template', $searchStringKey);
-            });
-        }*/
         $devices->orderBy('device_label');
-
-
-        // Apply sorting
-        //$cdrs->orderBy($this->sortField, $this->sortOrder);
-
         return $devices;
+    }
+
+    protected function filterShowglobal($query, $value)
+    {
+        if ($value) {
+            $query
+                ->where('domain_uuid', Session::get('domain_uuid'));
+        }
+    }
+
+    protected function filterSearch($query, $value)
+    {
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value) {
+            $query->where('device_address', 'ilike', '%'.$value.'%')
+                ->orWhere('device_label', 'ilike', '%'.$value.'%')
+                ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
+                ->orWhere('device_template', 'ilike', '%'.$value.'%');
+        });
     }
 
     /**
@@ -278,7 +283,7 @@ class DeviceController extends Controller
      */
     public function edit(Request $request, Devices $device)
     {
-        if($request->ajax()){
+        if ($request->ajax()) {
             return response()->json($device);
         }
 
@@ -310,7 +315,7 @@ class DeviceController extends Controller
         $inputs = $request->validated();
         $device->update($inputs);
 
-        if(($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
+        if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
             $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
             if ($deviceLinesExist) {
                 $deviceLinesExist->delete();
