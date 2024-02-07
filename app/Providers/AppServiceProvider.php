@@ -58,15 +58,15 @@ class AppServiceProvider extends ServiceProvider
         // Ringotel
         Http::macro('ringotel', function () {
             return Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('RINGOTEL_TOKEN'),
-            ])->baseUrl(env('RINGOTEL_URL'));
+                'Authorization' => 'Bearer ' . config('ringotel.token',''),
+            ])->baseUrl(config('ringotel.url', 'https://shell.ringotel.co'));
         });
 
         // Ringotel API
         Http::macro('ringotel_api', function () {
             return Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('RINGOTEL_TOKEN'),
-            ])->baseUrl(env('RINGOTEL_API_URL'));
+                'Authorization' => 'Bearer ' . config('ringotel.token',''),
+            ])->baseUrl(config('ringotel.api_url','https://shell.ringotel.co/api'));
         });
 
 

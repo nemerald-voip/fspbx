@@ -919,7 +919,6 @@
             $(document).on('click', '.forward_checkbox', function(e) {
                 var checkbox = $(this);
                 var cname = checkbox.data('option');
-                console.log(cname)
                 if (checkbox.is(':checked')) {
                     $('#' + cname + '_phone_number').removeClass('d-none');
                 } else {

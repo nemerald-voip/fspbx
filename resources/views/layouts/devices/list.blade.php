@@ -8,14 +8,14 @@
     <a href="{{ route('devices.create') }}" class="btn btn-sm btn-success mb-2 me-2">
         <i class="mdi mdi-plus-circle me-1"></i> Add New
     </a>
-    <a href="{{ route('devices.index', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
+    <a data-scope="{{ $selectedScope }}" href="{{ route('devices.index', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
         Show {{ (($selectedScope == 'local')?'global':'local') }} devices
     </a>
     @if($permissions['device_restart'])
-        <a href="#" class="btn btn-danger btn-restart-selected-devices btn-sm mb-2 me-2 disabled">
+        <a href="#" data-restart-url="{{route('extensions.send-event-notify-all')}}" class="btn btn-danger btn-restart-selected-devices btn-sm mb-2 me-2 disabled">
             Restart selected devices
         </a>
-        <a href="#" class="btn btn-danger btn-restart-all-devices btn-sm mb-2 me-2">
+        <a href="#" data-restart-url="{{route('extensions.send-event-notify-all')}}" data-total-devices-count="{{$devicesToRestartCount}}" class="btn btn-danger btn-restart-all-devices btn-sm mb-2 me-2">
             Restart all {{$devicesToRestartCount}} devices
         </a>
     @endif
@@ -66,7 +66,7 @@
                     @if ($permissions['device_restart'] && $device->lines()->first() && $device->lines()->first()->extension())
                         <div class="form-check">
                             <input type="checkbox" name="action_box[]" value="{{ $device->device_uuid }}"
-                                   data-restart-url="{{route('extensions.send-event-notify', $device->lines()->first()->extension()->extension_uuid)}}"
+                                   data-extension-uuid="{{$device->lines()->first()->extension()->extension_uuid}}"
                                    class="form-check-input action_checkbox">
                             <label class="form-check-label" >&nbsp;</label>
                         </div>

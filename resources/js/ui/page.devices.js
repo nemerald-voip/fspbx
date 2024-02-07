@@ -9,9 +9,9 @@
         this.$restartSelectedDevices = $(".btn-restart-selected-devices")
         this.$restartAllDevices = $('.btn-restart-all-devices')
         this.$selectallCheckbox = $('#selectallCheckbox')
-        this.$restartedWrapper = '<div id="restartedWrapper" class="jq-toast-wrap bottom-right">' +
-            '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>Restarted ' +
-            '<span id="restartedCount">:count</span></div></div>'
+        //this.$restartedWrapper = '<div id="restartedWrapper" class="jq-toast-wrap bottom-right">' +
+        //    '<div class="jq-toast-single"><h2 class="jq-toast-heading">Restarting devices</h2>' +
+        //    '<span id="restartedCount"></span></div></div>'
     };
 
     Devices.prototype.init = function () {
@@ -23,20 +23,18 @@
         });
         this.$restartSelectedDevices.on("click", function (e) {
             e.preventDefault();
-            $this.removeRestartedWrapper(false)
+            //$this.removeRestartedWrapper(false)
             let devices = $this.$actionCheckbox.filter(':checked');
-            let devicesTotal = devices.length;
-            $this.$restartedWrapper.replace(":count", `0 of ${devicesTotal}`)
-            $('body').append($this.$restartedWrapper);
-            $.each(devices, (i, device) => {
-                $this.sendRequest(device.dataset.restartUrl, true)
-                $('#restartedCount').text(`${i + 1} of ${devicesTotal}`)
-                if ((i + 1) === devicesTotal) {
-                    setTimeout(() => {
-                        $this.removeRestartedWrapper()
-                    }, 4000)
-                }
-            })
+            //let devicesTotal = devices.length;
+            //$('#restartedCount').text(`0 of ${devicesTotal}`)
+            //$('body').append($this.$restartedWrapper);
+
+            let extensionIds = [];
+            devices.each(function(key, val) {
+                extensionIds.push($(this).data('extension-uuid'));
+            });
+            $this.sendRequest(e.currentTarget.dataset.restartUrl, extensionIds)
+
             return false;
         });
         this.$deleteDeviceBtn.on("click", function (e) {
@@ -50,7 +48,12 @@
         });
         this.$restartAllDevices.on('click', function (e) {
             e.preventDefault();
+            //$this.removeRestartedWrapper(false)
+            //$('#restartedCount').text(`0 of ${e.currentTarget.dataset.totalDevicesCount}`)
+            //$('body').append($this.$restartedWrapper);
+            $this.sendRequest(e.currentTarget.dataset.restartUrl)
 
+            return false;
         })
         this.$restartSelectedDevices.on('click', function (e) {
             e.preventDefault();
@@ -90,11 +93,15 @@
         }
     }
 
-    Devices.prototype.sendRequest = function (url, hideNotifyOnSuccess = false) {
+    Devices.prototype.sendRequest = function (url, devicesData = null, hideNotifyOnSuccess = false) {
         let ajaxData = {
             type: 'POST',
             url: url,
             cache: false,
+            data: {
+                scope: $('a[data-scope]').data('scope'),
+                extensionIds: devicesData
+            }
         };
         $.ajax(ajaxData).done(function (response) {
             //$('.loading').hide();

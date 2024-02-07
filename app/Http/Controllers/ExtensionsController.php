@@ -695,7 +695,7 @@ class ExtensionsController extends Controller
             session_start();
         }
 
-        if (isset($extension->extension)) {    
+        if (isset($extension->extension)) {
             //clear fusionpbx cache
             FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
         }
@@ -1226,11 +1226,12 @@ class ExtensionsController extends Controller
             foreach ($attributes['follow_me_destinations'] as $destination) {
                 if ($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                if ($destination['target_external'] == 'external') {
+                if ($destination['target_external'] !='') {
                     $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
                 } else {
                     $followMeDest->follow_me_destination = $destination['target_internal'];
                 }
+
                 $followMeDest->follow_me_delay = $destination['delay'];
                 $followMeDest->follow_me_timeout = $destination['timeout'];
                 if ($destination['prompt'] == 'true') {
@@ -1383,7 +1384,7 @@ class ExtensionsController extends Controller
      * Restart devices for selected extensions.
      *
      * @param \App\Models\Extentions $extention
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sendEventNotify(Request $request, Extensions $extension)
     {
@@ -1398,8 +1399,6 @@ class ExtensionsController extends Controller
                 array_push($all_regs, $registration);
             }
         }
-
-        // Log::alert($all_regs);
 
         foreach ($all_regs as $reg) {
             // Get the agent name
@@ -1430,6 +1429,70 @@ class ExtensionsController extends Controller
         ]);
     }
 
+    /**
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sendEventNotifyAll(Request $request)
+    {
+        $selectedExtensionIds = $request->get('extensionIds') ?? [];
+        $selectedScope = $request->get('scope') ?? 'local';
+        if($selectedScope == 'global') {
+            $registrations = get_registrations('all');
+        } else {
+            $registrations = get_registrations();
+        }
+        $all_regs = [];
+        if(!empty($selectedExtensionIds)) {
+            foreach($selectedExtensionIds as $extensionId) {
+                $extension = Extensions::find($extensionId);
+                foreach ($registrations as $registration) {
+                    if ($registration['sip-auth-user'] == $extension['extension']) {
+                        array_push($all_regs, $registration);
+                    }
+                }
+            }
+        } else {
+            $all_regs = $registrations;
+        }
+
+        foreach ($all_regs as $reg) {
+            // Get the agent name
+            if (preg_match('/Bria|Push|Ringotel/i', $reg['agent']) > 0) {
+                $agent = "";
+            } elseif (preg_match('/polycom|polyedge/i', $reg['agent']) > 0) {
+                $agent = "polycom";
+            } elseif (preg_match("/yealink/i", $reg['agent'])) {
+                $agent = "yealink";
+            } elseif (preg_match("/grandstream/i", $reg['agent'])) {
+                $agent = "grandstream";
+            } else {
+                /**
+                 * Sometimes it throws an exception
+                 * "message": "Undefined variable $agent",
+                 * "exception": "ErrorException",
+                 * "file": "/var/www/freeswitchpbx/app/Http/Controllers/ExtensionsController.php",
+                 *
+                 * So this line prevents it
+                 */
+                $agent = "";
+            }
+
+            if ($agent != "") {
+                $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
+                // Queue a job to restart the phone
+                SendEventNotify::dispatch($command)->onQueue('default');
+            }
+        }
+
+        return response()->json([
+            'status' => 200,
+            'success' => [
+                'message' => 'Successfully submitted bulk restart request'
+            ]
+        ]);
+    }
+
     public function assignDevice(AssignDeviceRequest $request, Extensions $extension)
     {
         $inputs = $request->validated();
@@ -1448,6 +1511,8 @@ class ExtensionsController extends Controller
             'device_uuid' => $inputs['device_uuid'],
             'line_number' => $inputs['line_number'] ?? '1',
             'server_address' => Session::get('domain_name'),
+            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
             'server_address_primary' => get_domain_setting('server_address_primary'),
             'server_address_secondary' => get_domain_setting('server_address_secondary'),
             'display_name' => $extension->extension,
@@ -1473,6 +1538,11 @@ class ExtensionsController extends Controller
 
     public function unAssignDevice(Extensions $extension, DeviceLines $deviceLine)
     {
+        if ($deviceLine->device->device_label == $extension->extension) {
+            $deviceLine->device->device_label = "";
+            $deviceLine->device->save();
+        }
+
         $deviceLine->delete();
 
         return response()->json([

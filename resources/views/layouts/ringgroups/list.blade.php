@@ -19,6 +19,21 @@
     @endif
 @endsection
 
+@section('searchbar')
+    <form id="filterForm" method="GET" action="{{ url()->current() }}?page=1"
+        class="row gy-2 gx-2 align-items-center justify-content-xl-start justify-content-between">
+        <div class="col-auto">
+            <label for="search" class="visually-hidden">Search</label>
+            <div class="input-group input-group-merge">
+                <input type="search" class="form-control" name="search" id="search" value="{{ $searchString }}"
+                    placeholder="Search..." />
+                <input type="button" class="btn btn-light" name="clear" id="clearSearch" value="Clear" />
+            </div>
+        </div>
+        <div class="d-none"><input type="submit" name="submit" value="Ok" /></div>
+    </form>
+@endsection
+
 @section('table-head')
     <tr>
         <th style="width: 20px;">

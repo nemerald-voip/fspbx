@@ -171,7 +171,6 @@
                 greetingRecordedPlayPauseButton.find('i').removeClass('mdi-play').addClass('mdi-pause')
                 audioElementRecorded.play();
             } else {
-                console.log('Recorded audio playing. Pause')
                 greetingRecordedPlayPauseButton.find('i').removeClass('mdi-pause').addClass('mdi-play')
                 audioElementRecorded.currentTime = 0;
                 audioElementRecorded.pause();
@@ -388,7 +387,6 @@
     $('.delete-greeting-btn').click(function () {
         var confirmDeleteRecordingModal = $("#{{ $id }}_confirmDeleteRecordingModal");
         var setting_id = confirmDeleteRecordingModal.data("setting_id");
-        console.log(setting_id);
         confirmDeleteRecordingModal.modal('hide');
         var url = confirmDeleteRecordingModal.data("url");
         url = url.replace(':id', setting_id);
@@ -407,7 +405,6 @@
                 $("#{{ $id }} option[value='" + response.filename + "']").remove();
                 /*var newArray = [];
                 let newData = $.grep($('#{{ $id }}').select2('data'), function (value) {
-                            console.log(value)
                             return value['id'] !== response.filename;
                         });
                         newData.forEach(function(data) {

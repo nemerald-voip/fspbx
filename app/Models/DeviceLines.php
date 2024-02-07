@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Devices;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,8 @@ class DeviceLines extends Model
         'device_uuid',
         'line_number',
         'server_address',
+        'outbound_proxy_primary',
+        'outbound_proxy_secondary',
         'server_address_primary',
         'server_address_secondary',
         'display_name',
@@ -59,5 +62,14 @@ class DeviceLines extends Model
     public function extension()
     {
         return Extensions::where('extension', $this->attributes['label'])->first();
+    }
+
+    /**
+     * Get the Device object associated with this device line.
+     *  returns Eloquent Object
+     */
+    public function device()
+    {
+        return $this->hasOne(Devices::class, 'device_uuid', 'device_uuid');
     }
 }

@@ -16,6 +16,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use DateTime;
 
 class SendEventNotify implements ShouldQueue
 {
@@ -28,7 +29,7 @@ class SendEventNotify implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 3;
+    // public $tries = 4;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
@@ -56,7 +57,7 @@ class SendEventNotify implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 15;
+    public $backoff = 30;
 
     /**
      * Delete the job if its models no longer exist.
@@ -73,6 +74,14 @@ class SendEventNotify implements ShouldQueue
     public function __construct($command)
     {
         $this->command = $command;
+    }
+
+    /**
+     * Determine the time at which the job should timeout.
+     */
+    public function retryUntil(): DateTime
+    {
+        return now()->addMinutes(120);
     }
 
     /**
@@ -93,7 +102,7 @@ class SendEventNotify implements ShouldQueue
     public function handle()
     {
         // Allow only 5 job every 10 second
-        Redis::throttle('eventNotify')->allow(5)->every(10)->then(function () {
+        Redis::throttle('eventNotify')->allow(50)->every(30)->then(function () {
 
             $process = Process::fromShellCommandline($this->command);
 
@@ -108,7 +117,7 @@ class SendEventNotify implements ShouldQueue
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
-            return $this->release(5);
+            return $this->release(60);
         });
 
     }

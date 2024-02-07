@@ -4,8 +4,54 @@
         :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
 
     <div class="m-3">
-        <DataTable :filterData="filterData" @search-action="handleSearchButtonClick">
+        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>Call History</template>
+
+            <template #action>
+
+                <button type="button" @click.prevent="exportCsv" :disabled="data.data.length === 0"
+                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm 
+                    disabled:ring-0 disabled:text-blue-700/50
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                    <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
+                    Export CSV
+                </button>
+
+            </template>
+
+            <template #filters>
+                <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </div>
+                    <input type="search" v-model="filterData.search" name="mobile-search-candidate"
+                        id="mobile-search-candidate"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        placeholder="Search" />
+                    <input type="search" v-model="filterData.search" name="desktop-search-candidate"
+                        id="desktop-search-candidate"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        placeholder="Search" />
+                </div>
+
+
+                <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
+                    <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                        @update:date-range="handleUpdateDateRange" />
+                </div>
+
+                <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"
+                        :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
+                </div>
+
+                <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+                    <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                        :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                </div>
+
+            </template>
+
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
@@ -18,10 +64,10 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                 <TableColumnHeader header="Caller ID Number"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Dialed Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Destination Number"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
+                <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                </TableColumnHeader>
                 <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
                 <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -40,7 +86,8 @@
                         :text="row.direction" /> -->
                     <TableField :text="row.direction"
                         class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                        <ejs-tooltip :content="row.direction + ' call'" position='TopLeft' target="#destination_tooltip_target">
+                        <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
+                            target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
                                 <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
@@ -129,7 +176,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
 import DataTable from "./components/general/DataTable.vue";
@@ -139,21 +186,29 @@ import Paginator from "./components/general/Paginator.vue";
 import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
+import SelectBox from "./components/general/SelectBox.vue"
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
-
-
+import DatePicker from "./components/general/DatePicker.vue";
 import {
     PlayCircleIcon,
     PauseCircleIcon,
     CloudArrowDownIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
+import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+
 
 import {
     TransitionRoot,
 } from '@headlessui/vue'
+
+import {
+    startOfDay, endOfDay,
+} from 'date-fns';
+
+const today = new Date();
 
 const loading = ref(false)
 
@@ -169,21 +224,69 @@ const props = defineProps({
     endPeriod: String,
     search: String,
     timezone: String,
+    direction: String,
     recordingUrl: String,
+    entities: Array,
+    selectedEntity: String,
+    selectedEntityType: String,
+    csvUrl: Object,
 });
 
-// console.log(props.data);
+onMounted(() => {
+    //request list of entities
+    getEntities();
+})
+
 
 const filterData = ref({
     search: props.search,
     dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
+    direction: props.direction,
+    entity: props.selectedEntity,
+    entityType: props.selectedEntityType,
 });
 
-const handleSearchButtonClick = (searchData) => {
+const callDirections = [
+    { value: null, name: 'All' },
+    { value: 'outbound', name: 'Outbound' },
+    { value: 'inbound', name: 'Inbound' },
+    { value: 'local', name: 'Local' },
+]
+
+const getEntities = () => {
+    filterData.value.entity = null;
+    router.visit("/call-detail-records", {
+        preserveScroll: true,
+        preserveState: true,
+        data: {
+            filterData: filterData._rawValue,
+        },
+        only: ["entities"],
+        onSuccess: (page) => {
+            filterData.value.entity = props.selectedEntity;
+        }
+
+    });
+
+}
+
+const handleUpdateCallDirectionFilter = (newSelectedItem) => {
+    if (newSelectedItem.value == "all") {
+        filterData.value.direction = null;
+    } else {
+        filterData.value.direction = newSelectedItem.value;
+    }
+}
+
+const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
+    filterData.value.entity = newSelectedItem.value;
+    filterData.value.entityType = newSelectedItem.type;
+}
+
+const handleSearchButtonClick = () => {
     loading.value = true;
-    filterData.value.search = searchData.searchQuery;
-    filterData.value.dateRange = searchData.dateRange;
+
     router.visit("/call-detail-records", {
         data: {
             filterData: filterData._rawValue,
@@ -197,6 +300,19 @@ const handleSearchButtonClick = (searchData) => {
 
     });
 };
+
+const handleFiltersReset = () => {
+    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
+
+    filterData.value.search = null;
+    filterData.value.direction = null;
+    filterData.value.entity = null;
+    filterData.value.entityType = null;
+
+    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
+    handleSearchButtonClick();
+}
+
 const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
@@ -220,7 +336,6 @@ const isAudioPlaying = ref(false);
 const fetchAndPlayAudio = (uuid) => {
     router.visit("/call-detail-records", {
         data: {
-            // filterData: filterData._rawValue,
             callUuid: uuid,
         },
         preserveScroll: true,
@@ -258,8 +373,6 @@ const downloadAudio = (uuid) => {
         preserveState: true,
         only: ["recordingUrl"],
         onSuccess: (page) => {
-            // console.log(props.recordingUrl);
-
             let fileName;
 
             if (props.recordingUrl.includes("call-detail-records/file")) {
@@ -291,6 +404,44 @@ const pauseAudio = () => {
         currentAudio.value.pause();
         isAudioPlaying.value = false;
     }
+};
+
+const handleUpdateDateRange = (newDateRange) => {
+    filterData.value.dateRange = newDateRange;
+}
+
+const exportCsv = () => {
+
+    filterData.value.download = 'true';
+
+    let url = `/call-detail-records`;
+
+    axios.post(url, {
+        filterData: filterData._rawValue,
+    }, {
+        responseType: 'blob'
+    })
+        .then(response => {
+            // Create a blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Clean up
+            window.URL.revokeObjectURL(url); // Free up memory
+
+            filterData.value.download = 'false'; // Reset download flag on success
+
+        })
+        .catch(error => {
+            console.error('There was an error with the request:', error);
+            filterData.value.download = 'false'; // Reset download flag on error
+
+        });
+
+
 };
 
 

@@ -134,6 +134,6 @@
 <p>If you have any questions, <a href="mailto:{{ $attributes["support_email"] ?? ''}}">email our customer success team</a>. (We're lightning quick at replying.)</p>
 <p>Thanks,
   <br>{{ config('app.name', 'Laravel') }} Team</p>
-<p><strong>P.S.</strong> Need immediate help getting started? The {{ config('app.name', 'Laravel') }} support team is always ready to help! Check out our <a href="{{ $help_url ?? ''}}">help documentation</a>. Or, just reply to this email.</p>
+<p><strong>P.S.</strong> Need immediate help getting started? The {{ config('app.name', 'Laravel') }} support team is always ready to help! Just reply to this email.</p>
 
 @endsection
