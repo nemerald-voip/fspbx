@@ -7,6 +7,18 @@
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>Call History</template>
 
+            <template #action>
+
+                <button type="button" @click.prevent="exportCsv" :disabled="data.data.length === 0"
+                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm 
+                    disabled:ring-0 disabled:text-blue-700/50
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                    <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
+                    Export CSV
+                </button>
+
+            </template>
+
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -29,11 +41,13 @@
                 </div>
 
                 <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter"/>
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"
+                        :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
                 </div>
 
                 <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :search="true" :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter"/>
+                    <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                        :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
                 </div>
 
             </template>
@@ -52,8 +66,8 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                 <TableColumnHeader header="Dialed Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Recipient"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
+                <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                </TableColumnHeader>
                 <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
                 <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -183,6 +197,8 @@ import {
     CloudArrowDownIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
+import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+
 
 import {
     TransitionRoot,
@@ -213,6 +229,7 @@ const props = defineProps({
     entities: Array,
     selectedEntity: String,
     selectedEntityType: String,
+    csvUrl: Object,
 });
 
 onMounted(() => {
@@ -237,7 +254,7 @@ const callDirections = [
     { value: 'local', name: 'Local' },
 ]
 
-const getEntities = () =>{
+const getEntities = () => {
     filterData.value.entity = null;
     router.visit("/call-detail-records", {
         preserveScroll: true,
@@ -393,6 +410,40 @@ const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
 }
 
+const exportCsv = () => {
+
+    filterData.value.download = 'true';
+
+    let url = `/call-detail-records`;
+
+    axios.post(url, {
+        filterData: filterData._rawValue,
+    }, {
+        responseType: 'blob'
+    })
+        .then(response => {
+            // Create a blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Clean up
+            window.URL.revokeObjectURL(url); // Free up memory
+
+            filterData.value.download = 'false'; // Reset download flag on success
+
+        })
+        .catch(error => {
+            console.error('There was an error with the request:', error);
+            filterData.value.download = 'false'; // Reset download flag on error
+
+        });
+
+
+};
+
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
@@ -402,4 +453,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

@@ -8,7 +8,7 @@
     <a href="{{ route('devices.create') }}" class="btn btn-sm btn-success mb-2 me-2">
         <i class="mdi mdi-plus-circle me-1"></i> Add New
     </a>
-    <a href="{{ route('devices.index', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
+    <a data-scope="{{ $selectedScope }}" href="{{ route('devices.index', ['scope' => (($selectedScope == 'local')?'global':'local')]) }}" class="btn btn-sm btn-light mb-2 me-2">
         Show {{ (($selectedScope == 'local')?'global':'local') }} devices
     </a>
     @if($permissions['device_restart'])

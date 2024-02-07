@@ -99,6 +99,7 @@
             url: url,
             cache: false,
             data: {
+                scope: $('a[data-scope]').data('scope'),
                 extensionIds: devicesData
             }
         };

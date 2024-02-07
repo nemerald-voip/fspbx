@@ -1436,8 +1436,12 @@ class ExtensionsController extends Controller
     public function sendEventNotifyAll(Request $request)
     {
         $selectedExtensionIds = $request->get('extensionIds') ?? [];
-        $registrations = get_registrations();
-
+        $selectedScope = $request->get('scope') ?? 'local';
+        if($selectedScope == 'global') {
+            $registrations = get_registrations('all');
+        } else {
+            $registrations = get_registrations();
+        }
         $all_regs = [];
         if(!empty($selectedExtensionIds)) {
             foreach($selectedExtensionIds as $extensionId) {
@@ -1466,6 +1470,16 @@ class ExtensionsController extends Controller
                 $agent = "yealink";
             } elseif (preg_match("/grandstream/i", $reg['agent'])) {
                 $agent = "grandstream";
+            } else {
+                /**
+                 * Sometimes it throws an exception
+                 * "message": "Undefined variable $agent",
+                 * "exception": "ErrorException",
+                 * "file": "/var/www/freeswitchpbx/app/Http/Controllers/ExtensionsController.php",
+                 *
+                 * So this line prevents it
+                 */
+                $agent = "";
             }
 
             if (!empty($agent)) {

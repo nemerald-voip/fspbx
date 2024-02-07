@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CallCenterQueues;
 use App\Models\CDR;
-use App\Models\Extensions;
 use Inertia\Inertia;
+use App\Models\Extensions;
+use App\Exports\CdrsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Models\CallCenterQueues;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -77,6 +79,14 @@ class CdrsController extends Controller
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
         $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
+
+        if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
+            $cdrs = $this->getCdrs(false);
+            $export = new CdrsExport($cdrs);
+
+            return Excel::download($export, 'call-detail-records.csv');
+            
+        }
 
 
         // return view('layouts.cdrs.index')->with($data);
@@ -272,15 +282,18 @@ class CdrsController extends Controller
     }
 
 
-    public function getCdrs()
+    public function getCdrs($paginate = 50)
     {
-        $cdrs = $this->builder($this->filters)->paginate(50);
+        $cdrs = $this->builder($this->filters);
+
+        // Apply pagination if requested
+        if ($paginate) {
+            $cdrs = $cdrs->paginate($paginate);
+        }else {
+            $cdrs = $cdrs->get(); // This will return a collection
+        }
 
         $cdrs->transform(function ($cdr) {
-            // Perform any additional processing on start_date if needed
-            // For example, format start_date or add additional data
-
-            // Add or modify attributes as needed
             $cdr->start_date = $cdr->start_date;
             $cdr->start_time = $cdr->start_time;
 
