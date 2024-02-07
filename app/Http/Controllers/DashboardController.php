@@ -201,7 +201,12 @@ class DashboardController extends Controller
 
         }
 
-        return view('layouts.dashboard.index')->with($data);
+        // dd(Session::get('domain_name'));
+        // return view('layouts.dashboard.index')->with($data);
+
+        return Inertia::render(
+            'Dashboard'
+        );
     }
 
 }

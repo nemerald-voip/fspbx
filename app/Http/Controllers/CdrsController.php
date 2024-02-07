@@ -88,21 +88,6 @@ class CdrsController extends Controller
                 'data' => function () {
                     return $this->getCdrs();
                 },
-                'menus' => function () {
-                    return Session::get('menu');
-                },
-                'domainSelectPermission' => function () {
-                    return Session::get('domain_select');
-                },
-                'selectedDomain' => function () {
-                    return Session::get('domain_name');
-                },
-                'selectedDomainUuid' => function () {
-                    return Session::get('domain_uuid');
-                },
-                'domains' => function () {
-                    return Session::get("domains");
-                },
                 'startPeriod' => function () {
                     return $this->filters['startPeriod'];
                 },

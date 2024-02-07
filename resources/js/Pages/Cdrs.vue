@@ -1,7 +1,7 @@
 
 <template>
-    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-        :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
+    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+        :selected-domain-uuid="selectedDomainUuid" :domains="domains">
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -29,11 +29,13 @@
                 </div>
 
                 <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"  :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter"/>
+                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"
+                        :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
                 </div>
 
                 <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="entities" :selectedItem="filterData.entity"  :search="true" :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter"/>
+                    <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                        :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
                 </div>
 
             </template>
@@ -52,8 +54,8 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                 <TableColumnHeader header="Dialed Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
-                <TableColumnHeader header="Recipient"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
+                <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                </TableColumnHeader>
                 <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                 </TableColumnHeader>
                 <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -154,17 +156,14 @@
 
 
         </DataTable>
-
-
-
-        <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
+    </MainLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
-import Menu from "./components/Menu.vue";
+import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -237,7 +236,7 @@ const callDirections = [
     { value: 'local', name: 'Local' },
 ]
 
-const getEntities = () =>{
+const getEntities = () => {
     filterData.value.entity = null;
     router.visit("/call-detail-records", {
         preserveScroll: true,
@@ -402,4 +401,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>
