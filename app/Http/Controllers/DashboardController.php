@@ -205,8 +205,26 @@ class DashboardController extends Controller
         // return view('layouts.dashboard.index')->with($data);
 
         return Inertia::render(
-            'Dashboard'
+            'Dashboard',
+            [
+                // 'data' => function () {
+                //     return $data;
+                // },
+                'cards' => function () {
+                    return $this->getApps();
+                }
+            ]
         );
+    }
+
+
+    public function getApps () {
+        $apps = [
+            ['name' => 'Ring Groups', 'href' => '#', 'icon' => 'ScaleIcon', 'amount' => '2'],
+            ['name' => 'Extensions', 'href' => '#', 'icon' => 'ScaleIcon', 'amount' => '21'],
+        ];
+
+        return $apps;
     }
 
 }
