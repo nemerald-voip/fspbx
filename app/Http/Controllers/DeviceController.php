@@ -21,8 +21,6 @@ use Inertia\Inertia;
 class DeviceController extends Controller
 {
     public $filters;
-    public $sortField;
-    public $sortOrder;
 
     /**
      * Display a listing of the resource.
@@ -77,6 +75,29 @@ class DeviceController extends Controller
             $this->filters['search'] = $request->filterData['search'];
         }
 
+        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('device_profile_name')->get();
+
+        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))->orderBy('extension')->get();
+
+        // TODO: probably better to move this into the helper function
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $templateDir = public_path('resources/templates/provision');
+        $templates = [];
+        foreach($vendors ?? [] as $vendor) {
+            $templates[$vendor->name] = [];
+            if(is_dir($templateDir.'/'.$vendor->name)) {
+                $dirs = scandir($templateDir.'/'.$vendor->name);
+                foreach($dirs as $dir) {
+                    if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir)) {
+                        $templates[$vendor->name][$vendor->name."/".$dir] = $vendor->name."/".$dir;
+                    }
+                }
+            }
+        }
+        // /TODO
+
         return Inertia::render(
             'devices',
             [
@@ -104,7 +125,10 @@ class DeviceController extends Controller
                 'deviceGlobalView' => false,
                 'routeDevicesCreate' => route('devices.create'),
                 'routeDevices' => route('devices.index'),
-                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
+                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
+                'templates' => $templates,
+                'profiles' => $profiles,
+                'extensions' => $extensions,
             ]
         );
 
@@ -144,16 +168,7 @@ class DeviceController extends Controller
     public function builder($filters = [])
     {
         $devices = Devices::query();
-        //if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
-        //  $devices
-        //    ->where('domain_uuid', Session::get('domain_uuid'));
-        /*} else {
-            $devices
-                ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
-        }*/
         $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
-
-
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
@@ -168,8 +183,7 @@ class DeviceController extends Controller
     protected function filterShowglobal($query, $value)
     {
         if ($value) {
-            $query
-                ->where('domain_uuid', Session::get('domain_uuid'));
+            $query->where('domain_uuid', Session::get('domain_uuid'));
         }
     }
 

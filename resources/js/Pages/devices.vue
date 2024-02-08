@@ -81,7 +81,8 @@
                                :value="row.device_uuid" :data-extension-uuid="row.extension_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name"/>
+                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                                :text="row.domain_name"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_address"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_label"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
@@ -150,19 +151,63 @@
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
-        <NotificationSimple
-            :show="restartRequestNotificationErrorShow"
-            :isSuccess="false"
-            :header="'Warning'"
-            :text="'Please select at least one device'"
-            @update:show="restartRequestNotificationErrorShow = false"/>
-        <NotificationSimple
-            :show="restartRequestNotificationSuccessShow"
-            :isSuccess="true"
-            :header="'Success'"
-            :text="'Restart request has been submitted'"
-            @update:show="restartRequestNotificationSuccessShow = false"/>
     </div>
+    <NotificationSimple
+        :show="restartRequestNotificationErrorShow"
+        :isSuccess="false"
+        :header="'Warning'"
+        :text="'Please select at least one device'"
+        @update:show="restartRequestNotificationErrorShow = false"/>
+    <NotificationSimple
+        :show="restartRequestNotificationSuccessShow"
+        :isSuccess="true"
+        :header="'Success'"
+        :text="'Restart request has been submitted'"
+        @update:show="restartRequestNotificationSuccessShow = false"/>
+    <ModalAddEditItem @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
+        <template #modal-body>
+            <form>
+                <div class="space-y-12">
+                    <h2 class="text-base font-semibold leading-7 text-gray-900">Device Information</h2>
+
+                    <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                        <div class="sm:col-span-3">
+                            <label for="first-name" class="block text-sm font-medium leading-6 text-gray-900">MacAddress</label>
+                            <div class="mt-2">
+                                <input type="text" name="device_address" id="device_address" placeholder="Enter the MAC address"
+                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="template" class="block text-sm font-medium leading-6 text-gray-900">Template</label>
+                            <div class="mt-2">
+                                <SelectBox :options="templates" :selectedItem="filterData.entity" :search="true"
+                                           :placeholder="'Choose template'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-4">
+                            <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Profile</label>
+                            <div class="mt-2">
+                                <SelectBox :options="profiles" :selectedItem="filterData.entity" :search="true"
+                                           :placeholder="'Choose profile'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="country"
+                                   class="block text-sm font-medium leading-6 text-gray-900">Extension</label>
+                            <div class="mt-2">
+                                <SelectBox :options="extensions" :selectedItem="filterData.entity" :search="true"
+                                           :placeholder="'Choose extension'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </template>
+    </ModalAddEditItem>
 </template>
 
 <script setup>
@@ -175,10 +220,12 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
+import ModalAddEditItem from "./components/modal/AddEditItem.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {CogIcon, DocumentTextIcon, MagnifyingGlassIcon, TrashIcon,} from "@heroicons/vue/24/solid";
 
 import {TransitionRoot,} from '@headlessui/vue'
+import SelectBox from "./components/general/SelectBox.vue";
 
 const today = new Date();
 
@@ -202,6 +249,9 @@ const props = defineProps({
     routeDevicesCreate: String,
     routeDevices: String,
     routeSendEventNotifyAll: String,
+    templates: Array,
+    profiles: Array,
+    extensions: Array,
 });
 
 onMounted(() => {
