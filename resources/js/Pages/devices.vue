@@ -165,8 +165,8 @@
         :text="'Restart request has been submitted'"
         @update:show="restartRequestNotificationSuccessTrigger = false"/>
     <AddEditItemModal
-        :show="addModalTrigger" :
-        header="'Add New Device'">
+        :show="addModalTrigger"
+        :header="'Add New Device'">
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
