@@ -153,31 +153,45 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
     <NotificationSimple
-        :show="restartRequestNotificationErrorShow"
+        :show="restartRequestNotificationErrorTrigger"
         :isSuccess="false"
         :header="'Warning'"
         :text="'Please select at least one device'"
-        @update:show="restartRequestNotificationErrorShow = false"/>
+        @update:show="restartRequestNotificationErrorTrigger = false"/>
     <NotificationSimple
-        :show="restartRequestNotificationSuccessShow"
+        :show="restartRequestNotificationSuccessTrigger"
         :isSuccess="true"
         :header="'Success'"
         :text="'Restart request has been submitted'"
-        @update:show="restartRequestNotificationSuccessShow = false"/>
-    <AddEditItemModal :show="showAddModal" :header="'Add New Device'">
+        @update:show="restartRequestNotificationSuccessTrigger = false"/>
+    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'">
         <template #modal-body>
-            <AddEditDeviceForm :templates="templates" :profiles="profiles" :extensions="extensions" />
+            <AddEditDeviceForm
+                :device="DeviceObject"
+                :templates="templates"
+                :profiles="profiles"
+                :extensions="extensions"
+                @onDeviceUpdated="onDeviceUpdated"
+                @update:show="addModalTrigger = false"
+            />
         </template>
     </AddEditItemModal>
-    <AddEditItemModal :show="showEditModal" :header="'Edit Device'">
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'">
         <template #modal-body>
-            <AddEditDeviceForm :templates="templates" :profiles="profiles" :extensions="extensions" />
+            <AddEditDeviceForm
+                :device="DeviceObject"
+                :templates="templates"
+                :profiles="profiles"
+                :extensions="extensions"
+                @onDeviceUpdated="onDeviceUpdated"
+                @update:show="editModalTrigger = false"
+            />
         </template>
     </AddEditItemModal>
 </template>
 
 <script setup>
-import {onMounted, ref} from "vue";
+import {onMounted, ref, reactive} from "vue";
 import axios from 'axios';
 import {router} from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
@@ -198,11 +212,11 @@ const today = new Date();
 const loading = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const restartRequestNotificationSuccessShow = ref(false);
-const restartRequestNotificationErrorShow = ref(false);
+const restartRequestNotificationSuccessTrigger = ref(false);
+const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
-const showAddModal = ref(false);
-const showEditModal = ref(false);
+const addModalTrigger = ref(false);
+const editModalTrigger = ref(false);
 
 const props = defineProps({
     data: Object,
@@ -220,6 +234,13 @@ const props = defineProps({
     templates: Array,
     profiles: Array,
     extensions: Array,
+});
+
+const DeviceObject = reactive({
+    device_address: '',
+    extension_uuid: '',
+    device_profile_uuid: '',
+    device_template: ''
 });
 
 onMounted(() => {
@@ -253,7 +274,7 @@ const handleDestroy = (url) => {
 const handleRestart = (url) => {
     axios.post(url).then((response) => {
         loading.value = false;
-        restartRequestNotificationSuccessShow.value = true;
+        restartRequestNotificationSuccessTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to restart selected:', error);
     });
@@ -265,19 +286,19 @@ const handleRestartSelected = () => {
             extensionIds: selectedItems.value,
         }).then((response) => {
             loading.value = false;
-            restartRequestNotificationSuccessShow.value = true;
+            restartRequestNotificationSuccessTrigger.value = true;
         }).catch((error) => {
             console.error('Failed to restart selected:', error);
         });
     } else {
-        restartRequestNotificationErrorShow.value = true
+        restartRequestNotificationErrorTrigger.value = true
     }
 }
 
 const handleRestartAll = () => {
     axios.post(props.routeSendEventNotifyAll).then((response) => {
         loading.value = false;
-        restartRequestNotificationSuccessShow.value = true;
+        restartRequestNotificationSuccessTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to restart selected:', error);
     });
@@ -296,11 +317,11 @@ const handleShowLocal = () => {
 }
 
 const handleAdd = () => {
-    showAddModal.value = true;
+    addModalTrigger.value = true;
 }
 
 const handleEdit = (url) => {
-    showEditModal.value = true;
+    editModalTrigger.value = true;
 }
 
 const handleSearchButtonClick = () => {
@@ -339,6 +360,10 @@ const renderRequestedPage = (url) => {
 
     });
 };
+
+const onDeviceUpdated = (device) => {
+    console.log(device)
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

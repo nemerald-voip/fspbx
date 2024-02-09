@@ -1,6 +1,6 @@
 <template>
     <TransitionRoot as="template" :show="show">
-        <Dialog as="div" class="relative z-10" @close="show = false">
+        <Dialog as="div" class="relative z-10" @close="close">
             <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
             </TransitionChild>
@@ -17,8 +17,8 @@
                             </div>
                             <hr class="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
                             <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                                <button type="button" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2" @click="show = false">Save</button>
-                                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0" @click="show = false" ref="cancelButtonRef">Cancel</button>
+                                <button type="button" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2" @click="close">Save</button>
+                                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0" @click="close" ref="cancelButtonRef">Cancel</button>
                             </div>
                         </DialogPanel>
                     </TransitionChild>
@@ -29,11 +29,16 @@
 </template>
 
 <script setup>
-import {defineProps, ref} from 'vue'
+import {defineEmits, defineProps} from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
 const props = defineProps({
     show: Boolean,
     header: String
 });
+
+const emit = defineEmits(["update:show"]);
+
+const close = () => emit('update:show', false);
+
 </script>
