@@ -164,15 +164,17 @@
         :header="'Success'"
         :text="'Restart request has been submitted'"
         @update:show="restartRequestNotificationSuccessTrigger = false"/>
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'">
+    <AddEditItemModal
+        :show="addModalTrigger" :
+        header="'Add New Device'">
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
                 :templates="templates"
                 :profiles="profiles"
                 :extensions="extensions"
-                @onDeviceUpdated="onDeviceUpdated"
-                @update:show="addModalTrigger = false"
+                @update:onDeviceUpdated="onDeviceUpdated"
+                @update:show="addModalTrigger"
             />
         </template>
     </AddEditItemModal>
@@ -183,7 +185,7 @@
                 :templates="templates"
                 :profiles="profiles"
                 :extensions="extensions"
-                @onDeviceUpdated="onDeviceUpdated"
+                @update:onDeviceUpdated="onDeviceUpdated"
                 @update:show="editModalTrigger = false"
             />
         </template>
@@ -217,6 +219,8 @@ const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
+
+const sss = () => console.log('sssssss')
 
 const props = defineProps({
     data: Object,
