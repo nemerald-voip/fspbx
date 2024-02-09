@@ -23,10 +23,10 @@
             </template>
 
             <template #action>
-                <a type="button" :href="routeDevicesCreate"
+                <button type="button" :href="routeDevicesCreate" @click.prevent="handleAdd()"
                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add device
-                </a>
+                </button>
                 <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart selected devices
@@ -164,50 +164,16 @@
         :header="'Success'"
         :text="'Restart request has been submitted'"
         @update:show="restartRequestNotificationSuccessShow = false"/>
-    <ModalAddEditItem @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
+    <AddEditItemModal :show="showAddModal" :header="'Add New Device'">
         <template #modal-body>
-            <form>
-                <div class="space-y-12">
-                    <h2 class="text-base font-semibold leading-7 text-gray-900">Device Information</h2>
-
-                    <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                        <div class="sm:col-span-3">
-                            <label for="first-name" class="block text-sm font-medium leading-6 text-gray-900">MacAddress</label>
-                            <div class="mt-2">
-                                <input type="text" name="device_address" id="device_address" placeholder="Enter the MAC address"
-                                       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
-                            </div>
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="template" class="block text-sm font-medium leading-6 text-gray-900">Template</label>
-                            <div class="mt-2">
-                                <SelectBox :options="templates" :selectedItem="filterData.entity" :search="true"
-                                           :placeholder="'Choose template'" @update:modal-value="handleUpdateUserOrGroupFilter" />
-                            </div>
-                        </div>
-
-                        <div class="sm:col-span-4">
-                            <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Profile</label>
-                            <div class="mt-2">
-                                <SelectBox :options="profiles" :selectedItem="filterData.entity" :search="true"
-                                           :placeholder="'Choose profile'" @update:modal-value="handleUpdateUserOrGroupFilter" />
-                            </div>
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="country"
-                                   class="block text-sm font-medium leading-6 text-gray-900">Extension</label>
-                            <div class="mt-2">
-                                <SelectBox :options="extensions" :selectedItem="filterData.entity" :search="true"
-                                           :placeholder="'Choose extension'" @update:modal-value="handleUpdateUserOrGroupFilter" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
+            <AddEditDeviceForm :templates="templates" :profiles="profiles" :extensions="extensions" />
         </template>
-    </ModalAddEditItem>
+    </AddEditItemModal>
+    <AddEditItemModal :show="showEditModal" :header="'Edit Device'">
+        <template #modal-body>
+            <AddEditDeviceForm :templates="templates" :profiles="profiles" :extensions="extensions" />
+        </template>
+    </AddEditItemModal>
 </template>
 
 <script setup>
@@ -220,12 +186,12 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
-import ModalAddEditItem from "./components/modal/AddEditItem.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {CogIcon, DocumentTextIcon, MagnifyingGlassIcon, TrashIcon,} from "@heroicons/vue/24/solid";
 
 import {TransitionRoot,} from '@headlessui/vue'
-import SelectBox from "./components/general/SelectBox.vue";
 
 const today = new Date();
 
@@ -235,6 +201,8 @@ const selectedItems = ref([]);
 const restartRequestNotificationSuccessShow = ref(false);
 const restartRequestNotificationErrorShow = ref(false);
 const showGlobal = ref(false);
+const showAddModal = ref(false);
+const showEditModal = ref(false);
 
 const props = defineProps({
     data: Object,
@@ -270,10 +238,6 @@ const filterData = ref({
     search: props.search,
     showGlobal: props.deviceGlobalView,
 });
-
-const handleEdit = (url) => {
-    window.location = url;
-}
 
 const handleDestroy = (url) => {
     router.delete(url, {
@@ -329,6 +293,14 @@ const handleShowLocal = () => {
     filterData.value.showGlobal = false;
     showGlobal.value = false;
     handleSearchButtonClick();
+}
+
+const handleAdd = () => {
+    showAddModal.value = true;
+}
+
+const handleEdit = (url) => {
+    showEditModal.value = true;
 }
 
 const handleSearchButtonClick = () => {

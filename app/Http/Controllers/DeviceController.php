@@ -75,28 +75,59 @@ class DeviceController extends Controller
             $this->filters['search'] = $request->filterData['search'];
         }
 
-        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('device_profile_name')->get();
-
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))->orderBy('extension')->get();
-
         // TODO: probably better to move this into the helper function
-        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $vendorsCollection = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
         $templateDir = public_path('resources/templates/provision');
         $templates = [];
-        foreach($vendors ?? [] as $vendor) {
-            $templates[$vendor->name] = [];
-            if(is_dir($templateDir.'/'.$vendor->name)) {
+        foreach ($vendorsCollection ?? [] as $vendor) {
+            //$templates[$vendor->name] = [];
+            if (is_dir($templateDir.'/'.$vendor->name)) {
                 $dirs = scandir($templateDir.'/'.$vendor->name);
-                foreach($dirs as $dir) {
+                foreach ($dirs as $dir) {
                     if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir)) {
-                        $templates[$vendor->name][$vendor->name."/".$dir] = $vendor->name."/".$dir;
+                        $templates[] = [
+                            'name' => $vendor->name."/".$dir,
+                            'value' => $vendor->name."/".$dir
+                        ];
                     }
                 }
             }
         }
         // /TODO
+
+        $profilesCollection = DeviceProfile::where('device_profile_enabled', 'true')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('device_profile_name')->get();
+
+        $profiles = [];
+        foreach ($profilesCollection ?? [] as $profile) {
+            $profiles[] = [
+                'name' => $profile->device_profile_name,
+                'value' => $profile->device_profile_uuid
+            ];
+        }
+
+        $extensionsCollection = Extensions::where('domain_uuid',
+            Session::get('domain_uuid'))->orderBy('extension')->get();
+
+        $extensions = [];
+        foreach ($extensionsCollection ?? [] as $extension) {
+            $extensions[] = [
+                'name' => $extension->extension,
+                'value' => $extension->extension_uuid
+            ];
+        }
+
+        unset(
+            $extensionsCollection,
+            $extension,
+            $profilesCollection,
+            $profile,
+            $templateDir,
+            $dir,
+            $dirs,
+            $vendorsCollection,
+            $vendor);
 
         return Inertia::render(
             'devices',
