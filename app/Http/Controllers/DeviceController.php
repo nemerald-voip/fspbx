@@ -75,49 +75,6 @@ class DeviceController extends Controller
             $this->filters['search'] = $request->filterData['search'];
         }
 
-        // TODO: probably better to move this into the helper function
-        $vendorsCollection = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
-        $templateDir = public_path('resources/templates/provision');
-        $templates = [];
-        foreach ($vendorsCollection ?? [] as $vendor) {
-            //$templates[$vendor->name] = [];
-            if (is_dir($templateDir.'/'.$vendor->name)) {
-                $dirs = scandir($templateDir.'/'.$vendor->name);
-                foreach ($dirs as $dir) {
-                    if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir)) {
-                        $templates[] = [
-                            'name' => $vendor->name."/".$dir,
-                            'value' => $vendor->name."/".$dir
-                        ];
-                    }
-                }
-            }
-        }
-        // /TODO
-
-        $profilesCollection = DeviceProfile::where('device_profile_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('device_profile_name')->get();
-
-        $profiles = [];
-        foreach ($profilesCollection ?? [] as $profile) {
-            $profiles[] = [
-                'name' => $profile->device_profile_name,
-                'value' => $profile->device_profile_uuid
-            ];
-        }
-
-        $extensionsCollection = Extensions::where('domain_uuid',
-            Session::get('domain_uuid'))->orderBy('extension')->get();
-
-        $extensions = [];
-        foreach ($extensionsCollection ?? [] as $extension) {
-            $extensions[] = [
-                'name' => $extension->extension,
-                'value' => $extension->extension_uuid
-            ];
-        }
-
         unset(
             $extensionsCollection,
             $extension,
@@ -157,13 +114,11 @@ class DeviceController extends Controller
                 'routeDevicesCreate' => route('devices.create'),
                 'routeDevices' => route('devices.index'),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
-                'templates' => $templates,
-                'profiles' => $profiles,
-                'extensions' => $extensions,
+                'templates' => getVendorTemplateCollection(),
+                'profiles' => getProfileCollection(Session::get('domain_uuid')),
+                'extensions' => getExtensionCollection(Session::get('domain_uuid'))
             ]
         );
-
-
     }
 
     public function getDevices()
@@ -328,24 +283,12 @@ class DeviceController extends Controller
      */
     public function edit(Request $request, Devices $device)
     {
-        if ($request->ajax()) {
-            return response()->json($device);
-        }
-
-        $domainUuid = Session::get('domain_uuid');
-
-        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
-            ->where('domain_uuid', $domainUuid)
-            ->orderBy('device_profile_name')->get();
-
-        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
-        $extensions = Extensions::where('domain_uuid', $domainUuid)->orderBy('extension')->get();
-
-        return view('layouts.devices.createOrUpdate')
-            ->with('device', $device)
-            ->with('profiles', $profiles)
-            ->with('vendors', $vendors)
-            ->with('extensions', $extensions);
+        return Inertia::render(
+            'devices',
+            [
+                'dataObject' => $device,
+            ]
+        );
     }
 
     /**
