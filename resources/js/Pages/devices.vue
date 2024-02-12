@@ -167,7 +167,6 @@
     <AddEditItemModal
         :show="addModalTrigger"
         :header="'Add New Device'"
-        @update:show="addModalTrigger = false"
     >
         <template #modal-body>
             <AddEditDeviceForm
@@ -175,7 +174,6 @@
                 :templates="templates"
                 :profiles="profiles"
                 :extensions="extensions"
-                @update:onDevicePropertyUpdated="onDevicePropertyUpdated"
             />
         </template>
         <template #modal-action-buttons>
@@ -227,8 +225,6 @@ const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
-
-const sss = () => console.log('sssssss')
 
 const props = defineProps({
     data: Object,
@@ -376,11 +372,6 @@ const renderRequestedPage = (url) => {
 const handleSave = () => {
     console.log("device save. The Save button clicked")
     console.log(DeviceObject)
-}
-
-const onDevicePropertyUpdated = (newDeviceData) => {
-    console.log("device updated. Event fired")
-    DeviceObject = newDeviceData
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

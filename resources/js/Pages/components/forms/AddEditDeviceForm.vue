@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import {defineEmits, defineProps, ref, watchEffect} from 'vue'
+import {defineProps} from 'vue'
 import SelectBox from "../general/SelectBox.vue";
 
 const props = defineProps({
@@ -60,27 +60,15 @@ const props = defineProps({
     device: Object,
 });
 
-const emit = defineEmits(["update:onDevicePropertyUpdated"]);
-const formData = ref({ ...props.device });
-
-watchEffect(() => {
-    formData.value = { ...props.device };
-    emit('update:onDevicePropertyUpdated', formData);
-});
-
 const handleUpdateTemplate = (newSelectedItem) => {
-    console.warn(newSelectedItem.value)
-    formData.value.device_template = newSelectedItem.value
-    emit('update:onDevicePropertyUpdated', formData);
+    props.device.device_template = newSelectedItem.value
 }
 
 const handleUpdateProfile = (newSelectedItem) => {
-    formData.value.device_profile_uuid = newSelectedItem.value
-    emit('update:onDevicePropertyUpdated', formData);
+    props.device.device_profile_uuid = newSelectedItem.value
 }
 
 const handleUpdateExtension = (newSelectedItem) => {
-    formData.value.extension_uuid = newSelectedItem.value
-    emit('update:onDevicePropertyUpdated', formData);
+    props.device.extension_uuid = newSelectedItem.value
 }
 </script>
