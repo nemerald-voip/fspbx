@@ -24,7 +24,7 @@
 
             <template #action>
                 <button type="button" :href="routeDevicesCreate" @click.prevent="handleAdd()"
-                   class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add device
                 </button>
                 <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
@@ -168,7 +168,7 @@
         :show="addModalTrigger"
         :header="'Add New Device'"
         :loading="loadingModal"
-        @close="handleCancel"
+        @close="handleClose"
     >
         <template #modal-body>
             <AddEditDeviceForm
@@ -181,17 +181,19 @@
         <template #modal-action-buttons>
             <button type="button"
                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    @click="handleSave" ref="saveButtonRef">Save</button>
+                    @click="handleSave" ref="saveButtonRef">Save
+            </button>
             <button type="button"
                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="handleCancel" ref="cancelButtonRef">Cancel</button>
+                    @click="handleClose" ref="cancelButtonRef">Cancel
+            </button>
         </template>
     </AddEditItemModal>
     <AddEditItemModal
         :show="editModalTrigger"
         :header="'Edit Device'"
         :loading="loadingModal"
-        @close="handleCancel"
+        @close="handleClose"
     >
         <template #modal-body>
             <AddEditDeviceForm
@@ -205,16 +207,18 @@
         <template #modal-action-buttons>
             <button type="button"
                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    @click="handleSave" ref="saveButtonRef">Save</button>
+                    @click="handleSave" ref="saveButtonRef">Save
+            </button>
             <button type="button"
                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="handleCancel" ref="cancelButtonRef">Cancel</button>
+                    @click="handleClose" ref="cancelButtonRef">Cancel
+            </button>
         </template>
     </AddEditItemModal>
 </template>
 
 <script setup>
-import {onMounted, ref, reactive} from "vue";
+import {onMounted, reactive, ref} from "vue";
 import axios from 'axios';
 import {router} from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
@@ -261,6 +265,8 @@ const props = defineProps({
 });
 
 let DeviceObject = reactive({
+    update_path: '/devices/store',
+    device_uuid: '',
     device_address: '',
     extension_uuid: '',
     device_profile_uuid: '',
@@ -347,20 +353,16 @@ const handleAdd = () => {
 const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["dataObject"],
-        onSuccess: (device) => {
-            DeviceObject.device_address = device.props.dataObject.device_address
-            DeviceObject.device_profile_uuid = device.props.dataObject.device_profile_uuid
-            DeviceObject.device_template = device.props.dataObject.device_template
-            DeviceObject.extension_uuid = device.props.dataObject.extension_uuid
-            loadingModal.value = false
-        }
+    axios.get(url).then((response) => {
+        DeviceObject.update_path = response.data.update_path
+        DeviceObject.device_uuid = response.data.device.device_uuid
+        DeviceObject.device_address = response.data.device.device_address
+        DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
+        DeviceObject.device_template = response.data.device.device_template
+        DeviceObject.extension_uuid = response.data.device.extension_uuid
+        loadingModal.value = false
+    }).catch((error) => {
+        console.error('Failed to get device data:', error);
     });
 }
 
@@ -387,6 +389,8 @@ const handleFiltersReset = () => {
 
 const handleDeviceObjectReset = () => {
     DeviceObject = reactive({
+        update_path: '/devices/store',
+        device_uuid: '',
         device_address: '',
         extension_uuid: '',
         device_profile_uuid: '',
@@ -406,16 +410,25 @@ const renderRequestedPage = (url) => {
         onSuccess: (page) => {
             loading.value = false;
         }
-
     });
 };
 
 const handleSave = () => {
-    console.log("device save. The Save button clicked")
-    console.log(DeviceObject)
+    const formData = {
+        device_address: DeviceObject.device_address,
+        device_template: DeviceObject.device_template,
+        device_profile_uuid: DeviceObject.device_profile_uuid
+    }
+    console.log(DeviceObject.update_path)
+    console.log(formData)
+    axios.post(DeviceObject.update_path, formData).then((response) => {
+        handleClose()
+    }).catch((error) => {
+        console.error('Failed to save device data:', error);
+    });
 }
 
-const handleCancel = () => {
+const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
     setTimeout(handleDeviceObjectReset, 1000)

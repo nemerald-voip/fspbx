@@ -279,19 +279,26 @@ class DeviceController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  \App\Models\Devices  $device
-     * @return Application|Factory|View|Response
+     * @return JsonResponse
      */
     public function edit(Request $request, Devices $device)
     {
+        if(!$request->ajax()) {
+            return response()->json([
+                'message' => 'XHR request expected'
+            ], 405);
+        }
+
         if($device->extension()) {
             $device->extension_uuid = $device->extension()->extension_uuid;
         }
-        return Inertia::render(
-            'devices',
-            [
-                'dataObject' => $device,
-            ]
-        );
+
+        $device->update_path = route('devices.update', $device);
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device
+        ]);
     }
 
     /**
