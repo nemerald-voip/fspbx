@@ -354,7 +354,7 @@ const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
     axios.get(url).then((response) => {
-        DeviceObject.update_path = response.data.update_path
+        DeviceObject.update_path = response.data.device.update_path
         DeviceObject.device_uuid = response.data.device.device_uuid
         DeviceObject.device_address = response.data.device.device_address
         DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
@@ -414,14 +414,13 @@ const renderRequestedPage = (url) => {
 };
 
 const handleSave = () => {
-    const formData = {
+    axios.put(DeviceObject.update_path, {
         device_address: DeviceObject.device_address,
         device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid
-    }
-    console.log(DeviceObject.update_path)
-    console.log(formData)
-    axios.post(DeviceObject.update_path, formData).then((response) => {
+        device_profile_uuid: DeviceObject.device_profile_uuid,
+        extension_uuid: DeviceObject.extension_uuid
+    }).then((response) => {
+        handleSearchButtonClick()
         handleClose()
     }).catch((error) => {
         console.error('Failed to save device data:', error);
