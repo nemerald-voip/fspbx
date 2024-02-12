@@ -283,6 +283,9 @@ class DeviceController extends Controller
      */
     public function edit(Request $request, Devices $device)
     {
+        if($device->extension()) {
+            $device->extension_uuid = $device->extension()->extension_uuid;
+        }
         return Inertia::render(
             'devices',
             [

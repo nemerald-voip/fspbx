@@ -182,7 +182,7 @@
                     @click="handleSave" ref="saveButtonRef">Save</button>
             <button type="button"
                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="addModalTrigger = false" ref="cancelButtonRef">Cancel</button>
+                    @click="handleCancel" ref="cancelButtonRef">Cancel</button>
         </template>
     </AddEditItemModal>
     <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'">
@@ -201,7 +201,7 @@
                     @click="handleSave" ref="saveButtonRef">Save</button>
             <button type="button"
                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="editModalTrigger = false" ref="cancelButtonRef">Cancel</button>
+                    @click="handleCancel" ref="cancelButtonRef">Cancel</button>
         </template>
     </AddEditItemModal>
 </template>
@@ -338,6 +338,21 @@ const handleAdd = () => {
 
 const handleEdit = (url) => {
     editModalTrigger.value = true;
+    router.visit(url, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: ["dataObject"],
+        onSuccess: (device) => {
+            DeviceObject.device_address = device.props.dataObject.device_address
+            DeviceObject.device_profile_uuid = device.props.dataObject.device_profile_uuid
+            DeviceObject.device_template = device.props.dataObject.device_template
+            DeviceObject.extension_uuid = device.props.dataObject.extension_uuid
+            //loadingModal.value = false
+        }
+    });
 }
 
 const handleSearchButtonClick = () => {
@@ -361,6 +376,15 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
+const handleDeviceObjectReset = () => {
+    DeviceObject = reactive({
+        device_address: '',
+        extension_uuid: '',
+        device_profile_uuid: '',
+        device_template: ''
+    });
+}
+
 const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
@@ -380,6 +404,12 @@ const renderRequestedPage = (url) => {
 const handleSave = () => {
     console.log("device save. The Save button clicked")
     console.log(DeviceObject)
+}
+
+const handleCancel = () => {
+    addModalTrigger.value = false
+    editModalTrigger.value = false
+    handleDeviceObjectReset()
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
