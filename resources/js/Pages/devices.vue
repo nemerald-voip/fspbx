@@ -166,16 +166,25 @@
         @update:show="restartRequestNotificationSuccessTrigger = false"/>
     <AddEditItemModal
         :show="addModalTrigger"
-        :header="'Add New Device'">
+        :header="'Add New Device'"
+        @update:show="addModalTrigger = false"
+    >
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
                 :templates="templates"
                 :profiles="profiles"
                 :extensions="extensions"
-                @update:onDeviceUpdated="onDeviceUpdated"
-                @update:show="addModalTrigger"
+                @update:onDevicePropertyUpdated="onDevicePropertyUpdated"
             />
+        </template>
+        <template #modal-action-buttons>
+            <button type="button"
+                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    @click="handleSave" ref="saveButtonRef">Save</button>
+            <button type="button"
+                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                    @click="addModalTrigger = false" ref="cancelButtonRef">Cancel</button>
         </template>
     </AddEditItemModal>
     <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'">
@@ -185,7 +194,6 @@
                 :templates="templates"
                 :profiles="profiles"
                 :extensions="extensions"
-                @update:onDeviceUpdated="onDeviceUpdated"
                 @update:show="editModalTrigger = false"
             />
         </template>
@@ -240,7 +248,7 @@ const props = defineProps({
     extensions: Array,
 });
 
-const DeviceObject = reactive({
+let DeviceObject = reactive({
     device_address: '',
     extension_uuid: '',
     device_profile_uuid: '',
@@ -365,8 +373,14 @@ const renderRequestedPage = (url) => {
     });
 };
 
-const onDeviceUpdated = (device) => {
-    console.log(device)
+const handleSave = () => {
+    console.log("device save. The Save button clicked")
+    console.log(DeviceObject)
+}
+
+const onDevicePropertyUpdated = (newDeviceData) => {
+    console.log("device updated. Event fired")
+    DeviceObject = newDeviceData
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

@@ -4,8 +4,7 @@
             <div class="sm:col-span-12">
                 <label for="device_address" class="block text-sm font-medium leading-6 text-gray-900">MacAddress</label>
                 <div class="mt-2">
-                    <input type="text" name="device_address" id="device_address" placeholder="Enter the MAC address"
-                           :value="device.device_address"
+                    <input v-model="device.device_address" type="text" name="device_address" id="device_address" placeholder="Enter the MAC address"
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
@@ -51,7 +50,7 @@
 </template>
 
 <script setup>
-import {defineProps, ref, watchEffect} from 'vue'
+import {defineEmits, defineProps, ref, watchEffect} from 'vue'
 import SelectBox from "../general/SelectBox.vue";
 
 const props = defineProps({
@@ -61,21 +60,27 @@ const props = defineProps({
     device: Object,
 });
 
+const emit = defineEmits(["update:onDevicePropertyUpdated"]);
 const formData = ref({ ...props.device });
 
 watchEffect(() => {
     formData.value = { ...props.device };
+    emit('update:onDevicePropertyUpdated', formData);
 });
 
 const handleUpdateTemplate = (newSelectedItem) => {
-    console.log(newSelectedItem.value);
+    console.warn(newSelectedItem.value)
+    formData.value.device_template = newSelectedItem.value
+    emit('update:onDevicePropertyUpdated', formData);
 }
 
 const handleUpdateProfile = (newSelectedItem) => {
-    console.log(newSelectedItem.value);
+    formData.value.device_profile_uuid = newSelectedItem.value
+    emit('update:onDevicePropertyUpdated', formData);
 }
 
 const handleUpdateExtension = (newSelectedItem) => {
-    console.log(newSelectedItem.value);
+    formData.value.extension_uuid = newSelectedItem.value
+    emit('update:onDevicePropertyUpdated', formData);
 }
 </script>
