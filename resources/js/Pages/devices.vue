@@ -167,6 +167,8 @@
     <AddEditItemModal
         :show="addModalTrigger"
         :header="'Add New Device'"
+        :loading="loadingModal"
+        @close="handleCancel"
     >
         <template #modal-body>
             <AddEditDeviceForm
@@ -185,7 +187,12 @@
                     @click="handleCancel" ref="cancelButtonRef">Cancel</button>
         </template>
     </AddEditItemModal>
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'">
+    <AddEditItemModal
+        :show="editModalTrigger"
+        :header="'Edit Device'"
+        :loading="loadingModal"
+        @close="handleCancel"
+    >
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
@@ -226,6 +233,7 @@ import {TransitionRoot,} from '@headlessui/vue'
 const today = new Date();
 
 const loading = ref(false)
+const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const restartRequestNotificationSuccessTrigger = ref(false);
@@ -337,7 +345,8 @@ const handleAdd = () => {
 }
 
 const handleEdit = (url) => {
-    editModalTrigger.value = true;
+    editModalTrigger.value = true
+    loadingModal.value = true
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
@@ -350,7 +359,7 @@ const handleEdit = (url) => {
             DeviceObject.device_profile_uuid = device.props.dataObject.device_profile_uuid
             DeviceObject.device_template = device.props.dataObject.device_template
             DeviceObject.extension_uuid = device.props.dataObject.extension_uuid
-            //loadingModal.value = false
+            loadingModal.value = false
         }
     });
 }
@@ -409,7 +418,7 @@ const handleSave = () => {
 const handleCancel = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
-    handleDeviceObjectReset()
+    setTimeout(handleDeviceObjectReset, 1000)
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
