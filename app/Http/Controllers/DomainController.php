@@ -32,10 +32,10 @@ class DomainController extends Controller
         $domain = Domain::where('domain_uuid', $request->domain_uuid)->first();
 
         // If current domain is not the same as requested domain proceed with the change
-        if (Session::get('domain_uuid') != $domain->uuid){
+        if (Session::get('domain_uuid') != $domain->uuid) {
             //Check FusionPBX login status
             session_start();
-            if(!isset($_SESSION['user'])) {
+            if (!isset($_SESSION['user'])) {
                 return redirect()->route('logout');
             }
             Session::put('domain_uuid', $domain->domain_uuid);
@@ -55,13 +55,12 @@ class DomainController extends Controller
             $url = getFusionPBXPreviousURL(url()->previous());
             return response()->json([
                 'status' => 200,
-                'redirectUrl' => $url, 
+                'redirectUrl' => $url,
                 'success' => [
                     'message' => 'Domain has been switched'
                 ]
             ]);
         }
-        
     }
 
     /**
@@ -75,7 +74,7 @@ class DomainController extends Controller
         $domain = Domain::where('domain_uuid', $domain_uuid)->first();
 
         // If current domain is not the same as requested domain proceed with the change
-        if (Session::get('domain_uuid') != $domain->uuid){
+        if (Session::get('domain_uuid') != $domain->uuid) {
             session_start();
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
@@ -86,7 +85,7 @@ class DomainController extends Controller
 
             //set the context
             Session::put('context', $_SESSION["domain_name"]);
-			$_SESSION["context"] = $_SESSION["domain_name"];
+            $_SESSION["context"] = $_SESSION["domain_name"];
 
             // unset destinations belonging to old domain
             unset($_SESSION["destinations"]["array"]);
@@ -94,7 +93,40 @@ class DomainController extends Controller
             $url = getFusionPBXPreviousURL(url()->previous());
             return redirect($url);
         }
-        
+    }
+
+    /**
+     * Filter domains from FusionPBX pages. 
+     * Called when domain search is performed and user requested to filter a list of domains
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function filterDomainsFusionPBX(Request $request)
+    {
+        // Retrieve domains from session
+        $domains = Session::get('domains');
+
+        // Check if domains exist in session
+        if (!$domains) {
+            return response()->json(['error' => 'Domains not found in session'], 404);
+        }
+
+        // Check if search parameter is provided
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            // Filter domains based on search term
+            $domains = $domains->filter(function ($domain) use ($searchTerm) {
+                return strpos($domain->domain_name, $searchTerm) !== false;
+            });
+        }
+
+        // Convert the collection back to an array of associative arrays
+        $domains = $domains->map(function ($domain) {
+            return (array) $domain;
+        })->values()->all();
+
+
+        echo json_encode($domains, true);
     }
 
     /**
@@ -186,14 +218,8 @@ class DomainController extends Controller
                 print $extensions;
                 print "<br><br>";
             }
-
         } else {
-             return redirect('dashboard');
+            return redirect('dashboard');
         }
-
-
-
     }
-
-    
 }

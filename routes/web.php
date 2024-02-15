@@ -121,6 +121,8 @@ Route::group(['middleware' => 'auth'], function(){
         return redirect('/dashboard');
     });
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
+    Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
+    
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
