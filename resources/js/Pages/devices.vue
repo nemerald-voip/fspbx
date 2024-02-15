@@ -208,9 +208,6 @@ import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {CogIcon, DocumentTextIcon, MagnifyingGlassIcon, TrashIcon,} from "@heroicons/vue/24/solid";
-
-import {TransitionRoot,} from '@headlessui/vue'
-
 const today = new Date();
 
 const loading = ref(false)

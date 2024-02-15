@@ -38,7 +38,7 @@
                                     <slot name="modal-action-buttons"></slot>
                                 </div>
                             </div>
-                            <Loading :show="loading" />
+                            <Loading :show="loading" :absolute="false" />
                         </DialogPanel>
                     </TransitionChild>
                 </div>
