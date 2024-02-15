@@ -10,7 +10,7 @@
             <template #action>
 
                 <button type="button" @click.prevent="exportCsv" :disabled="data.data.length === 0"
-                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm 
+                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm
                     disabled:ring-0 disabled:text-blue-700/50
                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
                     <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
@@ -134,30 +134,7 @@
             </template>
 
             <template #loading>
-                <TransitionRoot as="template" :show="loading" enter="transition-opacity duration-500 ease-out"
-                    enter-from="opacity-0" enter-to="opacity-100" leave="transition-opacity duration-300 ease-in"
-                    leave-from="opacity-100" leave-to="opacity-0">
-                    <!-- Backdrop -->
-                    <div class="absolute w-full h-full bg-gray-400 bg-opacity-30">
-                        <div class="flex justify-center items-center space-x-3 mt-20">
-                            <div>
-                                <svg class="animate-spin  h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg"
-                                    fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4">
-                                    </circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                            </div>
-
-                            <div class="text-lg text-blue-600 m-auto">Loading...</div>
-                        </div>
-                    </div>
-                    <!-- End Backdrop -->
-
-                </TransitionRoot>
+                <Loading :show="loading" />
             </template>
 
             <template #footer>
@@ -207,6 +184,7 @@ import {
 import {
     startOfDay, endOfDay,
 } from 'date-fns';
+import Loading from "./components/general/Loading.vue";
 
 const today = new Date();
 
