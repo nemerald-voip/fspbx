@@ -97,7 +97,7 @@
                                                   class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer"/>
                                 <CogIcon v-if="row.send_notify_path" @click="handleRestart(row.send_notify_path)"
                                          class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer"/>
-                                <TrashIcon v-if="row.destroy_path" @click="handleDestroy(row.destroy_path)"
+                                <TrashIcon v-if="row.destroy_path" @click="handleDestroyConfirmation(row.destroy_path)"
                                            class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer"/>
                             </div>
                         </template>
@@ -198,6 +198,17 @@
             </button>
         </template>
     </AddEditItemModal>
+    <DeleteConfirmationModal
+        :show="confirmationModalTrigger"
+        @close="confirmationModalTrigger = false"
+        @confirm="handleDestroy(confirmationModalDestroyPath.value)"
+    />
+    <NotificationError
+        :show="actionError"
+        :errors="actionErrorsList"
+        :header="actionErrorMessage"
+        @update:show="handleErrorsReset"
+    />
 </template>
 
 <script setup>
@@ -212,6 +223,7 @@ import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
 import NotificationError from "./components/notifications/Error.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
@@ -227,6 +239,8 @@ const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
+const confirmationModalTrigger = ref(false);
+const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
@@ -282,6 +296,8 @@ const handleDestroy = (url) => {
         only: ["data"],
         onSuccess: (page) => {
             console.log(page)
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
         }
     });
 }
@@ -450,6 +466,11 @@ const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
     setTimeout(handleDeviceObjectReset, 1000)
+}
+
+const handleDestroyConfirmation = (url) => {
+    confirmationModalTrigger.value = true
+    confirmationModalDestroyPath.value = url;
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
