@@ -183,6 +183,7 @@
                 :templates="templates"
                 :profiles="profiles"
                 :extensions="extensions"
+                :isEdit="true"
                 @update:show="editModalTrigger = false"
             />
         </template>

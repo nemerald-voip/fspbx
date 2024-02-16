@@ -1,6 +1,6 @@
 <template>
     <div v-if="show" :class="{'absolute bg-gray-400 bg-opacity-30': absolute}" class="w-full h-full">
-        <div class="flex justify-center items-center space-x-3 mt-20">
+        <div :class="{'mt-20': absolute}" class="flex justify-center items-center space-x-3">
             <div>
                 <svg class="animate-spin  h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg"
                      fill="none" viewBox="0 0 24 24">

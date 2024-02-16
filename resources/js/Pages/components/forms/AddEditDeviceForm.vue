@@ -4,7 +4,7 @@
             <div class="sm:col-span-12">
                 <label for="device_address" class="block text-sm font-medium leading-6 text-gray-900">MacAddress</label>
                 <div class="mt-2">
-                    <input v-model="device.device_address" type="text" name="device_address" id="device_address" placeholder="Enter the MAC address"
+                    <input v-model="device.device_address" :disabled="isEdit" :class="{ 'disabled:opacity-50': isEdit }" type="text" name="device_address" id="device_address" placeholder="Enter the MAC address"
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
@@ -58,6 +58,10 @@ const props = defineProps({
     profiles: Array,
     extensions: Array,
     device: Object,
+    isEdit: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const handleUpdateTemplate = (newSelectedItem) => {
