@@ -191,6 +191,7 @@ class DeviceController extends Controller
      */
     public function create()
     {
+        /*
         $domainUuid = Session::get('domain_uuid');
 
         $profiles = DeviceProfile::where('device_profile_enabled', 'true')
@@ -206,7 +207,7 @@ class DeviceController extends Controller
             ->with('device', $device)
             ->with('profiles', $profiles)
             ->with('vendors', $vendors)
-            ->with('extensions', $extensions);
+            ->with('extensions', $extensions);*/
     }
 
     /**
@@ -217,8 +218,11 @@ class DeviceController extends Controller
      */
     public function store(StoreDeviceRequest $request)
     {
+        print_r($request);
+        die('sssss');
         $inputs = $request->validated();
 
+        die('sssss');
         $extension = Extensions::find($inputs['extension_uuid']);
 
         $device = new Devices();
