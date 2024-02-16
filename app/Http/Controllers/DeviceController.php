@@ -111,7 +111,7 @@ class DeviceController extends Controller
                     return Session::get('domain_uuid');
                 },
                 'deviceGlobalView' => false,
-                'routeDevicesCreate' => route('devices.create'),
+                'routeDevicesStore' => route('devices.store'),
                 'routeDevices' => route('devices.index'),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
                 'templates' => getVendorTemplateCollection(),
@@ -218,11 +218,8 @@ class DeviceController extends Controller
      */
     public function store(StoreDeviceRequest $request)
     {
-        print_r($request);
-        die('sssss');
         $inputs = $request->validated();
 
-        die('sssss');
         $extension = Extensions::find($inputs['extension_uuid']);
 
         $device = new Devices();

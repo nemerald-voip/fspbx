@@ -1,5 +1,5 @@
 <template>
-    <div aria-live="assertive" class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-20">
+    <div aria-live="assertive" class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-30">
         <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
             <transition enter-active-class="transform ease-out duration-300 transition"
                         enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
@@ -10,15 +10,16 @@
                      class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-gray-50 shadow-lg ring-1 ring-black ring-opacity-5">
                     <div class="p-4">
                         <div class="flex items-start">
-                            <div v-if="isSuccess" class="flex-shrink-0">
-                                <CheckCircleIcon class="h-6 w-6 text-green-400" aria-hidden="true"/>
-                            </div>
-                            <div v-else class="flex-shrink-0">
+                            <div class="flex-shrink-0">
                                 <XMarkIcon class="h-6 w-6 text-red-400" aria-hidden="true"/>
                             </div>
                             <div class="ml-3 w-0 flex-1 pt-0.5">
                                 <p v-if="header" class="text-sm font-medium text-gray-900 mb-1">{{ header }}</p>
-                                <p v-if="text" class="text-sm text-gray-500">{{ text }}</p>
+                                <ul v-if="errors" class="text-sm text-gray-500">
+                                    <li v-for="(error, index) in errors" :key="index">
+                                        {{error[0]}}
+                                    </li>
+                                </ul>
                             </div>
                             <div class="ml-4 flex flex-shrink-0">
                                 <button type="button" @click="show = false"
@@ -44,7 +45,7 @@ const props = defineProps({
     show: Boolean,
     isSuccess: Boolean,
     header: String,
-    text: String,
+    errors: Object,
 });
 
 let timeoutId = ref(null);

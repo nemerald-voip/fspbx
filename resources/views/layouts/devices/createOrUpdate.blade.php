@@ -55,6 +55,7 @@
 
 @push('scripts')
     <script>
+
     document.addEventListener('DOMContentLoaded', function() {
         $('#extension-select').select2({
             //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
@@ -67,7 +68,7 @@
         $('#template-select').select2({
             //sorter: data => data.sort((a, b) => b.text.localeCompare(a.text)),
         });
-    });
+
 
     $('.save-device-btn').on('click', function(e) {
         e.preventDefault();
@@ -121,5 +122,6 @@
             }
         });
     })
+    });
     </script>
 @endpush
