@@ -437,7 +437,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="row">
+                                                    {{-- <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Enabled</label>
@@ -455,7 +455,9 @@
                                                                     data-off-label="Off"></label>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
+                                                    <input type="hidden" name="ring_group_enabled"
+                                                                    value="true">
                                                 </div>
 
                                             </div>
