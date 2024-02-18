@@ -128,9 +128,9 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_extension" class="form-label">Ring
+                                                                <label for="ring_group_name" class="form-label">Ring
                                                                     Group Name <span class="text-danger">*</span></label>
-                                                                <input class="form-control" type="text" placeholder="xxx"
+                                                                <input class="form-control" type="text" placeholder=""
                                                                     id="ring_group_name" name="ring_group_name"
                                                                     value="{{ $ringGroup->ring_group_name }}" />
                                                                 <div id="ring_group_name_err"

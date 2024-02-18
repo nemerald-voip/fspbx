@@ -101,6 +101,7 @@ class RingGroupsController extends Controller
             'extensions',
             'timeconditions',
             'voicemails',
+            'ivrs',
             'others'
         ] as $category) {
             $timeoutDestinationsByCategory[$category] = getDestinationByCategory($category)['list'];
@@ -326,6 +327,7 @@ class RingGroupsController extends Controller
             'extensions',
             'timeconditions',
             'voicemails',
+            'ivrs',
             'others'
         ] as $category) {
             $c = getDestinationByCategory($category, $ringGroup->ring_group_timeout_data);
