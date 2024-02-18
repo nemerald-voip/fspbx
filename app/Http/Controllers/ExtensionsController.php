@@ -1458,7 +1458,7 @@ class ExtensionsController extends Controller
             $all_regs = $registrations;
         }
 
-        logger($all_regs);
+        // logger($all_regs);
 
         foreach ($all_regs as $reg) {
             // Get the agent name
