@@ -7,25 +7,28 @@
                     <select class="select2 form-control" data-toggle="select2" data-placeholder="Choose ..."
                             id="timeout_category" name="timeout_category">
                         <option value="disabled" @if($destinationsByCategory == 'disabled') selected="selected" @endif>
-                            Disabled
+                            Hang up
                         </option>
                         <option value="ringgroup" @if($destinationsByCategory == 'ringgroup') selected="selected" @endif>
-                            Ring Groups
+                            Ring Group
                         </option>
-                        <option value="dialplans" @if($destinationsByCategory == 'dialplans') selected="selected" @endif>
+                        {{-- <option value="dialplans" @if($destinationsByCategory == 'dialplans') selected="selected" @endif>
                             Dial Plans
-                        </option>
+                        </option> --}}
                         <option value="extensions" @if($destinationsByCategory == 'extensions') selected="selected" @endif>
-                            Extensions
+                            Extension
                         </option>
                         {{--<option value="timeconditions" @if($destinationsByCategory == 'timeconditions') selected="selected" @endif>
                             Time Conditions
                         </option>--}}
                         <option value="voicemails" @if($destinationsByCategory == 'voicemails') selected="selected" @endif>
-                            Voicemails
+                            Voicemail
+                        </option>
+                        <option value="ivrs" @if($destinationsByCategory == 'ivrs') selected="selected" @endif>
+                            Auto Receptionist
                         </option>
                         <option value="others" @if($destinationsByCategory == 'others') selected="selected" @endif>
-                            Others
+                            Miscellaneous
                         </option>
                     </select>
                 </div>
@@ -66,6 +69,7 @@
                     timeoutActionWrapper.show()
                 }
 
+                console.log(e.target.value);
                 timeoutActionWrapper.find('div').hide();
                 timeoutActionWrapper.find('div#timeout_action_wrapper_' + e.target.value).show();
             })

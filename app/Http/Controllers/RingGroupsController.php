@@ -101,6 +101,7 @@ class RingGroupsController extends Controller
             'extensions',
             'timeconditions',
             'voicemails',
+            'ivrs',
             'others'
         ] as $category) {
             $timeoutDestinationsByCategory[$category] = getDestinationByCategory($category)['list'];
@@ -143,6 +144,10 @@ class RingGroupsController extends Controller
 
         if (!isset($attributes['ring_group_missed_call_category'])) {
             $attributes['ring_group_missed_call_category'] = null;
+        }
+
+        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
         }
 
         $ringGroup = new RingGroups();
@@ -326,6 +331,7 @@ class RingGroupsController extends Controller
             'extensions',
             'timeconditions',
             'voicemails',
+            'ivrs',
             'others'
         ] as $category) {
             $c = getDestinationByCategory($category, $ringGroup->ring_group_timeout_data);
@@ -377,6 +383,10 @@ class RingGroupsController extends Controller
 
         if (!isset($attributes['ring_group_missed_call_category'])) {
             $attributes['ring_group_missed_call_category'] = null;
+        }
+
+        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
         }
 
         $ringGroup->update([

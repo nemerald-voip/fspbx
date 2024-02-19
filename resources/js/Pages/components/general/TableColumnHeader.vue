@@ -1,8 +1,10 @@
 <template>
-    <th :class="class" :style="style">{{ header }}</th>
+    <th :class="class" :style="style">
+        <slot>{{ header }}</slot>
+    </th>
 </template>
 
-  
+
 <script setup>
 
 // Define the props for the Column component

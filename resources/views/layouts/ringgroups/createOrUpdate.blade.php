@@ -128,9 +128,9 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="mb-3">
-                                                                <label for="ring_group_extension" class="form-label">Ring
+                                                                <label for="ring_group_name" class="form-label">Ring
                                                                     Group Name <span class="text-danger">*</span></label>
-                                                                <input class="form-control" type="text" placeholder="xxx"
+                                                                <input class="form-control" type="text" placeholder=""
                                                                     id="ring_group_name" name="ring_group_name"
                                                                     value="{{ $ringGroup->ring_group_name }}" />
                                                                 <div id="ring_group_name_err"
@@ -437,7 +437,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="row">
+                                                    {{-- <div class="row">
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Enabled</label>
@@ -455,7 +455,9 @@
                                                                     data-off-label="Off"></label>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
+                                                    <input type="hidden" name="ring_group_enabled"
+                                                                    value="true">
                                                 </div>
 
                                             </div>
@@ -600,8 +602,8 @@
                                                                         <optgroup label="Recordings">
                                                                             @foreach ($recordings as $recording)
                                                                                 <option
-                                                                                    value="{{ $recording->recording_name }}"
-                                                                                    @if ($recording->recording_name == $ringGroup->ring_group_ringback) selected @endif>
+                                                                                    value="{{ $recording->recording_filename }}"
+                                                                                    @if (getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" .$recording->recording_filename == $ringGroup->ring_group_ringback) selected @endif>
                                                                                     {{ $recording->recording_name }}
                                                                                 </option>
                                                                             @endforeach

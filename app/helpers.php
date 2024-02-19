@@ -1,25 +1,25 @@
 <?php
 
-use App\Models\IvrMenus;
-use App\Models\Settings;
-use App\Models\Dialplans;
-use App\Models\Extensions;
-use App\Models\RingGroups;
-use App\Models\Voicemails;
-use App\Models\SipProfiles;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-
-use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
+use App\Models\DeviceProfile;
+use App\Models\DeviceVendor;
+use App\Models\Dialplans;
+use App\Models\DomainSettings;
+use App\Models\Extensions;
+use App\Models\IvrMenus;
+use App\Models\RingGroups;
+use App\Models\Settings;
+use App\Models\SipProfiles;
+use App\Models\Voicemails;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Http;
-use libphonenumber\PhoneNumberFormat;
-use function PHPUnit\Framework\isEmpty;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 if (!function_exists('userCheckPermission')) {
     function userCheckPermission($permission)
@@ -76,27 +76,27 @@ if (!function_exists('getFusionPBXPreviousURL')) {
     function getFusionPBXPreviousURL($previous_url)
     {
         if (strpos($previous_url, "time_condition_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "time_condition_edit.php")) . "time_conditions.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "time_condition_edit.php"))."time_conditions.php";
         } elseif (strpos($previous_url, "destination_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "destination_edit.php")) . "destinations.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "destination_edit.php"))."destinations.php";
         } elseif (strpos($previous_url, "extension_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "extension_edit.php")) . "extensions.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "extension_edit.php"))."extensions.php";
         } elseif (strpos($previous_url, "ring_group_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "ring_group_edit.php")) . "ring_groups.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "ring_group_edit.php"))."ring_groups.php";
         } elseif (strpos($previous_url, "device_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "device_edit.php")) . "devices.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "device_edit.php"))."devices.php";
         } elseif (strpos($previous_url, "dialplan_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "dialplan_edit.php")) . "dialplans.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "dialplan_edit.php"))."dialplans.php";
         } elseif (strpos($previous_url, "ivr_menu_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "ivr_menu_edit.php")) . "ivr_menus.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "ivr_menu_edit.php"))."ivr_menus.php";
         } elseif (strpos($previous_url, "voicemail_edit.php")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "voicemail_edit.php")) . "voicemails.php";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "voicemail_edit.php"))."voicemails.php";
         } elseif (strpos($previous_url, "/extensions/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/extensions/")) . "/extensions";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/extensions/"))."/extensions";
         } elseif (strpos($previous_url, "/faxes/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/")) . "/faxes";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/"))."/faxes";
         } elseif (strpos($previous_url, "/voicemails/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/")) . "/voicemails";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/"))."/voicemails";
         } elseif (strpos($previous_url, "/contact-center")) {
             $url = "/dashboard";
         } else {
@@ -632,7 +632,7 @@ if (!function_exists('outbound_route_to_bridge')) {
                 if ($dialplan_detail['dialplan_detail_tag'] == "condition") {
 
                     if ($dialplan_detail['dialplan_detail_type'] == "destination_number") {
-                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
+                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
                         preg_match($pattern, $destination_number, $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
@@ -655,7 +655,7 @@ if (!function_exists('outbound_route_to_bridge')) {
                             }
                         }
                     } elseif ($dialplan_detail['dialplan_detail_type'] == "\${toll_allow}") {
-                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
+                        $pattern = '/'.$dialplan_detail['dialplan_detail_data'].'/';
                         preg_match($pattern, $channel_variables['toll_allow'], $matches, PREG_OFFSET_CAPTURE);
                         if (count($matches) == 0) {
                             $condition_match = 'false';
@@ -726,14 +726,14 @@ if (!function_exists('get_registrations')) {
         $registrations = array();
         $id = 0;
         foreach ($sip_profiles as $sip_profile) {
-            $cmd = "api sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
+            $cmd = "api sofia xmlstatus profile '".$sip_profile['sip_profile_name']."' reg";
             $xml_response = trim(event_socket_request($fp, $cmd));
             if (function_exists('iconv')) {
                 $xml_response = iconv("utf-8", "utf-8//IGNORE", $xml_response);
             }
             $xml_response = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml_response);
             if ($xml_response == "Invalid Profile!") {
-                $xml_response = "<error_msg>" . 'Error' . "</error_msg>";
+                $xml_response = "<error_msg>".'Error'."</error_msg>";
             }
             $xml_response = str_replace("<profile-info>", "<profile_info>", $xml_response);
             $xml_response = str_replace("</profile-info>", "</profile_info>", $xml_response);
@@ -743,9 +743,9 @@ if (!function_exists('get_registrations')) {
                 try {
                     $xml = new SimpleXMLElement($xml_response);
                 } catch (Exception $e) {
-                    echo basename(__FILE__) . "<br />\n";
-                    echo "line: " . __line__ . "<br />\n";
-                    echo "error: " . $e->getMessage() . "<br />\n";
+                    echo basename(__FILE__)."<br />\n";
+                    echo "line: ".__line__."<br />\n";
+                    echo "error: ".$e->getMessage()."<br />\n";
                     //echo $xml_response;
                     exit;
                 }
@@ -900,27 +900,27 @@ if (!function_exists('getDestinationByCategory')) {
                 switch ($category) {
                     case 'ringgroup':
                         $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
-                        $label = $row->ring_group_extension . " - " . $row->ring_group_name;
+                        $label = $row->ring_group_extension." - ".$row->ring_group_name;
                         $app_name = "Ring Group";
                         break;
                     case 'extensions':
                         $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
-                        $label = $row->extension . " - " . $row->effective_caller_id_name;
+                        $label = $row->extension." - ".$row->effective_caller_id_name;
                         $app_name = "Extension";
                         break;
                     case 'voicemails':
                         $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
                         $label = $row->voicemail_id;
                         if ($row->extension) {
-                            $label .= " - " . $row->extension->effective_caller_id_name;
+                            $label .= " - ".$row->extension->effective_caller_id_name;
                         } elseif ($row->voicemail_description != '') {
-                            $label .= " - " . $row->voicemail_description;
+                            $label .= " - ".$row->voicemail_description;
                         }
                         $app_name = "Voicemail";
                         break;
                     case 'ivrs':
                         $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
-                        $label = $row->ivr_menu_extension . " - " . $row->ivr_menu_name;
+                        $label = $row->ivr_menu_extension." - ".$row->ivr_menu_name;
                         $app_name = "Auto Receptionist";
                         break;
                     case 'others':
@@ -932,7 +932,7 @@ if (!function_exists('getDestinationByCategory')) {
                         break; // Skip unknown categories
                 }
 
-                if(isset($id)) {
+                if (isset($id)) {
                     // Check if the id matches the data
                     if ($id == $data || 'transfer:'.$id == $data) {
                         $selectedCategory = $category;
@@ -1183,12 +1183,12 @@ if (!function_exists('get_fax_dial_plan')) {
     function get_fax_dial_plan($fax, $dialplan)
     {
         $last_fax = "last_fax=\${caller_id_number}-\${strftime(%Y-%m-%d-%H-%M-%S)}";
-        $rxfax_data = Storage::disk('fax')->path($fax->accountcode . '/' . $fax->fax_extension . "/inbox/" . $fax->forward_prefix . '${last_fax}.tif');
+        $rxfax_data = Storage::disk('fax')->path($fax->accountcode.'/'.$fax->fax_extension."/inbox/".$fax->forward_prefix.'${last_fax}.tif');
         //build the xml dialplan
-        $dialplan_xml = "<extension name=\"" . $fax->fax_name . "\" continue=\"false\" uuid=\"" . $dialplan->dialplan_uuid . "\">\n";
-        $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^" . $fax->fax_destination_number . "$\">\n";
+        $dialplan_xml = "<extension name=\"".$fax->fax_name."\" continue=\"false\" uuid=\"".$dialplan->dialplan_uuid."\">\n";
+        $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^".$fax->fax_destination_number."$\">\n";
         $dialplan_xml .= "		<action application=\"answer\" data=\"\"/>\n";
-        $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=" . $fax->fax_uuid . "\"/>\n";
+        $dialplan_xml .= "		<action application=\"set\" data=\"fax_uuid=".$fax->fax_uuid."\"/>\n";
         $dialplan_xml .= "		<action application=\"set\" data=\"api_hangup_hook=lua app/fax/resources/scripts/hangup_rx.lua\"/>\n";
         $settings = \DB::table('v_default_settings')
             ->where('default_setting_category', 'fax')
@@ -1198,17 +1198,17 @@ if (!function_exists('get_fax_dial_plan')) {
 
         foreach ($settings as $data) {
             if (substr($data->default_setting_value, 0, 8) == "inbound:") {
-                $dialplan_xml .= "		<action application=\"set\" data=\"" . substr(
-                    $data->default_setting_value,
-                    8,
-                    strlen($data->default_setting_value)
-                ) . "\"/>\n";
+                $dialplan_xml .= "		<action application=\"set\" data=\"".substr(
+                        $data->default_setting_value,
+                        8,
+                        strlen($data->default_setting_value)
+                    )."\"/>\n";
             } elseif (substr($data->default_setting_value, 0, 9) == "outbound:") {
             } else {
-                $dialplan_xml .= "		<action application=\"set\" data=\"" . $data->default_setting_value . "\"/>\n";
+                $dialplan_xml .= "		<action application=\"set\" data=\"".$data->default_setting_value."\"/>\n";
             }
         }
-        $dialplan_xml .= "		<action application=\"set\" data=\"" . $last_fax . "\"/>\n";
+        $dialplan_xml .= "		<action application=\"set\" data=\"".$last_fax."\"/>\n";
         $dialplan_xml .= "		<action application=\"rxfax\" data=\"$rxfax_data\"/>\n";
         $dialplan_xml .= "		<action application=\"hangup\" data=\"\"/>\n";
         $dialplan_xml .= "	</condition>\n";
@@ -1331,7 +1331,8 @@ if (!function_exists('parse_socket_response_to_array')) {
 
 
 if (!function_exists('formatPhoneNumber')) {
-    function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL) {
+    function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL)
+    {
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
         try {
@@ -1351,8 +1352,76 @@ if (!function_exists('formatPhoneNumber')) {
 if (!function_exists('debugEloquentSqlWithBindings')) {
     function debugEloquentSqlWithBindings($query)
     {
-        return vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
-            return is_numeric($binding) ? $binding : "'{$binding}'";
-        })->toArray());
+        return vsprintf(str_replace('?', '%s', $query->toSql()),
+            collect($query->getBindings())->map(function ($binding) {
+                return is_numeric($binding) ? $binding : "'{$binding}'";
+            })->toArray());
     }
 }
+
+if (!function_exists('getVendorTemplateCollection')) {
+    function getVendorTemplateCollection(): array
+    {
+        $vendorsCollection = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+        $templateDir = public_path('resources/templates/provision');
+        $templates = [];
+        foreach ($vendorsCollection ?? [] as $vendor) {
+            //$templates[$vendor->name] = [];
+            if (is_dir($templateDir.'/'.$vendor->name)) {
+                $dirs = scandir($templateDir.'/'.$vendor->name);
+                foreach ($dirs as $dir) {
+                    if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir.'/'.$vendor->name.'/'.$dir)) {
+                        $templates[] = [
+                            'name' => $vendor->name."/".$dir,
+                            'value' => $vendor->name."/".$dir
+                        ];
+                    }
+                }
+            }
+        }
+        return $templates;
+    }
+}
+
+if (!function_exists('getProfileCollection')) {
+    function getProfileCollection($domain = null): array
+    {
+        $profilesCollection = DeviceProfile::where('device_profile_enabled', 'true');
+        if ($domain) {
+            $profilesCollection->where('domain_uuid', $domain);
+        }
+        $profilesCollection = $profilesCollection->orderBy('device_profile_name')->get();
+
+        $profiles = [];
+        foreach ($profilesCollection as $profile) {
+            $profiles[] = [
+                'name' => $profile->device_profile_name,
+                'value' => $profile->device_profile_uuid
+            ];
+        }
+        unset($profilesCollection, $profile);
+        return $profiles;
+    }
+}
+
+if (!function_exists('getExtensionCollection')) {
+    function getExtensionCollection($domain = null): array
+    {
+        $extensionsCollection = Extensions::query();
+        if ($domain) {
+            $extensionsCollection->where('domain_uuid', $domain);
+        }
+        $extensionsCollection = $extensionsCollection->orderBy('extension')->get();
+
+        $extensions = [];
+        foreach ($extensionsCollection as $extension) {
+            $extensions[] = [
+                'name' => $extension->extension.(($extension->description)?' ('.$extension->description.')':''),
+                'value' => $extension->extension_uuid
+            ];
+        }
+        unset($extensionsCollection, $extension);
+        return $extensions;
+    }
+}
+
