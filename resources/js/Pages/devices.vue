@@ -77,7 +77,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
                                 v-if="deviceRestartPermission">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.device_uuid" :data-extension-uuid="row.extension_uuid"
+                               :value="row.extension_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
