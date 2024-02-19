@@ -36,12 +36,12 @@
                     Restart all devices
                 </button>
 
-                <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -63,7 +63,6 @@
                                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="MAC Address"
                                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Assigned extension"
@@ -83,8 +82,7 @@
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                                 :text="row.domain_name"/>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_address"/>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_label"/>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer" :text="row.device_address" @click="handleEdit(row.edit_path)"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.profile_name"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -94,11 +92,11 @@
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
                                 <DocumentTextIcon v-if="row.edit_path" @click="handleEdit(row.edit_path)"
-                                                  class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer"/>
+                                                  class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
                                 <CogIcon v-if="row.send_notify_path" @click="handleRestart(row.send_notify_path)"
-                                         class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer"/>
+                                         class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
                                 <TrashIcon v-if="row.destroy_path" @click="handleDestroyConfirmation(row.destroy_path)"
-                                           class="h-5 w-5 text-black-500 hover:text-black-500 active:h-5 active:w-5 cursor-pointer"/>
+                                           class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
                             </div>
                         </template>
                     </TableField>

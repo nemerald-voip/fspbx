@@ -1416,7 +1416,7 @@ if (!function_exists('getExtensionCollection')) {
         $extensions = [];
         foreach ($extensionsCollection as $extension) {
             $extensions[] = [
-                'name' => $extension->extension,
+                'name' => $extension->extension.(($extension->description)?' ('.$extension->description.')':''),
                 'value' => $extension->extension_uuid
             ];
         }

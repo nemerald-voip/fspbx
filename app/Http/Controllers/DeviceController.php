@@ -5,74 +5,45 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Models\DeviceLines;
-use App\Models\DeviceProfile;
 use App\Models\Devices;
-use App\Models\DeviceVendor;
 use App\Models\Extensions;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Contracts\View\View;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
+use Inertia\Response;
 
+/**
+ * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
+ *
+ * @package App\Http\Controllers
+ */
 class DeviceController extends Controller
 {
-    public $filters;
+    public array $filters;
 
     /**
      * Display a listing of the resource.
-     *
-     * @return Application|Factory|View
      */
-    public function index(Request $request)
-    {
+    public function index(Request $request
+    ): Redirector|Response|RedirectResponse|Application {
         if (!userCheckPermission("device_view")) {
             return redirect('/');
         }
-
-        /*$scopes = ['global', 'local'];
-        $searchString = $request->get('search');
-        $searchStringKey = strtolower(trim($searchString));
-        $selectedScope = $request->get('scope', 'local');
-        $devices = Devices::query();
-        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
-            $devices
-                ->where('domain_uuid', Session::get('domain_uuid'));
-        } else {
-            $devices
-                ->join('v_domains','v_domains.domain_uuid','=','v_devices.domain_uuid');
-        }
-        if (!empty($searchStringKey)) {
-            $devices->where(function ($query) use ($searchStringKey) {
-                $query
-                    ->orWhereLike('device_address', str_replace([':', '-', '.'], '', $searchStringKey))
-                    ->orWhereLike('device_label', $searchStringKey)
-                    ->orWhereLike('device_vendor', $searchStringKey)
-                    ->orWhereLike('device_template', $searchStringKey);
-            });
-        }
-        $devices = $devices->orderBy('device_label');
-
-        $devicesToRestart = $devices->get()->filter(function ($device) {
-            return $device->extension();
-        });*/
-
-        //$data = array();
-        //$data['devices'] = $devices->paginate(5)->onEachSide(1);;
-        //$data['devicesToRestartCount'] = $devicesToRestart->count();
-        //$data['searchString'] = $searchString;
-        //$data['permissions']['device_restart'] = isSuperAdmin();
-        //$data['selectedScope'] = $selectedScope;
-
-        //return view('layouts.devices.list')->with($data);
 
         $this->filters = [];
 
         if (!empty($request->filterData['search'])) {
             $this->filters['search'] = $request->filterData['search'];
+        }
+
+        if (!empty($request->filterData['showGlobal'])) {
+            $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
         }
 
         unset(
@@ -121,7 +92,10 @@ class DeviceController extends Controller
         );
     }
 
-    public function getDevices()
+    /**
+     * @return LengthAwarePaginator
+     */
+    public function getDevices(): LengthAwarePaginator
     {
         $devices = $this->builder($this->filters)->paginate(50);
         foreach ($devices as $device) {
@@ -137,24 +111,21 @@ class DeviceController extends Controller
             $device->edit_path = route('devices.edit', $device);
             $device->destroy_path = route('devices.destroy', $device);
         }
-
-        /*        $devices->transform(function ($cdr) {
-                    // Perform any additional processing on start_date if needed
-                    // For example, format start_date or add additional data
-
-                    // Add or modify attributes as needed
-                    $cdr->start_date = $cdr->start_date;
-                    $cdr->start_time = $cdr->start_time;
-
-                    return $cdr;
-                });*/
         return $devices;
     }
 
-    public function builder($filters = [])
+    /**
+     * @param  array  $filters
+     * @return Builder
+     */
+    public function builder(array $filters = []): Builder
     {
         $devices = Devices::query();
-        $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
+        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
+        } else {
+            $devices->where('domain_uuid', Session::get('domain_uuid'));
+        }
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
@@ -166,14 +137,12 @@ class DeviceController extends Controller
         return $devices;
     }
 
-    protected function filterShowglobal($query, $value)
-    {
-        if ($value) {
-            $query->where('domain_uuid', Session::get('domain_uuid'));
-        }
-    }
-
-    protected function filterSearch($query, $value)
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value): void
     {
         // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value) {
@@ -187,27 +156,11 @@ class DeviceController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return Application|Factory|View|Response
+     * @return void
      */
     public function create()
     {
-        /*
-        $domainUuid = Session::get('domain_uuid');
-
-        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
-            ->where('domain_uuid', $domainUuid)
-            ->orderBy('device_profile_name')->get();
-
-        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
-        $extensions = Extensions::where('domain_uuid', $domainUuid)->orderBy('extension')->get();
-
-        $device = new Devices();
-
-        return view('layouts.devices.createOrUpdate')
-            ->with('device', $device)
-            ->with('profiles', $profiles)
-            ->with('vendors', $vendors)
-            ->with('extensions', $extensions);*/
+        //
     }
 
     /**
@@ -216,7 +169,7 @@ class DeviceController extends Controller
      * @param  \App\Http\Requests\StoreDeviceRequest  $request
      * @return JsonResponse
      */
-    public function store(StoreDeviceRequest $request)
+    public function store(StoreDeviceRequest $request): JsonResponse
     {
         $inputs = $request->validated();
 
@@ -268,8 +221,8 @@ class DeviceController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Devices  $device
-     * @return Response
+     * @param  Devices  $device
+     * @return void
      */
     public function show(Devices $device)
     {
@@ -279,18 +232,19 @@ class DeviceController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Devices  $device
+     * @param  Request  $request
+     * @param  Devices  $device
      * @return JsonResponse
      */
-    public function edit(Request $request, Devices $device)
+    public function edit(Request $request, Devices $device): JsonResponse
     {
-        if(!$request->ajax()) {
+        if (!$request->ajax()) {
             return response()->json([
                 'message' => 'XHR request expected'
             ], 405);
         }
 
-        if($device->extension()) {
+        if ($device->extension()) {
             $device->extension_uuid = $device->extension()->extension_uuid;
         }
 
@@ -305,11 +259,11 @@ class DeviceController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdateDeviceRequest  $request
-     * @param  \App\Models\Device  $device
+     * @param  UpdateDeviceRequest  $request
+     * @param  Devices  $device
      * @return JsonResponse
      */
-    public function update(UpdateDeviceRequest $request, Devices $device)
+    public function update(UpdateDeviceRequest $request, Devices $device): JsonResponse
     {
         $inputs = $request->validated();
         $device->update($inputs);
@@ -357,10 +311,10 @@ class DeviceController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Devices  $device
+     * @param  Devices  $device
      * @return Response
      */
-    public function destroy(Devices $device)
+    public function destroy(Devices $device): Response
     {
         if ($device->lines()) {
             $device->lines()->delete();
