@@ -602,8 +602,8 @@
                                                                         <optgroup label="Recordings">
                                                                             @foreach ($recordings as $recording)
                                                                                 <option
-                                                                                    value="{{ $recording->recording_name }}"
-                                                                                    @if ($recording->recording_name == $ringGroup->ring_group_ringback) selected @endif>
+                                                                                    value="{{ $recording->recording_filename }}"
+                                                                                    @if (getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/" .$recording->recording_filename == $ringGroup->ring_group_ringback) selected @endif>
                                                                                     {{ $recording->recording_name }}
                                                                                 </option>
                                                                             @endforeach

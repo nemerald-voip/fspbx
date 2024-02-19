@@ -146,6 +146,10 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
+        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
+        }
+
         $ringGroup = new RingGroups();
         $ringGroup->fill([
             'ring_group_name' => $attributes['ring_group_name'],
@@ -379,6 +383,10 @@ class RingGroupsController extends Controller
 
         if (!isset($attributes['ring_group_missed_call_category'])) {
             $attributes['ring_group_missed_call_category'] = null;
+        }
+
+        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
         }
 
         $ringGroup->update([
