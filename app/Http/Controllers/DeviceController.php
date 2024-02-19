@@ -81,7 +81,7 @@ class DeviceController extends Controller
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
                 },
-                'deviceGlobalView' => false,
+                'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
                 'routeDevices' => route('devices.index'),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
