@@ -102,12 +102,12 @@ class DeviceController extends Controller
             $device->profile_name = $device->profile()->first()->device_profile_name ?? '';
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
+                $device->extension_description = ($device->lines()->first()->extension()->description) ? '('.$device->lines()->first()->extension()->description.')' : '';
                 $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
                 $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
                 $device->send_notify_path = route('extensions.send-event-notify',
                     $device->lines()->first()->extension());
             }
-            //$device->domain_name = Session::get('domain_name');
             $device->edit_path = route('devices.edit', $device);
             $device->destroy_path = route('devices.destroy', $device);
         }

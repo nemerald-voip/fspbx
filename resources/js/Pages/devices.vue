@@ -81,12 +81,18 @@
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                                :text="row.domain_name"/>
+                                :text="row.domain_description">
+                        <ejs-tooltip :content="row.domain_name" position='TopLeft' target="#destination_tooltip_target">
+                            <div id="destination_tooltip_target">
+                                {{row.domain_description}}
+                            </div>
+                        </ejs-tooltip>
+                    </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer" :text="row.device_address" @click="handleEdit(row.edit_path)"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.profile_name"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <a v-if="row.extension_edit_path" :href="row.extension_edit_path">{{ row.extension }}</a>
+                        <a class="hover:text-gray-900 cursor-pointer" v-if="row.extension_edit_path" :href="row.extension_edit_path">{{ row.extension }} {{row.extension_description}}</a>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -226,6 +232,10 @@ import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {CogIcon, DocumentTextIcon, MagnifyingGlassIcon, TrashIcon,} from "@heroicons/vue/24/solid";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue";
+import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue";
+import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue";
 const today = new Date();
 
 const loading = ref(false)
