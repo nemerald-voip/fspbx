@@ -99,6 +99,7 @@ class DeviceController extends Controller
     {
         $devices = $this->builder($this->filters)->paginate(50);
         foreach ($devices as $device) {
+            $device->device_address_tokenized = $device->device_address;
             $device->device_address = formatMacAddress($device->device_address);
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
