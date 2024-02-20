@@ -229,7 +229,7 @@
     <DeleteConfirmationModal
         :show="confirmationModalTrigger"
         @close="confirmationModalTrigger = false"
-        @confirm="handleDestroy(confirmationModalDestroyPath.value)"
+        @confirm="handleDestroy(confirmationModalDestroyPath)"
     />
     <NotificationError
         :show="actionError"
@@ -324,7 +324,6 @@ const handleDestroy = (url) => {
         preserveState: true,
         only: ["data"],
         onSuccess: (page) => {
-            console.log(page)
             confirmationModalTrigger.value = false;
             confirmationModalDestroyPath.value = null;
         }

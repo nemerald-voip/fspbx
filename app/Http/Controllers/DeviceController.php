@@ -25,7 +25,7 @@ use Inertia\Response;
  */
 class DeviceController extends Controller
 {
-    public array $filters;
+    public array $filters = [];
 
     /**
      * Display a listing of the resource.
