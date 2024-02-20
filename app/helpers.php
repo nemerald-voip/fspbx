@@ -1416,7 +1416,7 @@ if (!function_exists('getExtensionCollection')) {
         $extensions = [];
         foreach ($extensionsCollection as $extension) {
             $extensions[] = [
-                'name' => $extension->extension.(($extension->description)?' ('.$extension->description.')':''),
+                'name' => $extension->extension.(($extension->effective_caller_id_name)?' ('.trim($extension->effective_caller_id_name).')':''),
                 'value' => $extension->extension_uuid
             ];
         }

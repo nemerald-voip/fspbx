@@ -99,10 +99,9 @@ class DeviceController extends Controller
     {
         $devices = $this->builder($this->filters)->paginate(50);
         foreach ($devices as $device) {
-            $device->profile_name = $device->profile()->first()->device_profile_name ?? '';
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
-                $device->extension_description = ($device->lines()->first()->extension()->description) ? '('.$device->lines()->first()->extension()->description.')' : '';
+                $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '('.trim($device->lines()->first()->extension()->effective_caller_id_name).')' : '';
                 $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
                 $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
                 $device->send_notify_path = route('extensions.send-event-notify',
@@ -124,8 +123,9 @@ class DeviceController extends Controller
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
             $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
         } else {
-            $devices->where('domain_uuid', Session::get('domain_uuid'));
+            $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
         }
+        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=', 'v_devices.device_profile_uuid');
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
@@ -149,6 +149,7 @@ class DeviceController extends Controller
             $query->where('device_address', 'ilike', '%'.$value.'%')
                 ->orWhere('device_label', 'ilike', '%'.$value.'%')
                 ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
+                ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
                 ->orWhere('device_template', 'ilike', '%'.$value.'%');
         });
     }

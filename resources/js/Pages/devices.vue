@@ -96,7 +96,7 @@
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.profile_name"/>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_profile_name"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <ejs-tooltip :content="'Click to edit extension'" position='TopLeft' target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
