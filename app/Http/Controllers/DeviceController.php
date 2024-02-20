@@ -146,7 +146,8 @@ class DeviceController extends Controller
     {
         // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value) {
-            $query->where('device_address', 'ilike', '%'.$value.'%')
+            $macAddress = str_replace([':', '.', '-'], '', trim(strtolower($value)));
+            $query->where('device_address', 'ilike', '%'.$macAddress.'%')
                 ->orWhere('device_label', 'ilike', '%'.$value.'%')
                 ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
                 ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
