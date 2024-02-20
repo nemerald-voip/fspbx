@@ -99,6 +99,7 @@ class DeviceController extends Controller
     {
         $devices = $this->builder($this->filters)->paginate(50);
         foreach ($devices as $device) {
+            $device->device_address = normalizeMacAddress($device->device_address);
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
                 $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '('.trim($device->lines()->first()->extension()->effective_caller_id_name).')' : '';
@@ -146,7 +147,7 @@ class DeviceController extends Controller
     {
         // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value) {
-            $macAddress = str_replace([':', '.', '-'], '', trim(strtolower($value)));
+            $macAddress = tokenizeMacAddress($value);
             $query->where('device_address', 'ilike', '%'.$macAddress.'%')
                 ->orWhere('device_label', 'ilike', '%'.$value.'%')
                 ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
@@ -179,7 +180,7 @@ class DeviceController extends Controller
 
         $device = new Devices();
         $device->fill([
-            'device_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_address']))),
+            'device_address' => tokenizeMacAddress($inputs['device_address']),
             'device_label' => $extension->extension,
             'device_vendor' => explode("/", $inputs['device_template'])[0],
             'device_enabled' => 'true',
@@ -250,6 +251,7 @@ class DeviceController extends Controller
             $device->extension_uuid = $device->extension()->extension_uuid;
         }
 
+        $device->device_address = normalizeMacAddress($device->device_address);
         $device->update_path = route('devices.update', $device);
 
         return response()->json([

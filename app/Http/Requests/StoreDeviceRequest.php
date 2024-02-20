@@ -14,7 +14,7 @@ class StoreDeviceRequest extends FormRequest
      *
      * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return Auth::check();
     }
@@ -59,11 +59,11 @@ class StoreDeviceRequest extends FormRequest
         ];
     }
 
-    public function prepareForValidation()
+    public function prepareForValidation(): void
     {
-        $macAddress = str_replace([':', '.', '-'], '', trim(strtolower($this->get('device_address'))));
+        $macAddress = tokenizeMacAddress($this->get('device_address'));
         $this->merge([
-            'device_address' => implode(":", str_split($macAddress, 2)),
+            'device_address' => normalizeMacAddress($macAddress),
             'device_address_modified' => $macAddress
         ]);
     }
