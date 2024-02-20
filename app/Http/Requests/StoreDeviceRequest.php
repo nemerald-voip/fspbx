@@ -63,7 +63,7 @@ class StoreDeviceRequest extends FormRequest
     {
         $macAddress = tokenizeMacAddress($this->get('device_address'));
         $this->merge([
-            'device_address' => normalizeMacAddress($macAddress),
+            'device_address' => formatMacAddress($macAddress),
             'device_address_modified' => $macAddress
         ]);
     }

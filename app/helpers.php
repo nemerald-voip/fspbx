@@ -1432,8 +1432,8 @@ if (!function_exists('tokenizeMacAddress')) {
     }
 }
 
-if (!function_exists('normalizeMacAddress')) {
-    function normalizeMacAddress(string $macAddress, $uppercase = true): string
+if (!function_exists('formatMacAddress')) {
+    function formatMacAddress(string $macAddress, $uppercase = true): string
     {
         $macAddress = ($uppercase) ? strtoupper($macAddress) : strtolower($macAddress);
         return implode(":", str_split($macAddress, 2));

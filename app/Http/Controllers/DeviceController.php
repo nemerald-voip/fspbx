@@ -99,7 +99,7 @@ class DeviceController extends Controller
     {
         $devices = $this->builder($this->filters)->paginate(50);
         foreach ($devices as $device) {
-            $device->device_address = normalizeMacAddress($device->device_address);
+            $device->device_address = formatMacAddress($device->device_address);
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
                 $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '('.trim($device->lines()->first()->extension()->effective_caller_id_name).')' : '';
@@ -251,7 +251,7 @@ class DeviceController extends Controller
             $device->extension_uuid = $device->extension()->extension_uuid;
         }
 
-        $device->device_address = normalizeMacAddress($device->device_address);
+        $device->device_address = formatMacAddress($device->device_address);
         $device->update_path = route('devices.update', $device);
 
         return response()->json([
