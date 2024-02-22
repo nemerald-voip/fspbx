@@ -357,7 +357,8 @@ const handleRestart = (url) => {
 
 const handleRestartSelected = () => {
     if (selectedItems.value.length > 0) {
-        axios.post(props.routeSendEventNotifyAll, {
+        let scope = showGlobal.value ? 'global' : 'local';
+        axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
             extensionIds: selectedItems.value,
         }).then((response) => {
             loading.value = false;
@@ -371,7 +372,8 @@ const handleRestartSelected = () => {
 }
 
 const handleRestartAll = () => {
-    axios.post(props.routeSendEventNotifyAll).then((response) => {
+    let scope = showGlobal.value ? 'global' : 'local';
+    axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`).then((response) => {
         loading.value = false;
         restartRequestNotificationSuccessTrigger.value = true;
     }).catch((error) => {
