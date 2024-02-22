@@ -40,7 +40,7 @@ class StoreDeviceRequest extends FormRequest
                 'string',
             ],
             'extension_uuid' => [
-                'required',
+                'nullable',
                 Rule::exists('App\Models\Extensions', 'extension_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
@@ -54,8 +54,7 @@ class StoreDeviceRequest extends FormRequest
             'device_address.mac_address' => 'MAC address is invalid',
             'device_address_modified.unique' => 'This MAC address is already used',
             'device_profile_uuid.required' => 'Profile is required',
-            'device_template.required' => 'Template is required',
-            'extension_uuid.required' => 'Extension is required'
+            'device_template.required' => 'Template is required'
         ];
     }
 
