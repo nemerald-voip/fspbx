@@ -220,7 +220,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'RingGroupIcon', 'amount' => '2'];
         }
         if (userCheckPermission("ivr_menu_view")) {
-            $apps[] = ['name' => 'Auto Receptionists', 'href' => '/app/ivr_menus/ivr_menus.php', 'icon' => 'IvrIcon', 'amount' => '5'];
+            $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => '/app/ivr_menus/ivr_menus.php', 'icon' => 'IvrIcon', 'amount' => '5'];
         }
         if (userCheckPermission("time_condition_view")) {
             $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'TimeConditionIcon', 'amount' => '10'];
@@ -229,7 +229,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Devices', 'href' => '/app/devices/devices.php', 'icon' => 'DeviceIcon', 'amount' => '15'];
         }
         if (userCheckPermission("xml_cdr_view")) {
-            $apps[] = ['name' => 'Call History', 'href' => '/call-detail-records', 'icon' => 'CdrIcon', 'amount' => '30'];
+            $apps[] = ['name' => 'Call History (CDRs)', 'href' => '/call-detail-records', 'icon' => 'CdrIcon', 'amount' => '30'];
         }
         if (userCheckPermission("voicemail_view")) {
             $apps[] = ['name' => 'Voicemails', 'href' => '/voicemails', 'icon' => 'VoicemailIcon', 'amount' => '25'];
