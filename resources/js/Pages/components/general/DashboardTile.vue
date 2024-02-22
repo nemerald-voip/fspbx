@@ -7,9 +7,9 @@
         </div>
         <div class="ml-5 w-0 flex-1">
           <dl>
-            <dt class="truncate text-sm font-medium text-gray-500">{{ card.name }}</dt>
+            <dt class="truncate text-lg font-medium text-gray-500">{{ card.name }}</dt>
             <dd>
-              <div class="text-lg font-medium text-gray-900">{{ card.amount }}</div>
+              <div class="text-md font-medium text-gray-900">{{ card.amount }}</div>
             </dd>
           </dl>
         </div>
