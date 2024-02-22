@@ -271,6 +271,7 @@ class DeviceController extends Controller
     public function update(UpdateDeviceRequest $request, Devices $device): JsonResponse
     {
         $inputs = $request->validated();
+        $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
         $device->update($inputs);
 
         if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
