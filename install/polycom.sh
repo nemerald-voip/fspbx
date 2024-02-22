@@ -10,8 +10,8 @@ for model in "${phone_models[@]}"; do
     if [ ! -d "$directory" ]; then
         mkdir -p "$directory"
     fi
-    ln -s "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${firmware_version}/\${mac}-directory.xml" "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${model}/\${mac}-directory"
-    ln -s "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${firmware_version}/\${mac}.cfg" "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${model}/\${mac}.cfg"
+    ln -s "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${firmware_version}/{\$mac}-directory.xml" "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${model}/{\$mac}-directory"
+    ln -s "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${firmware_version}/{\$mac}.cfg" "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${model}/{\$mac}.cfg"
     ln -s "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${firmware_version}/custom.cfg" "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${model}/custom.cfg"
     ln -s "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${firmware_version}/phoneMAC.cfg" "/var/www/freeswitchpbx/public/resources/templates/provision/polycom/${model}/phoneMAC.cfg"
 done
