@@ -72,8 +72,6 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.device_uuid">
-                    <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
-                        :text="row.direction" /> -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
                                 v-if="deviceRestartPermission">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
@@ -88,15 +86,20 @@
                             </div>
                         </ejs-tooltip>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer" :text="row.device_address" @click="handleEdit(row.edit_path)">
-                        <ejs-tooltip :content="'Click to edit device'" position='TopLeft' target="#destination_tooltip_target">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex" :text="row.device_address">
+                        <ejs-tooltip :content="'Click to edit device'" position='TopLeft' class="flex-initial cursor-pointer hover:text-gray-900" @click="handleEdit(row.edit_path)" target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 {{row.device_address}}
                             </div>
                         </ejs-tooltip>
+                        <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="flex-initial ml-2" @click="handleCopyMacAddress(row.device_address_tokenized)" target="#destination_tooltip_target">
+                            <div id="destination_tooltip_target">
+                                <ClipboardDocumentIcon class="h-4 w-4 text-black-500 hover:text-black-900 pt-1 cursor-pointer" />
+                            </div>
+                        </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.profile_name"/>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_profile_name"/>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <ejs-tooltip :content="'Click to edit extension'" position='TopLeft' target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
@@ -229,7 +232,7 @@
     <DeleteConfirmationModal
         :show="confirmationModalTrigger"
         @close="confirmationModalTrigger = false"
-        @confirm="handleDestroy(confirmationModalDestroyPath.value)"
+        @confirm="handleDestroy(confirmationModalDestroyPath)"
     />
     <NotificationError
         :show="actionError"
@@ -255,7 +258,7 @@ import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.
 import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
-import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon,} from "@heroicons/vue/24/solid";
+import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 const today = new Date();
 
@@ -273,6 +276,7 @@ const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
+let tooltipCopyContent = ref('Click to copy MacAddress');
 
 const props = defineProps({
     data: Object,
@@ -318,13 +322,24 @@ const filterData = ref({
     showGlobal: props.deviceGlobalView,
 });
 
+const handleCopyMacAddress = (macAddress) => {
+    navigator.clipboard.writeText(macAddress).then(() => {
+        tooltipCopyContent.value = 'Copied'
+        setTimeout(() => {
+            tooltipCopyContent.value = 'Click to copy MacAddress'
+        }, 500);
+    }).catch((error) => {
+        // Handle the error case
+        console.error('Failed to copy mac address:', error);
+    });
+}
+
 const handleDestroy = (url) => {
     router.delete(url, {
         preserveScroll: true,
         preserveState: true,
         only: ["data"],
         onSuccess: (page) => {
-            console.log(page)
             confirmationModalTrigger.value = false;
             confirmationModalDestroyPath.value = null;
         }
@@ -342,7 +357,8 @@ const handleRestart = (url) => {
 
 const handleRestartSelected = () => {
     if (selectedItems.value.length > 0) {
-        axios.post(props.routeSendEventNotifyAll, {
+        let scope = showGlobal.value ? 'global' : 'local';
+        axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
             extensionIds: selectedItems.value,
         }).then((response) => {
             loading.value = false;
@@ -356,7 +372,8 @@ const handleRestartSelected = () => {
 }
 
 const handleRestartAll = () => {
-    axios.post(props.routeSendEventNotifyAll).then((response) => {
+    let scope = showGlobal.value ? 'global' : 'local';
+    axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`).then((response) => {
         loading.value = false;
         restartRequestNotificationSuccessTrigger.value = true;
     }).catch((error) => {

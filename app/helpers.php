@@ -1384,7 +1384,7 @@ if (!function_exists('getVendorTemplateCollection')) {
 }
 
 if (!function_exists('getProfileCollection')) {
-    function getProfileCollection($domain = null): array
+    function getProfileCollection(string $domain = null): array
     {
         $profilesCollection = DeviceProfile::where('device_profile_enabled', 'true');
         if ($domain) {
@@ -1405,7 +1405,7 @@ if (!function_exists('getProfileCollection')) {
 }
 
 if (!function_exists('getExtensionCollection')) {
-    function getExtensionCollection($domain = null): array
+    function getExtensionCollection(string $domain = null): array
     {
         $extensionsCollection = Extensions::query();
         if ($domain) {
@@ -1416,12 +1416,27 @@ if (!function_exists('getExtensionCollection')) {
         $extensions = [];
         foreach ($extensionsCollection as $extension) {
             $extensions[] = [
-                'name' => $extension->extension.(($extension->description)?' ('.$extension->description.')':''),
+                'name' => $extension->extension.(($extension->effective_caller_id_name)?' ('.trim($extension->effective_caller_id_name).')':''),
                 'value' => $extension->extension_uuid
             ];
         }
         unset($extensionsCollection, $extension);
         return $extensions;
+    }
+}
+
+if (!function_exists('tokenizeMacAddress')) {
+    function tokenizeMacAddress(string $macAddress): string
+    {
+        return str_replace([':', '.', '-'], '', trim(strtolower($macAddress)));
+    }
+}
+
+if (!function_exists('formatMacAddress')) {
+    function formatMacAddress(string $macAddress, $uppercase = true): string
+    {
+        $macAddress = ($uppercase) ? strtoupper($macAddress) : strtolower($macAddress);
+        return implode(":", str_split($macAddress, 2));
     }
 }
 

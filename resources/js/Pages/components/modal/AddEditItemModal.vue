@@ -25,16 +25,13 @@
                                 </button>
                             </div>
                             <div v-if="!loading">
-                                <div>
-                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
-                                        {{ header }}
-                                    </DialogTitle>
-                                    <div class="mt-4">
-                                        <slot name="modal-body"></slot>
-                                    </div>
+                                <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
+                                    {{ header }}
+                                </DialogTitle>
+                                <div class="mt-4 pb-4 border-b border-b-gray-200">
+                                    <slot name="modal-body"></slot>
                                 </div>
-                                <hr class="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8"/>
-                                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                                <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                                     <slot name="modal-action-buttons"></slot>
                                 </div>
                             </div>

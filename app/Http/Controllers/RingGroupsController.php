@@ -146,7 +146,7 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
-        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default') {
+        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
             $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
         }
 
@@ -167,7 +167,7 @@ class RingGroupsController extends Controller
             'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
             'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
             'ring_group_distinctive_ring' => $attributes['ring_group_distinctive_ring'],
-            'ring_group_ringback' => $attributes['ring_group_ringback'],
+            'ring_group_ringback' => ($attributes['ring_group_ringback'] == 'null') ? null : $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'] ?? null,
@@ -385,7 +385,7 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
-        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default') {
+        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
             $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
         }
 
@@ -405,7 +405,7 @@ class RingGroupsController extends Controller
             'ring_group_caller_id_name' => $attributes['ring_group_caller_id_name'] ?? null,
             'ring_group_caller_id_number' => $attributes['ring_group_caller_id_number'] ?? null,
             'ring_group_distinctive_ring' => $attributes['ring_group_distinctive_ring'],
-            'ring_group_ringback' => $attributes['ring_group_ringback'],
+            'ring_group_ringback' => ($attributes['ring_group_ringback'] == 'null') ? null : $attributes['ring_group_ringback'],
             'ring_group_call_forward_enabled' => $attributes['ring_group_call_forward_enabled'],
             'ring_group_follow_me_enabled' => $attributes['ring_group_follow_me_enabled'],
             'ring_group_missed_call_data' => $attributes['ring_group_missed_call_data'] ?? null,

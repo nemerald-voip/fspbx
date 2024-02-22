@@ -25,7 +25,7 @@ use Inertia\Response;
  */
 class DeviceController extends Controller
 {
-    public array $filters;
+    public array $filters = [];
 
     /**
      * Display a listing of the resource.
@@ -99,10 +99,11 @@ class DeviceController extends Controller
     {
         $devices = $this->builder($this->filters)->paginate(50);
         foreach ($devices as $device) {
-            $device->profile_name = $device->profile()->first()->device_profile_name ?? '';
+            $device->device_address_tokenized = $device->device_address;
+            $device->device_address = formatMacAddress($device->device_address);
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
-                $device->extension_description = ($device->lines()->first()->extension()->description) ? '('.$device->lines()->first()->extension()->description.')' : '';
+                $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '('.trim($device->lines()->first()->extension()->effective_caller_id_name).')' : '';
                 $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
                 $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
                 $device->send_notify_path = route('extensions.send-event-notify',
@@ -124,8 +125,9 @@ class DeviceController extends Controller
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
             $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
         } else {
-            $devices->where('domain_uuid', Session::get('domain_uuid'));
+            $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
         }
+        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=', 'v_devices.device_profile_uuid');
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
@@ -146,9 +148,11 @@ class DeviceController extends Controller
     {
         // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value) {
-            $query->where('device_address', 'ilike', '%'.$value.'%')
+            $macAddress = tokenizeMacAddress($value);
+            $query->where('device_address', 'ilike', '%'.$macAddress.'%')
                 ->orWhere('device_label', 'ilike', '%'.$value.'%')
                 ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
+                ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
                 ->orWhere('device_template', 'ilike', '%'.$value.'%');
         });
     }
@@ -173,12 +177,16 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        $extension = Extensions::find($inputs['extension_uuid']);
+        if($inputs['extension_uuid']) {
+            $extension = Extensions::find($inputs['extension_uuid']);
+        } else {
+            $extension = null;
+        }
 
         $device = new Devices();
         $device->fill([
-            'device_address' => trim(strtolower(str_replace([':', '-', '.'], '', $inputs['device_address']))),
-            'device_label' => $extension->extension,
+            'device_address' => tokenizeMacAddress($inputs['device_address']),
+            'device_label' => $extension->extension ?? null,
             'device_vendor' => explode("/", $inputs['device_template'])[0],
             'device_enabled' => 'true',
             'device_enabled_date' => date('Y-m-d H:i:s'),
@@ -188,28 +196,30 @@ class DeviceController extends Controller
         ]);
         $device->save();
 
-        // Create device lines
-        $device->lines = new DeviceLines();
-        $device->lines->fill([
-            'device_uuid' => $device->device_uuid,
-            'line_number' => '1',
-            'server_address' => Session::get('domain_name'),
-            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-            'server_address_primary' => get_domain_setting('server_address_primary'),
-            'server_address_secondary' => get_domain_setting('server_address_secondary'),
-            'display_name' => $extension->extension,
-            'user_id' => $extension->extension,
-            'auth_id' => $extension->extension,
-            'label' => $extension->extension,
-            'password' => $extension->password,
-            'sip_port' => get_domain_setting('line_sip_port'),
-            'sip_transport' => get_domain_setting('line_sip_transport'),
-            'register_expires' => get_domain_setting('line_register_expires'),
-            'enabled' => 'true',
-        ]);
+        if($extension) {
+            // Create device lines
+            $device->lines = new DeviceLines();
+            $device->lines->fill([
+                'device_uuid' => $device->device_uuid,
+                'line_number' => '1',
+                'server_address' => Session::get('domain_name'),
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                'server_address_primary' => get_domain_setting('server_address_primary'),
+                'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                'display_name' => $extension->extension,
+                'user_id' => $extension->extension,
+                'auth_id' => $extension->extension,
+                'label' => $extension->extension,
+                'password' => $extension->password,
+                'sip_port' => get_domain_setting('line_sip_port'),
+                'sip_transport' => get_domain_setting('line_sip_transport'),
+                'register_expires' => get_domain_setting('line_register_expires'),
+                'enabled' => 'true',
+            ]);
+            $device->lines->save();
+        }
 
-        $device->lines->save();
 
         return response()->json([
             'status' => 'success',
@@ -248,6 +258,7 @@ class DeviceController extends Controller
             $device->extension_uuid = $device->extension()->extension_uuid;
         }
 
+        $device->device_address = formatMacAddress($device->device_address);
         $device->update_path = route('devices.update', $device);
 
         return response()->json([
@@ -266,39 +277,41 @@ class DeviceController extends Controller
     public function update(UpdateDeviceRequest $request, Devices $device): JsonResponse
     {
         $inputs = $request->validated();
+        $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
         $device->update($inputs);
 
-        if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
-            $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
-            if ($deviceLinesExist) {
-                $deviceLinesExist->delete();
-            }
-
+        if($request['extension_uuid']) {
             $extension = Extensions::find($request['extension_uuid']);
+            if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
+                $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
+                if ($deviceLinesExist) {
+                    $deviceLinesExist->delete();
+                }
 
-            // Create device lines
-            $deviceLines = new DeviceLines();
-            $deviceLines->fill([
-                'device_uuid' => $device->device_uuid,
-                'line_number' => '1',
-                'server_address' => Session::get('domain_name'),
-                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                'server_address_primary' => get_domain_setting('server_address_primary'),
-                'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                'display_name' => $extension->extension,
-                'user_id' => $extension->extension,
-                'auth_id' => $extension->extension,
-                'label' => $extension->extension,
-                'password' => $extension->password,
-                'sip_port' => get_domain_setting('line_sip_port'),
-                'sip_transport' => get_domain_setting('line_sip_transport'),
-                'register_expires' => get_domain_setting('line_register_expires'),
-                'enabled' => 'true',
-            ]);
-            $deviceLines->save();
-            $device->device_label = $extension->extension;
-            $device->save();
+                // Create device lines
+                $deviceLines = new DeviceLines();
+                $deviceLines->fill([
+                    'device_uuid' => $device->device_uuid,
+                    'line_number' => '1',
+                    'server_address' => Session::get('domain_name'),
+                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                    'server_address_primary' => get_domain_setting('server_address_primary'),
+                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                    'display_name' => $extension->extension,
+                    'user_id' => $extension->extension,
+                    'auth_id' => $extension->extension,
+                    'label' => $extension->extension,
+                    'password' => $extension->password,
+                    'sip_port' => get_domain_setting('line_sip_port'),
+                    'sip_transport' => get_domain_setting('line_sip_transport'),
+                    'register_expires' => get_domain_setting('line_register_expires'),
+                    'enabled' => 'true',
+                ]);
+                $deviceLines->save();
+                $device->device_label = $extension->extension;
+                $device->save();
+            }
         }
 
         return response()->json([

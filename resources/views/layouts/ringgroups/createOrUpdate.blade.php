@@ -584,9 +584,14 @@
                                                             <div class="mb-3">
                                                                 <label for="ring_group_ringback" class="form-label">Ring
                                                                     Back Music</label>
-                                                                <select class="select2 form-control" data-toggle="select2"
+                                                                <select class="form-control"
                                                                     data-placeholder="Choose ..." id="ring_group_ringback"
                                                                     name="ring_group_ringback">
+                                                                    <option
+                                                                        value="null"
+                                                                        @if (empty($ringGroup->ring_group_ringback)) selected @endif>
+                                                                        Don't use ring back music
+                                                                    </option>
                                                                     @if (!$moh->isEmpty())
                                                                         <optgroup label="Music on Hold">
                                                                             @foreach ($moh as $music)
@@ -829,6 +834,10 @@
             //const timeoutAction = $('#timeout_action');
             //const timeoutActionWrapper = $('#timeout_action_wrapper');
             const missedCallWrapper = $('#missed_call_wrapper');
+
+            $('#ring_group_ringback').select2({
+                width: 'element'
+            });
 
             applyDestinationSelect2()
 /* NOTE: not needed cause we moved it to separate blade resources/views/layouts/partials/timeoutDestinations.blade.php

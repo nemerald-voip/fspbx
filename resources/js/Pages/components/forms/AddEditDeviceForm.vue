@@ -34,7 +34,7 @@
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputRequired :target="'extension'" :label="'Extension'" />
+                <LabelInputOptional :target="'extension'" :label="'Extension'" />
                 <div class="mt-2">
                     <SelectBox :options="extensions"
                                :selectedItem="device.extension_uuid"
