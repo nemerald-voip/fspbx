@@ -199,11 +199,10 @@
                                                             </div>
                                                         </div>
                                                         @if (userCheckPermission('voicemail_edit'))
-                                                        
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="voicemail_mail_to" class="form-label">Email Address </label>
-                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to" 
+                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to"
                                                                     @if ($extension->exists && (!$extension->voicemail || !$extension->voicemail->voicemail_uuid))
                                                                         disabled
                                                                     @endif
@@ -214,7 +213,7 @@
                                                         @endif
                                                     </div> <!-- end row -->
 
-                                            
+
 
                                                     @if (userCheckPermission('extension_directory'))
                                                     <div class="row">
@@ -1817,10 +1816,10 @@
                         $('.loading').hide();
                     },
                     success: function (result) {
-                        $('#device_address').attr('readonly', true).val(result.device_address)
-                        $('#template-select').val(result.device_template).trigger('change')
-                        $('#profile-select').val(result.device_profile_uuid).trigger('change')
-                        $('#device_uuid').val(result.device_uuid)
+                        $('#device_address').attr('readonly', true).val(result.device.device_address)
+                        $('#template-select').val(result.device.device_template).trigger('change')
+                        $('#profile-select').val(result.device.device_profile_uuid).trigger('change')
+                        $('#device_uuid').val(result.device.device_uuid)
                     }
                 });
             } else {
