@@ -114,9 +114,9 @@ class DomainController extends Controller
         // Check if search parameter is provided
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            // Filter domains based on search term
+            // Filter domains based on search term in both domain_name and domain_description
             $domains = $domains->filter(function ($domain) use ($searchTerm) {
-                return strpos($domain->domain_name, $searchTerm) !== false;
+                return strpos($domain->domain_name, $searchTerm) !== false || strpos($domain->domain_description, $searchTerm) !== false;
             });
         }
 
