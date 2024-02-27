@@ -3,7 +3,8 @@
     <div class="p-5">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <component :is="card.icon" class="h-6 w-6 text-gray-400" aria-hidden="true" />
+          <!-- Use the dynamic component with the computed property -->
+          <component :is="iconComponent" class="h-6 w-6 text-gray-400" aria-hidden="true" />
         </div>
         <div class="ml-5 w-0 flex-1">
           <dl>
@@ -24,9 +25,31 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import {
+    UsersIcon,
+    UserGroupIcon,
+    CalendarDaysIcon
+} from "@heroicons/vue/24/solid";
+import VoicemailIcon from "../icons/VoicemailIcon.vue"
+import FaxIcon from "../icons/FaxIcon.vue"
 
 const props = defineProps({
-    card: Array,
+    card: Object,
 })
+
+
+// Map string keys to actual component objects
+const iconMap = {
+    UsersIcon: UsersIcon,
+    UserGroupIcon: UserGroupIcon,
+    VoicemailIcon: VoicemailIcon,
+    CalendarDaysIcon: CalendarDaysIcon,
+    FaxIcon: FaxIcon,
+}
+
+// Computed property to get the correct icon component
+const iconComponent = computed(() => iconMap[props.card.icon]);
+
 
 </script>

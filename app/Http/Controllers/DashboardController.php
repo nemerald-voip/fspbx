@@ -211,19 +211,19 @@ class DashboardController extends Controller
     
 
         if (userCheckPermission("user_view")) {
-            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UserIcon', 'amount' => '21'];
+            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'amount' => '21'];
         }
         if (userCheckPermission("extension_view")) {
             $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ExtensionIcon', 'amount' => '21'];
         }
         if (userCheckPermission("ring_group_view")) {
-            $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'RingGroupIcon', 'amount' => '2'];
+            $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'UserGroupIcon', 'amount' => '2'];
         }
         if (userCheckPermission("ivr_menu_view")) {
             $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => '/app/ivr_menus/ivr_menus.php', 'icon' => 'IvrIcon', 'amount' => '5'];
         }
         if (userCheckPermission("time_condition_view")) {
-            $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'TimeConditionIcon', 'amount' => '10'];
+            $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'amount' => '10'];
         }
         if (userCheckPermission("device_view")) {
             $apps[] = ['name' => 'Devices', 'href' => '/app/devices/devices.php', 'icon' => 'DeviceIcon', 'amount' => '15'];
