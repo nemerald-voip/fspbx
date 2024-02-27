@@ -61,7 +61,7 @@ class DeviceLines extends Model
 
     public function extension()
     {
-        return Extensions::where('extension', $this->attributes['label'])->first();
+        return Extensions::where('extension', $this->attributes['label'])->where('domain_uuid', $this->attributes['domain_uuid'])->first();
     }
 
     /**
