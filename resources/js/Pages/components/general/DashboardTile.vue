@@ -33,6 +33,11 @@ import {
 } from "@heroicons/vue/24/solid";
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import FaxIcon from "../icons/FaxIcon.vue"
+import CallHistoryIcon from "../icons/CallHistoryIcon.vue"
+import DevicesIcon from "../icons/DevicesIcon.vue"
+import DialpadIcon from "../icons/DialpadIcon.vue"
+import ContactPhoneIcon from "../icons/ContactPhoneIcon.vue"
+import AlternativeRouteIcon from "../icons/AlternativeRouteIcon.vue"
 
 const props = defineProps({
     card: Object,
@@ -46,6 +51,11 @@ const iconMap = {
     VoicemailIcon: VoicemailIcon,
     CalendarDaysIcon: CalendarDaysIcon,
     FaxIcon: FaxIcon,
+    CallHistoryIcon: CallHistoryIcon,
+    DevicesIcon: DevicesIcon,
+    DialpadIcon: DialpadIcon,
+    ContactPhoneIcon: ContactPhoneIcon,
+    AlternativeRouteIcon: AlternativeRouteIcon,
 }
 
 // Computed property to get the correct icon component

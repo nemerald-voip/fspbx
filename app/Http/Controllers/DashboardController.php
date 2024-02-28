@@ -214,7 +214,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'amount' => '21'];
         }
         if (userCheckPermission("extension_view")) {
-            $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ExtensionIcon', 'amount' => '21'];
+            $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ContactPhoneIcon', 'amount' => '21'];
         }
         if (userCheckPermission("ring_group_view")) {
             $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'UserGroupIcon', 'amount' => '2'];
@@ -226,19 +226,19 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'amount' => '10'];
         }
         if (userCheckPermission("device_view")) {
-            $apps[] = ['name' => 'Devices', 'href' => '/app/devices/devices.php', 'icon' => 'DeviceIcon', 'amount' => '15'];
+            $apps[] = ['name' => 'Devices', 'href' => '/app/devices/devices.php', 'icon' => 'DevicesIcon', 'amount' => '15'];
         }
         if (userCheckPermission("xml_cdr_view")) {
-            $apps[] = ['name' => 'Call History (CDRs)', 'href' => '/call-detail-records', 'icon' => 'CdrIcon', 'amount' => '30'];
+            $apps[] = ['name' => 'Call History (CDRs)', 'href' => '/call-detail-records', 'icon' => 'CallHistoryIcon', 'amount' => '30'];
         }
         if (userCheckPermission("voicemail_view")) {
             $apps[] = ['name' => 'Voicemails', 'href' => '/voicemails', 'icon' => 'VoicemailIcon', 'amount' => '25'];
         }
         if (userCheckPermission("destination_view")) {
-            $apps[] = ['name' => 'Phone Numbers', 'href' => '/app/destinations/destinations.php', 'icon' => 'PhoneNumberIcon', 'amount' => '50'];
+            $apps[] = ['name' => 'Phone Numbers', 'href' => '/app/destinations/destinations.php', 'icon' => 'DialpadIcon', 'amount' => '50'];
         }
         if (userCheckPermission("call_flow_view")) {
-            $apps[] = ['name' => 'Call Flows', 'href' => '/app/call_flows/call_flows.php', 'icon' => 'CallFlowIcon', 'amount' => '12'];
+            $apps[] = ['name' => 'Call Flows', 'href' => '/app/call_flows/call_flows.php', 'icon' => 'AlternativeRouteIcon', 'amount' => '12'];
         }
         if (userCheckPermission("fax_view")) {
             $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'amount' => '8'];
