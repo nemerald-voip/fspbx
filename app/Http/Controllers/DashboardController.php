@@ -211,7 +211,8 @@ class DashboardController extends Controller
     
 
         if (userCheckPermission("user_view")) {
-            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'amount' => '21'];
+            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'amount' => '21',
+            'iconForeground' => 'text-teal-700', 'iconBackground' => 'bg-teal-50'];
         }
         if (userCheckPermission("extension_view")) {
             $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ContactPhoneIcon', 'amount' => '21'];
