@@ -55,16 +55,16 @@
                     <div class="lg:col-start-3 lg:row-end-1">
                         <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-900/5">
                             <dl class="flex flex-wrap">
-                                <div class="flex-auto pl-6 pt-6">
-                                    <dt class="text-sm font-semibold leading-6 text-gray-900">Amount</dt>
-                                    <dd class="mt-1 text-base font-semibold leading-6 text-gray-900">$10,560.00</dd>
+                                <div class="flex-auto pl-6 pt-6 truncate">
+                                    <dt class="text-sm  leading-6 text-gray-600">Company name</dt>
+                                    <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">{{ data.company_name }}</div>
                                 </div>
-                                <div class="flex-none self-end px-6 pt-4">
+                                <!-- <div class="flex-none self-end px-6 pt-4">
                                     <dt class="sr-only">Status</dt>
                                     <dd
                                         class="rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-600 ring-1 ring-inset ring-green-600/20">
                                         Paid</dd>
-                                </div>
+                                </div> -->
                                 <div class="mt-6 flex w-full flex-none gap-x-4 border-t border-gray-900/5 px-6 pt-6">
                                     <dt class="flex-none">
                                         <span class="sr-only">Client</span>
@@ -101,7 +101,7 @@
                         class="-mx-4 px-4 py-8 shadow-sm bg-gray-50 ring-1 ring-gray-900/5 sm:mx-0 sm:rounded-lg sm:px-8 sm:pb-14 lg:col-span-2 lg:row-span-2 lg:row-end-2 xl:px-12 xl:pb-16 xl:pt-12">
 
                         <h2 class="text-base font-semibold leading-6 text-gray-900">Quick Access</h2>
-                        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                             <div v-for="card in cards" :key="card.name">
                                 <DashboardTile :card="card" />
                             </div>
