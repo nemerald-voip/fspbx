@@ -3,7 +3,8 @@
         <div class="p-5">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <span class="bg-teal-50 text-teal-700 inline-flex rounded-lg p-3 ring-4 ring-white">
+                    <span
+                        :class="[iconStyles.bgColor, iconStyles.textColor, 'inline-flex rounded-lg p-3 ring-4 ring-white']">
                         <component :is="iconComponent" class="h-6 w-6" aria-hidden="true" />
                     </span>
                 </div>
@@ -61,8 +62,24 @@ const iconMap = {
     IvrIcon: IvrIcon,
 }
 
+const styleMap = {
+    UsersIcon: { bgColor: 'bg-teal-50', textColor: 'text-teal-700' },
+    UserGroupIcon: { bgColor: 'bg-purple-50', textColor: 'text-purple-700' },
+    ContactPhoneIcon: { bgColor: 'bg-sky-50', textColor: 'text-sky-700' },
+    VoicemailIcon: { bgColor: 'bg-fuchsia-50', textColor: 'text-fuchsia-700' },
+    CalendarDaysIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700' },
+    FaxIcon: { bgColor: 'bg-indigo-50', textColor: 'text-indigo-700' },
+    CallHistoryIcon: { bgColor: 'bg-red-50', textColor: 'text-red-700' },
+    DevicesIcon: { bgColor: 'bg-lime-50', textColor: 'text-lime-700' },
+    DialpadIcon: { bgColor: 'bg-green-50', textColor: 'text-green-700' },
+    AlternativeRouteIcon: { bgColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
+    IvrIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
+};
+
 // Computed property to get the correct icon component
 const iconComponent = computed(() => iconMap[props.card.icon]);
+
+const iconStyles = computed(() => styleMap[props.card.icon] || { bgColor: 'default-bg', textColor: 'default-text' });
 
 
 </script>
