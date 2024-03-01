@@ -12,7 +12,7 @@
             <div class="sm:col-span-12">
                 <LabelInputRequired :target="'template'" :label="'Template'" />
                 <div class="mt-2">
-                    <SelectBox :options="templates"
+                    <SelectBox :options="device.device_options.templates"
                                :selectedItem="device.device_template"
                                :search="true"
                                :placeholder="'Choose template'"
@@ -24,7 +24,7 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'profile'" :label="'Profile'" />
                 <div class="mt-2">
-                    <SelectBox :options="profiles"
+                    <SelectBox :options="device.device_options.profiles"
                                :selectedItem="device.device_profile_uuid"
                                :search="true"
                                :placeholder="'Choose profile'"
@@ -36,7 +36,7 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Extension'" />
                 <div class="mt-2">
-                    <SelectBox :options="extensions"
+                    <SelectBox :options="device.device_options.extensions"
                                :selectedItem="device.extension_uuid"
                                :search="true"
                                :placeholder="'Choose extension'"
@@ -55,9 +55,6 @@ import LabelInputOptional from "../forms/LabelInputOptional.vue";
 import LabelInputRequired from "../forms/LabelInputRequired.vue";
 
 const props = defineProps({
-    templates: Array,
-    profiles: Array,
-    extensions: Array,
     device: Object,
     isEdit: {
         type: Boolean,

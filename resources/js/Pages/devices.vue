@@ -186,9 +186,6 @@
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
-                :templates="templates"
-                :profiles="profiles"
-                :extensions="extensions"
             />
         </template>
         <template #modal-action-buttons>
@@ -211,9 +208,6 @@
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
-                :templates="templates"
-                :profiles="profiles"
-                :extensions="extensions"
                 :isEdit="true"
                 @update:show="editModalTrigger = false"
             />
@@ -290,19 +284,22 @@ const props = defineProps({
     search: String,
     routeDevicesStore: String,
     routeDevices: String,
-    routeSendEventNotifyAll: String,
-    templates: Array,
-    profiles: Array,
-    extensions: Array,
+    routeSendEventNotifyAll: String
 });
 
 let DeviceObject = reactive({
     update_path: props.routeDevicesStore,
+    domain_uuid: '',
     device_uuid: '',
     device_address: '',
     extension_uuid: '',
     device_profile_uuid: '',
-    device_template: ''
+    device_template: '',
+    device_options: {
+        templates: Array,
+        profiles: Array,
+        extensions: Array
+    }
 });
 
 onMounted(() => {
@@ -402,12 +399,16 @@ const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
     axios.get(url).then((response) => {
+        DeviceObject.domain_uuid = response.data.device.domain_uuid
         DeviceObject.update_path = response.data.device.update_path
         DeviceObject.device_uuid = response.data.device.device_uuid
         DeviceObject.device_address = response.data.device.device_address
         DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
         DeviceObject.device_template = response.data.device.device_template
         DeviceObject.extension_uuid = response.data.device.extension_uuid
+        DeviceObject.device_options.templates = response.data.device.options.templates
+        DeviceObject.device_options.profiles = response.data.device.options.profiles
+        DeviceObject.device_options.extensions = response.data.device.options.extensions
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);
@@ -450,11 +451,17 @@ const handleErrorsPush = (message, errors) => {
 const handleDeviceObjectReset = () => {
     DeviceObject = reactive({
         update_path: props.routeDevicesStore,
+        domain_uuid: '',
         device_uuid: '',
         device_address: '',
         extension_uuid: '',
         device_profile_uuid: '',
-        device_template: ''
+        device_template: '',
+        device_options: {
+            templates: Array,
+            profiles: Array,
+            extensions: Array
+        }
     });
 }
 
@@ -492,6 +499,7 @@ const handleSaveAdd = () => {
 
 const handleSaveEdit = () => {
     axios.put(DeviceObject.update_path, {
+        domain_uuid: DeviceObject.domain_uuid,
         device_address: DeviceObject.device_address,
         device_template: DeviceObject.device_template,
         device_profile_uuid: DeviceObject.device_profile_uuid,

@@ -84,10 +84,7 @@ class DeviceController extends Controller
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
                 'routeDevices' => route('devices.index'),
-                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
-                'templates' => getVendorTemplateCollection(),
-                'profiles' => getProfileCollection(Session::get('domain_uuid')),
-                'extensions' => getExtensionCollection(Session::get('domain_uuid'))
+                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
         );
     }
@@ -260,6 +257,11 @@ class DeviceController extends Controller
 
         $device->device_address = formatMacAddress($device->device_address);
         $device->update_path = route('devices.update', $device);
+        $device->options = [
+            'templates' => getVendorTemplateCollection(),
+            'profiles' => getProfileCollection($device->domain_uuid),
+            'extensions' => getExtensionCollection($device->domain_uuid)
+        ];
 
         return response()->json([
             'status' => 'success',

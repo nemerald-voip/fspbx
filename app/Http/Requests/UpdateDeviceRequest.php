@@ -30,7 +30,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_profile_uuid' => [
                 'nullable',
                 Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('domain_uuid', $this->get('domain_uuid'))
             ],
             'device_template' => [
                 'required',
@@ -39,7 +39,7 @@ class UpdateDeviceRequest extends FormRequest
             'extension_uuid' => [
                 'nullable',
                 Rule::exists('App\Models\Extensions', 'extension_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('domain_uuid', $this->get('domain_uuid'))
             ],
         ];
     }
