@@ -116,13 +116,14 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
     Route::resource('devices', DeviceController::class);
+    Route::get('/devices/options', [DeviceController::class, 'device.options']);
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
         return redirect('/dashboard');
     });
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
-    
+
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

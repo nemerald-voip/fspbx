@@ -83,6 +83,7 @@ class DeviceController extends Controller
                 },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
+                'routeDevicesOptions' => route('devices.options'),
                 'routeDevices' => route('devices.index'),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
@@ -344,6 +345,15 @@ class DeviceController extends Controller
             'status' => 'success',
             'device' => $device,
             'message' => 'Device has been deleted'
+        ]);
+    }
+
+    public function options(): JsonResponse
+    {
+        return response()->json([
+            'templates' => getVendorTemplateCollection(),
+            'profiles' => getProfileCollection(Session::get('domain_uuid')),
+            'extensions' => getExtensionCollection(Session::get('domain_uuid'))
         ]);
     }
 }
