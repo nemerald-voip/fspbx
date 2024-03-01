@@ -309,6 +309,7 @@ class DeviceController extends Controller
                     'sip_transport' => get_domain_setting('line_sip_transport'),
                     'register_expires' => get_domain_setting('line_register_expires'),
                     'enabled' => 'true',
+                    'domain_uuid' => $device->domain_uuid
                 ]);
                 $deviceLines->save();
                 $device->device_label = $extension->extension;
