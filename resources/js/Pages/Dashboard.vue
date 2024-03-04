@@ -54,45 +54,86 @@
                     <!-- Company summary -->
                     <div class="lg:col-start-3 lg:row-end-1">
                         <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-900/5">
+
                             <dl class="flex flex-wrap">
-                                <div class="flex-auto pl-6 pt-6 truncate">
+                                <div class="flex-auto pl-6 py-6 truncate border-b border-gray-900/5">
                                     <dt class="text-sm  leading-6 text-gray-600">Company name</dt>
-                                    <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">{{ data.company_name }}</div>
+                                    <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">{{
+                                        company_data.company_name }}</div>
                                 </div>
+
                                 <!-- <div class="flex-none self-end px-6 pt-4">
                                     <dt class="sr-only">Status</dt>
                                     <dd
                                         class="rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-600 ring-1 ring-inset ring-green-600/20">
                                         Paid</dd>
                                 </div> -->
-                                <div class="mt-6 flex w-full flex-none gap-x-4 border-t border-gray-900/5 px-6 pt-6">
-                                    <dt class="flex-none">
-                                        <span class="sr-only">Client</span>
-                                        <UserCircleIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
-                                    </dt>
-                                    <dd class="text-sm font-medium leading-6 text-gray-900">Alex Curren</dd>
+
+                                <div v-if="Object.keys(data).length === 0" class="w-full">
+                                    <div class="animate-pulse flex space-x-4 pt-6 pl-6 w-6/12">
+                                    <div class="flex-1 space-y-6 py-1">
+                                        <div class="h-2 bg-slate-300 rounded w-10/12"></div>
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div class="h-2 bg-slate-300 rounded col-span-2"></div>
+                                            <div class="h-2 bg-slate-300 rounded col-span-1"></div>
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-4 w-9/12">
+                                            <div class="h-2 bg-slate-300 rounded col-span-1"></div>
+                                            <div class="h-2 bg-slate-300 rounded col-span-2"></div>
+                                        </div>
+
+                                    </div>
                                 </div>
-                                <div class="mt-4 flex w-full flex-none gap-x-4 px-6">
+                                </div>
+                               
+
+                                <div v-if="Object.keys(data).length !== 0 && data.extensions && data.extensions >= 0"
+                                    class="mt-6 flex w-full flex-none gap-x-4 px-6">
                                     <dt class="flex-none">
-                                        <span class="sr-only">Due date</span>
-                                        <CalendarDaysIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                        <ContactPhoneIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
                                     <dd class="text-sm leading-6 text-gray-500">
-                                        <time datetime="2023-01-31">January 31, 2023</time>
+                                        <span class="pr-3">Extensions: {{ data.extensions }}</span>
+                                        <span v-if="data.local_reg_count && data.local_reg_count >= 0"
+                                            class="pr-3 text-green-600 text-nowrap">
+                                            Online: {{ data.local_reg_count }}
+                                        </span>
+                                        <span v-if="data.local_reg_count && data.local_reg_count >= 0"
+                                            class=" text-rose-600 text-nowrap">
+                                            Offline: {{ data.extensions - data.local_reg_count }}
+                                        </span>
                                     </dd>
                                 </div>
-                                <div class="mt-4 flex w-full flex-none gap-x-4 px-6">
+
+                                <div v-if="Object.keys(data).length != 0  && data.phone_numbers && data.phone_numbers >= 0" 
+                                    class="mt-4 flex w-full flex-none gap-x-4 px-6">
                                     <dt class="flex-none">
-                                        <span class="sr-only">Status</span>
-                                        <CreditCardIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                        <DialpadIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
-                                    <dd class="text-sm leading-6 text-gray-500">Paid with MasterCard</dd>
+                                    <dd class="text-sm leading-6 text-gray-500">Phone Numbers: {{ data.phone_numbers }}</dd>
+                                </div>
+
+                                <div v-if="Object.keys(data).length != 0  && data.faxes && data.faxes >= 0" 
+                                    class="mt-4 flex w-full flex-none gap-x-4 px-6">
+                                    <dt class="flex-none">
+                                        <FaxIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                    </dt>
+                                    <dd class="text-sm leading-6 text-gray-500">Virtual Faxes: {{ data.faxes }}</dd>
+                                </div>
+
+                                <div class="mt-4 flex w-full flex-none gap-x-4 px-6 pb-8">
+                                    <dt class="flex-none">
+                                        <ClockIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                    </dt>
+                                    <dd class="text-sm font-medium leading-6 text-gray-500">Time Zone: {{
+                                        company_data.time_zone }}</dd>
                                 </div>
                             </dl>
-                            <div class="mt-6 border-t border-gray-900/5 px-6 py-6">
+
+                            <!-- <div class="mt-6 border-t border-gray-900/5 px-6 py-6">
                                 <a href="#" class="text-sm font-semibold leading-6 text-gray-900">Download receipt <span
                                         aria-hidden="true">&rarr;</span></a>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
 
@@ -109,8 +150,8 @@
 
                     </div>
 
-                    <div class="lg:col-start-3">
-                        <!-- Activity feed -->
+                    <!-- <div class="lg:col-start-3">
+
                         <h2 class="text-sm font-semibold leading-6 text-gray-900">Activity</h2>
                         <ul role="list" class="mt-6 space-y-6">
                             <li v-for="(activityItem, activityItemIdx) in activity" :key="activityItem.id"
@@ -152,7 +193,7 @@
                             </li>
                         </ul>
 
-                        <!-- New comment form -->
+
                         <div class="mt-6 flex gap-x-3">
                             <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                                 alt="" class="h-6 w-6 flex-none rounded-full bg-gray-50" />
@@ -229,7 +270,7 @@
                                 </div>
                             </form>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </main>
@@ -237,41 +278,31 @@
 </template>
   
 <script setup>
-import { ref } from 'vue'
+import { onMounted } from 'vue'
+import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DashboardTile from './components/general/DashboardTile.vue'
+import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
+import DialpadIcon from "./components/icons/DialpadIcon.vue"
+import FaxIcon from "./components/icons/FaxIcon.vue"
 import {
-    // Dialog,
-    // DialogPanel,
-    Listbox,
-    ListboxButton,
-    ListboxLabel,
-    ListboxOption,
-    ListboxOptions, 
-} from '@headlessui/vue'
-import {
-    CalendarDaysIcon,
     CreditCardIcon,
-    EllipsisVerticalIcon,
-    FaceFrownIcon,
-    FaceSmileIcon,
-    FireIcon,
-    HandThumbUpIcon,
-    HeartIcon,
-    PaperClipIcon,
-    UserCircleIcon,
+    ClockIcon,
     XMarkIcon as XMarkIconMini,
 } from '@heroicons/vue/20/solid'
 
-import { BellIcon, XMarkIcon as XMarkIconOutline } from '@heroicons/vue/24/outline'
-import { 
-    CheckCircleIcon,
-    ScaleIcon
-} from '@heroicons/vue/24/solid'
+onMounted(() => {
+    //request list of entities
+    getData();
+})
 
 
 const props = defineProps({
-    data: Object,
+    data: {
+        type: Object,
+        default: () => ({}) // Providing an empty object as default
+    },
+    company_data: Object,
     cards: Array,
     menus: Array,
     domainSelectPermission: Boolean,
@@ -280,81 +311,22 @@ const props = defineProps({
     domains: Array,
 })
 
-// console.log(props.cards);
-// const cards = [
-//   { name: 'Account balance', href: '#', icon: ScaleIcon, amount: '$30,659.45' },
-//   { name: 'Ring Groups', href: '#', icon: ScaleIcon, amount: '2' },
-//   // More items...
-// ]
+const getData = () => {
+    router.visit("/dashboard", {
+        preserveScroll: true,
+        preserveState: true,
+        data: {
 
-const invoice = {
-    subTotal: '$8,800.00',
-    tax: '$1,760.00',
-    total: '$10,560.00',
-    items: [
-        {
-            id: 1,
-            title: 'Logo redesign',
-            description: 'New logo and digital asset playbook.',
-            hours: '20.0',
-            rate: '$100.00',
-            price: '$2,000.00',
         },
-        {
-            id: 2,
-            title: 'Website redesign',
-            description: 'Design and program new company website.',
-            hours: '52.0',
-            rate: '$100.00',
-            price: '$5,200.00',
-        },
-        {
-            id: 3,
-            title: 'Business cards',
-            description: 'Design and production of 3.5" x 2.0" business cards.',
-            hours: '12.0',
-            rate: '$100.00',
-            price: '$1,200.00',
-        },
-        {
-            id: 4,
-            title: 'T-shirt design',
-            description: 'Three t-shirt design concepts.',
-            hours: '4.0',
-            rate: '$100.00',
-            price: '$400.00',
-        },
-    ],
+        only: ["data"],
+        onSuccess: (page) => {
+            // filterData.value.entity = props.selectedEntity;
+            console.log(props.data);
+        }
+
+    });
+
 }
-const activity = [
-    { id: 1, type: 'created', person: { name: 'Chelsea Hagon' }, date: '7d ago', dateTime: '2023-01-23T10:32' },
-    { id: 2, type: 'edited', person: { name: 'Chelsea Hagon' }, date: '6d ago', dateTime: '2023-01-23T11:03' },
-    { id: 3, type: 'sent', person: { name: 'Chelsea Hagon' }, date: '6d ago', dateTime: '2023-01-23T11:24' },
-    {
-        id: 4,
-        type: 'commented',
-        person: {
-            name: 'Chelsea Hagon',
-            imageUrl:
-                'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        },
-        comment: 'Called client, they reassured me the invoice would be paid by the 25th.',
-        date: '3d ago',
-        dateTime: '2023-01-23T15:56',
-    },
-    { id: 5, type: 'viewed', person: { name: 'Alex Curren' }, date: '2d ago', dateTime: '2023-01-24T09:12' },
-    { id: 6, type: 'paid', person: { name: 'Alex Curren' }, date: '1d ago', dateTime: '2023-01-24T09:20' },
-]
-const moods = [
-    { name: 'Excited', value: 'excited', icon: FireIcon, iconColor: 'text-white', bgColor: 'bg-red-500' },
-    { name: 'Loved', value: 'loved', icon: HeartIcon, iconColor: 'text-white', bgColor: 'bg-pink-400' },
-    { name: 'Happy', value: 'happy', icon: FaceSmileIcon, iconColor: 'text-white', bgColor: 'bg-green-400' },
-    { name: 'Sad', value: 'sad', icon: FaceFrownIcon, iconColor: 'text-white', bgColor: 'bg-yellow-400' },
-    { name: 'Thumbsy', value: 'thumbsy', icon: HandThumbUpIcon, iconColor: 'text-white', bgColor: 'bg-blue-500' },
-    { name: 'I feel nothing', value: null, icon: XMarkIconMini, iconColor: 'text-gray-400', bgColor: 'bg-transparent' },
-]
 
-const mobileMenuOpen = ref(false)
-const selected = ref(moods[5])
 
 </script>

@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CDR;
 use Linfo\Linfo;
-use App\Models\Extensions;
-use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
+use App\Models\Faxes;
+use App\Models\Extensions;
+use App\Models\Destinations;
+use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
 class DashboardController extends Controller
 {
-    public $data;
+
     /**
      * Display a listing of the resource.
      *
@@ -19,23 +22,59 @@ class DashboardController extends Controller
     public function index()
     {
         date_default_timezone_set('America/Los_Angeles');
+
+        // dd(Session::get('domain_name'));
+        // return view('layouts.dashboard.index')->with($data);
+
+        return Inertia::render(
+            'Dashboard',
+            [
+                'company_data' => function () {
+                    return $this->getCompanyData();
+                },
+                'cards' => function () {
+                    return $this->getApps();
+                },
+                'data' => Inertia::lazy(
+                    fn () =>
+                    $this->getData()
+                ),
+            ]
+        );
+    }
+
+    public function getData()
+    {
         $domain_id = Session::get('domain_uuid');
 
-        $this->data = [];
+        $data = [];
 
-        if (Session::get('domain_description') != '' && Session::get('domain_description') != null) {
-            $this->data['company_name'] = Session::get('domain_description');
-        } else {
-            $this->data['company_name'] = Session::get('domain_name');
-        }
+        //Extension count
+        $data['extensions'] = Extensions::where('domain_uuid', $domain_id)
+            ->where('enabled', 'true')
+            ->count();
+
+        //Phone Number count
+        $data['phone_numbers'] = Destinations::where('domain_uuid', $domain_id)
+            ->where('destination_enabled', 'true')
+            ->count();
+
+        // Faxes count
+        $data['faxes'] = Faxes::where('domain_uuid', $domain_id)
+            ->count();
+
+        //CDR Count
+        $data['cdrs'] = CDR::where('domain_uuid', $domain_id)
+            ->whereRaw("start_stamp >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
+            ->count();
 
         // Get the current status of Horizon.
         if (!$masters = app(MasterSupervisorRepository::class)->all()) {
-            $this->data['horizonStatus'] = 'inactive';
+            $data['horizonStatus'] = 'inactive';
         }
 
         if (!isset($data['horizonStatus'])) {
-            $this->data['horizonStatus'] =  collect($masters)->every(function ($master) {
+            $data['horizonStatus'] =  collect($masters)->every(function ($master) {
                 return $master->status === 'paused';
             }) ? 'paused' : 'running';
         }
@@ -54,7 +93,7 @@ class DashboardController extends Controller
             foreach ($registrations as $registration) {
                 if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
             }
-            $this->data['global_reg_count'] = count($unique_regs);
+            $data['global_reg_count'] = count($unique_regs);
 
             // Count local unique registrations
             $registrations = get_registrations();
@@ -62,21 +101,21 @@ class DashboardController extends Controller
             foreach ($registrations as $registration) {
                 if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
             }
-            $this->data['local_reg_count'] = count($unique_regs);
+            $data['local_reg_count'] = count($unique_regs);
 
             //Get Disk Usage
-            $this->data['diskfree'] = disk_free_space(".") / 1073741824;
-            $this->data['disktotal'] = disk_total_space("/") / 1073741824;
-            $this->data['diskused'] = $this->data['disktotal'] - $this->data['diskfree'];
-            $diskusage = round($this->data['diskused'] / $this->data['disktotal'] * 100);
-            $this->data['diskusage'] = $diskusage;
+            $data['diskfree'] = disk_free_space(".") / 1073741824;
+            $data['disktotal'] = disk_total_space("/") / 1073741824;
+            $data['diskused'] = $data['disktotal'] - $data['diskfree'];
+            $diskusage = round($data['diskused'] / $data['disktotal'] * 100);
+            $data['diskusage'] = $diskusage;
 
             if ($diskusage <= 60) {
-                $this->data['diskusagecolor'] = "bg-success";
+                $data['diskusagecolor'] = "bg-success";
             } elseif ($diskusage > 60 && $diskusage <= 75) {
-                $this->data['diskusagecolor'] = "bg-warning";
+                $data['diskusagecolor'] = "bg-warning";
             } elseif ($diskusage > 75) {
-                $this->data['diskusagecolor'] = "bg-danger";
+                $data['diskusagecolor'] = "bg-danger";
             }
 
             // Get RAM usage
@@ -84,77 +123,63 @@ class DashboardController extends Controller
             $parser = $linfo->getParser();
             $parser->determineCPUPercentage();
             $ram = $parser->getRam();
-            $this->data['ramfree'] = $ram['free'] / 1073741824;
-            $this->data['ramtotal'] = $ram['total'] / 1073741824;
-            $this->data['ramused'] = $this->data['ramtotal'] - $this->data['ramfree'];
-            $this->data['ramusage'] = round($this->data['ramused'] / $this->data['ramtotal'] * 100);
-            if ($this->data['ramusage'] <= 60) {
-                $this->data['ramusagecolor'] = "bg-success";
-            } elseif ($this->data['ramusage'] > 60 && $this->data['ramusage'] <= 75) {
-                $this->data['ramusagecolor'] = "bg-warning";
-            } elseif ($this->data['ramusage'] > 75) {
-                $this->data['ramusagecolor'] = "bg-danger";
+            $data['ramfree'] = $ram['free'] / 1073741824;
+            $data['ramtotal'] = $ram['total'] / 1073741824;
+            $data['ramused'] = $data['ramtotal'] - $data['ramfree'];
+            $data['ramusage'] = round($data['ramused'] / $data['ramtotal'] * 100);
+            if ($data['ramusage'] <= 60) {
+                $data['ramusagecolor'] = "bg-success";
+            } elseif ($data['ramusage'] > 60 && $data['ramusage'] <= 75) {
+                $data['ramusagecolor'] = "bg-warning";
+            } elseif ($data['ramusage'] > 75) {
+                $data['ramusagecolor'] = "bg-danger";
             }
-            $this->data['swapfree'] = $ram['swapFree'] / 1073741824;
-            $this->data['swaptotal'] = $ram['swapTotal'] / 1073741824;
-            $this->data['swapused'] = $this->data['swaptotal'] - $this->data['swapfree'];
-            $this->data['swapusage'] = round($this->data['swapused'] / $this->data['swaptotal'] * 100);
-            if ($this->data['swapusage'] <= 60) {
-                $this->data['swapusagecolor'] = "bg-success";
-            } elseif ($this->data['swapusage'] > 60 && $this->data['swapusage'] <= 75) {
-                $this->data['swapusagecolor'] = "bg-warning";
-            } elseif ($this->data['swapusage'] > 75) {
-                $this->data['swapusagecolor'] = "bg-danger";
+            $data['swapfree'] = $ram['swapFree'] / 1073741824;
+            $data['swaptotal'] = $ram['swapTotal'] / 1073741824;
+            $data['swapused'] = $data['swaptotal'] - $data['swapfree'];
+            $data['swapusage'] = round($data['swapused'] / $data['swaptotal'] * 100);
+            if ($data['swapusage'] <= 60) {
+                $data['swapusagecolor'] = "bg-success";
+            } elseif ($data['swapusage'] > 60 && $data['swapusage'] <= 75) {
+                $data['swapusagecolor'] = "bg-warning";
+            } elseif ($data['swapusage'] > 75) {
+                $data['swapusagecolor'] = "bg-danger";
             }
 
             //Get CPU load
-            $this->data['cpuload'] = $parser->getLoad();
+            $data['cpuload'] = $parser->getLoad();
 
             //Get domain total count
-            $this->data['domain_count'] = Session::get("domains")->count();
+            $data['domain_count'] = Session::get("domains")->count();
             // Get extension total count
-            $this->data['extension_count'] = Extensions::get()->count();
+            $data['extension_count'] = Extensions::get()->count();
 
             //Get core count
-            $this->data['core_count'] = trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
+            $data['core_count'] = trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
 
             // Get uptime
-            $this->data['uptime'] = $parser->getUpTime();
+            $data['uptime'] = $parser->getUpTime();
         }
-
-        // dd(Session::get('domain_name'));
-        // return view('layouts.dashboard.index')->with($data);
-
-        return Inertia::render(
-            'Dashboard',
-            [
-                'data' => function () {
-                    return $this->data;
-                },
-                'cards' => function () {
-                    return $this->getApps();
-                }
-            ]
-        );
+        return $data;
     }
 
+    public function getCompanyData()
+    {
+        $data = [];
+        if (Session::get('domain_description') != '' && Session::get('domain_description') != null) {
+            $data['company_name'] = Session::get('domain_description');
+        } else {
+            $data['company_name'] = Session::get('domain_name');
+        }
+
+        $data['time_zone'] = get_domain_setting('time_zone');
+
+        return $data;
+    }
 
     public function getApps()
     {
         $apps = [];
-
-        // //Extension count
-        // $data['extensions'] = DB::table('v_extensions')
-        //     ->where('domain_uuid', $domain_id)
-        //     ->where('enabled', 'true')
-        //     ->count();
-
-
-        // //Phone Number count
-        // $data['phone_number'] = DB::table('v_destinations')
-        //     ->where('domain_uuid', $domain_id)
-        //     ->where('destination_enabled', 'true')
-        //     ->count();
 
         // //Ring group count
         // $data['ring_groups'] = DB::table('v_ring_groups')
@@ -177,11 +202,6 @@ class DashboardController extends Controller
         // //Devices Count
         // $data['devices'] = DB::table('v_devices')->where('domain_uuid', $domain_id)->where('device_enabled', 'true')->count();;
 
-        // //CDR Count
-        // $data['cdr'] = DB::table('v_xml_cdr')
-        //     ->where('domain_uuid', $domain_id)
-        //     ->whereRaw("start_stamp >= '" . date('Y-m-d') . " 00:00:00.00 America/Los_Angeles'")
-        //     ->count();
 
         // //Voicemail Count
         // $data['voicemails'] = DB::table('v_voicemails')
@@ -195,19 +215,10 @@ class DashboardController extends Controller
         //     ->where('call_flow_enabled', 'true')
         //     ->count();
 
-        // //Call Faxes
-        // $data['faxes'] = Faxes::where('domain_uuid', $domain_id)
-        //     ->count();
 
 
         if (userCheckPermission("user_view")) {
-            // //Users Count
-            // $count = DB::table('v_users')->where('domain_uuid', $domain_id)->where('user_enabled', 'true')->count();
-
-            $apps[] = [
-                'name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'amount' => '21',
-                'iconForeground' => 'text-teal-700', 'iconBackground' => 'bg-teal-50'
-            ];
+            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'amount' => '21'];
         }
 
         if (userCheckPermission("extension_view")) {
