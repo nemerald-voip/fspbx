@@ -116,6 +116,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
     Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
+    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk-update');
     Route::resource('devices', DeviceController::class);
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Requests\UpdateBulkDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Models\DeviceLines;
 use App\Models\Devices;
@@ -84,6 +85,7 @@ class DeviceController extends Controller
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
                 'routeDevicesOptions' => route('devices.options'),
+                'routeDevicesBulkUpdate' => route('devices.bulk-update'),
                 'routeDevices' => route('devices.index'),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
@@ -322,6 +324,53 @@ class DeviceController extends Controller
             'status' => 'success',
             'device' => $device,
             'message' => 'Device has been updated.'
+        ]);
+    }
+
+    public function bulkUpdate(UpdateBulkDeviceRequest $request): JsonResponse
+    {
+        $inputs = $request->validated();
+
+        var_dump($inputs);
+
+       /* if($request['extension_uuid']) {
+            $extension = Extensions::find($request['extension_uuid']);
+            if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
+                $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
+                if ($deviceLinesExist) {
+                    $deviceLinesExist->delete();
+                }
+
+                // Create device lines
+                $deviceLines = new DeviceLines();
+                $deviceLines->fill([
+                    'device_uuid' => $device->device_uuid,
+                    'line_number' => '1',
+                    'server_address' => Session::get('domain_name'),
+                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                    'server_address_primary' => get_domain_setting('server_address_primary'),
+                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                    'display_name' => $extension->extension,
+                    'user_id' => $extension->extension,
+                    'auth_id' => $extension->extension,
+                    'label' => $extension->extension,
+                    'password' => $extension->password,
+                    'sip_port' => get_domain_setting('line_sip_port'),
+                    'sip_transport' => get_domain_setting('line_sip_transport'),
+                    'register_expires' => get_domain_setting('line_register_expires'),
+                    'enabled' => 'true',
+                    'domain_uuid' => $device->domain_uuid
+                ]);
+                $deviceLines->save();
+                $device->device_label = $extension->extension;
+                $device->save();
+            }
+        }*/
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Devices has been updated.'
         ]);
     }
 

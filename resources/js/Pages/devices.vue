@@ -313,6 +313,7 @@ const props = defineProps({
     search: String,
     routeDevicesStore: String,
     routeDevicesOptions: String,
+    routeDevicesBulkUpdate: String,
     routeDevices: String,
     routeSendEventNotifyAll: String
 });
@@ -561,7 +562,7 @@ const handleSaveEdit = () => {
         handleSearchButtonClick()
         handleClose()
     }).catch((error) => {
-        console.error('Failed to save device1 data:', error);
+        console.error('Failed to save device data:', error);
         console.log(error.response.data.errors)
         if(error.response.data.errors.length > 0)  {
             handleErrorsPush(error.response.data.message, error.response.data.errors)
@@ -570,7 +571,20 @@ const handleSaveEdit = () => {
 }
 
 const handleBulkSaveEdit = () => {
-    alert("Save device");
+    axios.put(props.routeDevicesBulkUpdate, {
+        devices: selectedItems.value,
+        device_template: DeviceObject.device_template,
+        device_profile_uuid: DeviceObject.device_profile_uuid
+    }).then((response) => {
+        handleSearchButtonClick()
+        handleBulkClose()
+    }).catch((error) => {
+        console.error('Failed to save device data:', error);
+        console.log(error.response.data.errors)
+        if(error.response.data.errors.length > 0)  {
+            handleErrorsPush(error.response.data.message, error.response.data.errors)
+        }
+    });
 }
 
 const handleClose = () => {
