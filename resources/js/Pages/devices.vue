@@ -27,6 +27,10 @@
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add device
                 </button>
+                <button v-if="showBulkEditButton" @click.prevent="handleBulkEdit()"
+                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    Edit device
+                </button>
                 <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart selected devices
@@ -223,6 +227,29 @@
             </button>
         </template>
     </AddEditItemModal>
+    <AddEditItemModal
+        :show="bulkEditModalTrigger"
+        :header="'Bulk Edit Device'"
+        :loading="loadingModal"
+        @close="handleBulkClose"
+    >
+        <template #modal-body>
+            <BulkEditDeviceForm
+                :device="DeviceObject"
+                @update:show="bulkEditModalTrigger = false"
+            />
+        </template>
+        <template #modal-action-buttons>
+            <button type="button"
+                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    @click="handleBulkSaveEdit" ref="saveButtonRef">Save
+            </button>
+            <button type="button"
+                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                    @click="handleBulkClose" ref="cancelButtonRef">Cancel
+            </button>
+        </template>
+    </AddEditItemModal>
     <DeleteConfirmationModal
         :show="confirmationModalTrigger"
         @close="confirmationModalTrigger = false"
@@ -237,7 +264,7 @@
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import axios from 'axios';
 import {router} from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
@@ -254,6 +281,7 @@ import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 const today = new Date();
 
 const loading = ref(false)
@@ -265,6 +293,7 @@ const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
+const bulkEditModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
@@ -306,6 +335,8 @@ let DeviceObject = reactive({
 onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
 })
+
+const showBulkEditButton = computed(() => !showGlobal.value && selectedItems.value.length > 0);
 
 const handleSelectAll = () => {
     if (selectAll.value) {
@@ -424,6 +455,19 @@ const handleEdit = (url) => {
     });
 }
 
+const handleBulkEdit = () => {
+    loadingModal.value = true;
+    axios.get(props.routeDevicesOptions).then((response) => {
+        DeviceObject.device_options.templates = response.data.templates
+        DeviceObject.device_options.profiles = response.data.profiles
+        DeviceObject.device_options.extensions = response.data.extensions
+        loadingModal.value = false
+        bulkEditModalTrigger.value = true;
+    }).catch((error) => {
+        console.error('Failed to get device data:', error);
+    });
+}
+
 const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routeDevices, {
@@ -525,9 +569,18 @@ const handleSaveEdit = () => {
     });
 }
 
+const handleBulkSaveEdit = () => {
+    alert("Save device");
+}
+
 const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
+    setTimeout(handleDeviceObjectReset, 1000)
+}
+
+const handleBulkClose = () => {
+    bulkEditModalTrigger.value = false
     setTimeout(handleDeviceObjectReset, 1000)
 }
 
