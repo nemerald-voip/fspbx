@@ -115,8 +115,8 @@ Route::group(['middleware' => 'auth'], function(){
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
+    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
     Route::resource('devices', DeviceController::class);
-    Route::get('/devices/options', [DeviceController::class, 'device.options'])->name('devices.options');
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
         return redirect('/dashboard');

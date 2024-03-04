@@ -392,13 +392,13 @@ const handleShowLocal = () => {
 }
 
 const handleAdd = () => {
-    addModalTrigger.value = true;
     DeviceObject.update_path = props.routeDevicesStore;
     axios.get(props.routeDevicesOptions).then((response) => {
         DeviceObject.device_options.templates = response.data.templates
         DeviceObject.device_options.profiles = response.data.profiles
         DeviceObject.device_options.extensions = response.data.extensions
         loadingModal.value = false
+        addModalTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
