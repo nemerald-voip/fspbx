@@ -27,7 +27,7 @@
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add device
                 </button>
-                <button v-if="showBulkEditButton" @click.prevent="handleBulkEdit()"
+                <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Edit device
                 </button>
@@ -337,8 +337,6 @@ onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
 })
 
-const showBulkEditButton = computed(() => !showGlobal.value && selectedItems.value.length > 0);
-
 const handleSelectAll = () => {
     if (selectAll.value) {
         selectedItems.value = props.data.data.map(item => item.extension_uuid);
@@ -457,16 +455,20 @@ const handleEdit = (url) => {
 }
 
 const handleBulkEdit = () => {
-    loadingModal.value = true;
-    axios.get(props.routeDevicesOptions).then((response) => {
-        DeviceObject.device_options.templates = response.data.templates
-        DeviceObject.device_options.profiles = response.data.profiles
-        DeviceObject.device_options.extensions = response.data.extensions
-        loadingModal.value = false
-        bulkEditModalTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to get device data:', error);
-    });
+    if (selectedItems.value.length > 0) {
+        loadingModal.value = true;
+        axios.get(props.routeDevicesOptions).then((response) => {
+            DeviceObject.device_options.templates = response.data.templates
+            DeviceObject.device_options.profiles = response.data.profiles
+            DeviceObject.device_options.extensions = response.data.extensions
+            loadingModal.value = false
+            bulkEditModalTrigger.value = true;
+        }).catch((error) => {
+            console.error('Failed to get device data:', error);
+        });
+    } else {
+        restartRequestNotificationErrorTrigger.value = true
+    }
 }
 
 const handleSearchButtonClick = () => {
