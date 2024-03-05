@@ -28,7 +28,7 @@
                     Add device
                 </button>
                 <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Edit device
                 </button>
                 <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
@@ -465,13 +465,13 @@ const handleEdit = (url) => {
 
 const handleBulkEdit = () => {
     if (selectedItems.value.length > 0) {
+        bulkEditModalTrigger.value = true;
         loadingModal.value = true;
         axios.get(props.routeDevicesOptions).then((response) => {
             DeviceObject.device_options.templates = response.data.templates
             DeviceObject.device_options.profiles = response.data.profiles
             DeviceObject.device_options.extensions = response.data.extensions
             loadingModal.value = false
-            bulkEditModalTrigger.value = true;
         }).catch((error) => {
             console.error('Failed to get device data:', error);
         });

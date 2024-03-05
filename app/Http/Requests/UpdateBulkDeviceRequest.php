@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 
 class UpdateBulkDeviceRequest extends FormRequest
@@ -29,10 +30,10 @@ class UpdateBulkDeviceRequest extends FormRequest
             'device_profile_uuid' => [
                 'nullable',
                 Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
-                    ->where('domain_uuid', $this->get('domain_uuid'))
+                    ->where('domain_uuid', Session::get('domain_uuid'))
             ],
             'device_template' => [
-                'required',
+                'nullable',
                 'string',
             ],
             'devices' => [
@@ -41,7 +42,7 @@ class UpdateBulkDeviceRequest extends FormRequest
             ],
             'devices.*' => [
                 Rule::exists('App\Models\Devices', 'device_uuid')
-                    ->where('domain_uuid', $this->get('domain_uuid'))
+                    ->where('domain_uuid', Session::get('domain_uuid'))
             ],
         ];
     }

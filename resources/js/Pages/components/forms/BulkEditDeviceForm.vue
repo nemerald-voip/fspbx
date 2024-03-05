@@ -2,7 +2,7 @@
     <form>
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
             <div class="sm:col-span-12">
-                <LabelInputRequired :target="'template'" :label="'Template'" />
+                <LabelInputOptional :target="'template'" :label="'Template'" />
                 <div class="mt-2">
                     <SelectBox :options="device.device_options.templates"
                                :search="true"
@@ -30,7 +30,6 @@
 import {defineProps} from 'vue'
 import SelectBox from "../general/SelectBox.vue";
 import LabelInputOptional from "../forms/LabelInputOptional.vue";
-import LabelInputRequired from "../forms/LabelInputRequired.vue";
 
 const props = defineProps({
     device: Object

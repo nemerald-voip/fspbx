@@ -127,7 +127,8 @@ class DeviceController extends Controller
         } else {
             $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
         }
-        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=', 'v_devices.device_profile_uuid');
+        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=',
+            'v_devices.device_profile_uuid');
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
@@ -177,7 +178,7 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        if($inputs['extension_uuid']) {
+        if ($inputs['extension_uuid']) {
             $extension = Extensions::find($inputs['extension_uuid']);
         } else {
             $extension = null;
@@ -196,7 +197,7 @@ class DeviceController extends Controller
         ]);
         $device->save();
 
-        if($extension) {
+        if ($extension) {
             // Create device lines
             $device->lines = new DeviceLines();
             $device->lines->fill([
@@ -285,7 +286,7 @@ class DeviceController extends Controller
         $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
         $device->update($inputs);
 
-        if($request['extension_uuid']) {
+        if ($request['extension_uuid']) {
             $extension = Extensions::find($request['extension_uuid']);
             if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
                 $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
@@ -330,44 +331,25 @@ class DeviceController extends Controller
     public function bulkUpdate(UpdateBulkDeviceRequest $request): JsonResponse
     {
         $inputs = $request->validated();
-
-        var_dump($inputs);
-
-       /* if($request['extension_uuid']) {
-            $extension = Extensions::find($request['extension_uuid']);
-            if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
-                $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
-                if ($deviceLinesExist) {
-                    $deviceLinesExist->delete();
-                }
-
-                // Create device lines
-                $deviceLines = new DeviceLines();
-                $deviceLines->fill([
-                    'device_uuid' => $device->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                    'domain_uuid' => $device->domain_uuid
-                ]);
-                $deviceLines->save();
-                $device->device_label = $extension->extension;
-                $device->save();
+        if (empty($inputs['device_profile_uuid']) && empty($inputs['device_template'])) {
+            return response()->json([
+                'errors' => [
+                    'no_option' => [
+                        'No option selected to update.'
+                    ]
+                ]
+            ], 402);
+        }
+        foreach ($inputs['devices'] as $deviceUuid) {
+            $device = Devices::find($deviceUuid);
+            if (!empty($inputs['device_profile_uuid'])) {
+                $device->device_profile_uuid = $inputs['device_profile_uuid'];
             }
-        }*/
-
+            if (!empty($inputs['device_template'])) {
+                $device->device_template = $inputs['device_template'];
+            }
+            $device->save();
+        }
         return response()->json([
             'status' => 'success',
             'message' => 'Devices has been updated.'

@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 
 class OldUpdateDeviceRequest extends FormRequest
 {
@@ -26,7 +28,9 @@ class OldUpdateDeviceRequest extends FormRequest
     {
         return [
             'device_profile_uuid' => [
-                'nullable'
+                'nullable',
+                Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
+                    ->where('domain_uuid', Session::get('domain_uuid'))
             ],
             'device_template' => [
                 'required',
