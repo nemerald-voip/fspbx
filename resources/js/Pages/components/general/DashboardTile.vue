@@ -12,7 +12,16 @@
                     <dl>
                         <dt class="truncate text-lg font-medium text-gray-500">{{ card.name }}</dt>
                         <dd>
-                            <div class="text-md font-medium text-gray-900">{{ card.amount }}</div>
+                            <div v-if="count === null" class="w-full">
+                                <div class="animate-pulse flex space-x-4 pt-2 w-4/12">
+                                    <div class="flex-1 space-y-6 py-1">
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div class="h-2 bg-slate-300 rounded col-span-2"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-md font-medium text-gray-900">{{ count }}</div>
                         </dd>
                     </dl>
                 </div>
@@ -44,6 +53,10 @@ import IvrIcon from "../icons/IvrIcon.vue"
 
 const props = defineProps({
     card: Object,
+    count: {
+        type: Number,
+        default: () => (null) // Providing an empty object as default
+    }
 })
 
 

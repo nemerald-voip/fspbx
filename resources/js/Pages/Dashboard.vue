@@ -71,54 +71,55 @@
 
                                 <div v-if="Object.keys(data).length === 0" class="w-full">
                                     <div class="animate-pulse flex space-x-4 pt-6 pl-6 w-6/12">
-                                    <div class="flex-1 space-y-6 py-1">
-                                        <div class="h-2 bg-slate-300 rounded w-10/12"></div>
-                                        <div class="grid grid-cols-3 gap-4">
-                                            <div class="h-2 bg-slate-300 rounded col-span-2"></div>
-                                            <div class="h-2 bg-slate-300 rounded col-span-1"></div>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-4 w-9/12">
-                                            <div class="h-2 bg-slate-300 rounded col-span-1"></div>
-                                            <div class="h-2 bg-slate-300 rounded col-span-2"></div>
-                                        </div>
+                                        <div class="flex-1 space-y-6 py-1">
+                                            <div class="h-2 bg-slate-300 rounded w-10/12"></div>
+                                            <div class="grid grid-cols-3 gap-4">
+                                                <div class="h-2 bg-slate-300 rounded col-span-2"></div>
+                                                <div class="h-2 bg-slate-300 rounded col-span-1"></div>
+                                            </div>
+                                            <div class="grid grid-cols-3 gap-4 w-9/12">
+                                                <div class="h-2 bg-slate-300 rounded col-span-1"></div>
+                                                <div class="h-2 bg-slate-300 rounded col-span-2"></div>
+                                            </div>
 
+                                        </div>
                                     </div>
                                 </div>
-                                </div>
-                               
 
-                                <div v-if="Object.keys(data).length !== 0 && data.extensions && data.extensions >= 0"
+
+                                <div v-if="Object.keys(counts).length !== 0 && counts.extensions && counts.extensions >= 0"
                                     class="mt-6 flex w-full flex-none gap-x-4 px-6">
                                     <dt class="flex-none">
                                         <ContactPhoneIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
                                     <dd class="text-sm leading-6 text-gray-500">
-                                        <span class="pr-3">Extensions: {{ data.extensions }}</span>
-                                        <span v-if="data.local_reg_count && data.local_reg_count >= 0"
+                                        <span class="pr-3">Extensions: {{ counts.extensions }}</span>
+                                        <span v-if="counts.local_reg_count && counts.local_reg_count >= 0"
                                             class="pr-3 text-green-600 text-nowrap">
-                                            Online: {{ data.local_reg_count }}
+                                            Online: {{ counts.local_reg_count }}
                                         </span>
-                                        <span v-if="data.local_reg_count && data.local_reg_count >= 0"
+                                        <span v-if="counts.local_reg_count && counts.local_reg_count >= 0"
                                             class=" text-rose-600 text-nowrap">
-                                            Offline: {{ data.extensions - data.local_reg_count }}
+                                            Offline: {{ counts.extensions - counts.local_reg_count }}
                                         </span>
                                     </dd>
                                 </div>
 
-                                <div v-if="Object.keys(data).length != 0  && data.phone_numbers && data.phone_numbers >= 0" 
+                                <div v-if="Object.keys(counts).length != 0 && counts.phone_numbers && counts.phone_numbers >= 0"
                                     class="mt-4 flex w-full flex-none gap-x-4 px-6">
                                     <dt class="flex-none">
                                         <DialpadIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
-                                    <dd class="text-sm leading-6 text-gray-500">Phone Numbers: {{ data.phone_numbers }}</dd>
+                                    <dd class="text-sm leading-6 text-gray-500">Phone Numbers: {{ counts.phone_numbers }}
+                                    </dd>
                                 </div>
 
-                                <div v-if="Object.keys(data).length != 0  && data.faxes && data.faxes >= 0" 
+                                <div v-if="Object.keys(counts).length != 0 && counts.faxes && counts.faxes >= 0"
                                     class="mt-4 flex w-full flex-none gap-x-4 px-6">
                                     <dt class="flex-none">
                                         <FaxIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
-                                    <dd class="text-sm leading-6 text-gray-500">Virtual Faxes: {{ data.faxes }}</dd>
+                                    <dd class="text-sm leading-6 text-gray-500">Virtual Faxes: {{ counts.faxes }}</dd>
                                 </div>
 
                                 <div class="mt-4 flex w-full flex-none gap-x-4 px-6 pb-8">
@@ -143,8 +144,8 @@
 
                         <h2 class="text-base font-semibold leading-6 text-gray-900">Quick Access</h2>
                         <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                            <div v-for="card in cards" :key="card.name">
-                                <DashboardTile :card="card" />
+                            <div v-for="card in cards" :key="card.slug">
+                                <DashboardTile :card="card" :count="counts[card.slug]" />
                             </div>
                         </div>
 
@@ -304,6 +305,10 @@ const props = defineProps({
     },
     company_data: Object,
     cards: Array,
+    counts: {
+        type: Object,
+        default: () => ({}) // Providing an empty object as default
+    },
     menus: Array,
     domainSelectPermission: Boolean,
     selectedDomain: String,
@@ -316,12 +321,11 @@ const getData = () => {
         preserveScroll: true,
         preserveState: true,
         data: {
-
         },
-        only: ["data"],
+        only: ["data", "counts"],
         onSuccess: (page) => {
             // filterData.value.entity = props.selectedEntity;
-            console.log(props.data);
+            console.log(props.cards);
         }
 
     });
