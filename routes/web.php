@@ -47,6 +47,9 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 Route::resource('extensions', ExtensionsController::class);
 Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
 Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
+Route::post('/extensions/{extension}/device', [ExtensionsController::class, 'oldStoreDevice'])->name('extensions.store-device');
+Route::get('/extensions/{extension}/device/{device}/edit', [ExtensionsController::class, 'oldEditDevice'])->name('extensions.edit-device');
+Route::put('/extensions/{extension}/device/{device}', [ExtensionsController::class, 'oldUpdateDevice'])->name('extensions.update-device');
 Route::delete('/extensions/{extension}/unassign/{deviceLine}/device', [ExtensionsController::class, 'unAssignDevice'])->name('extensions.unassign-device');
 Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsController::class, 'clearCallforwardDestination'])->name('extensions.clear-callforward-destination');
 Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');

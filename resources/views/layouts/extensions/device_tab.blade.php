@@ -49,7 +49,7 @@
                             <div id="tooltip-container-actions">
                                 <a class="action-icon" title="Edit" data-bs-toggle="modal"
                                     data-bs-target="#createDeviceModal"
-                                    data-href="{{ route('devices.edit', [$device->device_uuid]) }}">
+                                    data-href="{{ route('extensions.edit-device', [$extension->extension_uuid, $device->device_uuid]) }}">
                                     <i class="mdi mdi-lead-pencil" data-bs-container="#tooltip-container-actions"
                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit device"></i>
                                 </a>
