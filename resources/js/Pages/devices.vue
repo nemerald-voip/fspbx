@@ -79,7 +79,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
                                 v-if="deviceRestartPermission">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.extension_uuid"
+                               :value="row.device_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -337,11 +337,20 @@ onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
 })
 
+const selectedItemsExtensions = computed(() => {
+    return selectedItems.value.map(id => {
+        const foundItem = props.data.data.find(item => item.device_uuid === id);
+        return foundItem ? foundItem.extension_uuid : null;
+    });
+});
+
 const handleSelectAll = () => {
     if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.extension_uuid);
+        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItemsExtensions.value = props.data.data.map(item => item.extension_uuid);
     } else {
         selectedItems.value = [];
+        selectedItemsExtensions.value = [];
     }
 };
 
@@ -384,10 +393,10 @@ const handleRestart = (url) => {
 }
 
 const handleRestartSelected = () => {
-    if (selectedItems.value.length > 0) {
+    if (selectedItemsExtensions.value.length > 0) {
         let scope = showGlobal.value ? 'global' : 'local';
         axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
-            extensionIds: selectedItems.value,
+            extensionIds: selectedItemsExtensions.value,
         }).then((response) => {
             loading.value = false;
             restartRequestNotificationSuccessTrigger.value = true;
