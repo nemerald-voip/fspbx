@@ -333,12 +333,13 @@ class DeviceController extends Controller
         $inputs = $request->validated();
         if (empty($inputs['device_profile_uuid']) && empty($inputs['device_template'])) {
             return response()->json([
+                'message' =>  'No option selected to update.',
                 'errors' => [
                     'no_option' => [
                         'No option selected to update.'
                     ]
                 ]
-            ], 402);
+            ], 422);
         }
         foreach ($inputs['devices'] as $deviceUuid) {
             $device = Devices::find($deviceUuid);

@@ -507,9 +507,13 @@ const handleErrorsReset = () => {
     actionErrorMessage.value = null;
 }
 
-const handleErrorsPush = (message, errors) => {
+const handleErrorsPush = (message, errors = null) => {
     actionError.value = true;
-    actionErrorsList.value = errors;
+    if(errors !== null) {
+        actionErrorsList.value = errors;
+    } else {
+        actionErrorsList.value = {};
+    }
     actionErrorMessage.value = message;
 }
 
@@ -591,9 +595,8 @@ const handleBulkSaveEdit = () => {
         handleBulkClose()
     }).catch((error) => {
         console.error('Failed to save device data:', error);
-        console.log(error.response.data.errors)
-        if(error.response.data.errors.length > 0)  {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
+        if(error.response.data.message)  {
+            handleErrorsPush(error.response.data.message)
         }
     });
 }
