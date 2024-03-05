@@ -1201,6 +1201,7 @@ class ExtensionsController extends Controller
         $followMe->update_user = Session::get('user_uuid');
         $followMe->save();
         $extension->follow_me_uuid = $followMe->follow_me_uuid;
+        $extension->save();
 
         if (!isset($attributes['follow_me_destinations'])) {
             $attributes['follow_me_destinations'] = [];
