@@ -275,11 +275,33 @@
                 </div>
             </div>
         </main>
+
     </MainLayout>
+
+    <TransitionRoot as="template" :show="open" enter="transform transition ease-in-out duration-500 sm:duration-700"
+        enter-from="translate-y-full" enter-to="translate-y-0"
+        leave="transform transition ease-in-out duration-500 sm:duration-700" leave-from="translate-y-0"
+        leave-to="translate-y-full">
+
+        <div class="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6" @close="open = false">
+            <div class="pointer-events-auto mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-gray-900/10">
+                <p class="text-sm leading-6 text-gray-900">This website uses cookies to supplement a balanced diet
+                    and provide a much deserved reward to the senses after consuming bland but nutritious meals.
+                    Accepting our cookies is optional but recommended, as they are delicious. See our <a href="#"
+                        class="font-semibold text-indigo-600">cookie policy</a>.</p>
+
+                <button type="button" class="-m-1.5 flex-none p-1.5">
+                    <span class="sr-only">Dismiss</span>
+                    <XMarkIcon class="h-5 w-5 text-gray-900" aria-hidden="true" />
+                </button>
+            </div>
+        </div>
+
+    </TransitionRoot>
 </template>
   
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DashboardTile from './components/general/DashboardTile.vue'
@@ -287,10 +309,13 @@ import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
 import DialpadIcon from "./components/icons/DialpadIcon.vue"
 import FaxIcon from "./components/icons/FaxIcon.vue"
 import {
-    CreditCardIcon,
     ClockIcon,
-    XMarkIcon as XMarkIconMini,
 } from '@heroicons/vue/20/solid'
+
+import { TransitionRoot } from '@headlessui/vue'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
+
+const open = ref(false)
 
 onMounted(() => {
     //request list of entities
@@ -325,7 +350,8 @@ const getData = () => {
         only: ["data", "counts"],
         onSuccess: (page) => {
             // filterData.value.entity = props.selectedEntity;
-            console.log(props.cards);
+            // console.log(props.cards);
+            open.value = true;
         }
 
     });
