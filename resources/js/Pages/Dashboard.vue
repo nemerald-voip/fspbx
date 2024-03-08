@@ -285,15 +285,50 @@
 
         <div class="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6" @close="open = false">
             <div class="pointer-events-auto mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-gray-900/10">
-                <p class="text-sm leading-6 text-gray-900">This website uses cookies to supplement a balanced diet
-                    and provide a much deserved reward to the senses after consuming bland but nutritious meals.
-                    Accepting our cookies is optional but recommended, as they are delicious. See our <a href="#"
-                        class="font-semibold text-indigo-600">cookie policy</a>.</p>
 
-                <button type="button" class="-m-1.5 flex-none p-1.5">
-                    <span class="sr-only">Dismiss</span>
-                    <XMarkIcon class="h-5 w-5 text-gray-900" aria-hidden="true" />
-                </button>
+                <div class="relative">
+                    <div class="absolute right-0 top-0 hidden  sm:block">
+                        <button type="button" class="-m-1.5 flex-none p-1.5" @click="open = false">
+                            <span class="sr-only">Dismiss</span>
+                            <XMarkIcon class="h-5 w-5 text-gray-900" aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    <div>
+
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">Global Info</h3>
+                        <dl
+                            class="mt-3 grid grid-cols-1 divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow md:grid-cols-3 md:divide-x md:divide-y-0">
+                            <div v-for="item in stats" :key="item.name" class="px-4 py-5 sm:p-6">
+                                <dt class="text-base font-normal text-gray-900">{{ item.name }}</dt>
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="flex items-baseline text-2xl font-semibold text-indigo-600">
+                                        {{ item.stat }}
+                                        <span class="ml-2 text-sm font-medium text-gray-500">from {{ item.previousStat
+                                        }}</span>
+                                    </div>
+
+                                    <div
+                                        :class="[item.changeType === 'increase' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800', 'inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium md:mt-2 lg:mt-0']">
+                                        <ArrowUpIcon v-if="item.changeType === 'increase'"
+                                            class="-ml-1 mr-0.5 h-5 w-5 flex-shrink-0 self-center text-green-500"
+                                            aria-hidden="true" />
+                                        <ArrowDownIcon v-else
+                                            class="-ml-1 mr-0.5 h-5 w-5 flex-shrink-0 self-center text-red-500"
+                                            aria-hidden="true" />
+                                        <span class="sr-only"> {{ item.changeType === 'increase' ? 'Increased' : 'Decreased'
+                                        }} by </span>
+                                        {{ item.change }}
+                                    </div>
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 ">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 65%"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -340,6 +375,12 @@ const props = defineProps({
     selectedDomainUuid: String,
     domains: Array,
 })
+
+const stats = [
+  { name: 'Total Subscribers', stat: '71,897', previousStat: '70,946', change: '12%', changeType: 'increase' },
+  { name: 'Avg. Open Rate', stat: '58.16%', previousStat: '56.14%', change: '2.02%', changeType: 'increase' },
+  { name: 'Avg. Click Rate', stat: '24.57%', previousStat: '28.62%', change: '4.05%', changeType: 'decrease' },
+]
 
 const getData = () => {
     router.visit("/dashboard", {
