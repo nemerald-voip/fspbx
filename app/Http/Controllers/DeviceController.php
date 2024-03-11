@@ -123,7 +123,8 @@ class DeviceController extends Controller
     {
         $devices = Devices::query();
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
+            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid')
+                ->whereIn('v_domains.domain_uuid', Session::get('domains')->pluck('domain_uuid'));
         } else {
             $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
         }
