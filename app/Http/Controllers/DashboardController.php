@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CallCenterQueues;
 use Linfo\Linfo;
 use App\Models\CDR;
 use App\Models\User;
@@ -128,6 +129,10 @@ class DashboardController extends Controller
             $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_id)
                 ->where('call_flow_enabled', 'true')
                 ->count();
+        }
+
+        if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
+            $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_id)->count();
         }
 
         //if superuser get registration status
@@ -294,14 +299,23 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];
         }
 
-        if(Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))){
-            logger(userCheckPermission("contact_center_settings_edit"));
-            $contact_center_app = ['name' => 'Contact Center', 'icon' => 'SupportAgent', 'slug' => 'contact_center'];
-            if(userCheckPermission("contact_center_dashboard_view")) {
-                $contact_center_app['href'] = '/contact-center';
-            }
-            $apps[] = $contact_center_app;
+        if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
 
+            $queue_count = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))->count();
+
+            $contact_center_app = ['name' => 'Contact Center', 'icon' => 'SupportAgent', 'slug' => 'queues'];
+
+            if ($queue_count > 0) {
+                if (userCheckPermission("contact_center_dashboard_view")) {
+                    $contact_center_app['href'] = '/contact-center';
+                }
+            }
+
+            if (userCheckPermission("contact_center_settings_edit")) {
+                $contact_center_app['alt_href'] = '/contact-center/settings';
+            }
+
+            $apps[] = $contact_center_app;
         }
 
 
