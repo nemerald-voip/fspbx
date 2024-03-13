@@ -15,8 +15,8 @@ use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
 use App\Models\Destinations;
-use App\Models\TimeConditions;
 use Illuminate\Support\Carbon;
+use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
@@ -293,6 +293,17 @@ class DashboardController extends Controller
         if (userCheckPermission("fax_view")) {
             $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];
         }
+
+        if(Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))){
+            logger(userCheckPermission("contact_center_settings_edit"));
+            $contact_center_app = ['name' => 'Contact Center', 'icon' => 'SupportAgent', 'slug' => 'contact_center'];
+            if(userCheckPermission("contact_center_dashboard_view")) {
+                $contact_center_app['href'] = '/contact-center';
+            }
+            $apps[] = $contact_center_app;
+
+        }
+
 
         return $apps;
     }

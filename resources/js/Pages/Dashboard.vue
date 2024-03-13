@@ -490,11 +490,6 @@ const props = defineProps({
     domains: Array,
 })
 
-const stats = [
-    { name: 'Total Extensions', current: '71,897', total: '70,946', rate: '12%', color: 'increase' },
-    { name: 'Avg. Open Rate', stat: '58.16%', previousStat: '56.14%', change: '2.02%', changeType: 'increase' },
-    { name: 'Avg. Click Rate', stat: '24.57%', previousStat: '28.62%', change: '4.05%', changeType: 'decrease' },
-]
 
 const getData = () => {
     router.visit("/dashboard", {

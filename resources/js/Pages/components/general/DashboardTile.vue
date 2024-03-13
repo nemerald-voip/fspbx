@@ -50,6 +50,7 @@ import DialpadIcon from "../icons/DialpadIcon.vue"
 import ContactPhoneIcon from "../icons/ContactPhoneIcon.vue"
 import AlternativeRouteIcon from "../icons/AlternativeRouteIcon.vue"
 import IvrIcon from "../icons/IvrIcon.vue"
+import SupportAgent from "../icons/SupportAgent.vue"
 
 const props = defineProps({
     card: Object,
@@ -73,6 +74,7 @@ const iconMap = {
     ContactPhoneIcon: ContactPhoneIcon,
     AlternativeRouteIcon: AlternativeRouteIcon,
     IvrIcon: IvrIcon,
+    SupportAgent: SupportAgent,
 }
 
 const styleMap = {
@@ -87,6 +89,7 @@ const styleMap = {
     DialpadIcon: { bgColor: 'bg-green-50', textColor: 'text-green-700' },
     AlternativeRouteIcon: { bgColor: 'bg-cyan-50', textColor: 'text-cyan-700' },
     IvrIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700' },
+    SupportAgent: { bgColor: 'bg-orange-50', textColor: 'text-orange-700' }
 };
 
 // Computed property to get the correct icon component
