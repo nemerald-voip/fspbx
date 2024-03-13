@@ -1,6 +1,6 @@
 <template>
-    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-        :selected-domain-uuid="selectedDomainUuid" :domains="domains">
+    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission"
+        :selected-domain="selectedDomain" :selected-domain-uuid="selectedDomainUuid" :domains="domains">
 
 
         <main>
@@ -59,7 +59,7 @@
                                 <div class="flex-auto pl-6 py-6 truncate border-b border-gray-900/5">
                                     <dt class="text-sm  leading-6 text-gray-600">Company name</dt>
                                     <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">{{
-                                        company_data.company_name }}</div>
+        company_data.company_name }}</div>
                                 </div>
 
                                 <!-- <div class="flex-none self-end px-6 pt-4">
@@ -110,7 +110,8 @@
                                     <dt class="flex-none">
                                         <DialpadIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
-                                    <dd class="text-sm leading-6 text-gray-500">Phone Numbers: {{ counts.phone_numbers }}
+                                    <dd class="text-sm leading-6 text-gray-500">Phone Numbers: {{ counts.phone_numbers
+                                        }}
                                     </dd>
                                 </div>
 
@@ -127,7 +128,7 @@
                                         <ClockIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
                                     </dt>
                                     <dd class="text-sm font-medium leading-6 text-gray-500">Time Zone: {{
-                                        company_data.time_zone }}</dd>
+        company_data.time_zone }}</dd>
                                 </div>
                             </dl>
 
@@ -177,7 +178,7 @@
                                         <p class="text-sm leading-6 text-gray-500">{{ activityItem.comment }}</p>
                                     </div>
                                 </template>
-                                <template v-else>
+<template v-else>
                                     <div class="relative flex h-6 w-6 flex-none items-center justify-center bg-white">
                                         <CheckCircleIcon v-if="activityItem.type === 'paid'" class="h-6 w-6 text-indigo-600"
                                             aria-hidden="true" />
@@ -191,87 +192,85 @@
                                         class="flex-none py-0.5 text-xs leading-5 text-gray-500">{{ activityItem.date
                                         }}</time>
                                 </template>
-                            </li>
-                        </ul>
+</li>
+</ul>
 
 
-                        <div class="mt-6 flex gap-x-3">
-                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                                alt="" class="h-6 w-6 flex-none rounded-full bg-gray-50" />
-                            <form action="#" class="relative flex-auto">
-                                <div
-                                    class="overflow-hidden rounded-lg pb-12 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
-                                    <label for="comment" class="sr-only">Add your comment</label>
-                                    <textarea rows="2" name="comment" id="comment"
-                                        class="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                                        placeholder="Add your comment..." />
-                                </div>
+<div class="mt-6 flex gap-x-3">
+    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+        alt="" class="h-6 w-6 flex-none rounded-full bg-gray-50" />
+    <form action="#" class="relative flex-auto">
+        <div
+            class="overflow-hidden rounded-lg pb-12 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
+            <label for="comment" class="sr-only">Add your comment</label>
+            <textarea rows="2" name="comment" id="comment"
+                class="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                placeholder="Add your comment..." />
+        </div>
 
-                                <div class="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
-                                    <div class="flex items-center space-x-5">
-                                        <div class="flex items-center">
-                                            <button type="button"
-                                                class="-m-2.5 flex h-10 w-10 items-center justify-center rounded-full text-gray-400 hover:text-gray-500">
-                                                <PaperClipIcon class="h-5 w-5" aria-hidden="true" />
-                                                <span class="sr-only">Attach a file</span>
-                                            </button>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <Listbox as="div" v-model="selected">
-                                                <ListboxLabel class="sr-only">Your mood</ListboxLabel>
-                                                <div class="relative">
-                                                    <ListboxButton
-                                                        class="relative -m-2.5 flex h-10 w-10 items-center justify-center rounded-full text-gray-400 hover:text-gray-500">
-                                                        <span class="flex items-center justify-center">
-                                                            <span v-if="selected.value === null">
-                                                                <FaceSmileIcon class="h-5 w-5 flex-shrink-0"
-                                                                    aria-hidden="true" />
-                                                                <span class="sr-only">Add your mood</span>
-                                                            </span>
-                                                            <span v-if="!(selected.value === null)">
-                                                                <span
-                                                                    :class="[selected.bgColor, 'flex h-8 w-8 items-center justify-center rounded-full']">
-                                                                    <component :is="selected.icon"
-                                                                        class="h-5 w-5 flex-shrink-0 text-white"
-                                                                        aria-hidden="true" />
-                                                                </span>
-                                                                <span class="sr-only">{{ selected.name }}</span>
-                                                            </span>
-                                                        </span>
-                                                    </ListboxButton>
+        <div class="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
+            <div class="flex items-center space-x-5">
+                <div class="flex items-center">
+                    <button type="button"
+                        class="-m-2.5 flex h-10 w-10 items-center justify-center rounded-full text-gray-400 hover:text-gray-500">
+                        <PaperClipIcon class="h-5 w-5" aria-hidden="true" />
+                        <span class="sr-only">Attach a file</span>
+                    </button>
+                </div>
+                <div class="flex items-center">
+                    <Listbox as="div" v-model="selected">
+                        <ListboxLabel class="sr-only">Your mood</ListboxLabel>
+                        <div class="relative">
+                            <ListboxButton
+                                class="relative -m-2.5 flex h-10 w-10 items-center justify-center rounded-full text-gray-400 hover:text-gray-500">
+                                <span class="flex items-center justify-center">
+                                    <span v-if="selected.value === null">
+                                        <FaceSmileIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                                        <span class="sr-only">Add your mood</span>
+                                    </span>
+                                    <span v-if="!(selected.value === null)">
+                                        <span
+                                            :class="[selected.bgColor, 'flex h-8 w-8 items-center justify-center rounded-full']">
+                                            <component :is="selected.icon" class="h-5 w-5 flex-shrink-0 text-white"
+                                                aria-hidden="true" />
+                                        </span>
+                                        <span class="sr-only">{{ selected.name }}</span>
+                                    </span>
+                                </span>
+                            </ListboxButton>
 
-                                                    <transition leave-active-class="transition ease-in duration-100"
-                                                        leave-from-class="opacity-100" leave-to-class="opacity-0">
-                                                        <ListboxOptions
-                                                            class="absolute z-10 -ml-6 mt-1 w-60 rounded-lg bg-white py-3 text-base shadow ring-1 ring-black ring-opacity-5 focus:outline-none sm:ml-auto sm:w-64 sm:text-sm">
-                                                            <ListboxOption as="template" v-for="mood in moods"
-                                                                :key="mood.value" :value="mood" v-slot="{ active }">
-                                                                <li
-                                                                    :class="[active ? 'bg-gray-100' : 'bg-white', 'relative cursor-default select-none px-3 py-2']">
-                                                                    <div class="flex items-center">
-                                                                        <div
-                                                                            :class="[mood.bgColor, 'flex h-8 w-8 items-center justify-center rounded-full']">
-                                                                            <component :is="mood.icon"
-                                                                                :class="[mood.iconColor, 'h-5 w-5 flex-shrink-0']"
-                                                                                aria-hidden="true" />
-                                                                        </div>
-                                                                        <span class="ml-3 block truncate font-medium">{{
-                                                                            mood.name }}</span>
-                                                                    </div>
-                                                                </li>
-                                                            </ListboxOption>
-                                                        </ListboxOptions>
-                                                    </transition>
+                            <transition leave-active-class="transition ease-in duration-100"
+                                leave-from-class="opacity-100" leave-to-class="opacity-0">
+                                <ListboxOptions
+                                    class="absolute z-10 -ml-6 mt-1 w-60 rounded-lg bg-white py-3 text-base shadow ring-1 ring-black ring-opacity-5 focus:outline-none sm:ml-auto sm:w-64 sm:text-sm">
+                                    <ListboxOption as="template" v-for="mood in moods" :key="mood.value" :value="mood"
+                                        v-slot="{ active }">
+                                        <li
+                                            :class="[active ? 'bg-gray-100' : 'bg-white', 'relative cursor-default select-none px-3 py-2']">
+                                            <div class="flex items-center">
+                                                <div
+                                                    :class="[mood.bgColor, 'flex h-8 w-8 items-center justify-center rounded-full']">
+                                                    <component :is="mood.icon"
+                                                        :class="[mood.iconColor, 'h-5 w-5 flex-shrink-0']"
+                                                        aria-hidden="true" />
                                                 </div>
-                                            </Listbox>
-                                        </div>
-                                    </div>
-                                    <button type="submit"
-                                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Comment</button>
-                                </div>
-                            </form>
+                                                <span class="ml-3 block truncate font-medium">{{
+                                                    mood.name }}</span>
+                                            </div>
+                                        </li>
+                                    </ListboxOption>
+                                </ListboxOptions>
+                            </transition>
                         </div>
-                    </div> -->
+                    </Listbox>
+                </div>
+            </div>
+            <button type="submit"
+                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Comment</button>
+        </div>
+    </form>
+</div>
+</div> -->
                 </div>
             </div>
         </main>
@@ -281,13 +280,14 @@
     <TransitionRoot as="template" :show="open" enter="transform transition ease-in-out duration-500 sm:duration-700"
         enter-from="translate-y-full" enter-to="translate-y-0"
         leave="transform transition ease-in-out duration-500 sm:duration-700" leave-from="translate-y-0"
-        leave-to="translate-y-full">
+        leave-to="translate-y-full" class="hidden  lg:block">
 
         <div class="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6" @close="open = false">
-            <div class="pointer-events-auto mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-gray-900/10">
+            <div
+                class="pointer-events-auto mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-gray-900/10">
 
                 <div class="relative">
-                    <div class="absolute right-0 top-0 hidden  sm:block">
+                    <div class="absolute right-0 top-0">
                         <button type="button" class="-m-1.5 flex-none p-1.5" @click="open = false">
                             <span class="sr-only">Dismiss</span>
                             <XMarkIcon class="h-5 w-5 text-gray-900" aria-hidden="true" />
@@ -296,45 +296,159 @@
 
                     <div>
 
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Global Info</h3>
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">Global Info <span
+                                class="font-normal italic text-gray-600 text-sm">(Superadmin only)</span></h3>
                         <dl
-                            class="mt-3 grid grid-cols-1 divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow md:grid-cols-3 md:divide-x md:divide-y-0">
-                            <div v-for="item in stats" :key="item.name" class="px-4 py-5 sm:p-6">
-                                <dt class="text-base font-normal text-gray-900">{{ item.name }}</dt>
+                            class="mt-3 grid grid-cols-4 divide-x divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
+
+                            <div class=" px-4  shadow py-5">
+                                <dt class="truncate text-sm font-medium text-gray-500">Total Domains</dt>
+                                <dd class="mt-2 text-3xl font-semibold tracking-tight text-indigo-600">
+                                    {{ data.domain_count }}
+                                </dd>
+                            </div>
+
+                            <div class="px-4 py-5">
+                                <dt class="truncate text-sm font-medium text-gray-500">Total extensions</dt>
                                 <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
-                                    <div class="flex items-baseline text-2xl font-semibold text-indigo-600">
-                                        {{ item.stat }}
-                                        <span class="ml-2 text-sm font-medium text-gray-500">from {{ item.previousStat
-                                        }}</span>
+                                    <div class="flex items-baseline font-semibold text-gray-500">
+                                        {{ counts.global_reg_count }}
+                                        <span class="ml-2 text-sm font-medium text-gray-500">
+                                            online
+                                        </span>
                                     </div>
 
                                     <div
-                                        :class="[item.changeType === 'increase' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800', 'inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium md:mt-2 lg:mt-0']">
-                                        <ArrowUpIcon v-if="item.changeType === 'increase'"
-                                            class="-ml-1 mr-0.5 h-5 w-5 flex-shrink-0 self-center text-green-500"
-                                            aria-hidden="true" />
-                                        <ArrowDownIcon v-else
-                                            class="-ml-1 mr-0.5 h-5 w-5 flex-shrink-0 self-center text-red-500"
-                                            aria-hidden="true" />
-                                        <span class="sr-only"> {{ item.changeType === 'increase' ? 'Increased' : 'Decreased'
-                                        }} by </span>
-                                        {{ item.change }}
+                                        class="bg-sky-100 text-sky-800', 'inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium md:mt-2 lg:mt-0'">
+                                        Total {{ data.extension_count }}
+                                    </div>
+
+                                </dd>
+                                <div class="mt-1 w-full bg-gray-200 rounded-full h-2.5 ">
+                                    <div class="bg-green-500 h-2.5 rounded-full"
+                                        :style="{ width: (counts.global_reg_count / data.extension_count * 100) + '%' }">
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="px-4 ">
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="text-sm font-medium text-gray-500">
+                                        Disk: <span> {{ Math.round(data.diskused * 10) / 10 }}/{{
+        Math.round(data.disktotal * 10) / 10 }} GB</span>
+
+                                    </div>
+
+                                    <div :class="[
+        data.diskusagecolor === 'bg-success' ? 'bg-green-100 text-green-600' :
+            data.diskusagecolor === 'bg-warning' ? 'bg-yellow-100 text-yellow-600' :
+                data.diskusagecolor === 'bg-danger' ? 'bg-rose-100 text-rose-600' :
+                    'bg-sky-100 text-sky-800',
+        'inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium md:mt-2 lg:mt-0'
+    ]">
+                                        {{ Math.round(data.diskusage) }}%
+                                    </div>
+
+                                </dd>
+                                <div class="mt-1 w-full bg-gray-200 rounded-full h-2.5 ">
+                                    <div :class="data.diskusagecolor === 'bg-success' ? 'bg-green-500' : data.diskusagecolor === 'bg-warning' ? 'bg-yellow-500' : data.diskusagecolor === 'bg-danger' ? 'bg-rose-500' : ''"
+                                        class="h-2.5 rounded-full" :style="{ width: data.diskusage + '%' }"></div>
+                                </div>
+
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="text-sm font-medium text-gray-500">
+                                        Memory: <span> {{ Math.round(data.ramused * 10) / 10 }}/{{Math.round(data.ramtotal * 10) / 10}} GB</span>
+
+                                    </div>
+
+                                    <div :class="[
+                                            data.ramusagecolor === 'bg-success' ? 'bg-green-100 text-green-600' :
+                                                data.ramusagecolor === 'bg-warning' ? 'bg-yellow-100 text-yellow-600' :
+                                                    data.ramusagecolor === 'bg-danger' ? 'bg-rose-100 text-rose-600' :
+                                                        'bg-sky-100 text-sky-800',
+                                            'inline-flex items-baseline rounded-full px-2.5 py-0.5 text-sm font-medium md:mt-2 lg:mt-0'
+                                        ]">
+                                        {{ Math.round(data.ramusage) }}%
+                                    </div>
+
+                                </dd>
+                                <div class="mt-1 w-full bg-gray-200 rounded-full h-2.5 ">
+                                    <div :class="data.ramusagecolor === 'bg-success' ? 'bg-green-500' : data.ramusagecolor === 'bg-warning' ? 'bg-yellow-500' : data.ramusagecolor === 'bg-danger' ? 'bg-rose-500' : ''"
+                                        class="h-2.5 rounded-full" :style="{ width: data.ramusage + '%' }"></div>
+                                </div>
+
+
+                            </div>
+
+                            <div class="px-4 pb-2">
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="text-sm font-medium text-gray-500">
+                                        Hostname
+                                    </div>
+
+                                    <div class="truncate inline-flex items-baseline py-0.5 text-sm font-medium '">
+                                        <span class="px-2.5 py-0.5 rounded-full bg-slate-200">{{ data.hostname }}</span>
                                     </div>
                                 </dd>
+
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="text-sm font-medium text-gray-500">
+                                        Uptime
+                                    </div>
+
+                                    <div class="truncate pl-12 py-0.5 text-sm font-medium ">
+                                        <span class="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">{{ data.uptime }}</span>
+                                    </div>
+
+                                </dd>
+
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="text-sm font-medium text-gray-500">
+                                        CPU cores
+                                    </div>
+
+                                    <div class="truncate pl-12 py-0.5 text-sm font-medium ">
+                                        <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-600">{{
+                                            data.core_count
+                                            }}</span>
+                                    </div>
+
+                                </dd>
+
+
+                                <dd class="mt-1 flex items-baseline justify-between md:block lg:flex">
+                                    <div class="text-sm font-medium text-gray-500">
+                                        Horizon Status
+                                    </div>
+
+                                    <div class="truncate pl-12 py-0.5 text-sm font-medium ">
+                                        <span :class="[
+                                            data.horizonStatus === 'running' ? 'bg-green-100 text-green-600' : 
+                                            data.horizonStatus === 'paused' ? 'bg-yellow-100 text-yellow-600' : '', 
+                                            'px-2.5 py-0.5 rounded-full'
+                                        ]">
+                                            {{ data.horizonStatus }}
+                                        </span>
+                                    </div>
+
+                                </dd>
+
+
+
                             </div>
+
                         </dl>
                     </div>
 
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 ">
-                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 65%"></div>
-                    </div>
+
                 </div>
             </div>
         </div>
 
     </TransitionRoot>
 </template>
-  
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { router } from "@inertiajs/vue3";
@@ -377,9 +491,9 @@ const props = defineProps({
 })
 
 const stats = [
-  { name: 'Total Subscribers', stat: '71,897', previousStat: '70,946', change: '12%', changeType: 'increase' },
-  { name: 'Avg. Open Rate', stat: '58.16%', previousStat: '56.14%', change: '2.02%', changeType: 'increase' },
-  { name: 'Avg. Click Rate', stat: '24.57%', previousStat: '28.62%', change: '4.05%', changeType: 'decrease' },
+    { name: 'Total Extensions', current: '71,897', total: '70,946', rate: '12%', color: 'increase' },
+    { name: 'Avg. Open Rate', stat: '58.16%', previousStat: '56.14%', change: '2.02%', changeType: 'increase' },
+    { name: 'Avg. Click Rate', stat: '24.57%', previousStat: '28.62%', change: '4.05%', changeType: 'decrease' },
 ]
 
 const getData = () => {
@@ -391,7 +505,7 @@ const getData = () => {
         only: ["data", "counts"],
         onSuccess: (page) => {
             // filterData.value.entity = props.selectedEntity;
-            // console.log(props.cards);
+            // console.log(props.data);
             open.value = true;
         }
 

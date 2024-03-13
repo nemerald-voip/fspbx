@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CallFlows;
 use Linfo\Linfo;
 use App\Models\CDR;
 use App\Models\User;
@@ -10,12 +9,14 @@ use Inertia\Inertia;
 use App\Models\Faxes;
 use App\Models\Devices;
 use App\Models\IvrMenus;
+use App\Models\CallFlows;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\RingGroups;
+use App\Models\Voicemails;
 use App\Models\Destinations;
 use App\Models\TimeConditions;
-use App\Models\Voicemails;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
@@ -229,7 +230,14 @@ class DashboardController extends Controller
             $data['core_count'] = trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
 
             // Get uptime
-            $data['uptime'] = $parser->getUpTime();
+            $uptime = $parser->getUpTime();
+            $diff = Carbon::now()->diff(Carbon::createFromTimestamp($uptime['bootedTimestamp']));
+            // Format the difference
+            $formattedDiff = sprintf('%dd %dh %dm', $diff->days, $diff->h, $diff->i);
+            $data['uptime'] = $formattedDiff;
+
+            // Get the hostname of the server
+            $data['hostname'] = gethostname();
         }
         return $data;
     }
