@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckFusionPBXLogin
@@ -15,10 +17,15 @@ class CheckFusionPBXLogin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        logger('CheckFusionPBXLogin');
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
+        if (Auth::check()) {
+            session_start();
+            if (!isset($_SESSION['user'])) {
+                session_unset();
+                session_destroy();
+        
+                Auth::logout();
+                Session::flush();
+            }
         }
 
         return $next($request);
