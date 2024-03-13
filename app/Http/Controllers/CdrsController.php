@@ -32,10 +32,10 @@ class CdrsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         if ($request->callUuid) {
             $callUuid = $request->callUuid;

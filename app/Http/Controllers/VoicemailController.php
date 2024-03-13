@@ -80,10 +80,10 @@ class VoicemailController extends Controller
         $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
 
         //Check FusionPBX login status
-        session_start();
-        if (session_status() === PHP_SESSION_NONE) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (session_status() === PHP_SESSION_NONE) {
+        //     return redirect()->route('logout');
+        // }
 
         $vm_unavailable_file_exists = Storage::disk('voicemail')
             ->exists(Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/greeting_1.wav');
@@ -115,10 +115,10 @@ class VoicemailController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (session_status() === PHP_SESSION_NONE) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (session_status() === PHP_SESSION_NONE) {
+        //     return redirect()->route('logout');
+        // }
 
         $vm_unavailable_file_exists = Storage::disk('voicemail')
             ->exists(Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/greeting_1.wav');

@@ -34,10 +34,10 @@ class DomainController extends Controller
         // If current domain is not the same as requested domain proceed with the change
         if (Session::get('domain_uuid') != $domain->uuid){
             //Check FusionPBX login status
-            session_start();
-            if(!isset($_SESSION['user'])) {
-                return redirect()->route('logout');
-            }
+            // session_start();
+            // if(!isset($_SESSION['user'])) {
+            //     return redirect()->route('logout');
+            // }
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
             Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);
@@ -76,7 +76,9 @@ class DomainController extends Controller
 
         // If current domain is not the same as requested domain proceed with the change
         if (Session::get('domain_uuid') != $domain->uuid){
-            session_start();
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            };
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
             Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);

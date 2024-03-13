@@ -22,10 +22,10 @@ class GroupsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if(!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if(!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $groups = Groups::get()->sortBy('group_name');
 
