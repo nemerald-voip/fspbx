@@ -45,11 +45,22 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::loginView(function () {
-            return Inertia::render('Auth/Login');
+            $links['password-request'] = route('password.request');
+            return Inertia::render('Auth/Login',[
+                'links' => function () use ($links) {
+                    return $links;
+                },
+            ]);
         });
 
         Fortify::requestPasswordResetLinkView(function () {
-            return view('auth.forgot-password');
+            $links['login'] = route('login');
+            $links['password-email'] = route('password.email');
+            return Inertia::render('Auth/ForgotPassword',[
+                'links' => function () use ($links) {
+                    return $links;
+                },
+            ]);
         });
     
         Fortify::resetPasswordView(function () {
