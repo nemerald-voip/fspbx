@@ -50,6 +50,7 @@ class FortifyServiceProvider extends ServiceProvider
                 'links' => function () use ($links) {
                     return $links;
                 },
+                'status' => session('status'),
             ]);
         });
 
@@ -60,11 +61,28 @@ class FortifyServiceProvider extends ServiceProvider
                 'links' => function () use ($links) {
                     return $links;
                 },
+                'status' => session('status'),
             ]);
         });
     
-        Fortify::resetPasswordView(function () {
-            return view('auth.reset-password');
+        Fortify::resetPasswordView(function (Request $request) {
+            $links['login'] = route('login');
+            $links['password-update'] = route('password.update');
+            return Inertia::render('Auth/ResetPassword', [
+                'links' => function () use ($links) {
+                    return $links;
+                },
+                'user_email' => $request->input('email'),
+                'token' => $request->route('token'),
+            ]);
+        });
+
+        Fortify::twoFactorChallengeView(function () {
+            return Inertia::render('Auth/TwoFactorChallenge');
+        });
+
+        Fortify::confirmPasswordView(function () {
+            return Inertia::render('Auth/ConfirmPassword');
         });
     }
 }

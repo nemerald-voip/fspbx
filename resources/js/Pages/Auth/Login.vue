@@ -104,6 +104,9 @@ const submit = () => {
 
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
             <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
+                <div v-if="status" class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
+                    {{ status }}
+                </div>
                 <form class="space-y-6" action="#" method="POST">
                     <div>
                         <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">Email
@@ -184,6 +187,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const props = defineProps({
     errors: Object,
     links: Object,
+    status: String,
 })
 
 
