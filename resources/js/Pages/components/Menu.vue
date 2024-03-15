@@ -171,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, defineEmits } from 'vue';
 
 
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
@@ -201,12 +201,16 @@ const searchQuery = ref('');
 
 const logoUrl = ref('/storage/logo.png');
 
+const emit = defineEmits(['reset-filters']);
+
 const selectDomain = async (domainUuid) => {
 
     try {
         const response = await axios.post('/domains/switch', {
             domain_uuid: domainUuid
         });
+        emit('reset-filters');
+
         window.location.href = response.data.redirectUrl;
         // Handle successful response
     } catch (error) {

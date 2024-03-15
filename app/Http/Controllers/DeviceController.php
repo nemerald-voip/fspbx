@@ -39,9 +39,7 @@ class DeviceController extends Controller
 
         $this->filters = [];
 
-        if (!empty($request->filterData['search'])) {
-            $this->filters['search'] = $request->filterData['search'];
-        }
+        $this->filters['search'] = $request->filterData['search'] ?? null;
 
         if (!empty($request->filterData['showGlobal'])) {
             $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
@@ -148,15 +146,17 @@ class DeviceController extends Controller
      */
     protected function filterSearch($query, $value): void
     {
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value) {
-            $macAddress = tokenizeMacAddress($value);
-            $query->where('device_address', 'ilike', '%'.$macAddress.'%')
-                ->orWhere('device_label', 'ilike', '%'.$value.'%')
-                ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
-                ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
-                ->orWhere('device_template', 'ilike', '%'.$value.'%');
-        });
+        if ($value !== null) {
+            // Case-insensitive partial string search in the specified fields
+            $query->where(function ($query) use ($value) {
+                $macAddress = tokenizeMacAddress($value);
+                $query->where('device_address', 'ilike', '%'.$macAddress.'%')
+                    ->orWhere('device_label', 'ilike', '%'.$value.'%')
+                    ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
+                    ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
+                    ->orWhere('device_template', 'ilike', '%'.$value.'%');
+            });
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 <template>
     <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-          :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
+          :selected-domain-uuid="selectedDomainUuid" :domains="domains" @reset-filters="handleFiltersReset"></Menu>
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -496,6 +496,7 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
+    console.log("handleFiltersReset function called");
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
