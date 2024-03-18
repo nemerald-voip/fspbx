@@ -22,10 +22,10 @@ class DomainController extends Controller
     }
 
     /**
-     * Switch domain from one of the Laravel pages. 
+     * Switch domain from one of the Laravel pages.
      * Called when domain search is performed and user requested to switch domain
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function switchDomain(Request $request)
     {
@@ -52,7 +52,14 @@ class DomainController extends Controller
             // unset destinations belonging to old domain
             unset($_SESSION["destinations"]["array"]);
 
-            $url = getFusionPBXPreviousURL(url()->previous());
+            // This is a workaround to ensure the filters are reset when the domain changes.
+            // Given that url()->previous() includes the filter options, it's necessary to pass a refreshed URL.
+            if($request->redirect_url) {
+                $url = $request->redirect_url;
+            } else {
+                $url = getFusionPBXPreviousURL(url()->previous());
+            }
+
             return response()->json([
                 'status' => 200,
                 'redirectUrl' => $url,
@@ -64,7 +71,7 @@ class DomainController extends Controller
     }
 
     /**
-     * Switch domain from FusionPBX pages. 
+     * Switch domain from FusionPBX pages.
      * Called when domain search is performed and user requested to switch domain
      *
      * @return \Illuminate\Http\Response
@@ -96,7 +103,7 @@ class DomainController extends Controller
     }
 
     /**
-     * Filter domains from FusionPBX pages. 
+     * Filter domains from FusionPBX pages.
      * Called when domain search is performed and user requested to filter a list of domains
      *
      * @return \Illuminate\Http\Response

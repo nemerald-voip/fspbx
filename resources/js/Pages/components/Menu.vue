@@ -207,7 +207,8 @@ const selectDomain = async (domainUuid) => {
 
     try {
         const response = await axios.post('/domains/switch', {
-            domain_uuid: domainUuid
+            domain_uuid: domainUuid,
+            redirect_url: '/devices'
         });
         emit('reset-filters');
 
