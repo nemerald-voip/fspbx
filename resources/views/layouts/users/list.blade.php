@@ -206,11 +206,9 @@
             var user_email = $("#confirmPasswordResetModal").data("user_email");
             $('#confirmPasswordResetModal').modal('hide');
 
-            console.log("{{ route('password.email') }}");
-
             $.ajax({
                     type: 'POST',
-                    url: "{{ route('password.email') }}",
+                    url: "{{ route('users.password.email') }}",
                     cache: false,
                     data: {
                         email: user_email

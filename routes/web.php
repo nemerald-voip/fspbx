@@ -1,17 +1,16 @@
 <?php
 
-use App\Http\Controllers\CdrsController;
-use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
-use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
@@ -20,10 +19,12 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
+use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -73,10 +74,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Users
     Route::resource('users', UsersController::class);
-
     Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
     Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
-
+    Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
     // Groups
     Route::resource('groups', GroupsController::class);
 
