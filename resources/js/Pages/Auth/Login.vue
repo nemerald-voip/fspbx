@@ -202,9 +202,6 @@ const form = useForm({
     password: '',
     remember: false,
 });
-// const email = ref('');
-// const password = ref('');
-// const remember = ref(false);
 
 // Function to handle form submission
 const submitForm = () => {
@@ -217,52 +214,7 @@ const submitForm = () => {
             isLoading.value = false;
         },
     });
-
-    // router.visit("/login", {
-    //     method: 'post',
-    //     preserveScroll: true,
-    //     preserveState: true,
-    //     data: {
-    //         user_email: email.value,
-    //         password: password.value,
-    //         remember: remember.value,
-    //     },
-    //     onSuccess: (page) => {
-    //         console.log("Success");
-    //         // Once the operation is complete, set isLoading to false
-    //         isLoading.value = false;
-    //     },
-    //     onError: errors => {
-    //         // Handle the error
-    //         isLoading.value = false;
-    //         console.log(errors);
-    //         // errorMessage.value = 'An error occurred: ' + (errors || 'Unknown error');
-    //     }
-
-    // });
-
-    // Handle form submission logic here
-    // For example, send data to your server
-    // console.log('Email:', email.value);
-    // console.log('Password:', password.value);
-    // console.log('Remember Me:', remember.value);
 };
 
-// () => {
-//     filterData.value.entity = null;
-//     router.visit("/call-detail-records", {
-//         preserveScroll: true,
-//         preserveState: true,
-//         data: {
-//             filterData: filterData._rawValue,
-//         },
-//         only: ["entities"],
-//         onSuccess: (page) => {
-//             filterData.value.entity = props.selectedEntity;
-//         }
-
-//     });
-
-// }
 
 </script>

@@ -38,6 +38,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\CheckUserEnabled::class, // Custom class. Checks if FusionPBX user is enabled
             \App\Http\Middleware\CheckFusionPBXLogin::class, // Custom class. Check if FusionPBX user didn't expire
+            \App\Http\Middleware\RequireTwoFactorEmailAuthentication::class,
 
 
             // Inertia MUST BE the last item in your web middleware group

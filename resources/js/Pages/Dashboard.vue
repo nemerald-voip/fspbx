@@ -500,8 +500,11 @@ const getData = () => {
         only: ["data", "counts"],
         onSuccess: (page) => {
             // filterData.value.entity = props.selectedEntity;
-            // console.log(props.data);
-            open.value = true;
+            // console.log(props.data.superadmin);
+            // console.log(props.domains);
+            if(props.data.superadmin) {
+                open.value = true;
+            }
         }
 
     });

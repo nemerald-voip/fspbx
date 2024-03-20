@@ -166,6 +166,8 @@ class DashboardController extends Controller
 
         $data = [];
 
+        //Check if user is superadmin
+        $data['superadmin'] = isSuperAdmin();
 
         // Get the current status of Horizon.
         if (!$masters = app(MasterSupervisorRepository::class)->all()) {

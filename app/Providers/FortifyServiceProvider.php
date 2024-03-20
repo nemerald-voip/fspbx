@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Fortify;
+use Illuminate\Support\Facades\Hash;
 use App\Actions\Fortify\CreateNewUser;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -33,6 +35,21 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        // Implement custom authentication function
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = User::where('user_email', $request->user_email)->first();
+        
+            if ($user && Hash::check($request->password, $user->password)) {
+                if (!$user->two_factor_secret) {
+                    // Assuming you have sent the code here or earlier in the process
+                    // Redirect to verification page could be indicated by setting a session variable
+                    session(['user_id_for_2fa' => $user->user_uuid]);
+                }
+                return $user; 
+            }
+            return null;
+        });
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
@@ -78,6 +95,7 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::twoFactorChallengeView(function () {
+            logger("challange");
             return Inertia::render('Auth/TwoFactorChallenge');
         });
 

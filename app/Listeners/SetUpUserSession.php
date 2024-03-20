@@ -217,18 +217,19 @@ class SetUpUserSession
                         'domain_enabled',
                         DB::Raw('coalesce(domain_description , domain_name) as domain_description')
                     ]);
+                logger($domains);
             } elseif (userCheckPermission("domain_select")) {
-                $domains = DB::table('v_domains')
-                    ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
-                    ->where('v_domains.domain_enabled', '=', 't')
-                    ->where('user_uuid', '=', $event->user->user_uuid)
-                    ->get([
-                        'v_domains.domain_uuid',
-                        'v_domains.domain_parent_uuid',
-                        'v_domains.domain_name',
-                        'v_domains.domain_enabled',
-                        DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
-                    ]);
+                // $domains = DB::table('v_domains')
+                //     ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
+                //     ->where('v_domains.domain_enabled', '=', 't')
+                //     ->where('user_uuid', '=', $event->user->user_uuid)
+                //     ->get([
+                //         'v_domains.domain_uuid',
+                //         'v_domains.domain_parent_uuid',
+                //         'v_domains.domain_name',
+                //         'v_domains.domain_enabled',
+                //         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
+                //     ]);
 
                 $domains_from_groups = DB::table('v_domains')
                     ->join('domain_group_relations', 'v_domains.domain_uuid', '=', 'domain_group_relations.domain_uuid')
@@ -244,14 +245,30 @@ class SetUpUserSession
                         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
                     ]);
 
-                foreach ($domains_from_groups as $domain_from_group) {
-                    if (!$domains->contains($domain_from_group)) {
-                        $domains->push($domain_from_group);
-                    }
-                }
+                // foreach ($domains_from_groups as $domain_from_group) {
+                //     if (!$domains->contains($domain_from_group)) {
+                //         $domains->push($domain_from_group);
+                //     }
+                // }
 
-                // Sort returned collection
-                $domains = $domains->sortBy('domain_description');
+                // // Sort returned collection
+                // $domains = $domains->sortBy('domain_description');
+
+                // Assuming $domains_from_groups is the result that ended up like your second example
+                // $normalizedDomains = collect($domains_from_groups)->values();
+
+                $domains = $domains_from_groups;
+
+                // foreach ($normalizedDomains as $domain) {
+                //     if (!$domains->contains('domain_uuid', $domain->domain_uuid)) {
+                //         $domains->push($domain);
+                //     }
+                // }
+
+                // // Now $domains should be a collection with a consistent structure.
+                // // Sort returned collection
+                // $domains = $domains->sortBy('domain_description');
+                // logger($domains);
             }
 
             Session::put('domains', $domains);
