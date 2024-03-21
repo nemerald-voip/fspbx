@@ -15,6 +15,13 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use Laravel\Fortify\Features;
+use Illuminate\Routing\Pipeline;
+use Laravel\Fortify\Actions\AttemptToAuthenticate;
+use Laravel\Fortify\Actions\CanonicalizeUsername;
+use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
+use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
+use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -36,16 +43,28 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
+        Fortify::authenticateThrough(function () {
+            logger('custom');
+            return [
+                config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
+                config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
+                Features::enabled(Features::twoFactorAuthentication()) ? RedirectIfTwoFactorAuthenticatable::class : null,
+                AttemptToAuthenticate::class,
+                PrepareAuthenticatedSession::class,
+            ];
+        });
+
         // Implement custom authentication function
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('user_email', $request->user_email)->first();
         
             if ($user && Hash::check($request->password, $user->password)) {
-                if (!$user->two_factor_secret) {
-                    // Assuming you have sent the code here or earlier in the process
-                    // Redirect to verification page could be indicated by setting a session variable
-                    session(['user_id_for_2fa' => $user->user_uuid]);
-                }
+                // if (!$user->two_factor_secret) {
+                //     // Assuming you have sent the code here or earlier in the process
+                //     // Redirect to verification page could be indicated by setting a session variable
+                //     session(['user_uuid' => $user->user_uuid]);
+                //     return null;
+                // }
                 return $user; 
             }
             return null;

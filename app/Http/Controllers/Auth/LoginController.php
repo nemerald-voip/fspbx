@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
+use Inertia\Inertia;
 use App\Models\Domain;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;

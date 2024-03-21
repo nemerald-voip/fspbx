@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Inertia\Inertia;
 
 class RequireTwoFactorEmailAuthentication
 {
@@ -11,8 +10,11 @@ class RequireTwoFactorEmailAuthentication
     {
         // Check if we're post-login and the session indicates email verifications is needed
         // This only triggers if user is already succesfully authenticated but doesn't have 2FA enabled
-        if ($request->session()->has('user_id_for_2fa')) {
-            return Inertia::render('Auth/TwoFactorEmailChallenge');
+        if ($request->session()->has('email_challenge') && $request->session()->get('email_challenge') == 'required') 
+        {
+            session(['email_challenge' => 'requested']);
+            logger(route('login.email.challenge'));
+            return redirect(route('login.email.challenge'));
         }
 
         return $next($request);

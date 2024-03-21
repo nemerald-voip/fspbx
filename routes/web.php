@@ -48,6 +48,10 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 
+// Route for 2FA email challenge. Used as a backup when 2FA is not enabled. 
+Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('login.email.challenge');
+
+
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
 //     $data = "Your data to be use in blade file";
@@ -77,6 +81,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
     Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
     Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
+    
     // Groups
     Route::resource('groups', GroupsController::class);
 
@@ -115,6 +120,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
+
     Route::resource('devices', DeviceController::class);
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
