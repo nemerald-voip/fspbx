@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Laravel\Fortify\Fortify;
 use Illuminate\Support\Facades\Hash;
 use App\Actions\Fortify\CreateNewUser;
+use App\Actions\Fortify\RedirectToEmailChallengeIf2FAIsNotEnabled;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use App\Actions\Fortify\ResetUserPassword;
@@ -44,11 +45,11 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         Fortify::authenticateThrough(function () {
-            logger('custom');
             return [
                 config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
                 config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
                 Features::enabled(Features::twoFactorAuthentication()) ? RedirectIfTwoFactorAuthenticatable::class : null,
+                Features::enabled('email-challenge') ? RedirectToEmailChallengeIf2FAIsNotEnabled::class : null,
                 AttemptToAuthenticate::class,
                 PrepareAuthenticatedSession::class,
             ];

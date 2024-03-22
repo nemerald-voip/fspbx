@@ -154,6 +154,7 @@ return [
             'confirmPassword' => true,
             // 'window' => 5,
         ]),
+        'email-challenge',
     ],
 
 ];

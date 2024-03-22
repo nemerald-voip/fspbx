@@ -4,16 +4,15 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use App\Models\Traits\Fortify\EmailChallengable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid, TwoFactorAuthenticatable, EmailChallengable;
 
     protected $table = "v_users";
 
