@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\CdrsController;
+use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\ContactsController;
@@ -15,7 +15,6 @@ use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
@@ -119,7 +118,7 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
     Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk-update');
+    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulkUpdate');
     Route::resource('devices', DeviceController::class);
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
@@ -128,6 +127,9 @@ Route::group(['middleware' => 'auth'], function(){
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
+    //Route::get('/phone-numbers/options', [DeviceController::class, 'options'])->name('phoneNumbers.options');
+    //Route::put('/phone-numbers/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('phoneNumbers.bulkUpdate');
+    Route::resource('phone-numbers', PhoneNumbersController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
