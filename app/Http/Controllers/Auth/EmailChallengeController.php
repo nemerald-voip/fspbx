@@ -3,101 +3,114 @@
 namespace App\Http\Controllers\Auth;
 
 use Inertia\Inertia;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Jobs\EmailLoginChallengeCode;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
 
 class EmailChallengeController extends Controller
 {
+    /**
+     * Generate and store a new email challenge code.
+     *
+     * @param  mixed  $user
+     */
+    protected function generateAndStoreCode($user)
+    {
+        $code = random_int(100000, 999999);
+        Session::put('code', $code);
+        Session::put('code_expiration', now()->addMinutes(10));
+
+        $attributes = [
+            'name' => $user->user_adv_fields->first_name,
+            'email' => $user->user_email,
+            'code' => $code,
+        ];
+
+        EmailLoginChallengeCode::dispatch($attributes)->onQueue('emails');
+    }
 
     /**
      * Show the email challenge view.
      *
-     * @param  \Laravel\Fortify\Http\Requests\TwoFactorLoginRequest  $request
-     * @return  view
+     * @param  TwoFactorLoginRequest  $request
+     * @return \Inertia\Response
      */
-
     public function create(TwoFactorLoginRequest $request)
     {
         if (!$request->hasChallengedUser()) {
             throw new HttpResponseException(redirect()->route('login'));
         }
 
-        logger('create');
-
-        if (!Session::has('code') || now()->greaterThan(Session::get('code_expiration'))) {
-            //If the code has not been generated yet or expired generate a new one
-            $code = random_int(100000, 999999);
-
-            // Store code and the current timestamp for expiration mechanism
-            Session::put('code', $code);
-            // Set the code expiration after 10 minutes
-            $expirationTimestamp = now()->addMinutes(10);
-            Session::put('code_expiration', $expirationTimestamp);
-            logger(Session::get('code_expiration'));
-
-            $attributes = [
-                'name' => $request->challengedUser()->user_adv_fields->first_name,
-                'email' => $request->challengedUser()->user_email,
-                'code' => $code,
-            ];
-
-            logger($attributes);
-
-            // Send email verification code by email
-            EmailLoginChallengeCode::dispatch($attributes)->onQueue('emails');
+        if (!Session::has('code')) {
+            $this->generateAndStoreCode($request->challengedUser());
         }
 
-        $links['email-challenge'] = "/email-challenge";
-        return Inertia::render('Auth/TwoFactorEmailChallenge',[
-            'links' => function () use ($links) {
-                return $links;
-            },
+        return Inertia::render('Auth/TwoFactorEmailChallenge', [
+            'links' => [
+                'email-challenge' => "/email-challenge",
+            ],
             'status' => session('status'),
         ]);
-
     }
-
-
 
     /**
      * Attempt to authenticate a new session using the email challenge code.
      *
-     * @param  \Laravel\Fortify\Http\Requests\TwoFactorLoginRequest  $request
+     * @param  TwoFactorLoginRequest  $request
      * @return mixed
      */
     public function store(TwoFactorLoginRequest $request)
     {
-        logger(Session::get('code_expiration'));
-        
-        logger(Session::get('code_expiration'));
-        if (now()->greaterThan(Session::get('code_expiration'))) {
-            logger('code expired');
-            return redirect()->back()->withErrors(['message' => 'The code has expired.']);
-        }
+        $request->validate([
+            'code' => [
+                'required',
+                'max:6',
+                function ($attribute, $value, $fail) {
+                    if ((string) $value !== (string) session('code')) {
+                        logger($value);
+                        logger(session('code'));
+                        $fail('Supplied authentication code is invalid.');
+                    }
+                    if (now()->greaterThan(session('code_expiration'))) {
+                        $fail('The code has expired.');
+                    }
+                },
+            ],
+        ]);
 
-        $user = $request->challengedUser();
-
-        logger('store');
-        logger($request);
-        logger(Session::get('code'));
-
-        Auth::login($user, $request->remember());
-
+        Auth::login($request->challengedUser(), $request->remember());
         $request->session()->regenerate();
 
-        // if (! $request->hasValidCode()) {
-        //     return app(FailedTwoFactorLoginResponse::class)->toResponse($request);
-        // }
+        return app(TwoFactorLoginResponse::class);
+    }
 
-        // $this->guard->login($user, $request->remember());
+    /**
+     * Process request to create a new email challenge code.
+     *
+     * @param  TwoFactorLoginRequest  $request
+     * @return mixed
+     */
+    public function update(TwoFactorLoginRequest $request)
+    {
+        logger('update');
+        if ($request->hasChallengedUser()) {
+            // erase previous values
+            Session::forget('code');
+            Session::forget('code_expiration');
 
-        // $request->session()->regenerate();
+            // Generate new code
+            $this->generateAndStoreCode($request->challengedUser());
+        }
 
-        // return app(TwoFactorLoginResponse::class);
+        return Inertia::render('Auth/TwoFactorEmailChallenge', [
+            'links' => [
+                'email-challenge' => "/email-challenge",
+            ],
+            'status' => session('status'),
+        ]);
     }
 }

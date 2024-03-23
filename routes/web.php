@@ -50,6 +50,9 @@ Route::webhooks('webhook/commio/sms', 'commio_messaging');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled. 
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
+Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'update'])
+    ->middleware('throttle:2,1')
+    ->name('email-challenge.new-code');
 Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'store']);
 
 // Route::get('preview-email', function () {
@@ -81,7 +84,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
     Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
     Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
-    
+
     // Groups
     Route::resource('groups', GroupsController::class);
 

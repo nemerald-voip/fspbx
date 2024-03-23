@@ -96,11 +96,23 @@ const submitForm = () => {
 
     isLoading.value = true;
 
-    console.log(props.links['email-challenge']);
-
     form.post(props.links['email-challenge'], {
         onFinish: () => {
             isLoading.value = false;
+        }
+    }
+    );
+}
+
+// Function to handle new code request
+const requestNewCode = () => {
+
+    isLoadingNewCode.value = true;
+    form.reset('code');
+
+    form.put(props.links['email-challenge'], {
+        onFinish: () => {
+            isLoadingNewCode.value = false;
         }
     }
     );

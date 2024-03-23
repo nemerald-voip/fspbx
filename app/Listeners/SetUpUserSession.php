@@ -40,7 +40,9 @@ class SetUpUserSession
         $domain = Domain::where('domain_uuid', $event->user->domain_uuid)->first();
         Session::put('user.domain_name', $domain->domain_name);
 
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
         session_unset();
 
 
