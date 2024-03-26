@@ -15,6 +15,7 @@
         "firebase/php-jwt": "^6.4",
         "guzzlehttp/guzzle": "^7.0.1",
         "inertiajs/inertia-laravel": "^0.6.11",
+        "laravel/fortify": "^1.21",
         "laravel/framework": "^10",
         "laravel/horizon": "*",
         "laravel/sanctum": "^3.2",
@@ -32,7 +33,8 @@
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-webhook-client": "^3.2",
         "symfony/http-client": "^6.4",
-        "symfony/postmark-mailer": "^6.4"
+        "symfony/postmark-mailer": "^6.4",
+        "tightenco/ziggy": "^1.8"
     },
     "require-dev": {
         "spatie/laravel-ignition": "^2.0",

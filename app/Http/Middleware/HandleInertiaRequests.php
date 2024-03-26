@@ -2,8 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -37,7 +38,16 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
-            //
+            'menus' => Session::get('menu'),
+
+            'domainSelectPermission' => Session::get('domain_select'),
+
+            'selectedDomain' => Session::get('domain_description'),
+
+            'selectedDomainUuid' => Session::get('domain_uuid'),
+
+            'domains' => Session::get("domains"),
+            
         ]);
     }
 }

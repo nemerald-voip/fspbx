@@ -25,10 +25,10 @@ class DomainGroupsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if(!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if(!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $groups = DomainGroups::get()->sortBy('group_name');
 
@@ -50,10 +50,10 @@ class DomainGroupsController extends Controller
     public function create()
     {
         //Check FusionPBX login status
-        session_start();
-        if(!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if(!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         // Check permissions
         if (!isSuperAdmin()){
@@ -148,10 +148,10 @@ class DomainGroupsController extends Controller
     public function edit(DomainGroups $domaingroup)
     {
         //Check FusionPBX login status
-        session_start();
-        if(!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if(!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         // Check permissions
         if (!isSuperAdmin()){

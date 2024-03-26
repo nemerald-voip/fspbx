@@ -35,7 +35,7 @@
                                     leave-from-class="transform opacity-100 scale-100"
                                     leave-to-class="transform opacity-0 scale-95">
                                     <MenuItems
-                                        class="absolute mt-1 shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                        class="absolute mt-1 shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                                         <div v-for="child in item.child_menu" :key="child.menu_item_uuid">
                                             <MenuItem v-slot="{ active }">
                                             <a :href="child.menu_item_link"

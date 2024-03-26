@@ -1,7 +1,7 @@
 
 <template>
-    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-        :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
+    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+        :selected-domain-uuid="selectedDomainUuid" :domains="domains">
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -145,17 +145,14 @@
 
 
         </DataTable>
-
-
-
-        <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
+    </MainLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
-import Menu from "./components/Menu.vue";
+import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";

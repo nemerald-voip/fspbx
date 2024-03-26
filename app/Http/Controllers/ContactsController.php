@@ -26,10 +26,10 @@ class ContactsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $searchString = $request->get('search');
 
