@@ -25,7 +25,7 @@ class EmailChallengeController extends Controller
         Session::put('code_expiration', now()->addMinutes(10));
 
         $attributes = [
-            'name' => $user->user_adv_fields->first_name,
+            'name' => optional($user->user_adv_fields)->first_name ?? '',
             'email' => $user->user_email,
             'code' => $code,
         ];

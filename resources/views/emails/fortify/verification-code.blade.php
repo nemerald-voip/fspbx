@@ -3,7 +3,7 @@
 @section('content')
 <!-- Start Content-->
 
-<p>Hi {{ $attributes['name'] ?? '' }},</p>
+<p>Hello{{ isset($attributes['name']) ? ' ' . $attributes['name'] : '' }},</p>
 <p>Use the code below to complete your authentication:</p>
 <p>Your 2FA Code: <b>{{ $attributes['code'] ?? '' }}</b></p>
 

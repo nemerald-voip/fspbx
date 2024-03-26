@@ -1,4 +1,4 @@
-Hi {{ $attributes['name'] ?? '' }},
+Hello{{ isset($attributes['name']) ? ' ' . $attributes['name'] : '' }},
 
 Use the code below to complete your authentication:
 
