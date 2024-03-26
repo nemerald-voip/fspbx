@@ -47,6 +47,8 @@ class HandleInertiaRequests extends Middleware
             'selectedDomainUuid' => Session::get('domain_uuid'),
 
             'domains' => Session::get("domains"),
+
+            'csrf_token' => csrf_token(),
             
         ]);
     }

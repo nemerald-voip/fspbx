@@ -1,6 +1,5 @@
 <template>
-    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission"
-        :selected-domain="selectedDomain" :selected-domain-uuid="selectedDomainUuid" :domains="domains">
+    <MainLayout>
 
 
         <main>
@@ -483,11 +482,11 @@ const props = defineProps({
         type: Object,
         default: () => ({}) // Providing an empty object as default
     },
-    menus: Array,
-    domainSelectPermission: Boolean,
-    selectedDomain: String,
-    selectedDomainUuid: String,
-    domains: Array,
+    // menus: Array,
+    // domainSelectPermission: Boolean,
+    // selectedDomain: String,
+    // selectedDomainUuid: String,
+    // domains: Array,
 })
 
 
