@@ -148,6 +148,10 @@ class UsersController extends Controller
      */
     public function edit(User $user)
     {
+        if(request()->hasHeader('X-Inertia')) {
+            return Inertia::location(route(request()->route()->getName()));
+        }
+
         //check permissions
 	    if (!userCheckPermission('user_edit')) {
             return redirect('/');
@@ -266,6 +270,8 @@ class UsersController extends Controller
         if(!empty($attributes['last_name'])){
             $attributes['username'] .= '_' . $attributes['last_name'];
         }
+
+        $attributes['user_email'] = strtolower(trim($attributes['user_email']));
 
         // Generate a secure password 
         $attributes['password'] = Hash::make(Str::random(25));
@@ -403,6 +409,7 @@ class UsersController extends Controller
         if(!empty($attributes['last_name'])){
             $attributes['username'] .= '_' . $attributes['last_name'];
         }
+        $attributes['user_email'] = strtolower(trim($attributes['user_email']));
         
         $attributes['add_user'] = Auth::user()->username;
         $user->update($attributes);    
