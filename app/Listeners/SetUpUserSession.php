@@ -219,7 +219,6 @@ class SetUpUserSession
                         'domain_enabled',
                         DB::Raw('coalesce(domain_description , domain_name) as domain_description')
                     ]);
-                logger($domains);
             } elseif (userCheckPermission("domain_select")) {
                 // $domains = DB::table('v_domains')
                 //     ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')

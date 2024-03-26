@@ -115,7 +115,6 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::twoFactorChallengeView(function () {
-            logger("challange");
             return Inertia::render('Auth/TwoFactorChallenge');
         });
 

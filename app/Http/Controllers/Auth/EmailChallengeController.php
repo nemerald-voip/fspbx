@@ -71,8 +71,6 @@ class EmailChallengeController extends Controller
                 'max:6',
                 function ($attribute, $value, $fail) {
                     if ((string) $value !== (string) session('code')) {
-                        logger($value);
-                        logger(session('code'));
                         $fail('Supplied authentication code is invalid.');
                     }
                     if (now()->greaterThan(session('code_expiration'))) {
@@ -96,7 +94,6 @@ class EmailChallengeController extends Controller
      */
     public function update(TwoFactorLoginRequest $request)
     {
-        logger('update');
         if ($request->hasChallengedUser()) {
             // erase previous values
             Session::forget('code');
