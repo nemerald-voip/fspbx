@@ -1,10 +1,10 @@
 <template>
-    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-          :selected-domain-uuid="selectedDomainUuid" :domains="domains" @reset-filters="handleFiltersReset"></Menu>
+    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+                :selected-domain-uuid="selectedDomainUuid" :domains="domains" />
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Devices</template>
+            <template #title>Phone Numbers</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -25,26 +25,12 @@
             <template #action>
                 <button type="button" :href="routeDevicesStore" @click.prevent="handleAdd()"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Add device
+                    Add number
                 </button>
-                <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Edit device
-                </button>
-                <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Restart selected devices
-                </button>
-                <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartAll()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Restart all devices
-                </button>
-
                 <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
-
                 <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -58,7 +44,7 @@
                            @pagination-change-page="renderRequestedPage"/>
             </template>
             <template #table-header>
-                <TableColumnHeader v-if="deviceRestartPermission" header=" "
+                <TableColumnHeader header=" "
                                    class="py-3.5 text-sm font-semibold text-gray-900 text-center">
                     <input type="checkbox" v-model="selectAll" @change="handleSelectAll"
                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -76,19 +62,14 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.device_uuid">
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
-                                v-if="deviceRestartPermission">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
                                :value="row.device_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                                 :text="row.domain_description">
-                        <ejs-tooltip :content="row.domain_name" position='TopLeft' target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                {{row.domain_description}}
-                            </div>
-                        </ejs-tooltip>
+                        {{row.domain_description}}
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex" :text="row.device_address">
                         <ejs-tooltip :content="'Click to edit device'" position='TopLeft' class="flex-initial cursor-pointer hover:text-gray-900" @click="handleEdit(row.edit_path)" target="#destination_tooltip_target">
@@ -96,7 +77,7 @@
                                 {{row.device_address}}
                             </div>
                         </ejs-tooltip>
-                        <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="flex-initial ml-2" @click="handleCopyMacAddress(row.device_address_tokenized)" target="#destination_tooltip_target">
+                        <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="flex-initial ml-2" target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 <ClipboardDocumentIcon class="h-4 w-4 text-black-500 hover:text-black-900 pt-1 cursor-pointer" />
                             </div>
@@ -116,19 +97,13 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit device'" position='TopLeft' target="#destination_tooltip_target">
+                                <ejs-tooltip :content="'Edit phone number'" position='TopLeft' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <DocumentTextIcon v-if="row.edit_path" @click="handleEdit(row.edit_path)"
                                                   class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip :content="'Restart device'" position='TopLeft' target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <ArrowPathIcon v-if="row.send_notify_path" @click="handleRestart(row.send_notify_path)"
-                                         class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
-                                    </div>
-                                </ejs-tooltip>
-                                <ejs-tooltip :content="'Remove device'" position='TopLeft' target="#destination_tooltip_target">
+                                <ejs-tooltip :content="'Remove phone number'" position='TopLeft' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <TrashIcon v-if="row.destroy_path" @click="handleDestroyConfirmation(row.destroy_path)"
                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
@@ -163,18 +138,6 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
-    <NotificationSimple
-        :show="restartRequestNotificationErrorTrigger"
-        :isSuccess="false"
-        :header="'Warning'"
-        :text="'Please select at least one device'"
-        @update:show="restartRequestNotificationErrorTrigger = false"/>
-    <NotificationSimple
-        :show="restartRequestNotificationSuccessTrigger"
-        :isSuccess="true"
-        :header="'Success'"
-        :text="'Restart request has been submitted'"
-        @update:show="restartRequestNotificationSuccessTrigger = false"/>
     <NotificationError
         :show="actionError"
         :errors="actionErrorsList"
@@ -183,7 +146,7 @@
     />
     <AddEditItemModal
         :show="addModalTrigger"
-        :header="'Add New Device'"
+        :header="'Add New PhoneNumber'"
         :loading="loadingModal"
         @close="handleClose"
     >
@@ -205,7 +168,7 @@
     </AddEditItemModal>
     <AddEditItemModal
         :show="editModalTrigger"
-        :header="'Edit Device'"
+        :header="'Edit Phone Number'"
         :loading="loadingModal"
         @close="handleClose"
     >
@@ -227,29 +190,6 @@
             </button>
         </template>
     </AddEditItemModal>
-    <AddEditItemModal
-        :show="bulkEditModalTrigger"
-        :header="'Bulk Edit Device'"
-        :loading="loadingModal"
-        @close="handleBulkClose"
-    >
-        <template #modal-body>
-            <BulkEditDeviceForm
-                :device="DeviceObject"
-                @update:show="bulkEditModalTrigger = false"
-            />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    @click="handleBulkSaveEdit" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="handleBulkClose" ref="cancelButtonRef">Cancel
-            </button>
-        </template>
-    </AddEditItemModal>
     <DeleteConfirmationModal
         :show="confirmationModalTrigger"
         @close="confirmationModalTrigger = false"
@@ -267,29 +207,25 @@
 import {computed, onMounted, reactive, ref} from "vue";
 import axios from 'axios';
 import {router} from "@inertiajs/vue3";
-import Menu from "./components/Menu.vue";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
 import NotificationError from "./components/notifications/Error.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
-import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
+import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
+import MainLayout from "../Layouts/MainLayout.vue";
 const today = new Date();
 
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
@@ -299,7 +235,6 @@ const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
-let tooltipCopyContent = ref('Click to copy MacAddress');
 
 const props = defineProps({
     data: Object,
@@ -359,18 +294,6 @@ const filterData = ref({
     showGlobal: props.deviceGlobalView,
 });
 
-const handleCopyMacAddress = (macAddress) => {
-    navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
-        setTimeout(() => {
-            tooltipCopyContent.value = 'Click to copy MacAddress'
-        }, 500);
-    }).catch((error) => {
-        // Handle the error case
-        console.error('Failed to copy mac address:', error);
-    });
-}
-
 const handleDestroy = (url) => {
     router.delete(url, {
         preserveScroll: true,
@@ -380,41 +303,6 @@ const handleDestroy = (url) => {
             confirmationModalTrigger.value = false;
             confirmationModalDestroyPath.value = null;
         }
-    });
-}
-
-const handleRestart = (url) => {
-    axios.post(url).then((response) => {
-        loading.value = false;
-        restartRequestNotificationSuccessTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to restart selected:', error);
-    });
-}
-
-const handleRestartSelected = () => {
-    if (selectedItemsExtensions.value.length > 0) {
-        let scope = showGlobal.value ? 'global' : 'local';
-        axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
-            extensionIds: selectedItemsExtensions.value,
-        }).then((response) => {
-            loading.value = false;
-            restartRequestNotificationSuccessTrigger.value = true;
-        }).catch((error) => {
-            console.error('Failed to restart selected:', error);
-        });
-    } else {
-        restartRequestNotificationErrorTrigger.value = true
-    }
-}
-
-const handleRestartAll = () => {
-    let scope = showGlobal.value ? 'global' : 'local';
-    axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`).then((response) => {
-        loading.value = false;
-        restartRequestNotificationSuccessTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to restart selected:', error);
     });
 }
 
@@ -461,23 +349,6 @@ const handleEdit = (url) => {
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
-}
-
-const handleBulkEdit = () => {
-    if (selectedItems.value.length > 0) {
-        bulkEditModalTrigger.value = true;
-        loadingModal.value = true;
-        axios.get(props.routeDevicesOptions).then((response) => {
-            DeviceObject.device_options.templates = response.data.templates
-            DeviceObject.device_options.profiles = response.data.profiles
-            DeviceObject.device_options.extensions = response.data.extensions
-            loadingModal.value = false
-        }).catch((error) => {
-            console.error('Failed to get device data:', error);
-        });
-    } else {
-        restartRequestNotificationErrorTrigger.value = true
-    }
 }
 
 const handleSearchButtonClick = () => {
@@ -581,22 +452,6 @@ const handleSaveEdit = () => {
         console.log(error.response.data.errors)
         if(error.response.data.errors.length > 0)  {
             handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
-}
-
-const handleBulkSaveEdit = () => {
-    axios.put(props.routeDevicesBulkUpdate, {
-        devices: selectedItems.value,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleBulkClose()
-    }).catch((error) => {
-        console.error('Failed to save device data:', error);
-        if(error.response.data.message)  {
-            handleErrorsPush(error.response.data.message)
         }
     });
 }

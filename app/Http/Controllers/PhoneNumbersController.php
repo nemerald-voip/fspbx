@@ -28,7 +28,7 @@ class PhoneNumbersController extends Controller
             return redirect('/');
         }
 
-        die('asdasdasd');
+       // die('asdasdasd');
 
         $this->filters = [];
 
@@ -50,7 +50,7 @@ class PhoneNumbersController extends Controller
             $vendor);
 
         return Inertia::render(
-            'phonenumbers',
+            'Phonenumbers',
             [
                 'data' => function () {
                     return $this->getPhoneNumbers();
@@ -88,9 +88,9 @@ class PhoneNumbersController extends Controller
      */
     public function getPhoneNumbers(): LengthAwarePaginator
     {
-        $devices = $this->builder($this->filters)->paginate(50);
-        foreach ($devices as $device) {
-            $device->device_address_tokenized = $device->device_address;
+        $phoneNumbers = $this->builder($this->filters)->paginate(50);
+        foreach ($phoneNumbers as $phoneNumber) {
+            /*$device->device_address_tokenized = $device->device_address;
             $device->device_address = formatMacAddress($device->device_address);
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
@@ -101,9 +101,9 @@ class PhoneNumbersController extends Controller
                     $device->lines()->first()->extension());
             }
             $device->edit_path = route('devices.edit', $device);
-            $device->destroy_path = route('devices.destroy', $device);
+            $device->destroy_path = route('devices.destroy', $device);*/
         }
-        return $devices;
+        return $phoneNumbers;
     }
 
     /**
@@ -112,8 +112,8 @@ class PhoneNumbersController extends Controller
      */
     public function builder(array $filters = []): Builder
     {
-        $devices = Devices::query();
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+        $phoneNumbers = Destinations::query();
+        /*if (isset($filters['showGlobal']) and $filters['showGlobal']) {
             $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid')
                 ->whereIn('v_domains.domain_uuid', Session::get('domains')->pluck('domain_uuid'));
         } else {
@@ -127,9 +127,9 @@ class PhoneNumbersController extends Controller
                     $this->$method($devices, $value);
                 }
             }
-        }
-        $devices->orderBy('device_label');
-        return $devices;
+        }*/
+       // $devices->orderBy('device_label');
+        return $phoneNumbers;
     }
 
     /**
