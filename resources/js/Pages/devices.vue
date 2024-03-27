@@ -1,6 +1,6 @@
 <template>
-    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-          :selected-domain-uuid="selectedDomainUuid" :domains="domains" @reset-filters="handleFiltersReset"></Menu>
+    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+                :selected-domain-uuid="selectedDomainUuid" :domains="domains">
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -282,6 +282,7 @@ import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
+import MainLayout from "../Layouts/MainLayout.vue";
 const today = new Date();
 
 const loading = ref(false)
