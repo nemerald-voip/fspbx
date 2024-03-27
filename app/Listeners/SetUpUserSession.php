@@ -220,17 +220,17 @@ class SetUpUserSession
                         DB::Raw('coalesce(domain_description , domain_name) as domain_description')
                     ]);
             } elseif (userCheckPermission("domain_select")) {
-                // $domains = DB::table('v_domains')
-                //     ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
-                //     ->where('v_domains.domain_enabled', '=', 't')
-                //     ->where('user_uuid', '=', $event->user->user_uuid)
-                //     ->get([
-                //         'v_domains.domain_uuid',
-                //         'v_domains.domain_parent_uuid',
-                //         'v_domains.domain_name',
-                //         'v_domains.domain_enabled',
-                //         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
-                //     ]);
+                $domains = DB::table('v_domains')
+                    ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
+                    ->where('v_domains.domain_enabled', '=', 't')
+                    ->where('user_uuid', '=', $event->user->user_uuid)
+                    ->get([
+                        'v_domains.domain_uuid',
+                        'v_domains.domain_parent_uuid',
+                        'v_domains.domain_name',
+                        'v_domains.domain_enabled',
+                        DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
+                    ]);
 
                 $domains_from_groups = DB::table('v_domains')
                     ->join('domain_group_relations', 'v_domains.domain_uuid', '=', 'domain_group_relations.domain_uuid')
@@ -252,25 +252,21 @@ class SetUpUserSession
                 //     }
                 // }
 
-                // // Sort returned collection
-                // $domains = $domains->sortBy('domain_description');
+                // Merge the two collections together
+                $combinedDomains = $domains->merge($domains_from_groups);
 
-                // Assuming $domains_from_groups is the result that ended up like your second example
-                // $normalizedDomains = collect($domains_from_groups)->values();
+                // Ensure uniqueness based on 'domain_uuid'
+                $uniqueDomains = $combinedDomains->unique('domain_uuid');
 
-                $domains = $domains_from_groups;
+                // Optionally, if you want to re-index the collection keys after making it unique
+                $domains = $uniqueDomains->values();
 
-                // foreach ($normalizedDomains as $domain) {
-                //     if (!$domains->contains('domain_uuid', $domain->domain_uuid)) {
-                //         $domains->push($domain);
-                //     }
-                // }
+                // Sort returned collection
+                $domains = $domains->sortBy('domain_description');
+                $domains = $domains->values();
 
-                // // Now $domains should be a collection with a consistent structure.
-                // // Sort returned collection
-                // $domains = $domains->sortBy('domain_description');
-                // logger($domains);
             }
+            // logger($domains);
 
             Session::put('domains', $domains);
 
@@ -282,7 +278,7 @@ class SetUpUserSession
 
         // Assign additional variables
         if (userCheckPermission("domain_select")) {
-            //if user is in the reseller group check if he is allowed to see his own domain
+            //if user is a multi-domain admin check if he is allowed to see his own domain
             $self_domain = false;
             if (Session::get('domains')) {
                 foreach (Session::get('domains') as $session_domain) {
