@@ -58,6 +58,7 @@ class DomainController extends Controller
                 $url = $request->redirect_url;
             } else {
                 $url = getFusionPBXPreviousURL(url()->previous());
+                $url = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . parse_url($url, PHP_URL_PATH);
             }
 
             return response()->json([
