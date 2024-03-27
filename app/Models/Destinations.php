@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 class Destinations extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
-    
+
     protected $table = "v_destinations";
 
     public $timestamps = false;
@@ -55,4 +58,45 @@ class Destinations extends Model
         'destination_description',
         'group_uuid',
     ];
+
+    public function getDestinationNumberAttribute($value): ?string
+    {
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+        //try to convert phone number to National format
+        try {
+            $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
+            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                return $phoneNumberUtil
+                    ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+            } else {
+                return $value;
+            }
+        } catch (NumberParseException $e) {
+
+            // Do nothing and leave the number as is
+            return $value;
+        }
+    }
+
+    public function getDestinationCallerIdNumberAttribute($value): ?string
+    {
+        //Get libphonenumber object
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+        //try to convert phone number to National format
+        try {
+            $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
+            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                return $phoneNumberUtil
+                    ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+            } else {
+                return $value;
+            }
+        } catch (NumberParseException $e) {
+            // Do nothing and leave the number as is
+            return $value;
+        }
+    }
 }

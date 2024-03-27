@@ -64,9 +64,6 @@ class PhoneNumbersController extends Controller
                 'domains' => function () {
                     return Session::get("domains");
                 },
-                'deviceRestartPermission' => function () {
-                    return isSuperAdmin();
-                },
                 'selectedDomain' => function () {
                     return Session::get('domain_name');
                 },
@@ -74,11 +71,11 @@ class PhoneNumbersController extends Controller
                     return Session::get('domain_uuid');
                 },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
-                'routeDevicesStore' => route('devices.store'),
-                'routeDevicesOptions' => route('devices.options'),
-                'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
-                'routeDevices' => route('devices.index'),
-                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
+               // 'routePhoneNumbersStore' => route('phone-numbers.store'),
+                //'routeDevicesOptions' => route('devices.options'),
+                //'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
+                'routePhoneNumbers' => route('phone-numbers.index'),
+                //'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
         );
     }
@@ -113,23 +110,38 @@ class PhoneNumbersController extends Controller
     public function builder(array $filters = []): Builder
     {
         $phoneNumbers = Destinations::query();
-        /*if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid')
+        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+            $phoneNumbers->join('v_domains', 'v_domains.domain_uuid', '=', 'v_destinations.domain_uuid')
                 ->whereIn('v_domains.domain_uuid', Session::get('domains')->pluck('domain_uuid'));
         } else {
-            $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
+            $phoneNumbers->where('v_destinations.domain_uuid', Session::get('domain_uuid'));
         }
-        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=',
-            'v_devices.device_profile_uuid');
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
-                    $this->$method($devices, $value);
+                    $this->$method($phoneNumbers, $value);
                 }
             }
-        }*/
-       // $devices->orderBy('device_label');
+        }
+        $phoneNumbers->orderBy('destination_number');
         return $phoneNumbers;
+    }
+
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value): void
+    {
+        if ($value !== null) {
+            // Case-insensitive partial string search in the specified fields
+            $query->where(function ($query) use ($value) {
+                $query->where('destination_number', 'ilike', '%'.$value.'%')
+                    ->orWhere('destination_caller_id_number', 'ilike', '%'.$value.'%')
+                    ->orWhere('destination_caller_id_name', 'ilike', '%'.$value.'%');
+            });
+        }
     }
 
     /**

@@ -23,7 +23,7 @@
             </template>
 
             <template #action>
-                <button type="button" :href="routeDevicesStore" @click.prevent="handleAdd()"
+                <button type="button" :href="routePhoneNumbersStore" @click.prevent="handleAdd()"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add number
                 </button>
@@ -51,49 +51,29 @@
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="MAC Address"
-                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Assigned extension"
+                <TableColumnHeader header="Phone Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Caller ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Actions"
                                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.device_uuid">
+                <tr v-for="row in data.data" :key="row.destination_uuid">
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
-                        <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.device_uuid"
+                        <input v-model="selectedItems" type="checkbox" name="action_box[]"
+                               :value="row.destination_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                                :text="row.domain_description">
-                        {{row.domain_description}}
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex" :text="row.device_address">
-                        <ejs-tooltip :content="'Click to edit device'" position='TopLeft' class="flex-initial cursor-pointer hover:text-gray-900" @click="handleEdit(row.edit_path)" target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                {{row.device_address}}
-                            </div>
-                        </ejs-tooltip>
-                        <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="flex-initial ml-2" target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                <ClipboardDocumentIcon class="h-4 w-4 text-black-500 hover:text-black-900 pt-1 cursor-pointer" />
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template"/>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_profile_name"/>
+                                :text="row.domain_description" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ejs-tooltip :content="'Click to edit extension'" position='TopLeft' target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                <a class="hover:text-gray-900 cursor-pointer block" v-if="row.extension_edit_path" :href="row.extension_edit_path">
-                                    {{ row.extension }} {{row.extension_description}}
-                                </a>
-                            </div>
-                        </ejs-tooltip>
+                        <span v-if="row.destination_type === 'inbound'" class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Inbound</span>
+                        <span v-if="row.destination_type === 'outbound'" class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Outbound</span>
+                        {{row.destination_number}}
                     </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_caller_id_name"/>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"  />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
@@ -241,20 +221,19 @@ const props = defineProps({
     menus: Array,
     domains: Array,
     domainSelectPermission: Boolean,
-    deviceRestartPermission: Boolean,
     deviceGlobalView: Boolean,
     selectedDomain: String,
     selectedDomainUuid: String,
     search: String,
-    routeDevicesStore: String,
-    routeDevicesOptions: String,
-    routeDevicesBulkUpdate: String,
-    routeDevices: String,
-    routeSendEventNotifyAll: String
+   // routeDevicesStore: String,
+   // routeDevicesOptions: String,
+   // routeDevicesBulkUpdate: String,
+    routePhoneNumbers: String,
+   // routeSendEventNotifyAll: String
 });
 
 let DeviceObject = reactive({
-    update_path: props.routeDevicesStore,
+    update_path: props.routePhoneNumbersStore,
     domain_uuid: '',
     device_uuid: '',
     device_address: '',
@@ -319,8 +298,8 @@ const handleShowLocal = () => {
 }
 
 const handleAdd = () => {
-    DeviceObject.update_path = props.routeDevicesStore;
-    axios.get(props.routeDevicesOptions).then((response) => {
+    DeviceObject.update_path = props.routePhoneNumbersStore;
+    axios.get(props.routePhoneNumbersOptions).then((response) => {
         DeviceObject.device_options.templates = response.data.templates
         DeviceObject.device_options.profiles = response.data.profiles
         DeviceObject.device_options.extensions = response.data.extensions
@@ -353,7 +332,7 @@ const handleEdit = (url) => {
 
 const handleSearchButtonClick = () => {
     loading.value = true;
-    router.visit(props.routeDevices, {
+    router.visit(props.routePhoneNumbers, {
         data: {
             filterData: filterData._rawValue,
         },
@@ -390,7 +369,7 @@ const handleErrorsPush = (message, errors = null) => {
 
 const handleDeviceObjectReset = () => {
     DeviceObject = reactive({
-        update_path: props.routeDevicesStore,
+        update_path: props.routePhoneNumbersStore,
         domain_uuid: '',
         device_uuid: '',
         device_address: '',
@@ -421,7 +400,7 @@ const renderRequestedPage = (url) => {
 };
 
 const handleSaveAdd = () => {
-    axios.post(props.routeDevicesStore, {
+    axios.post(props.routePhoneNumbersStore, {
         device_address: DeviceObject.device_address,
         device_template: DeviceObject.device_template,
         device_profile_uuid: DeviceObject.device_profile_uuid,
