@@ -235,7 +235,7 @@ const props = defineProps({
 let DeviceObject = reactive({
     update_path: props.routePhoneNumbersStore,
     domain_uuid: '',
-    device_uuid: '',
+    destination_uuid: '',
     device_address: '',
     extension_uuid: '',
     device_profile_uuid: '',
@@ -253,14 +253,14 @@ onMounted(() => {
 
 const selectedItemsExtensions = computed(() => {
     return selectedItems.value.map(id => {
-        const foundItem = props.data.data.find(item => item.device_uuid === id);
+        const foundItem = props.data.data.find(item => item.destination_uuid === id);
         return foundItem ? foundItem.extension_uuid : null;
     });
 });
 
 const handleSelectAll = () => {
     if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItems.value = props.data.data.map(item => item.destination_uuid);
         selectedItemsExtensions.value = props.data.data.map(item => item.extension_uuid);
     } else {
         selectedItems.value = [];
@@ -316,7 +316,7 @@ const handleEdit = (url) => {
     axios.get(url).then((response) => {
         DeviceObject.domain_uuid = response.data.device.domain_uuid
         DeviceObject.update_path = response.data.device.update_path
-        DeviceObject.device_uuid = response.data.device.device_uuid
+        DeviceObject.destination_uuid = response.data.device.destination_uuid
         DeviceObject.device_address = response.data.device.device_address
         DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
         DeviceObject.device_template = response.data.device.device_template
@@ -371,7 +371,7 @@ const handleDeviceObjectReset = () => {
     DeviceObject = reactive({
         update_path: props.routePhoneNumbersStore,
         domain_uuid: '',
-        device_uuid: '',
+        destination_uuid: '',
         device_address: '',
         extension_uuid: '',
         device_profile_uuid: '',
