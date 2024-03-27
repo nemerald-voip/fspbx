@@ -63,10 +63,10 @@ class ExtensionsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $searchString = $request->get('search');
 
@@ -755,10 +755,10 @@ class ExtensionsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $devices = Devices::where('device_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))

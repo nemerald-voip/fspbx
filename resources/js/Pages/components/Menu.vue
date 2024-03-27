@@ -1,4 +1,3 @@
-
 <template>
     <Disclosure as="nav" class="bg-white shadow" v-slot="{ open }">
         <div class="mx-auto max-w-9xl px-4 sm:px-6 lg:px-8">
@@ -19,7 +18,7 @@
                     </div>
                     <div class="hidden lg:ml-6 lg:flex lg:space-x-4">
 
-                        <div v-for="item in menus" :key="menus.menu_item_id" class="inline-flex items-center">
+                        <div v-for="item in page.props.menus" :key="page.props.menus.menu_item_id" class="inline-flex items-center">
                             <Menu as="div" class="">
                                 <MenuButton
                                     class="inline-flex  border-none text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer">
@@ -35,7 +34,7 @@
                                     leave-from-class="transform opacity-100 scale-100"
                                     leave-to-class="transform opacity-0 scale-95">
                                     <MenuItems
-                                        class="absolute mt-1 shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                        class="absolute mt-1 shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                                         <div v-for="child in item.child_menu" :key="child.menu_item_uuid">
                                             <MenuItem v-slot="{ active }">
                                             <a :href="child.menu_item_link"
@@ -52,12 +51,13 @@
                 </div>
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <button type="button" @click="openDomainPanel"
+                        <button v-if="page.props.domainSelectPermission" type="button" @click="openDomainPanel"
                             class="relative inline-flex items-center gap-x-1.5 rounded-md  px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer ">
-                            <span class="hidden sm:block lg:hidden xl:block">{{ selectedDomain }}</span> <!-- Hide text on small screens -->
+                            <span class="hidden sm:block lg:hidden xl:block">{{ page.props.selectedDomain }}</span>
+                            <!-- Hide text on small screens -->
 
-                            <svg class="h-5 w-5 sm:hidden lg:block xl:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
-                                height="24"  fill="none" stroke="currentColor"
+                            <svg class="h-5 w-5 sm:hidden lg:block xl:hidden" xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
                                 stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                                 <circle cx="12" cy="12" r="10" />
                                 <line x1="2" x2="22" y1="12" y2="12" />
@@ -77,10 +77,10 @@
                 <ul role="list" class="flex flex-1 flex-col gap-y-7 mx-3">
                     <li>
                         <ul role="list" class="-mx-2 space-y-1">
-                            <li v-for="item in menus" :key="menus.menu_item_id">
+                            <li v-for="item in page.props.menus" :key="page.props.menus.menu_item_id">
                                 <a v-if="!item.child_menu" :href="item.href"
                                     :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{
-                                        item.menu_item_title }}</a>
+        item.menu_item_title }}</a>
                                 <Disclosure as="div" v-else v-slot="{ open }">
                                     <DisclosureButton
                                         :class="'hover:bg-gray-50 flex items-center w-full text-left rounded-md p-2 gap-x-3 text-sm leading-6 font-semibold text-gray-700'">
@@ -113,10 +113,11 @@
             <div class="fixed inset-0 overflow-hidden">
                 <div class="absolute inset-0 overflow-hidden">
                     <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
-                        <TransitionChild as="template" enter="transform transition ease-in-out duration-500 sm:duration-700"
+                        <TransitionChild as="template"
+                            enter="transform transition ease-in-out duration-500 sm:duration-700"
                             enter-from="translate-x-full" enter-to="translate-x-0"
-                            leave="transform transition ease-in-out duration-500 sm:duration-700" leave-from="translate-x-0"
-                            leave-to="translate-x-full">
+                            leave="transform transition ease-in-out duration-500 sm:duration-700"
+                            leave-from="translate-x-0" leave-to="translate-x-full">
                             <DialogPanel class="pointer-events-auto w-screen max-w-md">
                                 <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
                                     <div class="px-4 sm:px-6">
@@ -151,9 +152,9 @@
                                                     class="cursor-pointer no-underline">
 
                                                     <div class="flex flex-col p-2 border-b border-gray-200 "
-                                                        :class="selectedDomainUuid === domain.domain_uuid ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-300'">
+                                                        :class="page.props.selectedDomainUuid === domain.domain_uuid ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-300'">
                                                         <div class="text-base font-semibold mb-0">{{
-                                                            domain.domain_description }}</div>
+        domain.domain_description }}</div>
                                                         <div class="text-xs text-muted">{{ domain.domain_name }}</div>
                                                     </div>
                                                 </a>
@@ -172,22 +173,14 @@
 
 <script setup>
 import { ref, computed, defineEmits } from 'vue';
-
+import { usePage } from '@inertiajs/vue3'
 
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, } from '@headlessui/vue'
 
-
-const props = defineProps({
-    menus: Array,
-    domainSelectPermission: Boolean,
-    selectedDomain: String,
-    selectedDomainUuid: String,
-    domains: Array
-});
-
+const page = usePage()
 
 const isDomainPanelVisible = ref(false);
 
@@ -204,11 +197,10 @@ const logoUrl = ref('/storage/logo.png');
 const emit = defineEmits(['reset-filters']);
 
 const selectDomain = async (domainUuid) => {
-
     try {
         const response = await axios.post('/domains/switch', {
             domain_uuid: domainUuid,
-            redirect_url: '/devices'
+            _token: page.props.csrf_token,
         });
         emit('reset-filters');
 
@@ -222,9 +214,9 @@ const selectDomain = async (domainUuid) => {
 
 const filteredDomains = computed(() => {
     if (!searchQuery.value) {
-        return props.domains;
+        return page.props.domains;
     }
-    return props.domains.filter(domain =>
+    return page.props.domains.filter(domain =>
         domain.domain_description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         domain.domain_name.toLowerCase().includes(searchQuery.value.toLowerCase())
     );

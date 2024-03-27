@@ -4,18 +4,18 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
+use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Groups;
 use App\Models\Contact;
-use App\Models\DomainGroups;
 use App\Models\UserGroup;
 use App\Models\UserSetting;
 use Illuminate\Support\Str;
+use App\Models\DomainGroups;
 use Illuminate\Http\Request;
 use App\Models\UserAdvFields;
 use Illuminate\Validation\Rule;
 use App\Models\GroupPermissions;
-use App\Models\UserDomainGroupPermissions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserDomainPermission;
@@ -27,6 +27,7 @@ use function PHPUnit\Framework\isNull;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use App\Models\UserDomainGroupPermissions;
 
 class UsersController extends Controller
 {
@@ -47,6 +48,9 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
+        if($request->hasHeader('X-Inertia')) {
+            return Inertia::location(route($request->route()->getName()));
+        }
 
         // Check permissions
         if (!userCheckPermission("user_view")){
@@ -144,6 +148,10 @@ class UsersController extends Controller
      */
     public function edit(User $user)
     {
+        if(request()->hasHeader('X-Inertia')) {
+            return Inertia::location(route(request()->route()->getName()));
+        }
+
         //check permissions
 	    if (!userCheckPermission('user_edit')) {
             return redirect('/');
@@ -262,6 +270,8 @@ class UsersController extends Controller
         if(!empty($attributes['last_name'])){
             $attributes['username'] .= '_' . $attributes['last_name'];
         }
+
+        $attributes['user_email'] = strtolower(trim($attributes['user_email']));
 
         // Generate a secure password 
         $attributes['password'] = Hash::make(Str::random(25));
@@ -399,6 +409,7 @@ class UsersController extends Controller
         if(!empty($attributes['last_name'])){
             $attributes['username'] .= '_' . $attributes['last_name'];
         }
+        $attributes['user_email'] = strtolower(trim($attributes['user_email']));
         
         $attributes['add_user'] = Auth::user()->username;
         $user->update($attributes);    

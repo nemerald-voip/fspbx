@@ -34,10 +34,10 @@ class DomainController extends Controller
         // If current domain is not the same as requested domain proceed with the change
         if (Session::get('domain_uuid') != $domain->uuid) {
             //Check FusionPBX login status
-            session_start();
-            if (!isset($_SESSION['user'])) {
-                return redirect()->route('logout');
-            }
+            // session_start();
+            // if(!isset($_SESSION['user'])) {
+            //     return redirect()->route('logout');
+            // }
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
             Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);
@@ -58,6 +58,7 @@ class DomainController extends Controller
                 $url = $request->redirect_url;
             } else {
                 $url = getFusionPBXPreviousURL(url()->previous());
+                $url = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . parse_url($url, PHP_URL_PATH);
             }
 
             return response()->json([
@@ -81,8 +82,10 @@ class DomainController extends Controller
         $domain = Domain::where('domain_uuid', $domain_uuid)->first();
 
         // If current domain is not the same as requested domain proceed with the change
-        if (Session::get('domain_uuid') != $domain->uuid) {
-            session_start();
+        if (Session::get('domain_uuid') != $domain->uuid){
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            };
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
             Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);

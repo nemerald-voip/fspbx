@@ -99,7 +99,7 @@ async function getConfig() {
         resolve: {
             alias: {
                 '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
-                '@modules' : path.resolve(__dirname + '/modules')
+                '@modules' : path.resolve(__dirname + '/modules'),
             }
         }
     });

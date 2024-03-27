@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use App\Models\Traits\Fortify\EmailChallengable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid;
+    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid, TwoFactorAuthenticatable, EmailChallengable;
 
     protected $table = "v_users";
 
@@ -67,16 +67,16 @@ class User extends Authenticatable
     public function extensions()
     {
         $extensions = DB::table('v_extensions')
-        -> join ('v_extension_users', 'v_extension_users.extension_uuid', '=', 'v_extensions.extension_uuid')
-            -> where ('v_extension_users.user_uuid', '=', $this->user_uuid)
-                -> get([
-                    'v_extensions.extension_uuid',
-                    'v_extensions.extension',
-                    'v_extensions.outbound_caller_id_number',
-                    'v_extensions.user_context',
-                    'v_extensions.description',
-                ]);
-     
+            ->join('v_extension_users', 'v_extension_users.extension_uuid', '=', 'v_extensions.extension_uuid')
+            ->where('v_extension_users.user_uuid', '=', $this->user_uuid)
+            ->get([
+                'v_extensions.extension_uuid',
+                'v_extensions.extension',
+                'v_extensions.outbound_caller_id_number',
+                'v_extensions.user_context',
+                'v_extensions.description',
+            ]);
+
         return $extensions;
     }
 
@@ -85,19 +85,19 @@ class User extends Authenticatable
         return $this->user_email;
     }
 
-    
+
     public function contact()
     {
-        return $this->belongsTo(Contact::class,'contact_uuid','contact_uuid');
+        return $this->belongsTo(Contact::class, 'contact_uuid', 'contact_uuid');
     }
-    
+
     /**
      * Get the all group the user belongs to
      *  returns Eloqeunt Object
      */
     public function user_groups()
     {
-        return $this->hasMany(UserGroup::class,'user_uuid','user_uuid');
+        return $this->hasMany(UserGroup::class, 'user_uuid', 'user_uuid');
     }
 
     /**
@@ -113,36 +113,40 @@ class User extends Authenticatable
         }
 
         return $groups;
-
     }
-
-    // /**
-    //  * Get a collection of all domains for reseller
-    //  */
-    // public function reseller_domains()
-    // {
-    //     $domain_uuids = UserDomainPermission::where('user_uuid', $this->user_uuid)->get();
-
-    //     $domains = collect();
-    //     foreach ($domain_uuids as $domain_uuid) {
-    //         $domains->push($domain_uuid->domain);
-    //     }
-
-    //     return $domains;
-
-    // }
 
     /**
      * Get all of user's advanced fields such as first name and last name stored in a separate table.
      */
     public function user_adv_fields()
     {
-        return $this->hasOne(UserAdvFields::class,'user_uuid','user_uuid');
+        return $this->hasOne(UserAdvFields::class, 'user_uuid', 'user_uuid');
     }
 
-     public function setting()
+    public function getTwoFactorSecretAttribute()
     {
-        return $this->hasMany(UserSetting::class,'user_uuid','user_uuid');
+        // Attempt to load the two_factor_secret from UserAdvFields if not loaded already.
+        // This uses lazy loading; consider eager loading in the query if performance is a concern.
+        return $this->user_adv_fields->two_factor_secret ?? null;
+    }
+
+    public function getTwoFactorConfirmedAtAttribute()
+    {
+        // Attempt to load the two_factor_confirmed_at from UserAdvFields if not loaded already.
+        // This uses lazy loading; consider eager loading in the query if performance is a concern.
+        return $this->user_adv_fields->two_factor_confirmed_at ?? null;
+    }
+
+    public function getTwoFactorRecoveryCodesAttribute()
+    {
+        // Attempt to load the two_factor_recovery_codes from UserAdvFields if not loaded already.
+        // This uses lazy loading; consider eager loading in the query if performance is a concern.
+        return $this->user_adv_fields->two_factor_recovery_codes ?? null;
+    }
+
+    public function setting()
+    {
+        return $this->hasMany(UserSetting::class, 'user_uuid', 'user_uuid');
     }
 
     /**
@@ -150,7 +154,7 @@ class User extends Authenticatable
      */
     public function domain()
     {
-        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
     /**
@@ -158,7 +162,7 @@ class User extends Authenticatable
      */
     public function domain_permissions()
     {
-        return $this->hasMany(UserDomainPermission::class,'user_uuid','user_uuid');
+        return $this->hasMany(UserDomainPermission::class, 'user_uuid', 'user_uuid');
     }
 
     /**
@@ -166,7 +170,6 @@ class User extends Authenticatable
      */
     public function domain_group_permissions()
     {
-        return $this->hasMany(UserDomainGroupPermissions::class,'user_uuid','user_uuid');
+        return $this->hasMany(UserDomainGroupPermissions::class, 'user_uuid', 'user_uuid');
     }
-
 }

@@ -103,6 +103,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         $data['first_name'] = trim($data['first_name']);
         $data['last_name'] = trim($data['last_name']);
         $data['description'] = trim($data['description']);
+        $data['device_vendor'] = trim($data['device_vendor']);
+        $data['device_template'] = trim($data['device_template']);
         $data['email'] = strtolower(trim($data['email']));
         $data['outbound_caller_id_number'] = trim($data['outbound_caller_id_number']);
         return $data;
@@ -196,6 +198,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                     'server_address' => Session::get('domain_name'),
                     'server_address_primary' => get_domain_setting('server_address_primary'),
                     'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
                     'display_name' => $row['extension'],
                     'user_id' => $row['extension'],
                     'auth_id' => $row['extension'],
