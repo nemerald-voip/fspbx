@@ -71,7 +71,7 @@ class PhoneNumbersController extends Controller
                     return Session::get('domain_uuid');
                 },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
-               // 'routePhoneNumbersStore' => route('phone-numbers.store'),
+                'routePhoneNumbersStore' => route('phone-numbers.store'),
                 //'routeDevicesOptions' => route('devices.options'),
                 //'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
                 'routePhoneNumbers' => route('phone-numbers.index'),
@@ -96,9 +96,9 @@ class PhoneNumbersController extends Controller
                 $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
                 $device->send_notify_path = route('extensions.send-event-notify',
                     $device->lines()->first()->extension());
-            }
-            $device->edit_path = route('devices.edit', $device);
-            $device->destroy_path = route('devices.destroy', $device);*/
+            }*/
+            $phoneNumber->edit_path = route('phone-numbers.edit', $phoneNumber);
+            $phoneNumber->destroy_path = route('phone-numbers.destroy', $phoneNumber);
         }
         return $phoneNumbers;
     }

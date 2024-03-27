@@ -49,12 +49,11 @@
                     <input type="checkbox" v-model="selectAll" @change="handleSelectAll"
                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                 </TableColumnHeader>
-                <TableColumnHeader v-if="showGlobal" header="Domain"
-                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader v-if="showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Phone Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Caller ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Actions"
-                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Caller ID Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Caller ID Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Actions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
             </template>
 
@@ -70,9 +69,11 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <span v-if="row.destination_type === 'inbound'" class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Inbound</span>
                         <span v-if="row.destination_type === 'outbound'" class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Outbound</span>
+                        <span v-if="row.destination_type === 'local'" class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Local</span>
                         {{row.destination_number}}
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_caller_id_name"/>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_caller_id_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_caller_id_number" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"  />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -126,13 +127,13 @@
     />
     <AddEditItemModal
         :show="addModalTrigger"
-        :header="'Add New PhoneNumber'"
+        :header="'Add New Number'"
         :loading="loadingModal"
         @close="handleClose"
     >
         <template #modal-body>
-            <AddEditDeviceForm
-                :device="DeviceObject"
+            <AddEditPhoneNumberForm
+                :phoneNumber="PhoneNumberObject"
             />
         </template>
         <template #modal-action-buttons>
@@ -148,13 +149,13 @@
     </AddEditItemModal>
     <AddEditItemModal
         :show="editModalTrigger"
-        :header="'Edit Phone Number'"
+        :header="'Edit Number'"
         :loading="loadingModal"
         @close="handleClose"
     >
         <template #modal-body>
-            <AddEditDeviceForm
-                :device="DeviceObject"
+            <AddEditPhoneNumberForm
+                :phoneNumber="PhoneNumberObject"
                 :isEdit="true"
                 @update:show="editModalTrigger = false"
             />
@@ -194,10 +195,10 @@ import Paginator from "./components/general/Paginator.vue";
 import NotificationError from "./components/notifications/Error.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
+import AddEditPhoneNumberForm from "./components/forms/AddEditPhoneNumberForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
-import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
+import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 const today = new Date();
@@ -225,26 +226,20 @@ const props = defineProps({
     selectedDomain: String,
     selectedDomainUuid: String,
     search: String,
-   // routeDevicesStore: String,
+    routePhoneNumbersStore: String,
    // routeDevicesOptions: String,
    // routeDevicesBulkUpdate: String,
     routePhoneNumbers: String,
    // routeSendEventNotifyAll: String
 });
 
-let DeviceObject = reactive({
+let PhoneNumberObject = reactive({
     update_path: props.routePhoneNumbersStore,
     domain_uuid: '',
     destination_uuid: '',
-    device_address: '',
-    extension_uuid: '',
-    device_profile_uuid: '',
-    device_template: '',
-    device_options: {
-        templates: Array,
-        profiles: Array,
-        extensions: Array
-    }
+    destination_number: '',
+    destination_caller_id_name: '',
+    destination_caller_id_number: ''
 });
 
 onMounted(() => {
@@ -298,32 +293,31 @@ const handleShowLocal = () => {
 }
 
 const handleAdd = () => {
-    DeviceObject.update_path = props.routePhoneNumbersStore;
+    PhoneNumberObject.update_path = props.routePhoneNumbersStore;
+    loadingModal.value = false
+    addModalTrigger.value = true;
+    /*
     axios.get(props.routePhoneNumbersOptions).then((response) => {
-        DeviceObject.device_options.templates = response.data.templates
-        DeviceObject.device_options.profiles = response.data.profiles
-        DeviceObject.device_options.extensions = response.data.extensions
+        PhoneNumberObject.device_options.templates = response.data.templates
+        PhoneNumberObject.device_options.profiles = response.data.profiles
+        PhoneNumberObject.device_options.extensions = response.data.extensions
         loadingModal.value = false
         addModalTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to get device data:', error);
-    });
+    });*/
 }
 
 const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
     axios.get(url).then((response) => {
-        DeviceObject.domain_uuid = response.data.device.domain_uuid
-        DeviceObject.update_path = response.data.device.update_path
-        DeviceObject.destination_uuid = response.data.device.destination_uuid
-        DeviceObject.device_address = response.data.device.device_address
-        DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
-        DeviceObject.device_template = response.data.device.device_template
-        DeviceObject.extension_uuid = response.data.device.extension_uuid
-        DeviceObject.device_options.templates = response.data.device.options.templates
-        DeviceObject.device_options.profiles = response.data.device.options.profiles
-        DeviceObject.device_options.extensions = response.data.device.options.extensions
+        PhoneNumberObject.domain_uuid = response.data.phonenumber.domain_uuid
+        PhoneNumberObject.update_path = response.data.phonenumber.update_path
+        PhoneNumberObject.destination_uuid = response.data.phonenumber.destination_uuid
+        PhoneNumberObject.destination_number = response.data.phonenumber.destination_number
+        PhoneNumberObject.destination_caller_id_name = response.data.phonenumber.destination_caller_id_name
+        PhoneNumberObject.destination_caller_id_number = response.data.phonenumber.destination_caller_id_number
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);
@@ -367,20 +361,14 @@ const handleErrorsPush = (message, errors = null) => {
     actionErrorMessage.value = message;
 }
 
-const handleDeviceObjectReset = () => {
-    DeviceObject = reactive({
+const handlePhoneNumberObjectReset = () => {
+    PhoneNumberObject = reactive({
         update_path: props.routePhoneNumbersStore,
         domain_uuid: '',
         destination_uuid: '',
-        device_address: '',
-        extension_uuid: '',
-        device_profile_uuid: '',
-        device_template: '',
-        device_options: {
-            templates: Array,
-            profiles: Array,
-            extensions: Array
-        }
+        destination_number: '',
+        destination_caller_id_name: '',
+        destination_caller_id_number: ''
     });
 }
 
@@ -401,15 +389,14 @@ const renderRequestedPage = (url) => {
 
 const handleSaveAdd = () => {
     axios.post(props.routePhoneNumbersStore, {
-        device_address: DeviceObject.device_address,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid,
-        extension_uuid: DeviceObject.extension_uuid
+        destination_number: PhoneNumberObject.destination_number,
+        destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
+        destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
     }).then((response) => {
         handleSearchButtonClick()
         handleClose()
     }).catch((error) => {
-        console.error('Failed to add device data:', error);
+        console.error('Failed to add phone number data:', error);
         if(error.response.data.errors)  {
             handleErrorsPush(error.response.data.message, error.response.data.errors)
         }
@@ -417,17 +404,16 @@ const handleSaveAdd = () => {
 }
 
 const handleSaveEdit = () => {
-    axios.put(DeviceObject.update_path, {
-        domain_uuid: DeviceObject.domain_uuid,
-        device_address: DeviceObject.device_address,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid,
-        extension_uuid: DeviceObject.extension_uuid
+    axios.put(PhoneNumberObject.update_path, {
+        domain_uuid: PhoneNumberObject.domain_uuid,
+        destination_number: PhoneNumberObject.destination_number,
+        destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
+        destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
     }).then((response) => {
         handleSearchButtonClick()
         handleClose()
     }).catch((error) => {
-        console.error('Failed to save device data:', error);
+        console.error('Failed to save phone number data:', error);
         console.log(error.response.data.errors)
         if(error.response.data.errors.length > 0)  {
             handleErrorsPush(error.response.data.message, error.response.data.errors)
@@ -438,12 +424,12 @@ const handleSaveEdit = () => {
 const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
+    setTimeout(handlePhoneNumberObjectReset, 1000)
 }
 
 const handleBulkClose = () => {
     bulkEditModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
+    setTimeout(handlePhoneNumberObjectReset, 1000)
 }
 
 const handleDestroyConfirmation = (url) => {
