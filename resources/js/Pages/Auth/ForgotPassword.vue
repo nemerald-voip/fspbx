@@ -25,15 +25,13 @@
                         <div class="mt-2">
                             <input v-model="form.user_email" id="user_email" name="user_email" type="email"
                                 autocomplete="email" required
-                                :class="['block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6', { 'ring-1 ring-inset ring-red-600': errors.user_email, 'ring-1 ring-inset ring-gray-300': !errors.user_email }]" />
+                                :class="['block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6', { 'ring-1 ring-inset ring-red-600': errors.email, 'ring-1 ring-inset ring-gray-300': !errors.email }]" />
                         </div>
                         <!-- Error message for user_email -->
-                        <div v-if="errors.user_email" class="mt-2 text-sm text-red-600">
-                            {{ errors.user_email }}
+                        <div v-if="errors.email" class="mt-2 text-sm text-red-600">
+                            {{ errors.email }}
                         </div>
                     </div>
-
-
 
                     <div>
                         <button @click.prevent="submitForm" type="submit"
@@ -95,7 +93,10 @@ const submitForm = () => {
     form.post(props.links['password-email'],{
         onFinish: () => {
             isLoading.value = false;
-        }
+        },
+        onError: (errors) => {
+            // console.log(errors);
+        },
     }
     );
 
