@@ -32,7 +32,7 @@ class PhoneNumbersController extends Controller
             return redirect('/');
         }
 
-       // die('asdasdasd');
+        // die('asdasdasd');
 
         $this->filters = [];
 
@@ -73,6 +73,22 @@ class PhoneNumbersController extends Controller
                 },
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
+                },
+                'destinationTypes' => function () {
+                    return [
+                        [
+                            "name" => "inbound",
+                            "value" => "Inbound"
+                        ],
+                        [
+                            "name" => "outbound",
+                            "value" => "Outbound"
+                        ],
+                        [
+                            "name" => "local",
+                            "value" => "Local"
+                        ]
+                    ];
                 },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routePhoneNumbersStore' => route('phone-numbers.store'),

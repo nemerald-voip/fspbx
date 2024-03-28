@@ -226,6 +226,7 @@ const props = defineProps({
     selectedDomain: String,
     selectedDomainUuid: String,
     search: String,
+    destinationTypes: Array,
     routePhoneNumbersStore: String,
    // routeDevicesOptions: String,
    // routeDevicesBulkUpdate: String,
@@ -241,15 +242,12 @@ let PhoneNumberObject = reactive({
     destination_number: '',
     destination_caller_id_name: '',
     destination_caller_id_number: '',
-    destination_types: {
-        inbound: 'Inbound',
-        outbound: 'Outbound',
-        local: 'Local',
-    },
+    destination_types: [],
 });
 
 onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
+    PhoneNumberObject.destination_types = props.destinationTypes;
 })
 
 const selectedItemsExtensions = computed(() => {

@@ -2,11 +2,10 @@
     <form>
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'destination_type'" :label="'Type'" />
+                <LabelInputRequired :target="'destination_type'" :label="'Type'" />
                 <div class="mt-2">
-                    <SelectBox :options="phoneNumber.destination_types"
+                    <SelectBox :options="phoneNumber.destinationTypes"
                                :selectedItem="phoneNumber.destination_type"
-                               :search="true"
                                :placeholder="'Choose type'"
                                @update:modal-value="handleUpdateType"
                     />
