@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDeviceRequest;
 use App\Models\Destinations;
+use App\Models\DeviceLines;
 use App\Models\Devices;
+use App\Models\Extensions;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
@@ -157,12 +161,62 @@ class PhoneNumbersController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  \App\Http\Requests\StoreDeviceRequest  $request
+     * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(StoreDeviceRequest $request): JsonResponse
     {
-        //
+        $inputs = $request->validated();
+
+        if ($inputs['extension_uuid']) {
+            $extension = Extensions::find($inputs['extension_uuid']);
+        } else {
+            $extension = null;
+        }
+
+        $device = new Devices();
+        $device->fill([
+            'device_address' => tokenizeMacAddress($inputs['device_address']),
+            'device_label' => $extension->extension ?? null,
+            'device_vendor' => explode("/", $inputs['device_template'])[0],
+            'device_enabled' => 'true',
+            'device_enabled_date' => date('Y-m-d H:i:s'),
+            'device_template' => $inputs['device_template'],
+            'device_profile_uuid' => $inputs['device_profile_uuid'],
+            'device_description' => '',
+        ]);
+        $device->save();
+
+        if ($extension) {
+            // Create device lines
+            $device->lines = new DeviceLines();
+            $device->lines->fill([
+                'device_uuid' => $device->device_uuid,
+                'line_number' => '1',
+                'server_address' => Session::get('domain_name'),
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                'server_address_primary' => get_domain_setting('server_address_primary'),
+                'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                'display_name' => $extension->extension,
+                'user_id' => $extension->extension,
+                'auth_id' => $extension->extension,
+                'label' => $extension->extension,
+                'password' => $extension->password,
+                'sip_port' => get_domain_setting('line_sip_port'),
+                'sip_transport' => get_domain_setting('line_sip_transport'),
+                'register_expires' => get_domain_setting('line_register_expires'),
+                'enabled' => 'true',
+            ]);
+            $device->lines->save();
+        }
+
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device,
+            'message' => 'Device has been created and assigned.'
+        ]);
     }
 
     /**

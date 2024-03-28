@@ -237,9 +237,15 @@ let PhoneNumberObject = reactive({
     update_path: props.routePhoneNumbersStore,
     domain_uuid: '',
     destination_uuid: '',
+    destination_type: '',
     destination_number: '',
     destination_caller_id_name: '',
-    destination_caller_id_number: ''
+    destination_caller_id_number: '',
+    destination_types: {
+        inbound: 'Inbound',
+        outbound: 'Outbound',
+        local: 'Local',
+    },
 });
 
 onMounted(() => {
@@ -315,6 +321,7 @@ const handleEdit = (url) => {
         PhoneNumberObject.domain_uuid = response.data.phonenumber.domain_uuid
         PhoneNumberObject.update_path = response.data.phonenumber.update_path
         PhoneNumberObject.destination_uuid = response.data.phonenumber.destination_uuid
+        PhoneNumberObject.destination_type = response.data.phonenumber.destination_type
         PhoneNumberObject.destination_number = response.data.phonenumber.destination_number
         PhoneNumberObject.destination_caller_id_name = response.data.phonenumber.destination_caller_id_name
         PhoneNumberObject.destination_caller_id_number = response.data.phonenumber.destination_caller_id_number
@@ -366,6 +373,7 @@ const handlePhoneNumberObjectReset = () => {
         update_path: props.routePhoneNumbersStore,
         domain_uuid: '',
         destination_uuid: '',
+        destination_type: '',
         destination_number: '',
         destination_caller_id_name: '',
         destination_caller_id_number: ''
