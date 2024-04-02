@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Jobs\EmailLoginChallengeCode;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
@@ -83,7 +84,14 @@ class EmailChallengeController extends Controller
         Auth::login($request->challengedUser(), $request->remember());
         $request->session()->regenerate();
 
-        return app(TwoFactorLoginResponse::class);
+        \Cookie::queue('__TWO_FACTOR_EMAIL',"two_factor_cookie",1);
+
+        // return app(TwoFactorLoginResponse::class);
+        if ($request->session()->has('url.intended')) {
+            return Inertia::location(session('url.intended'));
+        }
+    
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /**

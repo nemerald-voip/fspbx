@@ -56,20 +56,20 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         // Implement custom authentication function
-        Fortify::authenticateUsing(function (Request $request) {
-            $user = User::where('user_email', $request->user_email)->first();
+        // Fortify::authenticateUsing(function (Request $request) {
+        //     $user = User::where('user_email', $request->user_email)->first();
         
-            if ($user && Hash::check($request->password, $user->password)) {
-                // if (!$user->two_factor_secret) {
-                //     // Assuming you have sent the code here or earlier in the process
-                //     // Redirect to verification page could be indicated by setting a session variable
-                //     session(['user_uuid' => $user->user_uuid]);
-                //     return null;
-                // }
-                return $user; 
-            }
-            return null;
-        });
+        //     if ($user && Hash::check($request->password, $user->password)) {
+        //         // if (!$user->two_factor_secret) {
+        //         //     // Assuming you have sent the code here or earlier in the process
+        //         //     // Redirect to verification page could be indicated by setting a session variable
+        //         //     session(['user_uuid' => $user->user_uuid]);
+        //         //     return null;
+        //         // }
+        //         return $user; 
+        //     }
+        //     return null;
+        // });
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());

@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Features;
 use Illuminate\Auth\Events\Failed;
 use Laravel\Fortify\LoginRateLimiter;
 use App\Events\TwoFactorEmailChallenged;
@@ -53,13 +54,35 @@ class RedirectToEmailChallengeIf2FAIsNotEnabled
 
         if (
             !optional($user)->two_factor_secret &&
-            in_array(EmailChallengable::class, class_uses_recursive($user))
+            in_array(EmailChallengable::class, class_uses_recursive($user)) &&
+            $this->checkIfUserDeviceHasNotCookie($user)
         ) {
+            // if (Features::enabled('remember-cookie')) {
+                
+            // }
             return $this->emailChallengeResponse($request, $user);
         }
 
         return $next($request);
     }
+
+    /**
+     * This checks if the user's device has the cookie stored 
+     * in the database.
+     *
+     * @param  \App\Models\User\User  $user
+     * @return bool
+     */
+    protected function checkIfUserDeviceHasNotCookie($user)
+    {    
+        logger('checking cookie');
+        logger($user->two_factor_cookies);
+        $two_factor_cookies = json_decode($user->two_factor_cookies, true) ?: [];
+        $two_factor_cookie = \Cookie::get('__TWO_FACTOR_EMAIL');
+    
+        return !in_array($two_factor_cookie, $two_factor_cookies);
+    }
+
 
 
     /**
