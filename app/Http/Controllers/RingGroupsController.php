@@ -271,6 +271,7 @@ class RingGroupsController extends Controller
         } else {
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_name = $ringGroup->ring_group_name;
+            $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
             $dialPlan->dialplan_description = $ringGroup->queue_description;
             $dialPlan->update_date = date('Y-m-d H:i:s');
             $dialPlan->update_user = Session::get('user_uuid');
