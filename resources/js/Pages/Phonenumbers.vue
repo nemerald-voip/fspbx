@@ -316,13 +316,13 @@ const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
     axios.get(url).then((response) => {
-        PhoneNumberObject.domain_uuid = response.data.phonenumber.domain_uuid
-        PhoneNumberObject.update_path = response.data.phonenumber.update_path
-        PhoneNumberObject.destination_uuid = response.data.phonenumber.destination_uuid
-        PhoneNumberObject.destination_type = response.data.phonenumber.destination_type
-        PhoneNumberObject.destination_number = response.data.phonenumber.destination_number
-        PhoneNumberObject.destination_caller_id_name = response.data.phonenumber.destination_caller_id_name
-        PhoneNumberObject.destination_caller_id_number = response.data.phonenumber.destination_caller_id_number
+        PhoneNumberObject.domain_uuid = response.data.phone_number.domain_uuid
+        PhoneNumberObject.update_path = response.data.phone_number.update_path
+        PhoneNumberObject.destination_uuid = response.data.phone_number.destination_uuid
+        PhoneNumberObject.destination_type = response.data.phone_number.destination_type
+        PhoneNumberObject.destination_number = response.data.phone_number.destination_number
+        PhoneNumberObject.destination_caller_id_name = response.data.phone_number.destination_caller_id_name
+        PhoneNumberObject.destination_caller_id_number = response.data.phone_number.destination_caller_id_number
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);
@@ -374,7 +374,8 @@ const handlePhoneNumberObjectReset = () => {
         destination_type: '',
         destination_number: '',
         destination_caller_id_name: '',
-        destination_caller_id_number: ''
+        destination_caller_id_number: '',
+        destination_types: props.destinationTypes
     });
 }
 
@@ -398,6 +399,7 @@ const handleSaveAdd = () => {
         destination_number: PhoneNumberObject.destination_number,
         destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
         destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
+        destination_type: PhoneNumberObject.destination_type,
     }).then((response) => {
         handleSearchButtonClick()
         handleClose()
@@ -415,6 +417,7 @@ const handleSaveEdit = () => {
         destination_number: PhoneNumberObject.destination_number,
         destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
         destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
+        destination_type: PhoneNumberObject.destination_type,
     }).then((response) => {
         handleSearchButtonClick()
         handleClose()

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Requests\StorePhoneNumberRequest;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
 use App\Models\Devices;
@@ -20,6 +21,8 @@ use Inertia\Response;
 
 class PhoneNumbersController extends Controller
 {
+    public array $filters = [];
+
     /**
      * Display a listing of the resource.
      *
@@ -41,17 +44,6 @@ class PhoneNumbersController extends Controller
         if (!empty($request->filterData['showGlobal'])) {
             $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
         }
-
-        unset(
-            $extensionsCollection,
-            $extension,
-            $profilesCollection,
-            $profile,
-            $templateDir,
-            $dir,
-            $dirs,
-            $vendorsCollection,
-            $vendor);
 
         return Inertia::render(
             'Phonenumbers',
@@ -77,16 +69,16 @@ class PhoneNumbersController extends Controller
                 'destinationTypes' => function () {
                     return [
                         [
-                            "name" => "inbound",
-                            "value" => "Inbound"
+                            "name" => "Inbound",
+                            "value" => "inbound"
                         ],
                         [
-                            "name" => "outbound",
-                            "value" => "Outbound"
+                            "name" => "Outbound",
+                            "value" => "outbound"
                         ],
                         [
-                            "name" => "local",
-                            "value" => "Local"
+                            "name" => "Local",
+                            "value" => "local"
                         ]
                     ];
                 },
@@ -177,18 +169,14 @@ class PhoneNumbersController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreDeviceRequest  $request
+     * @param  \App\Http\Requests\StorePhoneNumberRequest  $request
      * @return JsonResponse
      */
-    public function store(StoreDeviceRequest $request): JsonResponse
+    public function store(StorePhoneNumberRequest $request): JsonResponse
     {
         $inputs = $request->validated();
 
-        if ($inputs['extension_uuid']) {
-            $extension = Extensions::find($inputs['extension_uuid']);
-        } else {
-            $extension = null;
-        }
+        var_dump($inputs); die;
 
         $device = new Devices();
         $device->fill([
@@ -249,12 +237,23 @@ class PhoneNumbersController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Destinations  $destinations
-     * @return \Illuminate\Http\Response
+     * @param  \App\Models\Destinations  $phone_number
+     * @return JsonResponse
      */
-    public function edit(Destinations $destinations)
+    public function edit(Request $request, Destinations $phone_number)
     {
-        //
+        if (!$request->ajax()) {
+            return response()->json([
+                'message' => 'XHR request expected'
+            ], 405);
+        }
+
+        $phone_number->update_path = route('phone-numbers.update', $phone_number);
+
+        return response()->json([
+            'status' => 'success',
+            'phone_number' => $phone_number
+        ]);
     }
 
     /**
@@ -272,11 +271,20 @@ class PhoneNumbersController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Destinations  $destinations
-     * @return \Illuminate\Http\Response
+     * @param  \App\Models\Destinations  $destination
+     * @return Response
      */
-    public function destroy(Destinations $destinations)
+    public function destroy(Destinations $destination)
     {
-        //
+        $destination->delete();
+
+        return Inertia::render('Phonenumbers', [
+            'data' => function () {
+                return $this->getPhoneNumbers();
+            },
+            'status' => 'success',
+            'phone_number' => $destination,
+            'message' => 'Phone number has been deleted'
+        ]);
     }
 }

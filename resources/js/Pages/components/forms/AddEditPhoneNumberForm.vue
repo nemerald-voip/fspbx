@@ -1,10 +1,10 @@
 <template>
     <form>
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div class="sm:col-span-12">
+            <div v-if="!isEdit" class="sm:col-span-12">
                 <LabelInputRequired :target="'destination_type'" :label="'Type'" />
                 <div class="mt-2">
-                    <SelectBox :options="phoneNumber.destinationTypes"
+                    <SelectBox :options="phoneNumber.destination_types"
                                :selectedItem="phoneNumber.destination_type"
                                :placeholder="'Choose type'"
                                @update:modal-value="handleUpdateType"
