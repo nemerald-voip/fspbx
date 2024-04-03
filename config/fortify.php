@@ -155,6 +155,7 @@ return [
             // 'window' => 5,
         ]),
         'email-challenge',
+        'remember-cookie',
     ],
 
 ];
