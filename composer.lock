@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53abe9a6f37addcb7c549ca58c577a02",
+    "content-hash": "f030d29283c23947cedc366d5f6ee1fb",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -2725,30 +2725,30 @@
         },
         {
             "name": "laravel/slack-notification-channel",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/slack-notification-channel.git",
-                "reference": "c74265319b1d0ca710771d6c708558553972e1d6"
+                "reference": "fc8d1873e3db63a480bc57aebb4bf5ec05332d91"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/slack-notification-channel/zipball/c74265319b1d0ca710771d6c708558553972e1d6",
-                "reference": "c74265319b1d0ca710771d6c708558553972e1d6",
+                "url": "https://api.github.com/repos/laravel/slack-notification-channel/zipball/fc8d1873e3db63a480bc57aebb4bf5ec05332d91",
+                "reference": "fc8d1873e3db63a480bc57aebb4bf5ec05332d91",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7.0",
-                "illuminate/http": "^9.0|^10.0",
-                "illuminate/notifications": "^9.0|^10.0",
-                "illuminate/support": "^9.0|^10.0",
+                "illuminate/http": "^9.0|^10.0|^11.0",
+                "illuminate/notifications": "^9.0|^10.0|^11.0",
+                "illuminate/support": "^9.0|^10.0|^11.0",
                 "php": "^8.0"
             },
             "require-dev": {
                 "mockery/mockery": "^1.0",
-                "orchestra/testbench": "^7.0|^8.0",
+                "orchestra/testbench": "^7.0|^8.0|^9.0",
                 "phpstan/phpstan": "^1.10",
-                "phpunit/phpunit": "^9.0"
+                "phpunit/phpunit": "^9.0|^10.4"
             },
             "type": "library",
             "extra": {
@@ -2784,9 +2784,9 @@
             ],
             "support": {
                 "issues": "https://github.com/laravel/slack-notification-channel/issues",
-                "source": "https://github.com/laravel/slack-notification-channel/tree/v3.1.0"
+                "source": "https://github.com/laravel/slack-notification-channel/tree/v3.2.0"
             },
-            "time": "2023-10-30T17:52:13+00:00"
+            "time": "2024-01-15T20:07:45+00:00"
         },
         {
             "name": "laravel/tinker",
