@@ -129,12 +129,33 @@
         :show="addModalTrigger"
         :header="'Add New Number'"
         :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'"
         @close="handleClose"
     >
         <template #modal-body>
-            <AddEditPhoneNumberForm
+{{tab}}
+            <div class="sm:hidden">
+                <label for="ManagementTabs" class="sr-only">Select a tab</label>
+                <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
+                <select id="ManagementTabs" name="ManagementTabs" class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                    <option v-for="tab in ManagementTabs" :key="tab.name" :selected="tab.current">{{ tab.name }}</option>
+                </select>
+            </div>
+            <div class="hidden sm:block">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="ManagementTabs">
+                        <a v-for="tab in ManagementTabs" :key="tab.name" :href="tab.href" :class="[tab.current ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium']" :aria-current="tab.current ? 'page' : undefined">{{ tab.name }}</a>
+                    </nav>
+                </div>
+            </div>
+            <div v-for="tab in ManagementTabs" :key="tab.name">
+                <component v-if="tab.current" :is="tab.component" v-bind="tab.data"></component>
+            </div>
+
+
+            <!--AddEditPhoneNumberForm
                 :phoneNumber="PhoneNumberObject"
-            />
+            /-->
         </template>
         <template #modal-action-buttons>
             <button type="button"
@@ -151,14 +172,15 @@
         :show="editModalTrigger"
         :header="'Edit Number'"
         :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'"
         @close="handleClose"
     >
         <template #modal-body>
-            <AddEditPhoneNumberForm
+            <!--AddEditPhoneNumberForm
                 :phoneNumber="PhoneNumberObject"
                 :isEdit="true"
                 @update:show="editModalTrigger = false"
-            />
+            /-->
         </template>
         <template #modal-action-buttons>
             <button type="button"
@@ -195,7 +217,8 @@ import Paginator from "./components/general/Paginator.vue";
 import NotificationError from "./components/notifications/Error.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import AddEditPhoneNumberForm from "./components/forms/AddEditPhoneNumberForm.vue";
+import AddEditPhoneNumberFormBasic from "./components/forms/AddEditPhoneNumberFormBasic.vue";
+import AddEditPhoneNumberFormAdvanced from "./components/forms/AddEditPhoneNumberFormAdvanced.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";
@@ -244,6 +267,28 @@ let PhoneNumberObject = reactive({
     destination_caller_id_number: '',
     destination_types: [],
 });
+
+//const currentManagementTab = ref('Basic');
+const ManagementTabs = computed(() => [
+    {
+        name: 'Basic',
+        href: '#basic',
+        current: true,
+        component: AddEditPhoneNumberFormBasic,
+        data: {
+            phoneNumber: PhoneNumberObject
+        }
+    },
+    {
+        name: 'Advanced',
+        href: '#advanced',
+        current: false,
+        component: AddEditPhoneNumberFormAdvanced,
+        data: {
+            phoneNumber: PhoneNumberObject
+        }
+    }
+]);
 
 onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
