@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Jobs\EmailLoginChallengeCode;
+use Illuminate\Support\Facades\Cookie;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -79,12 +80,18 @@ class EmailChallengeController extends Controller
                     }
                 },
             ],
+            'remember' => [
+                'nullable',
+            ]
         ]);
 
-        Auth::login($request->challengedUser(), $request->remember());
+        Auth::login($request->challengedUser());
         $request->session()->regenerate();
 
-        \Cookie::queue('__TWO_FACTOR_EMAIL',"two_factor_cookie",1);
+        // If request has remember option then store browser details
+        if ($request->get('remember')) {
+            $this->storeCookieIfNotInDB($request);
+        }
 
         // return app(TwoFactorLoginResponse::class);
         if ($request->session()->has('url.intended')) {
@@ -117,5 +124,41 @@ class EmailChallengeController extends Controller
             ],
             'status' => session('status'),
         ]);
+    }
+
+     /**
+     * Store the cookie if it is not in the database.
+     *
+     * @param  TwoFactorLoginRequest  $request
+     * @return void
+     */
+    protected function storeCookieIfNotInDB($request)
+    {
+        logger('storeCookieIfNotInDB');
+        $user = $request->challengedUser();
+        $two_factor_cookies = json_decode($user->two_factor_cookies);
+        if (!is_array($two_factor_cookies)){
+            $two_factor_cookies = [];
+        }
+
+        $two_factor_cookie = Cookie::get('__TWO_FACTOR_EMAIL');
+
+        if (!in_array($two_factor_cookie,$two_factor_cookies)) {
+            $two_factor_cookie = md5($request->header('User-Agent') .' ' . $request->ip());
+            $two_factor_cookies[] = $two_factor_cookie;
+            if (count($two_factor_cookies) > 3) {
+                array_shift($two_factor_cookies);
+            }
+
+            $two_factor_cookies = array_unique($two_factor_cookies);
+
+            $user->user_adv_fields->two_factor_cookies = json_encode($two_factor_cookies);
+            $user->user_adv_fields->save();
+
+            $lifetime = 60 * 24 * 7; //7 days
+            Cookie::queue('__TWO_FACTOR_EMAIL',$two_factor_cookie,$lifetime);
+            // Cookie::queue('__TWO_FACTOR_EMAIL',$two_factor_cookie,5); // For testing. 5 minutes lifetime only
+        }
+
     }
 }

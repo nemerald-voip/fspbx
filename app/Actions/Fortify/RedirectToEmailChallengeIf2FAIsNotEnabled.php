@@ -6,6 +6,7 @@ use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Features;
 use Illuminate\Auth\Events\Failed;
 use Laravel\Fortify\LoginRateLimiter;
+use Illuminate\Support\Facades\Cookie;
 use App\Events\TwoFactorEmailChallenged;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Validation\ValidationException;
@@ -75,10 +76,8 @@ class RedirectToEmailChallengeIf2FAIsNotEnabled
      */
     protected function checkIfUserDeviceHasNotCookie($user)
     {    
-        logger('checking cookie');
-        logger($user->two_factor_cookies);
         $two_factor_cookies = json_decode($user->two_factor_cookies, true) ?: [];
-        $two_factor_cookie = \Cookie::get('__TWO_FACTOR_EMAIL');
+        $two_factor_cookie = Cookie::get('__TWO_FACTOR_EMAIL');
     
         return !in_array($two_factor_cookie, $two_factor_cookies);
     }
