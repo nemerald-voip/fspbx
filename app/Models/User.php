@@ -144,6 +144,13 @@ class User extends Authenticatable
         return $this->user_adv_fields->two_factor_recovery_codes ?? null;
     }
 
+    public function getTwoFactorCookiesAttribute()
+    {
+        // Attempt to load the two_factor_cookies from UserAdvFields if not loaded already.
+        // This uses lazy loading; consider eager loading in the query if performance is a concern.
+        return $this->user_adv_fields->two_factor_cookies ?? null;
+    }
+
     public function setting()
     {
         return $this->hasMany(UserSetting::class, 'user_uuid', 'user_uuid');
