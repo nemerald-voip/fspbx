@@ -76,6 +76,11 @@ class RedirectToEmailChallengeIf2FAIsNotEnabled
      */
     protected function checkIfUserDeviceHasNotCookie($user)
     {    
+        // Check if cookies enabled
+        if (!Features::enabled('remember-cookie')) {
+            return true;        
+        }
+
         $two_factor_cookies = json_decode($user->two_factor_cookies, true) ?: [];
         $two_factor_cookie = Cookie::get('__TWO_FACTOR_EMAIL');
     

@@ -134,7 +134,6 @@ class EmailChallengeController extends Controller
      */
     protected function storeCookieIfNotInDB($request)
     {
-        logger('storeCookieIfNotInDB');
         $user = $request->challengedUser();
         $two_factor_cookies = json_decode($user->two_factor_cookies);
         if (!is_array($two_factor_cookies)){
