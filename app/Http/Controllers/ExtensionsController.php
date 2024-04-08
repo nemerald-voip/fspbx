@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OldStoreDeviceRequest;
+use App\Http\Requests\OldUpdateDeviceRequest;
+use App\Http\Requests\UpdateDeviceRequest;
+use Illuminate\Http\JsonResponse;
 use Throwable;
 use App\Models\Devices;
 use App\Models\FollowMe;
 use App\Models\IvrMenus;
-use App\Jobs\SuspendUser;
 use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\RingGroups;
@@ -15,7 +18,6 @@ use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
 use App\Models\MusicOnHold;
-use Illuminate\Support\Str;
 use App\Models\Destinations;
 use App\Models\DeviceVendor;
 use Illuminate\Http\Request;
@@ -24,16 +26,11 @@ use App\Models\DeviceProfile;
 use App\Models\ExtensionUser;
 use App\Models\MobileAppUsers;
 use App\Jobs\UpdateAppSettings;
-use App\Models\DefaultSettings;
 use Illuminate\Validation\Rule;
-use App\Events\ExtensionUpdated;
 use App\Imports\ExtensionsImport;
-use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
@@ -66,10 +63,10 @@ class ExtensionsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $searchString = $request->get('search');
 
@@ -758,10 +755,10 @@ class ExtensionsController extends Controller
         }
 
         //Check FusionPBX login status
-        session_start();
-        if (!isset($_SESSION['user'])) {
-            return redirect()->route('logout');
-        }
+        // session_start();
+        // if (!isset($_SESSION['user'])) {
+        //     return redirect()->route('logout');
+        // }
 
         $devices = Devices::where('device_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))
@@ -1204,6 +1201,7 @@ class ExtensionsController extends Controller
         $followMe->update_user = Session::get('user_uuid');
         $followMe->save();
         $extension->follow_me_uuid = $followMe->follow_me_uuid;
+        $extension->save();
 
         if (!isset($attributes['follow_me_destinations'])) {
             $attributes['follow_me_destinations'] = [];
@@ -1617,5 +1615,154 @@ class ExtensionsController extends Controller
             'Ring Groups' => $ringGroups,
             //'Voicemails' => $voicemails
         ];
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \App\Http\Requests\StoreDeviceRequest  $request
+     * @return JsonResponse
+     */
+    public function oldStoreDevice(OldStoreDeviceRequest $request, Extensions $extension): JsonResponse
+    {
+        $inputs = $request->validated();
+
+        if($inputs['extension_uuid']) {
+            $extension = Extensions::find($inputs['extension_uuid']);
+        } else {
+            $extension = null;
+        }
+
+        $device = new Devices();
+        $device->fill([
+            'device_address' => tokenizeMacAddress($inputs['device_address']),
+            'device_label' => $extension->extension ?? null,
+            'device_vendor' => explode("/", $inputs['device_template'])[0],
+            'device_enabled' => 'true',
+            'device_enabled_date' => date('Y-m-d H:i:s'),
+            'device_template' => $inputs['device_template'],
+            'device_profile_uuid' => $inputs['device_profile_uuid'],
+            'device_description' => '',
+        ]);
+        $device->save();
+
+        if($extension) {
+            // Create device lines
+            $device->lines = new DeviceLines();
+            $device->lines->fill([
+                'device_uuid' => $device->device_uuid,
+                'line_number' => '1',
+                'server_address' => Session::get('domain_name'),
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                'server_address_primary' => get_domain_setting('server_address_primary'),
+                'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                'display_name' => $extension->extension,
+                'user_id' => $extension->extension,
+                'auth_id' => $extension->extension,
+                'label' => $extension->extension,
+                'password' => $extension->password,
+                'sip_port' => get_domain_setting('line_sip_port'),
+                'sip_transport' => get_domain_setting('line_sip_transport'),
+                'register_expires' => get_domain_setting('line_register_expires'),
+                'enabled' => 'true',
+            ]);
+            $device->lines->save();
+        }
+
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device,
+            'message' => 'Device has been created and assigned.'
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  Request  $request
+     * @param  Devices  $device
+     * @return JsonResponse
+     */
+    public function oldEditDevice(Request $request, Extensions $extension, Devices $device): JsonResponse
+    {
+        if (!$request->ajax()) {
+            return response()->json([
+                'message' => 'XHR request expected'
+            ], 405);
+        }
+
+        if ($device->extension()) {
+            $device->extension_uuid = $device->extension()->extension_uuid;
+        }
+
+        $device->device_address = formatMacAddress($device->device_address);
+        $device->update_path = route('devices.update', $device);
+        $device->options = [
+            'templates' => getVendorTemplateCollection(),
+            'profiles' => getProfileCollection($device->domain_uuid),
+            'extensions' => getExtensionCollection($device->domain_uuid)
+        ];
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  UpdateDeviceRequest  $request
+     * @param  Devices  $device
+     * @return JsonResponse
+     */
+    public function oldUpdateDevice(OldUpdateDeviceRequest $request, Extensions $extension, Devices $device): JsonResponse
+    {
+        $inputs = $request->validated();
+        $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+        $device->update($inputs);
+
+        if($request['extension_uuid']) {
+            $extension = Extensions::find($request['extension_uuid']);
+            if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
+                $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
+                if ($deviceLinesExist) {
+                    $deviceLinesExist->delete();
+                }
+
+                // Create device lines
+                $deviceLines = new DeviceLines();
+                $deviceLines->fill([
+                    'device_uuid' => $device->device_uuid,
+                    'line_number' => '1',
+                    'server_address' => Session::get('domain_name'),
+                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                    'server_address_primary' => get_domain_setting('server_address_primary'),
+                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                    'display_name' => $extension->extension,
+                    'user_id' => $extension->extension,
+                    'auth_id' => $extension->extension,
+                    'label' => $extension->extension,
+                    'password' => $extension->password,
+                    'sip_port' => get_domain_setting('line_sip_port'),
+                    'sip_transport' => get_domain_setting('line_sip_transport'),
+                    'register_expires' => get_domain_setting('line_register_expires'),
+                    'enabled' => 'true',
+                    'domain_uuid' => $device->domain_uuid
+                ]);
+                $deviceLines->save();
+                $device->device_label = $extension->extension;
+                $device->save();
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'device' => $device,
+            'message' => 'Device has been updated.'
+        ]);
     }
 }

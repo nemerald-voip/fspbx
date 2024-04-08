@@ -60,7 +60,7 @@ class StoreDeviceRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        $macAddress = tokenizeMacAddress($this->get('device_address'));
+        $macAddress = tokenizeMacAddress($this->get('device_address') ?? '');
         $this->merge([
             'device_address' => formatMacAddress($macAddress),
             'device_address_modified' => $macAddress

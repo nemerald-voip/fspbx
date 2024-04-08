@@ -199,11 +199,10 @@
                                                             </div>
                                                         </div>
                                                         @if (userCheckPermission('voicemail_edit'))
-                                                        
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
                                                                 <label for="voicemail_mail_to" class="form-label">Email Address </label>
-                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to" 
+                                                                <input class="form-control" type="email" placeholder="Enter email" id="voicemail_mail_to"
                                                                     @if ($extension->exists && (!$extension->voicemail || !$extension->voicemail->voicemail_uuid))
                                                                         disabled
                                                                     @endif
@@ -214,7 +213,7 @@
                                                         @endif
                                                     </div> <!-- end row -->
 
-                                            
+
 
                                                     @if (userCheckPermission('extension_directory'))
                                                     <div class="row">
@@ -318,7 +317,7 @@
                                                 <div class="col-lg-12">
                                                     <h4 class="mt-2">External Caller ID</h4>
 
-                                                    <p class="text-muted mb-3">Define the External Caller ID that will be displayed on the recipeint's device when dialing outside the company.</p>
+                                                    <p class="text-muted mb-3">Define the External Caller ID that will be displayed on the recipient's device when dialing outside the company.</p>
 
                                                         <div class="row">
                                                             <div class="col-6">
@@ -347,7 +346,7 @@
                                                 <div class="col-lg-12">
                                                     <h4 class="mt-4">Internal Caller ID</h4>
 
-                                                    <p class="text-muted mb-3">Define the Internal Caller ID that will be displayed on the recipeint's device when dialing inside the company.</p>
+                                                    <p class="text-muted mb-3">Define the Internal Caller ID that will be displayed on the recipient's device when dialing inside the company.</p>
 
                                                     @if (userCheckPermission('effective_caller_id_name'))
                                                     <div class="row">
@@ -1608,7 +1607,7 @@
             </div>
             <div class="modal-body">
                 @include('layouts.devices.form', [
-                    'action' => route('devices.store'),
+                    'action' => route('extensions.store-device', $extension->extension_uuid),
                     'device' => false,
                     'extensions' => false,
                     'extension_uuid' => $extension->extension_uuid,
@@ -1751,7 +1750,7 @@
 
             if(form.find('#device_address').attr('readonly') !== undefined) {
                 method = 'PUT'
-                action = '{{route('devices.update', ['device' => ':device'])}}'.replace(':device', form.find('#device_uuid').val())
+                action = '{{route('extensions.update-device', ['extension' => ':extension', 'device' => ':device'])}}'.replace(':extension', form.find('#extension_uuid').val()).replace(':device', form.find('#device_uuid').val())
             }
 //
             $.ajax({
@@ -1817,10 +1816,10 @@
                         $('.loading').hide();
                     },
                     success: function (result) {
-                        $('#device_address').attr('readonly', true).val(result.device_address)
-                        $('#template-select').val(result.device_template).trigger('change')
-                        $('#profile-select').val(result.device_profile_uuid).trigger('change')
-                        $('#device_uuid').val(result.device_uuid)
+                        $('#device_address').attr('readonly', true).val(result.device.device_address)
+                        $('#template-select').val(result.device.device_template).trigger('change')
+                        $('#profile-select').val(result.device.device_profile_uuid).trigger('change')
+                        $('#device_uuid').val(result.device.device_uuid)
                     }
                 });
             } else {

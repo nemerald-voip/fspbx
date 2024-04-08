@@ -1,6 +1,6 @@
 <template>
-    <Menu :menus="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-          :selected-domain-uuid="selectedDomainUuid" :domains="domains"></Menu>
+    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
+                :selected-domain-uuid="selectedDomainUuid" :domains="domains" />
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -26,6 +26,10 @@
                 <button type="button" :href="routeDevicesStore" @click.prevent="handleAdd()"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add device
+                </button>
+                <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Edit device
                 </button>
                 <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -75,7 +79,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center"
                                 v-if="deviceRestartPermission">
                         <input v-if="row.extension" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.extension_uuid"
+                               :value="row.device_uuid"
                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -186,9 +190,6 @@
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
-                :templates="templates"
-                :profiles="profiles"
-                :extensions="extensions"
             />
         </template>
         <template #modal-action-buttons>
@@ -211,9 +212,6 @@
         <template #modal-body>
             <AddEditDeviceForm
                 :device="DeviceObject"
-                :templates="templates"
-                :profiles="profiles"
-                :extensions="extensions"
                 :isEdit="true"
                 @update:show="editModalTrigger = false"
             />
@@ -226,6 +224,29 @@
             <button type="button"
                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
                     @click="handleClose" ref="cancelButtonRef">Cancel
+            </button>
+        </template>
+    </AddEditItemModal>
+    <AddEditItemModal
+        :show="bulkEditModalTrigger"
+        :header="'Bulk Edit Device'"
+        :loading="loadingModal"
+        @close="handleBulkClose"
+    >
+        <template #modal-body>
+            <BulkEditDeviceForm
+                :device="DeviceObject"
+                @update:show="bulkEditModalTrigger = false"
+            />
+        </template>
+        <template #modal-action-buttons>
+            <button type="button"
+                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    @click="handleBulkSaveEdit" ref="saveButtonRef">Save
+            </button>
+            <button type="button"
+                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                    @click="handleBulkClose" ref="cancelButtonRef">Cancel
             </button>
         </template>
     </AddEditItemModal>
@@ -243,7 +264,7 @@
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import axios from 'axios';
 import {router} from "@inertiajs/vue3";
 import Menu from "./components/Menu.vue";
@@ -260,6 +281,8 @@ import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon, ClipboardDocumentIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
+import MainLayout from "../Layouts/MainLayout.vue";
 const today = new Date();
 
 const loading = ref(false)
@@ -271,6 +294,7 @@ const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
+const bulkEditModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
@@ -289,31 +313,45 @@ const props = defineProps({
     selectedDomainUuid: String,
     search: String,
     routeDevicesStore: String,
+    routeDevicesOptions: String,
+    routeDevicesBulkUpdate: String,
     routeDevices: String,
-    routeSendEventNotifyAll: String,
-    templates: Array,
-    profiles: Array,
-    extensions: Array,
+    routeSendEventNotifyAll: String
 });
 
 let DeviceObject = reactive({
     update_path: props.routeDevicesStore,
+    domain_uuid: '',
     device_uuid: '',
     device_address: '',
     extension_uuid: '',
     device_profile_uuid: '',
-    device_template: ''
+    device_template: '',
+    device_options: {
+        templates: Array,
+        profiles: Array,
+        extensions: Array
+    }
 });
 
 onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
 })
 
+const selectedItemsExtensions = computed(() => {
+    return selectedItems.value.map(id => {
+        const foundItem = props.data.data.find(item => item.device_uuid === id);
+        return foundItem ? foundItem.extension_uuid : null;
+    });
+});
+
 const handleSelectAll = () => {
     if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.extension_uuid);
+        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItemsExtensions.value = props.data.data.map(item => item.extension_uuid);
     } else {
         selectedItems.value = [];
+        selectedItemsExtensions.value = [];
     }
 };
 
@@ -356,10 +394,10 @@ const handleRestart = (url) => {
 }
 
 const handleRestartSelected = () => {
-    if (selectedItems.value.length > 0) {
+    if (selectedItemsExtensions.value.length > 0) {
         let scope = showGlobal.value ? 'global' : 'local';
         axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
-            extensionIds: selectedItems.value,
+            extensionIds: selectedItemsExtensions.value,
         }).then((response) => {
             loading.value = false;
             restartRequestNotificationSuccessTrigger.value = true;
@@ -394,24 +432,53 @@ const handleShowLocal = () => {
 }
 
 const handleAdd = () => {
-    addModalTrigger.value = true;
     DeviceObject.update_path = props.routeDevicesStore;
+    axios.get(props.routeDevicesOptions).then((response) => {
+        DeviceObject.device_options.templates = response.data.templates
+        DeviceObject.device_options.profiles = response.data.profiles
+        DeviceObject.device_options.extensions = response.data.extensions
+        loadingModal.value = false
+        addModalTrigger.value = true;
+    }).catch((error) => {
+        console.error('Failed to get device data:', error);
+    });
 }
 
 const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
     axios.get(url).then((response) => {
+        DeviceObject.domain_uuid = response.data.device.domain_uuid
         DeviceObject.update_path = response.data.device.update_path
         DeviceObject.device_uuid = response.data.device.device_uuid
         DeviceObject.device_address = response.data.device.device_address
         DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
         DeviceObject.device_template = response.data.device.device_template
         DeviceObject.extension_uuid = response.data.device.extension_uuid
+        DeviceObject.device_options.templates = response.data.device.options.templates
+        DeviceObject.device_options.profiles = response.data.device.options.profiles
+        DeviceObject.device_options.extensions = response.data.device.options.extensions
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
+}
+
+const handleBulkEdit = () => {
+    if (selectedItems.value.length > 0) {
+        bulkEditModalTrigger.value = true;
+        loadingModal.value = true;
+        axios.get(props.routeDevicesOptions).then((response) => {
+            DeviceObject.device_options.templates = response.data.templates
+            DeviceObject.device_options.profiles = response.data.profiles
+            DeviceObject.device_options.extensions = response.data.extensions
+            loadingModal.value = false
+        }).catch((error) => {
+            console.error('Failed to get device data:', error);
+        });
+    } else {
+        restartRequestNotificationErrorTrigger.value = true
+    }
 }
 
 const handleSearchButtonClick = () => {
@@ -441,20 +508,30 @@ const handleErrorsReset = () => {
     actionErrorMessage.value = null;
 }
 
-const handleErrorsPush = (message, errors) => {
+const handleErrorsPush = (message, errors = null) => {
     actionError.value = true;
-    actionErrorsList.value = errors;
+    if(errors !== null) {
+        actionErrorsList.value = errors;
+    } else {
+        actionErrorsList.value = {};
+    }
     actionErrorMessage.value = message;
 }
 
 const handleDeviceObjectReset = () => {
     DeviceObject = reactive({
         update_path: props.routeDevicesStore,
+        domain_uuid: '',
         device_uuid: '',
         device_address: '',
         extension_uuid: '',
         device_profile_uuid: '',
-        device_template: ''
+        device_template: '',
+        device_options: {
+            templates: Array,
+            profiles: Array,
+            extensions: Array
+        }
     });
 }
 
@@ -492,6 +569,7 @@ const handleSaveAdd = () => {
 
 const handleSaveEdit = () => {
     axios.put(DeviceObject.update_path, {
+        domain_uuid: DeviceObject.domain_uuid,
         device_address: DeviceObject.device_address,
         device_template: DeviceObject.device_template,
         device_profile_uuid: DeviceObject.device_profile_uuid,
@@ -500,7 +578,7 @@ const handleSaveEdit = () => {
         handleSearchButtonClick()
         handleClose()
     }).catch((error) => {
-        console.error('Failed to save device1 data:', error);
+        console.error('Failed to save device data:', error);
         console.log(error.response.data.errors)
         if(error.response.data.errors.length > 0)  {
             handleErrorsPush(error.response.data.message, error.response.data.errors)
@@ -508,9 +586,30 @@ const handleSaveEdit = () => {
     });
 }
 
+const handleBulkSaveEdit = () => {
+    axios.put(props.routeDevicesBulkUpdate, {
+        devices: selectedItems.value,
+        device_template: DeviceObject.device_template,
+        device_profile_uuid: DeviceObject.device_profile_uuid
+    }).then((response) => {
+        handleSearchButtonClick()
+        handleBulkClose()
+    }).catch((error) => {
+        console.error('Failed to save device data:', error);
+        if(error.response.data.message)  {
+            handleErrorsPush(error.response.data.message)
+        }
+    });
+}
+
 const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
+    setTimeout(handleDeviceObjectReset, 1000)
+}
+
+const handleBulkClose = () => {
+    bulkEditModalTrigger.value = false
     setTimeout(handleDeviceObjectReset, 1000)
 }
 

@@ -22,10 +22,10 @@ class DomainController extends Controller
     }
 
     /**
-     * Switch domain from one of the Laravel pages. 
+     * Switch domain from one of the Laravel pages.
      * Called when domain search is performed and user requested to switch domain
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function switchDomain(Request $request)
     {
@@ -34,10 +34,10 @@ class DomainController extends Controller
         // If current domain is not the same as requested domain proceed with the change
         if (Session::get('domain_uuid') != $domain->uuid) {
             //Check FusionPBX login status
-            session_start();
-            if (!isset($_SESSION['user'])) {
-                return redirect()->route('logout');
-            }
+            // session_start();
+            // if(!isset($_SESSION['user'])) {
+            //     return redirect()->route('logout');
+            // }
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
             Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);
@@ -52,7 +52,15 @@ class DomainController extends Controller
             // unset destinations belonging to old domain
             unset($_SESSION["destinations"]["array"]);
 
-            $url = getFusionPBXPreviousURL(url()->previous());
+            // This is a workaround to ensure the filters are reset when the domain changes.
+            // Given that url()->previous() includes the filter options, it's necessary to pass a refreshed URL.
+            if($request->redirect_url) {
+                $url = $request->redirect_url;
+            } else {
+                $url = getFusionPBXPreviousURL(url()->previous());
+                $url = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . parse_url($url, PHP_URL_PATH);
+            }
+
             return response()->json([
                 'status' => 200,
                 'redirectUrl' => $url,
@@ -64,7 +72,7 @@ class DomainController extends Controller
     }
 
     /**
-     * Switch domain from FusionPBX pages. 
+     * Switch domain from FusionPBX pages.
      * Called when domain search is performed and user requested to switch domain
      *
      * @return \Illuminate\Http\Response
@@ -74,8 +82,10 @@ class DomainController extends Controller
         $domain = Domain::where('domain_uuid', $domain_uuid)->first();
 
         // If current domain is not the same as requested domain proceed with the change
-        if (Session::get('domain_uuid') != $domain->uuid) {
-            session_start();
+        if (Session::get('domain_uuid') != $domain->uuid){
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            };
             Session::put('domain_uuid', $domain->domain_uuid);
             Session::put('domain_name', $domain->domain_name);
             Session::put('domain_description', !empty($domain->domain_description) ? $domain->domain_description : $domain->domain_name);
@@ -96,7 +106,7 @@ class DomainController extends Controller
     }
 
     /**
-     * Filter domains from FusionPBX pages. 
+     * Filter domains from FusionPBX pages.
      * Called when domain search is performed and user requested to filter a list of domains
      *
      * @return \Illuminate\Http\Response
@@ -114,9 +124,9 @@ class DomainController extends Controller
         // Check if search parameter is provided
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            // Filter domains based on search term
+            // Filter domains based on search term in both domain_name and domain_description
             $domains = $domains->filter(function ($domain) use ($searchTerm) {
-                return strpos($domain->domain_name, $searchTerm) !== false;
+                return strpos($domain->domain_name, $searchTerm) !== false || strpos($domain->domain_description, $searchTerm) !== false;
             });
         }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDeviceRequest;
+use App\Http\Requests\UpdateBulkDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Models\DeviceLines;
 use App\Models\Devices;
@@ -38,9 +39,7 @@ class DeviceController extends Controller
 
         $this->filters = [];
 
-        if (!empty($request->filterData['search'])) {
-            $this->filters['search'] = $request->filterData['search'];
-        }
+        $this->filters['search'] = $request->filterData['search'] ?? null;
 
         if (!empty($request->filterData['showGlobal'])) {
             $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
@@ -83,11 +82,10 @@ class DeviceController extends Controller
                 },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
+                'routeDevicesOptions' => route('devices.options'),
+                'routeDevicesBulkUpdate' => route('devices.bulk-update'),
                 'routeDevices' => route('devices.index'),
-                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
-                'templates' => getVendorTemplateCollection(),
-                'profiles' => getProfileCollection(Session::get('domain_uuid')),
-                'extensions' => getExtensionCollection(Session::get('domain_uuid'))
+                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
         );
     }
@@ -123,11 +121,13 @@ class DeviceController extends Controller
     {
         $devices = Devices::query();
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid');
+            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid')
+                ->whereIn('v_domains.domain_uuid', Session::get('domains')->pluck('domain_uuid'));
         } else {
             $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
         }
-        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=', 'v_devices.device_profile_uuid');
+        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=',
+            'v_devices.device_profile_uuid');
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter".ucfirst($field))) {
@@ -146,15 +146,17 @@ class DeviceController extends Controller
      */
     protected function filterSearch($query, $value): void
     {
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value) {
-            $macAddress = tokenizeMacAddress($value);
-            $query->where('device_address', 'ilike', '%'.$macAddress.'%')
-                ->orWhere('device_label', 'ilike', '%'.$value.'%')
-                ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
-                ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
-                ->orWhere('device_template', 'ilike', '%'.$value.'%');
-        });
+        if ($value !== null) {
+            // Case-insensitive partial string search in the specified fields
+            $query->where(function ($query) use ($value) {
+                $macAddress = tokenizeMacAddress($value);
+                $query->where('device_address', 'ilike', '%'.$macAddress.'%')
+                    ->orWhere('device_label', 'ilike', '%'.$value.'%')
+                    ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
+                    ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
+                    ->orWhere('device_template', 'ilike', '%'.$value.'%');
+            });
+        }
     }
 
     /**
@@ -177,7 +179,7 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        if($inputs['extension_uuid']) {
+        if ($inputs['extension_uuid']) {
             $extension = Extensions::find($inputs['extension_uuid']);
         } else {
             $extension = null;
@@ -196,7 +198,7 @@ class DeviceController extends Controller
         ]);
         $device->save();
 
-        if($extension) {
+        if ($extension) {
             // Create device lines
             $device->lines = new DeviceLines();
             $device->lines->fill([
@@ -260,6 +262,11 @@ class DeviceController extends Controller
 
         $device->device_address = formatMacAddress($device->device_address);
         $device->update_path = route('devices.update', $device);
+        $device->options = [
+            'templates' => getVendorTemplateCollection(),
+            'profiles' => getProfileCollection($device->domain_uuid),
+            'extensions' => getExtensionCollection($device->domain_uuid)
+        ];
 
         return response()->json([
             'status' => 'success',
@@ -280,7 +287,7 @@ class DeviceController extends Controller
         $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
         $device->update($inputs);
 
-        if($request['extension_uuid']) {
+        if ($request['extension_uuid']) {
             $extension = Extensions::find($request['extension_uuid']);
             if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
                 $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
@@ -307,6 +314,7 @@ class DeviceController extends Controller
                     'sip_transport' => get_domain_setting('line_sip_transport'),
                     'register_expires' => get_domain_setting('line_register_expires'),
                     'enabled' => 'true',
+                    'domain_uuid' => $device->domain_uuid
                 ]);
                 $deviceLines->save();
                 $device->device_label = $extension->extension;
@@ -318,6 +326,35 @@ class DeviceController extends Controller
             'status' => 'success',
             'device' => $device,
             'message' => 'Device has been updated.'
+        ]);
+    }
+
+    public function bulkUpdate(UpdateBulkDeviceRequest $request): JsonResponse
+    {
+        $inputs = $request->validated();
+        if (empty($inputs['device_profile_uuid']) && empty($inputs['device_template'])) {
+            return response()->json([
+                'message' =>  'No option selected to update.',
+                'errors' => [
+                    'no_option' => [
+                        'No option selected to update.'
+                    ]
+                ]
+            ], 422);
+        }
+        foreach ($inputs['devices'] as $deviceUuid) {
+            $device = Devices::find($deviceUuid);
+            if (!empty($inputs['device_profile_uuid'])) {
+                $device->device_profile_uuid = $inputs['device_profile_uuid'];
+            }
+            if (!empty($inputs['device_template'])) {
+                $device->device_template = $inputs['device_template'];
+            }
+            $device->save();
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Devices has been updated.'
         ]);
     }
 
@@ -341,6 +378,15 @@ class DeviceController extends Controller
             'status' => 'success',
             'device' => $device,
             'message' => 'Device has been deleted'
+        ]);
+    }
+
+    public function options(): JsonResponse
+    {
+        return response()->json([
+            'templates' => getVendorTemplateCollection(),
+            'profiles' => getProfileCollection(Session::get('domain_uuid')),
+            'extensions' => getExtensionCollection(Session::get('domain_uuid'))
         ]);
     }
 }

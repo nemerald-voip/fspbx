@@ -117,7 +117,7 @@ class SendEventNotify implements ShouldQueue
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
-            return $this->release(60);
+            return $this->release(90);
         });
 
     }

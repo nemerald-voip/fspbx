@@ -1,8 +1,10 @@
 @php
-    if (isset($device) && $device) {
-        $actionUrl = route('devices.update', $device);
-    } else {
-        $actionUrl = route('devices.store');
+    if (isset($extension) && $extension) {
+        if (isset($device) && $device) {
+            $actionUrl = route('extensions.update-device', [$extension, $device]);
+        } else {
+            $actionUrl = route('extensions.store-device', [$extension]);
+        }
     }
 @endphp
 <form id="device_form" method="POST" action="{{$actionUrl}}">
@@ -11,7 +13,7 @@
     @endif
     @csrf
     @if(isset($extension) && $extension->extension_uuid)
-        <input type="hidden" name="extension_uuid" value="{{$extension->extension_uuid}}" />
+        <input type="hidden" id="extension_uuid" name="extension_uuid" value="{{$extension->extension_uuid}}" />
         <input type="hidden" id="device_uuid" name="device_uuid" value="" />
     @endif
     <div class="mb-3">

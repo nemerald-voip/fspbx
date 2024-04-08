@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
+use Inertia\Inertia;
 use App\Models\Domain;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -139,7 +140,9 @@ class LoginController extends Controller
     {
         // $user = Auth::user();
         // Log::info('User Logged Out. ', [$user]);
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
         session_unset();
         session_destroy();
 

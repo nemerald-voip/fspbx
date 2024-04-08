@@ -2,28 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use Auth;
+use App\Models\CallCenterQueues;
 use Linfo\Linfo;
-use Carbon\Carbon;
-use App\Models\Faxes;
-use App\Models\Domain;
-use App\Models\Extensions;
-use Aws\Mobile\MobileClient;
-use Illuminate\Http\Request;
-use App\Models\MobileAppUsers;
-use App\Models\DefaultSettings;
-use App\Jobs\SendAppCredentials;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\AppCredentialsGenerated;
-use Illuminate\Support\Facades\Session;
+use App\Models\CDR;
+use App\Models\User;
 use Inertia\Inertia;
+use App\Models\Faxes;
+use App\Models\Devices;
+use App\Models\IvrMenus;
+use App\Models\CallFlows;
+use App\Models\Dialplans;
+use App\Models\Extensions;
+use App\Models\RingGroups;
+use App\Models\Voicemails;
+use App\Models\Destinations;
+use Illuminate\Support\Carbon;
+use Nwidart\Modules\Facades\Module;
+use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 
 class DashboardController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      *
@@ -32,83 +32,145 @@ class DashboardController extends Controller
     public function index()
     {
         date_default_timezone_set('America/Los_Angeles');
+
+        // dd(Session::get('domain_name'));
+        // return view('layouts.dashboard.index')->with($data);
+
+        return Inertia::render(
+            'Dashboard',
+            [
+                'company_data' => function () {
+                    return $this->getCompanyData();
+                },
+                'cards' => function () {
+                    return $this->getApps();
+                },
+                'data' => Inertia::lazy(
+                    fn () =>
+                    $this->getData()
+                ),
+                'counts' => Inertia::lazy(
+                    fn () =>
+                    $this->getCounts()
+                ),
+            ]
+        );
+    }
+
+    public function getCounts()
+    {
         $domain_id = Session::get('domain_uuid');
 
+        $counts = [];
+        if (userCheckPermission("extension_view")) {
+            //Extension count
+            $counts['extensions'] = Extensions::where('domain_uuid', $domain_id)
+                ->where('enabled', 'true')
+                ->count();
+        }
 
-        $data = [];
-        $data['permissions']['users']=userCheckPermission("user_view");
-        $data['permissions']['extensions']=userCheckPermission("extension_view");
-        $data['permissions']['ring_groups']=userCheckPermission("ring_group_view");
-        $data['permissions']['ivr']=userCheckPermission("ivr_menu_view");
-        $data['permissions']['time_conditions']=userCheckPermission("time_condition_view");
-        $data['permissions']['devices']=userCheckPermission("device_view");
-        $data['permissions']['cdr']=userCheckPermission("xml_cdr_view");
-        $data['permissions']['voicemails']=userCheckPermission("voicemail_view");
-        $data['permissions']['phone_number']=userCheckPermission("destination_view");
-        $data['permissions']['call_flow_view']=userCheckPermission("call_flow_view");
-        $data['permissions']['fax_view']=userCheckPermission("fax_view");
-
-        //Users Count
-        $data['users'] = DB::table('v_users')->where('domain_uuid', $domain_id)->where('user_enabled', 'true')->count();
-
-        //Extension count
-        $data['extensions'] = DB::table('v_extensions')
-            ->where('domain_uuid', $domain_id)
-            ->where('enabled', 'true')
-            ->count();
-
+        if (userCheckPermission("user_view")) {
+            //User count
+            $counts['users'] = User::where('domain_uuid', $domain_id)
+                ->count();
+        }
 
         //Phone Number count
-        $data['phone_number'] = DB::table('v_destinations')
-        ->where('domain_uuid', $domain_id)
-        ->where('destination_enabled', 'true')
-        ->count();
-
-        //Ring group count
-        $data['ring_groups'] = DB::table('v_ring_groups')
-            ->where('domain_uuid', $domain_id)
-            ->where('ring_group_enabled', 'true')->count();;
-
-        //IVR Count
-        $data['ivr'] = DB::table('v_ivr_menus')
-            ->where('domain_uuid', $domain_id)
-            ->where('ivr_menu_enabled', 'true')
+        $counts['phone_numbers'] = Destinations::where('domain_uuid', $domain_id)
+            ->where('destination_enabled', 'true')
             ->count();
 
-        //Time Condition Count
-        $data['time_conditions'] = DB::table('v_dialplans')
-        ->where('domain_uuid', $domain_id)
-        ->where('app_uuid', '4b821450-926b-175a-af93-a03c441818b1')
-        ->count();
-
-
-        //Devices Count
-        $data['devices'] = DB::table('v_devices')->where('domain_uuid', $domain_id)->where('device_enabled', 'true')->count();;
+        // Faxes count
+        $counts['faxes'] = Faxes::where('domain_uuid', $domain_id)
+            ->count();
 
         //CDR Count
-        $data['cdr'] = DB::table('v_xml_cdr')
-            ->where('domain_uuid', $domain_id)
-            ->whereRaw("start_stamp >= '".date('Y-m-d')." 00:00:00.00 America/Los_Angeles'")
+        $counts['cdrs'] = CDR::where('domain_uuid', $domain_id)
+            ->whereRaw("start_stamp >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
             ->count();
 
-        //Voicemail Count
-        $data['voicemails'] = DB::table('v_voicemails')
-            ->where('domain_uuid', $domain_id)
-            ->where('voicemail_enabled', 'true')
-            ->count();
+        if (userCheckPermission("ring_group_view")) {
+            //Ring group count
+            $counts['ring_groups'] = RingGroups::where('domain_uuid', $domain_id)
+                ->where('ring_group_enabled', 'true')
+                ->count();;
+        }
 
-        //Call Flow Count
-        $data['call_flows'] = DB::table('v_call_flows')
-            ->where('domain_uuid', $domain_id)
-            ->where('call_flow_enabled', 'true')
-            ->count();
+        if (userCheckPermission("ivr_menu_view")) {
+            //IVR Count
+            $counts['ivrs'] = IvrMenus::where('domain_uuid', $domain_id)
+                ->where('ivr_menu_enabled', 'true')
+                ->count();
+        }
 
-        //Call Faxes
-        $data['faxes'] = Faxes::where('domain_uuid', $domain_id)
-        ->count();
+        if (userCheckPermission("time_condition_view")) {
+            //Time Condition Count
+            $counts['schedules'] = Dialplans::where('domain_uuid', $domain_id)
+                ->where('app_uuid', '4b821450-926b-175a-af93-a03c441818b1')
+                ->count();
+        }
+
+        if (userCheckPermission("device_view")) {
+            //Devices Count
+            $counts['devices'] = Devices::where('domain_uuid', $domain_id)
+                ->where('device_enabled', 'true')
+                ->count();;
+        }
+
+        if (userCheckPermission("voicemail_view")) {
+            //Voicemail Count
+            $counts['voicemails'] = Voicemails::where('domain_uuid', $domain_id)
+                ->where('voicemail_enabled', 'true')
+                ->count();
+        }
+
+        if (userCheckPermission("call_flow_view")) {
+            //Call Flow Count
+            $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_id)
+                ->where('call_flow_enabled', 'true')
+                ->count();
+        }
+
+        if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
+            $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_id)->count();
+        }
+
+        //if superuser get registration status
+        if (isSuperAdmin()) {
+            //Check FusionPBX login status
+            // session_start();
+            // if (isset($_SESSION['user'])) {
+            // Count global unique registrations
+            $registrations = get_registrations("all");
+            $unique_regs = [];
+            foreach ($registrations as $registration) {
+                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
+            }
+            $counts['global_reg_count'] = count($unique_regs);
+
+            // Count local unique registrations
+            $registrations = get_registrations();
+            $unique_regs = [];
+            foreach ($registrations as $registration) {
+                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
+            }
+            $counts['local_reg_count'] = count($unique_regs);
+            // }
+        }
+
+        return $counts;
+    }
+
+    public function getData()
+    {
+
+        $data = [];
+
+        //Check if user is superadmin
+        $data['superadmin'] = isSuperAdmin();
 
         // Get the current status of Horizon.
-        if (! $masters = app(MasterSupervisorRepository::class)->all()) {
+        if (!$masters = app(MasterSupervisorRepository::class)->all()) {
             $data['horizonStatus'] = 'inactive';
         }
 
@@ -120,40 +182,18 @@ class DashboardController extends Controller
 
         //if superuser get registration status
         if (isSuperAdmin()) {
-            //Check FusionPBX login status
-            session_start();
-            if(!isset($_SESSION['user'])) {
-                return redirect()->route('logout');
-            }
-
-            // Count global unique registrations
-            $registrations = get_registrations("all");
-            $unique_regs =[];
-            foreach ($registrations as $registration) {
-                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs,$registration['user']);
-            }
-            $data['global_reg_count'] = count($unique_regs);
-
-            // Count local unique registrations
-            $registrations = get_registrations();
-            $unique_regs =[];
-            foreach ($registrations as $registration) {
-                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs,$registration['user']);
-            }
-            $data['local_reg_count'] = count($unique_regs);
-
             //Get Disk Usage
             $data['diskfree'] = disk_free_space(".") / 1073741824;
             $data['disktotal'] = disk_total_space("/") / 1073741824;
             $data['diskused'] = $data['disktotal'] - $data['diskfree'];
-            $diskusage = round($data['diskused']/$data['disktotal']*100);
+            $diskusage = round($data['diskused'] / $data['disktotal'] * 100);
             $data['diskusage'] = $diskusage;
 
-            if ($diskusage <= 60){
+            if ($diskusage <= 60) {
                 $data['diskusagecolor'] = "bg-success";
-            } elseif ($diskusage > 60 && $diskusage <= 75){
+            } elseif ($diskusage > 60 && $diskusage <= 75) {
                 $data['diskusagecolor'] = "bg-warning";
-            } elseif ($diskusage >75) {
+            } elseif ($diskusage > 75) {
                 $data['diskusagecolor'] = "bg-danger";
             }
 
@@ -165,23 +205,23 @@ class DashboardController extends Controller
             $data['ramfree'] = $ram['free'] / 1073741824;
             $data['ramtotal'] = $ram['total'] / 1073741824;
             $data['ramused'] = $data['ramtotal'] - $data['ramfree'];
-            $data['ramusage'] = round($data['ramused']/$data['ramtotal']*100);
-            if ($data['ramusage'] <= 60){
+            $data['ramusage'] = round($data['ramused'] / $data['ramtotal'] * 100);
+            if ($data['ramusage'] <= 60) {
                 $data['ramusagecolor'] = "bg-success";
-            } elseif ($data['ramusage'] > 60 && $data['ramusage'] <= 75){
+            } elseif ($data['ramusage'] > 60 && $data['ramusage'] <= 75) {
                 $data['ramusagecolor'] = "bg-warning";
-            } elseif ($data['ramusage'] >75) {
+            } elseif ($data['ramusage'] > 75) {
                 $data['ramusagecolor'] = "bg-danger";
             }
             $data['swapfree'] = $ram['swapFree'] / 1073741824;
             $data['swaptotal'] = $ram['swapTotal'] / 1073741824;
             $data['swapused'] = $data['swaptotal'] - $data['swapfree'];
-            $data['swapusage'] = round($data['swapused']/$data['swaptotal']*100);
-            if ($data['swapusage'] <= 60){
+            $data['swapusage'] = round($data['swapused'] / $data['swaptotal'] * 100);
+            if ($data['swapusage'] <= 60) {
                 $data['swapusagecolor'] = "bg-success";
-            } elseif ($data['swapusage'] > 60 && $data['swapusage'] <= 75){
+            } elseif ($data['swapusage'] > 60 && $data['swapusage'] <= 75) {
                 $data['swapusagecolor'] = "bg-warning";
-            } elseif ($data['swapusage'] >75) {
+            } elseif ($data['swapusage'] > 75) {
                 $data['swapusagecolor'] = "bg-danger";
             }
 
@@ -194,14 +234,93 @@ class DashboardController extends Controller
             $data['extension_count'] = Extensions::get()->count();
 
             //Get core count
-            $data['core_count']=trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
+            $data['core_count'] = trim(shell_exec("grep -P '^physical id' /proc/cpuinfo|wc -l"));
 
             // Get uptime
-            $data['uptime'] = $parser->getUpTime();
+            $uptime = $parser->getUpTime();
+            $diff = Carbon::now()->diff(Carbon::createFromTimestamp($uptime['bootedTimestamp']));
+            // Format the difference
+            $formattedDiff = sprintf('%dd %dh %dm', $diff->days, $diff->h, $diff->i);
+            $data['uptime'] = $formattedDiff;
 
+            // Get the hostname of the server
+            $data['hostname'] = gethostname();
         }
-
-        return view('layouts.dashboard.index')->with($data);
+        return $data;
     }
 
+    public function getCompanyData()
+    {
+        $data = [];
+        if (Session::get('domain_description') != '' && Session::get('domain_description') != null) {
+            $data['company_name'] = Session::get('domain_description');
+        } else {
+            $data['company_name'] = Session::get('domain_name');
+        }
+
+        $data['time_zone'] = get_domain_setting('time_zone');
+
+        return $data;
+    }
+
+    public function getApps()
+    {
+        $apps = [];
+
+        if (userCheckPermission("user_view")) {
+            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'slug' => 'users'];
+        }
+        if (userCheckPermission("extension_view")) {
+            $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
+        }
+        if (userCheckPermission("ring_group_view")) {
+            $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'UserGroupIcon', 'slug' => 'ring_groups'];
+        }
+        if (userCheckPermission("ivr_menu_view")) {
+            $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => '/app/ivr_menus/ivr_menus.php', 'icon' => 'IvrIcon', 'slug' => 'ivrs'];
+        }
+        if (userCheckPermission("time_condition_view")) {
+            $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'slug' => 'schedules'];
+        }
+        if (userCheckPermission("device_view")) {
+            $apps[] = ['name' => 'Devices', 'href' => '/app/devices/devices.php', 'icon' => 'DevicesIcon', 'slug' => 'devices'];
+        }
+        if (userCheckPermission("xml_cdr_view")) {
+            $apps[] = ['name' => 'Call History (CDRs)', 'href' => '/call-detail-records', 'icon' => 'CallHistoryIcon', 'slug' => 'cdrs'];
+        }
+        if (userCheckPermission("voicemail_view")) {
+            $apps[] = ['name' => 'Voicemails', 'href' => '/voicemails', 'icon' => 'VoicemailIcon', 'slug' => 'voicemails'];
+        }
+        if (userCheckPermission("destination_view")) {
+            $apps[] = ['name' => 'Phone Numbers', 'href' => '/app/destinations/destinations.php', 'icon' => 'DialpadIcon', 'slug' => 'phone_numbers'];
+        }
+        if (userCheckPermission("call_flow_view")) {
+            $apps[] = ['name' => 'Call Flows', 'href' => '/app/call_flows/call_flows.php', 'icon' => 'AlternativeRouteIcon', 'slug' => 'call_flows'];
+        }
+        if (userCheckPermission("fax_view")) {
+            $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];
+        }
+
+        if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
+
+            $queue_count = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))->count();
+
+            $contact_center_app = ['name' => 'Contact Center', 'icon' => 'SupportAgent', 'slug' => 'queues'];
+
+            if ($queue_count > 0) {
+                if (userCheckPermission("contact_center_dashboard_view")) {
+                    $contact_center_app['href'] = '/contact-center';
+                }
+            }
+
+            if (userCheckPermission("contact_center_settings_edit")) {
+                $contact_center_app['alt_href'] = '/contact-center/settings';
+            }
+
+            $apps[] = $contact_center_app;
+        }
+
+
+        return $apps;
+    }
 }

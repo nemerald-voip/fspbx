@@ -40,7 +40,9 @@ class SetUpUserSession
         $domain = Domain::where('domain_uuid', $event->user->domain_uuid)->first();
         Session::put('user.domain_name', $domain->domain_name);
 
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
         session_unset();
 
 
@@ -244,15 +246,27 @@ class SetUpUserSession
                         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
                     ]);
 
-                foreach ($domains_from_groups as $domain_from_group) {
-                    if (!$domains->contains($domain_from_group)) {
-                        $domains->push($domain_from_group);
-                    }
-                }
+                // foreach ($domains_from_groups as $domain_from_group) {
+                //     if (!$domains->contains($domain_from_group)) {
+                //         $domains->push($domain_from_group);
+                //     }
+                // }
+
+                // Merge the two collections together
+                $combinedDomains = $domains->merge($domains_from_groups);
+
+                // Ensure uniqueness based on 'domain_uuid'
+                $uniqueDomains = $combinedDomains->unique('domain_uuid');
+
+                // Optionally, if you want to re-index the collection keys after making it unique
+                $domains = $uniqueDomains->values();
 
                 // Sort returned collection
                 $domains = $domains->sortBy('domain_description');
+                $domains = $domains->values();
+
             }
+            // logger($domains);
 
             Session::put('domains', $domains);
 
@@ -264,7 +278,7 @@ class SetUpUserSession
 
         // Assign additional variables
         if (userCheckPermission("domain_select")) {
-            //if user is in the reseller group check if he is allowed to see his own domain
+            //if user is a multi-domain admin check if he is allowed to see his own domain
             $self_domain = false;
             if (Session::get('domains')) {
                 foreach (Session::get('domains') as $session_domain) {
