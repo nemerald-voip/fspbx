@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 /*
@@ -61,7 +63,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Extensions
     Route::resource('extensions', ExtensionsController::class);
-    Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
+    Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
     Route::post('/extensions/{extension}/device', [ExtensionsController::class, 'oldStoreDevice'])->name('extensions.store-device');
     Route::get('/extensions/{extension}/device/{device}/edit', [ExtensionsController::class, 'oldEditDevice'])->name('extensions.edit-device');
@@ -90,18 +92,18 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Fax
     Route::resource('faxes', FaxesController::class);
-    Route::get('/faxes/newfax/create', [FaxesController::class, 'new']) ->name('faxes.newfax');
-    Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes.inbox.list');
-    Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
-    Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
-    Route::get('/faxes/log/{id}', [FaxesController::class, 'log']) ->name('faxes.log.list');
-    Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax']) ->name('faxes.file.deleteSentFax');
-    Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax']) ->name('faxes.file.deleteReceivedFax');
-    Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
-    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
-    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');
+    Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
+    Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox'])->name('faxes.inbox.list');
+    Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent'])->name('faxes.sent.list');
+    Route::get('/faxes/active/{id}', [FaxesController::class, 'active'])->name('faxes.active.list');
+    Route::get('/faxes/log/{id}', [FaxesController::class, 'log'])->name('faxes.log.list');
+    Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax'])->name('faxes.file.deleteSentFax');
+    Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
+    Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
+    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile'])->name('downloadInboxFaxFile');
+    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
     Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
-    Route::post('/faxes/send', [FaxesController::class, 'sendFax']) -> name ('faxes.sendFax');
+    Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.sendFax');
 
     // Domain Groups
     Route::resource('domaingroups', DomainGroupsController::class);
@@ -180,6 +182,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Messages
     Route::get('/messages', [MessagesController::class, 'index'])->name('messagesStatus');
+
+    // Message Settings
+    Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');
