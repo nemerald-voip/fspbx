@@ -258,18 +258,18 @@ const props = defineProps({
 
 let PhoneNumberObject = reactive({
     update_path: props.routePhoneNumbersStore,
-    domain_uuid: '',
+    domain_uuid: '', // advanced
     destination_uuid: '',
     destination_prefix: '1',
     destination_number: '',
-    destination_conditions: '',
+    destination_conditions: '', // advanced
     destination_actions: '',
-    fax_uuid: '',
-    destination_cid_name_prefix: '',
-    destination_record: 'false',
-    destination_accountcode: '',
+    fax_uuid: '', // advanced
+    destination_cid_name_prefix: '', // advanced
+    destination_record: 'false', // advanced
+    destination_accountcode: '', // advanced
     destination_hold_music: '',
-    destination_distinctive_ring: '',
+    destination_distinctive_ring: '', // advanced
     destination_enabled: 'true',
     destination_description: ''
 });
