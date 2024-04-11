@@ -249,7 +249,6 @@ const props = defineProps({
     selectedDomain: String,
     selectedDomainUuid: String,
     search: String,
-    destinationTypes: Array,
     routePhoneNumbersStore: String,
    // routeDevicesOptions: String,
    // routeDevicesBulkUpdate: String,
@@ -261,11 +260,18 @@ let PhoneNumberObject = reactive({
     update_path: props.routePhoneNumbersStore,
     domain_uuid: '',
     destination_uuid: '',
-    destination_type: '',
+    destination_prefix: '1',
     destination_number: '',
-    destination_caller_id_name: '',
-    destination_caller_id_number: '',
-    destination_types: [],
+    destination_conditions: '',
+    destination_actions: '',
+    fax_uuid: '',
+    destination_cid_name_prefix: '',
+    destination_record: 'false',
+    destination_accountcode: '',
+    destination_hold_music: '',
+    destination_distinctive_ring: '',
+    destination_enabled: 'true',
+    destination_description: ''
 });
 
 //const currentManagementTab = ref('Basic');

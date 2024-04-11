@@ -2,9 +2,21 @@
     <form>
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
             <div class="sm:col-span-12">
-                <LabelInputRequired :target="'destination_condition_field'" :label="'Conditions'" />
+                <LabelInputOptional :target="'Fax'" :label="'Fax'" />
                 <div class="mt-2">
-                    <input v-model="phoneNumber.destination_condition_field" :disabled="isEdit" :class="{ 'disabled:opacity-50': isEdit }" type="text" name="destination_condition_field" id="destination_condition_field" placeholder="Conditions"
+                    <SelectBox :options="phoneNumber.phonenumber_options.templates"
+                               :selectedItem="phoneNumber.fax_uuid"
+                               :search="true"
+                               :placeholder="'Choose fax'"
+                               @update:modal-value="handleUpdateFax"
+                    />
+                </div>
+            </div>
+
+            <div class="sm:col-span-12">
+                <LabelInputOptional :target="'destination_cid_name_prefix'" :label="'Caller ID name prefix'" />
+                <div class="mt-2">
+                    <input v-model="phoneNumber.destination_cid_name_prefix" type="text" name="destination_cid_name_prefix" id="destination_cid_name_prefix" placeholder="Enter caller prefix"
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
@@ -42,7 +54,11 @@ const props = defineProps({
     },
 });
 
-const handleUpdateType = (newSelectedItem) => {
-    props.phoneNumber.destination_type = newSelectedItem.value
+const handleUpdateFax = (newSelectedItem) => {
+    props.phoneNumber.fax_uuid = newSelectedItem.value
+}
+
+const handleUpdateTemplate = (newSelectedItem) => {
+    props.device.device_template = newSelectedItem.value
 }
 </script>

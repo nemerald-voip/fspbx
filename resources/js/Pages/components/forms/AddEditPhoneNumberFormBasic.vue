@@ -1,14 +1,11 @@
 <template>
     <form>
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div v-if="!isEdit" class="sm:col-span-12">
-                <LabelInputRequired :target="'destination_type'" :label="'Type'" />
+            <div class="sm:col-span-12">
+                <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'" />
                 <div class="mt-2">
-                    <SelectBox :options="phoneNumber.destination_types"
-                               :selectedItem="phoneNumber.destination_type"
-                               :placeholder="'Choose type'"
-                               @update:modal-value="handleUpdateType"
-                    />
+                    <input v-model="phoneNumber.destination_prefix" :disabled="isEdit" :class="{ 'disabled:opacity-50': isEdit }" type="text" name="destination_prefix" id="destination_prefix" placeholder="Enter country code"
+                           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
 
@@ -19,11 +16,10 @@
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
-
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'destination_caller_id_name'" :label="'Caller ID Name'" />
+                <LabelInputOptional :target="'destination_actions'" :label="'Actions'" />
                 <div class="mt-2">
-                    <input v-model="phoneNumber.destination_caller_id_name" type="text" name="destination_caller_id_name" id="destination_caller_id_name" placeholder="Enter caller id name"
+                    <input v-model="phoneNumber.destination_actions" type="text" name="destination_actions" id="destination_actions" placeholder="Enter actions"
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
