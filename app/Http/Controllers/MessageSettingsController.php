@@ -2,23 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Extensions;
 use Inertia\Inertia;
-use App\Models\Messages;
-use App\Models\MessageSetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use libphonenumber\PhoneNumberUtil;
-use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
-use libphonenumber\NumberParseException;
-use Propaganistas\LaravelPhone\PhoneNumber;
 
 class MessageSettingsController extends Controller
 {
-
+    public $model = 'App\Models\MessageSetting';
     public $filters = [];
     public $sortField;
     public $sortOrder;
+    protected $viewName = 'MessageSettings';
+    protected $searchable = ['destination', 'carrier', 'description', 'chatplan_detail_data', 'email'];
+
 
     /**
      * Display a listing of the resource.
@@ -146,7 +143,7 @@ class MessageSettingsController extends Controller
 
 
         return Inertia::render(
-            'MessageSettings',
+            $this->viewName,
             [
                 'data' => function () {
                     return $this->getData();
@@ -155,6 +152,10 @@ class MessageSettingsController extends Controller
                     fn () =>
                     $this->getItemData()
                 ),
+                'itemOptions' => Inertia::lazy(
+                    fn () =>
+                    $this->getItemOptions()
+                ),
                 'url' => route('messages.settings'),
             ]
         );
@@ -162,26 +163,52 @@ class MessageSettingsController extends Controller
 
     public function getItemData()
     {
-        logger(request('itemUuid'));
+        $itemData = $this->model::findOrFail(request('itemUuid'));
+        return $itemData;
+    }
 
-        $itemData = MessageSetting::findOrFail(request('itemUuid'));
+    public function getItemOptions()
+    {
+        // Define the options for the 'carrier' field
+        $carrierOptions = [
+            ['value' => 'thinq', 'label' => 'ThinQ'],
+            ['value' => 'synch', 'label' => 'Synch'],
+        ];
 
-        logger($itemData);
-        $apps = [];
+        // Define the options for the 'chatplan_detail_data' field
+        $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+            ->get([
+                'extension_uuid',
+                'extension',
+                'effective_caller_id_name',
+            ]);
 
-        // if (userCheckPermission("user_view")) {
-        //     $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'slug' => 'users'];
-        // }
-        // if (userCheckPermission("extension_view")) {
-        //     $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
-        // }
-        // if (userCheckPermission("ring_group_view")) {
-        //     $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'UserGroupIcon', 'slug' => 'ring_groups'];
-        // }
+        $chatplanDetailDataOptions = [];
+        // Loop through each extension and create an option
+        foreach ($extensions as $extension) {
+          $chatplanDetailDataOptions[] = [
+            'value' => $extension->extension,
+            'name' => $extension->name_formatted,
+          ];
+        }
+        
+        // Construct the itemOptions object
+        $itemOptions = [
+            'carrier' => $carrierOptions,
+            'chatplan_detail_data' => $chatplanDetailDataOptions,
+            // Define options for other fields as needed
+        ];
+
+        return $itemOptions;
     }
 
     public function getData($paginate = 50)
     {
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
+        }
+
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.showGlobal'))) {
             $this->filters['showGlobal'] = request('filterData.showGlobal');
@@ -212,7 +239,7 @@ class MessageSettingsController extends Controller
 
     public function builder($filters = [])
     {
-        $data =  MessageSetting::query();
+        $data =  $this->model::query();
 
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
             // Access domains through the session and filter devices by those domains
@@ -251,4 +278,16 @@ class MessageSettingsController extends Controller
 
         return $data;
     }
+
+    protected function filterSearch($query, $value)
+    {
+        $searchable = $this->searchable;
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
+            }
+        });
+    }
+
 }

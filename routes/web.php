@@ -1,5 +1,8 @@
 <?php
 
+
+use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -16,7 +19,6 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
-use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
@@ -46,7 +48,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 
-// Routes for 2FA email challenge. Used as a backup when 2FA is not enabled. 
+// Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
 Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'update'])
     ->middleware('throttle:2,1')
@@ -126,7 +128,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
     Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk-update');
+    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulkUpdate');
     Route::resource('devices', DeviceController::class);
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
@@ -135,6 +137,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
+    //Route::get('/phone-numbers/options', [DeviceController::class, 'options'])->name('phoneNumbers.options');
+    //Route::put('/phone-numbers/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('phoneNumbers.bulkUpdate');
+    Route::resource('phone-numbers', PhoneNumbersController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -185,6 +190,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Message Settings
     Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
+    Route::post('/message-settings', [MessageSettingsController::class, 'index']);
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');
