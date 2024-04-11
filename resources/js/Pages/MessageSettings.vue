@@ -67,7 +67,7 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.sms_destination_uuid">
+                <tr v-for="row in localData.data" :key="row.sms_destination_uuid">
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
                         <input v-if="row.destination" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.sms_destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -167,7 +167,8 @@
     </AddEditItemModal>
     <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleClose">
         <template #modal-body>
-            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" @settingsUpdated="handleSettingsUpdate"/>
+            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions"
+                @settingsUpdated="handleSettingsUpdate" />
         </template>
 
     </AddEditItemModal>
@@ -194,7 +195,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, watch, ref } from "vue";
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -238,6 +239,7 @@ const props = defineProps({
     url: String,
     itemData: Object,
     itemOptions: Object,
+    extensionData: Object,
     // routeDevicesStore: String,
     // routeDevicesOptions: String,
     // routeDevicesBulkUpdate: String,
@@ -250,9 +252,57 @@ const filterData = ref({
     showGlobal: props.showGlobal,
 });
 
-// onMounted(() => {
-//     showGlobal.value = props.deviceGlobalView;
-// })
+// Create a reactive reference for the local data copy
+const localData = ref(JSON.parse(JSON.stringify(props.data)));
+
+onMounted(() => {
+    // Check if the data array inside props.data has elements before calling getExtensionData
+    if (props.data.data && props.data.data.length > 0) {
+        getExtensionData();
+    }
+})
+
+const getExtensionData = () => {
+    router.post(props.url, {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'extensionData',
+            ],
+            onSuccess: (page) => {
+            },
+            onFinish: () => {
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
+// Function to update localData based on extensionData
+const updateLocalDataWithExtensionData = (extensionData) => {
+    if (!extensionData || extensionData.length === 0) return;
+    localData.value.data.forEach(row => {
+        const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
+        if (matchedExtension) {
+            row.chatplan_detail_data = matchedExtension.name_formatted;
+            // Ensure extension_error is cleared if it was previously set
+            delete row.extension_error;
+        } else {
+            // If no match is found, set extension_error for this row
+            row.extension_error = true;
+        }
+    });
+};
+
+// Watch for changes in props.extensionData and update localData accordingly
+watch(() => props.extensionData, (newExtensionData) => {
+    updateLocalDataWithExtensionData(newExtensionData);
+}, {
+    immediate: true, // This ensures the watcher is triggered immediately with the current value
+});
 
 const selectedItemsExtensions = computed(() => {
     return selectedItems.value.map(id => {
@@ -327,8 +377,8 @@ const handleEdit = (itemUuid) => {
     loadingModal.value = true
 
     router.post(props.url,
-        { 
-            itemUuid: itemUuid, 
+        {
+            itemUuid: itemUuid,
         },
         {
             preserveScroll: true,
