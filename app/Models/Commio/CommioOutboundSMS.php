@@ -44,11 +44,11 @@ class CommioOutboundSMS extends Model
         );
 
         $response = Http::withHeaders([
-            'Authorization' => 'Basic ' . base64_encode(env('THINQ_USERNAME') . ":" . env('THINQ_TOKEN')),
+            'Authorization' => 'Basic ' . base64_encode(config('commio.username') . ":" . config('commio.token')),
             'Content-Type' => 'application/json'
         ])
             ->withBody(json_encode($data), 'application/json')
-            ->post('https://api.thinq.com/account/' . env('THINQ_ACCOUNT_ID') . '/product/origination/sms/send');
+            ->post('https://api.thinq.com/account/' . config('commio.account_id') . '/product/origination/sms/send');
 
         // Get result
         if (isset($response)) {

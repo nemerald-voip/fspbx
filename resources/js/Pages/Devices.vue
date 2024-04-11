@@ -1,6 +1,5 @@
 <template>
-    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-                :selected-domain-uuid="selectedDomainUuid" :domains="domains" />
+    <MainLayout/>
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">

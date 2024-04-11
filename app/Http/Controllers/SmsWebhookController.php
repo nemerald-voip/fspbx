@@ -187,7 +187,7 @@ class SmsWebhookController extends Controller
         //Check message API key to authorize this method
         if (!isset($message['api_key'])) {
             return response('No API Key Provided');
-        } elseif ($message['api_key'] != env("RINGOTEL_TOKEN")) {
+        } elseif ($message['api_key'] != config("ringotel.token")) {
             $validation = false;
             $status = "Wrong API Key";
         }
@@ -269,21 +269,21 @@ class SmsWebhookController extends Controller
             $carrier =  $smsDestinationModel->carrier;
         }
 
-        // Send text message through Teli API
-        if ($validation && $message['method'] == "message" && $carrier == "teli") {
-            $response = Http::asForm()->post('https://api.teleapi.net/sms/send?token=' . env('TELI_TOKEN'), [
-                "source" => $sourcePhoneNumberObject->getNationalNumber(),
-                "destination" => $phoneNumberObject->getNationalNumber(),
-                "message" => $message['params']['content']
-            ]);
+        // // Send text message through Teli API
+        // if ($validation && $message['method'] == "message" && $carrier == "teli") {
+        //     $response = Http::asForm()->post('https://api.teleapi.net/sms/send?token=' . conig('teli.token'), [
+        //         "source" => $sourcePhoneNumberObject->getNationalNumber(),
+        //         "destination" => $phoneNumberObject->getNationalNumber(),
+        //         "message" => $message['params']['content']
+        //     ]);
 
-            //Get result
-            if (isset($response) && $response['status'] == 'error') {
-                $status = $response['data'];
-            } elseif (isset($response) && $response['status'] == 'success') {
-                $status = "success";
-            }
-        }
+        //     //Get result
+        //     if (isset($response) && $response['status'] == 'error') {
+        //         $status = $response['data'];
+        //     } elseif (isset($response) && $response['status'] == 'success') {
+        //         $status = "success";
+        //     }
+        // }
 
         // Store message in database
         $messageModel = new Messages;
