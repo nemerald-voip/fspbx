@@ -1408,11 +1408,20 @@ if (!function_exists('getProfileCollection')) {
 if (!function_exists('getMusicOnHoldCollection')) {
     function getMusicOnHoldCollection(string $domain = null): array
     {
-        return MusicOnHold::where('domain_uuid', $domain)
-//            ->orWhere('domain_uuid', null)
-            ->orderBy('music_on_hold_name', 'ASC')
-            ->get()
-            ->unique('music_on_hold_name');
+        $musicOnHold = [];
+        $musicOnHoldCollection = MusicOnHold::query();
+        if ($domain) {
+            $musicOnHoldCollection->where('domain_uuid', $domain);
+        }
+        $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get();
+        foreach ($musicOnHoldCollection as $item) {
+            $musicOnHold[] = [
+                'name' => $item->music_on_hold_name,
+                'value' => 'local_stream://'.$item->music_on_hold_name
+            ];
+        }
+        unset($musicOnHoldCollection, $item);
+        return $musicOnHold;
     }
 }
 

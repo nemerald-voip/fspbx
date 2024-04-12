@@ -291,7 +291,7 @@ class PhoneNumbersController extends Controller
     public function options(): JsonResponse
     {
         return response()->json([
-            'music_on_hold' => getMusicOnHoldCollection(Session::get('domain_uuid')),
+            'music_on_hold' => getMusicOnHoldCollection(),
             'faxes' => []
         ]);
     }
