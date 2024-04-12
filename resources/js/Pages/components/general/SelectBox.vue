@@ -19,6 +19,18 @@
                         class="w-full rounded-md border-0 py-1.5 pl-10 shadow-md mb-1 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                         placeholder="Search" type="search"/>
 
+                    <ListboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" :value="null" as="template">
+                        <li :class="[
+                            active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                            'relative cursor-default select-none py-2 pl-10 pr-4',
+                        ]">
+                            <span :class="[
+                                selected ? 'font-medium' : 'font-normal',
+                                'block truncate',
+                            ]">None</span>
+                        </li>
+                    </ListboxOption>
+
                     <ListboxOption v-slot="{ active, selected }" v-for="item in filteredOptions" :key="item.value" :value="item"
                         as="template">
                         <li :class="[
@@ -39,7 +51,7 @@
         </div>
     </Listbox>
 </template>
-  
+
 <script setup>
 import { ref, watch, computed } from 'vue'
 import {
@@ -56,6 +68,7 @@ const props = defineProps({
     selectedItem: [String, null],
     placeholder: [String, null],
     search: [Boolean, null],
+    allowEmpty: {type: [Boolean], default: false},
 });
 
 const emit = defineEmits(['update:modal-value'])
@@ -85,4 +98,3 @@ const filteredOptions = computed(() => {
 });
 
 </script>
-  

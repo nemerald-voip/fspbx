@@ -6,6 +6,7 @@ use App\Http\Requests\StorePhoneNumberRequest;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
 use App\Models\Devices;
+use App\Models\Faxes;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -290,9 +291,32 @@ class PhoneNumbersController extends Controller
 
     public function options(): JsonResponse
     {
+        $faxes = [];
+        $faxesCollection = Faxes::query();
+        $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
+        $faxesCollection = $faxesCollection->orderBy('fax_name')->get();
+        foreach ($faxesCollection as $item) {
+            $faxes[] = [
+                'name' => $item->fax_extension.' '.$item->fax_name,
+                'value' => $item->fax_uuid
+            ];
+        }
+
+        $domains = [];
+        $domainsCollection = Session::get("domains");
+        foreach ($domainsCollection as $item) {
+            $domains[] = [
+                'name' => $item->domain_name, //.' ('.$item->domain_description.')',
+                'value' => $item->domain_uuid
+            ];
+        }
+
+        unset($faxesCollection, $domainsCollection, $item);
+
         return response()->json([
             'music_on_hold' => getMusicOnHoldCollection(),
-            'faxes' => []
+            'faxes' => $faxes,
+            'domains' => $domains
         ]);
     }
 }

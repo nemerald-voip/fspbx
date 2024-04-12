@@ -263,7 +263,7 @@ const props = defineProps({
 
 let PhoneNumberObject = reactive({
     update_path: props.routePhoneNumbersStore,
-    domain_uuid: '', // advanced
+    domain_uuid: props.selectedDomainUuid, // advanced
     destination_uuid: '',
     destination_prefix: '1',
     destination_number: '',
@@ -279,7 +279,8 @@ let PhoneNumberObject = reactive({
     destination_description: '',
     phonenumber_options: {
         faxes: Array,
-        music_on_hold: Array
+        music_on_hold: Array,
+        domains: Array
     }
 });
 
@@ -368,6 +369,7 @@ const handleAdd = () => {
     axios.get(props.routePhoneNumbersOptions).then((response) => {
         PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
         PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
+        PhoneNumberObject.phonenumber_options.domains = response.data.domains
         loadingModal.value = false
         addModalTrigger.value = true;
     }).catch((error) => {
@@ -388,6 +390,7 @@ const handleEdit = (url) => {
         PhoneNumberObject.destination_caller_id_number = response.data.phone_number.destination_caller_id_number
         PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
         PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
+        PhoneNumberObject.phonenumber_options.domains = response.data.domains
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);

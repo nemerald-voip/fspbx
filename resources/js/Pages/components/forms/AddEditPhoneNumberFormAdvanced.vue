@@ -2,18 +2,6 @@
     <form class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
         <div class="px-4 py-6 sm:p-8">
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <!--div class="sm:col-span-12">
-                <LabelInputOptional :target="'Fax'" :label="'Fax'" />
-                <div class="mt-2">
-                    <SelectBox :options="phoneNumber.phonenumber_options.faxes"
-                               :selectedItem="phoneNumber.fax_uuid"
-                               :search="true"
-                               :placeholder="'Choose fax'"
-                               @update:modal-value="handleUpdateFax"
-                    />
-                </div>
-            </div-->
-
             <div class="sm:col-span-12">
                 <Toggle
                     :target="'destination_record'"
@@ -21,6 +9,18 @@
                     :enabled="destinationRecordTrigger"
                     @update:status="destinationRecordTrigger = false"
                 />
+            </div>
+
+            <div class="sm:col-span-12">
+                <LabelInputOptional :target="'fax_uuid'" :label="'Choose fax'"/>
+                <div class="mt-2">
+                    <SelectBox :options="phoneNumber.phonenumber_options.faxes"
+                               :search="true"
+                               :allowEmpty="true"
+                               :placeholder="'Choose fax'"
+                               @update:modal-value="handleUpdateFax"
+                    />
+                </div>
             </div>
 
             <div class="sm:col-span-12">
@@ -40,10 +40,22 @@
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'destination_caller_id_number'" :label="'Caller ID Name'" />
+                <LabelInputOptional :target="'destination_distinctive_ring'" :label="'Distinctive ring'" />
                 <div class="mt-2">
-                    <input v-model="phoneNumber.destination_caller_id_number" type="text" name="destination_caller_id_number" id="destination_caller_id_number" placeholder="Enter caller id number"
+                    <input v-model="phoneNumber.destination_distinctive_ring" type="text" name="destination_distinctive_ring" id="destination_distinctive_ring" placeholder="Enter distinctive ring"
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                </div>
+            </div>
+
+            <div class="sm:col-span-12">
+                <LabelInputRequired :target="'domain_uuid'" :label="'Domain'"/>
+                <div class="mt-2">
+                    <SelectBox :options="phoneNumber.phonenumber_options.domains"
+                               :selectedItem="phoneNumber.domain_uuid"
+                                    :search="true"
+                                    :placeholder="'Choose domain'"
+                                    @update:modal-value="handleUpdateDomain"
+                    />
                 </div>
             </div>
         </div>
@@ -57,6 +69,7 @@ import LabelInputRequired from "../forms/LabelInputRequired.vue";
 import LabelInputOptional from "../forms/LabelInputOptional.vue";
 import SelectBox from "../general/SelectBox.vue";
 import Toggle from "./Toggle.vue";
+import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 
 const props = defineProps({
     phoneNumber: Object,
@@ -69,10 +82,18 @@ const props = defineProps({
 const destinationRecordTrigger = ref(false);
 
 const handleUpdateFax = (newSelectedItem) => {
-    props.phoneNumber.fax_uuid = newSelectedItem.value
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        props.phoneNumber.fax_uuid = newSelectedItem.value
+    } else {
+        props.phoneNumber.fax_uuid = '';
+    }
 }
 
-const handleUpdateTemplate = (newSelectedItem) => {
-    props.device.device_template = newSelectedItem.value
+const handleUpdateDomain = (newSelectedItem) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        props.phoneNumber.domain_uuid = newSelectedItem.value
+    } else {
+        props.phoneNumber.domain_uuid = '';
+    }
 }
 </script>
