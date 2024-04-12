@@ -1,8 +1,8 @@
 <template>
-    advanced
-    <!--form>
+    <form class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+        <div class="px-4 py-6 sm:p-8">
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div class="sm:col-span-12">
+            <!--div class="sm:col-span-12">
                 <LabelInputOptional :target="'Fax'" :label="'Fax'" />
                 <div class="mt-2">
                     <SelectBox :options="phoneNumber.phonenumber_options.templates"
@@ -12,7 +12,7 @@
                                @update:modal-value="handleUpdateFax"
                     />
                 </div>
-            </div>
+            </div-->
 
             <div class="sm:col-span-12">
                 <Toggle
@@ -47,7 +47,8 @@
                 </div>
             </div>
         </div>
-    </form-->
+        </div>
+    </form>
 </template>
 
 <script setup>

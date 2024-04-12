@@ -1,6 +1,6 @@
 <template>
-    basic
-    <!--form>
+    <form class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+        <div class="px-4 py-6 sm:p-8">
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
             <div class="sm:col-span-12">
                 <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'" />
@@ -10,6 +10,7 @@
                 </div>
             </div>
 
+
             <div class="sm:col-span-12">
                 <LabelInputRequired :target="'destination_number'" :label="'Phone Number'" />
                 <div class="mt-2">
@@ -17,6 +18,8 @@
                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                 </div>
             </div>
+
+
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'destination_actions'" :label="'Actions'" />
                 <div class="mt-2">
@@ -25,27 +28,30 @@
                 </div>
             </div>
 
-            <div class="sm:col-span-12">
-                <LabelInputOptional :target="'destination_hold_music'" :label="'Hold Music'" />
-                <div class="mt-2">
-                    <SelectBox :options="phoneNumber.phonenumber_options.holdmusic"
-                               :search="true"
-                               :placeholder="'Choose music'"
-                               @update:modal-value="handleUpdateTemplate"
-                    />
-                </div>
-            </div>
+            <!--
+          <div class="sm:col-span-12">
+              <LabelInputOptional :target="'destination_hold_music'" :label="'Hold Music'" />
+              <div class="mt-2">
+                  <SelectBox :options="phoneNumber.phonenumber_options.holdmusic"
+                             :search="true"
+                             :placeholder="'Choose music'"
+                             @update:modal-value="handleUpdateTemplate"
+                  />
+              </div>
+          </div>
+ -->
+          <div class="sm:col-span-12">
+              <Toggle
+                  :target="'destination_enabled'"
+                  :label="'Enable'"
+                  :enabled="destinationEnabledTrigger"
+                  @update:status="destinationEnabledTrigger = false"
+              />
+          </div>
 
-            <div class="sm:col-span-12">
-                <Toggle
-                    :target="'destination_enabled'"
-                    :label="'Enabled'"
-                    :enabled="destinationEnabledTrigger"
-                    @update:status="destinationEnabledTrigger = false"
-                />
-            </div>
         </div>
-    </form-->
+        </div>
+    </form>
 </template>
 
 <script setup>
