@@ -413,6 +413,26 @@ const handleEdit = (itemUuid) => {
 
 const handleSettingsUpdate = (form) => {
     console.log(form);
+    form.clearErrors();
+
+    form.put(props.url,
+        {
+            preserveScroll: true,
+            preserveState: true,
+
+            onSuccess: (page) => {
+                console.log('success');
+                editModalTrigger.value = false;
+
+            },
+            onFinish: () => {
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+
 }
 const handleBulkEdit = () => {
     if (selectedItems.value.length > 0) {

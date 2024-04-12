@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Extensions;
 use Inertia\Inertia;
+use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use App\Http\Requests\UpdateMessageSettingRequest;
 
 class MessageSettingsController extends Controller
 {
@@ -91,12 +92,12 @@ class MessageSettingsController extends Controller
         $chatplanDetailDataOptions = [];
         // Loop through each extension and create an option
         foreach ($extensions as $extension) {
-          $chatplanDetailDataOptions[] = [
-            'value' => $extension->extension,
-            'name' => $extension->name_formatted,
-          ];
+            $chatplanDetailDataOptions[] = [
+                'value' => $extension->extension,
+                'name' => $extension->name_formatted,
+            ];
         }
-        
+
         // Construct the itemOptions object
         $itemOptions = [
             'carrier' => $carrierOptions,
@@ -195,4 +196,19 @@ class MessageSettingsController extends Controller
         });
     }
 
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\UpdateMessageSettingRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function update(UpdateMessageSettingRequest $request)
+    {
+        //
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Device has been updated.'
+        ]);
+    }
 }

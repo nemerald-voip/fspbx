@@ -191,6 +191,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Message Settings
     Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
     Route::post('/message-settings', [MessageSettingsController::class, 'index']);
+    Route::put('/message-settings', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');
