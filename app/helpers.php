@@ -8,6 +8,7 @@ use App\Models\DomainSettings;
 use App\Models\Extensions;
 use App\Models\IvrMenus;
 use App\Models\MusicOnHold;
+use App\Models\Recordings;
 use App\Models\RingGroups;
 use App\Models\Settings;
 use App\Models\SipProfiles;
@@ -1413,15 +1414,36 @@ if (!function_exists('getMusicOnHoldCollection')) {
         if ($domain) {
             $musicOnHoldCollection->where('domain_uuid', $domain);
         }
-        $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get();
+        $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get()->unique('music_on_hold_name');
         foreach ($musicOnHoldCollection as $item) {
             $musicOnHold[] = [
                 'name' => $item->music_on_hold_name,
                 'value' => 'local_stream://'.$item->music_on_hold_name
             ];
         }
-        unset($musicOnHoldCollection, $item);
-        return $musicOnHold;
+
+        $recordings = [];
+        $recordingsCollection = Recordings::query();
+        if ($domain) {
+            $recordingsCollection->where('domain_uuid', $domain);
+        }
+        $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
+        foreach ($recordingsCollection as $item) {
+            $recordings[] = [
+                'name' => $item->recording_name,
+                'value' => $item->recording_filename
+            ];
+        }
+
+        unset($musicOnHoldCollection, $recordingsCollection, $item);
+        return [
+            'Music on Hold' => $musicOnHold,
+            'Recordings' => $recordings,
+            'Ringtones' => [
+                'name' => 'us-ring',
+                'value' => 'us-ring'
+            ]
+        ];
     }
 }
 

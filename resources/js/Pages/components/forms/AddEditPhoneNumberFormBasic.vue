@@ -35,10 +35,11 @@
                 <div class="sm:col-span-12">
                     <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'"/>
                     <div class="mt-2">
-                        <SelectBox :options="phoneNumber.phonenumber_options.music_on_hold"
-                                   :search="true"
-                                   :placeholder="'Choose music on hold'"
-                                   @update:modal-value="handleUpdateMusicOnHold"
+                        <SelectBoxGroup :options="phoneNumber.phonenumber_options.music_on_hold"
+                                        :search="true"
+                                        :allowEmpty="true"
+                                        :placeholder="'Choose music on hold'"
+                                        @update:modal-value="handleUpdateMusicOnHold"
                         />
                     </div>
                 </div>
@@ -62,7 +63,7 @@ import {defineProps, ref} from 'vue'
 import LabelInputRequired from "../forms/LabelInputRequired.vue";
 import LabelInputOptional from "../forms/LabelInputOptional.vue";
 import Toggle from "../forms/Toggle.vue";
-import SelectBox from "../general/SelectBox.vue";
+import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 
 const destinationEnabledTrigger = ref(false);
 
@@ -75,7 +76,11 @@ const props = defineProps({
 });
 
 const handleUpdateMusicOnHold = (newSelectedItem) => {
-    props.phoneNumber.destination_hold_music = newSelectedItem.value
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        props.phoneNumber.destination_hold_music = newSelectedItem.value;
+    } else {
+        props.phoneNumber.destination_hold_music = '';
+    }
 }
 
 </script>
