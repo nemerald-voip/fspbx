@@ -48,7 +48,7 @@
             </button>
             <button type="button"
                 class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleClose" ref="cancelButtonRef">Cancel
+                @click="emits('close')" ref="cancelButtonRef">Cancel
             </button>
         </div>
         </div>
@@ -78,7 +78,7 @@ const form = useForm({
     description: props.item.description,
 })
 
-const emits = defineEmits(['settingsUpdated']);
+const emits = defineEmits(['settingsUpdated', 'close']);
 
 const submitForm = () => {
     emits('settingsUpdated', form); // Emit the event with the form data

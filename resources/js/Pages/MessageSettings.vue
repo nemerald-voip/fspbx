@@ -90,13 +90,17 @@
                             @click="handleCopyToClipboard(row.destination)" target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 <ClipboardDocumentIcon
-                                    class="h-4 w-4 text-black-500 hover:text-black-900 pt-1 cursor-pointer" />
+                                    class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
                             </div>
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.carrier" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.chatplan_detail_data" />
+                    <TableField class="flex whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.chatplan_detail_data">
+                        <template #action-buttons>
+                            <Warning v-if="row.extension_error" class="ml-2 h-5 w-5 text-amber-500" />
+                        </template>
+                    </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -168,7 +172,7 @@
     <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleClose">
         <template #modal-body>
             <UpdateMessageSettingsForm :item="itemData" :options="itemOptions"
-                @settingsUpdated="handleSettingsUpdate" />
+                @settingsUpdated="handleSettingsUpdate" @close="handleClose" />
         </template>
 
     </AddEditItemModal>
@@ -214,6 +218,8 @@ import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
+import Warning from "./components/icons/Warning.vue"
+
 const today = new Date();
 
 const loading = ref(false)
@@ -285,15 +291,19 @@ const getExtensionData = () => {
 const updateLocalDataWithExtensionData = (extensionData) => {
     if (!extensionData || extensionData.length === 0) return;
     localData.value.data.forEach(row => {
-        const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
-        if (matchedExtension) {
-            row.chatplan_detail_data = matchedExtension.name_formatted;
-            // Ensure extension_error is cleared if it was previously set
-            delete row.extension_error;
-        } else {
-            // If no match is found, set extension_error for this row
-            row.extension_error = true;
+        // Only proceed if chatplan_detail_data has a value
+        if (row.chatplan_detail_data) {
+            const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
+            if (matchedExtension) {
+                row.chatplan_detail_data = matchedExtension.name_formatted;
+                // Ensure extension_error is cleared if it was previously set
+                delete row.extension_error;
+            } else {
+                // If no match is found and chatplan_detail_data is not empty, set extension_error for this row
+                row.extension_error = true;
+            }
         }
+        // If chatplan_detail_data has no value, implicitly do nothing, which avoids setting extension_error
     });
 };
 
@@ -530,12 +540,10 @@ const handleBulkSaveEdit = () => {
 const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
 }
 
 const handleBulkClose = () => {
     bulkEditModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
 }
 
 const handleDestroyConfirmation = (url) => {
