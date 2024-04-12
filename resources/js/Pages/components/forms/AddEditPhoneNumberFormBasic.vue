@@ -30,11 +30,11 @@
 
             <!--
           <div class="sm:col-span-12">
-              <LabelInputOptional :target="'destination_hold_music'" :label="'Hold Music'" />
+              <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'" />
               <div class="mt-2">
-                  <SelectBox :options="phoneNumber.phonenumber_options.holdmusic"
+                  <SelectBox :options="phoneNumber.phonenumber_options.music_on_hold"
                              :search="true"
-                             :placeholder="'Choose music'"
+                             :placeholder="'Choose music on hold'"
                              @update:modal-value="handleUpdateTemplate"
                   />
               </div>

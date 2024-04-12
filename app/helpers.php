@@ -7,6 +7,7 @@ use App\Models\Dialplans;
 use App\Models\DomainSettings;
 use App\Models\Extensions;
 use App\Models\IvrMenus;
+use App\Models\MusicOnHold;
 use App\Models\RingGroups;
 use App\Models\Settings;
 use App\Models\SipProfiles;
@@ -1401,6 +1402,17 @@ if (!function_exists('getProfileCollection')) {
         }
         unset($profilesCollection, $profile);
         return $profiles;
+    }
+}
+
+if (!function_exists('getMusicOnHoldCollection')) {
+    function getMusicOnHoldCollection(string $domain = null): array
+    {
+        return MusicOnHold::where('domain_uuid', $domain)
+//            ->orWhere('domain_uuid', null)
+            ->orderBy('music_on_hold_name', 'ASC')
+            ->get()
+            ->unique('music_on_hold_name');
     }
 }
 

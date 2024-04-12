@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
 use App\Models\Devices;
-use App\Models\Extensions;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -84,6 +82,7 @@ class PhoneNumbersController extends Controller
                 },*/
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routePhoneNumbersStore' => route('phone-numbers.store'),
+                'routePhoneNumbersOptions' => route('phoneNumbers.options'),
                 //'routeDevicesOptions' => route('devices.options'),
                 //'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
                 'routePhoneNumbers' => route('phone-numbers.index'),
@@ -176,7 +175,8 @@ class PhoneNumbersController extends Controller
     {
         $inputs = $request->validated();
 
-        var_dump($inputs); die;
+        var_dump($inputs);
+        die;
 
         $device = new Devices();
         $device->fill([
@@ -285,6 +285,14 @@ class PhoneNumbersController extends Controller
             'status' => 'success',
             'phone_number' => $destination,
             'message' => 'Phone number has been deleted'
+        ]);
+    }
+
+    public function options(): JsonResponse
+    {
+        return response()->json([
+            'music_on_hold' => getMusicOnHoldCollection(Session::get('domain_uuid')),
+            'faxes' => []
         ]);
     }
 }

@@ -133,18 +133,16 @@
         @close="handleClose"
     >
         <template #modal-body>
-            <div class="hidden sm:block">
-                <div class="border-b border-gray-200">
-                    <nav class="-mb-px flex space-x-8" aria-label="ManagementTabs">
-                        <a v-for="(tab, index) in ManagementTabs" :key="tab.name"
-                           :href="tab.href"
-                           @click.prevent="selectTab(index)"
-                           :class="[isCurrentTab(index) ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium']"
-                           :aria-current="isCurrentTab(index) ? 'page' : undefined">
-                            {{ tab.name }}
-                        </a>
-                    </nav>
-                </div>
+            <div class="border-b border-gray-200 ml-4">
+                <nav class="-mb-px flex space-x-8" aria-label="ManagementTabs">
+                    <a v-for="(tab, index) in ManagementTabs" :key="tab.name"
+                       :href="tab.href"
+                       @click.prevent="selectTab(index)"
+                       :class="[isCurrentTab(index) ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium']"
+                       :aria-current="isCurrentTab(index) ? 'page' : undefined">
+                        {{ tab.name }}
+                    </a>
+                </nav>
             </div>
 
             <template v-for="(tab, index) in ManagementTabs" :key="tab.name">
@@ -257,7 +255,7 @@ const props = defineProps({
     selectedDomainUuid: String,
     search: String,
     routePhoneNumbersStore: String,
-   // routeDevicesOptions: String,
+    routePhoneNumbersOptions: String,
    // routeDevicesBulkUpdate: String,
     routePhoneNumbers: String,
    // routeSendEventNotifyAll: String
@@ -278,7 +276,11 @@ let PhoneNumberObject = reactive({
     destination_hold_music: '',
     destination_distinctive_ring: '', // advanced
     destination_enabled: 'true',
-    destination_description: ''
+    destination_description: '',
+    phonenumber_options: {
+        faxes: Array,
+        music_on_hold: Array
+    }
 });
 
 const selectedTab = ref(0);
@@ -363,18 +365,14 @@ const handleShowLocal = () => {
 
 const handleAdd = () => {
     PhoneNumberObject.update_path = props.routePhoneNumbersStore;
-    loadingModal.value = false
-    addModalTrigger.value = true;
-    /*
     axios.get(props.routePhoneNumbersOptions).then((response) => {
-        PhoneNumberObject.device_options.templates = response.data.templates
-        PhoneNumberObject.device_options.profiles = response.data.profiles
-        PhoneNumberObject.device_options.extensions = response.data.extensions
+        PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
+        PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
         loadingModal.value = false
         addModalTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to get device data:', error);
-    });*/
+    });
 }
 
 const handleEdit = (url) => {
@@ -388,6 +386,8 @@ const handleEdit = (url) => {
         PhoneNumberObject.destination_number = response.data.phone_number.destination_number
         PhoneNumberObject.destination_caller_id_name = response.data.phone_number.destination_caller_id_name
         PhoneNumberObject.destination_caller_id_number = response.data.phone_number.destination_caller_id_number
+        PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
+        PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);

@@ -5,7 +5,7 @@
             <!--div class="sm:col-span-12">
                 <LabelInputOptional :target="'Fax'" :label="'Fax'" />
                 <div class="mt-2">
-                    <SelectBox :options="phoneNumber.phonenumber_options.templates"
+                    <SelectBox :options="phoneNumber.phonenumber_options.faxes"
                                :selectedItem="phoneNumber.fax_uuid"
                                :search="true"
                                :placeholder="'Choose fax'"
