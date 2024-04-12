@@ -66,7 +66,7 @@ class PhoneNumbersController extends Controller
                 'selectedDomainUuid' => function () {
                     return Session::get('domain_uuid');
                 },
-                'destinationTypes' => function () {
+                /*'destinationTypes' => function () {
                     return [
                         [
                             "name" => "Inbound",
@@ -81,7 +81,7 @@ class PhoneNumbersController extends Controller
                             "value" => "local"
                         ]
                     ];
-                },
+                },*/
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routePhoneNumbersStore' => route('phone-numbers.store'),
                 //'routeDevicesOptions' => route('devices.options'),

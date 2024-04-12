@@ -1,5 +1,6 @@
 <template>
-    <form>
+    basic
+    <!--form>
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
             <div class="sm:col-span-12">
                 <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'" />
@@ -44,7 +45,7 @@
                 />
             </div>
         </div>
-    </form>
+    </form-->
 </template>
 
 <script setup>

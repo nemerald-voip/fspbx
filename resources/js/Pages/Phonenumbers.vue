@@ -133,24 +133,30 @@
         @close="handleClose"
     >
         <template #modal-body>
-{{tab}}
-            <div class="sm:hidden">
-                <label for="ManagementTabs" class="sr-only">Select a tab</label>
-                <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
-                <select id="ManagementTabs" name="ManagementTabs" class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-                    <option v-for="tab in ManagementTabs" :key="tab.name" :selected="tab.current">{{ tab.name }}</option>
-                </select>
-            </div>
             <div class="hidden sm:block">
                 <div class="border-b border-gray-200">
                     <nav class="-mb-px flex space-x-8" aria-label="ManagementTabs">
-                        <a v-for="tab in ManagementTabs" :key="tab.name" :href="tab.href" :class="[tab.current ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium']" :aria-current="tab.current ? 'page' : undefined">{{ tab.name }}</a>
+                        <a v-for="(tab, index) in ManagementTabs" :key="tab.name"
+                           :href="tab.href"
+                           @click.prevent="selectTab(index)"
+                           :class="[isCurrentTab(index) ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium']"
+                           :aria-current="isCurrentTab(index) ? 'page' : undefined">
+                            {{ tab.name }}
+                        </a>
                     </nav>
                 </div>
             </div>
-            <div v-for="tab in ManagementTabs" :key="tab.name">
-                <component v-if="tab.current" :is="tab.component" v-bind="tab.data"></component>
-            </div>
+
+            <template v-for="(tab, index) in ManagementTabs" :key="tab.name">
+                <component
+                    v-if="selectedTab === index"
+                    :is="tab.component"
+                    :phoneNumber="tab.data.phoneNumber" />
+            </template>
+
+            <!--div>
+                <component :is="ManagementTabs[selectedTab].component" :phonePumber="ManagementTabs[selectedTab].data.phoneNumber"></component>
+            </div-->
 
 
             <!--AddEditPhoneNumberForm
@@ -215,7 +221,7 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationError from "./components/notifications/Error.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import AddEditPhoneNumberFormBasic from "./components/forms/AddEditPhoneNumberFormBasic.vue";
 import AddEditPhoneNumberFormAdvanced from "./components/forms/AddEditPhoneNumberFormAdvanced.vue";
@@ -224,6 +230,7 @@ import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 const today = new Date();
 
 const loading = ref(false)
@@ -274,12 +281,13 @@ let PhoneNumberObject = reactive({
     destination_description: ''
 });
 
+const selectedTab = ref(0);
+
 //const currentManagementTab = ref('Basic');
-const ManagementTabs = computed(() => [
+const ManagementTabs = [
     {
         name: 'Basic',
         href: '#basic',
-        current: true,
         component: AddEditPhoneNumberFormBasic,
         data: {
             phoneNumber: PhoneNumberObject
@@ -288,17 +296,23 @@ const ManagementTabs = computed(() => [
     {
         name: 'Advanced',
         href: '#advanced',
-        current: false,
         component: AddEditPhoneNumberFormAdvanced,
         data: {
             phoneNumber: PhoneNumberObject
         }
     }
-]);
+];
+
+const selectTab = index => {
+    selectedTab.value = index;
+};
+
+const isCurrentTab = (tabIndex) => {
+    return tabIndex === selectedTab.value;
+}
 
 onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
-    PhoneNumberObject.destination_types = props.destinationTypes;
 })
 
 const selectedItemsExtensions = computed(() => {
@@ -426,7 +440,7 @@ const handlePhoneNumberObjectReset = () => {
         destination_number: '',
         destination_caller_id_name: '',
         destination_caller_id_number: '',
-        destination_types: props.destinationTypes
+        //destination_types: props.destinationTypes
     });
 }
 
