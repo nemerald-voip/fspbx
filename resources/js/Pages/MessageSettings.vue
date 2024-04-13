@@ -171,8 +171,8 @@
     </AddEditItemModal>
     <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleClose">
         <template #modal-body>
-            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions"
-                @settingsUpdated="handleSettingsUpdate" @close="handleClose" />
+            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" @settingsUpdated="handleSettingsUpdate"
+                @close="handleClose" />
         </template>
 
     </AddEditItemModal>
@@ -220,6 +220,8 @@ import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Warning from "./components/icons/Warning.vue"
 
+import { useForm } from '@inertiajs/vue3'
+
 const today = new Date();
 
 const loading = ref(false)
@@ -238,6 +240,7 @@ const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
+
 
 const props = defineProps({
     data: Object,
@@ -260,6 +263,11 @@ const filterData = ref({
 
 // Create a reactive reference for the local data copy
 const localData = ref(JSON.parse(JSON.stringify(props.data)));
+
+const updateLocalData = () => {
+    localData.value = JSON.parse(JSON.stringify(props.data));
+};
+
 
 onMounted(() => {
     // Check if the data array inside props.data has elements before calling getExtensionData
@@ -306,6 +314,11 @@ const updateLocalDataWithExtensionData = (extensionData) => {
         // If chatplan_detail_data has no value, implicitly do nothing, which avoids setting extension_error
     });
 };
+
+watch(() => props.data, () => {
+    updateLocalData();
+    updateLocalDataWithExtensionData(props.extensionData);
+}, { deep: true, immediate: true });
 
 // Watch for changes in props.extensionData and update localData accordingly
 watch(() => props.extensionData, (newExtensionData) => {
@@ -411,29 +424,68 @@ const handleEdit = (itemUuid) => {
         });
 }
 
+// const handleSettingsUpdate = (form) => {
+//     console.log(form);
+//     form.clearErrors();
+
+//     form.put(props.url,
+//         {
+//             preserveScroll: true,
+//             // preserveState: true,
+
+//             onSuccess: (page) => {
+//                 console.log('success');
+//                 editModalTrigger.value = false;
+
+//             },
+//             onFinish: () => {
+//             },
+//             onError: (errors) => {
+//                 console.log(props.options);
+//                 console.log(errors);
+//             },
+
+//         });
+
+// }
+
 const handleSettingsUpdate = (form) => {
     console.log(form);
-    form.clearErrors();
+    // form.clearErrors();
 
-    form.put(props.url,
-        {
-            preserveScroll: true,
-            preserveState: true,
+    // try {
+    //     const response = await axios.post(props.url, {
+    //         domain_uuid: domainUuid,
+    //         _token: page.props.csrf_token,
+    //     });
 
-            onSuccess: (page) => {
-                console.log('success');
-                editModalTrigger.value = false;
+    //     // window.location.href = response.data.redirectUrl;
+    //     // Handle successful response
+    //     console.log(response);
+    // } catch (error) {
+    //     console.error(error);
+    //     // Handle error
+    // }
 
-            },
-            onFinish: () => {
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+    axios.put(props.url, form)
+        .then((response) => {
+            console.log(response);
+            handleSearchButtonClick();
+            handleClose();
+        }).catch((error) => {
+            if (error.response.status === 422) {
+                // errors.value = error.response.data.errors;
+                console.log('errors');
+                console.log(error.response.data.errors);
+                handleErrorsPush(error.response.data.message, error.response.data.errors);
+            } else {
+                console.error('Failed to update nessage settings:', error);
+            }
 
         });
+};
 
-}
+
 const handleBulkEdit = () => {
     if (selectedItems.value.length > 0) {
         bulkEditModalTrigger.value = true;

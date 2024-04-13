@@ -7,6 +7,7 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\UpdateMessageSettingRequest;
+use App\Models\MessageSetting;
 
 class MessageSettingsController extends Controller
 {
@@ -201,14 +202,49 @@ class MessageSettingsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\UpdateMessageSettingRequest  $request
+     * @param   App\Models\MessageSetting  $setting
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateMessageSettingRequest $request)
+    public function update(UpdateMessageSettingRequest $request, MessageSetting $setting)
     {
+
+        logger($setting);
         //
+        // return response()->json([
+        //     'status' => 'success',
+        //     'message' => 'Device has been updated.'
+        // ]);
+        // return back();
+
+        // try {
+        //     // Attempt to find and update the organization
+        //     $organization = Organization::findOrFail($id);
+        //     $organization->update($validatedData);
+    
+        //     // Return a JSON response indicating success
+        //     return response()->json([
+        //         'success' => true,
+        //         'data' => new OrganizationResource($organization), // Optionally use a Resource for data transformation
+        //         'message' => 'Organization updated successfully'
+        //     ], 200); // 200 OK for successful resource updates
+    
+        // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        //     // If the organization is not found, return an error response
+        //     return response()->json([
+        //         'success' => false,
+        //                     'errors' => ['organization' => ['Organization not found']]
+        //     ], 404); // 404 Not Found if the organization does not exist
+        // } catch (\Exception $e) {
+        //     // Handle any other exception that may occur
+            // return response()->json([
+            //     'success' => false,
+            //     'errors' => ['server' => ['Failed to update organization: ' ]]
+            // ], 500); // 500 Internal Server Error for any other errors
+        // }
+
         return response()->json([
-            'status' => 'success',
-            'message' => 'Device has been updated.'
-        ]);
+            'success' => true,
+        ], 200); 
+        
     }
 }
