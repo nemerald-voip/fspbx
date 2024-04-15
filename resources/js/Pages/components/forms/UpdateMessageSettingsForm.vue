@@ -81,22 +81,34 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['settingsUpdated', 'close']);
+const emits = defineEmits(['submit', 'cancel']);
 
 const submitForm = () => {
     console.log(form);
 
-    // emits('settingsUpdated', form); // Emit the event with the form data
+    // emits('submit', form); // Emit the event with the form data
 
     axios.put('/message-settings/' + props.item.sms_destination_uuid, form)
         .then((response) => {
             console.log(response);
-            handleSearchButtonClick();
-            handleClose();
+            // handleSearchButtonClick();
+            // handleClose();
         }).catch((error) => {
-            console.log(error.response.data.errors);
-            handleErrorsPush(error.response.data.message, error.response.data.errors);
-
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.log(error.response.data);
+                handleErrorsPush(error.response.data.message, error.response.data.errors);
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                console.log(error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                console.log('Error', error.message);
+            }
+            console.log(error.config);
         });
 }
 

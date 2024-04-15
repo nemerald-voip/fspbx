@@ -171,8 +171,8 @@
     </AddEditItemModal>
     <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleClose">
         <template #modal-body>
-            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" @settingsUpdated="handleSettingsUpdate"
-                @close="handleClose" />
+            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" @submit="handleSettingsUpdate"
+                @cancel="handleClose" />
         </template>
 
     </AddEditItemModal>
