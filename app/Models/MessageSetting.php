@@ -21,6 +21,20 @@ class MessageSetting extends Model
     protected $keyType = 'string';
 
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'destination',
+        'carrier',
+        'description',
+        'chatplan_detail_data',
+        'email',
+    ];
+
+
+    /**
      * The booted method of the model
      *
      * Define all attributes here like normal code
@@ -28,26 +42,31 @@ class MessageSetting extends Model
      */
     protected static function booted()
     {
-        static::retrieved(function ($messageSetting) {
+        static::saving(function ($model) {
+            // Remove 'destination_formatted' attribute before saving to database
+            unset($model->destination_formatted);
+        });
+
+        static::retrieved(function ($model) {
             //Get libphonenumber object
             $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
-            $value = $messageSetting->destination;
+            $value = $model->destination;
 
             //try to convert phone number to National format
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $messageSetting->destination_formatted = $phoneNumberUtil
+                    $model->destination_formatted = $phoneNumberUtil
                         ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
                 } else {
-                    $messageSetting->destination_formatted = $value;
+                    $model->destination_formatted = $value;
                 }
             } catch (NumberParseException $e) {
                 // Do nothing and leave the numbner as is
-                $messageSetting->destination_formatted = $value;
+                $model->destination_formatted = $value;
             }
-            return $messageSetting;
+            return $model;
         });
     }
 

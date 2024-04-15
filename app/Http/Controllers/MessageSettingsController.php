@@ -70,7 +70,11 @@ class MessageSettingsController extends Controller
 
     public function getItemData()
     {
+        // Get item data
         $itemData = $this->model::findOrFail(request('itemUuid'));
+
+        // Add update url route info
+        $itemData->update_url = route('messages.settings.update', $itemData);
         return $itemData;
     }
 
@@ -78,8 +82,8 @@ class MessageSettingsController extends Controller
     {
         // Define the options for the 'carrier' field
         $carrierOptions = [
-            ['value' => 'thinq', 'label' => 'ThinQ'],
-            ['value' => 'synch', 'label' => 'Synch'],
+            ['value' => 'thinq', 'name' => 'ThinQ'],
+            ['value' => 'synch', 'name' => 'Synch'],
         ];
 
         // Define the options for the 'chatplan_detail_data' field
@@ -207,44 +211,34 @@ class MessageSettingsController extends Controller
      */
     public function update(UpdateMessageSettingRequest $request, MessageSetting $setting)
     {
+        if (! $setting) {
+            // If the model is not found, return an error response
+            return response()->json([
+                'success' => false,
+                'errors' => ['model' => ['Model not found']]
+            ], 404); // 404 Not Found if the model does not exist
+        }
 
-        logger($setting);
-        //
-        // return response()->json([
-        //     'status' => 'success',
-        //     'message' => 'Device has been updated.'
-        // ]);
-        // return back();
+        try {
+            logger($request->validated());
+            $setting->update($request->validated());
 
-        // try {
-        //     // Attempt to find and update the organization
-        //     $organization = Organization::findOrFail($id);
-        //     $organization->update($validatedData);
-    
-        //     // Return a JSON response indicating success
-        //     return response()->json([
-        //         'success' => true,
-        //         'data' => new OrganizationResource($organization), // Optionally use a Resource for data transformation
-        //         'message' => 'Organization updated successfully'
-        //     ], 200); // 200 OK for successful resource updates
-    
-        // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        //     // If the organization is not found, return an error response
-        //     return response()->json([
-        //         'success' => false,
-        //                     'errors' => ['organization' => ['Organization not found']]
-        //     ], 404); // 404 Not Found if the organization does not exist
-        // } catch (\Exception $e) {
-        //     // Handle any other exception that may occur
-            // return response()->json([
-            //     'success' => false,
-            //     'errors' => ['server' => ['Failed to update organization: ' ]]
-            // ], 500); // 500 Internal Server Error for any other errors
-        // }
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Settings updated.']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update settings']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
 
         return response()->json([
-            'success' => true,
-        ], 200); 
-        
+            'success' => false,
+            'errors' => ['server' => ['Failed to update settings']]
+        ], 500); // 500 Internal Server Error for any other errors
     }
 }

@@ -49,7 +49,6 @@
 </template>
 
 <script setup>
-import {defineProps} from 'vue'
 import SelectBox from "../general/SelectBox.vue";
 import LabelInputOptional from "../forms/LabelInputOptional.vue";
 import LabelInputRequired from "../forms/LabelInputRequired.vue";

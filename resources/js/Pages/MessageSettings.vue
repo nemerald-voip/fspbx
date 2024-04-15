@@ -83,7 +83,7 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex"
                         :text="row.destination_formatted">
-                        <div class="cursor-pointer hover:text-gray-900" @click="handleEdit(row.sms_destination_uuid)">
+                        <div class="cursor-pointer hover:text-gray-900" @click="handleEditRequest(row.sms_destination_uuid)">
                             {{ row.destination_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -109,7 +109,7 @@
                                 <ejs-tooltip :content="'Edit device'" position='TopLeft'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEdit()"
+                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEditRequest()"
                                             class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -157,25 +157,20 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-    <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
-        @update:show="handleErrorsReset" />
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleClose">
+\
+    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateMessageSettingsForm :device="DeviceObject" />
         </template>
-
     </AddEditItemModal>
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleClose">
+
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" @submit="handleSettingsUpdate"
-                @cancel="handleClose" />
+            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
-
     </AddEditItemModal>
+
     <AddEditItemModal :show="bulkEditModalTrigger" :header="'Bulk Edit Device'" :loading="loadingModal"
         @close="handleBulkClose">
         <template #modal-body>
@@ -192,10 +187,12 @@
             </button>
         </template>
     </AddEditItemModal>
+
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="handleDestroy(confirmationModalDestroyPath)" />
-    <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
-        @update:show="handleErrorsReset" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
@@ -206,8 +203,7 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
-import NotificationError from "./components/notifications/Error.vue";
+import Notification from "./components/notifications/Notification.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import UpdateMessageSettingsForm from "./components/forms/UpdateMessageSettingsForm.vue";
@@ -220,15 +216,10 @@ import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Warning from "./components/icons/Warning.vue"
 
-import { useForm } from '@inertiajs/vue3'
-
-const today = new Date();
-
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
@@ -236,9 +227,11 @@ const editModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const actionError = ref(false);
-const actionErrorsList = ref({});
-const actionErrorMessage = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
+const notificationType = ref(null);
+const updateFormSubmiting = ref(null);
+const formErrors = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 
@@ -395,8 +388,9 @@ const handleAdd = () => {
     });
 }
 
-const handleEdit = (itemUuid) => {
+const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
+    formErrors.value = null;
     loadingModal.value = true
 
     router.post(props.url,
@@ -424,65 +418,39 @@ const handleEdit = (itemUuid) => {
         });
 }
 
-// const handleSettingsUpdate = (form) => {
-//     console.log(form);
-//     form.clearErrors();
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
 
-//     form.put(props.url,
-//         {
-//             preserveScroll: true,
-//             // preserveState: true,
 
-//             onSuccess: (page) => {
-//                 console.log('success');
-//                 editModalTrigger.value = false;
-
-//             },
-//             onFinish: () => {
-//             },
-//             onError: (errors) => {
-//                 console.log(props.options);
-//                 console.log(errors);
-//             },
-
-//         });
-
-// }
-
-const handleSettingsUpdate = (form) => {
-    console.log(form);
-    // form.clearErrors();
-
-    // try {
-    //     const response = await axios.post(props.url, {
-    //         domain_uuid: domainUuid,
-    //         _token: page.props.csrf_token,
-    //     });
-
-    //     // window.location.href = response.data.redirectUrl;
-    //     // Handle successful response
-    //     console.log(response);
-    // } catch (error) {
-    //     console.error(error);
-    //     // Handle error
-    // }
-
-    axios.put(props.url, form)
+    axios.put(props.itemData.update_url, form)
         .then((response) => {
-            console.log(response);
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
             handleSearchButtonClick();
-            handleClose();
+            handleModalClose();
         }).catch((error) => {
-            if (error.response.status === 422) {
-                // errors.value = error.response.data.errors;
-                console.log('errors');
-                console.log(error.response.data.errors);
-                handleErrorsPush(error.response.data.message, error.response.data.errors);
+            updateFormSubmiting.value = false;
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                // console.log(error.response.data);
+                showNotification('error', error.response.data.errors);
+                formErrors.value = error.response.data.errors;
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                showNotification('error', { request: [error.request] } );
+                console.log(error.request);
             } else {
-                console.error('Failed to update nessage settings:', error);
+                // Something happened in setting up the request that triggered an Error
+                showNotification('error', { request: [error.message] } );
+                console.log(error.message);
             }
 
         });
+
 };
 
 
@@ -524,20 +492,16 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
-const handleErrorsReset = () => {
-    actionError.value = false;
-    actionErrorsList.value = {};
-    actionErrorMessage.value = null;
+const hideNotification = () => {
+    notificationShow.value  = false;
+    notificationType.value  = null;
+    notificationMessages.value  = null;
 }
 
-const handleErrorsPush = (message, errors = null) => {
-    actionError.value = true;
-    if (errors !== null) {
-        actionErrorsList.value = errors;
-    } else {
-        actionErrorsList.value = {};
-    }
-    actionErrorMessage.value = message;
+const showNotification = (type, messages = null) => {
+    notificationType.value  = type;
+    notificationMessages.value  = messages;
+    notificationShow.value  = true;
 }
 
 
@@ -565,7 +529,7 @@ const handleSaveAdd = () => {
         extension_uuid: DeviceObject.extension_uuid
     }).then((response) => {
         handleSearchButtonClick()
-        handleClose()
+        handleModalClose()
     }).catch((error) => {
         console.error('Failed to add device data:', error);
         if (error.response.data.errors) {
@@ -583,7 +547,7 @@ const handleSaveEdit = () => {
         extension_uuid: DeviceObject.extension_uuid
     }).then((response) => {
         handleSearchButtonClick()
-        handleClose()
+        handleModalClose()
     }).catch((error) => {
         console.error('Failed to save device data:', error);
         console.log(error.response.data.errors)
@@ -609,7 +573,7 @@ const handleBulkSaveEdit = () => {
     });
 }
 
-const handleClose = () => {
+const handleModalClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
 }

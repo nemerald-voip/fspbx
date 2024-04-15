@@ -31,7 +31,10 @@ class UpdateMessageSettingRequest extends FormRequest
             'destination' => [
                 'required',
             ],
-            'extension' => [
+            'carrier' => [
+                'nullable',
+            ],
+            'chatplan_detail_data' => [
                 'nullable',
             ],
             'email' => [
