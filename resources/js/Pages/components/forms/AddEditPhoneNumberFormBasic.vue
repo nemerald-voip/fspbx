@@ -24,11 +24,16 @@
                 </div>
 
                 <div class="sm:col-span-12">
-                    <LabelInputOptional :target="'destination_actions'" :label="'Actions'"/>
+                    <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
                     <div class="mt-2">
-                        <input v-model="phoneNumber.destination_actions" type="text" name="destination_actions"
-                               id="destination_actions" placeholder="Enter actions"
-                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                        <TimeoutDestinations
+                            :categories="phoneNumber.phonenumber_options.timeout_destinations_categories"
+                            :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
+                                             :search="true"
+                                             :allowEmpty="true"
+                                             :placeholder="'Choose music on hold'"
+                                             @update:modal-value="handleUpdateMusicOnHold"
+                        />
                     </div>
                 </div>
 
@@ -69,10 +74,11 @@
 
 <script setup>
 import {defineProps, ref} from 'vue'
-import LabelInputRequired from "../forms/LabelInputRequired.vue";
-import LabelInputOptional from "../forms/LabelInputOptional.vue";
-import Toggle from "../forms/Toggle.vue";
+import LabelInputRequired from "../general/LabelInputRequired.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
+import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
+import TimeoutDestinations from "../general/TimeoutDestinations.vue";
 
 const destinationEnabledTrigger = ref(false);
 

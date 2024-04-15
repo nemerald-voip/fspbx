@@ -295,28 +295,34 @@ class PhoneNumbersController extends Controller
         $faxesCollection = Faxes::query();
         $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
         $faxesCollection = $faxesCollection->orderBy('fax_name')->get();
-        foreach ($faxesCollection as $item) {
+        foreach ($faxesCollection as $fax) {
             $faxes[] = [
-                'name' => $item->fax_extension.' '.$item->fax_name,
-                'value' => $item->fax_uuid
+                'name' => $fax->fax_extension.' '.$fax->fax_name,
+                'value' => $fax->fax_uuid
             ];
         }
 
         $domains = [];
         $domainsCollection = Session::get("domains");
-        foreach ($domainsCollection as $item) {
+        foreach ($domainsCollection as $domain) {
             $domains[] = [
-                'name' => $item->domain_name, //.' ('.$item->domain_description.')',
-                'value' => $item->domain_uuid
+                'name' => $domain->domain_name,
+                'value' => $domain->domain_uuid
             ];
         }
+        $timeoutDestinations = getTimeoutDestinations();
 
-        unset($faxesCollection, $domainsCollection, $item);
+
+
+
+        unset($faxesCollection, $domainsCollection, $fax, $domain, $category);
 
         return response()->json([
             'music_on_hold' => getMusicOnHoldCollection(),
             'faxes' => $faxes,
-            'domains' => $domains
+            'domains' => $domains,
+            'timeout_destinations_categories' => $timeoutDestinations['categories'],
+            'timeout_destinations_targets' => $timeoutDestinations['targets']
         ]);
     }
 }

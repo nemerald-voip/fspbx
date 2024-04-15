@@ -959,6 +959,47 @@ if (!function_exists('getDestinationByCategory')) {
     }
 }
 
+if (!function_exists('getTimeoutDestinations')) {
+    function getTimeoutDestinations($domain = null)
+    {
+        if($domain !== null) {
+            logger('getTimeoutDestinations does not support $domain argument yet. '.__FILE__);
+        }
+        // TODO: refactor the getDestinationByCategory function to use $domain
+        $output = [
+            'categories' => [],
+            'targets' => [],
+        ];
+        foreach ([
+                     'ringgroup',
+                     'dialplans',
+                     'extensions',
+                     'timeconditions',
+                     'voicemails',
+                     'ivrs',
+                     'others'
+                 ] as $i => $category) {
+            $data = getDestinationByCategory($category)['list'];
+            foreach ($data as $b => $d) {
+                $output['categories'][$category] = [
+                    'name' => $d['app_name'],
+                    'value' => $category
+                ];
+
+                //[$i] = ;
+                //$output['categories'][$i] = ;
+                $output['targets'][$category][] = [
+                    'name' => $d['label'],
+                    'value' => $d['id']
+                ];
+            }
+
+        }
+
+        return $output;
+    }
+}
+
 if (!function_exists('pr')) {
     function pr($arr)
     {
@@ -1440,8 +1481,10 @@ if (!function_exists('getMusicOnHoldCollection')) {
             'Music on Hold' => $musicOnHold,
             'Recordings' => $recordings,
             'Ringtones' => [
-                'name' => 'us-ring',
-                'value' => 'us-ring'
+                [
+                    'name' => 'us-ring',
+                    'value' => 'us-ring'
+                ]
             ]
         ];
     }
@@ -1459,7 +1502,7 @@ if (!function_exists('getExtensionCollection')) {
         $extensions = [];
         foreach ($extensionsCollection as $extension) {
             $extensions[] = [
-                'name' => $extension->extension.(($extension->effective_caller_id_name)?' ('.trim($extension->effective_caller_id_name).')':''),
+                'name' => $extension->extension.(($extension->effective_caller_id_name) ? ' ('.trim($extension->effective_caller_id_name).')' : ''),
                 'value' => $extension->extension_uuid
             ];
         }

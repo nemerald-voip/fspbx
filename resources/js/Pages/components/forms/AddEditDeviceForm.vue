@@ -51,8 +51,8 @@
 <script setup>
 import {defineProps} from 'vue'
 import SelectBox from "../general/SelectBox.vue";
-import LabelInputOptional from "../forms/LabelInputOptional.vue";
-import LabelInputRequired from "../forms/LabelInputRequired.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
+import LabelInputRequired from "../general/LabelInputRequired.vue";
 
 const props = defineProps({
     device: Object,

@@ -5,14 +5,14 @@
             <div class="sm:col-span-12">
                 <Toggle
                     :target="'destination_record'"
-                    :label="'Record'"
+                    :label="'Check to save recordings'"
                     :enabled="destinationRecordTrigger"
                     @update:status="destinationRecordTrigger = false"
                 />
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'fax_uuid'" :label="'Choose fax'"/>
+                <LabelInputOptional :target="'fax_uuid'" :label="'Fax detection'"/>
                 <div class="mt-2">
                     <SelectBox :options="phoneNumber.phonenumber_options.faxes"
                                :search="true"
@@ -65,10 +65,10 @@
 
 <script setup>
 import {defineProps, ref} from 'vue'
-import LabelInputRequired from "../forms/LabelInputRequired.vue";
-import LabelInputOptional from "../forms/LabelInputOptional.vue";
+import LabelInputRequired from "../general/LabelInputRequired.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
 import SelectBox from "../general/SelectBox.vue";
-import Toggle from "./Toggle.vue";
+import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 
 const props = defineProps({

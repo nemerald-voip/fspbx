@@ -280,7 +280,8 @@ let PhoneNumberObject = reactive({
     phonenumber_options: {
         faxes: Array,
         music_on_hold: Array,
-        domains: Array
+        domains: Array,
+        timeout_destinations: Array,
     }
 });
 
@@ -370,6 +371,7 @@ const handleAdd = () => {
         PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
         PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
         PhoneNumberObject.phonenumber_options.domains = response.data.domains
+        PhoneNumberObject.phonenumber_options.timeout_destinations = response.data.timeout_destinations
         loadingModal.value = false
         addModalTrigger.value = true;
     }).catch((error) => {
@@ -391,6 +393,7 @@ const handleEdit = (url) => {
         PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
         PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
         PhoneNumberObject.phonenumber_options.domains = response.data.domains
+        PhoneNumberObject.phonenumber_options.timeout_destinations = response.data.timeout_destinations
         loadingModal.value = false
     }).catch((error) => {
         console.error('Failed to get device data:', error);
