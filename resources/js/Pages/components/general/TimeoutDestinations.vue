@@ -1,22 +1,19 @@
 <template>
-    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-        <div class="sm:col-span-6">
-            {{categories}}
-            <LabelInputOptional :target="'categories'" :label="'Category'" />
+    <div class="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-2">
+        <div>
             <div class="mt-2">
                 <SelectBox :options="categories"
                            :search="true"
                            :allowEmpty="true"
                            :placeholder="'Choose category'"
+                           @update:modal-value='updateCategory'
                 />
             </div>
         </div>
 
-        <div class="sm:col-span-6">
-            {{targets}}
-            <LabelInputOptional :target="'destination_actions'" :label="'Destination'" />
+        <div v-if="categoryTargets.value.length > 0">
             <div class="mt-2">
-                <SelectBox :options="targets"
+                <SelectBox :options="categoryTargets"
                            :search="true"
                            :placeholder="'Choose target destination'"
                 />
@@ -38,14 +35,22 @@ import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import SelectBox from "./SelectBox.vue";
 import LabelInputOptional from "./LabelInputOptional.vue";
 
+let selectedCategory = ref('');
+let categoryTargets = ref([]);
+
 const props = defineProps({
-    categories: [Object, null],
-    targets: [Object, null],
+    categories: [Array, null],
+    targets: [Array, null],
     selectedItem: [String, null],
     search: [Boolean, null]
 });
 
 const emit = defineEmits(['update:modal-value'])
+
+function updateCategory(newValue){
+    selectedCategory.value = newValue;
+    categoryTargets.value = props.targets[newValue] || [];
+}
 
 // let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
 let currentItem = ref(null);

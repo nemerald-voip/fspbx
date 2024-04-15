@@ -312,16 +312,13 @@ class PhoneNumbersController extends Controller
         }
         $timeoutDestinations = getTimeoutDestinations();
 
-
-
-
-        unset($faxesCollection, $domainsCollection, $fax, $domain, $category);
+        unset($faxesCollection, $domainsCollection, $fax, $domain);
 
         return response()->json([
             'music_on_hold' => getMusicOnHoldCollection(),
             'faxes' => $faxes,
             'domains' => $domains,
-            'timeout_destinations_categories' => $timeoutDestinations['categories'],
+            'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
             'timeout_destinations_targets' => $timeoutDestinations['targets']
         ]);
     }

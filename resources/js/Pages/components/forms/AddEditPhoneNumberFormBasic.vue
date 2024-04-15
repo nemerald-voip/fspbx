@@ -31,7 +31,7 @@
                             :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
                                              :search="true"
                                              :allowEmpty="true"
-                                             :placeholder="'Choose music on hold'"
+                                             :placeholder="'Choose destination'"
                                              @update:modal-value="handleUpdateMusicOnHold"
                         />
                     </div>
