@@ -267,8 +267,8 @@ let PhoneNumberObject = reactive({
     destination_uuid: '',
     destination_prefix: '1',
     destination_number: '',
-    destination_conditions: '', // advanced
-    destination_actions: '',
+    destination_conditions: [], // advanced
+    destination_actions: [],
     fax_uuid: '', // advanced
     destination_cid_name_prefix: '', // advanced
     destination_record: 'false', // advanced
@@ -444,12 +444,19 @@ const handlePhoneNumberObjectReset = () => {
     PhoneNumberObject = reactive({
         update_path: props.routePhoneNumbersStore,
         domain_uuid: '',
-        destination_uuid: '',
-        destination_type: '',
         destination_number: '',
-        destination_caller_id_name: '',
-        destination_caller_id_number: '',
-        //destination_types: props.destinationTypes
+        destination_uuid: '',
+        destination_prefix: '1',
+        destination_conditions: [], // advanced
+        destination_actions: [],
+        fax_uuid: '', // advanced
+        destination_cid_name_prefix: '', // advanced
+        destination_record: 'false', // advanced
+        destination_accountcode: '', // advanced
+        destination_hold_music: '',
+        destination_distinctive_ring: '', // advanced
+        destination_enabled: 'true',
+        destination_description: '',
     });
 }
 

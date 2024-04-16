@@ -25,16 +25,12 @@
 
                 <div class="sm:col-span-12">
                     <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
-                    <div class="mt-2">
-                        <TimeoutDestinations
-                            :categories="phoneNumber.phonenumber_options.timeout_destinations_categories"
-                            :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
-                                             :search="true"
-                                             :allowEmpty="true"
-                                             :placeholder="'Choose destination'"
-                                             @update:modal-value="handleUpdateMusicOnHold"
-                        />
-                    </div>
+                    <TimeoutDestinations
+                        :categories="phoneNumber.phonenumber_options.timeout_destinations_categories"
+                        :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
+                        :destinations="timeoutDestinations"
+                        @update:modal-value="handleUpdateTimeoutDestination"
+                    />
                 </div>
 
                 <div class="sm:col-span-12">
@@ -80,6 +76,7 @@ import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 import TimeoutDestinations from "../general/TimeoutDestinations.vue";
 
+
 const destinationEnabledTrigger = ref(false);
 
 const props = defineProps({
@@ -95,6 +92,14 @@ const handleUpdateMusicOnHold = (newSelectedItem) => {
         props.phoneNumber.destination_hold_music = newSelectedItem.value;
     } else {
         props.phoneNumber.destination_hold_music = '';
+    }
+}
+
+const handleUpdateTimeoutDestination = (newSelectedItem) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        //props.phoneNumber.destination_hold_music = newSelectedItem.value;
+    } else {
+        //props.phoneNumber.destination_hold_music = '';
     }
 }
 
