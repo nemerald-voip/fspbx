@@ -28,8 +28,8 @@
                     <TimeoutDestinations
                         :categories="phoneNumber.phonenumber_options.timeout_destinations_categories"
                         :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
-                        :destinations="timeoutDestinations"
-                        @update:modal-value="handleUpdateTimeoutDestination"
+                        :destinations="phoneNumber.phonenumber_options.destination_actions"
+                        @update:selected-targets="handleUpdateTimeoutDestination"
                     />
                 </div>
 
@@ -96,10 +96,12 @@ const handleUpdateMusicOnHold = (newSelectedItem) => {
 }
 
 const handleUpdateTimeoutDestination = (newSelectedItem) => {
+    console.log( newSelectedItem)
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        //props.phoneNumber.destination_hold_music = newSelectedItem.value;
+
+        props.phoneNumber.destination_actions = newSelectedItem.value;
     } else {
-        //props.phoneNumber.destination_hold_music = '';
+        props.phoneNumber.destination_actions = '';
     }
 }
 

@@ -1,22 +1,23 @@
 <template>
-    <div class="mt-2 grid grid-cols-2 gap-x-6 gap-y-8" v-for="(timeoutDestination, index) in timeoutDestinations" :key="index">
+    <div class="mt-2 grid grid-cols-5 gap-x-6 gap-y-8" v-for="(timeoutDestination, index) in timeoutDestinations" :key="index">
         <SelectBox :options="categories"
                    :search="true"
                    :allowEmpty="true"
                    :placeholder="'Choose category'"
-                   @update:modal-value='updateCategory'
+                   :class="'col-span-2'"
+                   @update:modal-value="value => updateCategory(value, index)"
         />
-        <SelectBox v-if="selectedCategory" :options="categoryTargets"
+        <SelectBox v-if="timeoutDestination.selectedCategory"
+                   :options="timeoutDestination.categoryTargets"
                    :search="true"
+                   :class="'col-span-2'"
                    :placeholder="'Choose target destination'"
         />
-        <div>
-            <MinusIcon @click="removeTimeoutDestination"
-                       class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
-            <PlusIcon @click="addTimeoutDestination"
-                      class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
-        </div>
+        <MinusIcon v-if="index > 0" @click="removeTimeoutDestination"
+                   class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer" />
     </div>
+    <PlusIcon  v-if="timeoutDestinations.length < 21" @click="addTimeoutDestination"
+               class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer" />
 </template>
 
 <script setup>
@@ -24,36 +25,52 @@ import { ref, watch, computed } from 'vue'
 import {PlusIcon,MinusIcon} from "@heroicons/vue/24/solid";
 import SelectBox from "./SelectBox.vue";
 
-let selectedCategory = ref('');
-let categoryTargets = ref([]);
-
 const props = defineProps({
     categories: [Array, null],
     targets: [Array, Object, null],
     selectedItem: [String, null],
-    search: [Boolean, null],
-    customClass: {
-        type: String
-    },
+    destination: [Array, Object, null],
 });
 
-const timeoutDestinations = ref([{value: ''}]);
+const timeoutDestinations = ref([
+    {
+        selectedCategory: '',
+        categoryTargets: [],
+        value: ''
+    }
+]);
 
-const emit = defineEmits(['update:modal-value'])
+const emit = defineEmits(['update:selected-targets'])
 
-function updateCategory(newValue){
-    selectedCategory.value = newValue.value;
-    categoryTargets.value = props.targets[newValue.value] || [];
+function updateCategory(newValue, index){
+    timeoutDestinations.value[index].selectedCategory = newValue.value;
+    timeoutDestinations.value[index].categoryTargets = props.targets[newValue.value] || [];
+    emit("update:selected-targets", timeoutDestinations.value.map(item => item.categoryTargets));
 }
 
 const addTimeoutDestination = () => {
-    timeoutDestinations.value.push({value: ''});
+    timeoutDestinations.value.push({
+        selectedCategory: '',
+        categoryTargets: [],
+        value: ''
+    });
+};
+
+const removeTimeoutDestination = (index) => {
+    timeoutDestinations.value.splice(index, 1);
 }
 
-const removeTimeoutDestination = () => {
+watch(() => props.destination, (newValue) => {
+    if(newValue !== null && newValue !== undefined) {
+        timeoutDestinations.value = newValue;
+    }
+}, { immediate: true });
 
-}
+watch(() => timeoutDestinations.value, (newValue) => {
+    emit("update:selected-targets", newValue.map(item => item.categoryTargets));
+});
 
+/*
 // let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
 let currentItem = ref(null);
 
@@ -84,6 +101,6 @@ const filteredOptions = computed(() => {
         );
     }
     return filtered;
-});
+});*/
 
 </script>
