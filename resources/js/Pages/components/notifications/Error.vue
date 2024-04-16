@@ -39,7 +39,7 @@
 <script setup>
 import {CheckCircleIcon} from '@heroicons/vue/24/outline'
 import {XMarkIcon} from '@heroicons/vue/20/solid'
-import {defineEmits, defineProps, nextTick, ref, watchEffect} from "vue";
+import {defineEmits, nextTick, ref, watchEffect} from "vue";
 
 const props = defineProps({
     show: Boolean,

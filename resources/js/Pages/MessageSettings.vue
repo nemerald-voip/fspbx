@@ -67,35 +67,40 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.sms_destination_uuid">
+                <tr v-for="row in localData.data" :key="row.sms_destination_uuid">
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
                         <input v-if="row.destination" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.sms_destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain_description">
-                        <ejs-tooltip :content="row.domain_name" position='TopLeft' target="#destination_tooltip_target">
+                        :text="row.domain.domain_description">
+                        <ejs-tooltip :content="row.domain.domain_name" position='TopLeft' target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
-                                {{ row.domain_description }}
+                                {{ row.domain.domain_description }}
                             </div>
                         </ejs-tooltip>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex" :text="row.destination_formatted">
-                        <div class="cursor-pointer hover:text-gray-900" @click="handleEdit(row.sms_destination_uuid)">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex"
+                        :text="row.destination_formatted">
+                        <div class="cursor-pointer hover:text-gray-900" @click="handleEditRequest(row.sms_destination_uuid)">
                             {{ row.destination_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
                             @click="handleCopyToClipboard(row.destination)" target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 <ClipboardDocumentIcon
-                                    class="h-4 w-4 text-black-500 hover:text-black-900 pt-1 cursor-pointer" />
+                                    class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
                             </div>
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.carrier" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.chatplan_detail_data" />
+                    <TableField class="flex whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.chatplan_detail_data">
+                        <template #action-buttons>
+                            <Warning v-if="row.extension_error" class="ml-2 h-5 w-5 text-amber-500" />
+                        </template>
+                    </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -104,7 +109,7 @@
                                 <ejs-tooltip :content="'Edit device'" position='TopLeft'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEdit()"
+                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEditRequest()"
                                             class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -152,42 +157,20 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-    <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
-        @update:show="handleErrorsReset" />
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleClose">
+\
+    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <AddEditDeviceForm :device="DeviceObject" />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                @click="handleSaveAdd" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleClose" ref="cancelButtonRef">Cancel
-            </button>
+            <UpdateMessageSettingsForm :device="DeviceObject" />
         </template>
     </AddEditItemModal>
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleClose">
+
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <AddEditDeviceForm :device="DeviceObject" :isEdit="true" @update:show="editModalTrigger = false" />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                @click="handleSaveEdit" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleClose" ref="cancelButtonRef">Cancel
-            </button>
+            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
+
     <AddEditItemModal :show="bulkEditModalTrigger" :header="'Bulk Edit Device'" :loading="loadingModal"
         @close="handleBulkClose">
         <template #modal-body>
@@ -204,25 +187,26 @@
             </button>
         </template>
     </AddEditItemModal>
+
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="handleDestroy(confirmationModalDestroyPath)" />
-    <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
-        @update:show="handleErrorsReset" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, watch, ref } from "vue";
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
-import NotificationError from "./components/notifications/Error.vue";
+import Notification from "./components/notifications/Notification.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
+import UpdateMessageSettingsForm from "./components/forms/UpdateMessageSettingsForm.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon } from "@heroicons/vue/24/solid";
@@ -230,13 +214,12 @@ import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-const today = new Date();
+import Warning from "./components/icons/Warning.vue"
 
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const showGlobal = ref(false);
 const addModalTrigger = ref(false);
@@ -244,15 +227,21 @@ const editModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const actionError = ref(false);
-const actionErrorsList = ref({});
-const actionErrorMessage = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
+const notificationType = ref(null);
+const updateFormSubmiting = ref(null);
+const formErrors = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
+
 
 const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     url: String,
+    itemData: Object,
+    itemOptions: Object,
+    extensionData: Object,
     // routeDevicesStore: String,
     // routeDevicesOptions: String,
     // routeDevicesBulkUpdate: String,
@@ -263,27 +252,73 @@ const props = defineProps({
 const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
-    itemData: Object,
 });
 
-let DeviceObject = reactive({
-    // update_path: props.routeDevicesStore,
-    domain_uuid: '',
-    device_uuid: '',
-    device_address: '',
-    extension_uuid: '',
-    device_profile_uuid: '',
-    device_template: '',
-    device_options: {
-        templates: Array,
-        profiles: Array,
-        extensions: Array
+// Create a reactive reference for the local data copy
+const localData = ref(JSON.parse(JSON.stringify(props.data)));
+
+const updateLocalData = () => {
+    localData.value = JSON.parse(JSON.stringify(props.data));
+};
+
+
+onMounted(() => {
+    // Check if the data array inside props.data has elements before calling getExtensionData
+    if (props.data.data && props.data.data.length > 0) {
+        getExtensionData();
     }
-});
+})
 
-// onMounted(() => {
-//     showGlobal.value = props.deviceGlobalView;
-// })
+const getExtensionData = () => {
+    router.post(props.url, {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'extensionData',
+            ],
+            onSuccess: (page) => {
+            },
+            onFinish: () => {
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
+// Function to update localData based on extensionData
+const updateLocalDataWithExtensionData = (extensionData) => {
+    if (!extensionData || extensionData.length === 0) return;
+    localData.value.data.forEach(row => {
+        // Only proceed if chatplan_detail_data has a value
+        if (row.chatplan_detail_data) {
+            const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
+            if (matchedExtension) {
+                row.chatplan_detail_data = matchedExtension.name_formatted;
+                // Ensure extension_error is cleared if it was previously set
+                delete row.extension_error;
+            } else {
+                // If no match is found and chatplan_detail_data is not empty, set extension_error for this row
+                row.extension_error = true;
+            }
+        }
+        // If chatplan_detail_data has no value, implicitly do nothing, which avoids setting extension_error
+    });
+};
+
+watch(() => props.data, () => {
+    updateLocalData();
+    updateLocalDataWithExtensionData(props.extensionData);
+}, { deep: true, immediate: true });
+
+// Watch for changes in props.extensionData and update localData accordingly
+watch(() => props.extensionData, (newExtensionData) => {
+    updateLocalDataWithExtensionData(newExtensionData);
+}, {
+    immediate: true, // This ensures the watcher is triggered immediately with the current value
+});
 
 const selectedItemsExtensions = computed(() => {
     return selectedItems.value.map(id => {
@@ -328,16 +363,6 @@ const handleDestroy = (url) => {
     });
 }
 
-const handleRestart = (url) => {
-    axios.post(url).then((response) => {
-        loading.value = false;
-        restartRequestNotificationSuccessTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to restart selected:', error);
-    });
-}
-
-
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
     showGlobal.value = true;
@@ -363,41 +388,71 @@ const handleAdd = () => {
     });
 }
 
-const handleEdit = (itemUuid) => {
+const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
+    formErrors.value = null;
     loadingModal.value = true
 
-    router.visit(props.url, {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
+    router.post(props.url,
+        {
             itemUuid: itemUuid,
         },
-        only: ["itemData"],
-        onSuccess: (page) => {
-            console.log('success');
-            console.log(props.itemData);
-            loadingModal.value = false;
-        }
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemData',
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                // console.log(props.itemOptions);
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
 
-    });
-
-    // axios.get(url).then((response) => {
-    //     DeviceObject.domain_uuid = response.data.device.domain_uuid
-    //     DeviceObject.update_path = response.data.device.update_path
-    //     DeviceObject.device_uuid = response.data.device.device_uuid
-    //     DeviceObject.device_address = response.data.device.device_address
-    //     DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
-    //     DeviceObject.device_template = response.data.device.device_template
-    //     DeviceObject.extension_uuid = response.data.device.extension_uuid
-    //     DeviceObject.device_options.templates = response.data.device.options.templates
-    //     DeviceObject.device_options.profiles = response.data.device.options.profiles
-    //     DeviceObject.device_options.extensions = response.data.device.options.extensions
-    //     loadingModal.value = false
-    // }).catch((error) => {
-    //     console.error('Failed to get device data:', error);
-    // });
+        });
 }
+
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
+
+
+    axios.put(props.itemData.update_url, form)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+        }).catch((error) => {
+            updateFormSubmiting.value = false;
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                // console.log(error.response.data);
+                showNotification('error', error.response.data.errors);
+                formErrors.value = error.response.data.errors;
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                showNotification('error', { request: [error.request] } );
+                console.log(error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                showNotification('error', { request: [error.message] } );
+                console.log(error.message);
+            }
+
+        });
+
+};
+
 
 const handleBulkEdit = () => {
     if (selectedItems.value.length > 0) {
@@ -437,38 +492,19 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
-const handleErrorsReset = () => {
-    actionError.value = false;
-    actionErrorsList.value = {};
-    actionErrorMessage.value = null;
+const hideNotification = () => {
+    notificationShow.value  = false;
+    notificationType.value  = null;
+    notificationMessages.value  = null;
 }
 
-const handleErrorsPush = (message, errors = null) => {
-    actionError.value = true;
-    if (errors !== null) {
-        actionErrorsList.value = errors;
-    } else {
-        actionErrorsList.value = {};
-    }
-    actionErrorMessage.value = message;
+const showNotification = (type, messages = null) => {
+    notificationType.value  = type;
+    notificationMessages.value  = messages;
+    notificationShow.value  = true;
 }
 
-const handleDeviceObjectReset = () => {
-    DeviceObject = reactive({
-        // update_path: props.routeDevicesStore,
-        domain_uuid: '',
-        device_uuid: '',
-        device_address: '',
-        extension_uuid: '',
-        device_profile_uuid: '',
-        device_template: '',
-        device_options: {
-            templates: Array,
-            profiles: Array,
-            extensions: Array
-        }
-    });
-}
+
 
 const renderRequestedPage = (url) => {
     loading.value = true;
@@ -493,7 +529,7 @@ const handleSaveAdd = () => {
         extension_uuid: DeviceObject.extension_uuid
     }).then((response) => {
         handleSearchButtonClick()
-        handleClose()
+        handleModalClose()
     }).catch((error) => {
         console.error('Failed to add device data:', error);
         if (error.response.data.errors) {
@@ -511,7 +547,7 @@ const handleSaveEdit = () => {
         extension_uuid: DeviceObject.extension_uuid
     }).then((response) => {
         handleSearchButtonClick()
-        handleClose()
+        handleModalClose()
     }).catch((error) => {
         console.error('Failed to save device data:', error);
         console.log(error.response.data.errors)
@@ -537,15 +573,13 @@ const handleBulkSaveEdit = () => {
     });
 }
 
-const handleClose = () => {
+const handleModalClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
 }
 
 const handleBulkClose = () => {
     bulkEditModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
 }
 
 const handleDestroyConfirmation = (url) => {
