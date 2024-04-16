@@ -26,7 +26,6 @@ class MessageSettingsController extends Controller
      */
     public function index(Request $request)
     {
-        logger($request->all());
         // Check permissions
         if (!userCheckPermission("message_settings_list_view")) {
             return redirect('/');
@@ -137,13 +136,6 @@ class MessageSettingsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        // $data->transform(function ($item) {
-        //     $item->start_date = $item->start_date;
-        //     $item->start_time = $item->start_time;
-
-        //     return $item;
-        // });
-        // logger($data);
         return $data;
     }
 
@@ -153,6 +145,9 @@ class MessageSettingsController extends Controller
         $data =  $this->model::query();
 
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+            $data->with(['domain' => function($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
+            }]);
             // Access domains through the session and filter devices by those domains
             $domainUuids = Session::get('domains')->pluck('domain_uuid');
             $data->whereHas('domain', function ($query) use ($domainUuids) {
@@ -161,10 +156,8 @@ class MessageSettingsController extends Controller
         } else {
             // Directly filter devices by the session's domain_uuid
             $domainUuid = Session::get('domain_uuid');
-            $data->where('domain_uuid', $domainUuid);
+            $data = $data->where('domain_uuid', $domainUuid);
         }
-        // logger($data->toSql());
-
         $data->select(
             'sms_destination_uuid',
             'destination',
@@ -173,10 +166,9 @@ class MessageSettingsController extends Controller
             'description',
             'chatplan_detail_data',
             'email',
-            'domain_uuid',
+            'domain_uuid'
         );
         // logger($filters);
-
 
         foreach ($filters as $field => $value) {
             if (method_exists($this, $method = "filter" . ucfirst($field))) {

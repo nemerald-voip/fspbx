@@ -73,10 +73,10 @@
                             :value="row.sms_destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain_description">
-                        <ejs-tooltip :content="row.domain_name" position='TopLeft' target="#destination_tooltip_target">
+                        :text="row.domain.domain_description">
+                        <ejs-tooltip :content="row.domain.domain_name" position='TopLeft' target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
-                                {{ row.domain_description }}
+                                {{ row.domain.domain_description }}
                             </div>
                         </ejs-tooltip>
                     </TableField>
