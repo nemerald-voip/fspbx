@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button type="button" @click.prevent="handleAdd()"
+                <button type="button" @click.prevent="handleAddRequest()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Add new
                 </button>
@@ -160,10 +160,11 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal"
+    <AddEditItemModal :show="addModalTrigger" :header="'Add New'" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
-            <UpdateMessageSettingsForm :device="DeviceObject" />
+            <CreateMessageSettingsForm :options="itemOptions" :errors="formErrors"
+                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"/>
         </template>
     </AddEditItemModal>
 
@@ -211,6 +212,7 @@ import Notification from "./components/notifications/Notification.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import UpdateMessageSettingsForm from "./components/forms/UpdateMessageSettingsForm.vue";
+import CreateMessageSettingsForm from "./components/forms/CreateMessageSettingsForm.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, ArrowPathIcon } from "@heroicons/vue/24/solid";
@@ -234,6 +236,7 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const notificationType = ref(null);
 const updateFormSubmiting = ref(null);
+const createFormSubmiting = ref(null);
 const formErrors = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
@@ -258,19 +261,13 @@ const filterData = ref({
 });
 const showGlobal = ref(props.showGlobal);
 
-// // Create a reactive reference for the local data copy
-// const localData = ref(JSON.parse(JSON.stringify(props.data)));
-
-// const updateLocalData = () => {
-//     localData.value = JSON.parse(JSON.stringify(props.data));
-// };
-
 
 onMounted(() => {
     // Check if the data array inside props.data has elements before calling getExtensionData
     // if (props.data.data && props.data.data.length > 0) {
     //     getExtensionData();
     // }
+    console.log(props.data);
 })
 
 const getExtensionData = () => {
@@ -295,37 +292,6 @@ const getExtensionData = () => {
         });
 }
 
-// Function to update localData based on extensionData
-// const updateLocalDataWithExtensionData = (extensionData) => {
-//     if (!extensionData || extensionData.length === 0) return;
-//     localData.value.data.forEach(row => {
-//         // Only proceed if chatplan_detail_data has a value
-//         if (row.chatplan_detail_data) {
-//             const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
-//             if (matchedExtension) {
-//                 row.chatplan_detail_data = matchedExtension.name_formatted;
-//                 // Ensure extension_error is cleared if it was previously set
-//                 delete row.extension_error;
-//             } else {
-//                 // If no match is found and chatplan_detail_data is not empty, set extension_error for this row
-//                 row.extension_error = true;
-//             }
-//         }
-//         // If chatplan_detail_data has no value, implicitly do nothing, which avoids setting extension_error
-//     });
-// };
-
-// watch(() => props.data, () => {
-//     updateLocalData();
-//     updateLocalDataWithExtensionData(props.extensionData);
-// }, { deep: true, immediate: true });
-
-// // Watch for changes in props.extensionData and update localData accordingly
-// watch(() => props.extensionData, (newExtensionData) => {
-//     updateLocalDataWithExtensionData(newExtensionData);
-// }, {
-//     immediate: true, // This ensures the watcher is triggered immediately with the current value
-// });
 
 const selectedItemsExtensions = computed(() => {
     return selectedItems.value.map(id => {
@@ -382,17 +348,44 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
-const handleAdd = () => {
-    // DeviceObject.update_path = props.routeDevicesStore;
-    axios.get(props.routeDevicesOptions).then((response) => {
-        DeviceObject.device_options.templates = response.data.templates
-        DeviceObject.device_options.profiles = response.data.profiles
-        DeviceObject.device_options.extensions = response.data.extensions
-        loadingModal.value = false
-        addModalTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to get device data:', error);
-    });
+// const handleAdd = () => {
+//     // DeviceObject.update_path = props.routeDevicesStore;
+//     axios.get(props.routeDevicesOptions).then((response) => {
+//         DeviceObject.device_options.templates = response.data.templates
+//         DeviceObject.device_options.profiles = response.data.profiles
+//         DeviceObject.device_options.extensions = response.data.extensions
+//         loadingModal.value = false
+//         addModalTrigger.value = true;
+//     }).catch((error) => {
+//         console.error('Failed to get device data:', error);
+//     });
+// }
+
+const handleAddRequest = (itemUuid) => {
+    addModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+
+    router.post(props.url,
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                // console.log(props.itemOptions);
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
 }
 
 const handleEditRequest = (itemUuid) => {
@@ -424,6 +417,41 @@ const handleEditRequest = (itemUuid) => {
 
         });
 }
+
+const handleCreateRequest = (form) => {
+    createFormSubmiting.value = true;
+    formErrors.value = null;
+
+
+    axios.put(props.itemData.update_url, form)
+        .then((response) => {
+            createFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+        }).catch((error) => {
+            updateFormSubmiting.value = false;
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                // console.log(error.response.data);
+                showNotification('error', error.response.data.errors);
+                formErrors.value = error.response.data.errors;
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                showNotification('error', { request: [error.request] });
+                console.log(error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                showNotification('error', { request: [error.message] });
+                console.log(error.message);
+            }
+
+        });
+
+};
 
 const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
