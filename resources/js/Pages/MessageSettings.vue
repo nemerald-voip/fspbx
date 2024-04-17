@@ -67,23 +67,25 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in localData.data" :key="row.sms_destination_uuid">
+                <tr v-for="row in data.data" :key="row.sms_destination_uuid">
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
                         <input v-if="row.destination" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.sms_destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain.domain_description">
-                        <ejs-tooltip :content="row.domain.domain_name" position='TopLeft' target="#destination_tooltip_target">
+                        :text="row.domain?.domain_description">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                            target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
-                                {{ row.domain.domain_description }}
+                                {{ row.domain?.domain_description }}
                             </div>
                         </ejs-tooltip>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 flex"
                         :text="row.destination_formatted">
-                        <div class="cursor-pointer hover:text-gray-900" @click="handleEditRequest(row.sms_destination_uuid)">
+                        <div class="cursor-pointer hover:text-gray-900"
+                            @click="handleEditRequest(row.sms_destination_uuid)">
                             {{ row.destination_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -96,9 +98,9 @@
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.carrier" />
                     <TableField class="flex whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.chatplan_detail_data">
+                        :text="row.extension ? row.extension.name_formatted : row.chatplan_detail_data">
                         <template #action-buttons>
-                            <Warning v-if="row.extension_error" class="ml-2 h-5 w-5 text-amber-500" />
+                            <Warning v-if="!row.extension && !row.chatplan_detail_data==''" class="ml-2 h-5 w-5 text-amber-500" />
                         </template>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email" />
@@ -157,14 +159,16 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
-\
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleModalClose">
+
+    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <UpdateMessageSettingsForm :device="DeviceObject" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" :errors="formErrors"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
@@ -221,7 +225,6 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const restartRequestNotificationErrorTrigger = ref(false);
-const showGlobal = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
@@ -253,29 +256,33 @@ const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
 });
+const showGlobal = ref(props.showGlobal);
 
-// Create a reactive reference for the local data copy
-const localData = ref(JSON.parse(JSON.stringify(props.data)));
+// // Create a reactive reference for the local data copy
+// const localData = ref(JSON.parse(JSON.stringify(props.data)));
 
-const updateLocalData = () => {
-    localData.value = JSON.parse(JSON.stringify(props.data));
-};
+// const updateLocalData = () => {
+//     localData.value = JSON.parse(JSON.stringify(props.data));
+// };
 
 
 onMounted(() => {
     // Check if the data array inside props.data has elements before calling getExtensionData
-    if (props.data.data && props.data.data.length > 0) {
-        getExtensionData();
-    }
+    // if (props.data.data && props.data.data.length > 0) {
+    //     getExtensionData();
+    // }
 })
 
 const getExtensionData = () => {
-    router.post(props.url, {},
+    router.post(props.url, {
+        filterData: filterData._rawValue,
+    },
         {
             preserveScroll: true,
             preserveState: true,
             only: [
                 'extensionData',
+                'showGlobal',
             ],
             onSuccess: (page) => {
             },
@@ -289,36 +296,36 @@ const getExtensionData = () => {
 }
 
 // Function to update localData based on extensionData
-const updateLocalDataWithExtensionData = (extensionData) => {
-    if (!extensionData || extensionData.length === 0) return;
-    localData.value.data.forEach(row => {
-        // Only proceed if chatplan_detail_data has a value
-        if (row.chatplan_detail_data) {
-            const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
-            if (matchedExtension) {
-                row.chatplan_detail_data = matchedExtension.name_formatted;
-                // Ensure extension_error is cleared if it was previously set
-                delete row.extension_error;
-            } else {
-                // If no match is found and chatplan_detail_data is not empty, set extension_error for this row
-                row.extension_error = true;
-            }
-        }
-        // If chatplan_detail_data has no value, implicitly do nothing, which avoids setting extension_error
-    });
-};
+// const updateLocalDataWithExtensionData = (extensionData) => {
+//     if (!extensionData || extensionData.length === 0) return;
+//     localData.value.data.forEach(row => {
+//         // Only proceed if chatplan_detail_data has a value
+//         if (row.chatplan_detail_data) {
+//             const matchedExtension = extensionData.find(extension => extension.extension === row.chatplan_detail_data);
+//             if (matchedExtension) {
+//                 row.chatplan_detail_data = matchedExtension.name_formatted;
+//                 // Ensure extension_error is cleared if it was previously set
+//                 delete row.extension_error;
+//             } else {
+//                 // If no match is found and chatplan_detail_data is not empty, set extension_error for this row
+//                 row.extension_error = true;
+//             }
+//         }
+//         // If chatplan_detail_data has no value, implicitly do nothing, which avoids setting extension_error
+//     });
+// };
 
-watch(() => props.data, () => {
-    updateLocalData();
-    updateLocalDataWithExtensionData(props.extensionData);
-}, { deep: true, immediate: true });
+// watch(() => props.data, () => {
+//     updateLocalData();
+//     updateLocalDataWithExtensionData(props.extensionData);
+// }, { deep: true, immediate: true });
 
-// Watch for changes in props.extensionData and update localData accordingly
-watch(() => props.extensionData, (newExtensionData) => {
-    updateLocalDataWithExtensionData(newExtensionData);
-}, {
-    immediate: true, // This ensures the watcher is triggered immediately with the current value
-});
+// // Watch for changes in props.extensionData and update localData accordingly
+// watch(() => props.extensionData, (newExtensionData) => {
+//     updateLocalDataWithExtensionData(newExtensionData);
+// }, {
+//     immediate: true, // This ensures the watcher is triggered immediately with the current value
+// });
 
 const selectedItemsExtensions = computed(() => {
     return selectedItems.value.map(id => {
@@ -441,11 +448,11 @@ const handleUpdateRequest = (form) => {
                 // The request was made but no response was received
                 // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
                 // http.ClientRequest in node.js
-                showNotification('error', { request: [error.request] } );
+                showNotification('error', { request: [error.request] });
                 console.log(error.request);
             } else {
                 // Something happened in setting up the request that triggered an Error
-                showNotification('error', { request: [error.message] } );
+                showNotification('error', { request: [error.message] });
                 console.log(error.message);
             }
 
@@ -479,7 +486,10 @@ const handleSearchButtonClick = () => {
         },
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
+        only: [
+            "data",
+            'showGlobal',
+        ],
         onSuccess: (page) => {
             loading.value = false;
         }
@@ -493,15 +503,15 @@ const handleFiltersReset = () => {
 }
 
 const hideNotification = () => {
-    notificationShow.value  = false;
-    notificationType.value  = null;
-    notificationMessages.value  = null;
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
 }
 
 const showNotification = (type, messages = null) => {
-    notificationType.value  = type;
-    notificationMessages.value  = messages;
-    notificationShow.value  = true;
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
 }
 
 

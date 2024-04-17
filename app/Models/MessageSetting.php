@@ -78,6 +78,21 @@ class MessageSetting extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
+    /**
+     * Get extenion that this message settings belongs to 
+     * and ensure that extension matches chatplan_detail_data
+     */
+    // public function extension()
+    // {
+    //     logger($this->domain_uuid);
+    //     $result =  $this->hasMany(Extensions::class, 'extension', 'chatplan_detail_data');
+    //         // ->where('domain_uuid', $this->domain_uuid);
+
+    //     logger($result->toSql());
+
+    //     return $result;
+    // }
+
     // /**
     //  * Get all group permissions
     //  */

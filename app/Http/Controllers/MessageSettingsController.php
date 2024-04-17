@@ -37,6 +37,9 @@ class MessageSettingsController extends Controller
                 'data' => function () {
                     return $this->getData();
                 },
+                'showGlobal' => function () {
+                    return request('filterData.showGlobal') === 'true';
+                },
                 'itemData' => Inertia::lazy(
                     fn () =>
                     $this->getItemData()
@@ -121,8 +124,11 @@ class MessageSettingsController extends Controller
 
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal');
+            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
+        } else {
+            $this->filters['showGlobal'] = null;
         }
+
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'destination'); // Default to 'destination'
         $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
@@ -136,6 +142,26 @@ class MessageSettingsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
+        // get all extensions
+        $extensions = Extensions::get(['domain_uuid', 'extension', 'effective_caller_id_name']);
+
+        // Iterate over each SMS destination to find the first matching extension
+        foreach ($data as $destination) {
+            // Initialize a variable to hold the first match
+            $firstMatch = null;
+
+            // Loop through extensions to find the first match
+            foreach ($extensions as $extension) {
+                if ($extension->domain_uuid === $destination->domain_uuid && $extension->extension === $destination->chatplan_detail_data) {
+                    $firstMatch = $extension;
+                    break; // Stop the loop after finding the first match
+                }
+            }
+
+            // Assign the first match to the destination object
+            $destination->extension = $firstMatch;
+        }
+
         return $data;
     }
 
@@ -145,18 +171,18 @@ class MessageSettingsController extends Controller
         $data =  $this->model::query();
 
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $data->with(['domain' => function($query) {
+            $data->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
             }]);
             // Access domains through the session and filter devices by those domains
             $domainUuids = Session::get('domains')->pluck('domain_uuid');
             $data->whereHas('domain', function ($query) use ($domainUuids) {
-                $query->whereIn('domain_uuid', $domainUuids);
+                $query->whereIn('v_sms_destinations.domain_uuid', $domainUuids);
             });
         } else {
             // Directly filter devices by the session's domain_uuid
             $domainUuid = Session::get('domain_uuid');
-            $data = $data->where('domain_uuid', $domainUuid);
+            $data = $data->where('v_sms_destinations.domain_uuid', $domainUuid);
         }
         $data->select(
             'sms_destination_uuid',
@@ -166,7 +192,7 @@ class MessageSettingsController extends Controller
             'description',
             'chatplan_detail_data',
             'email',
-            'domain_uuid'
+            'domain_uuid',
         );
         // logger($filters);
 
@@ -203,7 +229,7 @@ class MessageSettingsController extends Controller
      */
     public function update(UpdateMessageSettingRequest $request, MessageSetting $setting)
     {
-        if (! $setting) {
+        if (!$setting) {
             // If the model is not found, return an error response
             return response()->json([
                 'success' => false,
