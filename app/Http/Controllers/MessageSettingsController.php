@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
-use App\Http\Requests\UpdateMessageSettingRequest;
 use App\Models\MessageSetting;
+use Illuminate\Support\Facades\Session;
+use App\Http\Requests\CreateMessageSettingRequest;
+use App\Http\Requests\UpdateMessageSettingRequest;
+use Exception;
 
 class MessageSettingsController extends Controller
 {
@@ -48,27 +50,30 @@ class MessageSettingsController extends Controller
                     fn () =>
                     $this->getItemOptions()
                 ),
-                'extensionData' => Inertia::lazy(
-                    fn () =>
-                    $this->getExtensionData()
-                ),
-                'url' => route('messages.settings'),
+                // 'extensionData' => Inertia::lazy(
+                //     fn () =>
+                //     $this->getExtensionData()
+                // ),
+                'routes' => [
+                    'current_page' => route('messages.settings'),
+                    'store' => route('messages.settings.store')
+                ],
             ]
         );
     }
 
-    public function getExtensionData()
-    {
+    // public function getExtensionData()
+    // {
 
-        // Define the options for the 'chatplan_detail_data' field
-        $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-            ->get([
-                'extension',
-                'effective_caller_id_name',
-            ]);
+    //     // Define the options for the 'chatplan_detail_data' field
+    //     $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+    //         ->get([
+    //             'extension',
+    //             'effective_caller_id_name',
+    //         ]);
 
-        return $extensions;
-    }
+    //     return $extensions;
+    // }
 
     public function getItemData()
     {
@@ -238,7 +243,6 @@ class MessageSettingsController extends Controller
         }
 
         try {
-            logger($request->validated());
             $setting->update($request->validated());
 
             // Return a JSON response indicating success
@@ -258,5 +262,55 @@ class MessageSettingsController extends Controller
             'success' => false,
             'errors' => ['server' => ['Failed to update settings']]
         ], 500); // 500 Internal Server Error for any other errors
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\CreateMessageSettingRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(CreateMessageSettingRequest $request)
+    {
+        try {
+            // Validate the request data and create a new MessageSetting
+            $newSetting = new MessageSetting($request->validated());
+            $newSetting->save();  // Save the new model instance to the database
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Settings saved.']]
+            ], 201);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to save settings']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  MessageSetting $setting
+     * @return Response
+     */
+    public function destroy(MessageSetting $setting)
+    {
+        try {
+            // throw new \Exception;
+            $setting->delete();
+
+            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+        }
     }
 }

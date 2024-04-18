@@ -27,6 +27,7 @@ class MessageSetting extends Model
      */
     protected $fillable = [
         'destination',
+        'domain_uuid',
         'carrier',
         'description',
         'chatplan_detail_data',
@@ -43,8 +44,9 @@ class MessageSetting extends Model
     protected static function booted()
     {
         static::saving(function ($model) {
-            // Remove 'destination_formatted' attribute before saving to database
+            // Remove attributes before saving to database
             unset($model->destination_formatted);
+            unset($model->destroy_route);
         });
 
         static::retrieved(function ($model) {
@@ -66,6 +68,9 @@ class MessageSetting extends Model
                 // Do nothing and leave the numbner as is
                 $model->destination_formatted = $value;
             }
+
+            $model->destroy_route = route('messages.settings.destroy',$model);
+
             return $model;
         });
     }

@@ -137,9 +137,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
-    //Route::get('/phone-numbers/options', [DeviceController::class, 'options'])->name('phoneNumbers.options');
+    //Route::get('/phone-numbers/options', [PhoneNumbersController::class, 'options'])->name('phoneNumbers.options');
     //Route::put('/phone-numbers/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('phoneNumbers.bulkUpdate');
-    // Route::resource('phone-numbers', PhoneNumbersController::class);
+    //Route::resource('phone-numbers', PhoneNumbersController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -190,8 +190,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Message Settings
     Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
-    Route::post('/message-settings', [MessageSettingsController::class, 'index']);
     Route::put('/message-settings/{setting}', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
+    Route::post('/message-settings', [MessageSettingsController::class, 'store'])->name('messages.settings.store');
+    Route::delete('/message-settings/{setting}', [MessageSettingsController::class, 'destroy'])->name('messages.settings.destroy');
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');

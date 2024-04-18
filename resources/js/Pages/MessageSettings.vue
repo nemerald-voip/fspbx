@@ -100,7 +100,8 @@
                     <TableField class="flex whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.extension ? row.extension.name_formatted : row.chatplan_detail_data">
                         <template #action-buttons>
-                            <Warning v-if="!row.extension && !row.chatplan_detail_data==''" class="ml-2 h-5 w-5 text-amber-500" />
+                            <Warning v-if="!row.extension && !row.chatplan_detail_data == ''"
+                                class="ml-2 h-5 w-5 text-amber-500" />
                         </template>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email" />
@@ -108,27 +109,20 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit device'" position='TopLeft'
+                                <ejs-tooltip :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEditRequest()"
-                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
+                                        <DocumentTextIcon @click="handleEditRequest(row.sms_destination_uuid)"
+                                            class="h-5 w-5 text-gray-500 hover:text-gray-700 active:h-4 active:w-4 cursor-pointer" />
+
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip :content="'Restart device'" position='TopLeft'
+
+                                <ejs-tooltip :content="'Delete'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <ArrowPathIcon v-if="row.send_notify_path"
-                                            @click="handleRestart(row.send_notify_path)"
-                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-                                <ejs-tooltip :content="'Remove device'" position='TopLeft'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <TrashIcon v-if="row.destroy_path"
-                                            @click="handleDestroyConfirmation(row.destroy_path)"
-                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
+                                        <TrashIcon @click="handleDestroyConfirmation(row.destroy_route)"
+                                            class="h-5 w-5 text-gray-500 hover:text-gray-700 active:h-4 active:w-4 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -160,11 +154,10 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New'" :loading="loadingModal"
-        @close="handleModalClose">
+    <AddEditItemModal :show="addModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateMessageSettingsForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"/>
+            <CreateMessageSettingsForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+                @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
@@ -198,10 +191,11 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
 </template>
 
 <script setup>
-import { computed, onMounted, watch, ref } from "vue";
+import { computed, ref } from "vue";
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -221,6 +215,10 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Warning from "./components/icons/Warning.vue"
+
+// import { usePage } from '@inertiajs/vue3'
+
+// const page = usePage()
 
 const loading = ref(false)
 const loadingModal = ref(false)
@@ -244,10 +242,9 @@ let tooltipCopyContent = ref('Copy to Clipboard');
 const props = defineProps({
     data: Object,
     showGlobal: Boolean,
-    url: String,
+    routes: Object,
     itemData: Object,
     itemOptions: Object,
-    extensionData: Object,
     // routeDevicesStore: String,
     // routeDevicesOptions: String,
     // routeDevicesBulkUpdate: String,
@@ -260,37 +257,6 @@ const filterData = ref({
     showGlobal: props.showGlobal,
 });
 const showGlobal = ref(props.showGlobal);
-
-
-onMounted(() => {
-    // Check if the data array inside props.data has elements before calling getExtensionData
-    // if (props.data.data && props.data.data.length > 0) {
-    //     getExtensionData();
-    // }
-    console.log(props.data);
-})
-
-const getExtensionData = () => {
-    router.post(props.url, {
-        filterData: filterData._rawValue,
-    },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'extensionData',
-                'showGlobal',
-            ],
-            onSuccess: (page) => {
-            },
-            onFinish: () => {
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
 
 
 const selectedItemsExtensions = computed(() => {
@@ -328,11 +294,23 @@ const handleDestroy = (url) => {
     router.delete(url, {
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
         onSuccess: (page) => {
+            if (page.props.flash.error) {
+                showNotification('error', page.props.flash.error);
+            }
+            if (page.props.flash.message) {
+                showNotification('success', page.props.flash.message);
+            }
             confirmationModalTrigger.value = false;
             confirmationModalDestroyPath.value = null;
-        }
+        },
+        onFinish: () => {
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onError: (errors) => {
+            console.log(errors);
+        },
     });
 }
 
@@ -348,25 +326,13 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
-// const handleAdd = () => {
-//     // DeviceObject.update_path = props.routeDevicesStore;
-//     axios.get(props.routeDevicesOptions).then((response) => {
-//         DeviceObject.device_options.templates = response.data.templates
-//         DeviceObject.device_options.profiles = response.data.profiles
-//         DeviceObject.device_options.extensions = response.data.extensions
-//         loadingModal.value = false
-//         addModalTrigger.value = true;
-//     }).catch((error) => {
-//         console.error('Failed to get device data:', error);
-//     });
-// }
 
-const handleAddRequest = (itemUuid) => {
+const handleAddRequest = () => {
     addModalTrigger.value = true
     formErrors.value = null;
     loadingModal.value = true
 
-    router.post(props.url,
+    router.get(props.routes.current_page,
         {},
         {
             preserveScroll: true,
@@ -393,7 +359,7 @@ const handleEditRequest = (itemUuid) => {
     formErrors.value = null;
     loadingModal.value = true
 
-    router.post(props.url,
+    router.get(props.routes.current_page,
         {
             itemUuid: itemUuid,
         },
@@ -422,15 +388,14 @@ const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
 
-
-    axios.put(props.itemData.update_url, form)
+    axios.post(props.routes.store, form)
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
         }).catch((error) => {
-            updateFormSubmiting.value = false;
+            createFormSubmiting.value = false;
             if (error.response) {
                 // The request was made and the server responded with a status code
                 // that falls out of the range of 2xx
@@ -456,7 +421,6 @@ const handleCreateRequest = (form) => {
 const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
-
 
     axios.put(props.itemData.update_url, form)
         .then((response) => {
@@ -508,7 +472,7 @@ const handleBulkEdit = () => {
 
 const handleSearchButtonClick = () => {
     loading.value = true;
-    router.visit(props.url, {
+    router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
         },
@@ -543,7 +507,6 @@ const showNotification = (type, messages = null) => {
 }
 
 
-
 const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
@@ -559,41 +522,7 @@ const renderRequestedPage = (url) => {
     });
 };
 
-const handleSaveAdd = () => {
-    axios.post(props.url, {
-        device_address: DeviceObject.device_address,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid,
-        extension_uuid: DeviceObject.extension_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleModalClose()
-    }).catch((error) => {
-        console.error('Failed to add device data:', error);
-        if (error.response.data.errors) {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
-}
 
-const handleSaveEdit = () => {
-    axios.put(DeviceObject.update_path, {
-        domain_uuid: DeviceObject.domain_uuid,
-        device_address: DeviceObject.device_address,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid,
-        extension_uuid: DeviceObject.extension_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleModalClose()
-    }).catch((error) => {
-        console.error('Failed to save device data:', error);
-        console.log(error.response.data.errors)
-        if (error.response.data.errors.length > 0) {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
-}
 
 const handleBulkSaveEdit = () => {
     axios.put(props.routeDevicesBulkUpdate, {
