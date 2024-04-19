@@ -56,24 +56,12 @@ class MessageSettingsController extends Controller
                 // ),
                 'routes' => [
                     'current_page' => route('messages.settings'),
-                    'store' => route('messages.settings.store')
+                    'store' => route('messages.settings.store'),
+                    'select_all' => route('messages.settings.select.all'),
                 ],
             ]
         );
     }
-
-    // public function getExtensionData()
-    // {
-
-    //     // Define the options for the 'chatplan_detail_data' field
-    //     $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-    //         ->get([
-    //             'extension',
-    //             'effective_caller_id_name',
-    //         ]);
-
-    //     return $extensions;
-    // }
 
     public function getItemData()
     {
@@ -120,7 +108,7 @@ class MessageSettingsController extends Controller
         return $itemOptions;
     }
 
-    public function getData($paginate = 50)
+    public function getData($paginate = 5)
     {
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
@@ -312,5 +300,43 @@ class MessageSettingsController extends Controller
             logger($e->getMessage());
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
+    }
+
+        /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\UpdateMessageSettingRequest  $request
+     * @param   App\Models\MessageSetting  $setting
+     * @return \Illuminate\Http\Response
+     */
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $settings = MessageSetting::get('sms_destination_uuid')->pluck('sms_destination_uuid');
+            } else {
+                $settings = MessageSetting::where('domain_uuid',session('domain_uuid'))
+                    ->get('sms_destination_uuid')->pluck('sms_destination_uuid');
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $settings,
+            ], 200);
+
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to select all items']]
+        ], 500); // 500 Internal Server Error for any other errors
     }
 }
