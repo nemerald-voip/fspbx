@@ -29,7 +29,6 @@
                         :categories="phoneNumber.phonenumber_options.timeout_destinations_categories"
                         :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
                         :phoneNumber="phoneNumber"
-                        @update:selected-targets="handleUpdateTimeoutDestination"
                     />
                 </div>
 
@@ -100,15 +99,6 @@ const handleUpdateMusicOnHold = (newSelectedItem) => {
     } else {
         props.phoneNumber.destination_hold_music = '';
     }
-}
-
-const handleUpdateTimeoutDestination = (newSelectedItem) => {
-    /*if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        if (!props.phoneNumber.destination_actions.includes(newSelectedItem.value)) {
-            props.phoneNumber.destination_actions.push(newSelectedItem.value);
-        }
-    }*/
-    console.log(newSelectedItem);
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {

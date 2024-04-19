@@ -43,13 +43,15 @@ const timeoutDestinations = ref([
     }
 ]);
 
+const emit = defineEmits(['update:selected-targets'])
+
 function handleUpdateCategory(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
         timeoutDestinations.value[index].selectedCategory = newValue.value;
         timeoutDestinations.value[index].categoryTargets = props.targets[newValue.value] || [];
     } else {
         timeoutDestinations.value[index].categoryTargets = [];
-        timeoutDestinations.selectedCategory.value = '';
+        timeoutDestinations.selectedCategory = null;
     }
 }
 
