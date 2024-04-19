@@ -233,20 +233,20 @@ class MessageSettingsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Settings updated.']]
+                'messages' => ['success' => ['Item updated.']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update settings']]
+                'errors' => ['server' => ['Failed to update this item']]
             ], 500); // 500 Internal Server Error for any other errors
         }
 
         return response()->json([
             'success' => false,
-            'errors' => ['server' => ['Failed to update settings']]
+            'errors' => ['server' => ['Failed to update this item']]
         ], 500); // 500 Internal Server Error for any other errors
     }
 
@@ -265,7 +265,7 @@ class MessageSettingsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Settings saved.']]
+                'messages' => ['success' => ['New item created']]
             ], 201);
         } catch (\Exception $e) {
             // Log the error message
@@ -274,7 +274,7 @@ class MessageSettingsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to save settings']]
+                'errors' => ['server' => ['Failed to create new item']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -345,12 +345,12 @@ class MessageSettingsController extends Controller
     public function bulkDelete()
     {
         try {
-            $deleted = MessageSetting::whereIn('sms_destination_uuid',request()->all())
+            $deleted = MessageSetting::whereIn('sms_destination_uuid',request()->items)
                 ->delete();
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items deleted']],
+                'messages' => ['success' => ['Selected items deleted']],
             ], 200);
 
         } catch (\Exception $e) {

@@ -67,21 +67,21 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                    <td colspan="6"> 
-                        <div class="text-sm text-center m-2">
-                            <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected. 
-                            <button v-if="!selectAll && selectedItems.length != data.total"
+                <td colspan="6">
+                    <div class="text-sm text-center m-2">
+                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                                Select all {{ data.total }} items
-                            </button>
-                            <button v-if="selectAll"
+                            Select all {{ data.total }} items
+                        </button>
+                        <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                                Clear selection
-                            </button>
-                        </div>
-                    </td>
+                            Clear selection
+                        </button>
+                    </div>
+                </td>
             </template>
 
             <template #table-body>
@@ -139,7 +139,7 @@
                                 <ejs-tooltip :content="'Delete'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <TrashIcon @click="handleDestroyConfirmation(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -205,7 +205,7 @@
     </AddEditItemModal>
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="handleDestroy(confirmationModalDestroyPath)" />
+        @confirm="confirmDeleteAction" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -228,7 +228,7 @@ import UpdateMessageSettingsForm from "./components/forms/UpdateMessageSettingsF
 import CreateMessageSettingsForm from "./components/forms/CreateMessageSettingsForm.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { DocumentTextIcon, MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
@@ -256,6 +256,7 @@ const notificationType = ref(null);
 const updateFormSubmiting = ref(null);
 const createFormSubmiting = ref(null);
 const formErrors = ref(null);
+const confirmDeleteAction = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 
@@ -305,30 +306,14 @@ const handleSelectAll = () => {
 
         }).catch((error) => {
             handleClearSelection();
-            if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                // console.log(error.response.data);
-                showNotification('error', error.response.data.errors);
-            } else if (error.request) {
-                // The request was made but no response was received
-                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                // http.ClientRequest in node.js
-                showNotification('error', { request: [error.request] });
-                console.log(error.request);
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                showNotification('error', { request: [error.message] });
-                console.log(error.message);
-            }
-
+            handleErrorResponse();
         });
 
 };
 
 const handleClearSelection = () => {
     selectedItems.value = [],
-    selectPageItems.value = false;
+        selectPageItems.value = false;
     selectAll.value = false;
 }
 
@@ -348,35 +333,44 @@ const handleCopyToClipboard = (value) => {
 }
 
 const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        confirmationModalTrigger.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    } else {
+        executeBulkAction();
+    }
 
-    axios.post(`${props.routes[action]}`, selectedItems._rawValue)
+    // axios.post(`${props.routes[action]}`, selectedItems._rawValue)
+    //     .then((response) => {
+    //         showNotification('success', response.data.messages);
+    //         handleSearchButtonClick();
+    //     }).catch((error) => {
+    //         handleClearSelection();
+    //         handleErrorResponse(error);
+
+    //     });
+}
+
+const executeBulkDelete = () => {
+    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
         .then((response) => {
+            handleModalClose();
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
-
-        }).catch((error) => {
+        })
+        .catch((error) => {
             handleClearSelection();
-            if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                // console.log(error.response.data);
-                showNotification('error', error.response.data.errors || { request: [error.message] });
-            } else if (error.request) {
-                // The request was made but no response was received
-                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                // http.ClientRequest in node.js
-                showNotification('error', { request: [error.request] });
-                console.log(error.request);
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                showNotification('error', { request: [error.message] });
-                console.log(error.message);
-            }
-
+            handleModalClose();
+            handleErrorResponse(error);
         });
 }
 
-const handleDestroy = (url) => {
+const handleSingleItemDeleteRequest = (url) => {
+    confirmationModalTrigger.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(url);
+}
+
+const executeSingleDelete = (url) => {
     router.delete(url, {
         preserveScroll: true,
         preserveState: true,
@@ -486,24 +480,7 @@ const handleCreateRequest = (form) => {
         }).catch((error) => {
             createFormSubmiting.value = false;
             handleClearSelection();
-            if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                // console.log(error.response.data);
-                showNotification('error', error.response.data.errors || { request: [error.message] });
-                formErrors.value = error.response.data.errors;
-            } else if (error.request) {
-                // The request was made but no response was received
-                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                // http.ClientRequest in node.js
-                showNotification('error', { request: [error.request] });
-                console.log(error.request);
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                showNotification('error', { request: [error.message] });
-                console.log(error.message);
-            }
-
+            handleFormErrorResponse();
         });
 
 };
@@ -522,27 +499,50 @@ const handleUpdateRequest = (form) => {
         }).catch((error) => {
             updateFormSubmiting.value = false;
             handleClearSelection();
-            if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                // console.log(error.response.data);
-                showNotification('error', error.response.data.errors || { request: [error.message] });
-                formErrors.value = error.response.data.errors;
-            } else if (error.request) {
-                // The request was made but no response was received
-                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                // http.ClientRequest in node.js
-                showNotification('error', { request: [error.request] });
-                console.log(error.request);
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                showNotification('error', { request: [error.message] });
-                console.log(error.message);
-            }
-
+            handleFormErrorResponse(error);
         });
 
 };
+
+const handleFormErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+}
 
 
 const handleBulkEdit = () => {
@@ -635,8 +635,9 @@ const handleBulkSaveEdit = () => {
 }
 
 const handleModalClose = () => {
-    addModalTrigger.value = false
-    editModalTrigger.value = false
+    addModalTrigger.value = false;
+    editModalTrigger.value = false;
+    confirmationModalTrigger.value = false;
 }
 
 const handleBulkClose = () => {
