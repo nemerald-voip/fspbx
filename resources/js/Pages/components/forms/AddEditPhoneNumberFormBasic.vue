@@ -28,7 +28,7 @@
                     <TimeoutDestinations
                         :categories="phoneNumber.phonenumber_options.timeout_destinations_categories"
                         :targets="phoneNumber.phonenumber_options.timeout_destinations_targets"
-                        :destinations="phoneNumber.phonenumber_options.destination_actions"
+                        :phoneNumber="phoneNumber"
                         @update:selected-targets="handleUpdateTimeoutDestination"
                     />
                 </div>
@@ -48,9 +48,10 @@
                 <div class="sm:col-span-12">
                     <LabelInputOptional :target="'destination_description'" :label="'Description'"/>
                     <div class="mt-2">
-                        <textarea v-model="phoneNumber.destination_description" type="text" name="destination_description"
-                               id="destination_description" placeholder="Enter description"
-                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                        <textarea v-model="phoneNumber.destination_description" type="text"
+                                  name="destination_description"
+                                  id="destination_description" placeholder="Enter description"
+                                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
                     </div>
                 </div>
 
@@ -87,6 +88,9 @@ const props = defineProps({
 });
 
 onMounted(() => {
+    if(!Array.isArray(props.phoneNumber.destination_actions)) {
+        props.phoneNumber.destination_actions = [];
+    }
     destinationEnabledTrigger.value = props.phoneNumber.destination_enabled;
 });
 
@@ -99,11 +103,12 @@ const handleUpdateMusicOnHold = (newSelectedItem) => {
 }
 
 const handleUpdateTimeoutDestination = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        props.phoneNumber.destination_actions = newSelectedItem.value;
-    } else {
-        props.phoneNumber.destination_actions = '';
-    }
+    /*if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        if (!props.phoneNumber.destination_actions.includes(newSelectedItem.value)) {
+            props.phoneNumber.destination_actions.push(newSelectedItem.value);
+        }
+    }*/
+    console.log(newSelectedItem);
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {
