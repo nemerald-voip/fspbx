@@ -50,14 +50,12 @@ class MessageSettingsController extends Controller
                     fn () =>
                     $this->getItemOptions()
                 ),
-                // 'extensionData' => Inertia::lazy(
-                //     fn () =>
-                //     $this->getExtensionData()
-                // ),
                 'routes' => [
                     'current_page' => route('messages.settings'),
                     'store' => route('messages.settings.store'),
                     'select_all' => route('messages.settings.select.all'),
+                    'bulk_delete' => route('messages.settings.bulk.delete'),
+                    'bulk_udpdate' => route('messages.settings.bulk.update'),
                 ],
             ]
         );
@@ -108,7 +106,7 @@ class MessageSettingsController extends Controller
         return $itemOptions;
     }
 
-    public function getData($paginate = 5)
+    public function getData($paginate = 50)
     {
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
@@ -124,7 +122,7 @@ class MessageSettingsController extends Controller
 
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'destination'); // Default to 'destination'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
 
         $data = $this->builder($this->filters);
 
@@ -302,11 +300,9 @@ class MessageSettingsController extends Controller
         }
     }
 
-        /**
-     * Update the specified resource in storage.
+    /**
+     * Get all items
      *
-     * @param  \Illuminate\Http\UpdateMessageSettingRequest  $request
-     * @param   App\Models\MessageSetting  $setting
      * @return \Illuminate\Http\Response
      */
     public function selectAll()
@@ -339,4 +335,37 @@ class MessageSettingsController extends Controller
             'errors' => ['server' => ['Failed to select all items']]
         ], 500); // 500 Internal Server Error for any other errors
     }
+
+
+    /**
+     * Delete requested items
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function bulkDelete()
+    {
+        try {
+            $deleted = MessageSetting::whereIn('sms_destination_uuid',request()->all())
+                ->delete();
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items deleted']],
+            ], 200);
+
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to delete selected items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to delete selected items']]
+        ], 500); // 500 Internal Server Error for any other errors
+    }
+
 }

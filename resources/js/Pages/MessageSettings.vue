@@ -66,12 +66,11 @@
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
-            <template v-if="selectPageItems && selectedItems.length != data.total" v-slot:current-selection>
+            <template v-if="selectPageItems" v-slot:current-selection>
                     <td colspan="6"> 
                         <div class="text-sm text-center m-2">
-                            All <span class="font-semibold ">{{ selectedItems.length }} </span> items 
-                            <span v-if="!selectAll">on this page</span> are selected. 
-                            <button v-if="!selectAll"
+                            <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected. 
+                            <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                                 Select all {{ data.total }} items
@@ -276,12 +275,12 @@ const showGlobal = ref(props.showGlobal);
 
 const bulkActions = ref([
     {
-        id: 'edit',
+        id: 'bulk_update',
         label: 'Edit',
         icon: PencilSquareIcon
     },
     {
-        id: 'delete',
+        id: 'bulk_delete',
         label: 'Delete',
         icon: TrashIcon
     },
@@ -349,7 +348,32 @@ const handleCopyToClipboard = (value) => {
 }
 
 const handleBulkActionRequest = (action) => {
-    console.log(selectedItems);
+
+    axios.post(`${props.routes[action]}`, selectedItems._rawValue)
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+
+        }).catch((error) => {
+            handleClearSelection();
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                // console.log(error.response.data);
+                showNotification('error', error.response.data.errors || { request: [error.message] });
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                showNotification('error', { request: [error.request] });
+                console.log(error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                showNotification('error', { request: [error.message] });
+                console.log(error.message);
+            }
+
+        });
 }
 
 const handleDestroy = (url) => {
@@ -466,7 +490,7 @@ const handleCreateRequest = (form) => {
                 // The request was made and the server responded with a status code
                 // that falls out of the range of 2xx
                 // console.log(error.response.data);
-                showNotification('error', error.response.data.errors);
+                showNotification('error', error.response.data.errors || { request: [error.message] });
                 formErrors.value = error.response.data.errors;
             } else if (error.request) {
                 // The request was made but no response was received
@@ -502,7 +526,7 @@ const handleUpdateRequest = (form) => {
                 // The request was made and the server responded with a status code
                 // that falls out of the range of 2xx
                 // console.log(error.response.data);
-                showNotification('error', error.response.data.errors);
+                showNotification('error', error.response.data.errors || { request: [error.message] });
                 formErrors.value = error.response.data.errors;
             } else if (error.request) {
                 // The request was made but no response was received
