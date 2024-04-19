@@ -29,7 +29,7 @@ const props = defineProps({
     categories: [Array, null],
     targets: [Array, Object, null],
     selectedItem: [String, null],
-    destination: [Array, Object, null],
+    destinations: [Array, Object, null],
 });
 
 const timeoutDestinations = ref([
@@ -60,7 +60,7 @@ const removeTimeoutDestination = (index) => {
     timeoutDestinations.value.splice(index, 1);
 }
 
-watch(() => props.destination, (newValue) => {
+watch(() => props.destinations, (newValue) => {
     if(newValue !== null && newValue !== undefined) {
         timeoutDestinations.value = newValue;
     }
@@ -69,38 +69,5 @@ watch(() => props.destination, (newValue) => {
 watch(() => timeoutDestinations.value, (newValue) => {
     emit("update:selected-targets", newValue.map(item => item.categoryTargets));
 });
-
-/*
-// let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
-let currentItem = ref(null);
-
-// Initialize searchKeyword
-let searchKeyword = ref('');
-
-// Watch for changes in selectedItem and update currentItem accordingly
-watch(() => props.selectedItem, (newValue) => {
-    if (newValue === null || newValue === undefined || props.options === null || props.options === undefined) {
-        currentItem.value = null;
-    } else {
-        currentItem.value = props.options.find(option => option.value === newValue);
-    }
-
-}, { immediate: true });
-
-// Computed property to filter options based on search keyword
-const filteredOptions = computed(() => {
-    if (!searchKeyword.value) return props.options;
-
-    // Need to handle the fact that options are now an object of arrays.
-    // This creates a new object with the same keys, but filtered arrays.
-    const filtered = {};
-    for (const [group, items] of Object.entries(props.options)) {
-        // Only include items that match the search.
-        filtered[group] = items.filter(item =>
-            item.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-        );
-    }
-    return filtered;
-});*/
 
 </script>

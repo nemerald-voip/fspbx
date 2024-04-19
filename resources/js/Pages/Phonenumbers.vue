@@ -152,6 +152,10 @@
                     :phoneNumber="tab.data.phoneNumber" />
             </template>
 
+            <pre>
+            {{PhoneNumberObject}}
+                </pre>
+
             <!--div>
                 <component :is="ManagementTabs[selectedTab].component" :phonePumber="ManagementTabs[selectedTab].data.phoneNumber"></component>
             </div-->
@@ -271,11 +275,11 @@ let PhoneNumberObject = reactive({
     destination_actions: [],
     fax_uuid: '', // advanced
     destination_cid_name_prefix: '', // advanced
-    destination_record: 'false', // advanced
+    destination_record: false, // advanced
     destination_accountcode: '', // advanced
     destination_hold_music: '',
     destination_distinctive_ring: '', // advanced
-    destination_enabled: 'true',
+    destination_enabled: true,
     destination_description: '',
     phonenumber_options: {
         faxes: Array,

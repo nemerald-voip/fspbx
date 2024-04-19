@@ -1,6 +1,5 @@
 <template>
     <label :for="target">
-
         <SwitchGroup as="div" class="flex items-center">
             <Switch v-model="status"
                     :class="[status ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out']">
@@ -16,7 +15,7 @@
 </template>
 
 <script setup>
-import {defineEmits, defineProps, ref, watch} from 'vue'
+import {defineEmits, defineProps, onMounted, ref, watch} from 'vue'
 import {Switch, SwitchLabel, SwitchGroup} from '@headlessui/vue'
 
 const props = defineProps({
@@ -28,6 +27,14 @@ const props = defineProps({
 const status = ref(false)
 
 const emit = defineEmits(["update:status"]);
+
+watch(
+    () => props.enabled,
+    (newVal) => {
+        status.value = newVal;
+    },
+    {immediate: true}
+);
 
 watch(status, (newValue) => {
     emit('update:status', newValue);

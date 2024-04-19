@@ -7,7 +7,7 @@
                     :target="'destination_record'"
                     :label="'Check to save recordings'"
                     :enabled="destinationRecordTrigger"
-                    @update:status="destinationRecordTrigger = false"
+                    @update:status="handleDestinationRecord"
                 />
             </div>
 
@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import {defineProps, ref} from 'vue'
+import {defineProps, onMounted, ref, watch} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import SelectBox from "../general/SelectBox.vue";
@@ -81,6 +81,10 @@ const props = defineProps({
 
 const destinationRecordTrigger = ref(false);
 
+onMounted(() => {
+    destinationRecordTrigger.value = props.phoneNumber.destination_record;
+});
+
 const handleUpdateFax = (newSelectedItem) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
         props.phoneNumber.fax_uuid = newSelectedItem.value
@@ -95,5 +99,10 @@ const handleUpdateDomain = (newSelectedItem) => {
     } else {
         props.phoneNumber.domain_uuid = '';
     }
+}
+
+const handleDestinationRecord = (newSelectedItem) => {
+    props.phoneNumber.destination_record = newSelectedItem;
+    destinationRecordTrigger.value = newSelectedItem
 }
 </script>

@@ -59,7 +59,7 @@
                         :target="'destination_enabled'"
                         :label="'Enable'"
                         :enabled="destinationEnabledTrigger"
-                        @update:status="destinationEnabledTrigger = false"
+                        @update:status="handleDestinationEnabled"
                     />
                 </div>
 
@@ -69,13 +69,12 @@
 </template>
 
 <script setup>
-import {defineProps, ref} from 'vue'
+import {defineProps, onMounted, ref} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 import TimeoutDestinations from "../general/TimeoutDestinations.vue";
-
 
 const destinationEnabledTrigger = ref(false);
 
@@ -87,6 +86,10 @@ const props = defineProps({
     },
 });
 
+onMounted(() => {
+    destinationEnabledTrigger.value = props.phoneNumber.destination_enabled;
+});
+
 const handleUpdateMusicOnHold = (newSelectedItem) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
         props.phoneNumber.destination_hold_music = newSelectedItem.value;
@@ -96,13 +99,16 @@ const handleUpdateMusicOnHold = (newSelectedItem) => {
 }
 
 const handleUpdateTimeoutDestination = (newSelectedItem) => {
-    console.log( newSelectedItem)
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-
         props.phoneNumber.destination_actions = newSelectedItem.value;
     } else {
         props.phoneNumber.destination_actions = '';
     }
+}
+
+const handleDestinationEnabled = (newSelectedItem) => {
+    props.phoneNumber.destination_enabled = newSelectedItem;
+    destinationEnabledTrigger.value = newSelectedItem
 }
 
 </script>
