@@ -17,7 +17,7 @@
                 <div class="px-4 py-3">
                     <p class="text-sm font-semibold">Bulk Actions</p>
                 </div>
-                <div class="py-1">
+                <div v-if="hasSelectedItems" class="py-1">
                     <MenuItem v-for="action in actions" :key="action.id" v-slot="{ active }">
                         <button @click="$emit('bulkAction', action.id)"
                             :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-500', 'group flex items-center px-4 py-2 text-sm min-w-full']">
@@ -25,6 +25,9 @@
                             {{ action.label }}
                         </button>
                     </MenuItem>
+                </div>
+                <div v-else class="text-gray-500 italic group flex items-center px-4 py-2 text-sm min-w-full">
+                    No items selected
                 </div>
             </MenuItems>
         </transition>
@@ -41,7 +44,8 @@ import ArrowDropDown from "../icons/ArrowDropDown.vue"
 
 // Define props to accept actions from the parent component
 const props = defineProps({
-    actions: Array
+    actions: Array,
+    hasSelectedItems: Boolean
 });
 
 </script>

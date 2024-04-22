@@ -1,7 +1,7 @@
 <template>
     <form @submit.prevent="submitForm">
         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div class="sm:col-span-12">
+            <!-- <div class="sm:col-span-12">
                 <LabelInputRequired :target="'destination'" :label="'Phone Number'" />
                 <div class="mt-2">
                     <InputField v-model="form.destination" type="text" name="destination"
@@ -11,22 +11,21 @@
                 <div v-if="errors?.destination" class="mt-2 text-sm text-red-600">
                     {{ errors.destination[0] }}
                 </div>
-            </div>
+            </div> -->
 
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'carrier'" :label="'Message Provider'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.carrier" :selectedItem="item.carrier"
+                    <SelectBox :options="options.carrier" :selectedItem="null"
                         :search="true" :placeholder="'Choose carrier'" @update:modal-value="handleUpdateCarrier" />
                 </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p>
+
             </div>
 
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Extension'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.chatplan_detail_data" :selectedItem="item.chatplan_detail_data"
+                    <SelectBox :options="options.chatplan_detail_data" :selectedItem="null"
                         :search="true" :placeholder="'Choose extension'" @update:modal-value="handleUpdateExtension" />
                 </div>
                 <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -81,11 +80,10 @@ import SelectBox from "../general/SelectBox.vue";
 import Textarea from "../general/Textarea.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
-    item: Object,
+    items: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
@@ -94,11 +92,11 @@ const props = defineProps({
 const page = usePage();
 
 const form = reactive({
-    destination: props.item.destination,
-    carrier: props.item.carrier,
-    chatplan_detail_data: props.item.chatplan_detail_data,
-    email: props.item.email,
-    description: props.item.description,
+    items: props.items,
+    carrier: null,
+    chatplan_detail_data: null,
+    email: null,
+    description: null,
     _token: page.props.csrf_token,
 })
 

@@ -50,7 +50,7 @@
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest" />
+                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0"/>
                     <span class="pl-4">Phone Number</span>
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain"
@@ -187,20 +187,11 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="bulkEditModalTrigger" :header="'Bulk Edit Device'" :loading="loadingModal"
-        @close="handleBulkClose">
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
-            <BulkEditDeviceForm :device="DeviceObject" @update:show="bulkEditModalTrigger = false" />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                @click="handleBulkSaveEdit" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleBulkClose" ref="cancelButtonRef">Cancel
-            </button>
+            <BulkUpdateMessageSettingsForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
+                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
@@ -226,12 +217,12 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import UpdateMessageSettingsForm from "./components/forms/UpdateMessageSettingsForm.vue";
 import CreateMessageSettingsForm from "./components/forms/CreateMessageSettingsForm.vue";
+import BulkUpdateMessageSettingsForm from "./components/forms/BulkUpdateMessageSettingsForm.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Warning from "./components/icons/Warning.vue"
 
@@ -247,7 +238,7 @@ const selectedItems = ref([]);
 const restartRequestNotificationErrorTrigger = ref(false);
 const addModalTrigger = ref(false);
 const editModalTrigger = ref(false);
-const bulkEditModalTrigger = ref(false);
+const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const notificationMessages = ref(null);
@@ -255,6 +246,7 @@ const notificationShow = ref(null);
 const notificationType = ref(null);
 const updateFormSubmiting = ref(null);
 const createFormSubmiting = ref(null);
+const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const confirmDeleteAction = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
@@ -297,7 +289,6 @@ const handleSelectPageItems = () => {
 
 
 const handleSelectAll = () => {
-
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
             selectedItems.value = response.data.items;
@@ -306,7 +297,7 @@ const handleSelectAll = () => {
 
         }).catch((error) => {
             handleClearSelection();
-            handleErrorResponse();
+            handleErrorResponse(error);
         });
 
 };
@@ -336,19 +327,28 @@ const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
-    } else {
-        executeBulkAction();
     }
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
+    }
+}
 
-    // axios.post(`${props.routes[action]}`, selectedItems._rawValue)
-    //     .then((response) => {
-    //         showNotification('success', response.data.messages);
-    //         handleSearchButtonClick();
-    //     }).catch((error) => {
-    //         handleClearSelection();
-    //         handleErrorResponse(error);
-
-    //     });
+const handleBulkUpdateRequest = (form) => {
+    bulkUpdateFormSubmiting.value = true
+    axios.post(`${props.routes.bulk_update}`, form)
+        .then((response) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
 }
 
 const executeBulkDelete = () => {
@@ -413,7 +413,10 @@ const handleCreateButtonClick = () => {
     addModalTrigger.value = true
     formErrors.value = null;
     loadingModal.value = true
+    getItemOptions();
+}
 
+const getItemOptions = () => {
     router.get(props.routes.current_page,
         {},
         {
@@ -505,7 +508,9 @@ const handleUpdateRequest = (form) => {
 };
 
 const handleFormErrorResponse = (error) => {
-    if (error.response) {
+    if (error.request?.status == 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
@@ -638,15 +643,11 @@ const handleModalClose = () => {
     addModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
+    bulkUpdateModalTrigger.value = false;
 }
 
 const handleBulkClose = () => {
     bulkEditModalTrigger.value = false
-}
-
-const handleDestroyConfirmation = (url) => {
-    confirmationModalTrigger.value = true
-    confirmationModalDestroyPath.value = url;
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

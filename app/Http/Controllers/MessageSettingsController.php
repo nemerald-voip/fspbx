@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Inertia\Inertia;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
@@ -9,7 +10,7 @@ use App\Models\MessageSetting;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\CreateMessageSettingRequest;
 use App\Http\Requests\UpdateMessageSettingRequest;
-use Exception;
+use App\Http\Requests\BulkUpdateMessageSettingRequest;
 
 class MessageSettingsController extends Controller
 {
@@ -55,7 +56,7 @@ class MessageSettingsController extends Controller
                     'store' => route('messages.settings.store'),
                     'select_all' => route('messages.settings.select.all'),
                     'bulk_delete' => route('messages.settings.bulk.delete'),
-                    'bulk_udpdate' => route('messages.settings.bulk.update'),
+                    'bulk_update' => route('messages.settings.bulk.update'),
                 ],
             ]
         );
@@ -311,7 +312,7 @@ class MessageSettingsController extends Controller
             if (request()->get('showGlobal')) {
                 $settings = MessageSetting::get('sms_destination_uuid')->pluck('sms_destination_uuid');
             } else {
-                $settings = MessageSetting::where('domain_uuid',session('domain_uuid'))
+                $settings = MessageSetting::where('domain_uuid', session('domain_uuid'))
                     ->get('sms_destination_uuid')->pluck('sms_destination_uuid');
             }
 
@@ -320,7 +321,6 @@ class MessageSettingsController extends Controller
                 'messages' => ['success' => ['All items selected']],
                 'items' => $settings,
             ], 200);
-
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Handle any other exception that may occur
@@ -345,14 +345,13 @@ class MessageSettingsController extends Controller
     public function bulkDelete()
     {
         try {
-            $deleted = MessageSetting::whereIn('sms_destination_uuid',request()->items)
+            $deleted = MessageSetting::whereIn('sms_destination_uuid', request()->items)
                 ->delete();
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Selected items deleted']],
             ], 200);
-
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Handle any other exception that may occur
@@ -368,4 +367,42 @@ class MessageSettingsController extends Controller
         ], 500); // 500 Internal Server Error for any other errors
     }
 
+    /**
+     * Bulk update requested items
+     *
+     * @param  \Illuminate\Http\BulkUpdateMessageSettingRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function bulkUpdate(BulkUpdateMessageSettingRequest  $request)
+    {
+
+        try {
+            // Prepare the data for updating
+            $updateData = collect(request()->all())->only([
+                'carrier', 'chatplan_detail_data', 'email', 'description'
+            ])->filter(function ($value) {
+                return $value !== null;
+            })->toArray();
+
+            $updated = MessageSetting::whereIn('sms_destination_uuid', request()->items)
+                ->update($updateData);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Selected items updated']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update selected items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to update selected items']]
+        ], 500); // 500 Internal Server Error for any other errors
+    }
 }

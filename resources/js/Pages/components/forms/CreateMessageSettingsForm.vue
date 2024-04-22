@@ -19,8 +19,8 @@
                     <SelectBox :options="options.carrier" :selectedItem="null"
                         :search="true" :placeholder="'Choose carrier'" @update:modal-value="handleUpdateCarrier" />
                 </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p>
+                <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
+                    forwarded.</p> -->
             </div>
 
             <div class="sm:col-span-12">
