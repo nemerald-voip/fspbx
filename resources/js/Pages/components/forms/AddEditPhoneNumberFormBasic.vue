@@ -5,10 +5,14 @@
                 <div class="sm:col-span-12">
                     <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'"/>
                     <div class="mt-2">
-                        <input v-model="phoneNumber.destination_prefix" :disabled="isEdit"
-                               :class="{ 'disabled:opacity-50': isEdit }" type="text" name="destination_prefix"
-                               id="destination_prefix" placeholder="Enter country code"
-                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                        <InputField
+                            v-model="phoneNumber.destination_prefix"
+                            type="text"
+                            :disabled="isEdit"
+                            id="destination_prefix"
+                            name="destination_prefix"
+                            placeholder="Enter country code"
+                            :error="onSubmitErrors?.destination_prefix && onSubmitErrors.destination_prefix.length > 0"/>
                     </div>
                 </div>
 
@@ -16,10 +20,14 @@
                 <div class="sm:col-span-12">
                     <LabelInputRequired :target="'destination_number'" :label="'Phone Number'"/>
                     <div class="mt-2">
-                        <input v-model="phoneNumber.destination_number" :disabled="isEdit"
-                               :class="{ 'disabled:opacity-50': isEdit }" type="text" name="destination_number"
-                               id="destination_number" placeholder="Enter phone number"
-                               class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                        <InputField
+                            v-model="phoneNumber.destination_number"
+                            type="text"
+                            :disabled="isEdit"
+                            id="destination_number"
+                            name="destination_number"
+                            placeholder="Enter phone number"
+                            :error="onSubmitErrors?.destination_number && onSubmitErrors.destination_number.length > 0"/>
                     </div>
                 </div>
 
@@ -47,10 +55,7 @@
                 <div class="sm:col-span-12">
                     <LabelInputOptional :target="'destination_description'" :label="'Description'"/>
                     <div class="mt-2">
-                        <textarea v-model="phoneNumber.destination_description" type="text"
-                                  name="destination_description"
-                                  id="destination_description" placeholder="Enter description"
-                                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                        <Textarea v-model="phoneNumber.destination_description" name="destination_description" rows="2" />
                     </div>
                 </div>
 
@@ -75,6 +80,8 @@ import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 import TimeoutDestinations from "../general/TimeoutDestinations.vue";
+import InputField from "../general/InputField.vue";
+import Textarea from "../general/Textarea.vue";
 
 const destinationEnabledTrigger = ref(false);
 

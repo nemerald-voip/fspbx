@@ -155,15 +155,6 @@
             <pre>
             {{PhoneNumberObject}}
                 </pre>
-
-            <!--div>
-                <component :is="ManagementTabs[selectedTab].component" :phonePumber="ManagementTabs[selectedTab].data.phoneNumber"></component>
-            </div-->
-
-
-            <!--AddEditPhoneNumberForm
-                :phoneNumber="PhoneNumberObject"
-            /-->
         </template>
         <template #modal-action-buttons>
             <button type="button"
@@ -290,6 +281,10 @@ let PhoneNumberObject = reactive({
     }
 });
 
+let ErrorsObject = reactive({
+
+});
+
 const selectedTab = ref(0);
 
 //const currentManagementTab = ref('Basic');
@@ -299,7 +294,8 @@ const ManagementTabs = [
         href: '#basic',
         component: AddEditPhoneNumberFormBasic,
         data: {
-            phoneNumber: PhoneNumberObject
+            phoneNumber: PhoneNumberObject,
+            errors: ErrorsObject
         }
     },
     {
@@ -307,7 +303,8 @@ const ManagementTabs = [
         href: '#advanced',
         component: AddEditPhoneNumberFormAdvanced,
         data: {
-            phoneNumber: PhoneNumberObject
+            phoneNumber: PhoneNumberObject,
+            errors: ErrorsObject
         }
     }
 ];
