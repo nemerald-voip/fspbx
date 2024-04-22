@@ -319,7 +319,7 @@ const handleCopyToClipboard = (value) => {
         }, 500);
     }).catch((error) => {
         // Handle the error case
-        console.error('Failed to copy mac address:', error);
+        console.error('Failed to copy to clipboard:', error);
     });
 }
 

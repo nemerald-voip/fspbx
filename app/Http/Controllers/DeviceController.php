@@ -26,12 +26,19 @@ use Inertia\Response;
  */
 class DeviceController extends Controller
 {
-    public array $filters = [];
+
+    public $model = 'App\Models\Devices';
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'Devices';
+    protected $searchable = ['destination', 'carrier', 'description', 'chatplan_detail_data', 'email'];
 
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request
+    public function index(
+        Request $request
     ): Redirector|Response|RedirectResponse|Application {
         if (!userCheckPermission("device_view")) {
             return redirect('/');
@@ -54,31 +61,17 @@ class DeviceController extends Controller
             $dir,
             $dirs,
             $vendorsCollection,
-            $vendor);
+            $vendor
+        );
 
         return Inertia::render(
             'Devices',
             [
                 'data' => function () {
-                    return $this->getDevices();
-                },
-                'menus' => function () {
-                    return Session::get('menu');
-                },
-                'domainSelectPermission' => function () {
-                    return Session::get('domain_select');
-                },
-                'domains' => function () {
-                    return Session::get("domains");
+                    return $this->getData();
                 },
                 'deviceRestartPermission' => function () {
                     return isSuperAdmin();
-                },
-                'selectedDomain' => function () {
-                    return Session::get('domain_name');
-                },
-                'selectedDomainUuid' => function () {
-                    return Session::get('domain_uuid');
                 },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
@@ -91,26 +84,52 @@ class DeviceController extends Controller
     }
 
     /**
-     * @return LengthAwarePaginator
+     *  Get device data
      */
-    public function getDevices(): LengthAwarePaginator
+    public function getData($paginate = 50)
     {
-        $devices = $this->builder($this->filters)->paginate(50);
-        foreach ($devices as $device) {
-            $device->device_address_tokenized = $device->device_address;
-            $device->device_address = formatMacAddress($device->device_address);
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
+        }
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.showGlobal'))) {
+            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
+        } else {
+            $this->filters['showGlobal'] = null;
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'device_address'); // Default to 'destination'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
+
+        $data = $this->builder($this->filters);
+
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
+
+        foreach ($data as $device) {
+
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
                 $device->extension = $device->lines()->first()->extension()->extension;
-                $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '('.trim($device->lines()->first()->extension()->effective_caller_id_name).')' : '';
+                $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '(' . trim($device->lines()->first()->extension()->effective_caller_id_name) . ')' : '';
                 $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
                 $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
-                $device->send_notify_path = route('extensions.send-event-notify',
-                    $device->lines()->first()->extension());
+                $device->send_notify_path = route(
+                    'extensions.send-event-notify',
+                    $device->lines()->first()->extension()
+                );
             }
             $device->edit_path = route('devices.edit', $device);
             $device->destroy_path = route('devices.destroy', $device);
         }
-        return $devices;
+        return $data;
     }
 
     /**
@@ -126,11 +145,15 @@ class DeviceController extends Controller
         } else {
             $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
         }
-        $devices->leftJoin('v_device_profiles', 'v_device_profiles.device_profile_uuid', '=',
-            'v_devices.device_profile_uuid');
+        $devices->leftJoin(
+            'v_device_profiles',
+            'v_device_profiles.device_profile_uuid',
+            '=',
+            'v_devices.device_profile_uuid'
+        );
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter".ucfirst($field))) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($devices, $value);
                 }
             }
@@ -150,11 +173,11 @@ class DeviceController extends Controller
             // Case-insensitive partial string search in the specified fields
             $query->where(function ($query) use ($value) {
                 $macAddress = tokenizeMacAddress($value);
-                $query->where('device_address', 'ilike', '%'.$macAddress.'%')
-                    ->orWhere('device_label', 'ilike', '%'.$value.'%')
-                    ->orWhere('device_vendor', 'ilike', '%'.$value.'%')
-                    ->orWhere('device_profile_name', 'ilike', '%'.$value.'%')
-                    ->orWhere('device_template', 'ilike', '%'.$value.'%');
+                $query->where('device_address', 'ilike', '%' . $macAddress . '%')
+                    ->orWhere('device_label', 'ilike', '%' . $value . '%')
+                    ->orWhere('device_vendor', 'ilike', '%' . $value . '%')
+                    ->orWhere('device_profile_name', 'ilike', '%' . $value . '%')
+                    ->orWhere('device_template', 'ilike', '%' . $value . '%');
             });
         }
     }
