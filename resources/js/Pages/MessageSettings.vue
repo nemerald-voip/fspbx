@@ -480,7 +480,7 @@ const handleCreateRequest = (form) => {
         }).catch((error) => {
             createFormSubmiting.value = false;
             handleClearSelection();
-            handleFormErrorResponse();
+            handleFormErrorResponse(error);
         });
 
 };

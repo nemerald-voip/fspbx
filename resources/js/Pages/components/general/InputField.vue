@@ -1,21 +1,31 @@
 <template>
-    <input  :name="name" 
+    <input
+        v-bind="{ id: id }"
+        :name="name"
         :type="type"
         :placeholder="placeholder"
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"
         :class="inputClass" />
 </template>
-  
+
 <script setup>
 import { computed } from 'vue';
 
 const props = defineProps({
+    id: {
+        type: String,
+        default: null,
+    },
     name: String,
     type: String,
     placeholder: String,
     modelValue: String,
     error: Boolean,
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -26,8 +36,10 @@ const inputClass = computed(() => {
     if (props.error) {
         return `${baseClasses} ring-red-600`; // Apply red ring if there's an error
     }
+    if(props.disabled) {
+        return `${baseClasses} disabled:opacity-50`; // Apply disabled class
+    }
     return `${baseClasses} ring-gray-300`;  // Default ring color when no error
 });
 
 </script>
-  
