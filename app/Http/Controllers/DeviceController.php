@@ -83,7 +83,7 @@ class DeviceController extends Controller
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
                 'routeDevicesStore' => route('devices.store'),
                 'routeDevicesOptions' => route('devices.options'),
-                'routeDevicesBulkUpdate' => route('devices.bulk-update'),
+                'routeDevicesBulkUpdate' => route('devices.bulk.update'),
                 'routeDevices' => route('devices.index'),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
