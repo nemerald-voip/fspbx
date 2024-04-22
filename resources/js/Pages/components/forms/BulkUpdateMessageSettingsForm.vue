@@ -80,8 +80,8 @@ import { usePage } from '@inertiajs/vue3';
 import SelectBox from "../general/SelectBox.vue";
 import Textarea from "../general/Textarea.vue";
 import InputField from "../general/InputField.vue";
-import LabelInputOptional from "../forms/LabelInputOptional.vue";
-import LabelInputRequired from "../forms/LabelInputRequired.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
+import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
