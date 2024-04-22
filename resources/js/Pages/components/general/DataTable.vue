@@ -22,11 +22,11 @@
         </div>
 
         <div v-if="$slots.filters">
-            <div class="mt-3 sm:ml-4">
+            <div class="mt-6">
                 <div class="flex flex-col sm:flex-row sm:flex-wrap">
                     <slot name="filters"></slot>
 
-                    <div class="relative mb-2 ">
+                    <div class="relative">
                         <div class="flex justify-between">
 
                             <button type="button" @click.prevent="$emit('search-action')"

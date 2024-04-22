@@ -28,7 +28,7 @@
 
 <script setup>
 import SelectBox from "../general/SelectBox.vue";
-import LabelInputOptional from "../forms/LabelInputOptional.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
 
 const props = defineProps({
     device: Object

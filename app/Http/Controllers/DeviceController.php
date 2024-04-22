@@ -57,7 +57,7 @@ class DeviceController extends Controller
             $vendor);
 
         return Inertia::render(
-            'devices',
+            'Devices',
             [
                 'data' => function () {
                     return $this->getDevices();
@@ -371,7 +371,7 @@ class DeviceController extends Controller
         }
         $device->delete();
 
-        return Inertia::render('devices', [
+        return Inertia::render('Devices', [
             'data' => function () {
                 return $this->getDevices();
             },

@@ -7,6 +7,8 @@ use App\Models\Dialplans;
 use App\Models\DomainSettings;
 use App\Models\Extensions;
 use App\Models\IvrMenus;
+use App\Models\MusicOnHold;
+use App\Models\Recordings;
 use App\Models\RingGroups;
 use App\Models\Settings;
 use App\Models\SipProfiles;
@@ -957,6 +959,47 @@ if (!function_exists('getDestinationByCategory')) {
     }
 }
 
+if (!function_exists('getTimeoutDestinations')) {
+    function getTimeoutDestinations($domain = null)
+    {
+        if($domain !== null) {
+            logger('getTimeoutDestinations does not support $domain argument yet. '.__FILE__);
+        }
+        // TODO: refactor the getDestinationByCategory function to use $domain
+        $output = [
+            'categories' => [],
+            'targets' => [],
+        ];
+        foreach ([
+                     'ringgroup',
+                     'dialplans',
+                     'extensions',
+                     'timeconditions',
+                     'voicemails',
+                     'ivrs',
+                     'others'
+                 ] as $i => $category) {
+            $data = getDestinationByCategory($category)['list'];
+            foreach ($data as $b => $d) {
+                $output['categories'][$category] = [
+                    'name' => $d['app_name'],
+                    'value' => $category
+                ];
+
+                //[$i] = ;
+                //$output['categories'][$i] = ;
+                $output['targets'][$category][] = [
+                    'name' => $d['label'],
+                    'value' => $d['id']
+                ];
+            }
+
+        }
+
+        return $output;
+    }
+}
+
 if (!function_exists('pr')) {
     function pr($arr)
     {
@@ -1404,6 +1447,49 @@ if (!function_exists('getProfileCollection')) {
     }
 }
 
+if (!function_exists('getMusicOnHoldCollection')) {
+    function getMusicOnHoldCollection(string $domain = null): array
+    {
+        $musicOnHold = [];
+        $musicOnHoldCollection = MusicOnHold::query();
+        if ($domain) {
+            $musicOnHoldCollection->where('domain_uuid', $domain);
+        }
+        $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get()->unique('music_on_hold_name');
+        foreach ($musicOnHoldCollection as $item) {
+            $musicOnHold[] = [
+                'name' => $item->music_on_hold_name,
+                'value' => 'local_stream://'.$item->music_on_hold_name
+            ];
+        }
+
+        $recordings = [];
+        $recordingsCollection = Recordings::query();
+        if ($domain) {
+            $recordingsCollection->where('domain_uuid', $domain);
+        }
+        $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
+        foreach ($recordingsCollection as $item) {
+            $recordings[] = [
+                'name' => $item->recording_name,
+                'value' => $item->recording_filename
+            ];
+        }
+
+        unset($musicOnHoldCollection, $recordingsCollection, $item);
+        return [
+            'Music on Hold' => $musicOnHold,
+            'Recordings' => $recordings,
+            'Ringtones' => [
+                [
+                    'name' => 'us-ring',
+                    'value' => 'us-ring'
+                ]
+            ]
+        ];
+    }
+}
+
 if (!function_exists('getExtensionCollection')) {
     function getExtensionCollection(string $domain = null): array
     {
@@ -1416,7 +1502,7 @@ if (!function_exists('getExtensionCollection')) {
         $extensions = [];
         foreach ($extensionsCollection as $extension) {
             $extensions[] = [
-                'name' => $extension->extension.(($extension->effective_caller_id_name)?' ('.trim($extension->effective_caller_id_name).')':''),
+                'name' => $extension->extension.(($extension->effective_caller_id_name) ? ' ('.trim($extension->effective_caller_id_name).')' : ''),
                 'value' => $extension->extension_uuid
             ];
         }

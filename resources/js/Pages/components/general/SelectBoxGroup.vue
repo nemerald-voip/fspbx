@@ -31,9 +31,12 @@
                         </li>
                     </ListboxOption>
 
-                    <ListboxOption v-slot="{ active, selected }" v-for="item in filteredOptions" :key="item.value" :value="item"
-                        as="template">
-                        <li :class="[
+                    <template v-for="(group, groupName) in filteredOptions">
+                        <div class="p-2 text-gray-900 font-bold">
+                            {{ groupName }}
+                        </div>
+                        <ListboxOption v-slot="{ active, selected }" v-for="item in group" :key="item.value" :value="item" as="template">
+                            <li :class="[
                             active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
                             'relative cursor-default select-none py-2 pl-10 pr-4',
                         ]">
@@ -41,11 +44,12 @@
                                 selected ? 'font-medium' : 'font-normal',
                                 'block truncate',
                             ]">{{ item.name }}</span>
-                            <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                                <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
                                 <CheckIcon class="h-5 w-5" aria-hidden="true" />
                             </span>
-                        </li>
-                    </ListboxOption>
+                            </li>
+                        </ListboxOption>
+                    </template>
                 </ListboxOptions>
             </transition>
         </div>
@@ -64,7 +68,7 @@ import {
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps({
-    options: [Array, null],
+    options: [Object, null],
     selectedItem: [String, null],
     placeholder: [String, null],
     search: [Boolean, null],
@@ -92,9 +96,17 @@ watch(() => props.selectedItem, (newValue) => {
 // Computed property to filter options based on search keyword
 const filteredOptions = computed(() => {
     if (!searchKeyword.value) return props.options;
-    return props.options.filter(item =>
-        item.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    );
+
+    // Need to handle the fact that options are now an object of arrays.
+    // This creates a new object with the same keys, but filtered arrays.
+    const filtered = {};
+    for (const [group, items] of Object.entries(props.options)) {
+        // Only include items that match the search.
+        filtered[group] = items.filter(item =>
+            item.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+        );
+    }
+    return filtered;
 });
 
 </script>
