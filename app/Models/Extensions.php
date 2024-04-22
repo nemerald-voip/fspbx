@@ -101,12 +101,16 @@ class Extensions extends Model
      */
     protected static function booted()
     {
+        static::saving(function ($model) {
+            // Remove 'destination_formatted' attribute before saving to database
+            unset($model->name_formatted);
+        });
+
         static::retrieved(function ($extension) {
             // Format the name to look like "202 - Chris Fourmont"
             $extension->name_formatted = !empty($extension->effective_caller_id_name) 
             ? trim($extension->extension . ' - ' . $extension->effective_caller_id_name)
             : trim($extension->extension);
-        
         });
     }
 

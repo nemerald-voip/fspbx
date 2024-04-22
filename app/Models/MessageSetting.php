@@ -27,6 +27,7 @@ class MessageSetting extends Model
      */
     protected $fillable = [
         'destination',
+        'domain_uuid',
         'carrier',
         'description',
         'chatplan_detail_data',
@@ -43,8 +44,9 @@ class MessageSetting extends Model
     protected static function booted()
     {
         static::saving(function ($model) {
-            // Remove 'destination_formatted' attribute before saving to database
+            // Remove attributes before saving to database
             unset($model->destination_formatted);
+            unset($model->destroy_route);
         });
 
         static::retrieved(function ($model) {
@@ -66,6 +68,9 @@ class MessageSetting extends Model
                 // Do nothing and leave the numbner as is
                 $model->destination_formatted = $value;
             }
+
+            $model->destroy_route = route('messages.settings.destroy',$model);
+
             return $model;
         });
     }
@@ -77,6 +82,21 @@ class MessageSetting extends Model
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
+
+    /**
+     * Get extenion that this message settings belongs to 
+     * and ensure that extension matches chatplan_detail_data
+     */
+    // public function extension()
+    // {
+    //     logger($this->domain_uuid);
+    //     $result =  $this->hasMany(Extensions::class, 'extension', 'chatplan_detail_data');
+    //         // ->where('domain_uuid', $this->domain_uuid);
+
+    //     logger($result->toSql());
+
+    //     return $result;
+    // }
 
     // /**
     //  * Get all group permissions

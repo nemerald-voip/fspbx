@@ -28,8 +28,9 @@
             </div>
         </div>
         <div class="bg-gray-50 px-5 py-3">
-            <div class="text-sm">
+            <div class="flex text-sm justify-between">
                 <a :href="card.href" class="font-medium text-cyan-700 hover:text-cyan-900">View all</a>
+                <a v-if="card.alt_href" :href="card.alt_href" class="font-medium text-cyan-700 hover:text-cyan-900">{{ card.alt_link_label }}</a>
             </div>
         </div>
     </div>

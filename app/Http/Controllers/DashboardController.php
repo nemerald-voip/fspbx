@@ -315,6 +315,7 @@ class DashboardController extends Controller
 
             if (userCheckPermission("contact_center_settings_edit")) {
                 $contact_center_app['alt_href'] = '/contact-center/settings';
+                $contact_center_app['alt_link_label'] = 'Settings';
             }
 
             $apps[] = $contact_center_app;

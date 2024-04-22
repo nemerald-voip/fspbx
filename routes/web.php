@@ -190,8 +190,12 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Message Settings
     Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
-    Route::post('/message-settings', [MessageSettingsController::class, 'index']);
     Route::put('/message-settings/{setting}', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
+    Route::post('/message-settings', [MessageSettingsController::class, 'store'])->name('messages.settings.store');
+    Route::delete('/message-settings/{setting}', [MessageSettingsController::class, 'destroy'])->name('messages.settings.destroy');
+    Route::post('/message-settings/select-all', [MessageSettingsController::class, 'selectAll'])->name('messages.settings.select.all');
+    Route::post('/message-settings/bulk-delete', [MessageSettingsController::class, 'bulkDelete'])->name('messages.settings.bulk.delete');
+    Route::post('/message-settings/bulk-update', [MessageSettingsController::class, 'bulkUpdate'])->name('messages.settings.bulk.update');
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');

@@ -53,15 +53,22 @@
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <div class="relative overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                         <slot name="navigation"></slot>
+                        
+                        <!-- <slot name="current-selection"></slot> -->
+                        
                         <slot name="loading"></slot>
                         <!-- <div class="absolute w-full h-full bg-gray-500 bg-opacity-30"></div> -->
                         <table class="min-w-full divide-y divide-gray-300">
+                            
                             <thead class="bg-gray-50">
                                 <tr>
                                     <slot name="table-header"></slot>
 
                                 </tr>
                             </thead>
+                            
+                            <slot name="current-selection"></slot>
+
                             <tbody class="divide-y divide-gray-200 bg-white">
                                 <slot name="table-body"></slot>
                             </tbody>
