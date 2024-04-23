@@ -172,7 +172,7 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateMessageSettingsForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
@@ -236,7 +236,7 @@ const selectPageItems = ref(false);
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const restartRequestNotificationErrorTrigger = ref(false);
-const addModalTrigger = ref(false);
+const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
@@ -410,7 +410,7 @@ const handleShowLocal = () => {
 
 
 const handleCreateButtonClick = () => {
-    addModalTrigger.value = true
+    createModalTrigger.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions();
@@ -640,7 +640,7 @@ const handleBulkSaveEdit = () => {
 }
 
 const handleModalClose = () => {
-    addModalTrigger.value = false;
+    createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;

@@ -134,9 +134,18 @@ class MessageSettingsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        // get all extensions
-        $extensions = Extensions::get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-
+        if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
+            logger('here');
+            // Access domains through the session and filter extensions by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
+                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
+        } else {
+            logger('there');
+            // get extensions for session domain
+            $extensions = Extensions::where('domain_uuid',session('domain_uuid'))
+                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
+        }
         // Iterate over each SMS destination to find the first matching extension
         foreach ($data as $destination) {
             // Initialize a variable to hold the first match

@@ -27,42 +27,26 @@ use Inertia\Response;
 class DeviceController extends Controller
 {
 
-    public $model = 'App\Models\Devices';
+    public $model;
     public $filters = [];
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Devices';
     protected $searchable = ['destination', 'carrier', 'description', 'chatplan_detail_data', 'email'];
 
+    public function __construct()
+    {
+        $this->model = new Devices();
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(
-        Request $request
-    ): Redirector|Response|RedirectResponse|Application {
+    public function index()
+    {
         if (!userCheckPermission("device_view")) {
             return redirect('/');
         }
-
-        $this->filters = [];
-
-        $this->filters['search'] = $request->filterData['search'] ?? null;
-
-        if (!empty($request->filterData['showGlobal'])) {
-            $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
-        }
-
-        unset(
-            $extensionsCollection,
-            $extension,
-            $profilesCollection,
-            $profile,
-            $templateDir,
-            $dir,
-            $dirs,
-            $vendorsCollection,
-            $vendor
-        );
 
         return Inertia::render(
             'Devices',
@@ -70,15 +54,15 @@ class DeviceController extends Controller
                 'data' => function () {
                     return $this->getData();
                 },
-                'deviceRestartPermission' => function () {
-                    return isSuperAdmin();
-                },
                 'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
-                'routeDevicesStore' => route('devices.store'),
-                'routeDevicesOptions' => route('devices.options'),
-                'routeDevicesBulkUpdate' => route('devices.bulk.update'),
-                'routeDevices' => route('devices.index'),
-                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
+                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
+                'routes' => [
+                    'current_page' => route('devices.index'),
+                    'store' => route('devices.store'),
+                    'select_all' => route('messages.settings.select.all'),
+                    'bulk_delete' => route('messages.settings.bulk.delete'),
+                    'bulk_update' => route('devices.bulk.update'),
+                ],
             ]
         );
     }
@@ -102,7 +86,7 @@ class DeviceController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'device_address'); // Default to 'destination'
+        $this->sortField = request()->get('sortField', 'device_label'); // Default to 'destination'
         $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
 
         $data = $this->builder($this->filters);
@@ -114,21 +98,51 @@ class DeviceController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        foreach ($data as $device) {
-
-            if ($device->lines()->first() && $device->lines()->first()->extension()) {
-                $device->extension = $device->lines()->first()->extension()->extension;
-                $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '(' . trim($device->lines()->first()->extension()->effective_caller_id_name) . ')' : '';
-                $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
-                $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
-                $device->send_notify_path = route(
-                    'extensions.send-event-notify',
-                    $device->lines()->first()->extension()
-                );
-            }
-            $device->edit_path = route('devices.edit', $device);
-            $device->destroy_path = route('devices.destroy', $device);
+        if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
+            // Access domains through the session and filter extensions by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
+                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
+        } else {
+            // get extensions for session domain
+            $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
+
+        foreach ($data as $device) {
+            // Check each line in the device if it exists
+            $device->lines->each(function ($line) use ($extensions, $device) {
+                // Find the first matching extension
+                $firstMatch = $extensions->first(function ($extension) use ($line, $device) {
+                    return $extension->domain_uuid === $device->domain_uuid && $extension->extension === $line->label;
+                });
+        
+                // Assign the first matching extension to the line
+                $line->extension = $firstMatch;
+            });
+            // logger($device->lines);
+        }
+
+
+        // logger($data);
+
+
+        // foreach ($data as $device) {
+
+
+        //     if ($device->lines()->first() && $device->lines()->first()->extension()) {
+        //         $device->extension = $device->lines()->first()->extension()->extension;
+        //         $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '(' . trim($device->lines()->first()->extension()->effective_caller_id_name) . ')' : '';
+        //         $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
+        //         $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
+        //         $device->send_notify_path = route(
+        //             'extensions.send-event-notify',
+        //             $device->lines()->first()->extension()
+        //         );
+        //     }
+        //     $device->edit_path = route('devices.edit', $device);
+        //     $device->destroy_path = route('devices.destroy', $device);
+        // }
         return $data;
     }
 
@@ -138,28 +152,49 @@ class DeviceController extends Controller
      */
     public function builder(array $filters = []): Builder
     {
-        $devices = Devices::query();
+        $data =  $this->model::query();
+
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $devices->join('v_domains', 'v_domains.domain_uuid', '=', 'v_devices.domain_uuid')
-                ->whereIn('v_domains.domain_uuid', Session::get('domains')->pluck('domain_uuid'));
+            $data->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
+            }]);
+            // Access domains through the session and filter devices by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $data->whereHas('domain', function ($query) use ($domainUuids) {
+                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+            });
         } else {
-            $devices->where('v_devices.domain_uuid', Session::get('domain_uuid'));
+            // Directly filter devices by the session's domain_uuid
+            $domainUuid = Session::get('domain_uuid');
+            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         }
-        $devices->leftJoin(
-            'v_device_profiles',
-            'v_device_profiles.device_profile_uuid',
-            '=',
-            'v_devices.device_profile_uuid'
+
+        $data->with(['profile' => function ($query) {
+            $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
+        }]);
+
+        $data->with(['lines' => function ($query) {
+            $query->select('domain_uuid', 'device_line_uuid', 'device_uuid', 'line_number', 'label');
+        }]);
+
+        $data->select(
+            'device_uuid',
+            'device_profile_uuid',
+            'device_address',
+            'device_label',
+            'device_template',
+            'domain_uuid',
         );
+
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($devices, $value);
+                    $this->$method($data, $value);
                 }
             }
         }
-        $devices->orderBy('device_label');
-        return $devices;
+
+        return $data;
     }
 
     /**

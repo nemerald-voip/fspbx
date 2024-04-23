@@ -22,19 +22,19 @@
             </template>
 
             <template #action>
-                <button type="button" :href="routeDevicesStore" @click.prevent="handleAdd()"
+                <button type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Add device
+                    Create
                 </button>
                 <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Edit device
                 </button>
-                <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
+                <button  type="button" @click.prevent="handleRestartSelected()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart selected devices
                 </button>
-                <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartAll()"
+                <button type="button" @click.prevent="handleRestartAll()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart all devices
                 </button>
@@ -56,11 +56,7 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <!-- <TableColumnHeader v-if="deviceRestartPermission" header=" "
-                                   class="py-3.5 text-sm font-semibold text-gray-900 text-center">
-                    <input type="checkbox" v-model="selectAll" @change="handleSelectAll"
-                           class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                </TableColumnHeader> -->
+
                 <TableColumnHeader header="MAC Address"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
@@ -100,7 +96,7 @@
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain_description_">
+                        :text="row.domain_description">
                         <ejs-tooltip :content="row.domain_name" position='TopLeft' target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
                                 {{ row.domain_description }}
@@ -109,18 +105,10 @@
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.device_profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ejs-tooltip :content="'Click to edit extension'" position='TopLeft'
-                            target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                <a class="hover:text-gray-900 cursor-pointer block" v-if="row.extension_edit_path"
-                                    :href="row.extension_edit_path">
-                                    {{ row.extension }} {{ row.extension_description }}
-                                </a>
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
+                        :text="row.profile.device_profile_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    :text="row.lines[0]?.extension?.name_formatted" />
+                        
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
@@ -181,7 +169,8 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
     <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
         @update:show="handleErrorsReset" />
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleClose">
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New Device'" :loading="loadingModal"
+        @close="handleClose">
         <template #modal-body>
             <AddEditDeviceForm :device="DeviceObject" />
         </template>
@@ -264,8 +253,7 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
-const showGlobal = ref(false);
-const addModalTrigger = ref(false);
+const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
@@ -273,19 +261,27 @@ const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
+const formErrors = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    deviceRestartPermission: Boolean,
-    deviceGlobalView: Boolean,
-    search: String,
-    routeDevicesStore: String,
-    routeDevicesOptions: String,
-    routeDevicesBulkUpdate: String,
-    routeDevices: String,
-    routeSendEventNotifyAll: String
+    showGlobal: Boolean,
+    routes: Object,
+    // routeDevicesStore: String,
+    // routeDevicesOptions: String,
+    // routeDevicesBulkUpdate: String,
+    // routeDevices: String,
+    // routeSendEventNotifyAll: String
 });
+
+
+const filterData = ref({
+    search: null,
+    showGlobal: props.showGlobal,
+});
+
+const showGlobal = ref(props.showGlobal);
 
 let DeviceObject = reactive({
     update_path: props.routeDevicesStore,
@@ -321,7 +317,7 @@ const bulkActions = ref([
 ]);
 
 onMounted(() => {
-    showGlobal.value = props.deviceGlobalView;
+    console.log(props.data.data);
 });
 
 const handleBulkActionRequest = (action) => {
@@ -335,6 +331,13 @@ const handleBulkActionRequest = (action) => {
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
+}
+
+const handleCreateButtonClick = () => {
+    createModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions();
 }
 
 const selectedItemsExtensions = computed(() => {
@@ -354,10 +357,6 @@ const handleSelectAll = () => {
     }
 };
 
-const filterData = ref({
-    search: props.search,
-    showGlobal: props.deviceGlobalView,
-});
 
 const handleCopyToClipboard = (macAddress) => {
     navigator.clipboard.writeText(macAddress).then(() => {
@@ -437,7 +436,7 @@ const handleAdd = () => {
         DeviceObject.device_options.profiles = response.data.profiles
         DeviceObject.device_options.extensions = response.data.extensions
         loadingModal.value = false
-        addModalTrigger.value = true;
+        createModalTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
@@ -482,7 +481,7 @@ const handleBulkEdit = () => {
 
 const handleSearchButtonClick = () => {
     loading.value = true;
-    router.visit(props.routeDevices, {
+    router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
         },
@@ -601,8 +600,31 @@ const handleBulkSaveEdit = () => {
     });
 }
 
+const getItemOptions = () => {
+    router.get(props.routes.current_page,
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                // console.log(props.itemOptions);
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
 const handleClose = () => {
-    addModalTrigger.value = false
+    createModalTrigger.value = false
     editModalTrigger.value = false
     setTimeout(handleDeviceObjectReset, 1000)
 }

@@ -112,4 +112,12 @@ class Devices extends Model
     {
         return ($this->lines()->first() && $this->lines()->first()->extension()) ? $this->lines()->first()->extension() : null;
     }
+
+    /**
+     * Get domain that this message settings belongs to 
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
 }
