@@ -54,7 +54,17 @@ class DeviceController extends Controller
                 'data' => function () {
                     return $this->getData();
                 },
-                'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
+                'showGlobal' => function () {
+                    return request('filterData.showGlobal') === 'true';
+                },
+                'itemData' => Inertia::lazy(
+                    fn () =>
+                    $this->getItemData()
+                ),
+                'itemOptions' => Inertia::lazy(
+                    fn () =>
+                    $this->getItemOptions()
+                ),
                 'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
                 'routes' => [
                     'current_page' => route('devices.index'),
@@ -116,7 +126,7 @@ class DeviceController extends Controller
                 $firstMatch = $extensions->first(function ($extension) use ($line, $device) {
                     return $extension->domain_uuid === $device->domain_uuid && $extension->extension === $line->label;
                 });
-        
+
                 // Assign the first matching extension to the line
                 $line->extension = $firstMatch;
             });
@@ -439,12 +449,39 @@ class DeviceController extends Controller
         ]);
     }
 
-    public function options(): JsonResponse
+    public function getItemOptions()
     {
-        return response()->json([
+        // Define the options for the 'carrier' field
+        $carrierOptions = [
+            ['value' => 'thinq', 'name' => 'ThinQ'],
+            ['value' => 'synch', 'name' => 'Synch'],
+        ];
+
+        // Define the options for the 'chatplan_detail_data' field
+        $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+            ->get([
+                'extension_uuid',
+                'extension',
+                'effective_caller_id_name',
+            ]);
+
+        $chatplanDetailDataOptions = [];
+        // Loop through each extension and create an option
+        foreach ($extensions as $extension) {
+            $chatplanDetailDataOptions[] = [
+                'value' => $extension->extension,
+                'name' => $extension->name_formatted,
+            ];
+        }
+
+        // Construct the itemOptions object
+        $itemOptions = [
             'templates' => getVendorTemplateCollection(),
             'profiles' => getProfileCollection(Session::get('domain_uuid')),
-            'extensions' => getExtensionCollection(Session::get('domain_uuid'))
-        ]);
+            'extensions' => $extensions,
+            // Define options for other fields as needed
+        ];
+
+        return $itemOptions;
     }
 }

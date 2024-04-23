@@ -268,6 +268,8 @@ const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
+    itemData: Object,
+    itemOptions: Object,
     // routeDevicesStore: String,
     // routeDevicesOptions: String,
     // routeDevicesBulkUpdate: String,
@@ -610,7 +612,7 @@ const getItemOptions = () => {
                 'itemOptions',
             ],
             onSuccess: (page) => {
-                // console.log(props.itemOptions);
+                console.log(props.itemOptions);
                 loadingModal.value = false;
             },
             onFinish: () => {
