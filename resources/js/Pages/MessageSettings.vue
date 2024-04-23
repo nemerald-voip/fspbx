@@ -204,7 +204,7 @@
 </template>
 
 <script setup>
-import { watch, ref } from "vue";
+import { ref } from "vue";
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -235,7 +235,6 @@ const loadingModal = ref(false)
 const selectPageItems = ref(false);
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
@@ -549,23 +548,6 @@ const handleErrorResponse = (error) => {
     }
 }
 
-
-const handleBulkEdit = () => {
-    if (selectedItems.value.length > 0) {
-        bulkEditModalTrigger.value = true;
-        loadingModal.value = true;
-        axios.get(props.routeDevicesOptions).then((response) => {
-            DeviceObject.device_options.templates = response.data.templates
-            DeviceObject.device_options.profiles = response.data.profiles
-            DeviceObject.device_options.extensions = response.data.extensions
-            loadingModal.value = false
-        }).catch((error) => {
-            console.error('Failed to get device data:', error);
-        });
-    } else {
-        restartRequestNotificationErrorTrigger.value = true
-    }
-}
 
 const handleSearchButtonClick = () => {
     loading.value = true;
