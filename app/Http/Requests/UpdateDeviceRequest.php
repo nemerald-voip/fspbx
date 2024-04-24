@@ -37,8 +37,14 @@ class UpdateDeviceRequest extends FormRequest
             ],
             'device_profile_uuid' => [
                 'nullable',
-                Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                Rule::when(
+                    function ($input) {
+                        // Check if the value is not the literal string "NULL"
+                        return $input['device_profile_uuid'] !== 'NULL';
+                    },
+                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
+                        ->where('domain_uuid', Session::get('domain_uuid'))
+                )
             ],
             'device_template' => [
                 'required',
@@ -48,7 +54,8 @@ class UpdateDeviceRequest extends FormRequest
                 'nullable',
             ],
             'domain_uuid' => [
-                'nullable',
+                'required',
+                Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
             ],
         ];
     }
@@ -87,12 +94,12 @@ class UpdateDeviceRequest extends FormRequest
             'device_profile_uuid.required' => 'Profile is required',
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
+            'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
     public function prepareForValidation(): void
     {
-        logger($this);
         $macAddress = strtolower(trim(tokenizeMacAddress($this->get('device_address') ?? '')));
         $this->merge([
             'device_address' => formatMacAddress($macAddress),

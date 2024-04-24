@@ -18,8 +18,8 @@
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
                     <SelectBox :options="options.templates" :selectedItem="item.device_template" :search="true"
-                        :placeholder="'Choose template'" @update:modal-value="handleTemplateUpdate" 
-                        :error="errors?.device_template && errors.device_template.length > 0"/>
+                        :placeholder="'Choose template'" @update:modal-value="handleTemplateUpdate"
+                        :error="errors?.device_template && errors.device_template.length > 0" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p> -->
@@ -47,6 +47,20 @@
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p> -->
+            </div>
+
+            <div class="sm:col-span-12">
+                <LabelInputRequired :target="'domain'" :label="'Belongs To'" />
+                <div class="mt-2">
+                    <SelectBox :options="options.domains" :selectedItem="item.domain_uuid" :search="true"
+                        :placeholder="'Choose company'" @update:modal-value="handleDomainUpdate"
+                        :error="errors?.domain_uuid && errors.domain_uuid.length > 0" />
+                </div>
+                <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
+                    forwarded.</p> -->
+                <div v-if="errors?.domain_uuid" class="mt-2 text-sm text-red-600">
+                    {{ errors.domain_uuid[0] }}
+                </div>
             </div>
         </div>
 
@@ -92,13 +106,14 @@ const form = reactive({
     device_template: props.item.device_template,
     device_profile_uuid: props.item.device_profile_uuid,
     extension: props.item.device_label,
+    domain_uuid: props.item.domain_uuid,
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel']);
 
 const submitForm = () => {
-    console.log(form);
+    // console.log(form);
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -112,6 +127,10 @@ const handleProfileUpdate = (newSelectedItem) => {
 
 const handleExtensionUpdate = (newSelectedItem) => {
     form.extension = newSelectedItem.value
+}
+
+const handleDomainUpdate = (newSelectedItem) => {
+    form.domain_uuid = newSelectedItem.value
 }
 
 </script>

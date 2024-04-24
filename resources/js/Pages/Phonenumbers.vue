@@ -182,9 +182,6 @@ import NotificationError from "./components/notifications/Error.vue";
 
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import CreatePhoneNumberForm from "./components/forms/CreatePhoneNumberForm.vue";
-import CreatePhoneNumberFormAdvanced from "./components/forms/CreatePhoneNumberFormAdvanced.vue";
-import UpdatePhoneNumberFormBasic from "./components/forms/UpdatePhoneNumberFormBasic.vue";
-import UpdatePhoneNumberFormAdvanced from "./components/forms/UpdatePhoneNumberFormAdvanced.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";

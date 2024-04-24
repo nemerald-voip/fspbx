@@ -322,7 +322,6 @@ const handleEditRequest = (itemUuid) => {
                 'itemOptions',
             ],
             onSuccess: (page) => {
-                // console.log(props.itemData);
                 loadingModal.value = false;
             },
             onFinish: () => {
@@ -342,7 +341,6 @@ const handleCreateRequest = (form) => {
     axios.post(props.routes.store, form)
         .then((response) => {
             createFormSubmiting.value = false;
-            console.log(response);
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
@@ -541,9 +539,13 @@ const handleSearchButtonClick = () => {
         },
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
+        only: [
+            "data",
+            'showGlobal',
+        ],
         onSuccess: (page) => {
             loading.value = false;
+            handleClearSelection();
         }
     });
 };

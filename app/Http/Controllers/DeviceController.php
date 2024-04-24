@@ -8,14 +8,9 @@ use App\Http\Requests\UpdateDeviceRequest;
 use App\Models\DeviceLines;
 use App\Models\Devices;
 use App\Models\Extensions;
-use Exception;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,7 +28,7 @@ class DeviceController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Devices';
-    protected $searchable = ['destination', 'carrier', 'description', 'chatplan_detail_data', 'email'];
+    protected $searchable = ['device_address', 'device_label', 'device_template'];
 
     public function __construct()
     {
@@ -83,6 +78,7 @@ class DeviceController extends Controller
         // Get item data
         $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
             ->select([
+                'domain_uuid',
                 'device_uuid',
                 'device_template',
                 'device_label',
@@ -107,7 +103,7 @@ class DeviceController extends Controller
             $this->filters['search'] = request('filterData.search');
         }
 
-        // Check if search parameter is present and not empty
+        // Check if showGlobal parameter is present and not empty
         if (!empty(request('filterData.showGlobal'))) {
             $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
         } else {
@@ -115,7 +111,7 @@ class DeviceController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'device_label'); // Default to 'destination'
+        $this->sortField = request()->get('sortField', 'device_address'); // Default to 'destination'
         $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
 
         $data = $this->builder($this->filters);
@@ -223,6 +219,9 @@ class DeviceController extends Controller
             }
         }
 
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
+
         return $data;
     }
 
@@ -231,19 +230,15 @@ class DeviceController extends Controller
      * @param $value
      * @return void
      */
-    protected function filterSearch($query, $value): void
+    protected function filterSearch($query, $value)
     {
-        if ($value !== null) {
-            // Case-insensitive partial string search in the specified fields
-            $query->where(function ($query) use ($value) {
-                $macAddress = tokenizeMacAddress($value);
-                $query->where('device_address', 'ilike', '%' . $macAddress . '%')
-                    ->orWhere('device_label', 'ilike', '%' . $value . '%')
-                    ->orWhere('device_vendor', 'ilike', '%' . $value . '%')
-                    ->orWhere('device_profile_name', 'ilike', '%' . $value . '%')
-                    ->orWhere('device_template', 'ilike', '%' . $value . '%');
-            });
-        }
+        $searchable = $this->searchable;
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
+            }
+        });
     }
 
     /**
@@ -402,12 +397,64 @@ class DeviceController extends Controller
         }
 
         try {
-            $inputs = $request->validated();
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
+
+
             $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
             $inputs['device_address'] = $inputs['device_address_modified'];
+
+            if ($inputs['extension']) {
+                $extension = Extensions::where('extension', $inputs['extension'])
+                    ->where('domain_uuid', $inputs['domain_uuid'])
+                    ->first();
+
+                if ($extension) {
+                    $device->device_label = $extension->extension;
+                }
+            } else {
+                $device->device_label = null;
+                // Remove existing device lines
+                $device->lines()->delete();
+            }
+
+            // logger($inputs);
             $device->update($inputs);
 
-            logger($inputs);
+            if (isset($extension) && $extension) {
+                // Remove existing device lines
+                if ($device->lines()->exists()) {
+                    $device->lines()->delete();
+                }
+
+                // Create device lines
+                $deviceLines = new DeviceLines();
+                $deviceLines->fill([
+                    'device_uuid' => $device->device_uuid,
+                    'line_number' => '1',
+                    'server_address' => Session::get('domain_name'),
+                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                    'server_address_primary' => get_domain_setting('server_address_primary'),
+                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                    'display_name' => $extension->extension,
+                    'user_id' => $extension->extension,
+                    'auth_id' => $extension->extension,
+                    'label' => $extension->extension,
+                    'password' => $extension->password,
+                    'sip_port' => get_domain_setting('line_sip_port'),
+                    'sip_transport' => get_domain_setting('line_sip_transport'),
+                    'register_expires' => get_domain_setting('line_register_expires'),
+                    'enabled' => 'true',
+                    'domain_uuid' => $device->domain_uuid
+                ]);
+                $deviceLines->save();
+
+                $device->device_label = $extension->extension;
+                $device->save();
+            }
+
 
             // Return a JSON response indicating success
             return response()->json([
@@ -426,43 +473,6 @@ class DeviceController extends Controller
             'success' => false,
             'errors' => ['server' => ['Failed to update this item']]
         ], 500); // 500 Internal Server Error for any other errors
-
-
-        // if ($request['extension_uuid']) {
-        //     $extension = Extensions::find($request['extension_uuid']);
-        //     if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
-        //         $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
-        //         if ($deviceLinesExist) {
-        //             $deviceLinesExist->delete();
-        //         }
-
-        //         // Create device lines
-        //         $deviceLines = new DeviceLines();
-        //         $deviceLines->fill([
-        //             'device_uuid' => $device->device_uuid,
-        //             'line_number' => '1',
-        //             'server_address' => Session::get('domain_name'),
-        //             'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-        //             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-        //             'server_address_primary' => get_domain_setting('server_address_primary'),
-        //             'server_address_secondary' => get_domain_setting('server_address_secondary'),
-        //             'display_name' => $extension->extension,
-        //             'user_id' => $extension->extension,
-        //             'auth_id' => $extension->extension,
-        //             'label' => $extension->extension,
-        //             'password' => $extension->password,
-        //             'sip_port' => get_domain_setting('line_sip_port'),
-        //             'sip_transport' => get_domain_setting('line_sip_transport'),
-        //             'register_expires' => get_domain_setting('line_register_expires'),
-        //             'enabled' => 'true',
-        //             'domain_uuid' => $device->domain_uuid
-        //         ]);
-        //         $deviceLines->save();
-        //         $device->device_label = $extension->extension;
-        //         $device->save();
-        //     }
-        // }
-
 
     }
 
@@ -538,11 +548,21 @@ class DeviceController extends Controller
             ];
         }
 
+        $domainOptions = [];
+        // Loop through each domain and create an option
+        foreach (session('domains') as $domain) {
+            $domainOptions[] = [
+                'value' => $domain->domain_uuid,
+                'name' => $domain->domain_description,
+            ];
+        }
+
         // Construct the itemOptions object
         $itemOptions = [
             'templates' => getVendorTemplateCollection(),
             'profiles' => getProfileCollection(Session::get('domain_uuid')),
             'extensions' => $extensionOptions,
+            'domains' => $domainOptions,
             // Define options for other fields as needed
         ];
 
