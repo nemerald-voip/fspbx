@@ -1,19 +1,23 @@
 <template>
     <Listbox v-model="currentItem" @update:modelValue="value => emit('update:modal-value', value)">
         <div class="relative">
+
+
             <ListboxButton :class="inputClass">
                 <span :class="{ 'text-gray-400': !currentItem }" class="block truncate">
                     {{ currentItem ? currentItem.name : placeholder }}
                 </span>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-12">
-                    <XMarkIcon class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" aria-hidden="true" />
-                </div>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-9 border-l-2">
-                </div>
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                     <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </span>
             </ListboxButton>
+
+            <div v-if="currentItem != '' && currentItem != null" class="absolute inset-y-0 right-0 flex items-center pr-7">
+                <XMarkIcon @click="clearValue"
+                    class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                    aria-hidden="true" />
+
+            </div>
 
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
                 leave-to-class="opacity-0">
@@ -85,6 +89,10 @@ let currentItem = ref(null);
 
 // Initialize searchKeyword
 let searchKeyword = ref('');
+
+const clearValue = () => {
+    currentItem.value = "";
+}
 
 // Watch for changes in selectedItem and update currentItem accordingly
 watch(() => props.selectedItem, (newValue) => {
