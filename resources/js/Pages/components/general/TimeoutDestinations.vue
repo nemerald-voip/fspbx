@@ -28,11 +28,11 @@ import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
 import SelectBox from "./SelectBox.vue";
 
 const props = defineProps({
-    phoneNumber: Object,
+    itemOptions: Object,
     categories: [Array, null],
     targets: [Array, Object, null],
     selectedItem: [String, null],
-    destinations: [Array, Object, null],
+   // destinations: [Array, Object, null],
 });
 
 const timeoutDestinations = ref([
@@ -55,7 +55,7 @@ function handleUpdateCategory(newValue, index) {
 
 function handleUpdateTarget(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
-        props.phoneNumber.destination_actions[index] = newValue.value;
+        props.itemOptions.destination_actions[index] = newValue.value;
     }
 }
 
@@ -69,7 +69,7 @@ const addTimeoutDestination = () => {
 
 const removeTimeoutDestination = (index) => {
     timeoutDestinations.value.splice(index, 1);
-    props.phoneNumber.destination_actions.splice(index, 1);
+    props.itemOptions.destination_actions.splice(index, 1);
 }
 
 </script>

@@ -137,7 +137,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
-    Route::get('/phone-numbers/options', [PhoneNumbersController::class, 'options'])->name('phoneNumbers.options');
+    //Route::get('/phone-numbers/options', [PhoneNumbersController::class, 'options'])->name('phoneNumbers.options');
     //Route::put('/phone-numbers/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('phoneNumbers.bulkUpdate');
     Route::resource('phone-numbers', PhoneNumbersController::class);
 

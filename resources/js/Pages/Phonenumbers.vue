@@ -23,9 +23,9 @@
             </template>
 
             <template #action>
-                <button type="button" :href="routePhoneNumbersStore" @click.prevent="handleAdd()"
+                <button type="button" @click.prevent="handleCreateButtonClick()"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Add number
+                    Create
                 </button>
                 <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -126,53 +126,28 @@
         @update:show="handleErrorsReset"
     />
     <AddEditItemModal
-        :show="addModalTrigger"
-        :header="'Add New Number'"
+        :show="createModalTrigger"
+        :header="'Add New'"
         :loading="loadingModal"
         :customClass="'sm:max-w-4xl'"
-        @close="handleClose"
+        @close="handleModalClose"
     >
         <template #modal-body>
-            <div class="border-b border-gray-200 ml-4">
-                <nav class="-mb-px flex space-x-8" aria-label="ManagementTabs">
-                    <a v-for="(tab, index) in ManagementTabs" :key="tab.name"
-                       :href="tab.href"
-                       @click.prevent="selectTab(index)"
-                       :class="[isCurrentTab(index) ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium']"
-                       :aria-current="isCurrentTab(index) ? 'page' : undefined">
-                        {{ tab.name }}
-                    </a>
-                </nav>
-            </div>
-
-            <template v-for="(tab, index) in ManagementTabs" :key="tab.name">
-                <component
-                    v-if="selectedTab === index"
-                    :is="tab.component"
-                    :phoneNumber="tab.data.phoneNumber" />
-            </template>
-
-            <pre>
-            {{PhoneNumberObject}}
-                </pre>
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    @click="handleSaveAdd" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="handleClose" ref="cancelButtonRef">Cancel
-            </button>
+            <CreatePhoneNumberForm
+                :options="itemOptions"
+                :errors="formErrors"
+                :is-submitting="createFormSubmitting"
+                @submit="handleCreateRequest"
+                @cancel="handleModalClose"
+            />
         </template>
     </AddEditItemModal>
     <AddEditItemModal
-        :show="editModalTrigger"
-        :header="'Edit Number'"
+        :show="updateModalTrigger"
+        :header="'Update Number'"
         :loading="loadingModal"
         :customClass="'sm:max-w-4xl'"
-        @close="handleClose"
+        @close="handleModalClose"
     >
         <template #modal-body>
             <!--AddEditPhoneNumberForm
@@ -180,16 +155,6 @@
                 :isEdit="true"
                 @update:show="editModalTrigger = false"
             /-->
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    @click="handleSaveEdit" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="handleClose" ref="cancelButtonRef">Cancel
-            </button>
         </template>
     </AddEditItemModal>
     <DeleteConfirmationModal
@@ -216,14 +181,17 @@ import Paginator from "./components/general/Paginator.vue";
 import NotificationError from "./components/notifications/Error.vue";
 
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import AddEditPhoneNumberFormBasic from "./components/forms/AddEditPhoneNumberFormBasic.vue";
-import AddEditPhoneNumberFormAdvanced from "./components/forms/AddEditPhoneNumberFormAdvanced.vue";
+import CreatePhoneNumberForm from "./components/forms/CreatePhoneNumberForm.vue";
+import CreatePhoneNumberFormAdvanced from "./components/forms/CreatePhoneNumberFormAdvanced.vue";
+import UpdatePhoneNumberFormBasic from "./components/forms/UpdatePhoneNumberFormBasic.vue";
+import UpdatePhoneNumberFormAdvanced from "./components/forms/UpdatePhoneNumberFormAdvanced.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 const today = new Date();
 
 const loading = ref(false)
@@ -231,15 +199,31 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const showGlobal = ref(false);
-const addModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const createModalTrigger = ref(false);
+const updateModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
+const createFormSubmitting = ref(null);
+const updateFormSubmitting = ref(null);
+const formErrors = ref(null);
 
+const props = defineProps({
+    data: Object,
+    showGlobal: Boolean,
+    routes: Object,
+    itemData: Object,
+    itemOptions: Object,
+    // routeDevicesStore: String,
+    // routeDevicesOptions: String,
+    // routeDevicesBulkUpdate: String,
+    // routeDevices: String,
+    // routeSendEventNotifyAll: String
+});
+/*
 const props = defineProps({
     data: Object,
     menus: Array,
@@ -254,10 +238,10 @@ const props = defineProps({
    // routeDevicesBulkUpdate: String,
     routePhoneNumbers: String,
    // routeSendEventNotifyAll: String
-});
+});*/
 
 let PhoneNumberObject = reactive({
-    update_path: props.routePhoneNumbersStore,
+    update_path: props.routes.store,
     domain_uuid: props.selectedDomainUuid, // advanced
     destination_uuid: '',
     destination_prefix: '1',
@@ -281,41 +265,7 @@ let PhoneNumberObject = reactive({
     }
 });
 
-let ErrorsObject = reactive({
 
-});
-
-const selectedTab = ref(0);
-
-//const currentManagementTab = ref('Basic');
-const ManagementTabs = [
-    {
-        name: 'Basic',
-        href: '#basic',
-        component: AddEditPhoneNumberFormBasic,
-        data: {
-            phoneNumber: PhoneNumberObject,
-            errors: ErrorsObject
-        }
-    },
-    {
-        name: 'Advanced',
-        href: '#advanced',
-        component: AddEditPhoneNumberFormAdvanced,
-        data: {
-            phoneNumber: PhoneNumberObject,
-            errors: ErrorsObject
-        }
-    }
-];
-
-const selectTab = index => {
-    selectedTab.value = index;
-};
-
-const isCurrentTab = (tabIndex) => {
-    return tabIndex === selectedTab.value;
-}
 
 onMounted(() => {
     showGlobal.value = props.deviceGlobalView;
@@ -367,8 +317,38 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
+const handleCreateButtonClick = () => {
+    createModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions();
+}
+
+const getItemOptions = () => {
+    router.get(props.routes.current_page,
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
+/*
 const handleAdd = () => {
-    PhoneNumberObject.update_path = props.routePhoneNumbersStore;
+    //PhoneNumberObject.update_path = props.routes.store;
     axios.get(props.routePhoneNumbersOptions).then((response) => {
         PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
         PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
@@ -380,8 +360,9 @@ const handleAdd = () => {
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
-}
+}*/
 
+/*
 const handleEdit = (url) => {
     editModalTrigger.value = true
     loadingModal.value = true
@@ -402,7 +383,7 @@ const handleEdit = (url) => {
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
-}
+}*/
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -442,8 +423,8 @@ const handleErrorsPush = (message, errors = null) => {
 }
 
 const handlePhoneNumberObjectReset = () => {
-    PhoneNumberObject = reactive({
-        update_path: props.routePhoneNumbersStore,
+    /*PhoneNumberObject = reactive({
+        update_path: props.routes.store,
         domain_uuid: '',
         destination_number: '',
         destination_uuid: '',
@@ -458,7 +439,7 @@ const handlePhoneNumberObjectReset = () => {
         destination_distinctive_ring: '', // advanced
         destination_enabled: 'true',
         destination_description: '',
-    });
+    });*/
 }
 
 const renderRequestedPage = (url) => {
@@ -476,8 +457,36 @@ const renderRequestedPage = (url) => {
     });
 };
 
+const handleCreateRequest = (form) => {
+    createFormSubmitting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.store, form)
+        .then((response) => {
+            createFormSubmitting.value = false;
+            console.log(response);
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        createFormSubmitting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
+
+};
+
+const handleModalClose = () => {
+    createModalTrigger.value = false;
+    updateModalTrigger.value = false;
+    confirmationModalTrigger.value = false;
+    //bulkUpdateModalTrigger.value = false;
+}
+
+/*
 const handleSaveAdd = () => {
-    axios.post(props.routePhoneNumbersStore, {
+    axios.post(props.routes.store, {
         destination_number: PhoneNumberObject.destination_number,
         destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
         destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
@@ -510,8 +519,9 @@ const handleSaveEdit = () => {
             handleErrorsPush(error.response.data.message, error.response.data.errors)
         }
     });
-}
+}*/
 
+/*
 const handleClose = () => {
     addModalTrigger.value = false
     editModalTrigger.value = false
@@ -521,7 +531,7 @@ const handleClose = () => {
 const handleBulkClose = () => {
     bulkEditModalTrigger.value = false
     setTimeout(handlePhoneNumberObjectReset, 1000)
-}
+}*/
 
 const handleDestroyConfirmation = (url) => {
     confirmationModalTrigger.value = true
