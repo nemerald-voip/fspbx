@@ -92,6 +92,7 @@ let searchKeyword = ref('');
 
 const clearValue = () => {
     currentItem.value = "";
+    emit('update:modal-value', currentItem);
 }
 
 // Watch for changes in selectedItem and update currentItem accordingly

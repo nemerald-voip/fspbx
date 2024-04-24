@@ -274,11 +274,9 @@ class DeviceController extends Controller
             $extension = null;
         }
 
-        logger($extension);
-
         try {
             // Validate the request data and create a new instance
-            $instance = $this->model->fill($request->validated());
+            $instance = $this->model;
             $instance->fill([
                 'device_address' => $inputs['device_address_modified'],
                 'device_label' => $extension->extension ?? null,
@@ -358,31 +356,32 @@ class DeviceController extends Controller
      * @param  Devices  $device
      * @return JsonResponse
      */
-    public function edit(Request $request, Devices $device): JsonResponse
-    {
-        if (!$request->ajax()) {
-            return response()->json([
-                'message' => 'XHR request expected'
-            ], 405);
-        }
+    // public function edit(Request $request, Devices $device): JsonResponse
+    // {
+    //     logger('here');
+    //     if (!$request->ajax()) {
+    //         return response()->json([
+    //             'message' => 'XHR request expected'
+    //         ], 405);
+    //     }
 
-        if ($device->extension()) {
-            $device->extension_uuid = $device->extension()->extension_uuid;
-        }
+    //     if ($device->extension()) {
+    //         $device->extension_uuid = $device->extension()->extension_uuid;
+    //     }
 
-        $device->device_address = formatMacAddress($device->device_address);
-        $device->update_path = route('devices.update', $device);
-        $device->options = [
-            'templates' => getVendorTemplateCollection(),
-            'profiles' => getProfileCollection($device->domain_uuid),
-            'extensions' => getExtensionCollection($device->domain_uuid)
-        ];
+    //     $device->device_address = formatMacAddress($device->device_address);
+    //     $device->update_path = route('devices.update', $device);
+    //     $device->options = [
+    //         'templates' => getVendorTemplateCollection(),
+    //         'profiles' => getProfileCollection($device->domain_uuid),
+    //         'extensions' => getExtensionCollection($device->domain_uuid)
+    //     ];
 
-        return response()->json([
-            'status' => 'success',
-            'device' => $device
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'device' => $device
+    //     ]);
+    // }
 
     /**
      * Update the specified resource in storage.
@@ -393,50 +392,78 @@ class DeviceController extends Controller
      */
     public function update(UpdateDeviceRequest $request, Devices $device): JsonResponse
     {
-        $inputs = $request->validated();
-        $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
-        $device->update($inputs);
 
-        if ($request['extension_uuid']) {
-            $extension = Extensions::find($request['extension_uuid']);
-            if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
-                $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
-                if ($deviceLinesExist) {
-                    $deviceLinesExist->delete();
-                }
+        if (!$device) {
+            // If the model is not found, return an error response
+            return response()->json([
+                'success' => false,
+                'errors' => ['model' => ['Model not found']]
+            ], 404); // 404 Not Found if the model does not exist
+        }
 
-                // Create device lines
-                $deviceLines = new DeviceLines();
-                $deviceLines->fill([
-                    'device_uuid' => $device->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                    'domain_uuid' => $device->domain_uuid
-                ]);
-                $deviceLines->save();
-                $device->device_label = $extension->extension;
-                $device->save();
-            }
+        try {
+            $inputs = $request->validated();
+            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+            $inputs['device_address'] = $inputs['device_address_modified'];
+            $device->update($inputs);
+
+            logger($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Item updated.']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update this item']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
 
         return response()->json([
-            'status' => 'success',
-            'device' => $device,
-            'message' => 'Device has been updated.'
-        ]);
+            'success' => false,
+            'errors' => ['server' => ['Failed to update this item']]
+        ], 500); // 500 Internal Server Error for any other errors
+
+
+        // if ($request['extension_uuid']) {
+        //     $extension = Extensions::find($request['extension_uuid']);
+        //     if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
+        //         $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
+        //         if ($deviceLinesExist) {
+        //             $deviceLinesExist->delete();
+        //         }
+
+        //         // Create device lines
+        //         $deviceLines = new DeviceLines();
+        //         $deviceLines->fill([
+        //             'device_uuid' => $device->device_uuid,
+        //             'line_number' => '1',
+        //             'server_address' => Session::get('domain_name'),
+        //             'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+        //             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+        //             'server_address_primary' => get_domain_setting('server_address_primary'),
+        //             'server_address_secondary' => get_domain_setting('server_address_secondary'),
+        //             'display_name' => $extension->extension,
+        //             'user_id' => $extension->extension,
+        //             'auth_id' => $extension->extension,
+        //             'label' => $extension->extension,
+        //             'password' => $extension->password,
+        //             'sip_port' => get_domain_setting('line_sip_port'),
+        //             'sip_transport' => get_domain_setting('line_sip_transport'),
+        //             'register_expires' => get_domain_setting('line_register_expires'),
+        //             'enabled' => 'true',
+        //             'domain_uuid' => $device->domain_uuid
+        //         ]);
+        //         $deviceLines->save();
+        //         $device->device_label = $extension->extension;
+        //         $device->save();
+        //     }
+        // }
+
+
     }
 
     public function bulkUpdate(UpdateBulkDeviceRequest $request): JsonResponse

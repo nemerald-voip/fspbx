@@ -98,6 +98,7 @@ const form = reactive({
 const emits = defineEmits(['submit', 'cancel']);
 
 const submitForm = () => {
+    console.log(form);
     emits('submit', form); // Emit the event with the form data
 }
 

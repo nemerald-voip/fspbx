@@ -32,6 +32,8 @@ class UpdateDeviceRequest extends FormRequest
             'device_address_modified' => [
                 'nullable',
                 Rule::unique('App\Models\Devices', 'device_address')
+                    ->ignore($this->device_address_modified, 'device_address')
+                    ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'device_profile_uuid' => [
                 'nullable',
@@ -90,6 +92,7 @@ class UpdateDeviceRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        logger($this);
         $macAddress = strtolower(trim(tokenizeMacAddress($this->get('device_address') ?? '')));
         $this->merge([
             'device_address' => formatMacAddress($macAddress),
