@@ -184,7 +184,7 @@
         @close="handleModalClose">
         <template #modal-body>
             <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" @domain-selected="getItemOptions"/>
         </template>
     </AddEditItemModal>
 
@@ -371,6 +371,35 @@ const handleUpdateRequest = (form) => {
         });
 
 };
+
+const handleSingleItemDeleteRequest = (url) => {
+    confirmationModalTrigger.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(url);
+}
+
+const executeSingleDelete = (url) => {
+    router.delete(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            if (page.props.flash.error) {
+                showNotification('error', page.props.flash.error);
+            }
+            if (page.props.flash.message) {
+                showNotification('success', page.props.flash.message);
+            }
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onFinish: () => {
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onError: (errors) => {
+            console.log(errors);
+        },
+    });
+}
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -656,9 +685,11 @@ const handleBulkSaveEdit = () => {
     });
 }
 
-const getItemOptions = () => {
+const getItemOptions = (domain_uuid) => {
     router.get(props.routes.current_page,
-        {},
+        {
+            'domain_uuid': domain_uuid,
+        },
         {
             preserveScroll: true,
             preserveState: true,
@@ -717,11 +748,6 @@ const handleModalClose = () => {
 const handleBulkClose = () => {
     bulkEditModalTrigger.value = false
     setTimeout(handleDeviceObjectReset, 1000)
-}
-
-const handleDestroyConfirmation = (url) => {
-    confirmationModalTrigger.value = true
-    confirmationModalDestroyPath.value = url;
 }
 
 const hideNotification = () => {

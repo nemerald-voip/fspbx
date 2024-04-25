@@ -17,7 +17,7 @@
             <div class="sm:col-span-12">
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.templates" :selectedItem="item.device_template" :search="true"
+                    <SelectBox :options="options.templates" :selectedItem="form.device_template" :search="true"
                         :placeholder="'Choose template'" @update:modal-value="handleTemplateUpdate"
                         :error="errors?.device_template && errors.device_template.length > 0" />
                 </div>
@@ -31,7 +31,7 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.profiles" :selectedItem="item.device_profile_uuid" :search="true"
+                    <SelectBox :options="options.profiles" :selectedItem="form.device_profile_uuid" :search="true"
                         :placeholder="'Choose profile'" @update:modal-value="handleProfileUpdate" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -42,7 +42,7 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.extensions" :selectedItem="item.device_label" :search="true"
+                    <SelectBox :options="options.extensions" :selectedItem="form.extension" :search="true"
                         :placeholder="'Choose extension'" @update:modal-value="handleExtensionUpdate" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -50,9 +50,9 @@
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputRequired :target="'domain'" :label="'Belongs To'" />
+                <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.domains" :selectedItem="item.domain_uuid" :search="true"
+                    <SelectBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true"
                         :placeholder="'Choose company'" @update:modal-value="handleDomainUpdate"
                         :error="errors?.domain_uuid && errors.domain_uuid.length > 0" />
                 </div>
@@ -110,7 +110,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const submitForm = () => {
     // console.log(form);
@@ -130,7 +130,10 @@ const handleExtensionUpdate = (newSelectedItem) => {
 }
 
 const handleDomainUpdate = (newSelectedItem) => {
-    form.domain_uuid = newSelectedItem.value
+    form.domain_uuid = newSelectedItem.value;
+    form.device_profile_uuid = null;
+    form.extension = null;
+    emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
 }
 
 </script>

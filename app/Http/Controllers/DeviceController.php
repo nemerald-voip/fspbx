@@ -274,6 +274,7 @@ class DeviceController extends Controller
             $instance = $this->model;
             $instance->fill([
                 'device_address' => $inputs['device_address_modified'],
+                'domain_uuid' => $inputs['domain_uuid'],
                 'device_label' => $extension->extension ?? null,
                 'device_vendor' => explode("/", $inputs['device_template'])[0],
                 'device_enabled' => 'true',
@@ -509,30 +510,35 @@ class DeviceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Devices  $device
-     * @return Response
+     * 
      */
-    public function destroy(Devices $device): Response
+    public function destroy(Devices $device)
     {
-        if ($device->lines()) {
-            $device->lines()->delete();
-        }
-        $device->delete();
+        try {
+            // throw new \Exception;
 
-        return Inertia::render('Devices', [
-            'data' => function () {
-                return $this->getDevices();
-            },
-            'status' => 'success',
-            'device' => $device,
-            'message' => 'Device has been deleted'
-        ]);
+            // Delete all device lines
+            if ($device->lines()) {
+                $device->lines()->delete();
+            }
+
+            // Delete Device
+            $device->delete();
+
+            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+        }
     }
 
     public function getItemOptions()
     {
+        $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
 
         // Define the options for the 'extensions' field
-        $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+        $extensions = Extensions::where('domain_uuid', $domain_uuid)
             ->get([
                 'extension_uuid',
                 'extension',
@@ -560,7 +566,7 @@ class DeviceController extends Controller
         // Construct the itemOptions object
         $itemOptions = [
             'templates' => getVendorTemplateCollection(),
-            'profiles' => getProfileCollection(Session::get('domain_uuid')),
+            'profiles' => getProfileCollection($domain_uuid),
             'extensions' => $extensionOptions,
             'domains' => $domainOptions,
             // Define options for other fields as needed

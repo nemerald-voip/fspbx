@@ -127,15 +127,18 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
-    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
-    Route::resource('devices', DeviceController::class);
+\
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
         return redirect('/dashboard');
     });
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
+
+    //Devices
+    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
+    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
+    Route::resource('devices', DeviceController::class);
 
     //Route::get('/phone-numbers/options', [PhoneNumbersController::class, 'options'])->name('phoneNumbers.options');
     //Route::put('/phone-numbers/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('phoneNumbers.bulkUpdate');

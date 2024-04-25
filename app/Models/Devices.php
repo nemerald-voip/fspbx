@@ -69,12 +69,12 @@ class Devices extends Model
         static::saving(function ($model) {
             // Remove attributes before saving to database
             unset($model->device_address_formatted);
-            // unset($model->destroy_route);
+            unset($model->destroy_route);
         });
 
         static::retrieved(function ($model) {
             $model->device_address_formatted = $model->formatMacAddress($model->device_address);
-            // $model->destroy_route = route('messages.settings.destroy', $model);
+            $model->destroy_route = route('devices.destroy', $model);
 
             return $model;
         });

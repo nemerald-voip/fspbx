@@ -42,9 +42,8 @@ class UpdateDeviceRequest extends FormRequest
                         // Check if the value is not the literal string "NULL"
                         return $input['device_profile_uuid'] !== 'NULL';
                     },
-                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
-                        ->where('domain_uuid', Session::get('domain_uuid'))
-                )
+                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),                
+                    )
             ],
             'device_template' => [
                 'required',
