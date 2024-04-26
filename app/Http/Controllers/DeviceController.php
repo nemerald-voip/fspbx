@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreDeviceRequest;
-use App\Http\Requests\UpdateBulkDeviceRequest;
-use App\Http\Requests\UpdateDeviceRequest;
-use App\Models\DeviceLines;
-use App\Models\Devices;
-use App\Models\Extensions;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Devices;
+use App\Models\Settings;
+use App\Models\Extensions;
+use App\Models\DeviceLines;
+use App\Models\SipProfiles;
+use Illuminate\Http\Request;
+use App\Jobs\SendEventNotify;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Session;
+use App\Http\Requests\StoreDeviceRequest;
+use Illuminate\Database\Eloquent\Builder;
+use App\Http\Requests\UpdateDeviceRequest;
+use App\Http\Requests\UpdateBulkDeviceRequest;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -68,6 +71,7 @@ class DeviceController extends Controller
                     'select_all' => route('messages.settings.select.all'),
                     'bulk_delete' => route('messages.settings.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
+                    'restart' => route('devices.restart'),
                 ],
             ]
         );
@@ -573,5 +577,71 @@ class DeviceController extends Controller
         ];
 
         return $itemOptions;
+    }
+
+    public function restart()
+    {
+        try {
+
+            // Get a collection of SIP registrations 
+            $regs = sipRegistrations();
+
+            //Get device info as a collection
+            $devices = $this->model::whereIn('device_uuid', request('devices'))
+                ->with(['lines' => function ($query) {
+                    $query->select('device_uuid', 'auth_id', 'server_address');
+                }])
+                ->get(['device_uuid']);
+
+            // we are going to push all lines from devices to this collection
+            $linesCollection = collect();
+
+            foreach ($devices as $device) {
+                $line = $device->lines->first();
+                if ($line) {
+                    $linesCollection->push($line);
+                }
+            }
+
+            // logger($devices);
+
+            // Filter and process $regs based on $linesCollection
+            $filteredRegs = collect($regs)->filter(function ($reg) use ($linesCollection) {
+                [$authId, $domain] = explode('@', $reg['user'], 2);
+                return $linesCollection->contains(function ($line) use ($authId, $domain) {
+                    return $line['auth_id'] === $authId && $line['server_address'] === $domain;
+                });
+            })->each(function ($reg) {
+                // Determine the agent type based on 'agent' string
+                $agent = "";
+                if (preg_match('/Bria|Push|Ringotel/i', $reg['agent'])) {
+                    $agent = "";
+                } elseif (preg_match('/polycom|polyedge/i', $reg['agent'])) {
+                    $agent = "polycom";
+                } elseif (preg_match("/yealink/i", $reg['agent'])) {
+                    $agent = "yealink";
+                } elseif (preg_match("/grandstream/i", $reg['agent'])) {
+                    $agent = "grandstream";
+                }
+
+                // Execute commands if agent is specified
+                if (!empty($agent)) {
+                    $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
+                    logger($command);
+                    SendEventNotify::dispatch($command)->onQueue('default');
+                }
+            });
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Selected device(s) scheduled for reboot']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . PHP_EOL);
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 }

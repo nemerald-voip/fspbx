@@ -30,7 +30,7 @@
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Edit device
                 </button>
-                <button  type="button" @click.prevent="handleRestartSelected()"
+                <button type="button" @click.prevent="handleRestartSelected()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart selected devices
                 </button>
@@ -68,8 +68,7 @@
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Template"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -82,8 +81,7 @@
                         :text="row.device_address_formatted">
                         <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9 cursor-pointer hover:text-gray-900"
-                            @click="handleEditRequest(row.device_uuid)">
+                        <div class="ml-9 cursor-pointer hover:text-gray-900" @click="handleEditRequest(row.device_uuid)">
                             {{ row.device_address_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -107,13 +105,12 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                    :text="row.lines[0]?.extension?.name_formatted" />
-                        
+                        :text="row.lines[0]?.extension?.name_formatted" />
+
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip :content="'Edit'" position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -124,14 +121,12 @@
                                 <ejs-tooltip :content="'Restart device'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <RestartIcon 
-                                            @click="handleRestart(row.send_notify_path)"
+                                        <RestartIcon @click="handleRestart(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Delete'" position='TopCenter'
-                                    target="#delete_tooltip_target">
+                                <ejs-tooltip :content="'Delete'" position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -180,11 +175,11 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal"
-        @close="handleModalClose">
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" @domain-selected="getItemOptions"/>
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
+                @domain-selected="getItemOptions" />
         </template>
     </AddEditItemModal>
 
@@ -210,7 +205,6 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
-
 </template>
 
 <script setup>
@@ -463,13 +457,18 @@ const handleDestroy = (url) => {
     });
 }
 
-const handleRestart = (url) => {
-    axios.post(url).then((response) => {
-        loading.value = false;
-        restartRequestNotificationSuccessTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to restart selected:', error);
-    });
+const handleRestart = (device_uuid) => {
+    axios.post(props.routes.restart,
+        {'devices': [device_uuid]},
+    )
+    .then((response) => {
+            showNotification('success', response.data.messages);
+
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
 }
 
 const handleRestartSelected = () => {
@@ -734,7 +733,7 @@ const handleFormErrorResponse = (error) => {
 
 const handleClearSelection = () => {
     selectedItems.value = [],
-    selectPageItems.value = false;
+        selectPageItems.value = false;
     selectAll.value = false;
 }
 
