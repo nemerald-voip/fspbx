@@ -611,9 +611,6 @@ const handleModalClose = () => {
     bulkUpdateModalTrigger.value = false;
 }
 
-const handleBulkClose = () => {
-    bulkEditModalTrigger.value = false
-}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

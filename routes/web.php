@@ -137,7 +137,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Devices
     Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
+    Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
     Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
     Route::resource('devices', DeviceController::class);
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');

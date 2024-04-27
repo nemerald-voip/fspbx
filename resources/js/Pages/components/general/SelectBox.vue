@@ -12,10 +12,18 @@
                 </span>
             </ListboxButton>
 
-            <div v-if="currentItem != '' && currentItem != null" class="absolute inset-y-0 right-0 flex items-center pr-7">
-                <XMarkIcon @click="clearValue"
-                    class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                    aria-hidden="true" />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-7">
+                <div v-if="true">
+                    <UndoIcon v-if="showUndo" @click="undoValue"
+                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        aria-hidden="true" />
+                </div>
+
+                <div v-if="(currentItem != '' && currentItem != null) || showClear" class="">
+                    <XMarkIcon @click="clearValue"
+                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        aria-hidden="true" />
+                </div>
 
             </div>
 
@@ -72,6 +80,7 @@ import {
 } from '@headlessui/vue'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import UndoIcon from "../icons/UndoIcon.vue"
 
 const props = defineProps({
     options: [Array, null],
@@ -79,6 +88,8 @@ const props = defineProps({
     placeholder: [String, null],
     search: [Boolean, null],
     allowEmpty: { type: [Boolean], default: false },
+    showClear: { type: [Boolean], default: false },
+    showUndo: { type: [Boolean], default: false },
     error: Boolean,
 });
 
@@ -93,6 +104,11 @@ let searchKeyword = ref('');
 const clearValue = () => {
     currentItem.value = null;
     emit('update:modal-value', { value: "NULL" });
+}
+
+const undoValue = () => {
+    currentItem.value = null;
+    emit('update:modal-value', { value: null });
 }
 
 // Watch for changes in selectedItem and update currentItem accordingly

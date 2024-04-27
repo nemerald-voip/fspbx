@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\UpdateDeviceRequest;
+use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Http\Requests\UpdateBulkDeviceRequest;
 
 /**
@@ -481,35 +482,6 @@ class DeviceController extends Controller
 
     }
 
-    public function bulkUpdate(UpdateBulkDeviceRequest $request): JsonResponse
-    {
-        $inputs = $request->validated();
-        if (empty($inputs['device_profile_uuid']) && empty($inputs['device_template'])) {
-            return response()->json([
-                'message' =>  'No option selected to update.',
-                'errors' => [
-                    'no_option' => [
-                        'No option selected to update.'
-                    ]
-                ]
-            ], 422);
-        }
-        foreach ($inputs['devices'] as $deviceUuid) {
-            $device = Devices::find($deviceUuid);
-            if (!empty($inputs['device_profile_uuid'])) {
-                $device->device_profile_uuid = $inputs['device_profile_uuid'];
-            }
-            if (!empty($inputs['device_template'])) {
-                $device->device_template = $inputs['device_template'];
-            }
-            $device->save();
-        }
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Devices has been updated.'
-        ]);
-    }
-
     /**
      * Remove the specified resource from storage.
      *
@@ -578,6 +550,48 @@ class DeviceController extends Controller
 
         return $itemOptions;
     }
+
+    /**
+     * Bulk update requested items
+     *
+     * @param  \Illuminate\Http\BulkUpdateDeviceRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function bulkUpdate(BulkUpdateDeviceRequest  $request)
+    {
+
+        try {
+            // Prepare the data for updating
+            $updateData = collect(request()->all())->only([
+                'device_template', 'device_profile_uuid', 'extension', 'domain_uuid'
+            ])->filter(function ($value) {
+                return $value !== null;
+            })->toArray();
+
+            logger($updateData);
+
+            // $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
+            //     ->update($updateData);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Selected items updated']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update selected items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to update selected items']]
+        ], 500); // 500 Internal Server Error for any other errors
+    }
+
 
     public function restart()
     {

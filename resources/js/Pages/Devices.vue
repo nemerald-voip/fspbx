@@ -201,20 +201,11 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="bulkEditModalTrigger" :header="'Bulk Edit Device'" :loading="loadingModal"
-        @close="handleBulkClose">
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
-            <BulkEditDeviceForm :device="DeviceObject" @update:show="bulkEditModalTrigger = false" />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                @click="handleBulkSaveEdit" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleBulkClose" ref="cancelButtonRef">Cancel
-            </button>
+            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
+                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
@@ -241,7 +232,7 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
+import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
@@ -269,6 +260,7 @@ const actionErrorMessage = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
+const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -426,6 +418,21 @@ const handleBulkActionRequest = (action) => {
     }
 }
 
+const handleBulkUpdateRequest = (form) => {
+    bulkUpdateFormSubmiting.value = true
+    axios.post(`${props.routes.bulk_update}`, form)
+        .then((response) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
+}
+
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true
     formErrors.value = null;
@@ -433,12 +440,12 @@ const handleCreateButtonClick = () => {
     getItemOptions();
 }
 
-const selectedItemsExtensions = computed(() => {
-    return selectedItems.value.map(id => {
-        const foundItem = props.data.data.find(item => item.device_uuid === id);
-        return foundItem ? foundItem.extension_uuid : null;
-    });
-});
+// const selectedItemsExtensions = computed(() => {
+//     return selectedItems.value.map(id => {
+//         const foundItem = props.data.data.find(item => item.device_uuid === id);
+//         return foundItem ? foundItem.extension_uuid : null;
+//     });
+// });
 
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
@@ -493,21 +500,21 @@ const handleRestart = (device_uuid) => {
         });
 }
 
-const handleRestartSelected = () => {
-    if (selectedItemsExtensions.value.length > 0) {
-        let scope = showGlobal.value ? 'global' : 'local';
-        axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
-            extensionIds: selectedItemsExtensions.value,
-        }).then((response) => {
-            loading.value = false;
-            restartRequestNotificationSuccessTrigger.value = true;
-        }).catch((error) => {
-            console.error('Failed to restart selected:', error);
-        });
-    } else {
-        restartRequestNotificationErrorTrigger.value = true
-    }
-}
+// const handleRestartSelected = () => {
+//     if (selectedItemsExtensions.value.length > 0) {
+//         let scope = showGlobal.value ? 'global' : 'local';
+//         axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
+//             extensionIds: selectedItemsExtensions.value,
+//         }).then((response) => {
+//             loading.value = false;
+//             restartRequestNotificationSuccessTrigger.value = true;
+//         }).catch((error) => {
+//             console.error('Failed to restart selected:', error);
+//         });
+//     } else {
+//         restartRequestNotificationErrorTrigger.value = true
+//     }
+// }
 
 const handleRestartAll = () => {
     let scope = showGlobal.value ? 'global' : 'local';
@@ -751,6 +758,25 @@ const handleFormErrorResponse = (error) => {
         console.log(error.message);
     }
 
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
 }
 
 const handleSelectPageItems = () => {
