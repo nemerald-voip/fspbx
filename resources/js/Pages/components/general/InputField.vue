@@ -30,7 +30,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-// Compute the classes based on the error state
+// Compute the classes based on the state
 const inputClass = computed(() => {
     let baseClasses = 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6';
     if (props.error) {

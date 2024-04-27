@@ -6,6 +6,7 @@ use App\Http\Requests\StorePhoneNumberRequest;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
 use App\Models\Devices;
+use App\Models\Extensions;
 use App\Models\Faxes;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -21,6 +22,13 @@ use Inertia\Response;
 class PhoneNumbersController extends Controller
 {
     public array $filters = [];
+
+    public $model;
+
+    public function __construct()
+    {
+        $this->model = new Destinations();
+    }
 
     /**
      * Display a listing of the resource.
@@ -48,8 +56,28 @@ class PhoneNumbersController extends Controller
             'Phonenumbers',
             [
                 'data' => function () {
-                    return $this->getPhoneNumbers();
+                    return $this->getData();
                 },
+                'showGlobal' => function () {
+                    return request('filterData.showGlobal') === 'true';
+                },
+                'itemData' => Inertia::lazy(
+                    fn () =>
+                    $this->getItemData()
+                ),
+                'itemOptions' => Inertia::lazy(
+                    fn () =>
+                    $this->getItemOptions()
+                ),
+                'routes' => [
+                    'current_page' => route('phone-numbers.index'),
+                    'store' => route('phone-numbers.store'),
+                   // 'select_all' => route('messages.settings.select.all'),
+                    //'bulk_delete' => route('messages.settings.bulk.delete'),
+                    //'bulk_update' => route('devices.bulk.update'),
+                ],
+
+                /*
                 'menus' => function () {
                     return Session::get('menu');
                 },
@@ -81,21 +109,77 @@ class PhoneNumbersController extends Controller
                         ]
                     ];
                 },*/
-                'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
-                'routePhoneNumbersStore' => route('phone-numbers.store'),
-                'routePhoneNumbersOptions' => route('phoneNumbers.options'),
+                //'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
+                //'routePhoneNumbersStore' => route('phone-numbers.store'),
+                //'routePhoneNumbersOptions' => route('phoneNumbers.options'),
                 //'routeDevicesOptions' => route('devices.options'),
                 //'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
-                'routePhoneNumbers' => route('phone-numbers.index'),
+                //'routePhoneNumbers' => route('phone-numbers.index'),
                 //'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
             ]
         );
     }
 
+    public function getItemData()
+    {
+        // Get item data
+        $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
+            ->select([
+                'device_uuid',
+                'device_template',
+                'device_label',
+                'device_profile_uuid',
+                'device_address',
+            ])
+            ->first();
+
+        // Add update url route info
+        $itemData->update_url = route('devices.update', $itemData);
+        return $itemData;
+    }
+
+    public function getItemOptions()
+    {
+        $faxes = [];
+        $faxesCollection = Faxes::query();
+        $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
+        $faxesCollection = $faxesCollection->orderBy('fax_name')->get([
+            'fax_extension',
+            'fax_name',
+            'fax_uuid'
+        ]);
+        foreach ($faxesCollection as $fax) {
+            $faxes[] = [
+                'name' => $fax->fax_extension.' '.$fax->fax_name,
+                'value' => $fax->fax_uuid
+            ];
+        }
+
+        $domains = [];
+        $domainsCollection = Session::get("domains");
+        foreach ($domainsCollection as $domain) {
+            $domains[] = [
+                'name' => $domain->domain_name,
+                'value' => $domain->domain_uuid
+            ];
+        }
+        $timeoutDestinations = getTimeoutDestinations();
+
+        unset($faxesCollection, $domainsCollection, $fax, $domain);
+
+        return [
+            'music_on_hold' => getMusicOnHoldCollection(),
+            'faxes' => $faxes,
+            'domains' => $domains,
+            'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
+            'timeout_destinations_targets' => $timeoutDestinations['targets']
+        ];
+    }
+
     /**
      * @return LengthAwarePaginator
      */
-    public function getPhoneNumbers(): LengthAwarePaginator
+    public function getData(): LengthAwarePaginator
     {
         $phoneNumbers = $this->builder($this->filters)->paginate(50);
         foreach ($phoneNumbers as $phoneNumber) {
@@ -281,7 +365,7 @@ class PhoneNumbersController extends Controller
 
         return Inertia::render('Phonenumbers', [
             'data' => function () {
-                return $this->getPhoneNumbers();
+                return $this->getData();
             },
             'status' => 'success',
             'phone_number' => $destination,

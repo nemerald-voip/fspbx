@@ -172,7 +172,7 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateMessageSettingsForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
@@ -204,7 +204,7 @@
 </template>
 
 <script setup>
-import { watch, ref } from "vue";
+import { ref } from "vue";
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -235,8 +235,7 @@ const loadingModal = ref(false)
 const selectPageItems = ref(false);
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const restartRequestNotificationErrorTrigger = ref(false);
-const addModalTrigger = ref(false);
+const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
@@ -410,7 +409,7 @@ const handleShowLocal = () => {
 
 
 const handleCreateButtonClick = () => {
-    addModalTrigger.value = true
+    createModalTrigger.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions();
@@ -550,23 +549,6 @@ const handleErrorResponse = (error) => {
 }
 
 
-const handleBulkEdit = () => {
-    if (selectedItems.value.length > 0) {
-        bulkEditModalTrigger.value = true;
-        loadingModal.value = true;
-        axios.get(props.routeDevicesOptions).then((response) => {
-            DeviceObject.device_options.templates = response.data.templates
-            DeviceObject.device_options.profiles = response.data.profiles
-            DeviceObject.device_options.extensions = response.data.extensions
-            loadingModal.value = false
-        }).catch((error) => {
-            console.error('Failed to get device data:', error);
-        });
-    } else {
-        restartRequestNotificationErrorTrigger.value = true
-    }
-}
-
 const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
@@ -640,7 +622,7 @@ const handleBulkSaveEdit = () => {
 }
 
 const handleModalClose = () => {
-    addModalTrigger.value = false;
+    createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;

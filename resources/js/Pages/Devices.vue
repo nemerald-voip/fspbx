@@ -22,19 +22,19 @@
             </template>
 
             <template #action>
-                <button type="button" :href="routeDevicesStore" @click.prevent="handleAdd()"
+                <button type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Add device
+                    Create
                 </button>
                 <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Edit device
                 </button>
-                <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartSelected()"
+                <button type="button" @click.prevent="handleRestartSelected()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart selected devices
                 </button>
-                <button v-if="deviceRestartPermission" type="button" @click.prevent="handleRestartAll()"
+                <button type="button" @click.prevent="handleRestartAll()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Restart all devices
                 </button>
@@ -56,11 +56,7 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <!-- <TableColumnHeader v-if="deviceRestartPermission" header=" "
-                                   class="py-3.5 text-sm font-semibold text-gray-900 text-center">
-                    <input type="checkbox" v-model="selectAll" @change="handleSelectAll"
-                           class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                </TableColumnHeader> -->
+
                 <TableColumnHeader header="MAC Address"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
@@ -72,8 +68,7 @@
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Template"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -86,13 +81,12 @@
                         :text="row.device_address_formatted">
                         <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9 cursor-pointer hover:text-gray-900"
-                            @click="handleEditRequest(row.device_uuid)">
+                        <div class="ml-9 cursor-pointer hover:text-gray-900" @click="handleEditRequest(row.device_uuid)">
                             {{ row.device_address_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
-                            @click="handleCopyToClipboard(row.device_address)" target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
+                            @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
+                            <div id="copy_tooltip_target">
                                 <ClipboardDocumentIcon
                                     class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
                             </div>
@@ -100,51 +94,42 @@
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain_description_">
-                        <ejs-tooltip :content="row.domain_name" position='TopLeft' target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                {{ row.domain_description }}
+                        :text="row.domain?.domain_description">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
+                            <div id="domain_tooltip_target">
+                                {{ row.domain?.domain_description }}
                             </div>
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.device_profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ejs-tooltip :content="'Click to edit extension'" position='TopLeft'
-                            target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                <a class="hover:text-gray-900 cursor-pointer block" v-if="row.extension_edit_path"
-                                    :href="row.extension_edit_path">
-                                    {{ row.extension }} {{ row.extension_description }}
-                                </a>
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
+                        :text="row.profile?.device_profile_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.lines[0]?.extension?.name_formatted" />
+
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit device'" position='TopLeft'
-                                    target="#destination_tooltip_target">
+                            <div class="flex items-center whitespace-nowrap">
+                                <ejs-tooltip :content="'Edit'" position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEdit(row.edit_path)"
-                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
+                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip :content="'Restart device'" position='TopLeft'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <RestartIcon v-if="row.send_notify_path"
-                                            @click="handleRestart(row.send_notify_path)"
-                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
+
+                                <ejs-tooltip :content="'Restart device'" position='TopCenter'
+                                    target="#restart_tooltip_target">
+                                    <div id="restart_tooltip_target">
+                                        <RestartIcon @click="handleRestart(row.device_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip :content="'Remove device'" position='TopLeft'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <TrashIcon v-if="row.destroy_path"
-                                            @click="handleDestroyConfirmation(row.destroy_path)"
-                                            class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer" />
+
+                                <ejs-tooltip :content="'Delete'" position='TopCenter' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -175,42 +160,29 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
+
+
     <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
         :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
     <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-    <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
-        @update:show="handleErrorsReset" />
-    <AddEditItemModal :show="addModalTrigger" :header="'Add New Device'" :loading="loadingModal" @close="handleClose">
+
+
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <AddEditDeviceForm :device="DeviceObject" />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                @click="handleSaveAdd" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleClose" ref="cancelButtonRef">Cancel
-            </button>
+            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+                @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleClose">
+
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <AddEditDeviceForm :device="DeviceObject" :isEdit="true" @update:show="editModalTrigger = false" />
-        </template>
-        <template #modal-action-buttons>
-            <button type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                @click="handleSaveEdit" ref="saveButtonRef">Save
-            </button>
-            <button type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                @click="handleClose" ref="cancelButtonRef">Cancel
-            </button>
+            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
+                @domain-selected="getItemOptions" />
         </template>
     </AddEditItemModal>
+
     <AddEditItemModal :show="bulkEditModalTrigger" :header="'Bulk Edit Device'" :loading="loadingModal"
         @close="handleBulkClose">
         <template #modal-body>
@@ -227,10 +199,12 @@
             </button>
         </template>
     </AddEditItemModal>
+
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="handleDestroy(confirmationModalDestroyPath)" />
-    <NotificationError :show="actionError" :errors="actionErrorsList" :header="actionErrorMessage"
-        @update:show="handleErrorsReset" />
+        @confirm="confirmDeleteAction" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
@@ -242,20 +216,21 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
-import NotificationError from "./components/notifications/Error.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import AddEditDeviceForm from "./components/forms/AddEditDeviceForm.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { DocumentTextIcon } from "@heroicons/vue/24/solid";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkEditDeviceForm from "./components/forms/BulkEditDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue"
+import RestartIcon from "./components/icons/RestartIcon.vue";
+import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
+import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
+import Notification from "./components/notifications/Notification.vue";
+
 
 const loading = ref(false)
 const loadingModal = ref(false)
@@ -264,43 +239,44 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
-const showGlobal = ref(false);
-const addModalTrigger = ref(false);
+const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
+const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
 const actionErrorMessage = ref(null);
+const createFormSubmiting = ref(null);
+const updateFormSubmiting = ref(null);
+const confirmDeleteAction = ref(null);
+const formErrors = ref(null);
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    deviceRestartPermission: Boolean,
-    deviceGlobalView: Boolean,
-    search: String,
-    routeDevicesStore: String,
-    routeDevicesOptions: String,
-    routeDevicesBulkUpdate: String,
-    routeDevices: String,
-    routeSendEventNotifyAll: String
+    showGlobal: Boolean,
+    routes: Object,
+    itemData: Object,
+    itemOptions: Object,
+    // routeDevicesStore: String,
+    // routeDevicesOptions: String,
+    // routeDevicesBulkUpdate: String,
+    // routeDevices: String,
+    // routeSendEventNotifyAll: String
 });
 
-let DeviceObject = reactive({
-    update_path: props.routeDevicesStore,
-    domain_uuid: '',
-    device_uuid: '',
-    device_address: '',
-    extension_uuid: '',
-    device_profile_uuid: '',
-    device_template: '',
-    device_options: {
-        templates: Array,
-        profiles: Array,
-        extensions: Array
-    }
+
+const filterData = ref({
+    search: null,
+    showGlobal: props.showGlobal,
 });
+
+const showGlobal = ref(props.showGlobal);
 
 const bulkActions = ref([
     {
@@ -321,8 +297,103 @@ const bulkActions = ref([
 ]);
 
 onMounted(() => {
-    showGlobal.value = props.deviceGlobalView;
 });
+
+const handleEditRequest = (itemUuid) => {
+    editModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+
+    router.get(props.routes.current_page,
+        {
+            itemUuid: itemUuid,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemData',
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
+const handleCreateRequest = (form) => {
+    createFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.store, form)
+        .then((response) => {
+            createFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            createFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.put(props.itemData.update_url, form)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            updateFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
+const handleSingleItemDeleteRequest = (url) => {
+    confirmationModalTrigger.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(url);
+}
+
+const executeSingleDelete = (url) => {
+    router.delete(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            if (page.props.flash.error) {
+                showNotification('error', page.props.flash.error);
+            }
+            if (page.props.flash.message) {
+                showNotification('success', page.props.flash.message);
+            }
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onFinish: () => {
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onError: (errors) => {
+            console.log(errors);
+        },
+    });
+}
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -335,6 +406,13 @@ const handleBulkActionRequest = (action) => {
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
+}
+
+const handleCreateButtonClick = () => {
+    createModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions();
 }
 
 const selectedItemsExtensions = computed(() => {
@@ -354,10 +432,6 @@ const handleSelectAll = () => {
     }
 };
 
-const filterData = ref({
-    search: props.search,
-    showGlobal: props.deviceGlobalView,
-});
 
 const handleCopyToClipboard = (macAddress) => {
     navigator.clipboard.writeText(macAddress).then(() => {
@@ -383,13 +457,18 @@ const handleDestroy = (url) => {
     });
 }
 
-const handleRestart = (url) => {
-    axios.post(url).then((response) => {
-        loading.value = false;
-        restartRequestNotificationSuccessTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to restart selected:', error);
-    });
+const handleRestart = (device_uuid) => {
+    axios.post(props.routes.restart,
+        {'devices': [device_uuid]},
+    )
+    .then((response) => {
+            showNotification('success', response.data.messages);
+
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
 }
 
 const handleRestartSelected = () => {
@@ -437,7 +516,7 @@ const handleAdd = () => {
         DeviceObject.device_options.profiles = response.data.profiles
         DeviceObject.device_options.extensions = response.data.extensions
         loadingModal.value = false
-        addModalTrigger.value = true;
+        createModalTrigger.value = true;
     }).catch((error) => {
         console.error('Failed to get device data:', error);
     });
@@ -482,15 +561,19 @@ const handleBulkEdit = () => {
 
 const handleSearchButtonClick = () => {
     loading.value = true;
-    router.visit(props.routeDevices, {
+    router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
         },
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
+        only: [
+            "data",
+            'showGlobal',
+        ],
         onSuccess: (page) => {
             loading.value = false;
+            handleClearSelection();
         }
     });
 };
@@ -557,7 +640,7 @@ const handleSaveAdd = () => {
         extension_uuid: DeviceObject.extension_uuid
     }).then((response) => {
         handleSearchButtonClick()
-        handleClose()
+        handleModalClose()
     }).catch((error) => {
         console.error('Failed to add device data:', error);
         if (error.response.data.errors) {
@@ -575,7 +658,7 @@ const handleSaveEdit = () => {
         extension_uuid: DeviceObject.extension_uuid
     }).then((response) => {
         handleSearchButtonClick()
-        handleClose()
+        handleModalClose()
     }).catch((error) => {
         console.error('Failed to save device data:', error);
         console.log(error.response.data.errors)
@@ -601,10 +684,64 @@ const handleBulkSaveEdit = () => {
     });
 }
 
-const handleClose = () => {
-    addModalTrigger.value = false
-    editModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
+const getItemOptions = (domain_uuid) => {
+    router.get(props.routes.current_page,
+        {
+            'domain_uuid': domain_uuid,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
+const handleFormErrorResponse = (error) => {
+    if (error.request?.status == 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+
+}
+
+const handleClearSelection = () => {
+    selectedItems.value = [],
+        selectPageItems.value = false;
+    selectAll.value = false;
+}
+
+const handleModalClose = () => {
+    createModalTrigger.value = false;
+    editModalTrigger.value = false;
+    confirmationModalTrigger.value = false;
+    bulkUpdateModalTrigger.value = false;
 }
 
 const handleBulkClose = () => {
@@ -612,9 +749,16 @@ const handleBulkClose = () => {
     setTimeout(handleDeviceObjectReset, 1000)
 }
 
-const handleDestroyConfirmation = (url) => {
-    confirmationModalTrigger.value = true
-    confirmationModalDestroyPath.value = url;
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
+
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

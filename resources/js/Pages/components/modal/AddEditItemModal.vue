@@ -29,12 +29,6 @@
                                 <div class="mt-4 pb-4">
                                     <slot name="modal-body"></slot>
                                 </div>
-                                <div v-if="$slots['modal-action-buttons']">
-                                    <div
-                                        class="border-t border-t-gray-200 mt-4 pt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                                        <slot name="modal-action-buttons"></slot>
-                                    </div>
-                                </div>
                             </div>
                             <Loading :show="loading" :absolute="false" />
                         </DialogPanel>
