@@ -75,6 +75,24 @@
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
+            <template v-if="selectPageItems" v-slot:current-selection>
+                <td colspan="6">
+                    <div class="text-sm text-center m-2">
+                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <button v-if="!selectAll && selectedItems.length != data.total"
+                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            @click="handleSelectAll">
+                            Select all {{ data.total }} items
+                        </button>
+                        <button v-if="selectAll"
+                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            @click="handleClearSelection">
+                            Clear selection
+                        </button>
+                    </div>
+                </td>
+            </template>
+
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.device_uuid">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex"
@@ -282,17 +300,17 @@ const bulkActions = ref([
     {
         id: 'bulk_restart',
         label: 'Restart',
-        icon: RestartIcon
+        icon: 'RestartIcon'
     },
     {
         id: 'bulk_update',
         label: 'Edit',
-        icon: PencilSquareIcon
+        icon: 'PencilSquareIcon'
     },
     {
         id: 'bulk_delete',
         label: 'Delete',
-        icon: TrashIcon
+        icon: 'TrashIcon'
     },
 ]);
 
@@ -423,13 +441,17 @@ const selectedItemsExtensions = computed(() => {
 });
 
 const handleSelectAll = () => {
-    if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
-        selectedItemsExtensions.value = props.data.data.map(item => item.extension_uuid);
-    } else {
-        selectedItems.value = [];
-        selectedItemsExtensions.value = [];
-    }
+    axios.post(props.routes.select_all, filterData._rawValue)
+        .then((response) => {
+            selectedItems.value = response.data.items;
+            selectAll.value = true;
+            showNotification('success', response.data.messages);
+
+        }).catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+        });
+
 };
 
 
@@ -730,6 +752,16 @@ const handleFormErrorResponse = (error) => {
     }
 
 }
+
+const handleSelectPageItems = () => {
+    if (selectPageItems.value) {
+        selectedItems.value = props.data.data.map(item => item.device_uuid);
+    } else {
+        selectedItems.value = [];
+    }
+};
+
+
 
 const handleClearSelection = () => {
     selectedItems.value = [],

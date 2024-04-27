@@ -20,8 +20,8 @@
                 <div v-if="hasSelectedItems" class="py-1">
                     <MenuItem v-for="action in actions" :key="action.id" v-slot="{ active }">
                         <button @click="$emit('bulkAction', action.id)"
-                            :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-500', 'group flex items-center px-4 py-2 text-sm min-w-full']">
-                            <component :is="action.icon" class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                            :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-500', getIconStyles(action.icon).bgColor, getIconStyles(action.icon).textColor, 'group flex items-center px-4 py-2 text-sm min-w-full']">
+                            <component :is="getIconComponent(action.icon)" class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
                             {{ action.label }}
                         </button>
                     </MenuItem>
@@ -35,12 +35,15 @@
 </template>
 
 <script setup>
+import { defineAsyncComponent,computed,onMounted } from 'vue'
+
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import {
-    PencilSquareIcon,
-    TrashIcon,
-} from '@heroicons/vue/20/solid'
 import ArrowDropDown from "../icons/ArrowDropDown.vue"
+
+
+const RestartIcon = defineAsyncComponent(() => import('../icons/RestartIcon.vue'));
+const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PencilSquareIcon'));
+const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
 
 // Define props to accept actions from the parent component
 const props = defineProps({
@@ -48,4 +51,23 @@ const props = defineProps({
     hasSelectedItems: Boolean
 });
 
+// Map 
+const iconMap = {
+  RestartIcon,
+  PencilSquareIcon,
+  TrashIcon
+};
+
+const getIconComponent = (iconKey) => {
+  return iconMap[iconKey];
+};
+
+const styleMap = {
+    // ArrowDropDown: { bgColor: 'bg-teal-50', textColor: 'text-teal-700' },
+};
+
+
+const getIconStyles = (iconKey) => {
+  return styleMap[iconKey] || { bgColor: 'default-bg', textColor: 'default-text' };
+};
 </script>

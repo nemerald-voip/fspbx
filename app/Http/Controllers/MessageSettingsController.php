@@ -14,13 +14,17 @@ use App\Http\Requests\BulkUpdateMessageSettingRequest;
 
 class MessageSettingsController extends Controller
 {
-    public $model = 'App\Models\MessageSetting';
+    public $model;
     public $filters = [];
     public $sortField;
     public $sortOrder;
     protected $viewName = 'MessageSettings';
     protected $searchable = ['destination', 'carrier', 'description', 'chatplan_detail_data', 'email'];
 
+    public function __construct()
+    {
+        $this->model = new MessageSetting();
+    }
 
     /**
      * Display a listing of the resource.
@@ -135,13 +139,11 @@ class MessageSettingsController extends Controller
         }
 
         if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
-            logger('here');
             // Access domains through the session and filter extensions by those domains
             $domainUuids = Session::get('domains')->pluck('domain_uuid');
             $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
                 ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         } else {
-            logger('there');
             // get extensions for session domain
             $extensions = Extensions::where('domain_uuid',session('domain_uuid'))
                 ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
@@ -319,16 +321,16 @@ class MessageSettingsController extends Controller
     {
         try {
             if (request()->get('showGlobal')) {
-                $settings = MessageSetting::get('sms_destination_uuid')->pluck('sms_destination_uuid');
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
             } else {
-                $settings = MessageSetting::where('domain_uuid', session('domain_uuid'))
-                    ->get('sms_destination_uuid')->pluck('sms_destination_uuid');
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
             }
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => $settings,
+                'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());

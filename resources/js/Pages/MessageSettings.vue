@@ -269,12 +269,12 @@ const bulkActions = ref([
     {
         id: 'bulk_update',
         label: 'Edit',
-        icon: PencilSquareIcon
+        icon: 'PencilSquareIcon'
     },
     {
         id: 'bulk_delete',
         label: 'Delete',
-        icon: TrashIcon
+        icon: 'TrashIcon'
     },
 ]);
 
@@ -603,23 +603,6 @@ const renderRequestedPage = (url) => {
     });
 };
 
-
-
-const handleBulkSaveEdit = () => {
-    axios.put(props.routeDevicesBulkUpdate, {
-        devices: selectedItems.value,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleBulkClose()
-    }).catch((error) => {
-        console.error('Failed to save device data:', error);
-        if (error.response.data.message) {
-            handleErrorsPush(error.response.data.message)
-        }
-    });
-}
 
 const handleModalClose = () => {
     createModalTrigger.value = false;
