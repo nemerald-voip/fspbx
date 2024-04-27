@@ -59,44 +59,44 @@ class Destinations extends Model
         'group_uuid',
     ];
 
-    public function getDestinationNumberAttribute($value): ?string
-    {
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+    // public function getDestinationNumberAttribute($value): ?string
+    // {
+    //     //Get libphonenumber object
+    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
-        //try to convert phone number to National format
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                return $phoneNumberUtil
-                    ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-            } else {
-                return $value;
-            }
-        } catch (NumberParseException $e) {
+    //     //try to convert phone number to National format
+    //     try {
+    //         $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
+    //         if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+    //             return $phoneNumberUtil
+    //                 ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+    //         } else {
+    //             return $value;
+    //         }
+    //     } catch (NumberParseException $e) {
 
-            // Do nothing and leave the number as is
-            return $value;
-        }
-    }
+    //         // Do nothing and leave the number as is
+    //         return $value;
+    //     }
+    // }
 
-    public function getDestinationCallerIdNumberAttribute($value): ?string
-    {
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+    // public function getDestinationCallerIdNumberAttribute($value): ?string
+    // {
+    //     //Get libphonenumber object
+    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
-        //try to convert phone number to National format
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                return $phoneNumberUtil
-                    ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-            } else {
-                return $value;
-            }
-        } catch (NumberParseException $e) {
-            // Do nothing and leave the number as is
-            return $value;
-        }
-    }
+    //     //try to convert phone number to National format
+    //     try {
+    //         $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
+    //         if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+    //             return $phoneNumberUtil
+    //                 ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+    //         } else {
+    //             return $value;
+    //         }
+    //     } catch (NumberParseException $e) {
+    //         // Do nothing and leave the number as is
+    //         return $value;
+    //     }
+    // }
 }
