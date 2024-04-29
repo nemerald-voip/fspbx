@@ -26,18 +26,6 @@
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
-                <button v-if="!showGlobal" @click.prevent="handleBulkEdit()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Edit device
-                </button>
-                <button type="button" @click.prevent="handleRestartSelected()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Restart selected devices
-                </button>
-                <button type="button" @click.prevent="handleRestartAll()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Restart all devices
-                </button>
 
                 <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -205,7 +193,8 @@
         @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose" />
+                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose" 
+                @domain-selected="getItemOptions" />
         </template>
     </AddEditItemModal>
 
@@ -416,6 +405,20 @@ const handleBulkActionRequest = (action) => {
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
+}
+
+const executeBulkDelete = () => {
+    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+        .then((response) => {
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleModalClose();
+            handleErrorResponse(error);
+        });
 }
 
 const handleBulkUpdateRequest = (form) => {

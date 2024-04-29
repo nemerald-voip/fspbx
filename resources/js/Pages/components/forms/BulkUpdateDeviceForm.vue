@@ -44,7 +44,7 @@
         <div class="sm:col-span-12">
             <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
             <div class="mt-2">
-                <SelectBox :options="options.profiles" :selectedItem="form.device_profile_uuid" :search="true" :showClear="true" :showUndo="form.device_template === 'NULL'"
+                <SelectBox :options="options.profiles" :selectedItem="form.device_profile_uuid" :search="true" :showClear="true" :showUndo="form.device_profile_uuid === 'NULL'"
                     :placeholder="placeholderText('device_profile_uuid')" @update:modal-value="handleProfileUpdate" />
             </div>
             <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -65,7 +65,7 @@
         <div class="sm:col-span-12">
             <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
             <div class="mt-2">
-                <SelectBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true" :showUndo="form.extension === 'NULL'"
+                <SelectBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true" :showUndo="form.domain_uuid === 'NULL'"
                     :placeholder="placeholderText('domain_uuid')" @update:modal-value="handleDomainUpdate"
                     :error="errors?.domain_uuid && errors.domain_uuid.length > 0" />
             </div>
@@ -147,8 +147,9 @@ const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
     form.device_profile_uuid = null;
     form.extension = null;
-    emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
-}
+    if (newSelectedItem.value !== "NULL") {
+        emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
+    }}
 
 // Function to determine placeholder based on the current value
 function placeholderText(fieldName) {

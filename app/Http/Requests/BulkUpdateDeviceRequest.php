@@ -24,10 +24,6 @@ class BulkUpdateDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'items' => [
-                'required',
-                'array'
-            ],
             'device_profile_uuid' => [
                 'nullable',
                 Rule::when(
@@ -62,7 +58,7 @@ class BulkUpdateDeviceRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        logger($this);
+        // logger($this);
 
     }
 }

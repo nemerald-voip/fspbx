@@ -133,7 +133,9 @@ const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
     form.device_profile_uuid = null;
     form.extension = null;
-    emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
+    if (newSelectedItem.value !== "NULL") {
+        emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
+    }
 }
 
 </script>

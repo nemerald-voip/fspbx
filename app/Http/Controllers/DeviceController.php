@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Domain;
 use App\Models\Devices;
 use App\Models\Settings;
 use App\Models\Extensions;
@@ -12,6 +13,7 @@ use App\Models\SipProfiles;
 use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
@@ -559,21 +561,40 @@ class DeviceController extends Controller
      */
     public function bulkUpdate(BulkUpdateDeviceRequest  $request)
     {
+        // $request->items has items IDs that need to be updated
+        // $request->validated has the update data
 
         try {
             // Prepare the data for updating
-            $updateData = collect(request()->all())->only([
-                'device_template', 'device_profile_uuid', 'extension', 'domain_uuid'
-            ])->filter(function ($value) {
-                return $value !== null;
-            })->toArray();
+            $inputs = collect($request->validated())
+                ->filter(function ($value) {
+                    return $value !== null;
+                })->toArray();
 
-            logger($updateData);
+            if (isset($inputs['device_template'])) {
+                $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+            }
 
-            // $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
-            //     ->update($updateData);
+            if (isset($inputs['extension'])) {
+                $extension = $inputs['extension'];
+                unset($inputs['extension']);
+            } else {
+                $extension = null;
+            }
 
-            // Return a JSON response indicating success
+            if (sizeof($inputs) > 0) {
+                $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
+                    ->update($inputs);
+            }
+
+            if ($extension) {
+                // First, we are deleting all existing device lines
+                $this->deleteDeviceLines(request('items'));
+
+                // Create new lines
+                $this->createDeviceLines(request('items'), $extension);
+            }
+
             return response()->json([
                 'messages' => ['success' => ['Selected items updated']],
             ], 200);
@@ -694,4 +715,129 @@ class DeviceController extends Controller
         ], 500); // 500 Internal Server Error for any other errors
     }
 
+    public function deleteDeviceLines($deviceUuids)
+    {
+        // Retrieve all devices at once with their lines
+        $devices = $this->model::whereIn('device_uuid', $deviceUuids)
+            ->with(['lines' => function ($query) {
+                $query->select('device_uuid', 'device_line_uuid');
+            }])
+            ->get(['device_uuid']);
+
+        $lineIdsToDelete = [];
+        foreach ($devices as $device) {
+            // Collect line IDs
+            foreach ($device->lines as $line) {
+                $lineIdsToDelete[] = $line->device_line_uuid; // Assuming there's an 'id' field
+            }
+
+            // $device->update(['device_label' => null]);
+            // logger($device);
+        }
+
+        // Bulk delete lines
+        DeviceLines::whereIn('device_line_uuid', $lineIdsToDelete)->delete();
+
+        // Bulk update all devices to set label to null
+        $this->model::whereIn('device_uuid', $deviceUuids)->update(['device_label' => null]);
+    }
+
+
+    public function createDeviceLines($deviceUuids, $extension_number)
+    {
+        // Retrieve all devices at once with their lines
+        $devices = $this->model::whereIn('device_uuid', $deviceUuids)
+            ->get(['device_uuid', 'domain_uuid']);
+
+        $domain_uuid = $devices->first()->domain_uuid;
+        $domain_name = Domain::find($domain_uuid)->domain_name;
+
+        $extension = Extensions::where('domain_uuid', $domain_uuid)
+            ->where('extension', $extension_number)
+            ->select([
+                'extension_uuid',
+                'extension',
+                'password'
+            ])
+            ->first();
+
+        foreach ($devices as $device) {
+            $deviceLines = new DeviceLines();
+            $deviceLines->fill([
+                'device_uuid' => $device->device_uuid,
+                'line_number' => '1',
+                'server_address' => $domain_name,
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                'server_address_primary' => get_domain_setting('server_address_primary'),
+                'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                'display_name' => $extension->extension,
+                'user_id' => $extension->extension,
+                'auth_id' => $extension->extension,
+                'label' => $extension->extension,
+                'password' => $extension->password,
+                'sip_port' => get_domain_setting('line_sip_port'),
+                'sip_transport' => get_domain_setting('line_sip_transport'),
+                'register_expires' => get_domain_setting('line_register_expires'),
+                'enabled' => 'true',
+                'domain_uuid' => $domain_uuid
+            ]);
+            $deviceLines->save();
+        }
+
+        // // Bulk update all devices to set label to extension number
+        $this->model::whereIn('device_uuid', $deviceUuids)->update(['device_label' => $extension_number]);
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  Devices  $device
+     * 
+     */
+    public function BulkDelete(Devices $device)
+    {
+        try {
+            // Begin Transaction
+            DB::beginTransaction();
+
+            // Retrieve all devices at once with their lines
+            $devices = $this->model::whereIn('device_uuid', request('items'))
+                ->with(['lines' => function ($query) {
+                    $query->select('device_uuid', 'device_line_uuid');
+                }])
+                ->get(['device_uuid']);
+
+            foreach ($devices as $device) {
+                // Delete all related lines for each device
+                if ($device->lines) { // Using eager loaded 'lines'
+                    foreach ($device->lines as $line) {
+                        $line->delete();
+                    }
+                }
+
+                // Delete the device itself
+                $device->delete();
+            }
+
+            // Commit Transaction
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
 }
