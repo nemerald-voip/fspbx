@@ -199,7 +199,11 @@
     </AddEditItemModal>
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
+        @confirm="confirmDeleteAction"/>
+
+    <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
+        @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
+        :confirm-button-label="'Restart'" cancel-button-label="Cancel"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -216,6 +220,7 @@ import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -242,6 +247,7 @@ const editModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
+const confirmationRestartTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
 const actionErrorsList = ref({});
@@ -249,6 +255,7 @@ const actionErrorMessage = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
+const confirmRestartAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -405,6 +412,25 @@ const handleBulkActionRequest = (action) => {
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
+    if (action === 'bulk_restart') {
+        confirmationRestartTrigger.value = true;
+        confirmRestartAction.value = () => executeBulkRestart();
+    }
+}
+
+const executeBulkRestart = () => {
+    axios.post(props.routes.restart,
+        {'devices': selectedItems.value},
+    )
+    .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleModalClose();
+            handleFormErrorResponse(error);
+        });
 }
 
 const executeBulkDelete = () => {
@@ -442,13 +468,6 @@ const handleCreateButtonClick = () => {
     loadingModal.value = true
     getItemOptions();
 }
-
-// const selectedItemsExtensions = computed(() => {
-//     return selectedItems.value.map(id => {
-//         const foundItem = props.data.data.find(item => item.device_uuid === id);
-//         return foundItem ? foundItem.extension_uuid : null;
-//     });
-// });
 
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
@@ -503,31 +522,6 @@ const handleRestart = (device_uuid) => {
         });
 }
 
-// const handleRestartSelected = () => {
-//     if (selectedItemsExtensions.value.length > 0) {
-//         let scope = showGlobal.value ? 'global' : 'local';
-//         axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`, {
-//             extensionIds: selectedItemsExtensions.value,
-//         }).then((response) => {
-//             loading.value = false;
-//             restartRequestNotificationSuccessTrigger.value = true;
-//         }).catch((error) => {
-//             console.error('Failed to restart selected:', error);
-//         });
-//     } else {
-//         restartRequestNotificationErrorTrigger.value = true
-//     }
-// }
-
-const handleRestartAll = () => {
-    let scope = showGlobal.value ? 'global' : 'local';
-    axios.post(`${props.routeSendEventNotifyAll}?scope=${scope}`).then((response) => {
-        loading.value = false;
-        restartRequestNotificationSuccessTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to restart selected:', error);
-    });
-}
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -539,56 +533,6 @@ const handleShowLocal = () => {
     filterData.value.showGlobal = false;
     showGlobal.value = false;
     handleSearchButtonClick();
-}
-
-const handleAdd = () => {
-    DeviceObject.update_path = props.routeDevicesStore;
-    axios.get(props.routeDevicesOptions).then((response) => {
-        DeviceObject.device_options.templates = response.data.templates
-        DeviceObject.device_options.profiles = response.data.profiles
-        DeviceObject.device_options.extensions = response.data.extensions
-        loadingModal.value = false
-        createModalTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to get device data:', error);
-    });
-}
-
-const handleEdit = (url) => {
-    editModalTrigger.value = true
-    loadingModal.value = true
-    axios.get(url).then((response) => {
-        DeviceObject.domain_uuid = response.data.device.domain_uuid
-        DeviceObject.update_path = response.data.device.update_path
-        DeviceObject.device_uuid = response.data.device.device_uuid
-        DeviceObject.device_address = response.data.device.device_address
-        DeviceObject.device_profile_uuid = response.data.device.device_profile_uuid
-        DeviceObject.device_template = response.data.device.device_template
-        DeviceObject.extension_uuid = response.data.device.extension_uuid
-        DeviceObject.device_options.templates = response.data.device.options.templates
-        DeviceObject.device_options.profiles = response.data.device.options.profiles
-        DeviceObject.device_options.extensions = response.data.device.options.extensions
-        loadingModal.value = false
-    }).catch((error) => {
-        console.error('Failed to get device data:', error);
-    });
-}
-
-const handleBulkEdit = () => {
-    if (selectedItems.value.length > 0) {
-        bulkEditModalTrigger.value = true;
-        loadingModal.value = true;
-        axios.get(props.routeDevicesOptions).then((response) => {
-            DeviceObject.device_options.templates = response.data.templates
-            DeviceObject.device_options.profiles = response.data.profiles
-            DeviceObject.device_options.extensions = response.data.extensions
-            loadingModal.value = false
-        }).catch((error) => {
-            console.error('Failed to get device data:', error);
-        });
-    } else {
-        restartRequestNotificationErrorTrigger.value = true
-    }
 }
 
 const handleSearchButtonClick = () => {
