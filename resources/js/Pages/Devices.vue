@@ -22,17 +22,17 @@
             </template>
 
             <template #action>
-                <button type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="permissions.canCreate" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="!showGlobal && permissions.canSeeGlobal" type="button" @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="showGlobal && permissions.canSeeGlobal" type="button" @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -87,7 +87,8 @@
                         :text="row.device_address_formatted">
                         <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9 cursor-pointer hover:text-gray-900" @click="handleEditRequest(row.device_uuid)">
+                        <div class="ml-9" :class="{ 'cursor-pointer hover:text-gray-900': permissions.canUpdate, }"
+                            @click="permissions.canUpdate && handleEditRequest(row.device_uuid)">
                             {{ row.device_address_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -116,7 +117,8 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit'" position='TopCenter' target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="permissions.canUpdate" :content="'Edit'" position='TopCenter'
+                                    target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -132,7 +134,8 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Delete'" position='TopCenter' target="#delete_tooltip_target">
+                                <ejs-tooltip v-if="permissions.canDelete" :content="'Delete'" position='TopCenter'
+                                    target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -193,24 +196,24 @@
         @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose" 
+                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
                 @domain-selected="getItemOptions" />
         </template>
     </AddEditItemModal>
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction"/>
+        @confirm="confirmDeleteAction" />
 
     <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
         @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
-        :confirm-button-label="'Restart'" cancel-button-label="Cancel"/>
+        :confirm-button-label="'Restart'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -244,14 +247,10 @@ const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
-const bulkEditModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const actionError = ref(false);
-const actionErrorsList = ref({});
-const actionErrorMessage = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
@@ -269,11 +268,7 @@ const props = defineProps({
     routes: Object,
     itemData: Object,
     itemOptions: Object,
-    // routeDevicesStore: String,
-    // routeDevicesOptions: String,
-    // routeDevicesBulkUpdate: String,
-    // routeDevices: String,
-    // routeSendEventNotifyAll: String
+    permissions: Object,
 });
 
 
@@ -284,23 +279,32 @@ const filterData = ref({
 
 const showGlobal = ref(props.showGlobal);
 
-const bulkActions = ref([
-    {
-        id: 'bulk_restart',
-        label: 'Restart',
-        icon: 'RestartIcon'
-    },
-    {
-        id: 'bulk_update',
-        label: 'Edit',
-        icon: 'PencilSquareIcon'
-    },
-    {
-        id: 'bulk_delete',
-        label: 'Delete',
-        icon: 'TrashIcon'
-    },
-]);
+// Computed property for bulk actions based on permissions
+const bulkActions = computed(() => {
+    const actions = [
+        {
+            id: 'bulk_restart',
+            label: 'Restart',
+            icon: 'RestartIcon'
+        },
+        {
+            id: 'bulk_update',
+            label: 'Edit',
+            icon: 'PencilSquareIcon'
+        }
+    ];
+
+    // Conditionally add the delete action if permission is granted
+    if (props.permissions.canDelete) {
+        actions.push({
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
+        });
+    }
+
+    return actions;
+});
 
 onMounted(() => {
 });
@@ -420,9 +424,9 @@ const handleBulkActionRequest = (action) => {
 
 const executeBulkRestart = () => {
     axios.post(props.routes.restart,
-        {'devices': selectedItems.value},
+        { 'devices': selectedItems.value },
     )
-    .then((response) => {
+        .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
             handleClearSelection();
@@ -496,23 +500,12 @@ const handleCopyToClipboard = (macAddress) => {
     });
 }
 
-const handleDestroy = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        }
-    });
-}
 
 const handleRestart = (device_uuid) => {
     axios.post(props.routes.restart,
-        {'devices': [device_uuid]},
+        { 'devices': [device_uuid] },
     )
-    .then((response) => {
+        .then((response) => {
             showNotification('success', response.data.messages);
 
             handleClearSelection();
@@ -560,38 +553,6 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
-const handleErrorsReset = () => {
-    actionError.value = false;
-    actionErrorsList.value = {};
-    actionErrorMessage.value = null;
-}
-
-const handleErrorsPush = (message, errors = null) => {
-    actionError.value = true;
-    if (errors !== null) {
-        actionErrorsList.value = errors;
-    } else {
-        actionErrorsList.value = {};
-    }
-    actionErrorMessage.value = message;
-}
-
-const handleDeviceObjectReset = () => {
-    DeviceObject = reactive({
-        update_path: props.routeDevicesStore,
-        domain_uuid: '',
-        device_uuid: '',
-        device_address: '',
-        extension_uuid: '',
-        device_profile_uuid: '',
-        device_template: '',
-        device_options: {
-            templates: Array,
-            profiles: Array,
-            extensions: Array
-        }
-    });
-}
 
 const renderRequestedPage = (url) => {
     loading.value = true;
@@ -608,57 +569,6 @@ const renderRequestedPage = (url) => {
     });
 };
 
-const handleSaveAdd = () => {
-    axios.post(props.routeDevicesStore, {
-        device_address: DeviceObject.device_address,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid,
-        extension_uuid: DeviceObject.extension_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleModalClose()
-    }).catch((error) => {
-        console.error('Failed to add device data:', error);
-        if (error.response.data.errors) {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
-}
-
-const handleSaveEdit = () => {
-    axios.put(DeviceObject.update_path, {
-        domain_uuid: DeviceObject.domain_uuid,
-        device_address: DeviceObject.device_address,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid,
-        extension_uuid: DeviceObject.extension_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleModalClose()
-    }).catch((error) => {
-        console.error('Failed to save device data:', error);
-        console.log(error.response.data.errors)
-        if (error.response.data.errors.length > 0) {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
-}
-
-const handleBulkSaveEdit = () => {
-    axios.put(props.routeDevicesBulkUpdate, {
-        devices: selectedItems.value,
-        device_template: DeviceObject.device_template,
-        device_profile_uuid: DeviceObject.device_profile_uuid
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleBulkClose()
-    }).catch((error) => {
-        console.error('Failed to save device data:', error);
-        if (error.response.data.message) {
-            handleErrorsPush(error.response.data.message)
-        }
-    });
-}
 
 const getItemOptions = (domain_uuid) => {
     router.get(props.routes.current_page,
@@ -746,12 +656,8 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
+    confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
-}
-
-const handleBulkClose = () => {
-    bulkEditModalTrigger.value = false
-    setTimeout(handleDeviceObjectReset, 1000)
 }
 
 const hideNotification = () => {
@@ -772,5 +678,4 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>

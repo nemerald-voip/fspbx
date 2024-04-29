@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Http\Requests\UpdateBulkDeviceRequest;
+use permission;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -67,7 +68,6 @@ class DeviceController extends Controller
                     fn () =>
                     $this->getItemOptions()
                 ),
-                'routeSendEventNotifyAll' => route('extensions.send-event-notify-all'),
                 'routes' => [
                     'current_page' => route('devices.index'),
                     'store' => route('devices.store'),
@@ -76,6 +76,9 @@ class DeviceController extends Controller
                     'bulk_update' => route('devices.bulk.update'),
                     'restart' => route('devices.restart'),
                 ],
+                'permissions' =>  function () {
+                    return $this->getPermissions();
+                },
             ]
         );
     }
@@ -155,26 +158,6 @@ class DeviceController extends Controller
             // logger($device->lines);
         }
 
-
-        // logger($data);
-
-
-        // foreach ($data as $device) {
-
-
-        //     if ($device->lines()->first() && $device->lines()->first()->extension()) {
-        //         $device->extension = $device->lines()->first()->extension()->extension;
-        //         $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '(' . trim($device->lines()->first()->extension()->effective_caller_id_name) . ')' : '';
-        //         $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
-        //         $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
-        //         $device->send_notify_path = route(
-        //             'extensions.send-event-notify',
-        //             $device->lines()->first()->extension()
-        //         );
-        //     }
-        //     $device->edit_path = route('devices.edit', $device);
-        //     $device->destroy_path = route('devices.destroy', $device);
-        // }
         return $data;
     }
 
@@ -534,11 +517,13 @@ class DeviceController extends Controller
 
         $domainOptions = [];
         // Loop through each domain and create an option
-        foreach (session('domains') as $domain) {
-            $domainOptions[] = [
-                'value' => $domain->domain_uuid,
-                'name' => $domain->domain_description,
-            ];
+        if (session('domains')) {
+            foreach (session('domains') as $domain) {
+                $domainOptions[] = [
+                    'value' => $domain->domain_uuid,
+                    'name' => $domain->domain_description,
+                ];
+            }
         }
 
         // Construct the itemOptions object
@@ -839,5 +824,17 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function getPermissions() {
+        $permissions = [];
+        $permissions['canCreate'] = userCheckPermission('device_add');
+        $permissions['canSeeGlobal'] = userCheckPermission('device_all');
+        $permissions['canDelete'] = userCheckPermission('device_delete');
+        $permissions['canUpdate'] = userCheckPermission('device_edit');
+
+        $permissions['canUpdateDomain'] = userCheckPermission('device_domain') && session('domains'); //not yet implemented
+        logger($permissions);
+        return $permissions;
     }
 }

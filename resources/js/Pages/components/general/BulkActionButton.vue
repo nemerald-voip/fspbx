@@ -48,7 +48,7 @@ const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/Tra
 // Define props to accept actions from the parent component
 const props = defineProps({
     actions: Array,
-    hasSelectedItems: Boolean
+    hasSelectedItems: Boolean,
 });
 
 // Map 
