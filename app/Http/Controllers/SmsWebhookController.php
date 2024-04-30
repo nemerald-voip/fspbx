@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use message;
-use domain_settings;
+
 use App\Models\Domain;
 use App\Models\Messages;
 use App\Models\Extensions;
@@ -12,14 +11,18 @@ use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
 use App\Notifications\StatusUpdate;
-use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Http;
 use App\Jobs\SendSmsNotificationToSlack;
-use Propaganistas\LaravelPhone\PhoneNumber;
 use Illuminate\Support\Facades\Notification;
 
 class SmsWebhookController extends Controller
 {
+    protected $mobileAppDomainConfig;
+    protected $smsDestinationModel;
+    protected $sourcePhoneNumberObject;
+
+
     // Recieve SMS from the provider and send through Ringotel API
     public function handle(Request $request)
     {
@@ -172,129 +175,114 @@ class SmsWebhookController extends Controller
     }
 
     // Receive SMS from Ringotel and send to the provider
-    public function messageFromRingotel(Request $request)
+    public function messageFromRingotel()
     {
-        //$payload = json_decode(file_get_contents('php://input'));
-        $rawdata = file_get_contents("php://input");
-        // $rawdata = '{"method":"message","api_key":"e9bS5f5WNBK4HZRK143Wb3VM1EIk48hDQFvL6MP16UA0VMTUV2QmVdtqFXmf6uKf",
-        //     "params":{"from":"300","to":"6467052267","type":1,"ownerid":"16276636335171355647","userid":"16481387548477672383",
-        //         "content":"5","orgid":"16467742064165946777"}}';
-        $message = json_decode($rawdata, true);
+        $message = $this->parseRequest();
+
+        try {
+            $this->validateMessage($message);
+            $response = $this->handleMessageType($message);
+            return $response;
+        } catch (\Exception $e) {
+            return $this->handleError($message, $e);
+        }
 
         // Set initial validation status
         $validation = true;
 
         //Check message API key to authorize this method
-        if (!isset($message['api_key'])) {
-            return response('No API Key Provided');
-        } elseif ($message['api_key'] != config("ringotel.token")) {
-            $validation = false;
-            $status = "Wrong API Key";
-        }
+        // if (!isset($message['api_key'])) {
+        //     return response('No API Key Provided');
+        // } elseif ($message['api_key'] != config("ringotel.token")) {
+        //     $validation = false;
+        //     $status = "Wrong API Key";
+        // }
 
-        // if method is "typing"
-        if ($message['method'] == "typing") {
-            return;
-        }
+        // // if method is "typing"
+        // if ($message['method'] == "typing") {
+        //     return;
+        // }
 
-        if (isset($message['params']['to'])) {
-            //Create libphonenumber object for destination number
-            $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-            $phoneNumberObject = $phoneNumberUtil->parse($message['params']['to'], 'US');
+        // if (isset($message['params']['to'])) {
+        //     //Create libphonenumber object for destination number
+        //     $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        //     $phoneNumberObject = $phoneNumberUtil->parse($message['params']['to'], 'US');
 
-            //Validate the destination number
-            if (!$phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                //     Notification::route('mail', 'dexter@stellarvoip.com')
-                //   ->notify(new StatusUpdate("number is not valid"));
-                $validation = false;
-                $status = "Destination number is not a valid US number";
-            }
-        }
-
-        // if method is "read" send
-        if ($message['method'] == "read") {
-            // Process read response
-            exit();
-        }
-
-        // if method is "delivered" send
-        if ($message['method'] == "delivered") {
-            // Process delivered response
-            exit();
-        }
-
-        //Get user's domain settings
-        $domainSetting = DomainSettings::where('domain_setting_subcategory', 'org_id')
-            ->where('domain_setting_value', $message['params']['orgid'])
-            ->first();
-        if (!$domainSetting) {
-            $validation = false;
-            $status = "Domain not found";
-        }
-
-        if ($domainSetting) {
-            // Get SMS Destinations model that belongs to the user
-            $smsDestinationModel = SmsDestinations::where('domain_uuid', $domainSetting->domain_uuid)
-                ->where('chatplan_detail_data', $message['params']['from'])
-                ->first();
-        }
-
-        if (!$smsDestinationModel) {
-            $validation = false;
-            $status = "Caller ID not found for extension " .$message['params']['from'];
-        }
-
-        if ($smsDestinationModel) {
-            //Create libphonenumber object for Caller ID number
-            $sourcePhoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-            $sourcePhoneNumberObject = $sourcePhoneNumberUtil->parse($smsDestinationModel->destination, 'US');
-
-            //Validate the source number
-            if (!$sourcePhoneNumberUtil->isValidNumber($sourcePhoneNumberObject)) {
-                $validation = false;
-                $status = "Source number is not a valid US number";
-            }
-
-            //Get Extension model
-            $ext_model = Extensions::where('domain_uuid', $smsDestinationModel->domain_uuid)
-                ->where('extension', $message['params']['from'])
-                ->first();
-
-            if (!$ext_model) {
-                $validation = false;
-                $status = "User extension not found";
-            }
-
-            //Assign a provider
-            $carrier =  $smsDestinationModel->carrier;
-        }
-
-        // // Send text message through Teli API
-        // if ($validation && $message['method'] == "message" && $carrier == "teli") {
-        //     $response = Http::asForm()->post('https://api.teleapi.net/sms/send?token=' . conig('teli.token'), [
-        //         "source" => $sourcePhoneNumberObject->getNationalNumber(),
-        //         "destination" => $phoneNumberObject->getNationalNumber(),
-        //         "message" => $message['params']['content']
-        //     ]);
-
-        //     //Get result
-        //     if (isset($response) && $response['status'] == 'error') {
-        //         $status = $response['data'];
-        //     } elseif (isset($response) && $response['status'] == 'success') {
-        //         $status = "success";
+        //     //Validate the destination number
+        //     if (!$phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+        //         //     Notification::route('mail', 'dexter@stellarvoip.com')
+        //         //   ->notify(new StatusUpdate("number is not valid"));
+        //         $validation = false;
+        //         $status = "Destination number is not a valid US number";
         //     }
         // }
 
-        // Store message in database
-        $messageModel = new Messages;
-        $messageModel->extension_uuid = (isset($ext_model->extension_uuid)) ? $ext_model->extension_uuid : null;
-        $messageModel->domain_uuid = (isset($smsDestinationModel->domain_uuid)) ? $smsDestinationModel->domain_uuid : null;
-        $messageModel->source = (isset($sourcePhoneNumberObject)) ? $sourcePhoneNumberObject->getNationalNumber() : "";
-        $messageModel->destination = (isset($phoneNumberObject)) ? $phoneNumberObject->getNationalNumber() : "";
-        $messageModel->message = $message['params']['content'];
-        $messageModel->direction = 'out';
-        $messageModel->type = 'sms';
-        $messageModel->save();
+        // // if method is "read" send
+        // if ($message['method'] == "read") {
+        //     // Process read response
+        //     exit();
+        // }
+
+        // if method is "delivered" send
+        // if ($message['method'] == "delivered") {
+        //     // Process delivered response
+        //     exit();
+        // }
+
+        //Get user's domain settings
+        // $domainSetting = DomainSettings::where('domain_setting_subcategory', 'org_id')
+        //     ->with('domain')
+        //     ->where('domain_setting_value', $message['params']['orgid'])
+        //     ->first();
+        // if (!$domainSetting) {
+        //     $validation = false;
+        //     $status = "Domain not found";
+        // }
+
+
+        // if ($domainSetting) {
+        //     // Get SMS Destinations model that belongs to the user
+        //     $smsDestinationModel = SmsDestinations::where('domain_uuid', $domainSetting->domain_uuid)
+        //         ->where('chatplan_detail_data', $message['params']['from'])
+        //         ->first();
+        // }
+
+        // if (!$smsDestinationModel) {
+        //     $validation = false;
+        //     $status = isset($domainSetting) && isset($domainSetting->domain) ?
+        //         "Extension *" . $message['params']['from'] . "* in *" . $domainSetting->domain->domain_description . "* doesn't have an assigned phone number" :
+        //         "Extension *" . $message['params']['from'] . "* doesn't have an assigned phone number";
+        // }
+
+
+        // if ($smsDestinationModel) {
+        //     //Create libphonenumber object for Caller ID number
+        //     $sourcePhoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        //     $sourcePhoneNumberObject = $sourcePhoneNumberUtil->parse($smsDestinationModel->destination, 'US');
+
+        //     //Validate the source number
+        //     if (!$sourcePhoneNumberUtil->isValidNumber($sourcePhoneNumberObject)) {
+        //         $validation = false;
+        //         $status = "Source number (" . $smsDestinationModel->destination . ") is not a valid US number";
+        //     }
+
+        //     //Assign a provider
+        //     $carrier =  $smsDestinationModel->carrier;
+        // }
+
+        //Assign a provider
+        $carrier =  $smsDestinationModel->carrier;
+
+        // // Store message in database
+        // $messageModel = new Messages;
+        // $messageModel->extension_uuid = (isset($ext_model->extension_uuid)) ? $ext_model->extension_uuid : null;
+        // $messageModel->domain_uuid = (isset($smsDestinationModel->domain_uuid)) ? $smsDestinationModel->domain_uuid : null;
+        // $messageModel->source = (isset($sourcePhoneNumberObject)) ? $sourcePhoneNumberObject->getNationalNumber() : "";
+        // $messageModel->destination = (isset($phoneNumberObject)) ? $phoneNumberObject->getNationalNumber() : "";
+        // $messageModel->message = $message['params']['content'];
+        // $messageModel->direction = 'out';
+        // $messageModel->type = 'sms';
+        // $messageModel->save();
 
         // Send text message through Thinq API
         if ($validation && $message['method'] == "message" && $carrier == "thinq") {
@@ -313,9 +301,162 @@ class SmsWebhookController extends Controller
         $messageModel->save();
 
         if (!$validation) {
-            SendSmsNotificationToSlack::dispatch("*Commio Outbound SMS*: From: " . $message['params']['from'] . " To: " . $message['params']['to'].  "\n Error delivering SMS from Ringtotel to Commio. " . $status)->onQueue('messages');
+            $error = isset($domainSetting) && isset($domainSetting->domain) ?
+                "*Outbound SMS Failed*: From: " . $message['params']['from'] . " in " . $domainSetting->domain->domain_description . " To: " . $message['params']['to'] .  "\n " . $status :
+                "*Outbound SMS Failed*: From: " . $message['params']['from'] . " To: " . $message['params']['to'] .  "\n" . $status;
+            SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
+        }
+    }
 
+
+    private function parseRequest()
+    {
+        // Example of the request
+        // array (
+        //     'method' => 'message',
+        //     'api_key' => 'h8nabAAJKkKCyPTdd0haEbEIG5dK2Jfzp605AVdJJcCwKaoAweb2QsD2rcDhAc58',
+        //     'params' => 
+        //     array (
+        //       'domain' => 'apidomain',
+        //       'messageid' => '1714513135694-40c3963c2e43ec9a12',
+        //       'from' => '202',
+        //       'to' => '6467052267',
+        //       'sessionid' => '1714509056562-7b6f32813bf37ab35e',
+        //       'type' => 1,
+        //       'userid' => '17145080854723820909',
+        //       'content' => '1',
+        //       'orgid' => '16583817918735846352',
+        //     ),
+        //   )  
+
+        $rawdata = file_get_contents("php://input");
+        return json_decode($rawdata, true);
+    }
+
+    private function validateMessage(array $message)
+    {
+        if (empty($message['api_key']) || $message['api_key'] != config("ringotel.token")) {
+            throw new \Exception("Invalid or missing API Key");
         }
 
+        if (!isset($message['params']['to'])) {
+            throw new \Exception("Missing destination number");
+        }
+
+        $this->validatePhoneNumber($message['params']['to'], 'US');
     }
+
+    private function validatePhoneNumber($number, $country)
+    {
+        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+        $phoneNumberObject = $phoneNumberUtil->parse($number, $country);
+
+        if (!$phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+            throw new \Exception("Destination phone number is not valid");
+        }
+
+        return $phoneNumberObject;
+    }
+
+    private function handleMessageType(array $message)
+    {
+        switch ($message['method']) {
+            case 'typing':
+            case 'read':
+            case 'delivered':
+            case 'message':
+                return $this->processOutgoingMessage($message);
+            default:
+                throw new \Exception("Unsupported method type");
+        }
+    }
+
+    private function processOutgoingMessage(array $message)
+    {
+        $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($message['params']['orgid']);
+        logger($this->mobileAppDomainConfig);
+        $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($message['params']['from'], $this->mobileAppDomainConfig->domain_uuid);
+        $sourcePhoneNumberObject = $this->validatePhoneNumber($phoneNumberSmsConfig->destination, 'US');
+        $extension = $this->getExtension();
+
+        $messageModel = $this->storeMessage($message, $phoneNumberSmsConfig, $sourcePhoneNumberObject);
+        $this->sendMessage($messageModel, $sourcePhoneNumberObject);
+
+        return response()->json(['status' => 'Message sent']);
+    }
+
+    private function getMobileAppDomainConfig($orgId)
+    {
+        $mobileAppDomainConfig = DomainSettings::where('domain_setting_subcategory', 'org_id')
+                                       ->where('domain_setting_value', $orgId)
+                                       ->with('domain')
+                                       ->first();
+
+        // if (!$mobileAppDomainConfig) {
+            throw new \Exception("Domain not found");
+        // }
+
+        return $mobileAppDomainConfig;
+    }
+
+    private function getPhoneNumberSmsConfig($from, $domainUuid)
+    {
+        $phoneNumberSmsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
+                                         ->where('chatplan_detail_data', $from)
+                                         ->first();
+
+        if (!$phoneNumberSmsConfig) {
+            throw new \Exception("Phone number SMS configuration not found");
+        }
+
+        return $phoneNumberSmsConfig;
+    }
+
+    private function getExtension($domainUuid)
+    {
+
+        $ext_model = Extensions::where('domain_uuid', $domainUuid)
+        ->where('extension', $message['params']['from'])
+        ->first();
+
+        if (!$ext_model) {
+            throw new \Exception("User extension not found");
+        }
+
+        return $ext_model;
+    }
+
+
+    private function storeMessage($message, $phoneNumberSmsConfig, $sourcePhoneNumberObject)
+    {
+        $messageModel = new Messages;
+        $messageModel->extension_uuid = $phoneNumberSmsConfig->extension_uuid;
+        $messageModel->domain_uuid = $phoneNumberSmsConfig->domain_uuid;
+        $messageModel->source = $sourcePhoneNumberObject->getNationalNumber();
+        $messageModel->destination = $message['params']['to'];  // Assuming destination is already validated
+        $messageModel->message = $message['params']['content'];
+        $messageModel->direction = 'out';
+        $messageModel->type = 'sms';
+        $messageModel->save();
+
+        return $messageModel;
+    }
+
+    private function handleError($message, \Exception $e)
+    {
+        // Log the error or send it to Slack
+        $error = isset($this->mobileAppDomainConfig) && isset($this->mobileAppDomainConfig->domain) ?
+            "*Outbound SMS Failed*: From: " . $message['params']['from'] . " in " . $this->mobileAppDomainConfig->domain->domain_description . " To: " . $message['params']['to'] . "\n" . $e->getMessage() :
+            "*Outbound SMS Failed*: From: " . $message['params']['from'] . " To: " . $message['params']['to'] . "\n" . $e->getMessage();
+
+        // Reuse the sourcePhoneNumberObject if it was already validated
+        if (isset($this->sourcePhoneNumberObject)) {
+            $this->storeMessage($message, $this->smsDestinationModel, $this->sourcePhoneNumberObject);
+        }
+
+        SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
+
+        return response()->json(['error' => $e->getMessage()], 400);
+    }
+
 }

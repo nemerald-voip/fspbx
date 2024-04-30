@@ -48,6 +48,6 @@ class DomainSettings extends Model
      */
     public function domain()
     {
-        return $this->belongsTo(Domain::class);
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 }
