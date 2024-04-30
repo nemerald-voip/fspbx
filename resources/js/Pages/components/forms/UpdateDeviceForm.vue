@@ -5,7 +5,7 @@
                 <LabelInputRequired :target="'device_address'" :label="'MAC Address'" />
                 <div class="mt-2">
                     <InputField v-model="form.device_address" type="text" name="device_address"
-                        placeholder="Enter MAC Address"
+                        placeholder="Enter MAC Address" :disabled="!page.props.auth.can.device_edit_address"
                         :error="errors?.device_address && errors.device_address.length > 0" />
                 </div>
                 <div v-if="errors?.device_address" class="mt-2 text-sm text-red-600">
@@ -14,7 +14,7 @@
             </div>
 
 
-            <div class="sm:col-span-12">
+            <div v-if="page.props.auth.can.device_template" class="sm:col-span-12">
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
                     <SelectBox :options="options.templates" :selectedItem="form.device_template" :search="true"
@@ -39,7 +39,7 @@
             </div>
 
 
-            <div class="sm:col-span-12">
+            <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                 <div class="mt-2">
                     <SelectBox :options="options.extensions" :selectedItem="form.extension" :search="true"
@@ -49,7 +49,7 @@
                     forwarded.</p> -->
             </div>
 
-            <div class="sm:col-span-12">
+            <div v-if="page.props.auth.can.domain_select && page.props.auth.can.device_edit_domain" class="sm:col-span-12">
                 <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
                 <div class="mt-2">
                     <SelectBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true"

@@ -49,11 +49,33 @@ class HandleInertiaRequests extends Middleware
             'domains' => Session::get("domains"),
 
             'csrf_token' => csrf_token(),
+
+            'auth' => [
+                'can' => fn () => $this->getPermissions(),
+            ],
             
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'error' => fn () =>  $request->session()->get('error'),
             ],
-        ]);
+        ]);   
+    }
+
+    public function getPermissions() {
+        $permissions = [];
+        $permissions['domain_select'] = session('domain_select');
+        $permissions['device_create'] = userCheckPermission('device_add');
+        $permissions['device_view_global'] = userCheckPermission('device_all');
+        $permissions['device_destroy'] = userCheckPermission('device_delete');
+        $permissions['device_update'] = userCheckPermission('device_edit');
+        $permissions['device_import'] = userCheckPermission('device_import'); //not yet implemented
+        $permissions['device_export'] = userCheckPermission('device_export'); //not yet implemented
+        $permissions['device_edit_domain'] = userCheckPermission('device_domain');
+        $permissions['device_edit_address'] = userCheckPermission('device_address');
+        $permissions['device_edit_line'] = userCheckPermission('device_line_edit');
+        $permissions['device_edit_template'] = userCheckPermission('device_template');
+        
+        // logger($permissions);
+        return $permissions;
     }
 }

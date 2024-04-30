@@ -3,13 +3,10 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use Inertia\Response;
 use App\Models\Domain;
 use App\Models\Devices;
-use App\Models\Settings;
 use App\Models\Extensions;
 use App\Models\DeviceLines;
-use App\Models\SipProfiles;
 use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
 use Illuminate\Http\JsonResponse;
@@ -19,8 +16,6 @@ use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
-use App\Http\Requests\UpdateBulkDeviceRequest;
-use permission;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -75,10 +70,7 @@ class DeviceController extends Controller
                     'bulk_delete' => route('devices.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
                     'restart' => route('devices.restart'),
-                ],
-                'permissions' =>  function () {
-                    return $this->getPermissions();
-                },
+                ]
             ]
         );
     }
@@ -826,15 +818,4 @@ class DeviceController extends Controller
         }
     }
 
-    public function getPermissions() {
-        $permissions = [];
-        $permissions['canCreate'] = userCheckPermission('device_add');
-        $permissions['canSeeGlobal'] = userCheckPermission('device_all');
-        $permissions['canDelete'] = userCheckPermission('device_delete');
-        $permissions['canUpdate'] = userCheckPermission('device_edit');
-
-        $permissions['canUpdateDomain'] = userCheckPermission('device_domain') && session('domains'); //not yet implemented
-        logger($permissions);
-        return $permissions;
-    }
 }

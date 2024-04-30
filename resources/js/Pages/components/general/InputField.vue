@@ -6,7 +6,8 @@
         :placeholder="placeholder"
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"
-        :class="inputClass" />
+        :class="inputClass" 
+        :disabled="disabled"/>
 </template>
 
 <script setup>
@@ -37,7 +38,7 @@ const inputClass = computed(() => {
         return `${baseClasses} ring-red-600`; // Apply red ring if there's an error
     }
     if(props.disabled) {
-        return `${baseClasses} disabled:opacity-50`; // Apply disabled class
+        return `${baseClasses} disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:ring-gray-200`; // Apply disabled class
     }
     return `${baseClasses} ring-gray-300`;  // Default ring color when no error
 });

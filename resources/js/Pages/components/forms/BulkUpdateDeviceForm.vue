@@ -52,7 +52,7 @@
         </div>
 
 
-        <div class="sm:col-span-12">
+        <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
             <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
             <div class="mt-2">
                 <SelectBox :options="options.extensions" :selectedItem="form.extension" :search="true" :showClear="true" :showUndo="form.extension === 'NULL'"
@@ -62,7 +62,7 @@
                     forwarded.</p> -->
         </div>
 
-        <div class="sm:col-span-12">
+        <div v-if="page.props.auth.can.domain_select && page.props.auth.can.device_edit_domain" class="sm:col-span-12">
             <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
             <div class="mt-2">
                 <SelectBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true" :showUndo="form.domain_uuid === 'NULL'"
@@ -145,8 +145,8 @@ const handleExtensionUpdate = (newSelectedItem) => {
 
 const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
-    form.device_profile_uuid = null;
-    form.extension = null;
+    form.device_profile_uuid = "NULL";
+    form.extension = "NULL";
     if (newSelectedItem.value !== "NULL") {
         emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
     }}

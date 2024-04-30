@@ -22,17 +22,17 @@
             </template>
 
             <template #action>
-                <button v-if="permissions.canCreate" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <button v-if="!showGlobal && permissions.canSeeGlobal" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button" @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && permissions.canSeeGlobal" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button" @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -87,8 +87,8 @@
                         :text="row.device_address_formatted">
                         <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9" :class="{ 'cursor-pointer hover:text-gray-900': permissions.canUpdate, }"
-                            @click="permissions.canUpdate && handleEditRequest(row.device_uuid)">
+                        <div class="ml-9" :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
+                            @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
                             {{ row.device_address_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -117,7 +117,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="permissions.canUpdate" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
@@ -134,7 +134,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.canDelete" :content="'Delete'" position='TopCenter'
+                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
                                     target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
@@ -214,6 +214,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -237,7 +238,7 @@ import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 
-
+const page = usePage()
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
@@ -268,7 +269,6 @@ const props = defineProps({
     routes: Object,
     itemData: Object,
     itemOptions: Object,
-    permissions: Object,
 });
 
 
@@ -295,7 +295,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (props.permissions.canDelete) {
+    if (page.props.auth.can.device_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
