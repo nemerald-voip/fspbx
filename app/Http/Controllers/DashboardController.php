@@ -59,6 +59,8 @@ class DashboardController extends Controller
 
     public function getCounts()
     {
+
+        logger('get counts');
         $domain_id = Session::get('domain_uuid');
 
         $counts = [];
@@ -137,10 +139,7 @@ class DashboardController extends Controller
 
         //if superuser get registration status
         if (isSuperAdmin()) {
-            //Check FusionPBX login status
-            // session_start();
-            // if (isset($_SESSION['user'])) {
-            // Count global unique registrations
+
             $registrations = get_registrations("all");
             $unique_regs = [];
             foreach ($registrations as $registration) {
@@ -283,7 +282,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'slug' => 'schedules'];
         }
         if (userCheckPermission("device_view")) {
-            $apps[] = ['name' => 'Devices', 'href' => '/app/devices/devices.php', 'icon' => 'DevicesIcon', 'slug' => 'devices'];
+            $apps[] = ['name' => 'Devices', 'href' => route('devices.index'), 'icon' => 'DevicesIcon', 'slug' => 'devices'];
         }
         if (userCheckPermission("xml_cdr_view")) {
             $apps[] = ['name' => 'Call History (CDRs)', 'href' => '/call-detail-records', 'icon' => 'CallHistoryIcon', 'slug' => 'cdrs'];
