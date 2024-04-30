@@ -59,8 +59,6 @@ class DashboardController extends Controller
 
     public function getCounts()
     {
-
-        logger('get counts');
         $domain_id = Session::get('domain_uuid');
 
         $counts = [];
