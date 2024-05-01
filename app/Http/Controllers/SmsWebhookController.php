@@ -314,18 +314,18 @@ class SmsWebhookController extends Controller
         // Example of the request
         // array (
         //     'method' => 'message',
-        //     'api_key' => 'h8nabAAJKkKCyPTdd0haEbEIG5dK2Jfzp605AVdJJcCwKaoAweb2QsD2rcDhAc58',
+        //     'api_key' => 'APIKEY',
         //     'params' => 
         //     array (
         //       'domain' => 'apidomain',
         //       'messageid' => '1714513135694-40c3963c2e43ec9a12',
         //       'from' => '202',
-        //       'to' => '6467052267',
+        //       'to' => '646705xxxx',
         //       'sessionid' => '1714509056562-7b6f32813bf37ab35e',
         //       'type' => 1,
-        //       'userid' => '17145080854723820909',
+        //       'userid' => '17145080854xxxxxxxx',
         //       'content' => '1',
-        //       'orgid' => '16583817918735846352',
+        //       'orgid' => '1658381791xxxxxx2',
         //     ),
         //   )  
 
