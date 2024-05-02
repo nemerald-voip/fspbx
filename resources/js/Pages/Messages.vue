@@ -319,7 +319,7 @@ const bulkActions = computed(() => {
 });
 
 onMounted(() => {
-    console.log(props.data);
+    // console.log(props.data);
 });
 
 const handleEditRequest = (itemUuid) => {

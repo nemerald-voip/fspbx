@@ -51,6 +51,7 @@ class Messages extends Model
             // Remove attributes before saving to database
             unset($model->created_at_formatted);
             unset($model->source_formatted);
+            unset($model->destination_formatted);
             // unset($model->send_notify_path);
         });
 

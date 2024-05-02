@@ -36,6 +36,8 @@ class SmsWebhookController extends Controller
     public function handle(Request $request)
     {
         // $payload = $request->all();
+
+        // logger($payload);
         // Notification::route('mail', 'dexter@stellarvoip.com')
         //      ->notify(new StatusUpdate($request));
 
