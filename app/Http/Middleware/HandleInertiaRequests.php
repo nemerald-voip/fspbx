@@ -74,8 +74,11 @@ class HandleInertiaRequests extends Middleware
         $permissions['device_edit_address'] = userCheckPermission('device_address');
         $permissions['device_edit_line'] = userCheckPermission('device_line_edit');
         $permissions['device_edit_template'] = userCheckPermission('device_template');
+
+        $permissions['device_profile_index'] = userCheckPermission('device_profile_view');
+
         
-        // logger($permissions);
+        logger($permissions);
         return $permissions;
     }
 }
