@@ -44,11 +44,6 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-
-                <TableColumnHeader v-if="showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-
                 <TableColumnHeader header="Date"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
@@ -57,6 +52,10 @@
                         :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">Date</span>
                 </TableColumnHeader>
+
+                <TableColumnHeader v-if="showGlobal" header="Domain"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
 
                 <TableColumnHeader header="In/Out" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Source" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -91,6 +90,17 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.message_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 "
+                        :text="row.created_at_formatted">
+                        <div class="flex items-center">
+                        <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox" name="action_box[]"
+                            :value="row.message_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        <div class="ml-9" >
+                            {{ row.created_at_formatted }}
+                        </div>
+                       
+                    </div>
+                    </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description">
@@ -101,35 +111,13 @@
                         </ejs-tooltip>
                     </TableField>
 
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.created_at_formatted">
-                    </TableField> -->
-
-
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex"
-                        :text="row.created_at">
-                        <input v-if="row.created_at" v-model="selectedItems" type="checkbox" name="action_box[]"
-                            :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9" :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                            @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
-                            {{ row.created_at }}
-                        </div>
-                        <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
-                            @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
-                            <div id="copy_tooltip_target">
-                                <ClipboardDocumentIcon
-                                    class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
-
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.source" />
+                        :text="row.source_formatted" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.destination" />
+                        :text="row.destination_formatted" />
 
                     <TableField class=" px-2 py-2 text-sm text-gray-500"
                         :text="row.message" />

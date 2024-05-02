@@ -227,24 +227,7 @@ class MessagesController extends Controller
             //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
 
-        // foreach ($data as $device) {
-        //     // Check each line in the device if it exists
-        //     $device->lines->each(function ($line) use ($extensions, $device) {
-        //         // Find the first matching extension
-        //         $firstMatch = $extensions->first(function ($extension) use ($line, $device) {
-        //             return $extension->domain_uuid === $device->domain_uuid && $extension->extension === $line->label;
-        //         });
 
-        //         // Assign the first matching extension to the line
-        //         $line->extension = $firstMatch;
-        //     });
-        //     // logger($device->lines);
-        // }
-
-        // Get local Time Zone
-        $time_zone = get_local_time_zone(Session::get('domain_uuid'));
-
-        logger($time_zone);
 
         return $data;
     }
