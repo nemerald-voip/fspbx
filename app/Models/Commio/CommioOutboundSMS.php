@@ -16,9 +16,6 @@ use Illuminate\Database\Eloquent\Model;
 class CommioOutboundSMS extends Model
 {
 
-    public $to_did;
-    public $from_did;
-    public $message;
     public $message_uuid;
 
     /**
@@ -38,9 +35,10 @@ class CommioOutboundSMS extends Model
         // This method should return a boolean indicating whether the message was sent successfully.
 
         $data = array(
-            'from_did' => $this->from_did,
-            'to_did' => $this->to_did,
-            "message" => $this->message,
+            'from_did' => $this->formatNumber($message->source),
+            'to_did' => $this->formatNumber($message->destination),
+            "message" => $message->message,
+            "message_uuid" => $message->message_uuid
         );
         
         $response = Http::withHeaders([
@@ -76,5 +74,9 @@ class CommioOutboundSMS extends Model
         // Logic to determine if the message was sent successfully using a third-party API.
 
         return true; // Change this to reflect the result of the API call.
+    }
+
+    private function formatNumber($phoneNumber){
+        return str_replace("+1", "", $phoneNumber);
     }
 }

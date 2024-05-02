@@ -61,9 +61,9 @@ class SendCommioSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $to_did;
-    private $from_did;
-    private $message;
+    // private $to_did;
+    // private $from_did;
+    // private $message;
 
     private $message_uuid;
 
@@ -72,12 +72,12 @@ class SendCommioSMS implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct($message_uuid)
     {
-        $this->to_did = $data['to_did'];
-        $this->from_did = $data['from_did'];
-        $this->message = $data['message'];
-        $this->message_uuid = $data['message_uuid'];
+        // $this->to_did = $data['to_did'];
+        // $this->from_did = $data['from_did'];
+        // $this->message = $data['message'];
+        $this->message_uuid = $message_uuid;
     }
 
     /**
@@ -101,9 +101,9 @@ class SendCommioSMS implements ShouldQueue
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 
             $sms = new CommioOutboundSMS();
-            $sms->to_did = $this->to_did;
-            $sms->from_did = $this->from_did;
-            $sms->message = $this->message;
+            // $sms->to_did = $this->to_did;
+            // $sms->from_did = $this->from_did;
+            // $sms->message = $this->message;
             $sms->message_uuid = $this->message_uuid;
             $sms->send();
 

@@ -101,6 +101,7 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public function handle()
     {
+        logger('ProcessCommioSMS');
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 

@@ -10,17 +10,19 @@ use App\Services\Interfaces\MessageProviderInterface;
 
 class CommioMessageProvider implements MessageProviderInterface
 {
-    public function send($message)
+    public function send($message_uuid)
     {
-        $data = array(
-            'from_did' => $this->formatNumber($message->source),
-            'to_did' => $this->formatNumber($message->destination),
-            "message" => $message->message,
-            "message_uuid" => $message->message_uuid
-        );
+        // $data = array(
+        //     'from_did' => $this->formatNumber($message->source),
+        //     'to_did' => $this->formatNumber($message->destination),
+        //     "message" => $message->message,
+        //     "message_uuid" => $message->message_uuid
+        // );
+
+        // logger($data);
 
         // Implementation for sending SMS via Thinq
-        SendCommioSMS::dispatch($data)->onQueue('messages');
+        SendCommioSMS::dispatch($message_uuid)->onQueue('messages');
     }
 
     private function formatNumber($phoneNumber){
