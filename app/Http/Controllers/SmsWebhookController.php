@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 use App\Models\Domain;
 use App\Models\Messages;
 use App\Models\Extensions;
-use App\Jobs\SendCommioSMS;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
@@ -14,6 +13,8 @@ use App\Notifications\StatusUpdate;
 use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Http;
 use libphonenumber\PhoneNumberFormat;
+use App\Services\SynchMessageProvider;
+use App\Services\CommioMessageProvider;
 use App\Jobs\SendSmsNotificationToSlack;
 use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Notification;
@@ -29,6 +30,7 @@ class SmsWebhookController extends Controller
     protected $source;
     protected $destination;
     protected $carrier;
+    protected $messageProvider;
 
 
     // Recieve SMS from the provider and send through Ringotel API
@@ -259,7 +261,6 @@ class SmsWebhookController extends Controller
             $this->destination = $this->message['params']['to'];
             throw new \Exception("Destination phone number (" . $this->message['params']['to'] . ") is not a valid US number");
         }
-
     }
 
     private function handleMessageType()
@@ -280,8 +281,13 @@ class SmsWebhookController extends Controller
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
         $this->domain_uuid = $this->mobileAppDomainConfig->domain_uuid;
         $this->extension_uuid = $this->getExtensionUuid();
+
+        //Get message config
         $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($this->message['params']['from'], $this->domain_uuid);
         $this->carrier =  $phoneNumberSmsConfig->carrier;
+
+        //Determine message provider
+        $this->messageProvider = $this->getMessageProvider($this->carrier);
 
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
         try {
@@ -298,10 +304,11 @@ class SmsWebhookController extends Controller
             throw new \Exception("Phone number (" . $phoneNumberSmsConfig->destination . ") assigned to extension *" . $this->message['params']['from'] . "* is not a valid US number");
         }
 
-        logger($this->source);
+        //Store message in the log database
+        $message = $this->storeMessage("Queued");
 
-        $messageModel = $this->storeMessage();
-        $this->sendMessage($messageModel, $sourcePhoneNumberObject);
+        // Send message
+        $this->messageProvider->send($message);
 
         return response()->json(['status' => 'Message sent']);
     }
@@ -366,6 +373,8 @@ class SmsWebhookController extends Controller
 
     private function handleError(\Exception $e)
     {
+
+        logger($e->getMessage());
         $this->storeMessage($e->getMessage());
         // Log the error or send it to Slack
         $error = isset($this->mobileAppDomainConfig) && isset($this->mobileAppDomainConfig->domain) ?
@@ -380,5 +389,18 @@ class SmsWebhookController extends Controller
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
 
         return response()->json(['error' => $e->getMessage()], 400);
+    }
+
+    private function getMessageProvider($carrier)
+    {
+        switch ($carrier) {
+            case 'thinq':
+                return new CommioMessageProvider();
+            case 'synch':
+                return new SynchMessageProvider();
+                // Add cases for other carriers
+            default:
+                throw new \Exception("Unsupported carrier");
+        }
     }
 }
