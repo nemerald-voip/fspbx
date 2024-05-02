@@ -47,7 +47,7 @@ class DeviceController extends Controller
         }
 
         return Inertia::render(
-            'Devices',
+            $this->viewName,
             [
                 'data' => function () {
                     return $this->getData();
