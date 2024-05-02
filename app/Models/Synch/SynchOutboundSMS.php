@@ -5,6 +5,7 @@ namespace App\Models\Synch;
 use App\Models\Messages;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Database\Eloquent\Model;
+use App\Jobs\SendSmsNotificationToSlack;
 
 /**
  * @property string|null $domain_setting_value
@@ -14,10 +15,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SynchOutboundSMS extends Model
 {
-
-    public $from;
-    public $to;
-    public $text;
     public $message_uuid;
 
     /**
@@ -30,16 +27,20 @@ class SynchOutboundSMS extends Model
         $message = Messages::find($this->message_uuid);
 
         if (!$message) {
-            logger("Could not find sms entity from " . $this->from_did . " to " . $this->to_did);
+            logger("Could not find sms entity. SMS From " . $this->from_did . " to " . $this->to_did);
+            return;
         }
 
         // Logic to send the SMS message using a third-party Synch API,
         // This method should return a boolean indicating whether the message was sent successfully.
 
         $data = array(
-            'from' => $this->from,
-            'to' => $this->to,
-            "text" => $this->text,
+            'from' => preg_replace('/[^0-9]/', '', $message->source),
+            'to' => [
+                preg_replace('/[^0-9]/', '', $message->destination),
+            ],
+            "text" => $message->message,
+            "message_uuid" => $message->message_uuid
         );
 
         $response = Http::withHeaders([
@@ -52,7 +53,7 @@ class SynchOutboundSMS extends Model
         // Get result
         if (isset($response)) {
             $result = json_decode($response->body());
-            logger($response->body());
+            // logger($response->body());
 
             // Determine if the operation was successful
             if ($response->successful() && isset($result->success) && $result->success) {
@@ -72,13 +73,15 @@ class SynchOutboundSMS extends Model
                 if (isset($result->errors)) {
                     logger()->error("Error details:", $result->errors);
                 }
+                $this->handleError($message);
             }
     
             $message->save();
         } else {
-            logger()->error('SMS error. No response received from the server.');
+            logger()->error('SMS error. No response received from Synch API.');
             $message->status = 'failed';
             $message->save();
+            $this->handleError($message);
         }
 
         return true; // Change this to reflect the result of the API call.
@@ -94,5 +97,15 @@ class SynchOutboundSMS extends Model
         // Logic to determine if the message was sent successfully using a third-party API.
 
         return true; // Change this to reflect the result of the API call.
+    }
+
+    private function handleError($message)
+    {
+
+        // Log the error or send it to Slack
+        $error = "*Outbound SMS Failed*: From: " . $message->source . " To: " . $message->destination . "\n" . $message->status;
+
+        SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
+
     }
 }

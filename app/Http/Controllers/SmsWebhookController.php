@@ -23,7 +23,6 @@ class SmsWebhookController extends Controller
 {
     protected $mobileAppDomainConfig;
     protected $smsDestinationModel;
-    protected $sourcePhoneNumberObject;
     protected $domain_uuid;
     protected $message;
     protected $extension_uuid;
@@ -196,20 +195,6 @@ class SmsWebhookController extends Controller
         } catch (\Exception $e) {
             return $this->handleError($e);
         }
-
-
-        // // Send text message through Thinq API
-        // if ($validation && $message['method'] == "message" && $carrier == "thinq") {
-        //     $data = array(
-        //         'from_did' => $sourcePhoneNumberObject->getNationalNumber(),
-        //         'to_did' => $phoneNumberObject->getNationalNumber(),
-        //         "message" => $message['params']['content'],
-        //         "message_uuid" => $messageModel->message_uuid
-        //     );
-        //     SendCommioSMS::dispatch($data)->onQueue('messages');
-        //     $status = "Queued";
-        // }
-
     }
 
 
@@ -308,7 +293,7 @@ class SmsWebhookController extends Controller
         $message = $this->storeMessage("Queued");
 
         // Send message
-        $this->messageProvider->send($message);
+        $this->messageProvider->send($message->message_uuid);
 
         return response()->json(['status' => 'Message sent']);
     }
@@ -380,11 +365,6 @@ class SmsWebhookController extends Controller
         $error = isset($this->mobileAppDomainConfig) && isset($this->mobileAppDomainConfig->domain) ?
             "*Outbound SMS Failed*: From: " . $this->message['params']['from'] . " in " . $this->mobileAppDomainConfig->domain->domain_description . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage() :
             "*Outbound SMS Failed*: From: " . $this->message['params']['from'] . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage();
-
-        // Reuse the sourcePhoneNumberObject if it was already validated
-        if (isset($this->sourcePhoneNumberObject)) {
-            $this->storeMessage($this->message, $this->smsDestinationModel, $this->sourcePhoneNumberObject);
-        }
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
 

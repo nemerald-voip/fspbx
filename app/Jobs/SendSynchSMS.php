@@ -57,10 +57,6 @@ class SendSynchSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $from;
-    private $to;
-    private $text;
-
     private $message_uuid;
 
     /**
@@ -68,12 +64,9 @@ class SendSynchSMS implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct($message_uuid)
     {
-        $this->from = $data['from'];
-        $this->to = $data['to'];
-        $this->text = $data['text'];
-        $this->message_uuid = $data['message_uuid'];
+        $this->message_uuid = $message_uuid;
     }
 
     /**
@@ -97,9 +90,6 @@ class SendSynchSMS implements ShouldQueue
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 
             $sms = new SynchOutboundSMS();
-            $sms->to = $this->to;
-            $sms->from = $this->from;
-            $sms->text = $this->text;
             $sms->message_uuid = $this->message_uuid;
             $sms->send();
 
