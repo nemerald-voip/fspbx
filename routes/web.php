@@ -25,6 +25,8 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use Aws\Sns\Message;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -193,7 +195,13 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
     // Messages
-    Route::get('/messages', [MessagesController::class, 'index'])->name('messagesStatus');
+    Route::resource('messages', MessagesController::class);
+    Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
+    Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
+    Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
+    Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');
+
+
 
     // Message Settings
     Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');

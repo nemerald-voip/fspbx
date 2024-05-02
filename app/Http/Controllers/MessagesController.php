@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Inertia\Inertia;
 use App\Models\Messages;
+use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Models\SmsDestinations;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
+use App\Services\SynchMessageProvider;
+use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
 use libphonenumber\NumberParseException;
 use Propaganistas\LaravelPhone\PhoneNumber;
@@ -39,7 +44,7 @@ class MessagesController extends Controller
         // $searchString = $request->get('search');
 
         // $searchPeriod = $request->get('period');
-        
+
         // $period = [
         //     Carbon::now()->startOfDay()->subDays(30),
         //     Carbon::now()->endOfDay()
@@ -81,7 +86,7 @@ class MessagesController extends Controller
         //     });
         // }
         // $messages->whereBetween('created_at', $period);
-        
+
         // $messages = $messages->paginate(50)->onEachSide(1);
 
         // // Get local Time Zone
@@ -167,21 +172,20 @@ class MessagesController extends Controller
                 //     fn () =>
                 //     $this->getItemOptions()
                 // ),
-                // 'routes' => [
-                //     'current_page' => route('devices.index'),
-                //     'store' => route('devices.store'),
-                //     'select_all' => route('devices.select.all'),
-                //     'bulk_delete' => route('devices.bulk.delete'),
-                //     'bulk_update' => route('devices.bulk.update'),
-                //     'restart' => route('devices.restart'),
-                // ]
+                'routes' => [
+                    'current_page' => route('messages.index'),
+                    'store' => route('messages.store'),
+                    'select_all' => route('messages.select.all'),
+                    'bulk_delete' => route('messages.bulk.delete'),
+                    'bulk_update' => route('messages.bulk.update'),
+                    'retry' => route('messages.retry'),
+                ]
             ]
         );
-
     }
 
 
-        /**
+    /**
      *  Get device data
      */
     public function getData($paginate = 50)
@@ -201,7 +205,7 @@ class MessagesController extends Controller
 
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'created_at'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
@@ -318,5 +322,90 @@ class MessagesController extends Controller
                 $query->orWhere($field, 'ilike', '%' . $value . '%');
             }
         });
+    }
+
+
+    public function retry()
+    {
+        try {
+
+            logger('retry');
+
+            // // Get a collection of SIP registrations 
+            // $regs = sipRegistrations();
+
+            //Get items info as a collection
+            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
+                ->get();
+
+
+            // logger($items);
+
+            foreach ($items as $item) {
+                // get originating extension
+                $extension = Extensions::find($item->extension_uuid);
+
+                if (!$extension) {
+                    throw new Exception('Extension not found');
+                }
+
+                //Get message config
+                $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($extension->extension, $item->domain_uuid);
+                $carrier =  $phoneNumberSmsConfig->carrier;
+                logger($carrier);
+
+                //Determine message provider
+                $messageProvider = $this->getMessageProvider($carrier);
+
+                //Store message in the log database
+                $item->status = "Queued";
+                $item->save();
+
+                // Send message
+                $messageProvider->send($item->message_uuid);
+            }
+
+            // logger($devices);
+
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Selected message(s) scheduled for sending']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . PHP_EOL);
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    private function getPhoneNumberSmsConfig($from, $domainUuid)
+    {
+        $phoneNumberSmsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
+            ->where('chatplan_detail_data', $from)
+            ->first();
+
+        if (!$phoneNumberSmsConfig) {
+            throw new \Exception("SMS configuration not found for extension " . $from);
+        }
+
+        return $phoneNumberSmsConfig;
+    }
+
+    private function getMessageProvider($carrier)
+    {
+        switch ($carrier) {
+            case 'thinq':
+                return new CommioMessageProvider();
+            case 'synch':
+                return new SynchMessageProvider();
+                // Add cases for other carriers
+            default:
+                throw new \Exception("Unsupported carrier");
+        }
     }
 }

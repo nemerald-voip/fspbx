@@ -141,30 +141,30 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
+                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
-                                </ejs-tooltip>
+                                </ejs-tooltip> -->
 
-                                <ejs-tooltip :content="'Restart device'" position='TopCenter'
+                                <ejs-tooltip :content="'Retry'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRestart(row.device_uuid)"
+                                        <RestartIcon @click="handleRetry(row.message_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
+                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
                                     target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
-                                </ejs-tooltip>
+                                </ejs-tooltip> -->
                             </div>
                         </template>
                     </TableField>
@@ -526,9 +526,9 @@ const handleCopyToClipboard = (macAddress) => {
 }
 
 
-const handleRestart = (device_uuid) => {
-    axios.post(props.routes.restart,
-        { 'devices': [device_uuid] },
+const handleRetry = (message_uuid) => {
+    axios.post(props.routes.retry,
+        { 'items': [message_uuid] },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
