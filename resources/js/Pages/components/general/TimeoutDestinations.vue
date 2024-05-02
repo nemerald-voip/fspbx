@@ -6,14 +6,14 @@
                    :allowEmpty="true"
                    :placeholder="'Choose category'"
                    :class="'col-span-2'"
-                   @update:modal-value="value => handleUpdateCategory(value, index)"
+                   @update:modal-value="value => handleCategoryUpdate(value, index)"
         />
         <SelectBox v-if="timeoutDestination.selectedCategory"
                    :options="timeoutDestination.categoryTargets"
                    :search="true"
                    :class="'col-span-2'"
                    :placeholder="'Choose target destination'"
-                   @update:modal-value="value => handleUpdateTarget(value, index)"
+                   @update:modal-value="value => handleTargetUpdate(value, index)"
         />
         <MinusIcon v-if="index > 0" @click="() => removeTimeoutDestination(index)"
                    class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
@@ -31,9 +31,10 @@ const props = defineProps({
     itemOptions: Object,
     categories: [Array, null],
     targets: [Array, Object, null],
-    selectedItem: [String, null],
-   // destinations: [Array, Object, null],
+    selectedItems: [Array, Object, null]
 });
+
+const emit = defineEmits(['update:modal-value'])
 
 const timeoutDestinations = ref([
     {
@@ -43,7 +44,7 @@ const timeoutDestinations = ref([
     }
 ]);
 
-function handleUpdateCategory(newValue, index) {
+function handleCategoryUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
         timeoutDestinations.value[index].selectedCategory = newValue.value;
         timeoutDestinations.value[index].categoryTargets = props.targets[newValue.value] || [];
@@ -53,10 +54,12 @@ function handleUpdateCategory(newValue, index) {
     }
 }
 
-function handleUpdateTarget(newValue, index) {
-    if (newValue !== null && newValue !== undefined) {
-        props.itemOptions.destination_actions[index] = newValue.value;
-    }
+function handleTargetUpdate(newValue, index) {
+    console.log(newValue)
+    //if (newValue !== null && newValue !== undefined) {
+        timeoutDestinations.value[index].value = newValue;
+        emit('update:modal-value', timeoutDestinations.value);
+    //}
 }
 
 const addTimeoutDestination = () => {
