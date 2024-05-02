@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -30,6 +29,7 @@ class Messages extends Model
         'message',
         'direction',
         'type',
+        'reference_id',
         'status',
         'created_at',
         'updated_at',

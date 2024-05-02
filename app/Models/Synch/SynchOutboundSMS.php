@@ -29,8 +29,8 @@ class SynchOutboundSMS extends Model
     {
         $message = Messages::find($this->message_uuid);
 
-        if(!$message) {
-            logger("Could not find sms entity from ".$this->from_did." to ".$this->to_did);
+        if (!$message) {
+            logger("Could not find sms entity from " . $this->from_did . " to " . $this->to_did);
         }
 
         // Logic to send the SMS message using a third-party Synch API,
@@ -41,34 +41,44 @@ class SynchOutboundSMS extends Model
             'to' => $this->to,
             "text" => $this->text,
         );
-        logger($data);
-        // $response = Http::withHeaders([
-        //     'Authorization' => 'Authorization: Bearer ' . config('synch.api_key'),
-        //     'Content-Type' => 'application/json'
-        // ])
-        //     ->withBody(json_encode($data), 'application/json')
-        //     ->post(config('synch.message_broker_url') . "/publishMessages");
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . config('synch.api_key'),
             'Content-Type' => 'application/json'
         ])
-        ->asJson()
-        ->post(config('synch.message_broker_url') . "/publishMessages", $data);
-
-        logger(config('synch.api_key'));
+            ->asJson()
+            ->post(config('synch.message_broker_url') . "/publishMessages", $data);
 
         // Get result
         if (isset($response)) {
             $result = json_decode($response->body());
-            logger([$result]);
-            if (isset($result->code) && ($result->code >= 400)) {
-                // $message->status = $result->message;
+            logger($response->body());
+
+            // Determine if the operation was successful
+            if ($response->successful() && isset($result->success) && $result->success) {
+                $message->status = 'success';
+                if (isset($result->result->referenceId)) {
+                    $message->reference_id = $result->result->referenceId;
+                }
+            } else {
+                if (isset($result->reason, $result->detail)) {
+                    $message->status = $result->detail;
+                } elseif (isset($result->response) && !$result->response->success) {
+                    $message->status = $result->response->detail;
+                } else {
+                    $message->status = 'unknown error';
+                }
+    
+                if (isset($result->errors)) {
+                    logger()->error("Error details:", $result->errors);
+                }
             }
-            if (isset($result->guid)) {
-                $message->status = "success";
-            }
-            // $message->save();
+    
+            $message->save();
+        } else {
+            logger()->error('SMS error. No response received from the server.');
+            $message->status = 'failed';
+            $message->save();
         }
 
         return true; // Change this to reflect the result of the API call.

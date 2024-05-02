@@ -18,7 +18,7 @@ class SynchMessageProvider implements MessageProviderInterface
             "message_uuid" => $message->message_uuid
         );
 
-        // Implementation for sending SMS via Thinq
+        // Implementation for sending SMS via Synch
         SendSynchSMS::dispatch($data)->onQueue('messages');
     }
 
