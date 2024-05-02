@@ -31,6 +31,9 @@
                                 placeholder="Enter country code"
                                 :error="errors?.destination_prefix && errors.destination_prefix.length > 0"/>
                         </div>
+                        <div v-if="errors?.destination_prefix" class="mt-2 text-sm text-red-600">
+                            {{ errors.destination_prefix[0] }}
+                        </div>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputRequired :target="'destination_number'" :label="'Phone Number'"/>
@@ -41,16 +44,19 @@
                                 id="destination_number"
                                 name="destination_number"
                                 placeholder="Enter phone number"
-                                :error="errors?.destination_prefix && errors.destination_prefix.length > 0"/>
+                                :error="errors?.destination_number && errors.destination_number.length > 0"/>
+                        </div>
+                        <div v-if="errors?.destination_number" class="mt-2 text-sm text-red-600">
+                            {{ errors.destination_number[0] }}
                         </div>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
                         <TimeoutDestinations
-                            :categories="options.categories"
-                            :targets="options.targets"
-                            :selectedItem="form.destination_actions"
-                            :itemOptions="phoneNumber"
+                            :categories="options.timeout_destinations_categories"
+                            :targets="options.timeout_destinations_targets"
+                            :selectedItems="null"
+                            @update:modal-value="handleTimeoutDestinationUpdate"
                         />
                     </div>
                     <div class="sm:col-span-12">
@@ -61,7 +67,7 @@
                                             :allowEmpty="true"
                                             :selectedItem="null"
                                             :placeholder="'Choose music on hold'"
-                                            @update:modal-value="handleUpdateMusicOnHold"
+                                            @update:modal-value="handleMusicOnHoldUpdate"
                             />
                         </div>
                     </div>
@@ -75,7 +81,7 @@
                         <Toggle
                             :target="'destination_enabled'"
                             :label="'Enable'"
-                            :enabled="destinationEnabledTrigger"
+                            :enabled="form.destination_enabled"
                             @update:status="handleDestinationEnabled"
                         />
                     </div>
@@ -88,8 +94,8 @@
                         <Toggle
                             :target="'destination_record'"
                             :label="'Check to save recordings'"
-                            :enabled="destinationRecordTrigger"
-                            @update:status="handleDestinationRecord"
+                            :enabled="form.destination_record"
+                            @update:status="handleDestinationRecordEnabled"
                         />
                     </div>
                     <div class="sm:col-span-12">
@@ -98,8 +104,9 @@
                             <SelectBox :options="options.faxes"
                                        :search="true"
                                        :allowEmpty="true"
+                                       :selectedItem="null"
                                        :placeholder="'Choose fax'"
-                                       @update:modal-value="handleUpdateFax"
+                                       @update:modal-value="handleFaxUpdate"
                             />
                         </div>
                     </div>
@@ -142,14 +149,18 @@
                     </div>
 
                     <div class="sm:col-span-12">
-                        <LabelInputRequired :target="'domain_uuid'" :label="'Domain'"/>
+                        <LabelInputRequired :target="'domain_uuid'" :label="'Owned By (Company Name)'"/>
                         <div class="mt-2">
                             <SelectBox :options="options.domains"
-                                       :selectedItem="null"
+                                       :selectedItem="form.domain_uuid"
                                        :search="true"
-                                       :placeholder="'Choose domain'"
-                                       @update:modal-value="handleUpdateDomain"
+                                       :placeholder="'Choose company'"
+                                       @update:modal-value="handleDomainUpdate"
+                                       :error="errors?.domain_uuid && errors.domain_uuid.length > 0"
                             />
+                        </div>
+                        <div v-if="errors?.domain_uuid" class="mt-2 text-sm text-red-600">
+                            {{ errors.domain_uuid[0] }}
                         </div>
                     </div>
                 </div>
@@ -169,6 +180,7 @@
                 </button>
             </div>
         </div>
+        {{form}}
     </form>
 </template>
 
@@ -185,27 +197,33 @@ import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
 
-const destinationEnabledTrigger = ref(false);
-
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
 });
 
-const emits = defineEmits(['submit', 'cancel']);
-
 const page = usePage();
 
 const selectedTab = ref(0)
 
 const form = reactive({
-    destination_prefix: null,
+    domain_uuid: null,
+    fax_uuid: null,
+    destination_prefix: 1,
     destination_number: null,
     destination_actions: null,
+    destination_hold_music: null,
     destination_description: null,
+    destination_enabled: true,
+    destination_record: false,
+    destination_cid_name_prefix: null,
+    destination_accountcode: null,
+    destination_distinctive_ring: null,
     _token: page.props.csrf_token,
 })
+
+const emits = defineEmits(['submit', 'cancel']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -218,17 +236,28 @@ const submitForm = () => {
     destinationEnabledTrigger.value = props.phoneNumber.destination_enabled;
 });*/
 
-const handleUpdateMusicOnHold = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+const handleMusicOnHoldUpdate = (newSelectedItem) => {
         form.destination_hold_music = newSelectedItem.value;
-    } else {
-        form.destination_hold_music = '';
-    }
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {
     form.destination_enabled = newSelectedItem;
-    destinationEnabledTrigger.value = newSelectedItem
+}
+
+const handleDestinationRecordEnabled = (newSelectedItem) => {
+    form.destination_record = newSelectedItem;
+}
+
+const handleDomainUpdate = (newSelectedItem) => {
+    form.domain_uuid = newSelectedItem.value;
+}
+
+const handleFaxUpdate = (newSelectedItem) => {
+    form.fax_uuid = newSelectedItem.value;
+}
+
+const handleTimeoutDestinationUpdate = (newSelectedItem) => {
+    form.destination_actions = newSelectedItem;
 }
 
 </script>

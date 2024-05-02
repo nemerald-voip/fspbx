@@ -1,6 +1,5 @@
 <template>
-    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-                :selected-domain-uuid="selectedDomainUuid" :domains="domains" />
+    <MainLayout />
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -195,7 +194,6 @@ const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const showGlobal = ref(false);
 const createModalTrigger = ref(false);
 const updateModalTrigger = ref(false);
 const bulkEditModalTrigger = ref(false);
@@ -213,94 +211,253 @@ const props = defineProps({
     showGlobal: Boolean,
     routes: Object,
     itemData: Object,
-    itemOptions: Object,
-    // routeDevicesStore: String,
-    // routeDevicesOptions: String,
-    // routeDevicesBulkUpdate: String,
-    // routeDevices: String,
-    // routeSendEventNotifyAll: String
-});
-/*
-const props = defineProps({
-    data: Object,
-    menus: Array,
-    domains: Array,
-    domainSelectPermission: Boolean,
-    deviceGlobalView: Boolean,
-    selectedDomain: String,
-    selectedDomainUuid: String,
-    search: String,
-    routePhoneNumbersStore: String,
-    routePhoneNumbersOptions: String,
-   // routeDevicesBulkUpdate: String,
-    routePhoneNumbers: String,
-   // routeSendEventNotifyAll: String
-});*/
-
-let PhoneNumberObject = reactive({
-    update_path: props.routes.store,
-    domain_uuid: props.selectedDomainUuid, // advanced
-    destination_uuid: '',
-    destination_prefix: '1',
-    destination_number: '',
-    destination_conditions: [], // advanced
-    destination_actions: [],
-    fax_uuid: '', // advanced
-    destination_cid_name_prefix: '', // advanced
-    destination_record: false, // advanced
-    destination_accountcode: '', // advanced
-    destination_hold_music: '',
-    destination_distinctive_ring: '', // advanced
-    destination_enabled: true,
-    destination_description: '',
-    phonenumber_options: {
-        faxes: Array,
-        music_on_hold: Array,
-        domains: Array,
-        timeout_destinations_categories: Array,
-        timeout_destinations_targets: Array,
-    }
+    itemOptions: Object
 });
 
-
-
-onMounted(() => {
-    showGlobal.value = props.deviceGlobalView;
-})
-
-const selectedItemsExtensions = computed(() => {
-    return selectedItems.value.map(id => {
-        const foundItem = props.data.data.find(item => item.destination_uuid === id);
-        return foundItem ? foundItem.extension_uuid : null;
-    });
-});
-
-const handleSelectAll = () => {
-    if (selectAll.value) {
-        selectedItems.value = props.data.data.map(item => item.destination_uuid);
-        selectedItemsExtensions.value = props.data.data.map(item => item.extension_uuid);
-    } else {
-        selectedItems.value = [];
-        selectedItemsExtensions.value = [];
-    }
-};
 
 const filterData = ref({
-    search: props.search,
-    showGlobal: props.deviceGlobalView,
+    search: null,
+    showGlobal: props.showGlobal,
 });
 
-const handleDestroy = (url) => {
+const showGlobal = ref(props.showGlobal);
+
+// Computed property for bulk actions based on permissions
+const bulkActions = computed(() => {
+    const actions = [
+        {
+            id: 'bulk_restart',
+            label: 'Restart',
+            icon: 'RestartIcon'
+        },
+        {
+            id: 'bulk_update',
+            label: 'Edit',
+            icon: 'PencilSquareIcon'
+        }
+    ];
+
+    // Conditionally add the delete action if permission is granted
+    if (page.props.auth.can.device_destroy) {
+        actions.push({
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
+        });
+    }
+
+    return actions;
+});
+
+onMounted(() => {
+});
+
+const handleEditRequest = (itemUuid) => {
+    editModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+
+    router.get(props.routes.current_page,
+        {
+            itemUuid: itemUuid,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemData',
+                'itemOptions',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
+const handleCreateRequest = (form) => {
+    createFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.store, form)
+        .then((response) => {
+            createFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        createFormSubmiting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
+
+};
+
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.put(props.itemData.update_url, form)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        updateFormSubmiting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
+
+};
+
+const handleSingleItemDeleteRequest = (url) => {
+    confirmationModalTrigger.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(url);
+}
+
+const executeSingleDelete = (url) => {
     router.delete(url, {
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
         onSuccess: (page) => {
+            if (page.props.flash.error) {
+                showNotification('error', page.props.flash.error);
+            }
+            if (page.props.flash.message) {
+                showNotification('success', page.props.flash.message);
+            }
             confirmationModalTrigger.value = false;
             confirmationModalDestroyPath.value = null;
-        }
+        },
+        onFinish: () => {
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onError: (errors) => {
+            console.log(errors);
+        },
     });
 }
+
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        confirmationModalTrigger.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
+    }
+    if (action === 'bulk_restart') {
+        confirmationRestartTrigger.value = true;
+        confirmRestartAction.value = () => executeBulkRestart();
+    }
+}
+
+const executeBulkRestart = () => {
+    axios.post(props.routes.restart,
+        { 'devices': selectedItems.value },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        handleClearSelection();
+        handleModalClose();
+        handleFormErrorResponse(error);
+    });
+}
+
+const executeBulkDelete = () => {
+    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+        .then((response) => {
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+const handleBulkUpdateRequest = (form) => {
+    bulkUpdateFormSubmiting.value = true
+    axios.post(`${props.routes.bulk_update}`, form)
+        .then((response) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
+}
+
+const handleCreateButtonClick = () => {
+    createModalTrigger.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions();
+}
+
+const handleSelectAll = () => {
+    axios.post(props.routes.select_all, filterData._rawValue)
+        .then((response) => {
+            selectedItems.value = response.data.items;
+            selectAll.value = true;
+            showNotification('success', response.data.messages);
+
+        }).catch((error) => {
+        handleClearSelection();
+        handleErrorResponse(error);
+    });
+
+};
+
+
+const handleCopyToClipboard = (macAddress) => {
+    navigator.clipboard.writeText(macAddress).then(() => {
+        tooltipCopyContent.value = 'Copied'
+        setTimeout(() => {
+            tooltipCopyContent.value = 'Copy to Clipboard'
+        }, 500);
+    }).catch((error) => {
+        // Handle the error case
+        console.error('Failed to copy to clipboard:', error);
+    });
+}
+
+
+const handleRestart = (device_uuid) => {
+    axios.post(props.routes.restart,
+        { 'devices': [device_uuid] },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+
+            handleClearSelection();
+        }).catch((error) => {
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
+}
+
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -314,16 +471,53 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
+const handleSearchButtonClick = () => {
+    loading.value = true;
+    router.visit(props.routes.current_page, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: [
+            "data",
+            'showGlobal',
+        ],
+        onSuccess: (page) => {
+            loading.value = false;
+            handleClearSelection();
+        }
+    });
+};
+
+const handleFiltersReset = () => {
+    filterData.value.search = null;
+    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
+    handleSearchButtonClick();
 }
 
-const getItemOptions = () => {
+
+const renderRequestedPage = (url) => {
+    loading.value = true;
+    router.visit(url, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: ["data"],
+        onSuccess: (page) => {
+            loading.value = false;
+        }
+    });
+};
+
+
+const getItemOptions = (domain_uuid) => {
     router.get(props.routes.current_page,
-        {},
+        {
+            'domain_uuid': domain_uuid,
+        },
         {
             preserveScroll: true,
             preserveState: true,
@@ -343,196 +537,82 @@ const getItemOptions = () => {
         });
 }
 
-/*
-const handleAdd = () => {
-    //PhoneNumberObject.update_path = props.routes.store;
-    axios.get(props.routePhoneNumbersOptions).then((response) => {
-        PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
-        PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
-        PhoneNumberObject.phonenumber_options.domains = response.data.domains
-        PhoneNumberObject.phonenumber_options.timeout_destinations_categories = response.data.timeout_destinations_categories
-        PhoneNumberObject.phonenumber_options.timeout_destinations_targets = response.data.timeout_destinations_targets
-        loadingModal.value = false
-        addModalTrigger.value = true;
-    }).catch((error) => {
-        console.error('Failed to get device data:', error);
-    });
-}*/
-
-/*
-const handleEdit = (url) => {
-    editModalTrigger.value = true
-    loadingModal.value = true
-    axios.get(url).then((response) => {
-        PhoneNumberObject.domain_uuid = response.data.phone_number.domain_uuid
-        PhoneNumberObject.update_path = response.data.phone_number.update_path
-        PhoneNumberObject.destination_uuid = response.data.phone_number.destination_uuid
-        PhoneNumberObject.destination_type = response.data.phone_number.destination_type
-        PhoneNumberObject.destination_number = response.data.phone_number.destination_number
-        PhoneNumberObject.destination_caller_id_name = response.data.phone_number.destination_caller_id_name
-        PhoneNumberObject.destination_caller_id_number = response.data.phone_number.destination_caller_id_number
-        PhoneNumberObject.phonenumber_options.music_on_hold = response.data.music_on_hold
-        PhoneNumberObject.phonenumber_options.faxes = response.data.faxes
-        PhoneNumberObject.phonenumber_options.domains = response.data.domains
-        PhoneNumberObject.phonenumber_options.timeout_destinations_categories = response.data.timeout_destinations_categories
-        PhoneNumberObject.phonenumber_options.timeout_destinations_targets = response.data.timeout_destinations_targets
-        loadingModal.value = false
-    }).catch((error) => {
-        console.error('Failed to get device data:', error);
-    });
-}*/
-
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routePhoneNumbers, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
-};
-
-const handleFiltersReset = () => {
-    filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
-}
-
-const handleErrorsReset = () => {
-    actionError.value = false;
-    actionErrorsList.value = {};
-    actionErrorMessage.value = null;
-}
-
-const handleErrorsPush = (message, errors = null) => {
-    actionError.value = true;
-    if(errors !== null) {
-        actionErrorsList.value = errors;
+const handleFormErrorResponse = (error) => {
+    if (error.request?.status == 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
     } else {
-        actionErrorsList.value = {};
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
     }
-    actionErrorMessage.value = message;
+
 }
 
-const handlePhoneNumberObjectReset = () => {
-    /*PhoneNumberObject = reactive({
-        update_path: props.routes.store,
-        domain_uuid: '',
-        destination_number: '',
-        destination_uuid: '',
-        destination_prefix: '1',
-        destination_conditions: [], // advanced
-        destination_actions: [],
-        fax_uuid: '', // advanced
-        destination_cid_name_prefix: '', // advanced
-        destination_record: 'false', // advanced
-        destination_accountcode: '', // advanced
-        destination_hold_music: '',
-        destination_distinctive_ring: '', // advanced
-        destination_enabled: 'true',
-        destination_description: '',
-    });*/
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
 }
 
-const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+const handleSelectPageItems = () => {
+    if (selectPageItems.value) {
+        selectedItems.value = props.data.data.map(item => item.device_uuid);
+    } else {
+        selectedItems.value = [];
+    }
 };
 
-const handleCreateRequest = (form) => {
-    createFormSubmitting.value = true;
-    formErrors.value = null;
 
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmitting.value = false;
-            console.log(response);
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-        createFormSubmitting.value = false;
-        handleClearSelection();
-        handleFormErrorResponse(error);
-    });
 
-};
+const handleClearSelection = () => {
+    selectedItems.value = [],
+        selectPageItems.value = false;
+    selectAll.value = false;
+}
 
 const handleModalClose = () => {
     createModalTrigger.value = false;
-    updateModalTrigger.value = false;
+    editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    //bulkUpdateModalTrigger.value = false;
+    confirmationRestartTrigger.value = false;
+    bulkUpdateModalTrigger.value = false;
 }
 
-/*
-const handleSaveAdd = () => {
-    axios.post(props.routes.store, {
-        destination_number: PhoneNumberObject.destination_number,
-        destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
-        destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
-        destination_type: PhoneNumberObject.destination_type,
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleClose()
-    }).catch((error) => {
-        console.error('Failed to add phone number data:', error);
-        if(error.response.data.errors)  {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
 }
 
-const handleSaveEdit = () => {
-    axios.put(PhoneNumberObject.update_path, {
-        domain_uuid: PhoneNumberObject.domain_uuid,
-        destination_number: PhoneNumberObject.destination_number,
-        destination_caller_id_name: PhoneNumberObject.destination_caller_id_name,
-        destination_caller_id_number: PhoneNumberObject.destination_caller_id_number,
-        destination_type: PhoneNumberObject.destination_type,
-    }).then((response) => {
-        handleSearchButtonClick()
-        handleClose()
-    }).catch((error) => {
-        console.error('Failed to save phone number data:', error);
-        console.log(error.response.data.errors)
-        if(error.response.data.errors.length > 0)  {
-            handleErrorsPush(error.response.data.message, error.response.data.errors)
-        }
-    });
-}*/
-
-/*
-const handleClose = () => {
-    addModalTrigger.value = false
-    editModalTrigger.value = false
-    setTimeout(handlePhoneNumberObjectReset, 1000)
-}
-
-const handleBulkClose = () => {
-    bulkEditModalTrigger.value = false
-    setTimeout(handlePhoneNumberObjectReset, 1000)
-}*/
-
-const handleDestroyConfirmation = (url) => {
-    confirmationModalTrigger.value = true
-    confirmationModalDestroyPath.value = url;
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

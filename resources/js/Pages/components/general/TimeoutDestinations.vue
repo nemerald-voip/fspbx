@@ -50,16 +50,17 @@ function handleCategoryUpdate(newValue, index) {
         timeoutDestinations.value[index].categoryTargets = props.targets[newValue.value] || [];
     } else {
         timeoutDestinations.value[index].categoryTargets = [];
-        timeoutDestinations.selectedCategory.value = '';
+        timeoutDestinations.value[index].selectedCategory = '';
     }
+    //emit('update:modal-value', timeoutDestinations.value); // emit the current state on category update
 }
 
 function handleTargetUpdate(newValue, index) {
-    console.log(newValue)
-    //if (newValue !== null && newValue !== undefined) {
+    if (newValue !== null && newValue !== undefined) {
         timeoutDestinations.value[index].value = newValue;
-        emit('update:modal-value', timeoutDestinations.value);
-    //}
+    }
+    console.log(timeoutDestinations.value);
+    emit('update:modal-value', timeoutDestinations.value); // emit the current state on target update
 }
 
 const addTimeoutDestination = () => {

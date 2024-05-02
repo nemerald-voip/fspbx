@@ -59,6 +59,34 @@ class Destinations extends Model
         'group_uuid',
     ];
 
+    /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            // Remove attributes before saving to database
+            unset($model->destroy_route);
+        });
+
+        static::retrieved(function ($model) {
+            $model->destroy_route = route('phone-numbers.destroy', $model);
+
+            return $model;
+        });
+    }
+
+    /**
+     * Get domain that this message settings belongs to
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
     // public function getDestinationNumberAttribute($value): ?string
     // {
     //     //Get libphonenumber object

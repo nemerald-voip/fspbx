@@ -21,9 +21,11 @@ use Inertia\Response;
 
 class PhoneNumbersController extends Controller
 {
-    public array $filters = [];
-
     public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $searchable = ['destination_number', 'destination_caller_id_name'];
 
     public function __construct()
     {
@@ -44,13 +46,13 @@ class PhoneNumbersController extends Controller
 
         // die('asdasdasd');
 
-        $this->filters = [];
+        /*$this->filters = [];
 
         $this->filters['search'] = $request->filterData['search'] ?? null;
 
         if (!empty($request->filterData['showGlobal'])) {
             $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
-        }
+        }*/
 
         return Inertia::render(
             'Phonenumbers',
@@ -125,16 +127,23 @@ class PhoneNumbersController extends Controller
         // Get item data
         $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
             ->select([
-                'device_uuid',
-                'device_template',
-                'device_label',
-                'device_profile_uuid',
-                'device_address',
+                'domain_uuid',
+                'fax_uuid',
+                'destination_prefix',
+                'destination_number',
+                'destination_actions',
+                'destination_hold_music',
+                'destination_description',
+                'destination_enabled',
+                'destination_record',
+                'destination_cid_name_prefix',
+                'destination_accountcode',
+                'destination_distinctive_ring',
             ])
             ->first();
 
         // Add update url route info
-        $itemData->update_url = route('devices.update', $itemData);
+        $itemData->update_url = route('phone-numbers.update', $itemData);
         return $itemData;
     }
 
@@ -179,10 +188,39 @@ class PhoneNumbersController extends Controller
     /**
      * @return LengthAwarePaginator
      */
-    public function getData(): LengthAwarePaginator
+    public function getData($paginate = 50): LengthAwarePaginator
     {
-        $phoneNumbers = $this->builder($this->filters)->paginate(50);
-        foreach ($phoneNumbers as $phoneNumber) {
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
+        }
+
+        // Check if showGlobal parameter is present and not empty
+        if (!empty(request('filterData.showGlobal'))) {
+            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
+        } else {
+            $this->filters['showGlobal'] = null;
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'destination_number'); // Default to 'destination'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
+
+        $data = $this->builder($this->filters);
+
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
+
+        //if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
+            // Access domains through the session and filter extensions by those domains
+        //    $domainUuids = Session::get('domains')->pluck('domain_uuid');
+        //}
+
+        //foreach ($data as $phoneNumber) {
             /*$device->device_address_tokenized = $device->device_address;
             $device->device_address = formatMacAddress($device->device_address);
             if ($device->lines()->first() && $device->lines()->first()->extension()) {
@@ -193,10 +231,10 @@ class PhoneNumbersController extends Controller
                 $device->send_notify_path = route('extensions.send-event-notify',
                     $device->lines()->first()->extension());
             }*/
-            $phoneNumber->edit_path = route('phone-numbers.edit', $phoneNumber);
-            $phoneNumber->destroy_path = route('phone-numbers.destroy', $phoneNumber);
-        }
-        return $phoneNumbers;
+            //$phoneNumber->edit_path = route('phone-numbers.edit', $phoneNumber);
+            //$phoneNumber->destroy_path = route('phone-numbers.destroy', $phoneNumber);
+        //}
+        return $data;
     }
 
     /**
@@ -205,22 +243,41 @@ class PhoneNumbersController extends Controller
      */
     public function builder(array $filters = []): Builder
     {
-        $phoneNumbers = Destinations::query();
+        $data =  $this->model::query();
+
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $phoneNumbers->join('v_domains', 'v_domains.domain_uuid', '=', 'v_destinations.domain_uuid')
-                ->whereIn('v_domains.domain_uuid', Session::get('domains')->pluck('domain_uuid'));
+            $data->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
+            }]);
+            // Access domains through the session and filter devices by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $data->whereHas('domain', function ($query) use ($domainUuids) {
+                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+            });
         } else {
-            $phoneNumbers->where('v_destinations.domain_uuid', Session::get('domain_uuid'));
+            // Directly filter devices by the session's domain_uuid
+            $domainUuid = Session::get('domain_uuid');
+            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         }
+
+        $data->select(
+            'destination_uuid',
+            'destination_caller_id_name',
+            'domain_uuid',
+        );
+
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter".ucfirst($field))) {
-                    $this->$method($phoneNumbers, $value);
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
                 }
             }
         }
-        $phoneNumbers->orderBy('destination_number');
-        return $phoneNumbers;
+
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
+
+        return $data;
     }
 
     /**
@@ -228,16 +285,15 @@ class PhoneNumbersController extends Controller
      * @param $value
      * @return void
      */
-    protected function filterSearch($query, $value): void
+    protected function filterSearch($query, $value)
     {
-        if ($value !== null) {
-            // Case-insensitive partial string search in the specified fields
-            $query->where(function ($query) use ($value) {
-                $query->where('destination_number', 'ilike', '%'.$value.'%')
-                    ->orWhere('destination_caller_id_number', 'ilike', '%'.$value.'%')
-                    ->orWhere('destination_caller_id_name', 'ilike', '%'.$value.'%');
-            });
-        }
+        $searchable = $this->searchable;
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
+            }
+        });
     }
 
     /**
@@ -260,52 +316,39 @@ class PhoneNumbersController extends Controller
     {
         $inputs = $request->validated();
 
-        var_dump($inputs);
-        die;
+        try {
 
-        $device = new Devices();
-        $device->fill([
-            'device_address' => tokenizeMacAddress($inputs['device_address']),
-            'device_label' => $extension->extension ?? null,
-            'device_vendor' => explode("/", $inputs['device_template'])[0],
-            'device_enabled' => 'true',
-            'device_enabled_date' => date('Y-m-d H:i:s'),
-            'device_template' => $inputs['device_template'],
-            'device_profile_uuid' => $inputs['device_profile_uuid'],
-            'device_description' => '',
-        ]);
-        $device->save();
-
-        if ($extension) {
-            // Create device lines
-            $device->lines = new DeviceLines();
-            $device->lines->fill([
-                'device_uuid' => $device->device_uuid,
-                'line_number' => '1',
-                'server_address' => Session::get('domain_name'),
-                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                'server_address_primary' => get_domain_setting('server_address_primary'),
-                'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                'display_name' => $extension->extension,
-                'user_id' => $extension->extension,
-                'auth_id' => $extension->extension,
-                'label' => $extension->extension,
-                'password' => $extension->password,
-                'sip_port' => get_domain_setting('line_sip_port'),
-                'sip_transport' => get_domain_setting('line_sip_transport'),
-                'register_expires' => get_domain_setting('line_register_expires'),
-                'enabled' => 'true',
+            $instance = $this->model;
+            $instance->fill([
+                'domain_uuid' => $inputs['domain_uuid'],
+                'fax_uuid' => $inputs['fax_uuid'] ?? null,
+                'destination_type' => 'inbound',
+                'destination_prefix' => $inputs['destination_prefix'],
+                'destination_number' => $inputs['destination_number'],
+                'destination_actions' => $inputs['destination_actions'] ?? null,
+                'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
+                'destination_description' => $inputs['destination_description'] ?? null,
+                'destination_enabled' => $inputs['destination_enabled'] ?? true,
+                'destination_record' => $inputs['destination_record'] ?? false,
+                'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
+                'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
+                'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
             ]);
-            $device->lines->save();
+            $instance->save();
+
+            return response()->json([
+                'messages' => ['success' => ['New item created']]
+            ], 201);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to create new item'], 'ss' => $e->getMessage()]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
-
-
-        return response()->json([
-            'status' => 'success',
-            'device' => $device,
-            'message' => 'Device has been created and assigned.'
-        ]);
     }
 
     /**
@@ -327,7 +370,8 @@ class PhoneNumbersController extends Controller
      */
     public function edit(Request $request, Destinations $phone_number)
     {
-        if (!$request->ajax()) {
+        //
+        /*if (!$request->ajax()) {
             return response()->json([
                 'message' => 'XHR request expected'
             ], 405);
@@ -338,7 +382,7 @@ class PhoneNumbersController extends Controller
         return response()->json([
             'status' => 'success',
             'phone_number' => $phone_number
-        ]);
+        ]);*/
     }
 
     /**

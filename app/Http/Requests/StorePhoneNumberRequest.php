@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use libphonenumber\NumberParseException;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
@@ -30,6 +33,10 @@ class StorePhoneNumberRequest extends FormRequest
                 Rule::unique('App\Models\Destinations', 'destination_number')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
+            'destination_prefix' => [
+                'required',
+                Rule::in('1')
+            ],
             'destination_number_regex' => [
                 'required',
             ],
@@ -41,19 +48,38 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'phone:US',
             ],
-            'destination_type' => [
+            'domain_uuid' => [
                 'required',
-                'in:inbound,outbound,local',
+                Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
             ],
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     *
+     * @param Validator $validator
+     * @return void
+     * @throws ValidationException
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        // Get the original error messages from the validator
+        $errors = $validator->errors();
+
+        $responseData = array('errors' => $errors);
+
+        throw new HttpResponseException(response()->json($responseData, 422));
     }
 
     public function messages(): array
     {
         return [
+            'destination_prefix.required' => 'Country code is required',
             'destination_number.required' => 'Phone number is required',
             'destination_number.phone' => 'Should be valid US phone number',
-            'destination_number.unique' => 'This phone number is already used'
+            'destination_number.unique' => 'This phone number is already used',
+            'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
@@ -81,5 +107,8 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_number_regex' => '^('.$destination_number_regex.')$',
             'destination_caller_id_number' => $destination_caller_id_number
         ]);
+        if (!$this->has('domain_uuid')) {
+            $this->merge(['domain_uuid' => session('domain_uuid')]);
+        }
     }
 }
