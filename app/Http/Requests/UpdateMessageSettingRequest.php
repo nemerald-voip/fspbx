@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use libphonenumber\PhoneNumberFormat;
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateMessageSettingRequest extends FormRequest
 {
@@ -65,6 +66,10 @@ class UpdateMessageSettingRequest extends FormRequest
 
         if (!$this->has('enabled')) {
             $merge['enabled'] = "true";
+        }
+
+        if ($this->has('destination')) {
+            $merge['destination'] = formatPhoneNumber($this->input('destination'),'US', PhoneNumberFormat::E164);
         }
 
         $this->merge($merge);
