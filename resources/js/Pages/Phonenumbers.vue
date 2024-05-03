@@ -43,16 +43,17 @@
                            @pagination-change-page="renderRequestedPage"/>
             </template>
             <template #table-header>
-                <TableColumnHeader header=" "
-                                   class="py-3.5 text-sm font-semibold text-gray-900 text-center">
-                    <input type="checkbox" v-model="selectAll" @change="handleSelectAll"
+                <TableColumnHeader header=" " class="w-4 flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                                      :has-selected-items="selectedItems.length > 0" />
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Phone Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Actions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Call Actions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Status" class="w-12 px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Action" class="w-4 px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -75,19 +76,20 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.destination_uuid">
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
-                        <input v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.destination_uuid"
-                               class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                    <TableField class="w-4 whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex">
+                        <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                               :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     </TableField>
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                                 :text="row.domain_description" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         {{row.destination_number_prefix}} {{row.destination_number_formatted}}
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"  />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_enabled" />
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="'Actionssss'" />
+                    <TableField class="w-12 whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <StatusBadge :enabled="row.destination_enabled" />
+                    </TableField>
+                    <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
                                 <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
@@ -196,6 +198,8 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import Notification from "./components/notifications/Notification.vue";
+import BulkActionButton from "./components/general/BulkActionButton.vue";
+import StatusBadge from "./components/general/StatusBadge.vue";
 
 const page = usePage()
 
@@ -235,7 +239,7 @@ const showGlobal = ref(props.showGlobal);
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
+        /*{
             id: 'bulk_restart',
             label: 'Restart',
             icon: 'RestartIcon'
@@ -244,11 +248,11 @@ const bulkActions = computed(() => {
             id: 'bulk_update',
             label: 'Edit',
             icon: 'PencilSquareIcon'
-        }
+        }*/
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.destination_delete) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -356,6 +360,13 @@ const executeSingleDelete = (url) => {
             console.log(errors);
         },
     });
+}
+
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        confirmationModalTrigger.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
 }
 
 const executeBulkDelete = () => {

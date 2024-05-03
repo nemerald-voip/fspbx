@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePhoneNumberRequest;
+use App\Http\Requests\UpdatePhoneNumberRequest;
 use App\Models\Destinations;
 use App\Models\DeviceLines;
 use App\Models\Devices;
@@ -15,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -76,6 +78,7 @@ class PhoneNumbersController extends Controller
                     'current_page' => route('phone-numbers.index'),
                     'store' => route('phone-numbers.store'),
                     'select_all' => route('phone-numbers.select.all'),
+                    'bulk_delete' => route('phone-numbers.bulk.delete'),
                    // 'select_all' => route('messages.settings.select.all'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
@@ -423,13 +426,44 @@ class PhoneNumbersController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Destinations  $destinations
-     * @return \Illuminate\Http\Response
+     * @param  UpdatePhoneNumberRequest  $request
+     * @param  Destinations  $destinations
+     * @return JsonResponse
      */
-    public function update(Request $request, Destinations $destinations)
+    public function update(UpdatePhoneNumberRequest $request, Destinations $destinations)
     {
-        //
+        if (!$destinations) {
+            // If the model is not found, return an error response
+            return response()->json([
+                'success' => false,
+                'errors' => ['model' => ['Model not found']]
+            ], 404); // 404 Not Found if the model does not exist
+        }
+
+        try {
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
+
+
+            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+            $inputs['device_address'] = $inputs['device_address_modified'];
+
+            // logger($inputs);
+            $destinations->update($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Item updated.']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update this item']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 
     /**
@@ -452,37 +486,42 @@ class PhoneNumbersController extends Controller
         ]);
     }
 
-    public function options(): JsonResponse
+    /**
+     * Remove the specified resource from storage.
+     * @return JsonResponse
+     */
+    public function bulkDelete(): JsonResponse
     {
-        $faxes = [];
-        $faxesCollection = Faxes::query();
-        $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
-        $faxesCollection = $faxesCollection->orderBy('fax_name')->get();
-        foreach ($faxesCollection as $fax) {
-            $faxes[] = [
-                'name' => $fax->fax_extension.' '.$fax->fax_name,
-                'value' => $fax->fax_uuid
-            ];
+        try {
+            // Begin Transaction
+            DB::beginTransaction();
+
+            // Retrieve all items at once
+            $items = $this->model::whereIn('destination_uuid', request('items'))
+                ->get(['destination_uuid']);
+
+            foreach ($items as $item) {
+                // Delete the item itself
+                $item->delete();
+            }
+
+            // Commit Transaction
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
-
-        $domains = [];
-        $domainsCollection = Session::get("domains");
-        foreach ($domainsCollection as $domain) {
-            $domains[] = [
-                'name' => $domain->domain_name,
-                'value' => $domain->domain_uuid
-            ];
-        }
-        $timeoutDestinations = getTimeoutDestinations();
-
-        unset($faxesCollection, $domainsCollection, $fax, $domain);
-
-        return response()->json([
-            'music_on_hold' => getMusicOnHoldCollection(),
-            'faxes' => $faxes,
-            'domains' => $domains,
-            'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
-            'timeout_destinations_targets' => $timeoutDestinations['targets']
-        ]);
     }
 }
