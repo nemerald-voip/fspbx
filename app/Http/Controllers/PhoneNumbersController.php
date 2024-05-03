@@ -30,6 +30,7 @@ class PhoneNumbersController extends Controller
     public function __construct()
     {
         $this->model = new Destinations();
+
     }
 
     /**
@@ -262,7 +263,10 @@ class PhoneNumbersController extends Controller
 
         $data->select(
             'destination_uuid',
-            'destination_caller_id_name',
+            'destination_number',
+            'destination_prefix',
+            'destination_actions',
+            'destination_enabled',
             'domain_uuid',
         );
 

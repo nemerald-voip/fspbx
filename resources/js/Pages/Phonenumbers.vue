@@ -50,9 +50,8 @@
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Phone Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Caller ID Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Caller ID Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Actions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
             </template>
 
@@ -66,27 +65,23 @@
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                                 :text="row.domain_description" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <span v-if="row.destination_type === 'inbound'" class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Inbound</span>
-                        <span v-if="row.destination_type === 'outbound'" class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Outbound</span>
-                        <span v-if="row.destination_type === 'local'" class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Local</span>
-                        {{row.destination_number}}
+                        {{row.destination_number_prefix}} {{row.destination_number_formatted}}
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_caller_id_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_caller_id_number" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"  />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_enabled" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit phone number'" position='TopLeft' target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <DocumentTextIcon v-if="row.edit_path" @click="handleEdit(row.edit_path)"
-                                                  class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
+                                <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
+                                    <div id="edit_tooltip_target">
+                                        <DocumentTextIcon @click="handleEditRequest(row.destination_uuid)"
+                                                  class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip :content="'Remove phone number'" position='TopLeft' target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <TrashIcon v-if="row.destroy_path" @click="handleDestroyConfirmation(row.destroy_path)"
-                                           class="h-5 w-5 text-black-500 hover:text-black-900 active:h-5 active:w-5 cursor-pointer"/>
+                                <ejs-tooltip v-if="page.props.auth.can.destination_delete" :content="'Remove phone number'" position='TopLeft' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
+                                           class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -172,7 +167,7 @@
 <script setup>
 import {computed, onMounted, reactive, ref} from "vue";
 import axios from 'axios';
-import {router} from "@inertiajs/vue3";
+import {router, usePage} from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -190,13 +185,14 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 const today = new Date();
 
+const page = usePage()
+
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const createModalTrigger = ref(false);
-const updateModalTrigger = ref(false);
-const bulkEditModalTrigger = ref(false);
+const editModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const actionError = ref(false);
@@ -282,18 +278,18 @@ const handleEditRequest = (itemUuid) => {
 }
 
 const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
+    createFormSubmitting.value = true;
     formErrors.value = null;
 
     axios.post(props.routes.store, form)
         .then((response) => {
-            createFormSubmiting.value = false;
+            createFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-        createFormSubmiting.value = false;
+        createFormSubmitting.value = false;
         handleClearSelection();
         handleFormErrorResponse(error);
     });
@@ -301,7 +297,7 @@ const handleCreateRequest = (form) => {
 };
 
 const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
+    updateFormSubmitting.value = true;
     formErrors.value = null;
 
     axios.put(props.itemData.update_url, form)
@@ -348,38 +344,6 @@ const executeSingleDelete = (url) => {
     });
 }
 
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
-    }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
-    if (action === 'bulk_restart') {
-        confirmationRestartTrigger.value = true;
-        confirmRestartAction.value = () => executeBulkRestart();
-    }
-}
-
-const executeBulkRestart = () => {
-    axios.post(props.routes.restart,
-        { 'devices': selectedItems.value },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-        handleClearSelection();
-        handleModalClose();
-        handleFormErrorResponse(error);
-    });
-}
-
 const executeBulkDelete = () => {
     axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
         .then((response) => {
@@ -391,21 +355,6 @@ const executeBulkDelete = () => {
             handleClearSelection();
             handleModalClose();
             handleErrorResponse(error);
-        });
-}
-
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
         });
 }
 
@@ -429,35 +378,6 @@ const handleSelectAll = () => {
     });
 
 };
-
-
-const handleCopyToClipboard = (macAddress) => {
-    navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
-        setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
-        }, 500);
-    }).catch((error) => {
-        // Handle the error case
-        console.error('Failed to copy to clipboard:', error);
-    });
-}
-
-
-const handleRestart = (device_uuid) => {
-    axios.post(props.routes.restart,
-        { 'devices': [device_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-        handleClearSelection();
-        handleFormErrorResponse(error);
-    });
-}
-
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -599,7 +519,6 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 

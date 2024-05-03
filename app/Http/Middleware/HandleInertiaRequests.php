@@ -53,12 +53,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'can' => fn () => $this->getPermissions(),
             ],
-            
+
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'error' => fn () =>  $request->session()->get('error'),
             ],
-        ]);   
+        ]);
     }
 
     public function getPermissions() {
@@ -77,7 +77,10 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['device_profile_index'] = userCheckPermission('device_profile_view');
 
-        
+        $permissions['destination_add'] = userCheckPermission('destination_add');
+        $permissions['destination_edit'] = userCheckPermission('destination_edit');
+        $permissions['destination_delete'] = userCheckPermission('destination_delete');
+
         // logger($permissions);
         return $permissions;
     }
