@@ -150,12 +150,12 @@ class SmsWebhookController extends Controller
     public function messageFromRingotel()
     {
         $this->message = $this->parseRequest();
-
+        
         try {
-            $this->validateMessage();
             $response = $this->handleMessageType();
             return $response;
         } catch (\Exception $e) {
+            logger('catching error');
             return $this->handleError($e);
         }
     }
@@ -215,8 +215,11 @@ class SmsWebhookController extends Controller
     {
         switch ($this->message['method']) {
             case 'typing':
+                return;
             case 'read':
+                return;
             case 'delivered':
+                return;
             case 'message':
                 return $this->processOutgoingMessage();
             default:
@@ -226,6 +229,8 @@ class SmsWebhookController extends Controller
 
     private function processOutgoingMessage()
     {
+        $this->validateMessage();
+
         $this->direction = "out";
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
         $this->domain_uuid = $this->mobileAppDomainConfig->domain_uuid;
