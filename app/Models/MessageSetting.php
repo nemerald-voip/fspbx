@@ -32,6 +32,7 @@ class MessageSetting extends Model
         'description',
         'chatplan_detail_data',
         'email',
+        'enabled',
     ];
 
 

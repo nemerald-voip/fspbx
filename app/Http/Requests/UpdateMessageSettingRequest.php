@@ -45,6 +45,9 @@ class UpdateMessageSettingRequest extends FormRequest
                 'nullable',
                 'string'
             ],
+            'enabled' => [
+                'nullable',
+            ],
         ];
     }
 
@@ -56,14 +59,14 @@ class UpdateMessageSettingRequest extends FormRequest
         ];
     }
 
-    // protected function prepareForValidation()
-    // {
-        // $merge = [];
+    protected function prepareForValidation()
+    {
+        $merge = [];
 
-        // if ($this->has('first_name')) {
-        //     $merge['first_name'] = ucfirst($this->get('first_name'));
-        // }
+        if (!$this->has('enabled')) {
+            $merge['enabled'] = "true";
+        }
 
-        // $this->merge($merge);
-    // }
+        $this->merge($merge);
+    }
 }

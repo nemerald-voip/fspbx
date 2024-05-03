@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
@@ -59,6 +60,15 @@ class Destinations extends Model
         'group_uuid',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct();
+        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+        $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->fill($attributes);
+    }
+
     /**
      * The booted method of the model
      *
@@ -69,10 +79,25 @@ class Destinations extends Model
     {
         static::saving(function ($model) {
             // Remove attributes before saving to database
+            unset($model->destination_number_formatted);
             unset($model->destroy_route);
         });
 
         static::retrieved(function ($model) {
+            if ($model->destination_number) {
+                $phoneNumberUtil = PhoneNumberUtil::getInstance();
+                try {
+                    $phoneNumberObject = $phoneNumberUtil->parse($model->destination_number, 'US');
+                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                        $model->destination_number_formatted = $phoneNumberUtil
+                            ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+                    } else {
+                        $model->destination_number_formatted = $model->destination_number;
+                    }
+                } catch (NumberParseException $e) {
+                    $model->destination_number_formatted = $model->destination_number;
+                }
+            }
             $model->destroy_route = route('phone-numbers.destroy', $model);
 
             return $model;

@@ -48,6 +48,9 @@ class CreateMessageSettingRequest extends FormRequest
             'domain_uuid' => [
                 'required',
             ],
+            'enabled' => [
+                'nullable',
+            ],
         ];
     }
 
@@ -65,6 +68,10 @@ class CreateMessageSettingRequest extends FormRequest
 
         if (!$this->has('domain_uuid')) {
             $merge['domain_uuid'] = session('domain_uuid');
+        }
+
+        if (!$this->has('enabled')) {
+            $merge['enabled'] = "true";
         }
 
         $this->merge($merge);
