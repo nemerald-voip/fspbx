@@ -55,6 +55,24 @@
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
             </template>
 
+            <template v-if="selectPageItems" v-slot:current-selection>
+                <td colspan="6">
+                    <div class="text-sm text-center m-2">
+                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <button v-if="!selectAll && selectedItems.length != data.total"
+                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                @click="handleSelectAll">
+                            Select all {{ data.total }} items
+                        </button>
+                        <button v-if="selectAll"
+                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                @click="handleClearSelection">
+                            Clear selection
+                        </button>
+                    </div>
+                </td>
+            </template>
+
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.destination_uuid">
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-center">
@@ -113,12 +131,7 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
-    <NotificationError
-        :show="actionError"
-        :errors="actionErrorsList"
-        :header="actionErrorMessage"
-        @update:show="handleErrorsReset"
-    />
+
     <AddEditItemModal
         :show="createModalTrigger"
         :header="'Add New'"
@@ -137,30 +150,32 @@
         </template>
     </AddEditItemModal>
     <AddEditItemModal
-        :show="updateModalTrigger"
+        :show="editModalTrigger"
         :header="'Update Number'"
         :loading="loadingModal"
         :customClass="'sm:max-w-4xl'"
         @close="handleModalClose"
     >
         <template #modal-body>
-            <!--AddEditPhoneNumberForm
-                :phoneNumber="PhoneNumberObject"
-                :isEdit="true"
-                @update:show="editModalTrigger = false"
-            /-->
+            <CreatePhoneNumberForm
+                :options="itemOptions"
+                :errors="formErrors"
+                :is-submitting="createFormSubmitting"
+                @submit="handleCreateRequest"
+                @cancel="handleModalClose"
+            />
         </template>
     </AddEditItemModal>
     <DeleteConfirmationModal
         :show="confirmationModalTrigger"
         @close="confirmationModalTrigger = false"
-        @confirm="handleDestroy(confirmationModalDestroyPath)"
+        @confirm="confirmDeleteAction"
     />
-    <NotificationError
-        :show="actionError"
-        :errors="actionErrorsList"
-        :header="actionErrorMessage"
-        @update:show="handleErrorsReset"
+    <Notification
+        :show="notificationShow"
+        :type="notificationType"
+        :messages="notificationMessages"
+        @update:show="hideNotification"
     />
 </template>
 
@@ -172,8 +187,6 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationError from "./components/notifications/Error.vue";
-
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import CreatePhoneNumberForm from "./components/forms/CreatePhoneNumberForm.vue";
 import Loading from "./components/general/Loading.vue";
@@ -182,8 +195,7 @@ import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/2
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
-const today = new Date();
+import Notification from "./components/notifications/Notification.vue";
 
 const page = usePage()
 
@@ -191,16 +203,18 @@ const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
+const selectPageItems = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const actionError = ref(false);
-const actionErrorsList = ref({});
-const actionErrorMessage = ref(null);
+const confirmDeleteAction = ref(null);
 const createFormSubmitting = ref(null);
 const updateFormSubmitting = ref(null);
 const formErrors = ref(null);
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -519,7 +533,6 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
 }
 
 const hideNotification = () => {

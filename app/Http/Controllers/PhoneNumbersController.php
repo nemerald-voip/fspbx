@@ -75,6 +75,7 @@ class PhoneNumbersController extends Controller
                 'routes' => [
                     'current_page' => route('phone-numbers.index'),
                     'store' => route('phone-numbers.store'),
+                    'select_all' => route('phone-numbers.select.all'),
                    // 'select_all' => route('messages.settings.select.all'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
@@ -236,6 +237,36 @@ class PhoneNumbersController extends Controller
             //$phoneNumber->destroy_path = route('phone-numbers.destroy', $phoneNumber);
         //}
         return $data;
+    }
+
+    /**
+     * @return JsonResponse
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     */
+    public function selectAll(): JsonResponse
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 
     /**

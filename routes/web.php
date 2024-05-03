@@ -145,10 +145,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
     Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
 
-
-    //Route::get('/phone-numbers/options', [PhoneNumbersController::class, 'options'])->name('phoneNumbers.options');
-    //Route::put('/phone-numbers/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('phoneNumbers.bulkUpdate');
     Route::resource('phone-numbers', PhoneNumbersController::class);
+    Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
