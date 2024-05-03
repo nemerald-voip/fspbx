@@ -7,7 +7,7 @@
 import {defineProps} from 'vue'
 
 const props = defineProps({
-    enabled: Boolean,
+    enabled: [Boolean, String],
     enabledLabel: {
         type: String,
         default: 'Enabled'
