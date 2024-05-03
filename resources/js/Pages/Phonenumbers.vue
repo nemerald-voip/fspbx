@@ -94,8 +94,8 @@
                             <div class="flex items-center space-x-2 whitespace-nowrap">
                                 <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
                                     <div id="edit_tooltip_target">
-                                        <DocumentTextIcon @click="handleEditRequest(row.destination_uuid)"
-                                                  class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
+                                        <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
+                                                          class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                                 <ejs-tooltip v-if="page.props.auth.can.destination_delete" :content="'Remove phone number'" position='TopLeft' target="#delete_tooltip_target">
@@ -200,6 +200,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import Notification from "./components/notifications/Notification.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import StatusBadge from "./components/general/StatusBadge.vue";
+import {PencilSquareIcon} from "@heroicons/vue/24/solid/index.js";
 
 const page = usePage()
 

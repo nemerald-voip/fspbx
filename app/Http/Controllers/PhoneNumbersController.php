@@ -469,19 +469,19 @@ class PhoneNumbersController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Destinations  $destination
+     * @param  \App\Models\Destinations  $phone_number
      * @return Response
      */
-    public function destroy(Destinations $destination)
+    public function destroy(Destinations $phone_number)
     {
-        $destination->delete();
+        $phone_number->delete();
 
         return Inertia::render('Phonenumbers', [
             'data' => function () {
                 return $this->getData();
             },
             'status' => 'success',
-            'phone_number' => $destination,
+            'phone_number' => $phone_number,
             'message' => 'Phone number has been deleted'
         ]);
     }

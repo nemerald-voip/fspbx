@@ -98,7 +98,7 @@ class Destinations extends Model
                     $model->destination_number_formatted = $model->destination_number;
                 }
             }
-            $model->destroy_route = route('phone-numbers.destroy', $model);
+            $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);
 
             return $model;
         });
