@@ -32,6 +32,7 @@ class SmsWebhookController extends Controller
     protected $carrier;
     protected $messageProvider;
     protected $currentDestination;
+    protected $direction;
 
 
     // Recieve SMS from the provider and send through Ringotel API
@@ -225,6 +226,7 @@ class SmsWebhookController extends Controller
 
     private function processOutgoingMessage()
     {
+        $this->direction = "out";
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
         $this->domain_uuid = $this->mobileAppDomainConfig->domain_uuid;
         $this->extension_uuid = $this->getExtensionUuid();
@@ -252,7 +254,7 @@ class SmsWebhookController extends Controller
         }
 
         //Store message in the log database
-        $message = $this->storeMessage("Queued");
+        $message = $this->storeMessage("queued");
 
         // Send message
         $this->messageProvider->send($message->message_uuid);
@@ -310,7 +312,7 @@ class SmsWebhookController extends Controller
         $messageModel->source =  (isset($this->source)) ? $this->source : "";
         $messageModel->destination =  (isset($this->destination)) ? $this->destination : "";
         $messageModel->message = $this->message['params']['content'];
-        $messageModel->direction = 'out';
+        $messageModel->direction = $this->direction;
         $messageModel->type = 'sms';
         $messageModel->status = $status;
         $messageModel->save();
@@ -390,6 +392,8 @@ class SmsWebhookController extends Controller
         if (!isset($this->carrier)) {
             throw new Exception("Carrier not supported");
         }
+
+        $this->direction = "in";
     }
 
     protected function findAndValidateDestination($destination)
@@ -482,12 +486,13 @@ class SmsWebhookController extends Controller
             'params' => [
                 'orgid' => $this->fetchOrgId($destination),
                 'from' => $this->source,
-                'to' => $this->currrentDestination,
+                'to' => $this->smsDestinationModel->chatplan_detail_data,
                 'content' => $this->message,
             ]
         ];
 
-        $response = Http::timeout(5)
+        $response = Http::ringotel_api()
+            ->timeout(5)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->json();
