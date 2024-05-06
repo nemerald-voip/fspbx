@@ -19,7 +19,7 @@
     <div class="mb-3">
         <label for="device_address" class="col-form-label">Mac Address</label>
         <input type="text" class="form-control" id="device_address" name="device_address" placeholder="Enter the MAC address" value="{{$device->device_address ?? ''}}"
-        @if (isset($device) && $device) readonly @endif
+               @if (isset($device) && $device) readonly @endif
         />
         <div class="error text-danger" id="device_address_error"></div>
         <div class="error text-danger" id="device_address_modified_error"></div>
@@ -66,10 +66,10 @@
                 <option value="" selected>Choose extension</option>
                 @foreach($extensions as $extensionItem)
                     <option @php
-                        if($device && $device->extension() && $device->extension()->extension == $extensionItem->extension) {
-                            print 'selected';
-                        }
-                    @endphp value='{{$extensionItem->extension_uuid}}'>{{$extensionItem->extension}}</option>
+                                if($device && $device->extension() && $device->extension()->extension == $extensionItem->extension) {
+                                    print 'selected';
+                                }
+                            @endphp value='{{$extensionItem->extension_uuid}}'>{{$extensionItem->extension}}</option>
                 @endforeach
             </select>
             <div class="error text-danger" id="device_profile_uuid_error"></div>

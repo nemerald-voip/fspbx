@@ -319,6 +319,7 @@ class SetUpUserSession
             $_SESSION["user"]["domain_name"] = $domain->domain_name;
             $_SESSION["domain_uuid"] = $domain->domain_uuid;
             $_SESSION["context"] = $domain->domain_name;
+            $_SESSION["user"]["domain_uuid"] = $domain->domain_uuid;
         }
 
         // Redirect FusionPBX to an intended URL if it's not a logout page

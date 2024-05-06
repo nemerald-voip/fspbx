@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Groups;
+use App\Models\Permissions;
 use App\Models\DefaultSettings;
 use Illuminate\Database\Seeder;
+use App\Models\GroupPermissions;
 use Illuminate\Database\Eloquent\Model;
 
 class DatabaseSeeder extends Seeder
@@ -19,8 +22,76 @@ class DatabaseSeeder extends Seeder
 
         $this->createMobileAppSettings();
 
+        $this->createPermissions();
+
+        $this->createGroupPermissions();
+
         Model::reguard();
 
+    }
+
+    private function createPermissions() {
+        $permissions = [
+            [
+                'application_name'       => 'Message Settings',
+                'permission_name'        => 'message_settings_list_view',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            // [
+            //     'application_name'       => 'Example Application 1',
+            //     'permission_name'        => 'edit',
+            //     'permission_description' => 'Allows editing of Example Application 1 resources',
+            // ],
+            // Add more permissions as needed
+        ];
+    
+        foreach ($permissions as $permission) {
+            $existingPermission = Permissions::where('application_name', $permission['application_name'])
+                                             ->where('permission_name', $permission['permission_name'])
+                                             ->first();
+    
+            if (is_null($existingPermission)) {
+                Permissions::create([
+                    'application_name'        => $permission['application_name'],
+                    'permission_name'        => $permission['permission_name'],
+                    'insert_date'       => $permission['insert_date'],
+                ]);
+            }
+        }
+    }
+
+    private function createGroupPermissions()
+    {
+
+        $group_permissions = [
+            [
+                'permission_name'        => 'message_settings_list_view',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+
+        ];
+
+        foreach ($group_permissions as $permission) {
+            $existing_item = GroupPermissions::where('permission_name', $permission['permission_name'])
+                ->first();
+
+            if (empty($existing_item)) {
+                // Add new permission
+                GroupPermissions::create([
+                    'permission_name'        => $permission['permission_name'],
+                    'permission_protected'  => $permission['permission_protected'],
+                    'permission_assigned'  => $permission['permission_assigned'],
+                    'group_name'            => $permission['group_name'],
+                    'group_uuid'            => $permission['group_uuid'],
+                    'insert_date'       => $permission['insert_date'],
+                ]);
+
+            }
+        }
     }
 
     private function createMobileAppSettings()

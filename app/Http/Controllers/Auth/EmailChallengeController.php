@@ -25,7 +25,7 @@ class EmailChallengeController extends Controller
         $code = random_int(100000, 999999);
         Session::put('code', $code);
         Session::put('code_expiration', now()->addMinutes(10));
-
+        logger('Your 2FA code is '.$code);
         $attributes = [
             'name' => optional($user->user_adv_fields)->first_name ?? '',
             'email' => $user->user_email,
@@ -97,7 +97,7 @@ class EmailChallengeController extends Controller
         if ($request->session()->has('url.intended')) {
             return Inertia::location(session('url.intended'));
         }
-    
+
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

@@ -110,8 +110,8 @@ class AppsController extends Controller
                 'organization_region' => $request->organization_region,
                 'org_id' => $response['result']['id'],
                 'protocol' => ($protocol) ? $protocol : "",
-                'connection_port' => ($port) ? $port : env("RINGOTEL_CONNECTION_PORT"),
-                'outbound_proxy' => ($proxy) ? $proxy : env("RINGOTEL_OUTBOUND_PROXY"),
+                'connection_port' => ($port) ? $port : config("ringotel.connection_port"),
+                'outbound_proxy' => ($proxy) ? $proxy : config("ringotel.outbound_proxy"),
                 'success' => [
                     'message' => 'Organization created succesfully',
                 ]

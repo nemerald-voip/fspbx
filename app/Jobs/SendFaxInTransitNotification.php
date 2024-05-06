@@ -98,7 +98,7 @@ class SendFaxInTransitNotification implements ShouldQueue
             if (get_domain_setting('fax_slack_notification') == "all") {
                 $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['FromFull']['Email'] . ", To:" . $this->request['fax_destination'] ." is in progress\n";
                 
-                Notification::route('slack', env('SLACK_FAX_HOOK'))
+                Notification::route('slack', config('slack.fax'))
                     ->notify(new SendSlackNotification($this->request));
             }
 

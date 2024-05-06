@@ -1,4 +1,8 @@
 <?php
+
+
+use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -15,12 +19,14 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
-use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use Aws\Sns\Message;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -43,8 +49,9 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 // Webhooks
 Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
+Route::webhooks('webhook/synch/sms', 'synch_messaging');
 
-// Routes for 2FA email challenge. Used as a backup when 2FA is not enabled. 
+// Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
 Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'update'])
     ->middleware('throttle:2,1')
@@ -61,7 +68,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Extensions
     Route::resource('extensions', ExtensionsController::class);
-    Route::post('/extensions/import',[ExtensionsController::class, 'import']) ->name('extensions.import');
+    Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
     Route::post('/extensions/{extension}/device', [ExtensionsController::class, 'oldStoreDevice'])->name('extensions.store-device');
     Route::get('/extensions/{extension}/device/{device}/edit', [ExtensionsController::class, 'oldEditDevice'])->name('extensions.edit-device');
@@ -90,18 +97,18 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Fax
     Route::resource('faxes', FaxesController::class);
-    Route::get('/faxes/newfax/create', [FaxesController::class, 'new']) ->name('faxes.newfax');
-    Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox']) ->name('faxes.inbox.list');
-    Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent']) ->name('faxes.sent.list');
-    Route::get('/faxes/active/{id}', [FaxesController::class, 'active']) ->name('faxes.active.list');
-    Route::get('/faxes/log/{id}', [FaxesController::class, 'log']) ->name('faxes.log.list');
-    Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax']) ->name('faxes.file.deleteSentFax');
-    Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax']) ->name('faxes.file.deleteReceivedFax');
-    Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog']) ->name('faxes.file.deleteFaxLog');
-    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile']) ->name('downloadInboxFaxFile');
-    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile']) ->name('downloadSentFaxFile');
+    Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
+    Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox'])->name('faxes.inbox.list');
+    Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent'])->name('faxes.sent.list');
+    Route::get('/faxes/active/{id}', [FaxesController::class, 'active'])->name('faxes.active.list');
+    Route::get('/faxes/log/{id}', [FaxesController::class, 'log'])->name('faxes.log.list');
+    Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax'])->name('faxes.file.deleteSentFax');
+    Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
+    Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
+    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile'])->name('downloadInboxFaxFile');
+    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
     Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
-    Route::post('/faxes/send', [FaxesController::class, 'sendFax']) -> name ('faxes.sendFax');
+    Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.sendFax');
 
     // Domain Groups
     Route::resource('domaingroups', DomainGroupsController::class);
@@ -123,9 +130,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
-    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::put('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk-update');
-    Route::resource('devices', DeviceController::class);
+
     Route::post('/domains/switch', [DomainController::class, 'switchDomain'])->name('switchDomain');
     Route::get('/domains/switch', function () {
         return redirect('/dashboard');
@@ -133,6 +138,17 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
+    //Devices
+    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
+    Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
+    Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
+    Route::resource('devices', DeviceController::class);
+    Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
+    Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
+
+    Route::resource('phone-numbers', PhoneNumbersController::class);
+    Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
+    Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -179,7 +195,22 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
     // Messages
-    Route::get('/messages', [MessagesController::class, 'index'])->name('messagesStatus');
+    Route::resource('messages', MessagesController::class);
+    Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
+    Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
+    Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
+    Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');
+
+
+
+    // Message Settings
+    Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
+    Route::put('/message-settings/{setting}', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
+    Route::post('/message-settings', [MessageSettingsController::class, 'store'])->name('messages.settings.store');
+    Route::delete('/message-settings/{setting}', [MessageSettingsController::class, 'destroy'])->name('messages.settings.destroy');
+    Route::post('/message-settings/select-all', [MessageSettingsController::class, 'selectAll'])->name('messages.settings.select.all');
+    Route::post('/message-settings/bulk-delete', [MessageSettingsController::class, 'bulkDelete'])->name('messages.settings.bulk.delete');
+    Route::post('/message-settings/bulk-update', [MessageSettingsController::class, 'bulkUpdate'])->name('messages.settings.bulk.update');
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');

@@ -94,7 +94,7 @@ class SendFaxFailedNotification implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
             
-            Notification::route('slack', env('SLACK_FAX_HOOK'))
+            Notification::route('slack', config('slack.fax'))
                 ->notify(new SendSlackNotification($this->request));
 
             Mail::to($this->request['FromFull']['Email'])->send(new FaxFailed($this->request));

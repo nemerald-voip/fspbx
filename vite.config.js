@@ -55,9 +55,6 @@ async function getConfig() {
         "node_modules/daterangepicker/daterangepicker.js",
         // "resources/js/ui/component.range-slider.js",
         // "resources/js/ui/component.rating.js",
-
-        // specific pages
-        "resources/js/ui/page.devices.js",
     ];
 
     const allPaths = await collectModuleAssetsPaths(paths, 'Modules');

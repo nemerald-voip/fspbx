@@ -93,6 +93,26 @@ class Extensions extends Model
         $this->fill($attributes);
     }
 
+    /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            // Remove 'destination_formatted' attribute before saving to database
+            unset($model->name_formatted);
+        });
+
+        static::retrieved(function ($extension) {
+            // Format the name to look like "202 - Chris Fourmont"
+            $extension->name_formatted = !empty($extension->effective_caller_id_name) 
+            ? trim($extension->extension . ' - ' . $extension->effective_caller_id_name)
+            : trim($extension->extension);
+        });
+    }
 
     /**
      * Get the voicemail associated with this extension.

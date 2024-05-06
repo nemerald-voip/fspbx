@@ -11,38 +11,25 @@ use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use App\Jobs\SendSmsNotificationToSlack;
+use libphonenumber\NumberParseException;
 use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
 
 class CommioWebhookProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
+        logger($request);
         try {
-            $slack_message = 'SMS from ' . $request['from'] . ' to ' . $request['to'] . '\n';
-            $slack_message = "*Commio SMS* From: " . $request['from'] . ", To:" . $request['to'] ."\n";
+
+            $smsDestinationModel = $this->getPhoneNumberSmsConfig($request['to']);
+
+
+            $slack_message = "*Commio Inbound SMS* From: " . $request['from'] . ", To:" . $request['to'] ."\n";
 
             //convert all numbers to e.164 format
-            //Get libphonenumber object
-            $phoneNumberUtil = PhoneNumberUtil::getInstance();
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($request['from'], 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $request['from'] = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
+            $request['from'] = formatPhoneNumber($request['from'],'US',PhoneNumberFormat::E164);
 
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($request['to'], 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $request['to'] = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
+            $request['to'] = formatPhoneNumber($request['to'],'US',PhoneNumberFormat::E164);
 
             // Get domain UUID using destination number from the request
             $smsDestinationModel = SmsDestinations::where('destination', $request['to'])
@@ -63,7 +50,7 @@ class CommioWebhookProfile implements WebhookProfile
                 ->first();
 
             if (!$extensionModel && (is_null($smsDestinationModel->email) ||  $smsDestinationModel->email =="")) {
-                throw new \Exception('Unable to find extension or email destination for '. $request["to"]);
+                throw new \Exception('Phone number '. $request["to"] . '  doesnt have an assigned extension or email');
             }
 
             if (!is_null($smsDestinationModel->email) &&  $smsDestinationModel->email !="") {
@@ -112,5 +99,15 @@ class CommioWebhookProfile implements WebhookProfile
         }
 
         return false;
+    }
+
+
+    private function getPhoneNumberSmsConfig($destination)
+    {
+        $model = SmsDestinations::where('destination', $destination)->where('enabled', 'true')->first();
+        if (!$model) {
+            throw new \Exception("SMS configuration not found for extension " . $destination);
+        }
+        return $model;
     }
 }

@@ -59,6 +59,37 @@ class Devices extends Model
     }
 
     /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            // Remove attributes before saving to database
+            unset($model->device_address_formatted);
+            unset($model->destroy_route);
+            unset($model->send_notify_path);
+        });
+
+        static::retrieved(function ($model) {
+            if ($model->device_address) {
+                $model->device_address_formatted = $model->formatMacAddress($model->device_address);
+            }
+            $model->destroy_route = route('devices.destroy', $model);
+
+            return $model;
+        });
+    }
+
+    private function formatMacAddress(string $macAddress, $uppercase = true): string
+    {
+        $macAddress = ($uppercase) ? strtoupper($macAddress) : strtolower($macAddress);
+        return implode(":", str_split($macAddress, 2));
+    }
+
+    /**
      * Get the Device Lines objects associated with this device.
      *  returns Eloquent Object
      */
@@ -83,5 +114,13 @@ class Devices extends Model
     public function extension()
     {
         return ($this->lines()->first() && $this->lines()->first()->extension()) ? $this->lines()->first()->extension() : null;
+    }
+
+    /**
+     * Get domain that this message settings belongs to 
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 }

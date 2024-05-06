@@ -1,7 +1,6 @@
 
 <template>
-    <MainLayout :menu-options="menus" :domain-select-permission="domainSelectPermission" :selected-domain="selectedDomain"
-        :selected-domain-uuid="selectedDomainUuid" :domains="domains">
+    <MainLayout >
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -185,11 +184,6 @@ const loading = ref(false)
 
 const props = defineProps({
     data: Object,
-    menus: Array,
-    domainSelectPermission: Boolean,
-    selectedDomain: String,
-    selectedDomainUuid: String,
-    domains: Array,
     startPeriod: String,
     endPeriod: String,
     search: String,

@@ -94,7 +94,7 @@ class SendSmsNotificationToSlack implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('slack')->allow(2)->every(1)->then(function () {
             
-            Notification::route('slack', env('SLACK_SMS_HOOK'))
+            Notification::route('slack', config('slack.sms'))
                 ->notify(new SendSlackNotification($this->request));
 
         }, function () {
