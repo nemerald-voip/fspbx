@@ -60,7 +60,7 @@
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != data.total"
+                        <button v-if="!selectAll && selectedItems.length !== data.total"
                                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                 @click="handleSelectAll">
                             Select all {{ data.total }} items
@@ -143,6 +143,7 @@
     >
         <template #modal-body>
             <CreatePhoneNumberForm
+                :item="itemData"
                 :options="itemOptions"
                 :errors="formErrors"
                 :is-submitting="createFormSubmitting"
@@ -159,11 +160,11 @@
         @close="handleModalClose"
     >
         <template #modal-body>
-            <CreatePhoneNumberForm
+            <UpdatePhoneNumberForm
                 :options="itemOptions"
                 :errors="formErrors"
-                :is-submitting="createFormSubmitting"
-                @submit="handleCreateRequest"
+                :is-submitting="updateFormSubmitting"
+                @submit="handleUpdateRequest"
                 @cancel="handleModalClose"
             />
         </template>
@@ -191,6 +192,7 @@ import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import CreatePhoneNumberForm from "./components/forms/CreatePhoneNumberForm.vue";
+import UpdatePhoneNumberForm from "./components/forms/UpdatePhoneNumberForm.vue";
 import Loading from "./components/general/Loading.vue";
 import {registerLicense} from '@syncfusion/ej2-base';
 import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";
@@ -484,7 +486,7 @@ const getItemOptions = (domain_uuid) => {
 }
 
 const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
+    if (error.request?.status === 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
@@ -527,7 +529,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItems.value = props.data.data.map(item => item.destination_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -536,8 +538,8 @@ const handleSelectPageItems = () => {
 
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
+    selectedItems.value = [];
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 

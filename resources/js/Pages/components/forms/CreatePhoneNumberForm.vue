@@ -198,6 +198,7 @@ import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
 
 const props = defineProps({
+    item: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
@@ -208,7 +209,7 @@ const page = usePage();
 const selectedTab = ref(0)
 
 const form = reactive({
-    domain_uuid: null,
+    domain_uuid: props.item.domain_uuid,
     fax_uuid: null,
     destination_prefix: 1,
     destination_number: null,
@@ -228,13 +229,6 @@ const emits = defineEmits(['submit', 'cancel']);
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
-
-/*onMounted(() => {
-    if(!Array.isArray(props.phoneNumber.destination_actions)) {
-        props.phoneNumber.destination_actions = [];
-    }
-    destinationEnabledTrigger.value = props.phoneNumber.destination_enabled;
-});*/
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
         form.destination_hold_music = newSelectedItem.value;

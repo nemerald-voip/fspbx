@@ -104,7 +104,7 @@ class StorePhoneNumberRequest extends FormRequest
         }
         $this->merge([
             'destination_number' => $destination_number_regex,
-            'destination_number_regex' => '^('.$destination_number_regex.')$',
+            'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destination_number_regex.')$',
             'destination_caller_id_number' => $destination_caller_id_number
         ]);
         if (!$this->has('domain_uuid')) {

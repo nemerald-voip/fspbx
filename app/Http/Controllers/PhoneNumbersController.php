@@ -132,11 +132,13 @@ class PhoneNumbersController extends Controller
         // Get item data
         $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
             ->select([
+                'destination_uuid',
                 'domain_uuid',
                 'fax_uuid',
                 'destination_prefix',
                 'destination_number',
                 'destination_actions',
+                'destination_conditions',
                 'destination_hold_music',
                 'destination_description',
                 'destination_enabled',

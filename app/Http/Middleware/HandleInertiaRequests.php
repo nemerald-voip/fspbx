@@ -80,6 +80,7 @@ class HandleInertiaRequests extends Middleware
         $permissions['destination_add'] = userCheckPermission('destination_add');
         $permissions['destination_edit'] = userCheckPermission('destination_edit');
         $permissions['destination_delete'] = userCheckPermission('destination_delete');
+        $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
 
         // logger($permissions);
         return $permissions;

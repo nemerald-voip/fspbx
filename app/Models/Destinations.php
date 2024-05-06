@@ -98,6 +98,15 @@ class Destinations extends Model
                     $model->destination_number_formatted = $model->destination_number;
                 }
             }
+
+            if ($model->destination_actions) {
+                $model->destination_actions = json_decode($model->destination_actions);
+            }
+
+            if ($model->destination_conditions) {
+                $model->destination_conditions = json_decode($model->destination_conditions);
+            }
+
             $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);
 
             return $model;
