@@ -12,6 +12,7 @@ class SynchSignatureValidator implements SignatureValidator
         
         //If there is a way to validate that this request came from Commio then let's implement the logic here
         // Otherwise it's defaulted to athenticate all post requests
+        logger('Incoming Message from Synch');
         logger($request);
 
         $apiKey = config('synch.inbound_api_key');  // Retrieve the API key from the config file

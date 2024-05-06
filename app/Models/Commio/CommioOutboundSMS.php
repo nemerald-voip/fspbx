@@ -51,11 +51,12 @@ class CommioOutboundSMS extends Model
         // Get result
         if (isset($response)) {
             $result = json_decode($response->body());
-            // logger([$result]);
+            logger($response->body());
             if (isset($result->code) && ($result->code >= 400)) {
                 $message->status = $result->message;
             }
             if (isset($result->guid)) {
+                $message->reference_id = $result->guid;
                 $message->status = "success";
             }
             $message->save();
