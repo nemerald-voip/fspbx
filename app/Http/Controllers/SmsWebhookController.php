@@ -33,13 +33,15 @@ class SmsWebhookController extends Controller
     protected $messageProvider;
     protected $currentDestination;
     protected $direction;
+    protected $deliveryReceipt;
 
 
     // Recieve SMS from the provider and send through Ringotel API
     public function handle(Request $request)
     {
         // $payload = $request->all();
-        logger($request);
+        logger('SmsWebhookController');
+        return;
 
         try {
             // Early exit if unauthorized
@@ -62,48 +64,18 @@ class SmsWebhookController extends Controller
 
 
 
-
-
             return response('Webhook received');
         } catch (Exception $e) {
             $error = "*Inbound SMS Failed*: " . $e->getMessage();
             SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
             logger($error);
             logger($request->all());
-            //I need to know the vlaue of current destination
+
+            $this->storeMessage($e->getMessage());
 
             return $this->unauthorizedResponse();
         }
 
-
-  
-
-        //     if ($validation) {
-        //         $data = array(
-        //             'method' => 'message',
-        //             'params' => array(
-        //                 'orgid' => $setting->domain_setting_value,
-        //                 'from' => $from,
-        //                 'to' => $smsDestinationModel->chatplan_detail_data,
-        //                 // 'content' => $domainModel->domain_uuid,
-        //                 'content' => $message,
-        //             )
-        //         );
-
-        //         $response = Http::ringotel_api()
-        //             //->dd()
-        //             ->timeout(5)
-        //             ->withBody(json_encode($data), 'application/json')
-        //             ->post('/')
-        //             ->throw(function ($response, $e) {
-        //                 Notification::route('mail', 'dexter@stellarvoip.com')
-        //                     ->notify(new StatusUpdate("error"));
-        //                 return response()->json([
-        //                     'error' => 401,
-        //                     'message' => 'Unable to send message'
-        //                 ]);
-        //             })
-        //             ->json();
 
         //         //Example of succesfull message
         //         //{"result":{"sessionid":"1649368248560-f92a642d026618b5fe"}}
@@ -150,9 +122,9 @@ class SmsWebhookController extends Controller
     public function messageFromRingotel()
     {
         $this->message = $this->parseRequest();
-        
+
         try {
-            $response = $this->handleMessageType();
+            $response = $this->handleOutgoingMessageType();
             return $response;
         } catch (\Exception $e) {
             logger('catching error');
@@ -200,18 +172,18 @@ class SmsWebhookController extends Controller
             $phoneNumberObject = $phoneNumberUtil->parse($this->message['params']['to'], 'US');
 
             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                $this->destination = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
+                $this->currentDestination = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
             } else {
-                $this->destination = $this->message['params']['to'];
+                $this->currentDestination = $this->message['params']['to'];
                 throw new \Exception("Destination phone number (" . $this->message['params']['to'] . ") is not a valid US number");
             }
         } catch (NumberParseException $e) {
-            $this->destination = $this->message['params']['to'];
+            $this->currentDestination = $this->message['params']['to'];
             throw new \Exception("Destination phone number (" . $this->message['params']['to'] . ") is not a valid US number");
         }
     }
 
-    private function handleMessageType()
+    private function handleOutgoingMessageType()
     {
         switch ($this->message['method']) {
             case 'typing':
@@ -225,6 +197,22 @@ class SmsWebhookController extends Controller
             default:
                 throw new \Exception("Unsupported method type");
         }
+    }
+    
+    private function handleIcomingMessageType()
+    {
+        switch ($this->message['deliveryReceipt']) {
+            case true:
+                $this->deliveryReceipt = true;
+                $this->processDeliveryUpdate();
+            default:
+                return;
+        }
+    }
+
+    private function processDeliveryUpdate() {
+        logger($this->message['referenceId']);
+
     }
 
     private function processOutgoingMessage()
@@ -315,7 +303,7 @@ class SmsWebhookController extends Controller
         $messageModel->extension_uuid = (isset($this->extension_uuid)) ? $this->extension_uuid : null;
         $messageModel->domain_uuid = (isset($this->domain_uuid)) ? $this->domain_uuid : null;
         $messageModel->source =  (isset($this->source)) ? $this->source : "";
-        $messageModel->destination =  (isset($this->destination)) ? $this->destination : "";
+        $messageModel->destination =  (isset($this->currentDestination)) ? $this->currentDestination : "";
         $messageModel->message = $this->message['params']['content'];
         $messageModel->direction = $this->direction;
         $messageModel->type = 'sms';
@@ -380,6 +368,9 @@ class SmsWebhookController extends Controller
 
     protected function initializeMessageDetails()
     {
+        // $this->handleIcomingMessageType();
+        logger(request());
+
         if ($this->carrier == 'thinq') {
             $this->destination = $this->normalizeDestination(request('to'));
             $this->source = request('from');
