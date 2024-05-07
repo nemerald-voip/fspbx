@@ -104,7 +104,6 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
             } catch (\Exception $e) {
                 return $this->handleError($e);
             }
-
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
@@ -126,7 +125,7 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
             // $this->prepareMessageDetails($this->webhookCall->payload);
             // $this->handleIncomingMessage();
             $this->processMessage($this->webhookCall->payload);
-        }else {
+        } else {
             throw new \Exception("Unsupported message type");
         }
     }
@@ -194,7 +193,7 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         }
         return $model;
     }
-    
+
 
     private function handleError(\Exception $e)
     {
@@ -240,12 +239,16 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
 
     private function getExtensionUuid()
     {
-        $extension_uuid = Extensions::where('domain_uuid', $this->domain_uuid)
+        $extension = Extensions::where('domain_uuid', $this->domain_uuid)
             ->where('extension', $this->messageConfig->chatplan_detail_data)
             ->select('extension_uuid')
-            ->first()
-            ->extension_uuid;
+            ->first();
 
-        return $extension_uuid;
+        if ($extension) {
+            return $extension->extension_uuid;
+        } else {
+            // Handle the case when no extension is found
+            return null; 
+        }
     }
 }
