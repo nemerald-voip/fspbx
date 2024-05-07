@@ -20,6 +20,10 @@ class ProcessCommioSMS implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private $org_id;
+    private $extension;
+    private $message_uuid;
+
     /**
      * The number of times the job may be attempted.
      *
@@ -62,13 +66,6 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $to_did;
-    private $from_did;
-    private $message;
-
-    private $org_id;
-
-    private $message_uuid;
 
     /**
      * Create a new job instance.
@@ -77,11 +74,9 @@ class ProcessCommioSMS implements ShouldQueue
      */
     public function __construct($data)
     {
-        $this->to_did = $data['to_did'];
-        $this->from_did = $data['from_did'];
-        $this->message = $data['message'];
         $this->org_id = $data['org_id'];
         $this->message_uuid = $data['message_uuid'];
+        $this->extension = $data['extension'];
     }
 
     /**
@@ -105,11 +100,9 @@ class ProcessCommioSMS implements ShouldQueue
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 
             $sms = new CommioInboundSMS();
-            $sms->to_did = $this->to_did;
-            $sms->from_did = $this->from_did;
-            $sms->message = $this->message;
             $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
+            $sms->extension = $this->extension;
             $sms->send();
 
         }, function () {

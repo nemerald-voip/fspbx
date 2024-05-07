@@ -2,12 +2,11 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Models\Domain;
 use App\Models\Messages;
 use App\Models\Extensions;
 use App\Jobs\ProcessCommioSMS;
+use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
-use Illuminate\Support\Facades\Log;
 use App\Jobs\ProcessCommioSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
@@ -63,7 +62,7 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
 
 
     protected $mobileAppDomainConfig;
-    protected $smsDestinationModel;
+    protected $messageConfig;
     protected $domain_uuid;
     protected $message;
     protected $extension_uuid;
@@ -73,6 +72,8 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
     protected $messageProvider;
     protected $currentDestination;
     protected $deliveryReceipt;
+    protected $email;
+    protected $ext;
 
     /**
      * Get the middleware the job should pass through.
@@ -104,25 +105,6 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
                 return $this->handleError($e);
             }
 
-            if ($this->webhookCall->payload['to'] != "") {
-                ProcessCommioSMS::dispatch([
-                    'org_id' => $this->webhookCall->payload['org_id'],
-                    'message_uuid' => $this->webhookCall->payload['message_uuid'],
-                    'to_did' => $this->webhookCall->payload['to'],
-                    'from_did' => $this->webhookCall->payload['from'],
-                    'message' => $this->webhookCall->payload['message']
-                ])->onQueue('messages');
-            }
-
-            if ($this->webhookCall->payload['email_to'] != "") {
-                ProcessCommioSMSToEmail::dispatch([
-                    'org_id' => $this->webhookCall->payload['org_id'],
-                    'message_uuid' => $this->webhookCall->payload['message_uuid'],
-                    'email_to' => $this->webhookCall->payload['email_to'],
-                    'from_did' => $this->webhookCall->payload['from'],
-                    'message' => $this->webhookCall->payload['message']
-                ])->onQueue('emails');
-            }
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
@@ -140,72 +122,67 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
 
         if (isset($this->webhookCall->payload['send_status'])) {
             // $this->handleDeliveryUpdate();
+        } elseif (isset($this->webhookCall->payload['type'])) {
+            // $this->prepareMessageDetails($this->webhookCall->payload);
+            // $this->handleIncomingMessage();
+            $this->processMessage($this->webhookCall->payload);
+        }else {
+            throw new \Exception("Unsupported message type");
         }
-
-        if (isset($this->webhookCall->payload['type'])) {
-            $this->destination = $this->webhookCall->payload['to'];
-            $this->source = $this->webhookCall->payload['from'];
-            $this->message = $this->webhookCall->payload['message'];
-            $this->handleIncomingMessage();
-        }
-
-        throw new \Exception("Unsupported message type");
     }
 
-    private function handleIncomingMessage()
+    private function processMessage($payload)
     {
-        $smsDestinationModel = $this->getPhoneNumberSmsConfig($this->destination);
-
-
-        $slack_message = "*Commio Inbound SMS* From: " . $this->source . ", To:" . $this->destination . "\n";
-
         //convert all numbers to e.164 format
-        $this->source = formatPhoneNumber($this->source, 'US', PhoneNumberFormat::E164);
+        $this->source = formatPhoneNumber($payload['from'], 'US', PhoneNumberFormat::E164);
+        $this->destination = formatPhoneNumber($payload['to'], 'US', PhoneNumberFormat::E164);
 
-        $this->destination = formatPhoneNumber($this->destination, 'US', PhoneNumberFormat::E164);
+        $this->message = $payload['message'];
+        $this->messageConfig = $this->getPhoneNumberSmsConfig($this->destination);
+        $this->handleSms();
+    }
 
-        $domainModel = Domain::find($smsDestinationModel->domain_uuid);
+    private function handleSms()
+    {
+        $this->domain_uuid = $this->messageConfig->domain_uuid;
 
-        if (!$domainModel) {
-            throw new \Exception('Domain ' . $smsDestinationModel->domain_uuid . ' is not found');
-        }
+        $this->extension_uuid = $this->getExtensionUuid();
 
-        $extensionModel = Extensions::where('domain_uuid', $smsDestinationModel->domain_uuid)
-            ->where('extension', $smsDestinationModel->chatplan_detail_data)
-            ->first();
-
-        if (!$extensionModel && (is_null($smsDestinationModel->email) ||  $smsDestinationModel->email == "")) {
+        if (!$this->extension_uuid && (is_null($this->messageConfig->email) ||  $this->messageConfig->email == "")) {
             throw new \Exception('Phone number *' . $this->destination . '*  doesnt have an assigned extension or email');
         }
 
-        if (!is_null($smsDestinationModel->email) &&  $smsDestinationModel->email != "") {
-            $email = $smsDestinationModel->email;
+        if (!is_null($this->messageConfig->email) &&  $this->messageConfig->email != "") {
+            $this->email = $this->messageConfig->email;
         } else {
-            $email = "";
+            $this->email = "";
         }
 
-        if (!is_null($smsDestinationModel->chatplan_detail_data) &&  $smsDestinationModel->chatplan_detail_data != "") {
-            $ext = $smsDestinationModel->chatplan_detail_data;
+        if (!is_null($this->messageConfig->chatplan_detail_data) &&  $this->messageConfig->chatplan_detail_data != "") {
+            $this->ext = $this->messageConfig->chatplan_detail_data;
         } else {
-            $ext = "";
+            $this->ext = "";
         }
 
-        // Store message in database
-        $messageModel = new Messages();
-        $messageModel->extension_uuid = (isset($extensionModel->extension_uuid)) ? $extensionModel->extension_uuid : null;
-        $messageModel->domain_uuid = (isset($smsDestinationModel->domain_uuid)) ? $smsDestinationModel->domain_uuid : null;
-        $messageModel->source = $this->source;
-        $messageModel->destination = $this->destination;
-        $messageModel->message = $this->message;
-        $messageModel->direction = 'in';
-        $messageModel->type = 'sms';
-        $messageModel->status = 'Queued';
-        $messageModel->save();
+        $message = $this->storeMessage('queued');
 
-        // $request['org_id'] = $setting->domain_setting_value;
-        // $request['to'] = $ext;
-        // $request['email_to'] = $email;
-        // $request['message_uuid'] = $messageModel->message_uuid;
+        if ($this->ext != "") {
+            ProcessCommioSMS::dispatch([
+                'org_id' => $this->fetchOrgId(),
+                'message_uuid' => $message->message_uuid,
+                'extension' => $this->ext,
+            ])->onQueue('messages');
+        }
+
+        if ($this->email != "") {
+            ProcessCommioSMSToEmail::dispatch([
+                'org_id' => $this->fetchOrgId(),
+                'message_uuid' => $message->message_uuid,
+                'email' => $this->email,
+            ])->onQueue('emails');
+        }
+
+        return true;
     }
 
 
@@ -224,9 +201,7 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         logger($e->getMessage());
         $this->storeMessage($e->getMessage());
         // Log the error or send it to Slack
-        $error = isset($this->mobileAppDomainConfig) && isset($this->mobileAppDomainConfig->domain) ?
-            "*Commio Inbound SMS Failed*: From: " . $this->message['params']['from'] . " in " . $this->mobileAppDomainConfig->domain->domain_description . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage() :
-            "*Commio Inbound SMS Failed*: From: " . $this->source . " To: " . $this->destination . "\n" . $e->getMessage();
+        $error = "*Commio Inbound SMS Failed*: From: " . $this->source . " To: " . $this->destination . "\n" . $e->getMessage();
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
 
@@ -246,12 +221,10 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         $messageModel->status = $status;
         $messageModel->save();
 
-        logger($messageModel);
-
         return $messageModel;
     }
 
-    protected function fetchOrgId($destination)
+    protected function fetchOrgId()
     {
         $setting = DomainSettings::where('domain_uuid', $this->domain_uuid)
             ->where('domain_setting_category', 'app shell')
@@ -259,9 +232,20 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
             ->value('domain_setting_value');
 
         if (is_null($setting)) {
-            throw new Exception("From: " . $this->source . " To: " . $destination . " \n Org ID not found");
+            throw new \Exception("From: " . $this->source . " To: " . $this->destination . " \n Org ID not found");
         }
 
         return $setting;
+    }
+
+    private function getExtensionUuid()
+    {
+        $extension_uuid = Extensions::where('domain_uuid', $this->domain_uuid)
+            ->where('extension', $this->messageConfig->chatplan_detail_data)
+            ->select('extension_uuid')
+            ->first()
+            ->extension_uuid;
+
+        return $extension_uuid;
     }
 }

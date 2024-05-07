@@ -62,10 +62,6 @@ class ProcessCommioSMSToEmail implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $email_to;
-    private $from_did;
-    private $message;
-
     private $org_id;
 
     private $message_uuid;
@@ -77,9 +73,6 @@ class ProcessCommioSMSToEmail implements ShouldQueue
      */
     public function __construct($data)
     {
-        $this->email_to = $data['email_to'];
-        $this->from_did = $data['from_did'];
-        $this->message = $data['message'];
         $this->org_id = $data['org_id'];
         $this->message_uuid = $data['message_uuid'];
     }
@@ -105,9 +98,6 @@ class ProcessCommioSMSToEmail implements ShouldQueue
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
 
             $sms = new CommioInboundSMS();
-            $sms->email_to = $this->email_to;
-            $sms->from_did = $this->from_did;
-            $sms->message = $this->message;
             $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
             $sms->smsToEmail();
