@@ -106,7 +106,7 @@
                     </div>
 
                     <!-- Global Info -->
-                    <div class="lg:hidde" v-show="props.data.superadmin">
+                    <div class="lg:hidden" v-show="props.data.superadmin">
                         <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-900/5">
 
                             <dl class="flex flex-wrap">
