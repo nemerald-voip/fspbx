@@ -241,7 +241,11 @@ class MessageSettingsController extends Controller
         }
 
         try {
-            $setting->update($request->validated());
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
+
+            $setting->update($inputs);
 
             // Return a JSON response indicating success
             return response()->json([
