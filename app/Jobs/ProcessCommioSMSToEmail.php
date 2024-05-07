@@ -63,7 +63,7 @@ class ProcessCommioSMSToEmail implements ShouldQueue
     public $deleteWhenMissingModels = true;
 
     private $org_id;
-
+    private $email;
     private $message_uuid;
 
     /**
@@ -75,6 +75,7 @@ class ProcessCommioSMSToEmail implements ShouldQueue
     {
         $this->org_id = $data['org_id'];
         $this->message_uuid = $data['message_uuid'];
+        $this->email = $data['email'];
     }
 
     /**
@@ -100,6 +101,7 @@ class ProcessCommioSMSToEmail implements ShouldQueue
             $sms = new CommioInboundSMS();
             $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
+            $sms->email = $this->email;
             $sms->smsToEmail();
 
         }, function () {

@@ -110,20 +110,12 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         });
     }
 
-    private function parseRequest()
-    {
-        // $rawdata = file_get_contents("php://input");
-        // return json_decode($rawdata, true);
-    }
-
     private function handleIncomingMessageType()
     {
 
         if (isset($this->webhookCall->payload['send_status'])) {
-            // $this->handleDeliveryUpdate();
+            $this->handleDeliveryStatusUpdate($this->webhookCall->payload);
         } elseif (isset($this->webhookCall->payload['type'])) {
-            // $this->prepareMessageDetails($this->webhookCall->payload);
-            // $this->handleIncomingMessage();
             $this->processMessage($this->webhookCall->payload);
         } else {
             throw new \Exception("Unsupported message type");
@@ -182,6 +174,17 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
         }
 
         return true;
+    }
+
+    public function handleDeliveryStatusUpdate() 
+    {
+        $message = Messages::where('reference_id', $this->webhookCall->payload['guid'])
+            ->first();
+
+        if ($message) {
+            $message->status = $this->webhookCall->payload['send_status'];
+            $message->save();
+        }
     }
 
 

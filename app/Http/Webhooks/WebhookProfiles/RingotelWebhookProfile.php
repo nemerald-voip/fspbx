@@ -10,7 +10,8 @@ class RingotelWebhookProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
-        // logger($request);
+        logger("here");
+        logger($request);
     
         try {
             switch ($request['method']) {
@@ -19,7 +20,7 @@ class RingotelWebhookProfile implements WebhookProfile
                 case 'read':
                     return false;
                 case 'delivered':
-                    return false;
+                    return true;
                 case 'message':
                     return true;
                 default:
