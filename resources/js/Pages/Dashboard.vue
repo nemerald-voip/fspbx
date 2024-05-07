@@ -22,7 +22,7 @@
                                         Paid</dd>
                                 </div> -->
 
-                                <div v-if="Object.keys(data).length === 0" class="w-full">
+                                <div v-if="Object.keys(counts).length === 0" class="w-full">
                                     <div class="animate-pulse flex space-x-4 pt-6 pl-6 w-6/12">
                                         <div class="flex-1 space-y-6 py-1">
                                             <div class="h-2 bg-slate-300 rounded w-10/12"></div>
