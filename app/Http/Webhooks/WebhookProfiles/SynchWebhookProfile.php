@@ -18,8 +18,9 @@ class SynchWebhookProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
-        logger($request);
+
         try {
+            return true;
             // $slack_message = 'SMS from ' . $request['from'] . ' to ' . $request['to'] . '\n';
             // $slack_message = "*Commio Inbound SMS* From: " . $request['from'] . ", To:" . $request['to'] ."\n";
 

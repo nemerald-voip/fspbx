@@ -314,9 +314,6 @@ class MessagesController extends Controller
 
             logger('retry');
 
-            // // Get a collection of SIP registrations 
-            // $regs = sipRegistrations();
-
             //Get items info as a collection
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
                 ->get();

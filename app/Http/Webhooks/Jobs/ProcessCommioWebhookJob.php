@@ -60,18 +60,12 @@ class ProcessCommioWebhookJob extends SpatieProcessWebhookJob
      */
     public $deleteWhenMissingModels = true;
 
-
-    protected $mobileAppDomainConfig;
     protected $messageConfig;
     protected $domain_uuid;
     protected $message;
     protected $extension_uuid;
     protected $source;
     protected $destination;
-    protected $carrier;
-    protected $messageProvider;
-    protected $currentDestination;
-    protected $deliveryReceipt;
     protected $email;
     protected $ext;
 
