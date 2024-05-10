@@ -12,11 +12,10 @@ use Illuminate\Database\Eloquent\Model;
 use App\Jobs\SendSmsNotificationToSlack;
 
 /**
- * @property string|null $domain_setting_value
- * @property string|null $to_did
- * @property string|null $from_did
- * @property string|null $message
+ * @property string|null $org_id
  * @property string|null $message_uuid
+ * @property string|null $email
+ * @property string|null $extension
  */
 class SynchInboundSMS extends Model
 {

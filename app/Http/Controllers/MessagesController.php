@@ -7,13 +7,16 @@ use Inertia\Inertia;
 use App\Models\Messages;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
+use App\Models\DomainSettings;
 use Illuminate\Support\Carbon;
 use App\Models\SmsDestinations;
 use libphonenumber\PhoneNumberUtil;
+use Illuminate\Support\Facades\Http;
 use libphonenumber\PhoneNumberFormat;
 use App\Services\SynchMessageProvider;
 use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
+use App\Jobs\SendSmsNotificationToSlack;
 use libphonenumber\NumberParseException;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
@@ -311,15 +314,9 @@ class MessagesController extends Controller
     public function retry()
     {
         try {
-
-            logger('retry');
-
             //Get items info as a collection
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
                 ->get();
-
-
-            // logger($items);
 
             foreach ($items as $item) {
                 // get originating extension
@@ -329,25 +326,59 @@ class MessagesController extends Controller
                     throw new Exception('Extension not found');
                 }
 
-                //Get message config
-                $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($extension->extension, $item->domain_uuid);
-                $carrier =  $phoneNumberSmsConfig->carrier;
-                logger($carrier);
+                if ($item->direction == "out") {
 
-                //Determine message provider
-                $messageProvider = $this->getMessageProvider($carrier);
 
-                //Store message in the log database
-                $item->status = "Queued";
-                $item->save();
+                    //Get message config
+                    $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($extension->extension, $item->domain_uuid);
+                    $carrier =  $phoneNumberSmsConfig->carrier;
+                    // logger($carrier);
 
-                // Send message
-                $messageProvider->send($item->message_uuid);
+                    //Determine message provider
+                    $messageProvider = $this->getMessageProvider($carrier);
+
+                    //Store message in the log database
+                    $item->status = "Queued";
+                    $item->save();
+
+                    // Send message
+                    $messageProvider->send($item->message_uuid);
+                }
+
+                if ($item->direction == "in") {
+                    $org_id = DomainSettings::where('domain_uuid', $item->domain_uuid)
+                        ->where('domain_setting_category', 'app shell')
+                        ->where('domain_setting_subcategory', 'org_id')
+                        ->value('domain_setting_value');
+
+                    if (is_null($org_id)) {
+                        throw new \Exception("From: " . $item->source . " To: " . $item->destination . " \n Org ID not found");
+                    }
+                    // Logic to deliver the SMS message using a third-party Ringotel API,
+                    // This method should return a boolean indicating whether the message was sent successfully.
+                    try {
+                        $response = Http::ringotel_api()
+                            ->withBody(json_encode([
+                                'method' => 'message',
+                                'params' => [
+                                    'orgid' => $org_id,
+                                    'from' => $item->source,
+                                    'to' => $extension->extension,
+                                    'content' => $item->message
+                                ]
+                            ]), 'application/json')
+                            ->post('/')
+                            ->throw()
+                            ->json();
+
+                        $this->updateMessageStatus($item, $response);
+                    } catch (\Throwable $e) {
+                        logger("Error delivering SMS to Ringotel: {$e->getMessage()}");
+                        SendSmsNotificationToSlack::dispatch("*Inbound SMS Failed*. From: " . $item->source . " To: " . $item->extension . "\nError delivering SMS to Ringotel")->onQueue('messages');
+                        return false;
+                    }
+                }
             }
-
-            // logger($devices);
-
-
 
             // Return a JSON response indicating success
             return response()->json([
@@ -387,5 +418,25 @@ class MessagesController extends Controller
             default:
                 throw new \Exception("Unsupported carrier");
         }
+    }
+
+
+    private function updateMessageStatus($message, $response)
+    {
+        if (isset($response['result']) && !empty($response['result'])) {
+            if (isset($response['result']['messageid'])) {
+                $message->status = 'success';
+                $message->reference_id = $response['result']['messageid'];
+            } else {
+                $message->status = 'failed';
+                $errorDetail = json_encode($response['result']);
+                SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Error: No message ID received. Details: " . $errorDetail)->onQueue('messages');
+            }
+        } else {
+            $message->status = 'failed';
+            $errorDetail = isset($response['error']) ? json_encode($response['error']) : 'Unknown error';
+            SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
+        }
+        $message->save();
     }
 }
