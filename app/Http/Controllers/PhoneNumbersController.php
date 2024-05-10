@@ -394,7 +394,7 @@ class PhoneNumbersController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Destinations  $destinations
+     * @param  Destinations  $destinations
      * @return \Illuminate\Http\Response
      */
     public function show(Destinations $destinations)
@@ -405,7 +405,7 @@ class PhoneNumbersController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Destinations  $phone_number
+     * @param  Destinations  $phone_number
      * @return JsonResponse
      */
     public function edit(Request $request, Destinations $phone_number)
@@ -429,12 +429,12 @@ class PhoneNumbersController extends Controller
      * Update the specified resource in storage.
      *
      * @param  UpdatePhoneNumberRequest  $request
-     * @param  Destinations  $destinations
+     * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function update(UpdatePhoneNumberRequest $request, Destinations $destinations)
+    public function update(UpdatePhoneNumberRequest $request, Destinations $phone_number)
     {
-        if (!$destinations) {
+        if (!$phone_number) {
             // If the model is not found, return an error response
             return response()->json([
                 'success' => false,
@@ -447,12 +447,9 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-
-            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
-            $inputs['device_address'] = $inputs['device_address_modified'];
-
-            // logger($inputs);
-            $destinations->update($inputs);
+            logger($phone_number);
+            logger($inputs);
+            $phone_number->update($inputs);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -471,7 +468,7 @@ class PhoneNumbersController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Destinations  $phone_number
+     * @param  Destinations  $phone_number
      * @return Response
      */
     public function destroy(Destinations $phone_number)
