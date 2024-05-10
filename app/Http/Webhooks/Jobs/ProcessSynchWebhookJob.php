@@ -4,11 +4,10 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Models\Messages;
 use App\Models\Extensions;
-use App\Jobs\ProcessSynchSMS;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
-use Illuminate\Support\Facades\Log;
-use App\Jobs\ProcessSynchSMSToEmail;
+use App\Jobs\DeliverSynchInboundSMS;
+use App\Jobs\DeliverSynchSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
 use App\Jobs\SendSmsNotificationToSlack;
@@ -108,8 +107,6 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
 
     private function handleIncomingMessageType()
     {
-        logger($this->webhookCall->payload);
-
         if ($this->webhookCall->payload['deliveryReceipt']) {
             $this->handleDeliveryStatusUpdate($this->webhookCall->payload);
         } else {
@@ -158,7 +155,7 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
         $message = $this->storeMessage('queued');
 
         if ($this->ext != "") {
-            ProcessSynchSMS::dispatch([
+            DeliverSynchInboundSMS::dispatch([
                 'org_id' => $this->fetchOrgId(),
                 'message_uuid' => $message->message_uuid,
                 'extension' => $this->ext,
@@ -166,7 +163,7 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
         }
 
         if ($this->email != "") {
-            ProcessSynchSMSToEmail::dispatch([
+            DeliverSynchSMSToEmail::dispatch([
                 'org_id' => $this->fetchOrgId(),
                 'message_uuid' => $message->message_uuid,
                 'email' => $this->email,
@@ -178,12 +175,18 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
 
     public function handleDeliveryStatusUpdate()
     {
-        $message = Messages::where('reference_id', $this->webhookCall->payload['guid'])
+        $message = Messages::where('reference_id', $this->webhookCall->payload['referenceId'])
             ->first();
 
         if ($message) {
-            $message->status = $this->webhookCall->payload['send_status'];
-            $message->save();
+            $text = $this->webhookCall->payload['text'];
+            preg_match('/stat:(\w+)/', $text, $matches);
+            $status = $matches[1] ?? 'UNKNOWN'; // Default to 'UNKNOWN' if not found
+
+            if ($status === "DELIVRD") {
+                $message->status = 'delivered';
+                $message->save();
+            }
         }
     }
 

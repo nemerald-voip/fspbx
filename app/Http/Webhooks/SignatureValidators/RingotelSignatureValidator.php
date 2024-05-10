@@ -11,7 +11,9 @@ class RingotelSignatureValidator implements SignatureValidator
     public function isValid(Request $request, WebhookConfig $config) : bool {
         
         //If there is a way to validate that this request came from Ringotel then let's implement the logic here
-logger('validator');
+// logger('RingotelSignatureValidator');
+
+
         $apiKey = config('ringotel.token');  // Retrieve the API key from the config file
 
         return $request['api_key'] === $apiKey;
