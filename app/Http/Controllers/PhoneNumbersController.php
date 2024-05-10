@@ -447,8 +447,24 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-            logger($phone_number);
+            //logger($phone_number);
+            //logger($inputs);
+
+            $destination_actions = [];
+            if($inputs['destination_actions']) {
+                foreach($inputs['destination_actions'] as $destination) {
+                    $destination_actions[] = [
+                        'destination_app' => 'transfer',
+                        'destination_data' => $destination['value']['value']
+                    ];
+                }
+                $inputs['destination_actions'] = $destination_actions;
+            }
+
             logger($inputs);
+            // [{"condition_field":"caller_id_number","condition_expression":"2034567564","condition_app":"transfer","condition_data":"9500 XML api.us.nemerald.net"}]
+//[{"destination_app":"transfer","destination_data":"370 XML api.us.nemerald.net"}]
+
             $phone_number->update($inputs);
 
             // Return a JSON response indicating success

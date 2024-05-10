@@ -42,6 +42,8 @@ class Destinations extends Model
         'destination_caller_id_name',
         'destination_caller_id_number',
         'destination_cid_name_prefix',
+        'destination_actions',
+        'destination_conditions',
         'destination_context',
         'destination_record',
         'destination_hold_music',
@@ -83,6 +85,8 @@ class Destinations extends Model
             unset($model->destroy_route);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
+            $model->destination_actions = json_encode($model->destination_actions);
+            $model->destination_conditions = json_encode($model->destination_conditions);
         });
 
         static::retrieved(function ($model) {

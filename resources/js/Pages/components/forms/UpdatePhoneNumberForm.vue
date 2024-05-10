@@ -52,7 +52,7 @@
                             :categories="options.timeout_destinations_categories"
                             :targets="options.timeout_destinations_targets"
                             :selectedItems="form.destination_actions"
-                            @update:modal-value="handleTimeoutDestinationUpdate"
+                            @update:modal-value="handleDestinationActionsUpdate"
                         />
                     </div>
                     <div class="sm:col-span-12">
@@ -249,7 +249,7 @@ const handleFaxUpdate = (newSelectedItem) => {
     form.fax_uuid = newSelectedItem.value;
 }
 
-const handleTimeoutDestinationUpdate = (newSelectedItem) => {
+const handleDestinationActionsUpdate = (newSelectedItem) => {
     form.destination_actions = newSelectedItem;
 }
 

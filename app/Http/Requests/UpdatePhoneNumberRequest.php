@@ -30,7 +30,18 @@ class UpdatePhoneNumberRequest extends FormRequest
             ],
             'destination_actions' => [
                 'nullable',
-                'string',
+                'array',
+            ],
+            /*'destination_actions.*.selectedCategory' => [
+                Rule::in(['', 'extensions', 'ringgroup', 'ivrs', 'voicemails', 'others'])
+            ],
+            'destination_actions.*.value.value' => [
+                'required_if:destination_actions.*.selectedCategory,!=,""',
+                'string'
+            ],*/
+            'destination_conditions' => [
+                'nullable',
+                'array',
             ],
             'destination_cid_name_prefix' => [
                 'nullable',
