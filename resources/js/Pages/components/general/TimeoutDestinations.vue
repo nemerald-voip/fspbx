@@ -18,7 +18,7 @@
         <MinusIcon v-if="index > 0" @click="() => removeTimeoutDestination(index)"
                    class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
     </div>
-    <PlusIcon v-if="timeoutDestinations.length < 21" @click="addTimeoutDestination"
+    <PlusIcon v-if="timeoutDestinations.length < maxLimit" @click="addTimeoutDestination"
               class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
 </template>
 
@@ -31,7 +31,8 @@ const props = defineProps({
     itemOptions: Object,
     categories: [Array, null],
     targets: [Array, Object, null],
-    selectedItems: [Array, Object, null]
+    selectedItems: [Array, Object, null],
+    maxLimit: { type: Number, default: 21 }
 });
 
 const emit = defineEmits(['update:modal-value'])
@@ -64,11 +65,13 @@ function handleTargetUpdate(newValue, index) {
 }
 
 const addTimeoutDestination = () => {
-    timeoutDestinations.value.push({
-        selectedCategory: '',
-        categoryTargets: [],
-        value: ''
-    });
+    if (timeoutDestinations.value.length < props.maxLimit) {
+        timeoutDestinations.value.push({
+            selectedCategory: '',
+            categoryTargets: [],
+            value: ''
+        });
+    }
 };
 
 const removeTimeoutDestination = (index) => {

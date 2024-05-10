@@ -119,6 +119,16 @@
                         </div>
                     </div>
                     <div class="sm:col-span-12">
+                        <LabelInputOptional :target="'destination_conditions'" :label="'Conditions'"/>
+                        <TimeoutDestinations
+                            :categories="options.timeout_destinations_categories"
+                            :targets="options.timeout_destinations_targets"
+                            :selectedItems="null"
+                            :maxLimit="1"
+                            @update:modal-value="handleDestinationActionsUpdate"
+                        />
+                    </div>
+                    <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
                         <div class="mt-2">
                             <InputField
