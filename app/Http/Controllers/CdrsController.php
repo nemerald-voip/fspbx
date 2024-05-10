@@ -17,9 +17,19 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CdrsController extends Controller
 {
-    public $filters;
+
+    public $model;
+    public $filters = [];
     public $sortField;
     public $sortOrder;
+    protected $viewName = 'Cdrs';
+    protected $searchable = ['device_address', 'device_label', 'device_template'];
+
+    public function __construct()
+    {
+        $this->model = new CDR();
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -38,49 +48,12 @@ class CdrsController extends Controller
             $callUuid = $request->callUuid;
         }
 
-        if (!empty($request->filterData['dateRange'])) {
-            $startPeriod = Carbon::parse($request->filterData['dateRange'][0])->setTimeZone('UTC');
-            $endPeriod = Carbon::parse($request->filterData['dateRange'][1])->setTimeZone('UTC');
-        } else {
-            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
-        }
-
-        $this->filters = [
-            'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod,
-        ];
-
-        // Check if direction parameter is present and not empty
-        if (!empty($request->filterData['direction'])) {
-            $this->filters['direction'] = $request->filterData['direction'];
-        }
-
-        // Check if search parameter is present and not empty
-        if (!empty($request->filterData['search'])) {
-            $this->filters['search'] = $request->filterData['search'];
-        }
-
-        // Check if search parameter is present and not empty
-        if (!empty($request->filterData['entity'])) {
-            $this->filters['entity'] = $request->filterData['entity'];
-        }
-
-        // Check if search parameter is present and not empty
-        if (!empty($request->filterData['entityType'])) {
-            $this->filters['entityType'] = $request->filterData['entityType'];
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
 
         if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
-            $cdrs = $this->getCdrs(false);
+            $cdrs = $this->getData(false);
             $export = new CdrsExport($cdrs);
 
             return Excel::download($export, 'call-detail-records.csv');
-            
         }
 
 
@@ -88,10 +61,10 @@ class CdrsController extends Controller
 
 
         return Inertia::render(
-            'Cdrs',
+            $this->viewName,
             [
                 'data' => function () {
-                    return $this->getCdrs();
+                    return $this->getData();
                 },
                 'startPeriod' => function () {
                     return $this->filters['startPeriod'];
@@ -262,14 +235,62 @@ class CdrsController extends Controller
     }
 
 
-    public function getCdrs($paginate = 50)
+    public function getData($paginate = 50)
     {
+        // request('filterData.search')
+        if (!empty(request('filterData.dateRange'))) {
+            $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
+            $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
+        } else {
+            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+        }
+
+        $this->filters = [
+            'startPeriod' => $startPeriod,
+            'endPeriod' => $endPeriod,
+        ];
+
+        // Check if showGlobal parameter is present and not empty
+        if (!empty(request('filterData.showGlobal'))) {
+            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
+        } else {
+            $this->filters['showGlobal'] = null;
+        }
+
+        // Check if direction parameter is present and not empty
+        if (!empty(request('filterData.direction'))) {
+            $this->filters['direction'] = request('filterData.direction');
+        }
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
+        }
+
+        // Check if search parameter is present and not empty
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.entity'))) {
+            $this->filters['entity'] = request('filterData.entity');
+        }
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.entityType'))) {
+            $this->filters['entityType'] = request('filterData.entityType');
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
+
+
         $cdrs = $this->builder($this->filters);
 
         // Apply pagination if requested
         if ($paginate) {
             $cdrs = $cdrs->paginate($paginate);
-        }else {
+        } else {
             $cdrs = $cdrs->get(); // This will return a collection
         }
 
@@ -285,9 +306,24 @@ class CdrsController extends Controller
     public function builder($filters = [])
     {
 
-        $cdrs =  CDR::query()
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->select(
+        $data =  $this->model::query();
+
+        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+            $data->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
+            }]);
+            // Access domains through the session and filter by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $data->whereHas('domain', function ($query) use ($domainUuids) {
+                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+            });
+        } else {
+            // Directly filter by the session's domain_uuid
+            $domainUuid = Session::get('domain_uuid');
+            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
+        }
+
+        $data->select(
                 'xml_cdr_uuid',
                 'direction',
                 'caller_id_name',
@@ -330,19 +366,19 @@ class CdrsController extends Controller
 
         //exclude legs that were not answered
         if (!userCheckPermission('xml_cdr_lose_race')) {
-            $cdrs->where('hangup_cause', '!=', 'LOSE_RACE');
+            $data->where('hangup_cause', '!=', 'LOSE_RACE');
         }
 
         foreach ($filters as $field => $value) {
             if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                $this->$method($cdrs, $value);
+                $this->$method($data, $value);
             }
         }
 
         // Apply sorting
-        $cdrs->orderBy($this->sortField, $this->sortOrder);
+        $data->orderBy($this->sortField, $this->sortOrder);
 
-        return $cdrs;
+        return $data;
     }
 
     protected function getTimezone()

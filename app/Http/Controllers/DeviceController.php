@@ -165,13 +165,13 @@ class DeviceController extends Controller
             $data->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
             }]);
-            // Access domains through the session and filter devices by those domains
+            // Access domains through the session and filter by those domains
             $domainUuids = Session::get('domains')->pluck('domain_uuid');
             $data->whereHas('domain', function ($query) use ($domainUuids) {
                 $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
             });
         } else {
-            // Directly filter devices by the session's domain_uuid
+            // Directly filter by the session's domain_uuid
             $domainUuid = Session::get('domain_uuid');
             $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         }

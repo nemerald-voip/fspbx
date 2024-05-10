@@ -133,9 +133,18 @@ class CDR extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = [];
     public function archive_recording()
     {
         return $this->hasOne(ArchiveRecording::class, 'xml_cdr_uuid', 'xml_cdr_uuid');
     }
+
+    /**
+     * Get domain that this message settings belongs to 
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+
 }

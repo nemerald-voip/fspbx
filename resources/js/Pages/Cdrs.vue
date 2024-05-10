@@ -15,15 +15,6 @@
                         Export CSV
                     </button>
 
-                    <!-- <button type="button" @click.prevent="exportCsv" :disabled="data.data.length === 0"
-                        class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm
-                    disabled:ring-0 disabled:text-blue-700/50
-                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-                        <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
-                        Export CSV
-                    </button> -->
-
-
                     <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
                         @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -79,6 +70,8 @@
                 <template #table-header>
                     <TableColumnHeader header=" "
                         class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
+                    <TableColumnHeader v-if="showGlobal" header="Domain"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="Caller ID Name"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                     <TableColumnHeader header="Caller ID Number"
@@ -116,6 +109,17 @@
                             </ejs-tooltip>
 
                         </TableField>
+
+                        <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.domain?.domain_description">
+                            <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                                target="#domain_tooltip_target">
+                                <div id="domain_tooltip_target">
+                                    {{ row.domain?.domain_description }}
+                                </div>
+                            </ejs-tooltip>
+                        </TableField>
+
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.caller_id_number" />
@@ -286,7 +290,10 @@ const handleSearchButtonClick = () => {
         },
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
+        only: [
+            "data",
+            'showGlobal',
+        ],
         onSuccess: (page) => {
             loading.value = false;
         }
