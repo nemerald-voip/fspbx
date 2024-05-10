@@ -211,7 +211,7 @@ const selectedTab = ref(0)
 const form = reactive({
     domain_uuid: null,
     fax_uuid: null,
-    destination_prefix: 1,
+    destination_prefix: "1",
     destination_number: null,
     destination_actions: null,
     destination_hold_music: null,
@@ -231,7 +231,7 @@ const submitForm = () => {
 }
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
-        form.destination_hold_music = newSelectedItem.value;
+    form.destination_hold_music = newSelectedItem.value;
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {

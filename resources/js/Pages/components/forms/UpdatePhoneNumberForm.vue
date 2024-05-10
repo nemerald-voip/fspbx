@@ -61,7 +61,7 @@
                             <SelectBoxGroup :options="options.music_on_hold"
                                             :search="true"
                                             :allowEmpty="true"
-                                            :selectedItem="form.destination_hold_music"
+                                            :selectedItem="null"
                                             :placeholder="'Choose music on hold'"
                                             @update:modal-value="handleMusicOnHoldUpdate"
                             />
