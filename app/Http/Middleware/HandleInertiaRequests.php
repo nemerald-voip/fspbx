@@ -82,6 +82,8 @@ class HandleInertiaRequests extends Middleware
         $permissions['destination_delete'] = userCheckPermission('destination_delete');
         $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
 
+        $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
+
         // logger($permissions);
         return $permissions;
     }
