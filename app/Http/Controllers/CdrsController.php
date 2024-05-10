@@ -29,15 +29,10 @@ class CdrsController extends Controller
     {
         // logger($request->all());
         // Check permissions
-        if (!userCheckPermission("extension_view")) {
+        if (!userCheckPermission("xml_cdr_view")) {
             return redirect('/');
         }
 
-        //Check FusionPBX login status
-        // session_start();
-        // if (!isset($_SESSION['user'])) {
-        //     return redirect()->route('logout');
-        // }
 
         if ($request->callUuid) {
             $callUuid = $request->callUuid;
