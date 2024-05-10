@@ -214,9 +214,9 @@
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
 
-    <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
-        @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
-        :confirm-button-label="'Restart'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
+        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
+        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -260,12 +260,12 @@ const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationRestartTrigger = ref(false);
+const confirmationRetryTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmRestartAction = ref(null);
+const confirmRetryAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -293,25 +293,16 @@ const showGlobal = ref(props.showGlobal);
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
+            id: 'bulk_retry',
+            label: 'Retry',
             icon: 'RestartIcon'
         },
         {
-            id: 'bulk_update',
-            label: 'Edit',
-            icon: 'PencilSquareIcon'
-        }
-    ];
-
-    // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
-        actions.push({
             id: 'bulk_delete',
             label: 'Delete',
             icon: 'TrashIcon'
-        });
-    }
+        }
+    ];
 
     return actions;
 });
@@ -421,21 +412,16 @@ const handleBulkActionRequest = (action) => {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
-    if (action === 'bulk_restart') {
-        confirmationRestartTrigger.value = true;
-        confirmRestartAction.value = () => executeBulkRestart();
+
+    if (action === 'bulk_retry') {
+        confirmationRetryTrigger.value = true;
+        confirmRetryAction.value = () => executeBulkRetry();
     }
 }
 
-const executeBulkRestart = () => {
-    axios.post(props.routes.restart,
-        { 'devices': selectedItems.value },
+const executeBulkRetry = () => {
+    axios.post(props.routes.retry,
+        { 'items': selectedItems.value },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -667,7 +653,7 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    confirmationRestartTrigger.value = false;
+    confirmationRetryTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 
