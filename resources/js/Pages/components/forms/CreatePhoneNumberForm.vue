@@ -209,7 +209,7 @@ const page = usePage();
 const selectedTab = ref(0)
 
 const form = reactive({
-    domain_uuid: props.item.domain_uuid,
+    domain_uuid: null,
     fax_uuid: null,
     destination_prefix: 1,
     destination_number: null,
