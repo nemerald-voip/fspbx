@@ -29,10 +29,8 @@
                                 id="destination_prefix"
                                 name="destination_prefix"
                                 placeholder="Enter country code"
-                                :error="errors?.destination_prefix && errors.destination_prefix.length > 0"/>
-                        </div>
-                        <div v-if="errors?.destination_prefix" class="mt-2 text-sm text-red-600">
-                            {{ errors.destination_prefix[0] }}
+                                disabled="disabled"
+                            />
                         </div>
                     </div>
                     <div class="sm:col-span-12">
@@ -44,10 +42,8 @@
                                 id="destination_number"
                                 name="destination_number"
                                 placeholder="Enter phone number"
-                                :error="errors?.destination_number && errors.destination_number.length > 0"/>
-                        </div>
-                        <div v-if="errors?.destination_number" class="mt-2 text-sm text-red-600">
-                            {{ errors.destination_number[0] }}
+                                disabled="disabled"
+                            />
                         </div>
                     </div>
                     <div class="sm:col-span-12">
@@ -65,7 +61,7 @@
                             <SelectBoxGroup :options="options.music_on_hold"
                                             :search="true"
                                             :allowEmpty="true"
-                                            :selectedItem="form.destination_hold_music"
+                                            :selectedItem="null"
                                             :placeholder="'Choose music on hold'"
                                             @update:modal-value="handleMusicOnHoldUpdate"
                             />

@@ -85,9 +85,12 @@ class StorePhoneNumberRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        $phone = $this->get('destination_number');
+        $prefix = $this->get('destination_prefix');
+        $phone = preg_replace("/[^0-9]/", "", $prefix.$phone);
         try {
             $destination_number_regex = (new PhoneNumber(
-                $this->get('destination_number'),
+                $phone,
                 "US"
             ))->formatE164();
         } catch (NumberParseException $e) {
@@ -96,7 +99,7 @@ class StorePhoneNumberRequest extends FormRequest
         $destination_number_regex = str_replace('+1', '', $destination_number_regex);
         try {
             $destination_caller_id_number = (new PhoneNumber(
-                $this->get('destination_number'),
+                $phone,
                 "US"
             ))->formatE164();
         } catch (NumberParseException $e) {

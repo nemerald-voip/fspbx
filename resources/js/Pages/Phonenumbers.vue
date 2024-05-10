@@ -161,6 +161,7 @@
     >
         <template #modal-body>
             <UpdatePhoneNumberForm
+                :item="itemData"
                 :options="itemOptions"
                 :errors="formErrors"
                 :is-submitting="updateFormSubmitting"
@@ -323,13 +324,13 @@ const handleUpdateRequest = (form) => {
 
     axios.put(props.itemData.update_url, form)
         .then((response) => {
-            updateFormSubmiting.value = false;
+            updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-        updateFormSubmiting.value = false;
+        updateFormSubmitting.value = false;
         handleClearSelection();
         handleFormErrorResponse(error);
     });

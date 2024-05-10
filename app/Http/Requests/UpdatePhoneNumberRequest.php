@@ -24,13 +24,39 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'destination_accountcode' => [
+                'nullable',
+                'string',
+            ],
+            'destination_actions' => [
+                'nullable',
+                'string',
+            ],
+            'destination_cid_name_prefix' => [
+                'nullable',
+                'string',
+            ],
+            'destination_description' => [
+                'nullable',
+                'string',
+            ],
+            'destination_distinctive_ring' => [
+                'nullable',
+                'string',
+            ],
+            'destination_enabled' => [
+                Rule::in([true, false]),
+            ],
+            'destination_record' => [
+                Rule::in([true, false]),
+            ],
             'destination_caller_id_name' => [
                 'nullable',
                 'string',
             ],
-            'destination_caller_id_number' => [
-                'nullable',
-                'phone:US',
+            'domain_uuid' => [
+                'required',
+                Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
             ],
         ];
     }
@@ -38,22 +64,14 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-
+            'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
     public function prepareForValidation(): void
     {
-        try {
-            $destination_caller_id_number = (new PhoneNumber(
-                $this->get('destination_number'),
-                "US"
-            ))->formatE164();
-        } catch (NumberParseException $e) {
-            $destination_caller_id_number = '';
+        if (!$this->has('domain_uuid')) {
+            $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
-        $this->merge([
-            'destination_caller_id_number' => $destination_caller_id_number
-        ]);
     }
 }

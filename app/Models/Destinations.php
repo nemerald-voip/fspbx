@@ -81,6 +81,8 @@ class Destinations extends Model
             // Remove attributes before saving to database
             unset($model->destination_number_formatted);
             unset($model->destroy_route);
+            $model->update_date = date('Y-m-d H:i:s');
+            $model->update_user = Session::get('user_uuid');
         });
 
         static::retrieved(function ($model) {
@@ -119,6 +121,50 @@ class Destinations extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    /**
+     * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
+     *
+     * @param  string|null  $value
+     * @return bool
+     */
+    public function getDestinationEnabledAttribute(?string $value): bool
+    {
+        return $value === 'true';
+    }
+
+    /**
+     * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
+     *
+     * @param  string|null  $value
+     * @return bool
+     */
+    public function getDestinationRecordAttribute(?string $value): bool
+    {
+        return $value === 'true';
+    }
+
+    /**
+     * Set the destination_enabled attribute.
+     *
+     * @param  bool $value
+     * @return void
+     */
+    public function setDestinationEnabledAttribute($value): void
+    {
+        $this->attributes['destination_enabled'] = $value ? 'true' : 'false';
+    }
+
+    /**
+     * Set the destination_record attribute.
+     *
+     * @param  bool $value
+     * @return void
+     */
+    public function setDestinationRecordAttribute($value): void
+    {
+        $this->attributes['destination_record'] = $value ? 'true' : 'false';
     }
 
     // public function getDestinationNumberAttribute($value): ?string
