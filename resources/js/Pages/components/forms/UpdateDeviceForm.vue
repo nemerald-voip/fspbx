@@ -14,7 +14,7 @@
             </div>
 
 
-            <div v-if="page.props.auth.can.device_template" class="sm:col-span-12">
+            <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
                     <SelectBox :options="options.templates" :selectedItem="form.device_template" :search="true"
