@@ -136,7 +136,7 @@
                                     type="text"
                                     id="condition_expression"
                                     name="condition_expression"
-                                    placeholder="Enter number"
+                                    placeholder="Enter phone number"
                                     :error="errors?.condition_expression && errors.condition_expression.length > 0"/>
                             </div>
                         </div>
@@ -210,7 +210,9 @@
                 </button>
             </div>
         </div>
+        <pre>
         {{form}}
+            </pre>
     </form>
 </template>
 
@@ -299,11 +301,10 @@ const handleConditionActionsUpdate = (newSelectedItem) => {
 }
 
 const handleConditionFieldUpdate = (newSelectedItem) => {
-    if (newSelectedItem !== null) {
+    if (newSelectedItem !== null && newSelectedItem.value !== 'NULL') {
         form.destination_conditions.condition_field = newSelectedItem;
     } else {
         form.destination_conditions.condition_field = null;
     }
 }
-
 </script>

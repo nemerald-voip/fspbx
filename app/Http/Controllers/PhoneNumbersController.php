@@ -457,18 +457,35 @@ class PhoneNumbersController extends Controller
             //logger($inputs);
 
             $destination_actions = [];
-            if($inputs['destination_actions']) {
-                foreach($inputs['destination_actions'] as $destination) {
+            if(isset($inputs['destination_actions'])) {
+                foreach($inputs['destination_actions'] as $action) {
                     $destination_actions[] = [
                         'destination_app' => 'transfer',
-                        'destination_data' => $destination['value']['value']
+                        'destination_data' => $action['value']['value']
                     ];
                 }
                 $inputs['destination_actions'] = $destination_actions;
             }
-
+            $destination_conditions = [];
             logger($inputs);
-            // [{"condition_field":"caller_id_number","condition_expression":"2034567564","condition_app":"transfer","condition_data":"9500 XML api.us.nemerald.net"}]
+            if(isset($inputs['destination_conditions'])) {
+                $destination_conditions[] = [
+                    'condition_field' => $inputs['destination_conditions']['condition_field']['value'],
+                    'condition_expression' => $inputs['destination_conditions']['condition_expression'],
+                    'condition_app' => 'transfer',
+                    'destination_data' => $inputs['destination_conditions']['condition_data'][0]['value']['value']
+                ];
+
+                $inputs['destination_conditions'] = $destination_conditions;
+            }
+
+
+            // [{
+            //"condition_field":"caller_id_number",
+            //"condition_expression":"2034567564",
+            //"condition_app":"transfer",
+            //"condition_data":"9500 XML api.us.nemerald.net"}
+            //]
 //[{"destination_app":"transfer","destination_data":"370 XML api.us.nemerald.net"}]
 
             $phone_number->update($inputs);

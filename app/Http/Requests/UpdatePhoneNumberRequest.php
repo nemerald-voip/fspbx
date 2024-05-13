@@ -32,16 +32,32 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            /*'destination_actions.*.selectedCategory' => [
+            'destination_actions.*.selectedCategory' => [
                 Rule::in(['', 'extensions', 'ringgroup', 'ivrs', 'voicemails', 'others'])
             ],
             'destination_actions.*.value.value' => [
                 'required_if:destination_actions.*.selectedCategory,!=,""',
                 'string'
-            ],*/
+            ],
             'destination_conditions' => [
                 'nullable',
                 'array',
+            ],
+            'destination_conditions.condition_app' => [
+                'nullable',
+                Rule::in(['transfer'])
+            ],
+            'destination_conditions.condition_field.value' => [
+                'nullable',
+                'required_if:destination_conditions.condition_app,==,"transfer"',
+            ],
+            'destination_conditions.condition_expression' => [
+                'required_if:destination_conditions.condition_app,==,"transfer"',
+                'phone:US'
+            ],
+            'destination_conditions.condition_data.*.value.value' => [
+                'required_if:destination_conditions.condition_app,==,"transfer"',
+                'string'
             ],
             'destination_cid_name_prefix' => [
                 'nullable',

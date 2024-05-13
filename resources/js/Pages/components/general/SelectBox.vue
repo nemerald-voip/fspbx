@@ -19,7 +19,7 @@
                         aria-hidden="true" />
                 </div>
 
-                <div v-if="(currentItem !== '' && currentItem !== null) || showClear" class="">
+                <div v-if="(currentItem != '' && currentItem != null) || showClear" class="">
                     <XMarkIcon @click="clearValue"
                         class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                         aria-hidden="true" />
@@ -103,7 +103,7 @@ let searchKeyword = ref('');
 
 const clearValue = () => {
     currentItem.value = null;
-    emit('update:modal-value', { value: null });
+    emit('update:modal-value', { value: "NULL" });
 }
 
 const undoValue = () => {
