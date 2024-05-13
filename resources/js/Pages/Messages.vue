@@ -485,19 +485,6 @@ const handleSelectAll = () => {
 };
 
 
-const handleCopyToClipboard = (macAddress) => {
-    navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
-        setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
-        }, 500);
-    }).catch((error) => {
-        // Handle the error case
-        console.error('Failed to copy to clipboard:', error);
-    });
-}
-
-
 const handleRetry = (message_uuid) => {
     axios.post(props.routes.retry,
         { 'items': [message_uuid] },

@@ -27,12 +27,12 @@ class PhoneNumbersController extends Controller
     public $filters = [];
     public $sortField;
     public $sortOrder;
-    protected $searchable = ['destination_number', 'destination_caller_id_name'];
+    protected $viewName = 'PhoneNumbers';
+    protected $searchable = ['destination_number', 'destination_data','destination_description'];
 
     public function __construct()
     {
         $this->model = new Destinations();
-
     }
 
     /**
@@ -58,7 +58,7 @@ class PhoneNumbersController extends Controller
         }*/
 
         return Inertia::render(
-            'Phonenumbers',
+            $this->viewName,
             [
                 'data' => function () {
                     return $this->getData();
@@ -90,45 +90,7 @@ class PhoneNumbersController extends Controller
                     ]
                 ]
 
-                /*
-                'menus' => function () {
-                    return Session::get('menu');
-                },
-                'domainSelectPermission' => function () {
-                    return Session::get('domain_select');
-                },
-                'domains' => function () {
-                    return Session::get("domains");
-                },
-                'selectedDomain' => function () {
-                    return Session::get('domain_name');
-                },
-                'selectedDomainUuid' => function () {
-                    return Session::get('domain_uuid');
-                },
-                /*'destinationTypes' => function () {
-                    return [
-                        [
-                            "name" => "Inbound",
-                            "value" => "inbound"
-                        ],
-                        [
-                            "name" => "Outbound",
-                            "value" => "outbound"
-                        ],
-                        [
-                            "name" => "Local",
-                            "value" => "local"
-                        ]
-                    ];
-                },*/
-                //'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
-                //'routePhoneNumbersStore' => route('phone-numbers.store'),
-                //'routePhoneNumbersOptions' => route('phoneNumbers.options'),
-                //'routeDevicesOptions' => route('devices.options'),
-                //'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
-                //'routePhoneNumbers' => route('phone-numbers.index'),
-                //'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
+
             ]
         );
     }
@@ -309,6 +271,8 @@ class PhoneNumbersController extends Controller
             'destination_prefix',
             'destination_actions',
             'destination_enabled',
+            'destination_description',
+            'destination_data',
             'domain_uuid',
         );
 
