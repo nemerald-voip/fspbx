@@ -9,10 +9,7 @@ use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
 class RingotelWebhookProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
-    {
-        logger("here");
-        logger($request);
-    
+    {    
         try {
             switch ($request['method']) {
                 case 'typing':

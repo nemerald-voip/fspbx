@@ -103,13 +103,17 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
             $this->message = $this->webhookCall->payload;
             try {
-                $response = $this->processOutgoingMessage();
+
+                if ($this->message['method'] == 'delivered') {
+                    $response = $this->handleDeliveryStatusUpdate();
+                } else {
+                    $response = $this->processOutgoingMessage();
+                }
+
                 return $response;
             } catch (\Exception $e) {
                 return $this->handleError($e);
             }
-
-            
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
@@ -153,6 +157,19 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         $this->messageProvider->send($message->message_uuid);
 
         return response()->json(['status' => 'Message sent']);
+    }
+
+    public function handleDeliveryStatusUpdate()
+    {
+        $message = Messages::where('reference_id', $this->message['params']['messageid'])
+            ->first();
+
+        if ($message) {
+            $message->status = 'delivered';
+            $message->save();
+        }
+
+        return response()->json(['status' => 'Delivery status updated']);
     }
 
     private function validateMessage()
@@ -262,5 +279,4 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
         return $messageModel;
     }
-
 }
