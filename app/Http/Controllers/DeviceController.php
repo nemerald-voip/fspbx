@@ -254,11 +254,17 @@ class DeviceController extends Controller
         try {
             // Validate the request data and create a new instance
             $instance = $this->model;
+
+            $vendor = explode("/", $inputs['device_template'])[0];
+            if ($vendor === 'poly') {
+                $vendor = 'polycom';
+            }
+
             $instance->fill([
                 'device_address' => $inputs['device_address_modified'],
                 'domain_uuid' => $inputs['domain_uuid'],
                 'device_label' => $extension->extension ?? null,
-                'device_vendor' => explode("/", $inputs['device_template'])[0],
+                'device_vendor' => $vendor,
                 'device_enabled' => 'true',
                 'device_enabled_date' => date('Y-m-d H:i:s'),
                 'device_template' => $inputs['device_template'],
@@ -386,6 +392,9 @@ class DeviceController extends Controller
 
 
             $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+            if ($inputs['device_vendor'] === 'poly') {
+                $inputs['device_vendor'] = 'polycom';
+            }
             $inputs['device_address'] = $inputs['device_address_modified'];
 
             if ($inputs['extension']) {
@@ -550,6 +559,9 @@ class DeviceController extends Controller
 
             if (isset($inputs['device_template'])) {
                 $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+                if ($inputs['device_vendor'] === 'poly') {
+                    $inputs['device_vendor'] = 'polycom';
+                }
             }
 
             if (isset($inputs['extension'])) {
@@ -804,7 +816,6 @@ class DeviceController extends Controller
             return response()->json([
                 'messages' => ['server' => ['All selected items have been deleted successfully.']],
             ], 200);
-
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
             DB::rollBack();
@@ -817,5 +828,4 @@ class DeviceController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
-
 }
