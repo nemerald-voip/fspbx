@@ -127,10 +127,10 @@
                                        :allowEmpty="true"
                                        :selectedItem="null"
                                        :placeholder="'Choose condition'"
-                                       @update:modal-value="handleFaxUpdate"
+                                       @update:modal-value="handleConditionFieldUpdate"
                             />
                             </div>
-                            <div>
+                            <div v-if="form.destination_conditions.condition_field">
                                 <InputField
                                     v-model="form.destination_conditions.condition_expression"
                                     type="text"
@@ -140,8 +140,8 @@
                                     :error="errors?.condition_expression && errors.condition_expression.length > 0"/>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-x-2">
-                            <ArrowCurvedRightIcon class="mt-2 h-10 w-10 float-right" aria-hidden="true" />
+                        <div v-if="form.destination_conditions.condition_field" class="grid grid-cols-3 gap-x-2">
+                            <ArrowCurvedRightIcon class="mt-2 h-10 w-10" aria-hidden="true" />
                             <ConditionDestinations
                                 :categories="options.timeout_destinations_categories"
                                 :targets="options.timeout_destinations_targets"
@@ -282,9 +282,7 @@ const handleDestinationRecordEnabled = (newSelectedItem) => {
 
 const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
-    if (newSelectedItem.value !== "NULL") {
-        emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
-    }
+    emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
@@ -296,7 +294,16 @@ const handleDestinationActionsUpdate = (newSelectedItem) => {
 }
 
 const handleConditionActionsUpdate = (newSelectedItem) => {
-    form.destination_conditions = newSelectedItem;
+    form.destination_conditions.condition_data = newSelectedItem;
+    form.destination_conditions.condition_app = 'transfer';
+}
+
+const handleConditionFieldUpdate = (newSelectedItem) => {
+    if (newSelectedItem !== null) {
+        form.destination_conditions.condition_field = newSelectedItem;
+    } else {
+        form.destination_conditions.condition_field = null;
+    }
 }
 
 </script>
