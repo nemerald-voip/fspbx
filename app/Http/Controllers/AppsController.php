@@ -900,7 +900,7 @@ class AppsController extends Controller
         $mobile_app['status'] = (int)$mobile_app['status'];
 
         $mobile_app['name'] = $extension['effective_caller_id_name'];
-        $mobile_app['email'] = ($extension['voicemail_mail_to']) ? $extension['voicemail_mail_to'] : "";
+        $mobile_app['email'] = ($extension->voicemail['voicemail_mail_to']) ? $extension->voicemail['voicemail_mail_to'] : "";
         $mobile_app['ext'] = $extension['extension'];
         $mobile_app['password'] = $extension->password;
 
