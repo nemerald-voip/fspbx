@@ -72,7 +72,6 @@
                     timeoutActionWrapper.show()
                 }
 
-                console.log(e.target.value);
                 timeoutActionWrapper.find('div').hide();
                 timeoutActionWrapper.find('div#timeout_action_wrapper_' + e.target.value).show();
             })
