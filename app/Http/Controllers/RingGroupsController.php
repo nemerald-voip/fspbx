@@ -73,7 +73,20 @@ class RingGroupsController extends Controller
             return redirect('/');
         }
 
-        $ringGroup = new RingGroups();
+        $ringGroup = new RingGroups([
+            'domain_uuid' => Session::get('domain_uuid'),
+            'insert_date' => date('Y-m-d H:i:s'),
+            'insert_user' => Session::get('user_uuid'),
+            'ring_group_context' => Session::get('domain_name'),
+            'ring_group_enabled' => "true",
+            'ring_group_strategy' => "enterprise",
+            'ring_group_call_timeout' => "30",
+            'ring_group_ringback' => '${us-ring}',
+            'ring_group_call_forward_enabled' => "true",
+            'ring_group_follow_me_enabled' => "true",
+        ]);
+
+        $ringGroup->ring_group_extension = $ringGroup->generateUniqueSequenceNumber();
 
         $ringGroupRingMyPhoneTimeout = 0;
         $ringGroupDestinations = $ringGroup->getGroupDestinations();
@@ -146,8 +159,8 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
-        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
-            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
+        if ($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch', 'recordings') . "/" . Session::get('domain_name') . "/" . $attributes['ring_group_ringback'];
         }
 
         $ringGroup = new RingGroups();
@@ -386,8 +399,8 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
-        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
-            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
+        if ($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch', 'recordings') . "/" . Session::get('domain_name') . "/" . $attributes['ring_group_ringback'];
         }
 
         $ringGroup->update([
@@ -466,6 +479,8 @@ class RingGroupsController extends Controller
             'simultaneous' => $longestDestinationsTimeout,
             default => 0,
         };
+
+        logger($ringGroup->ring_group_call_timeout);
 
         $ringGroup->save();
 

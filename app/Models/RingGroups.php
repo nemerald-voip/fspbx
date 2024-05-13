@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RingGroups extends Model
 {
@@ -24,6 +25,7 @@ class RingGroups extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'domain_uuid',
         'ring_group_extension',
         'ring_group_greeting',
         'ring_group_strategy',
@@ -35,6 +37,7 @@ class RingGroups extends Model
         'ring_group_cid_number_prefix',
         'ring_group_description',
         'ring_group_enabled',
+        'ring_group_context',
         'ring_group_forward_enabled',
         'ring_group_forward_destination',
         'ring_group_strategy',
@@ -55,22 +58,26 @@ class RingGroups extends Model
         'update_user'
     ];
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->attributes['ring_group_context'] = Session::get('domain_name');
-        $this->attributes['ring_group_enabled'] = "true";
-        $this->attributes['ring_group_strategy'] = "enterprise";
-        $this->attributes['ring_group_call_timeout'] = "30";
-        $this->attributes['ring_group_ringback'] = '${us-ring}';
-        $this->attributes['ring_group_call_forward_enabled'] = "true";
-        $this->attributes['ring_group_follow_me_enabled'] = "true";
-        $this->attributes['ring_group_extension'] = $this->generateUniqueSequenceNumber();
+    /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
 
-        $this->fill($attributes);
+     */
+    protected static function booted()
+    {
+        // static::saving(function ($model) {
+
+
+
+        // });
+
+        // static::retrieved(function ($model) {
+
+        //     $model->destroy_route = route('devices.destroy', $model);
+
+        //     return $model;
+        // });
     }
 
     public function getId()
@@ -80,17 +87,17 @@ class RingGroups extends Model
 
     public function getName()
     {
-        return $this->ring_group_extension.' - '.$this->ring_group_name;
+        return $this->ring_group_extension . ' - ' . $this->ring_group_name;
     }
 
     public function getGroupDestinations()
     {
-        return $this->belongsTo(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid')->orderBy('destination_delay')->get();
+        return $this->belongsTo(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid')->orderBy('destination_delay')->get();
     }
 
     public function groupDestinations()
     {
-        return $this->hasMany(RingGroupsDestinations::class,'ring_group_uuid','ring_group_uuid');
+        return $this->hasMany(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid');
     }
 
     /**
@@ -98,25 +105,32 @@ class RingGroups extends Model
      *
      * @return int|null The generated sequence number, or null if unable to generate.
      */
-    private function generateUniqueSequenceNumber() {
-        // Create an array to store the existing numbers
-        $existingNumbers = [];
+    public function generateUniqueSequenceNumber()
+    {
 
-        // Get all extension, ring group and voicemail numbers from the database tables and add them to the array
-        $existingNumbers = array_merge(
-            $existingNumbers,
-            RingGroups::where('domain_uuid', Session::get('domain_uuid'))->pluck('ring_group_extension')->all(),
-            Extensions::where('domain_uuid', Session::get('domain_uuid'))->pluck('extension')->all(),
-            Voicemails::where('domain_uuid', Session::get('domain_uuid'))->pluck('voicemail_id')->all()
-        );
+        // Ring groups will have extensions in the range between 9000 and 9099 by default
+        $rangeStart = 9000;
+        $rangeEnd = 9099;
 
-        // Generate a sequence number starting from 1
-        for ($i = 1; $i <= PHP_INT_MAX; $i++) {
-            // Check if the generated number is not in the existing numbers array
-            if (!in_array($i, $existingNumbers)) {
-                // Return the generated number if it is unique
-                return $i;
+        $domainUuid = Session::get('domain_uuid');
+
+        // Fetch all used extensions in one combined query
+        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
+            ->where('dialplan_number', 'not like', '*%')
+            ->pluck('dialplan_number')
+            ->unique();
+
+        // Find the first available extension
+        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
+            if (!$usedExtensions->contains($ext)) {
+                // This is your unique extension
+                $uniqueExtension = $ext;
+                break;
             }
+        }
+
+        if(isset($uniqueExtension)) {
+            return $uniqueExtension;
         }
 
         // Return null if unable to generate a unique sequence number
