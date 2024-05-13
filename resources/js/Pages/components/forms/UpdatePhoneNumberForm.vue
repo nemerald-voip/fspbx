@@ -119,14 +119,38 @@
                         </div>
                     </div>
                     <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'destination_conditions'" :label="'Conditions'"/>
-                        <TimeoutDestinations
-                            :categories="options.timeout_destinations_categories"
-                            :targets="options.timeout_destinations_targets"
-                            :selectedItems="null"
-                            :maxLimit="1"
-                            @update:modal-value="handleDestinationActionsUpdate"
-                        />
+                        <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action'"/>
+                        <div class="mt-2 grid grid-cols-3 gap-x-2">
+                            <div>
+                            <SelectBox :options="page.props.conditions"
+                                       :search="false"
+                                       :allowEmpty="true"
+                                       :selectedItem="null"
+                                       :placeholder="'Choose condition'"
+                                       @update:modal-value="handleFaxUpdate"
+                            />
+                            </div>
+                            <div>
+                                <InputField
+                                    v-model="form.destination_conditions.condition_expression"
+                                    type="text"
+                                    id="condition_expression"
+                                    name="condition_expression"
+                                    placeholder="Enter number"
+                                    :error="errors?.condition_expression && errors.condition_expression.length > 0"/>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-x-2">
+                            <ArrowCurvedRightIcon class="mt-2 h-10 w-10 float-right" aria-hidden="true" />
+                            <ConditionDestinations
+                                :categories="options.timeout_destinations_categories"
+                                :targets="options.timeout_destinations_targets"
+                                :selectedItems="null"
+                                :maxLimit="1"
+                                :customClass="'col-span-2'"
+                                @update:modal-value="handleConditionActionsUpdate"
+                            />
+                        </div>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
@@ -197,11 +221,13 @@ import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 import TimeoutDestinations from "../general/TimeoutDestinations.vue";
+import ConditionDestinations from "../general/TimeoutDestinations.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
+import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 
 const props = defineProps({
     item: Object,
@@ -227,6 +253,12 @@ const form = reactive({
     destination_cid_name_prefix: props.item.destination_cid_name_prefix,
     destination_accountcode: props.item.destination_accountcode,
     destination_distinctive_ring: props.item.destination_distinctive_ring,
+    destination_conditions: {
+        condition_field: null,
+        condition_expression: null,
+        condition_app: null,
+        condition_data: null
+    },
     _token: page.props.csrf_token,
 })
 
@@ -261,6 +293,10 @@ const handleFaxUpdate = (newSelectedItem) => {
 
 const handleDestinationActionsUpdate = (newSelectedItem) => {
     form.destination_actions = newSelectedItem;
+}
+
+const handleConditionActionsUpdate = (newSelectedItem) => {
+    form.destination_conditions = newSelectedItem;
 }
 
 </script>

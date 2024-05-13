@@ -229,9 +229,9 @@ const props = defineProps({
     showGlobal: Boolean,
     routes: Object,
     itemData: Object,
-    itemOptions: Object
+    itemOptions: Object,
+    conditions: Object
 });
-
 
 const filterData = ref({
     search: null,

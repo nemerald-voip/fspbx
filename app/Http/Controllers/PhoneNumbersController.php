@@ -83,6 +83,12 @@ class PhoneNumbersController extends Controller
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
+                'conditions' => [
+                    [
+                        'name' => 'Caller ID Number',
+                        'value' => 'caller_id_number'
+                    ]
+                ]
 
                 /*
                 'menus' => function () {

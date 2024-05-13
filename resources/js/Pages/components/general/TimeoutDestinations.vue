@@ -1,5 +1,5 @@
 <template>
-    <div class="mt-2 grid grid-cols-5 gap-x-6 gap-y-8" v-for="(timeoutDestination, index) in timeoutDestinations"
+    <div :class="['mt-2 grid grid-cols-4 gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
          :key="index">
         <SelectBox :options="categories"
                    :search="true"
@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import {ref, watch, computed} from 'vue'
+import {ref} from 'vue'
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
 import SelectBox from "./SelectBox.vue";
 
@@ -32,7 +32,11 @@ const props = defineProps({
     categories: [Array, null],
     targets: [Array, Object, null],
     selectedItems: [Array, Object, null],
-    maxLimit: { type: Number, default: 21 }
+    maxLimit: { type: Number, default: 21 },
+    customClass: {
+        type: String,
+        default: ''
+    },
 });
 
 const emit = defineEmits(['update:modal-value'])
@@ -53,7 +57,6 @@ function handleCategoryUpdate(newValue, index) {
         timeoutDestinations.value[index].categoryTargets = [];
         timeoutDestinations.value[index].selectedCategory = '';
     }
-    //emit('update:modal-value', timeoutDestinations.value); // emit the current state on category update
 }
 
 function handleTargetUpdate(newValue, index) {
