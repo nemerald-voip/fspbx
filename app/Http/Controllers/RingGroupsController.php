@@ -437,6 +437,7 @@ class RingGroupsController extends Controller
             $i = 0;
             $order = 5;
             foreach ($attributes['ring_group_destinations'] as $destination) {
+                logger($destination);
                 if ($i > 49) {
                     break;
                 }
@@ -453,9 +454,13 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
-                $sumDestinationsTimeout += $destination['timeout'];
+
+                if ($destination['status'] == 'true') {
+                    $sumDestinationsTimeout += $destination['timeout'];
+                }
+
                 // Save the longest timeout
-                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout && $destination['status'] == 'true') {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
                 }
                 if ($destination['prompt'] == 'true') {
@@ -475,12 +480,11 @@ class RingGroupsController extends Controller
         }
 
         $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
-            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
-            'simultaneous' => $longestDestinationsTimeout,
+            'random', 'sequence', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous','enterprise' => $longestDestinationsTimeout,
             default => 0,
         };
 
-        logger($ringGroup->ring_group_call_timeout);
 
         $ringGroup->save();
 
