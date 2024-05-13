@@ -4,8 +4,10 @@
             <label for="timeout_category" class="form-label">If not answered, calls will be sent</label>
             <div class="row">
                 <div class="col-md-4 col-sm-4">
-                    <select class="select2 form-control" data-toggle="select2" data-placeholder="Choose ..."
+                    <select class="select2 form-control" data-toggle="select2" data-placeholder="Choose option..."
                             id="timeout_category" name="timeout_category">
+                        <option value="">
+                        </option>
                         <option value="disabled" @if($destinationsByCategory == 'disabled') selected="selected" @endif>
                             Hang up
                         </option>
@@ -31,6 +33,7 @@
                             Miscellaneous
                         </option>
                     </select>
+                    <div id="timeout_category_err" class="text-danger error_message"></div>
                 </div>
                 <div id="timeout_action_wrapper" class="col-md-8 col-sm-8"
                      @if($destinationsByCategory == 'disabled') style="display: none" @endif>

@@ -126,7 +126,7 @@ class RingGroupsController extends Controller
             ->with('recordings', $recordings)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('timeoutDestinationsByCategory', $timeoutDestinationsByCategory)
-            ->with('destinationsByCategory', 'disabled')
+            ->with('destinationsByCategory', '')
             ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
             ->with('ringGroupDestinations', $ringGroupDestinations);
     }
@@ -190,8 +190,6 @@ class RingGroupsController extends Controller
             'dialplan_uuid' => Str::uuid(),
         ]);
 
-        $ringGroup->save();
-
         $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
@@ -213,9 +211,12 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
-                $sumDestinationsTimeout += $destination['timeout'];
+                if ($destination['status'] == 'true') {
+                    $sumDestinationsTimeout += $destination['timeout'];
+                }
+
                 // Save the longest timeout
-                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout && $destination['status'] == 'true') {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
                 }
                 if ($destination['prompt'] == 'true') {
@@ -235,8 +236,8 @@ class RingGroupsController extends Controller
         }
 
         $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
-            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
-            'simultaneous' => $longestDestinationsTimeout,
+            'random', 'sequence', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous','enterprise' => $longestDestinationsTimeout,
             default => 0,
         };
 
@@ -429,8 +430,6 @@ class RingGroupsController extends Controller
         ]);
 
         $ringGroup->groupDestinations()->delete();
-
-        $ringGroup->save();
 
         $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
