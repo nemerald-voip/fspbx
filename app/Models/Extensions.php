@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 
 class Extensions extends Model
 {
-    use HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, \App\Models\Traits\TraitUuid, LogsActivity;
 
     protected $table = "v_extensions";
 
@@ -112,6 +115,16 @@ class Extensions extends Model
             ? trim($extension->extension . ' - ' . $extension->effective_caller_id_name)
             : trim($extension->extension);
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+        ->logFillable()
+        ->logOnlyDirty()
+        ->dontSubmitEmptyLogs()
+        ->logExcept(['update_date']);
+        // Chain fluent methods for configuration options
     }
 
     /**
