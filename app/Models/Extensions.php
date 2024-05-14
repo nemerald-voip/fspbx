@@ -123,7 +123,12 @@ class Extensions extends Model
         ->logFillable()
         ->logOnlyDirty()
         ->dontSubmitEmptyLogs()
-        ->logExcept(['update_date']);
+        ->logExcept([
+            'create_date',
+            'create_user',
+            'update_date',
+            'update_user'
+        ]);
         // Chain fluent methods for configuration options
     }
 
