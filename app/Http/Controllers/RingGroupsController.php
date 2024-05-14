@@ -89,13 +89,15 @@ class RingGroupsController extends Controller
         $ringGroup->ring_group_extension = $ringGroup->generateUniqueSequenceNumber();
 
         $ringGroupRingMyPhoneTimeout = 0;
-        $ringGroupDestinations = $ringGroup->getGroupDestinations();
-        if ($ringGroupDestinations->count() > 0) {
-            if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
-                $ringGroupDestinations = $ringGroupDestinations[0]->destination_timeout;
-                unset($ringGroupDestinations[0]);
-            }
-        }
+        $ringGroupDestinations = [];
+        // $ringGroupDestinations = $ringGroup->getGroupDestinations();
+        // if ($ringGroupDestinations->count() > 0) {
+        //     logger($ringGroupDestinations);
+        //     if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
+        //         $ringGroupDestinations = $ringGroupDestinations[0]->destination_timeout;
+        //         unset($ringGroupDestinations[0]);
+        //     }
+        // }
 
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
             ->orWhere('domain_uuid', null)
@@ -165,6 +167,7 @@ class RingGroupsController extends Controller
 
         $ringGroup = new RingGroups();
         $ringGroup->fill([
+            'domain_uuid' => session('domain_uuid'),
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
