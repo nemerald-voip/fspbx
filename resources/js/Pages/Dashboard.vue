@@ -1,5 +1,8 @@
 <template>
     <MainLayout>
+        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-rose-600"
+            :text="topBannerText" />
+
         <main>
             <div class="mx-auto max-w-8xl px-4 py-10 sm:px-6 lg:px-8">
                 <div
@@ -474,6 +477,8 @@ import {
 
 import { TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import TopBanner from './components/notifications/TopBanner.vue';
+
 
 const props = defineProps({
     data: {
@@ -491,7 +496,8 @@ const props = defineProps({
 
 const open = ref(false);
 
-const globalInfoShow = ref(props.data.superadmin);
+const showTopBanner = ref(Boolean(props.company_data.billing_suspension));
+const topBannerText = ref('Your account has been suspended. Reactivation requires payment for past-due invoice(s).');
 
 
 onMounted(() => {
@@ -525,6 +531,12 @@ const getData = () => {
             if (props.data.superadmin) {
                 open.value = true;
             }
+            // console.log(props.data);
+            // console.log(props.data.billing_suspension);
+            // if (props.data.billing_suspension) {
+            //     showTopBanner.value = true;
+            // }
+        
         }
 
     });
