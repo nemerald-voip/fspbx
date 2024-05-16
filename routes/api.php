@@ -1,10 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
-use App\Http\Controllers\UsersController;
-use App\Http\Controllers\SmsWebhookController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -18,8 +17,6 @@ use App\Http\Controllers\SmsWebhookController;
 */
 
 // Route::post('/tokens/create', [TokenController::class,"create"]);
-Route::post('/sms/webhook', [SmsWebhookController::class,"handle"]);
-Route::post('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
 //Route::post('/tokens', [TokenController::class,"index"]);
 
