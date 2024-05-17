@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use Exception;
 use Inertia\Inertia;
 use App\Models\Extensions;
-use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\Http;
 use App\Services\SynchMessageProvider;
 use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
-use Spatie\Activitylog\Models\Activity;
+use App\Models\Activity;
 use App\Jobs\SendSmsNotificationToSlack;
 
 
@@ -57,12 +56,9 @@ class ActivityLogController extends Controller
                 //     $this->getItemOptions()
                 // ),
                 'routes' => [
-                    'current_page' => route('messages.index'),
-                    'store' => route('messages.store'),
-                    'select_all' => route('messages.select.all'),
-                    'bulk_delete' => route('messages.bulk.delete'),
-                    'bulk_update' => route('messages.bulk.update'),
-                    'retry' => route('messages.retry'),
+                    'current_page' => route('activities.index'),
+                    'select_all' => route('activities.select.all'),
+                    'bulk_delete' => route('activities.bulk.delete'),
                 ]
             ]
         );
@@ -111,7 +107,7 @@ class ActivityLogController extends Controller
             //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
 
-
+        logger($data);
 
         return $data;
     }

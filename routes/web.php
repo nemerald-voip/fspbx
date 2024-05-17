@@ -241,9 +241,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Activity Log
     Route::resource('activities', ActivityLogController::class);
-    Route::post('/messages/bulk-update', [ActivityLogController::class, 'bulkUpdate'])->name('messages.bulk.update');
-    Route::post('/messages/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('messages.bulk.delete');
-    Route::post('/messages/select-all', [ActivityLogController::class, 'selectAll'])->name('messages.select.all');
+    Route::post('/activities/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activities.bulk.delete');
+    Route::post('/activities/select-all', [ActivityLogController::class, 'selectAll'])->name('activities.select.all');
 });
 
 // Route::group(['prefix' => '/'], function () {
