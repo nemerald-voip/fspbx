@@ -1,5 +1,5 @@
 <template>
-    <div :class="['mt-2 grid grid-cols-5 gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
+    <div :class="['mt-2 grid gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
          :key="index">
         <SelectBox :options="categories"
                    :search="true"
@@ -17,17 +17,35 @@
                    :selectedItem="timeoutDestination.value.value"
                    @update:modal-value="value => handleTargetUpdate(value, index)"
         />
-        <MinusIcon v-if="index > 0" @click="() => removeTimeoutDestination(index)"
-                   class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+        <div class="relative">
+            <div class="absolute right-0">
+                <ejs-tooltip :content="'Remove destination'"
+                             position='RightTop' :target="'#delete_destination_tooltip'+index">
+                    <div :id="'delete_destination_tooltip'+index">
+                        <MinusIcon @click="() => removeTimeoutDestination(index)"
+                                   class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                    </div>
+                </ejs-tooltip>
+            </div>
+        </div>
+
     </div>
-    <PlusIcon v-if="timeoutDestinations.length < maxLimit" @click="addTimeoutDestination"
-              class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+    <div class="w-fit">
+        <ejs-tooltip v-if="timeoutDestinations.length < maxLimit" :content="'Add destination'"
+                     position='RightTop' target="#add_destination_tooltip">
+            <div id="add_destination_tooltip">
+                <PlusIcon @click="addTimeoutDestination"
+                          class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+            </div>
+        </ejs-tooltip>
+    </div>
 </template>
 
 <script setup>
 import {ref,onMounted} from 'vue'
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
 import SelectBox from "./SelectBox.vue";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
     itemOptions: Object,
@@ -37,7 +55,7 @@ const props = defineProps({
     maxLimit: { type: Number, default: 21 },
     customClass: {
         type: String,
-        default: ''
+        default: 'grid-cols-5'
     },
 });
 

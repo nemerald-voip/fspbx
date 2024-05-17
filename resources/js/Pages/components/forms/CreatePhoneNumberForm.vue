@@ -52,12 +52,15 @@
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
-                        <TimeoutDestinations
-                            :categories="options.timeout_destinations_categories"
-                            :targets="options.timeout_destinations_targets"
-                            :selectedItems="null"
-                            @update:modal-value="handleDestinationActionsUpdate"
-                        />
+                        <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
+                            <TimeoutDestinations
+                                :categories="options.timeout_destinations_categories"
+                                :targets="options.timeout_destinations_targets"
+                                :selectedItems="form.destination_actions"
+                                :customClass="'grid-cols-5'"
+                                @update:modal-value="handleDestinationActionsUpdate"
+                            />
+                        </div>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'"/>
@@ -123,14 +126,59 @@
                         </div>
                     </div>
                     <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'destination_conditions'" :label="'Conditions'"/>
-                        <TimeoutDestinations
-                            :categories="options.timeout_destinations_categories"
-                            :targets="options.timeout_destinations_targets"
-                            :selectedItems="null"
-                            :maxLimit="1"
-                            @update:modal-value="handleDestinationActionsUpdate"
-                        />
+                        <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action'"/>
+                        <div class="border rounded-md pl-4 pr-4 pb-2">
+                            <div v-for="(condition, index) in conditions" :key="index">
+                                <div class="mt-4 grid grid-cols-3 gap-x-2">
+                                    <div>
+                                        <SelectBox :options="page.props.conditions"
+                                                   :search="false"
+                                                   :allowEmpty="true"
+                                                   :selectedItem="condition.condition_field"
+                                                   v-model="condition.condition_field"
+                                                   :placeholder="'Choose condition'"/>
+                                    </div>
+                                    <div v-if="condition.condition_field">
+                                        <InputField
+                                            v-model="condition.condition_expression"
+                                            type="text"
+                                            placeholder="Enter phone number"/>
+                                    </div>
+                                    <div v-else />
+                                    <div class="relative">
+                                        <div class="absolute right-0">
+                                            <ejs-tooltip :content="'Remove condition'"
+                                                         position='RightTop' :target="'#delete_condition_tooltip'+index">
+                                                <div :id="'delete_condition_tooltip'+index">
+                                                    <MinusIcon @click="() => removeCondition(index)"
+                                                               class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                                                </div>
+                                            </ejs-tooltip>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2 border-b pb-4">
+                                    <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
+                                    <ConditionDestinations
+                                        :categories="options.timeout_destinations_categories"
+                                        :targets="options.timeout_destinations_targets"
+                                        :selectedItems="[condition]"
+                                        :maxLimit="1"
+                                        :customClass="'grid-cols-4 col-span-2'"
+                                        @update:modal-value="value => handleConditionActionsUpdate(value, index)"
+                                    />
+                                </div>
+                            </div>
+                            <div class="w-fit">
+                                <ejs-tooltip :content="'Add condition'"
+                                             position='RightTop' target="#add_condition_tooltip">
+                                    <div id="add_condition_tooltip">
+                                        <PlusIcon @click="addCondition"
+                                                  class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                                    </div>
+                                </ejs-tooltip>
+                            </div>
+                        </div>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
@@ -206,6 +254,10 @@ import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
+import ConditionDestinations from "../general/TimeoutDestinations.vue";
+import {MinusIcon, PlusIcon} from "@heroicons/vue/24/solid/index.js";
+import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
     item: Object,
@@ -215,6 +267,8 @@ const props = defineProps({
 });
 
 const page = usePage();
+
+const conditions = ref([])
 
 const selectedTab = ref(0)
 
@@ -263,6 +317,20 @@ const handleFaxUpdate = (newSelectedItem) => {
 
 const handleDestinationActionsUpdate = (newSelectedItem) => {
     form.destination_actions = newSelectedItem;
+}
+
+const addCondition = () => {
+    conditions.value.push({
+        condition_field: null,
+        condition_expression: "",
+        selectedCategory: "",
+        categoryTargets: [],
+        value: ""
+    })
+}
+
+const removeCondition = (index) => {
+    conditions.value.splice(index, 1)
 }
 
 </script>
