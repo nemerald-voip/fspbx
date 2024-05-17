@@ -100,7 +100,7 @@
                             <SelectBox :options="options.faxes"
                                        :search="true"
                                        :allowEmpty="true"
-                                       :selectedItem="null"
+                                       :selectedItem="form.fax_uuid"
                                        :placeholder="'Choose fax'"
                                        @update:modal-value="handleFaxUpdate"
                             />
@@ -120,36 +120,36 @@
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action'"/>
-                        <div class="mt-2 grid grid-cols-3 gap-x-2">
-                            <div>
-                            <SelectBox :options="page.props.conditions"
-                                       :search="false"
-                                       :allowEmpty="true"
-                                       :selectedItem="null"
-                                       :placeholder="'Choose condition'"
-                                       @update:modal-value="handleConditionFieldUpdate"
-                            />
+                        <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
+                            <div v-for="(condition, index) in conditions" :key="index">
+                                <div class="mt-2 grid grid-cols-3 gap-x-2">
+                                    <div>
+                                        <SelectBox :options="page.props.conditions"
+                                                   :search="false"
+                                                   :allowEmpty="true"
+                                                   :selectedItem="condition.condition_field"
+                                                   v-model="condition.condition_field"
+                                                   :placeholder="'Choose condition'"/>
+                                    </div>
+                                    <div v-if="condition.condition_field">
+                                        <InputField
+                                            v-model="condition.condition_expression"
+                                            type="text"
+                                            placeholder="Enter phone number"/>
+                                    </div>
+                                </div>
+                                <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2">
+                                    <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
+                                    <ConditionDestinations
+                                        :categories="options.timeout_destinations_categories"
+                                        :targets="options.timeout_destinations_targets"
+                                        :selectedItems="[condition]"
+                                        :maxLimit="1"
+                                        :customClass="'col-span-2'"
+                                        @update:modal-value="value => handleConditionActionsUpdate(value, index)"
+                                    />
+                                </div>
                             </div>
-                            <div v-if="form.destination_conditions.condition_field">
-                                <InputField
-                                    v-model="form.destination_conditions.condition_expression"
-                                    type="text"
-                                    id="condition_expression"
-                                    name="condition_expression"
-                                    placeholder="Enter phone number"
-                                    :error="errors?.condition_expression && errors.condition_expression.length > 0"/>
-                            </div>
-                        </div>
-                        <div v-if="form.destination_conditions.condition_field" class="grid grid-cols-3 gap-x-2">
-                            <ArrowCurvedRightIcon class="mt-2 h-10 w-10" aria-hidden="true" />
-                            <ConditionDestinations
-                                :categories="options.timeout_destinations_categories"
-                                :targets="options.timeout_destinations_targets"
-                                :selectedItems="null"
-                                :maxLimit="1"
-                                :customClass="'col-span-2'"
-                                @update:modal-value="handleConditionActionsUpdate"
-                            />
                         </div>
                     </div>
                     <div class="sm:col-span-12">
@@ -240,6 +240,8 @@ const props = defineProps({
 
 const page = usePage();
 
+const conditions = ref([])
+
 const selectedTab = ref(0)
 
 const form = reactive({
@@ -255,16 +257,44 @@ const form = reactive({
     destination_cid_name_prefix: props.item.destination_cid_name_prefix,
     destination_accountcode: props.item.destination_accountcode,
     destination_distinctive_ring: props.item.destination_distinctive_ring,
-    destination_conditions: {
-        condition_field: null,
-        condition_expression: null,
-        condition_app: null,
-        condition_data: null
-    },
+    destination_conditions: props.item.destination_conditions,
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
+
+onMounted(() => {
+    if (form.destination_conditions) {
+        conditions.value = form.destination_conditions.map(condition => {
+            const categoryNames = Object.keys(props.options.timeout_destinations_targets);
+            let selectedCategory = "";
+            let selectedCategoryTarget = {};
+
+            // look in each category to find the target value
+            for (let category of categoryNames) {
+                const foundInCategory = props.options.timeout_destinations_targets[category].find(
+                    target => target.value === condition.condition_data
+                );
+
+                // if found, save the category and target
+                if (foundInCategory) {
+                    selectedCategory = category;
+                    selectedCategoryTarget = foundInCategory;
+                    break;
+                }
+            }
+
+            // return a new conditions object
+            return {
+                condition_field: condition.condition_field,
+                condition_expression: condition.condition_expression,
+                selectedCategory: selectedCategory,
+                categoryTargets: props.options.timeout_destinations_targets[selectedCategory] || [],
+                destination_data: selectedCategoryTarget.value
+            };
+        });
+    }
+});
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data

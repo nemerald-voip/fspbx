@@ -231,12 +231,7 @@ const form = reactive({
     destination_cid_name_prefix: null,
     destination_accountcode: null,
     destination_distinctive_ring: null,
-    destination_conditions: {
-        condition_field: null,
-        condition_expression: null,
-        condition_app: null,
-        condition_data: null
-    },
+    destination_conditions: null,
     _token: page.props.csrf_token,
 })
 

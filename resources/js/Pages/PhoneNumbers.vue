@@ -275,10 +275,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-    console.log(props.data);
-});
-
 const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
     formErrors.value = null;

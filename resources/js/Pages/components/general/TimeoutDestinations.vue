@@ -97,7 +97,6 @@ function handleTargetUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
         timeoutDestinations.value[index].value = newValue;
     }
-    console.log(timeoutDestinations.value);
     emit('update:modal-value', timeoutDestinations.value); // emit the current state on target update
 }
 
