@@ -1,11 +1,12 @@
 <template>
-    <div :class="['mt-2 grid grid-cols-4 gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
+    <div :class="['mt-2 grid grid-cols-5 gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
          :key="index">
         <SelectBox :options="categories"
                    :search="true"
                    :allowEmpty="true"
                    :placeholder="'Choose category'"
                    :class="'col-span-2'"
+                   :selectedItem="timeoutDestination.selectedCategory"
                    @update:modal-value="value => handleCategoryUpdate(value, index)"
         />
         <SelectBox v-if="timeoutDestination.selectedCategory"
@@ -13,6 +14,7 @@
                    :search="true"
                    :class="'col-span-2'"
                    :placeholder="'Choose target destination'"
+                   :selectedItem="timeoutDestination.value.value"
                    @update:modal-value="value => handleTargetUpdate(value, index)"
         />
         <MinusIcon v-if="index > 0" @click="() => removeTimeoutDestination(index)"
@@ -23,7 +25,7 @@
 </template>
 
 <script setup>
-import {ref} from 'vue'
+import {ref,onMounted} from 'vue'
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
 import SelectBox from "./SelectBox.vue";
 
@@ -40,6 +42,38 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modal-value'])
+
+onMounted(() => {
+    if (props.selectedItems) {
+        timeoutDestinations.value = props.selectedItems.map(item => {
+            const categoryNames = Object.keys(props.targets);
+
+            let selectedCategory = '';
+            let selectedCategoryTarget = {};
+
+            // look in each category to find the target value
+            for (let category of categoryNames) {
+                const foundInCategory = props.targets[category].find(target =>
+                    target.value === item.destination_data
+                );
+
+                // if found, save the category and target
+                if (foundInCategory) {
+                    selectedCategory = category;
+                    selectedCategoryTarget = foundInCategory;
+                    break;
+                }
+            }
+
+            // return a new timeoutDestination object
+            return {
+                selectedCategory: selectedCategory,
+                categoryTargets: props.targets[selectedCategory] || [],
+                value: selectedCategoryTarget
+            }
+        })
+    }
+})
 
 const timeoutDestinations = ref([
     {
