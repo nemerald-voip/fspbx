@@ -136,7 +136,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.destination_delete" :content="'Remove phone number'"
                                     position='TopLeft' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
