@@ -478,7 +478,7 @@ class PhoneNumbersController extends Controller
     {
         $phone_number->delete();
 
-        return Inertia::render('Phonenumbers', [
+        return Inertia::render($this->viewName, [
             'data' => function () {
                 return $this->getData();
             },
