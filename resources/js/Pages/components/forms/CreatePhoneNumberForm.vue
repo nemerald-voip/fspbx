@@ -323,23 +323,32 @@ const handleDestinationActionsUpdate = (newSelectedItem) => {
 }
 
 const addCondition = () => {
-    conditions.value.push({
+    const newCondition = {
         condition_field: null,
         condition_expression: "",
         selectedCategory: "",
         categoryTargets: [],
         value: ""
-    })
+    };
+    conditions.value.push(newCondition);
+    form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        const updatedCondition = {
+            condition_field: conditions.value[index].condition_field,
+            condition_expression: conditions.value[index].condition_expression,
+            condition_data: newSelectedItem,
+        };
         conditions.value[index].value = newSelectedItem;
+        form.destination_conditions[index] = updatedCondition;
     }
 }
 
 const removeCondition = (index) => {
-    conditions.value.splice(index, 1)
+    conditions.value.splice(index, 1);
+    form.destination_conditions.splice(index, 1);
 }
 
 </script>

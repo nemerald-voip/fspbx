@@ -8,6 +8,10 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use libphonenumber\NumberParseException;
+use libphonenumber\NumberParseException as libNumberParseException;
+use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class UpdatePhoneNumberRequest extends FormRequest
 {
@@ -54,7 +58,7 @@ class UpdatePhoneNumberRequest extends FormRequest
             ],
             'destination_conditions.*.condition_expression' => [
                 'nullable',
-                'phone:US'
+                'string'
             ],
             'destination_conditions.*.condition_data' => [
                 'required_if:destination_conditions.*.condition_expression,!=,""',
@@ -119,7 +123,7 @@ class UpdatePhoneNumberRequest extends FormRequest
             foreach($this->get('destination_actions') as $action) {
                 $destination_actions[] = [
                     'destination_app' => 'transfer',
-                    'destination_data' => $action['value'] ?? $action['destination_data'] ?? '',
+                    'destination_data' => $action['value']['value'] ?? $action['destination_data'] ?? '',
                 ];
             }
         }
@@ -128,13 +132,12 @@ class UpdatePhoneNumberRequest extends FormRequest
             foreach($this->get('destination_conditions') as $action) {
                 $destination_conditions[] = [
                     'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
-                    'condition_expression' => $action['condition_expression'] ?? '',
+                    'condition_expression' => $action['condition_expression'] ?? null,
                     'condition_app' => 'transfer',
-                    'condition_data' => $action['condition_data']['value'] ?? $action['condition_data'] ?? ''
+                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
                 ];
             }
         }
-
         $this->merge([
             'destination_actions' => $destination_actions,
             'destination_conditions' => $destination_conditions
@@ -144,5 +147,6 @@ class UpdatePhoneNumberRequest extends FormRequest
         }
     }
 }
-// [{"condition_field":"caller_id_number","condition_expression":"3045746322","condition_app":"transfer","condition_data":"152 XML suspended"},{"condition_field":"caller_id_number","condition_expression":"2034657345","condition_app":"transfer","condition_data":"9000 XML api.us.nemerald.net"}]
-// [{"condition_field":"caller_id_number","condition_expression":"3045746322","condition_data":"152 XML suspended"},{"condition_field":"caller_id_number","condition_expression":"2034657345","condition_data":"9000 XML api.us.nemerald.net"}]
+
+// [{"condition_app":"transfer","condition_field":"caller_id_number","condition_expression":"2038567463","condition_data":"152 XML api.us.nemerald.net"}]
+// [{"condition_field":"caller_id_number","condition_expression":"2038567463","condition_app":"transfer","condition_data":"200 XML api.us.nemerald.net"}]

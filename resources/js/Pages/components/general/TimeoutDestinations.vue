@@ -1,5 +1,5 @@
 <template>
-    <div :class="['mt-2 grid gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
+    <div :class="['mt-2 mb-2 grid gap-x-2', customClass]" v-for="(timeoutDestination, index) in timeoutDestinations"
          :key="index">
         <SelectBox :options="categories"
                    :search="true"
@@ -39,7 +39,7 @@
                      position='RightTop' target="#add_destination_tooltip">
             <div id="add_destination_tooltip">
                 <PlusIcon @click="addTimeoutDestination"
-                          class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                          class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
             </div>
         </ejs-tooltip>
     </div>
@@ -134,7 +134,7 @@ const addTimeoutDestination = () => {
 
 const removeTimeoutDestination = (index) => {
     timeoutDestinations.value.splice(index, 1);
-    props.itemOptions.destination_actions.splice(index, 1);
+    emit('update:modal-value', timeoutDestinations.value);
 }
 
 </script>

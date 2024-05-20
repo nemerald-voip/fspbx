@@ -157,7 +157,7 @@ class StorePhoneNumberRequest extends FormRequest
             foreach($this->get('destination_actions') as $action) {
                 $destination_actions[] = [
                     'destination_app' => 'transfer',
-                    'destination_data' => $action['value'] ?? $action['destination_data'] ?? '',
+                    'destination_data' => $action['value']['value'] ?? $action['destination_data'] ?? '',
                 ];
             }
         }
@@ -168,11 +168,10 @@ class StorePhoneNumberRequest extends FormRequest
                     'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
                     'condition_expression' => $action['condition_expression'] ?? '',
                     'condition_app' => 'transfer',
-                    'condition_data' => $action['condition_data']['value'] ?? $action['condition_data'] ?? ''
+                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
                 ];
             }
         }
-
         $this->merge([
             'destination_actions' => $destination_actions,
             'destination_conditions' => $destination_conditions,
