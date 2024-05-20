@@ -17,7 +17,11 @@
                    :selectedItem="timeoutDestination.value.value"
                    @update:modal-value="value => handleTargetUpdate(value, index)"
         />
-        <div class="relative">
+        <template v-else>
+            <div></div>
+            <div></div>
+        </template>
+        <div v-if="maxLimit > 1" class="relative">
             <div class="absolute right-0">
                 <ejs-tooltip :content="'Remove destination'"
                              position='RightTop' :target="'#delete_destination_tooltip'+index">
@@ -30,7 +34,7 @@
         </div>
 
     </div>
-    <div class="w-fit">
+    <div v-if="maxLimit > 1" class="w-fit">
         <ejs-tooltip v-if="timeoutDestinations.length < maxLimit" :content="'Add destination'"
                      position='RightTop' target="#add_destination_tooltip">
             <div id="add_destination_tooltip">

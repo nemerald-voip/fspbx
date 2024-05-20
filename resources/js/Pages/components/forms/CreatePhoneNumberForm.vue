@@ -206,7 +206,7 @@
                         </div>
                     </div>
 
-                    <div class="sm:col-span-12">
+                    <div v-if="page.props.auth.can.domain_select && page.props.auth.can.destination_edit_domain" class="sm:col-span-12">
                         <LabelInputRequired :target="'domain_uuid'" :label="'Owned By (Company Name)'"/>
                         <div class="mt-2">
                             <SelectBox :options="options.domains"
@@ -238,7 +238,9 @@
                 </button>
             </div>
         </div>
+        <pre>
         {{form}}
+            </pre>
     </form>
 </template>
 
@@ -289,7 +291,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -309,6 +311,7 @@ const handleDestinationRecordEnabled = (newSelectedItem) => {
 
 const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
+    emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
@@ -327,6 +330,12 @@ const addCondition = () => {
         categoryTargets: [],
         value: ""
     })
+}
+
+const handleConditionActionsUpdate = (newSelectedItem, index) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        conditions.value[index].value = newSelectedItem;
+    }
 }
 
 const removeCondition = (index) => {

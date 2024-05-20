@@ -351,14 +351,6 @@ const handleDestinationActionsUpdate = (newSelectedItem) => {
     form.destination_actions = newSelectedItem;
 }
 
-const handleConditionActionsUpdate = (newSelectedItem) => {
-   // if (newSelectedItem !== null && newValue !== undefined) {
-   //     conditions.value[index].value = newValue;
-   // }
-    form.destination_conditions.condition_data = newSelectedItem;
-    form.destination_conditions.condition_app = 'transfer';
-}
-
 const addCondition = () => {
     conditions.value.push({
         condition_field: null,
@@ -369,16 +361,14 @@ const addCondition = () => {
     })
 }
 
+const handleConditionActionsUpdate = (newSelectedItem, index) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        conditions.value[index].value = newSelectedItem;
+    }
+}
+
 const removeCondition = (index) => {
     conditions.value.splice(index, 1)
 }
 
-/*
-const handleConditionFieldUpdate = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem.value !== 'NULL') {
-        form.destination_conditions.condition_field = newSelectedItem;
-    } else {
-        form.destination_conditions.condition_field = null;
-    }
-}*/
 </script>

@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
-use libphonenumber\NumberParseException;
-use Propaganistas\LaravelPhone\PhoneNumber;
+use Illuminate\Validation\ValidationException;
 
 class UpdatePhoneNumberRequest extends FormRequest
 {
@@ -32,34 +32,39 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_actions.*.selectedCategory' => [
-                Rule::in(['', 'extensions', 'ringgroup', 'ivrs', 'voicemails', 'others'])
+            'destination_actions.*.destination_app' => [
+                'nullable',
+                Rule::in('transfer')
             ],
-            'destination_actions.*.value.value' => [
-                'required_if:destination_actions.*.selectedCategory,!=,""',
+            'destination_actions.*.destination_data' => [
+                'nullable',
                 'string'
             ],
             'destination_conditions' => [
                 'nullable',
                 'array',
             ],
-            'destination_conditions.condition_app' => [
+            'destination_conditions.*.condition_app' => [
                 'nullable',
-                Rule::in(['transfer'])
+                Rule::in('transfer')
             ],
-            'destination_conditions.condition_field.value' => [
+            'destination_conditions.*.condition_field' => [
                 'nullable',
-                'required_if:destination_conditions.condition_app,==,"transfer"',
+                'string'
             ],
-            'destination_conditions.condition_expression' => [
-                'required_if:destination_conditions.condition_app,==,"transfer"',
+            'destination_conditions.*.condition_expression' => [
+                'nullable',
                 'phone:US'
             ],
-            'destination_conditions.condition_data.*.value.value' => [
-                'required_if:destination_conditions.condition_app,==,"transfer"',
+            'destination_conditions.*.condition_data' => [
+                'required_if:destination_conditions.*.condition_expression,!=,""',
                 'string'
             ],
             'destination_cid_name_prefix' => [
+                'nullable',
+                'string',
+            ],
+            'destination_caller_id_name' => [
                 'nullable',
                 'string',
             ],
@@ -77,15 +82,27 @@ class UpdatePhoneNumberRequest extends FormRequest
             'destination_record' => [
                 Rule::in([true, false]),
             ],
-            'destination_caller_id_name' => [
-                'nullable',
-                'string',
-            ],
             'domain_uuid' => [
                 'required',
                 Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
             ],
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     *
+     * @param Validator $validator
+     * @return void
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        // Get the original error messages from the validator
+        $errors = $validator->errors();
+
+        $responseData = array('errors' => $errors);
+
+        throw new HttpResponseException(response()->json($responseData, 422));
     }
 
     public function messages(): array
@@ -97,8 +114,35 @@ class UpdatePhoneNumberRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        $destination_actions = [];
+        if($this->has('destination_actions')) {
+            foreach($this->get('destination_actions') as $action) {
+                $destination_actions[] = [
+                    'destination_app' => 'transfer',
+                    'destination_data' => $action['value'] ?? $action['destination_data'] ?? '',
+                ];
+            }
+        }
+        $destination_conditions = [];
+        if($this->has('destination_conditions')) {
+            foreach($this->get('destination_conditions') as $action) {
+                $destination_conditions[] = [
+                    'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
+                    'condition_expression' => $action['condition_expression'] ?? '',
+                    'condition_app' => 'transfer',
+                    'condition_data' => $action['condition_data']['value'] ?? $action['condition_data'] ?? ''
+                ];
+            }
+        }
+
+        $this->merge([
+            'destination_actions' => $destination_actions,
+            'destination_conditions' => $destination_conditions
+        ]);
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
     }
 }
+// [{"condition_field":"caller_id_number","condition_expression":"3045746322","condition_app":"transfer","condition_data":"152 XML suspended"},{"condition_field":"caller_id_number","condition_expression":"2034657345","condition_app":"transfer","condition_data":"9000 XML api.us.nemerald.net"}]
+// [{"condition_field":"caller_id_number","condition_expression":"3045746322","condition_data":"152 XML suspended"},{"condition_field":"caller_id_number","condition_expression":"2034657345","condition_data":"9000 XML api.us.nemerald.net"}]

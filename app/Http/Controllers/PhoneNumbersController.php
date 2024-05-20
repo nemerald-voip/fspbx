@@ -324,9 +324,36 @@ class PhoneNumbersController extends Controller
      */
     public function store(StorePhoneNumberRequest $request): JsonResponse
     {
-        $inputs = $request->validated();
-
         try {
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
+
+            logger($inputs);
+
+            die;
+
+            $destination_actions = [];
+            if(isset($inputs['destination_actions'])) {
+                foreach($inputs['destination_actions'] as $action) {
+                    $destination_actions[] = [
+                        'destination_app' => 'transfer',
+                        'destination_data' => $action['value']['value']
+                    ];
+                }
+                $inputs['destination_actions'] = $destination_actions;
+            }
+            $destination_conditions = [];
+            if(isset($inputs['destination_conditions'])) {
+                $destination_conditions[] = [
+                    'condition_field' => $inputs['destination_conditions']['condition_field']['value'],
+                    'condition_expression' => $inputs['destination_conditions']['condition_expression'],
+                    'condition_app' => 'transfer',
+                    'destination_data' => $inputs['destination_conditions']['condition_data'][0]['value']['value']
+                ];
+
+                $inputs['destination_conditions'] = $destination_conditions;
+            }
 
             $instance = $this->model;
             $instance->fill([
@@ -416,41 +443,6 @@ class PhoneNumbersController extends Controller
             $inputs = array_map(function ($value) {
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
-
-            //logger($phone_number);
-            //logger($inputs);
-
-            $destination_actions = [];
-            if(isset($inputs['destination_actions'])) {
-                foreach($inputs['destination_actions'] as $action) {
-                    $destination_actions[] = [
-                        'destination_app' => 'transfer',
-                        'destination_data' => $action['value']['value']
-                    ];
-                }
-                $inputs['destination_actions'] = $destination_actions;
-            }
-            $destination_conditions = [];
-            logger($inputs);
-            if(isset($inputs['destination_conditions'])) {
-                $destination_conditions[] = [
-                    'condition_field' => $inputs['destination_conditions']['condition_field']['value'],
-                    'condition_expression' => $inputs['destination_conditions']['condition_expression'],
-                    'condition_app' => 'transfer',
-                    'destination_data' => $inputs['destination_conditions']['condition_data'][0]['value']['value']
-                ];
-
-                $inputs['destination_conditions'] = $destination_conditions;
-            }
-
-
-            // [{
-            //"condition_field":"caller_id_number",
-            //"condition_expression":"2034567564",
-            //"condition_app":"transfer",
-            //"condition_data":"9500 XML api.us.nemerald.net"}
-            //]
-//[{"destination_app":"transfer","destination_data":"370 XML api.us.nemerald.net"}]
 
             $phone_number->update($inputs);
 
