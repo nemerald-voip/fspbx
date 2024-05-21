@@ -29,6 +29,15 @@ class UserAdvFields extends Model
         'last_name',
     ];
 
+    protected $hidden = [
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'two_factor_cookies',
+        'created_at',
+        'updated_at',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class,'user_uuid','user_uuid');

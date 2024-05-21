@@ -50,4 +50,5 @@ class Activity extends SpatieActivity implements ActivityContract
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
+
 }

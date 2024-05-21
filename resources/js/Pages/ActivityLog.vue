@@ -41,7 +41,7 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                
+
 
                 <TableColumnHeader header=""
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
@@ -52,16 +52,17 @@
                     <span class="pl-4">Date of change</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="showGlobal" header="Log Name"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Log Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="User" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Event" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Properties" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -86,8 +87,8 @@
                 <tr v-for="row in data.data" :key="row.id">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.log_name">
                         <div class="flex items-center">
-                            <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.id" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]" :value="row.id"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.created_at_formatted }}
                             </div>
@@ -104,14 +105,21 @@
                             </div>
                         </ejs-tooltip>
                     </TableField>
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                            <div class="font-medium text-gray-900">{{ formatUserName(row.causer.user_adv_fields) }}</div>
+                            <div class="mt-1 text-gray-500">{{ row.causer.user_email }}</div>
+                    </TableField>
+
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="formatProperties(row.properties)" v-html="formatProperties(row.properties)"/>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" v-html="formatProperties(row)" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.properties"/> -->
                     <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.lines[0]?.extension?.name_formatted" /> -->
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
+                            <div class="flex items-center whitespace-nowrap justify-center">
                                 <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
@@ -121,13 +129,6 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Restart device'" position='TopCenter'
-                                    target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRestart(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
 
                                 <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
@@ -497,20 +498,6 @@ const handleCopyToClipboard = (macAddress) => {
 }
 
 
-const handleRestart = (device_uuid) => {
-    axios.post(props.routes.restart,
-        { 'devices': [device_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
-
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -614,19 +601,40 @@ const handleFormErrorResponse = (error) => {
 }
 
 // Method to format properties
-const formatProperties = (properties) => {
+const formatProperties = (item) => {
     const formattedProperties = [];
 
-    if (properties.attributes && properties.old) {
-        Object.keys(properties.attributes).forEach(key => {
-            if (properties.old[key] !== properties.attributes[key]) {
-                formattedProperties.push(`Changed <strong>${key.replace(/_/g, ' ')}</strong> from <span class="text-red-500">${properties.old[key]}</span> to <span class="text-green-500">${properties.attributes[key]}</span>.<br>`);
-            }
-        });
+    if (item.subject_type && item.subject_id) {
+        formattedProperties.push(`Subject Type: <strong>${item.subject_type}</strong><br>`);
+        formattedProperties.push(`Subject ID: <strong>${item.subject_id}</strong><br>`);
     }
 
-    return formattedProperties.join(' ');
+    if (item.description === 'updated') {
+        if (item.properties.attributes && item.properties.old) {
+            Object.keys(item.properties.attributes).forEach(key => {
+                if (item.properties.old[key] !== item.properties.attributes[key]) {
+                    formattedProperties.push(`Changed <strong>${key.replace(/_/g, ' ')}</strong> from <span class="text-red-500">${item.properties.old[key]}</span> to <span class="text-green-500">${item.properties.attributes[key]}</span>.<br>`);
+                }
+            });
+        }
+    }
+
+    return formattedProperties.join('');
 };
+
+// Method to format user
+const formatUserName = (userAdvFields) => {
+    if (userAdvFields) {
+        const firstName = userAdvFields.first_name || '';
+        const lastName = userAdvFields.last_name || '';
+        return `${firstName} ${lastName}`.trim();
+    }
+    return '';
+};
+
+
+
+
 
 const handleErrorResponse = (error) => {
     if (error.response) {

@@ -49,7 +49,15 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'api_key'
+        'api_key',
+        'insert_date',
+        'insert_user',
+        'salt',
+        'update_date',
+        'update_user',
+        'add_date',
+        'add_user',
+        'contact_uuid',
     ];
 
     /**

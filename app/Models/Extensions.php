@@ -87,6 +87,15 @@ class Extensions extends Model
         'update_user',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+    ];
+
     public function __construct(array $attributes = [])
     {
         parent::__construct();
@@ -127,7 +136,8 @@ class Extensions extends Model
             'create_date',
             'create_user',
             'update_date',
-            'update_user'
+            'update_user',
+            'password',
         ]);
         // Chain fluent methods for configuration options
     }
