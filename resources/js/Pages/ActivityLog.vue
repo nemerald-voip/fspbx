@@ -41,6 +41,7 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
+                
 
                 <TableColumnHeader header=""
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
@@ -48,12 +49,16 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Log Name</span>
+                    <span class="pl-4">Date of change</span>
                 </TableColumnHeader>
+
+                <TableColumnHeader v-if="showGlobal" header="Log Name"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Properties" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -78,25 +83,18 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.device_uuid">
+                <tr v-for="row in data.data" :key="row.id">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.log_name">
                         <div class="flex items-center">
                             <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
-                                {{ row.log_name }}
+                                :value="row.id" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9">
+                                {{ row.created_at_formatted }}
                             </div>
                         </div>
-                        <!-- <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
-                            @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
-                            <div id="copy_tooltip_target">
-                                <ClipboardDocumentIcon
-                                    class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
-                            </div>
-                        </ejs-tooltip> -->
                     </TableField>
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.log_name" />
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description">
@@ -107,7 +105,7 @@
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.properties" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="formatProperties(row.properties)" v-html="formatProperties(row.properties)"/>
                     <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.lines[0]?.extension?.name_formatted" /> -->
 
@@ -614,6 +612,21 @@ const handleFormErrorResponse = (error) => {
     }
 
 }
+
+// Method to format properties
+const formatProperties = (properties) => {
+    const formattedProperties = [];
+
+    if (properties.attributes && properties.old) {
+        Object.keys(properties.attributes).forEach(key => {
+            if (properties.old[key] !== properties.attributes[key]) {
+                formattedProperties.push(`Changed <strong>${key.replace(/_/g, ' ')}</strong> from <span class="text-red-500">${properties.old[key]}</span> to <span class="text-green-500">${properties.attributes[key]}</span>.<br>`);
+            }
+        });
+    }
+
+    return formattedProperties.join(' ');
+};
 
 const handleErrorResponse = (error) => {
     if (error.response) {

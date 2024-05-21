@@ -107,7 +107,7 @@ class ActivityLogController extends Controller
             //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
