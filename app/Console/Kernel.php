@@ -42,7 +42,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
        Commands\UploadArchiveFiles::class,
-       \App\Console\Commands\MigrationLastSchemaUpdate::class,
+       Commands\MigrationShowLastBatch::class,
+       Commands\MigrationDeleteLastBatch::class,
     ];
     
     protected function commands()
