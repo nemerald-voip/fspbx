@@ -49,7 +49,8 @@ class LoginVerificationCode extends Mailable
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
 
-        return $this->subject(config('app.name', 'Laravel') . ' two factor verification code');
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+            ->subject(config('app.name', 'Laravel') . ' two factor verification code');
     }
 
     /**

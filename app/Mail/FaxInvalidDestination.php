@@ -57,7 +57,8 @@ class FaxInvalidDestination extends Mailable
         $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->subject('Fax to ' . $this->attributes['invalid_number'] . ' Failed - Invalid Fax Destination Number')
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+        ->subject('Fax to ' . $this->attributes['invalid_number'] . ' Failed - Invalid Fax Destination Number')
             ->view('emails.fax.invalidDestinationNumber');
     }
 }

@@ -57,6 +57,7 @@ class FaxFailed extends Mailable
         $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->subject('Re: fax to '.$this->attributes['fax_destination'] . ' Failed')->view('emails.fax.failed');
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+        ->subject('Re: fax to '.$this->attributes['fax_destination'] . ' Failed')->view('emails.fax.failed');
     }
 }

@@ -57,6 +57,7 @@ class FaxNotAuthorized extends Mailable
         $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
-        return $this->subject('Email Not Authorized')->view('emails.fax.notauthorized');
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+        ->subject('Email Not Authorized')->view('emails.fax.notauthorized');
     }
 }
