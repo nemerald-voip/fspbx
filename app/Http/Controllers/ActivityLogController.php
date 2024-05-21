@@ -120,20 +120,20 @@ class ActivityLogController extends Controller
     {
         $data =  $this->model::query();
 
-        // if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-        //     $data->with(['domain' => function ($query) {
-        //         $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-        //     }]);
-        //     // Access domains through the session and filter devices by those domains
-        //     $domainUuids = Session::get('domains')->pluck('domain_uuid');
-        //     $data->whereHas('domain', function ($query) use ($domainUuids) {
-        //         $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
-        //     });
-        // } else {
-        //     // Directly filter devices by the session's domain_uuid
-        //     $domainUuid = Session::get('domain_uuid');
-        //     $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        // }
+        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+            $data->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
+            }]);
+            // Access domains through the session and filter devices by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $data->whereHas('domain', function ($query) use ($domainUuids) {
+                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+            })->orWhereNull($this->model->getTable() . '.domain_uuid');
+        } else {
+            // Directly filter devices by the session's domain_uuid
+            $domainUuid = Session::get('domain_uuid');
+            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
+        }
 
 
         $data->select(
@@ -141,8 +141,8 @@ class ActivityLogController extends Controller
             'log_name',
             'description',
             'properties',
-            'created_at'
-
+            'created_at',
+            'domain_uuid',
         );
 
         if (is_array($filters)) {

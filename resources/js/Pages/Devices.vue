@@ -28,16 +28,18 @@
                 </button>
 
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
-                class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Profiles
                 </a>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
+                    @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
+                    @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -88,21 +90,24 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.device_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex"
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
                         :text="row.device_address_formatted">
-                        <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
-                            :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9" :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                            @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
-                            {{ row.device_address_formatted }}
-                        </div>
-                        <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
-                            @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
-                            <div id="copy_tooltip_target">
-                                <ClipboardDocumentIcon
-                                    class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
+                        <div class="flex items-center">
+                            <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9"
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
+                                @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
+                                {{ row.device_address_formatted }}
                             </div>
-                        </ejs-tooltip>
+                            <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
+                                @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
+                                <div id="copy_tooltip_target">
+                                    <ClipboardDocumentIcon
+                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
+                                </div>
+                            </ejs-tooltip>
+                        </div>
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -139,8 +144,8 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
-                                    target="#delete_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                    position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -681,6 +686,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 </script>
 
-<style>
-@import "@syncfusion/ej2-base/styles/tailwind.css";
+<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
 @import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
