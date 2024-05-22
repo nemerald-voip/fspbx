@@ -61,7 +61,7 @@
                                                             data-switch="success" /> --}}
 
                                                         <input type="checkbox" id="checkbox{{ $destination->destination_uuid }}" data-switch="success" class="callerIdCheckbox" 
-                                                            onclick="javascript:changeCallerId('{{ route('updateCallerID', $extension )}}','{{ $destination->destination_uuid }}', this);"
+                                                            onclick="javascript:changeCallerId('{{ route('updateCallerID', $extension )}}','{{ $destination->destination_uuid }}',this);"
                                                             @if ($destination->isCallerID) checked @endif >
                                                         <label for="checkbox{{ $destination->destination_uuid }}" data-on-label="Yes" data-off-label="No" class="mb-0 d-block"></label>
 
@@ -94,38 +94,7 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        //CallerID single page. 
-        //uncheck all of the checkboxes, apart from the one checked
-        // $('input.callerIdCheckbox').on('change', function() {
-        //     var id = $(this).val();
-        //     var checkbox = $(this);
 
-
-        //     var formData = new FormData();
-        //     formData.append('extension_uuid', extension_uuid);
-        //     formData.append('destination_uuid', id); 
-
-        //     $.ajax({
-        //         type : "POST",
-        //         url : url,
-        //         data: formData,
-        //         processData: false,
-        //         contentType: false,
-        //         checkbox : $(this),
-        //     })
-        //     .done(function(response) { 
-        //         console.log(response);
-        //         if (response.error){
-        //             checkbox.prop('checked', false);
-        //         } else {
-        //             $('input.callerIdCheckbox').not(checkbox).prop('checked', false);
-        //         }
-        //     })
-        //     .fail(function (response){
-        //         //
-        //     });
-
-        // });
     });
 
     // Send request to change Caller ID
