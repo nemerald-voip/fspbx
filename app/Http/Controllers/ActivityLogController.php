@@ -107,7 +107,7 @@ class ActivityLogController extends Controller
             //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
@@ -136,8 +136,11 @@ class ActivityLogController extends Controller
         }
 
         $data->with('subject');
-        $data->with('causer');
-        $data->with('causer.user_adv_fields');
+        $data->with('causer')->with(['causer' => function ($query) {
+            $query->when(get_class($query->getModel()) === 'App\Models\User', function ($q) {
+                $q->with('user_adv_fields');
+            });
+        }]);
 
 
         $data->select(
