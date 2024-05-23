@@ -119,7 +119,7 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function prepareForValidation(): void
     {
         $destination_actions = [];
-        if($this->has('destination_actions')) {
+        if($this->filled('destination_actions')) {
             foreach($this->get('destination_actions') as $action) {
                 $destination_actions[] = [
                     'destination_app' => 'transfer',
@@ -128,7 +128,7 @@ class UpdatePhoneNumberRequest extends FormRequest
             }
         }
         $destination_conditions = [];
-        if($this->has('destination_conditions')) {
+        if($this->filled('destination_conditions')) {
             foreach($this->get('destination_conditions') as $action) {
                 $destination_conditions[] = [
                     'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',

@@ -56,7 +56,7 @@ const props = defineProps({
     categories: [Array, null],
     targets: [Array, Object, null],
     selectedItems: [Array, Object, null],
-    maxLimit: { type: Number, default: 21 },
+    maxLimit: { type: Number, default: 6 },
     customClass: {
         type: String,
         default: 'grid-cols-5'

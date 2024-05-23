@@ -8,7 +8,6 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use libphonenumber\NumberParseException;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
@@ -153,7 +152,7 @@ class StorePhoneNumberRequest extends FormRequest
         }
 
         $destination_actions = [];
-        if($this->has('destination_actions')) {
+        if($this->filled('destination_actions')) {
             foreach($this->get('destination_actions') as $action) {
                 $destination_actions[] = [
                     'destination_app' => 'transfer',
@@ -162,7 +161,7 @@ class StorePhoneNumberRequest extends FormRequest
             }
         }
         $destination_conditions = [];
-        if($this->has('destination_conditions')) {
+        if($this->filled('destination_conditions')) {
             foreach($this->get('destination_conditions') as $action) {
                 $destination_conditions[] = [
                     'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',

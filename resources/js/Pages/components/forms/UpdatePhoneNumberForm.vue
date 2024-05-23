@@ -131,8 +131,9 @@
                                                    :search="false"
                                                    :allowEmpty="true"
                                                    :selectedItem="condition.condition_field"
-                                                   v-model="condition.condition_field"
-                                                   :placeholder="'Choose condition'"/>
+                                                   :placeholder="'Choose condition'"
+                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
+                                        />
                                     </div>
                                     <div v-if="condition.condition_field">
                                         <InputField
@@ -166,7 +167,7 @@
                                 </div>
                             </div>
                             <div class="w-fit">
-                                <ejs-tooltip :content="'Add condition'"
+                                <ejs-tooltip v-if="conditions.length < conditionsMaxLimit" :content="'Add condition'"
                                              position='RightTop' target="#add_condition_tooltip">
                                     <div id="add_condition_tooltip">
                                         <PlusIcon @click="addCondition"
@@ -268,6 +269,8 @@ const page = usePage();
 
 const conditions = ref([])
 
+const conditionsMaxLimit = 6;
+
 const selectedTab = ref(0)
 
 const form = reactive({
@@ -345,6 +348,18 @@ const handleDomainUpdate = (newSelectedItem) => {
 
 const handleFaxUpdate = (newSelectedItem) => {
     form.fax_uuid = newSelectedItem.value;
+}
+
+const handleConditionUpdate = (newSelectedItem, index) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        const updatedCondition = {
+            condition_field: newSelectedItem.value,
+            condition_expression: conditions.value[index].condition_expression,
+            condition_data: conditions.value[index].condition_data,
+        };
+        conditions.value[index].condition_field = newSelectedItem.value;
+        form.destination_conditions[index] = updatedCondition;
+    }
 }
 
 const handleDestinationActionsUpdate = (newSelectedItem) => {

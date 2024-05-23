@@ -135,8 +135,9 @@
                                                    :search="false"
                                                    :allowEmpty="true"
                                                    :selectedItem="condition.condition_field"
-                                                   v-model="condition.condition_field"
-                                                   :placeholder="'Choose condition'"/>
+                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
+                                                   :placeholder="'Choose condition'"
+                                        />
                                     </div>
                                     <div v-if="condition.condition_field">
                                         <InputField
@@ -170,7 +171,7 @@
                                 </div>
                             </div>
                             <div class="w-fit">
-                                <ejs-tooltip :content="'Add condition'"
+                                <ejs-tooltip v-if="conditions.length < conditionsMaxLimit" :content="'Add condition'"
                                              position='RightTop' target="#add_condition_tooltip">
                                     <div id="add_condition_tooltip">
                                         <PlusIcon @click="addCondition"
@@ -245,18 +246,18 @@
 </template>
 
 <script setup>
-import {defineProps, onMounted, reactive, ref} from 'vue'
+import {defineProps, reactive, ref} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
 import TimeoutDestinations from "../general/TimeoutDestinations.vue";
+import ConditionDestinations from "../general/TimeoutDestinations.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
-import ConditionDestinations from "../general/TimeoutDestinations.vue";
 import {MinusIcon, PlusIcon} from "@heroicons/vue/24/solid/index.js";
 import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
@@ -271,6 +272,8 @@ const props = defineProps({
 const page = usePage();
 
 const conditions = ref([])
+
+const conditionsMaxLimit = 6;
 
 const selectedTab = ref(0)
 
@@ -316,6 +319,18 @@ const handleDomainUpdate = (newSelectedItem) => {
 
 const handleFaxUpdate = (newSelectedItem) => {
     form.fax_uuid = newSelectedItem.value;
+}
+
+const handleConditionUpdate = (newSelectedItem, index) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        const updatedCondition = {
+            condition_field: newSelectedItem.value,
+            condition_expression: conditions.value[index].condition_expression,
+            condition_data: conditions.value[index].condition_data,
+        };
+        conditions.value[index].condition_field = newSelectedItem.value;
+        form.destination_conditions[index] = updatedCondition;
+    }
 }
 
 const handleDestinationActionsUpdate = (newSelectedItem) => {
