@@ -439,7 +439,6 @@ class RingGroupsController extends Controller
             $i = 0;
             $order = 5;
             foreach ($attributes['ring_group_destinations'] as $destination) {
-                logger($destination);
                 if ($i > 49) {
                     break;
                 }
