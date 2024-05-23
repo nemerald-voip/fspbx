@@ -92,9 +92,34 @@ class CdrsController extends Controller
                     fn () =>
                     $this->getEntities()
                 ),
+                'itemData' => Inertia::lazy(
+                    fn () =>
+                    $this->getItemData()
+                ),
+                'routes' => [
+                    'current_page' => route('cdrs.index'),
+                ]
 
             ]
         );
+    }
+
+    public function getItemData()
+    {
+        // Get item data
+        $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
+            // ->select([
+            //     'domain_uuid',
+            //     'device_uuid',
+            //     'device_template',
+            //     'device_label',
+            //     'device_profile_uuid',
+            //     'device_address',
+            // ])
+            ->first();
+
+// logger($itemData);
+        return $itemData;
     }
 
     public function getEntities()

@@ -89,8 +89,10 @@
                     </TableColumnHeader>
                     <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
+                    <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                    <TableColumnHeader header="Actions" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+
                 </template>
 
                 <template #table-body>
@@ -147,6 +149,22 @@
                                 </div>
                             </template>
                         </TableField>
+
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <template #action-buttons>
+                            <div class="flex items-center whitespace-nowrap justify-center">
+                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'" position='TopCenter'
+                                    target="#view_tooltip_target">
+                                    <div id="view_tooltip_target">
+                                        <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                    </div>
+                                </ejs-tooltip>
+
+                            </div>
+                        </template>
+                    </TableField>
                     </tr>
                 </template>
                 <template #empty>
@@ -174,6 +192,12 @@
             </DataTable>
         </div>
     </MainLayout>
+
+
+    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :header="'Call details'" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+    </CallDetailsModal>
+
 </template>
 
 <script setup>
@@ -193,6 +217,7 @@ import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
+import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
 import {
     PlayCircleIcon,
     PauseCircleIcon,
@@ -209,6 +234,8 @@ import Loading from "./components/general/Loading.vue";
 const page = usePage()
 const today = new Date();
 const loading = ref(false)
+const viewModalTrigger = ref(false);
+const loadingModal = ref(false)
 
 
 const props = defineProps({
@@ -224,6 +251,8 @@ const props = defineProps({
     selectedEntity: String,
     selectedEntityType: String,
     csvUrl: Object,
+    routes: Object,
+    itemData: Object,
 });
 
 onMounted(() => {
@@ -266,6 +295,34 @@ const getEntities = () => {
 
     });
 
+}
+
+const handleViewRequest = (itemUuid) => {
+    viewModalTrigger.value = true
+    loadingModal.value = true
+
+    router.get(props.routes.current_page,
+        {
+            itemUuid: itemUuid,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemData',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+                console.log(props.itemData);
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
 }
 
 const handleUpdateCallDirectionFilter = (newSelectedItem) => {
@@ -454,6 +511,10 @@ const handleShowLocal = () => {
     filterData.value.showGlobal = false;
     showGlobal.value = false;
     handleSearchButtonClick();
+}
+
+const handleModalClose = () => {
+    viewModalTrigger.value = false;
 }
 
 
