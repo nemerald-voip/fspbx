@@ -83,6 +83,7 @@ class Destinations extends Model
             // Remove attributes before saving to database
             unset($model->destination_number_formatted);
             unset($model->destroy_route);
+            unset($model->destination_actions_formatted);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
             $model->destination_actions = json_encode($model->destination_actions);
