@@ -282,7 +282,7 @@ const form = reactive({
     fax_uuid: null,
     destination_prefix: "1",
     destination_number: null,
-    destination_actions: null,
+    destination_actions: [],
     destination_hold_music: null,
     destination_description: null,
     destination_enabled: true,
@@ -290,7 +290,7 @@ const form = reactive({
     destination_cid_name_prefix: null,
     destination_accountcode: null,
     destination_distinctive_ring: null,
-    destination_conditions: null,
+    destination_conditions: [],
     _token: page.props.csrf_token,
 })
 
@@ -346,7 +346,7 @@ const addCondition = () => {
         value: ""
     };
     conditions.value.push(newCondition);
-    form.destination_conditions.push(newCondition);
+    //form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {

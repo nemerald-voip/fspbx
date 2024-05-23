@@ -88,6 +88,10 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'fax_uuid' => [
+                'nullable',
+                Rule::exists('v_fax', 'fax_uuid')
+            ],
             'destination_enabled' => [
                 Rule::in([true, false]),
             ],
@@ -96,7 +100,8 @@ class StorePhoneNumberRequest extends FormRequest
             ],
             'domain_uuid' => [
                 'required',
-                Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
+                Rule::notIn(['NULL']),
+                Rule::exists('v_domains', 'domain_uuid')
             ],
         ];
     }
