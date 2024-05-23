@@ -329,10 +329,6 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-            logger($inputs);
-
-            die;
-
             $destination_actions = [];
             if(isset($inputs['destination_actions'])) {
                 foreach($inputs['destination_actions'] as $action) {

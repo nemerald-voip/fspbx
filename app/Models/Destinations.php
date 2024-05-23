@@ -105,8 +105,13 @@ class Destinations extends Model
                 }
             }
 
+            //$timeoutDestinations = getTimeoutDestinations();
+            //'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
+            //'timeout_destinations_targets' => $timeoutDestinations['targets']
+
             if ($model->destination_actions) {
                 $model->destination_actions = json_decode($model->destination_actions);
+                $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
             }
 
             if ($model->destination_conditions) {

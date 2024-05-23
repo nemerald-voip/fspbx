@@ -116,7 +116,13 @@
                         </ejs-tooltip>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_data" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <ul v-if="row.destination_actions_formatted">
+                            <li v-for="(action, index) in row.destination_actions_formatted" :key="index">
+                                {{action}}
+                            </li>
+                        </ul>
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_description" />
 
@@ -542,8 +548,6 @@ const handleSelectPageItems = () => {
     }
 };
 
-
-
 const handleClearSelection = () => {
     selectedItems.value = [];
     selectPageItems.value = false;
@@ -579,6 +583,10 @@ const handleCopyToClipboard = (text) => {
         console.error('Failed to copy to clipboard:', error);
     });
 }
+
+const getDestinationActionName = ((action) => {
+    return action;
+})
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
