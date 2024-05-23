@@ -329,28 +329,6 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-            $destination_actions = [];
-            if(isset($inputs['destination_actions'])) {
-                foreach($inputs['destination_actions'] as $action) {
-                    $destination_actions[] = [
-                        'destination_app' => 'transfer',
-                        'destination_data' => $action['value']['value']
-                    ];
-                }
-                $inputs['destination_actions'] = $destination_actions;
-            }
-            $destination_conditions = [];
-            if(isset($inputs['destination_conditions'])) {
-                $destination_conditions[] = [
-                    'condition_field' => $inputs['destination_conditions']['condition_field']['value'],
-                    'condition_expression' => $inputs['destination_conditions']['condition_expression'],
-                    'condition_app' => 'transfer',
-                    'destination_data' => $inputs['destination_conditions']['condition_data'][0]['value']['value']
-                ];
-
-                $inputs['destination_conditions'] = $destination_conditions;
-            }
-
             $instance = $this->model;
             $instance->fill([
                 'domain_uuid' => $inputs['domain_uuid'],
@@ -359,6 +337,7 @@ class PhoneNumbersController extends Controller
                 'destination_prefix' => $inputs['destination_prefix'],
                 'destination_number' => $inputs['destination_number'],
                 'destination_actions' => $inputs['destination_actions'] ?? null,
+                'destination_conditions' => $inputs['destination_conditions'] ?? null,
                 'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,

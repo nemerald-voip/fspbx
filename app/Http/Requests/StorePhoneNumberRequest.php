@@ -169,7 +169,7 @@ class StorePhoneNumberRequest extends FormRequest
         if($this->filled('destination_conditions')) {
             foreach($this->get('destination_conditions') as $action) {
                 $destination_conditions[] = [
-                    'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
+                    'condition_field' => $action['condition_field'] ?? $action['condition_field']['value'] ?? '',
                     'condition_expression' => $action['condition_expression'] ?? '',
                     'condition_app' => 'transfer',
                     'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
