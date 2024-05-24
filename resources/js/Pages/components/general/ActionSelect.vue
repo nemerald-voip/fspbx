@@ -1,7 +1,7 @@
 <template>
     <div :class="['mt-2 mb-2 grid gap-x-2', customClass]" v-for="(action, index) in actions"
          :key="index">
-        <SelectBox :options="categories"
+        <SelectBox :options="options"
                    :search="true"
                    :allowEmpty="true"
                    :placeholder="'Choose category'"
@@ -52,11 +52,11 @@ import SelectBox from "./SelectBox.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
-    itemOptions: Object,
-    categories: [Array, null],
-    targets: [Array, Object, null],
+    //itemOptions: Object,
+    options: [Array, null],
+    optionTargets: [Array, Object, null],
     selectedItems: [Array, Object, null],
-    maxLimit: { type: Number, default: 6 },
+    maxLimit: { type: Number, default: 1 },
     customClass: {
         type: String,
         default: 'grid-cols-5'
@@ -68,7 +68,7 @@ const emit = defineEmits(['update:modal-value'])
 onMounted(() => {
     if (props.selectedItems) {
         actions.value = props.selectedItems.map(item => {
-            const categoryNames = Object.keys(props.targets);
+            const categoryNames = Object.keys(props.optionTargets);
 
             let selectedCategory = '';
             let selectedCategoryTarget = {};
@@ -76,7 +76,7 @@ onMounted(() => {
             // look in each category to find the target value
             for (let category of categoryNames) {
                 // TODO: probably need to refactor to avoid using the 'destination_data' term
-                const foundInCategory = props.targets[category].find(target =>
+                const foundInCategory = props.optionTargets[category].find(target =>
                     target.value === item.destination_data
                 );
 
@@ -91,7 +91,7 @@ onMounted(() => {
             // return a new action object
             return {
                 selectedCategory: selectedCategory,
-                categoryTargets: props.targets[selectedCategory] || [],
+                categoryTargets: props.optionTargets[selectedCategory] || [],
                 value: selectedCategoryTarget
             }
         })
@@ -109,7 +109,7 @@ const actions = ref([
 function handleCategoryUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
         actions.value[index].selectedCategory = newValue.value;
-        actions.value[index].categoryTargets = props.targets[newValue.value] || [];
+        actions.value[index].categoryTargets = props.optionTargets[newValue.value] || [];
     } else {
         actions.value[index].categoryTargets = [];
         actions.value[index].selectedCategory = '';

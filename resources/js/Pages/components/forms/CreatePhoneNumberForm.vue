@@ -54,10 +54,11 @@
                         <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
-                                :categories="options.timeout_destinations_categories"
-                                :targets="options.timeout_destinations_targets"
+                                :options="options.timeout_destinations_categories"
+                                :optionTargets="options.timeout_destinations_targets"
                                 :selectedItems="form.destination_actions"
                                 :customClass="'grid-cols-5'"
+                                :maxLimit="6"
                                 @update:modal-value="handleDestinationActionsUpdate"
                             />
                         </div>
@@ -161,10 +162,9 @@
                                 <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2 border-b pb-4">
                                     <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
                                     <ConditionDestinations
-                                        :categories="options.timeout_destinations_categories"
-                                        :targets="options.timeout_destinations_targets"
+                                        :options="options.timeout_destinations_categories"
+                                        :optionTargets="options.timeout_destinations_targets"
                                         :selectedItems="[condition]"
-                                        :maxLimit="1"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:modal-value="value => handleConditionActionsUpdate(value, index)"
                                     />
