@@ -49,7 +49,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
-                            <TimeoutDestinations
+                            <MainDestinations
                                 :categories="options.timeout_destinations_categories"
                                 :targets="options.timeout_destinations_targets"
                                 :selectedItems="form.destination_actions"
@@ -244,8 +244,8 @@ import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
-import TimeoutDestinations from "../general/TimeoutDestinations.vue";
-import ConditionDestinations from "../general/TimeoutDestinations.vue";
+import MainDestinations from "../general/ActionSelect.vue";
+import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
