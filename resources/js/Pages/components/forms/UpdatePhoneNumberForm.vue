@@ -235,9 +235,6 @@
                 </button>
             </div>
         </div>
-        <pre>
-        {{form}}
-        </pre>
     </form>
 </template>
 
