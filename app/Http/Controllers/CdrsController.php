@@ -108,19 +108,175 @@ class CdrsController extends Controller
     {
         // Get item data
         $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
-            // ->select([
-            //     'domain_uuid',
-            //     'device_uuid',
-            //     'device_template',
-            //     'device_label',
-            //     'device_profile_uuid',
-            //     'device_address',
-            // ])
+            ->select([
+                'xml_cdr_uuid',
+                'domain_uuid',
+                'extension_uuid',
+                'caller_id_name',
+                'caller_id_number',
+                'caller_destination',
+                'start_epoch',
+                'answer_epoch',
+                'end_epoch',
+                'duration',
+                'call_flow',
+
+            ])
             ->first();
 
-// logger($itemData);
-        return $itemData;
+        // logger($itemData);
+
+        if (!$itemData) {
+            return null;
+        }
+
+        $callFlowData = collect(json_decode($itemData->call_flow, true));
+
+        // Add new rows for transfers
+        $callFlowData = $this->handleTransfers($callFlowData);
+
+        // logger($callFlowData);
+        
+        // Format times
+        $callFlowData = $this->formatTimes($callFlowData);
+
+        // Build the call flow summary
+        $callFlowSummary = $callFlowData->map(function ($row) {
+            return $this->buildSummaryItem($row);
+        })->all();
+        
+
+        logger($callFlowSummary);
+
+
     }
+
+        /**
+     * Handle transfers in the call flow array
+     *
+     * @param Collection $callFlowArray
+     * @return Collection
+     */
+    protected function handleTransfers($callFlowData)
+    {
+        $newRows = collect();
+
+        $callFlowData->each(function ($row, $key) use ($callFlowData, $newRows) {
+            if (!empty($row['caller_profile']['destination_number']) &&
+                !empty($row['caller_profile']['callee_id_number']) &&
+                $row['caller_profile']['destination_number'] !== $row['caller_profile']['callee_id_number']) {
+
+                $newRow = [
+                    'caller_profile' => [
+                        'destination_number' => $row['caller_profile']['callee_id_number'],
+                        'caller_id_name' => $row['caller_profile']['callee_id_name'],
+                        'caller_id_number' => $row['caller_profile']['caller_id_number']
+                    ],
+                    'times' => [
+                        'profile_created_time' => $row['times']['profile_created_time'],
+                        'profile_end_time' => $row['times']['profile_end_time']
+                    ]
+                ];
+
+                if (isset($row['times']['transfer_time']) && $row['times']['transfer_time'] > 0) {
+                    $callFlowArray[$key]['times']['profile_end_time'] = $row['times']['transfer_time'];
+                    $newRow['times']['profile_created_time'] = $row['times']['transfer_time'];
+                }
+
+                if (isset($row['times']['bridged_time']) && $row['times']['bridged_time'] > 0) {
+                    $callFlowArray[$key]['times']['profile_end_time'] = $row['times']['bridged_time'];
+                    $newRow['times']['profile_created_time'] = $row['times']['bridged_time'];
+                }
+
+                $newRows->push($newRow);
+            }
+        });
+
+        return $callFlowData->merge($newRows);
+    }
+
+
+    /**
+     * Format the times in the call flow array
+     *
+     * @param Collection $callFlowArray
+     * @return Collection
+     */
+    protected function formatTimes($callFlowData)
+    {
+        return $callFlowData->map(function ($row) {
+            foreach ($row['times'] as $name => $value) {
+                if (is_numeric($value) && $value > 0) {
+                    $row['times'][$name . 'stamp'] = Carbon::createFromTimestampMs(floatval($value) / 1000)->toDateTimeString();
+                }
+            }
+            return $row;
+        });
+    }
+
+
+    /**
+     * Build a summary item for the call flow
+     *
+     * @param array $row
+     * @return array
+     */
+    protected function buildSummaryItem(array $row): array
+    {
+        // $app = $this->findApp($row['caller_profile']['destination_number']);
+
+        $profileCreatedEpoch = round($row['times']['profile_created_time'] / 1000000);
+        $profileEndEpoch = round($row['times']['profile_end_time'] / 1000000);
+
+        return [
+            'application_name' => $app['application'] ?? '',
+            'application_label' => $this->getApplicationLabel($app['application'] ?? ''),
+            'destination_uuid' => $app['uuid'] ?? '',
+            'destination_name' => $app['name'] ?? '',
+            'destination_number' => $row['caller_profile']['destination_number'],
+            'destination_label' => $app['label'] ?? '',
+            'destination_status' => $app['status'] ?? '',
+            'destination_description' => $app['description'] ?? '',
+            'start_epoch' => $profileCreatedEpoch,
+            'end_epoch' => $profileEndEpoch,
+            'start_stamp' => Carbon::createFromTimestamp($profileCreatedEpoch)->toDateTimeString(),
+            'end_stamp' => Carbon::createFromTimestamp($profileEndEpoch)->toDateTimeString(),
+            'duration_seconds' => $profileEndEpoch - $profileCreatedEpoch,
+            'duration_formatted' => gmdate('G:i:s', $profileEndEpoch - $profileCreatedEpoch),
+        ];
+    }
+
+    /**
+     * Find the application details from the destination number
+     *
+     * @param string $destinationNumber
+     * @return array
+     */
+    protected function findApp(string $destinationNumber): array
+    {
+        $destination = Destination::where('destination_number', $destinationNumber)->first();
+
+        if ($destination) {
+            return $destination->toArray();
+        }
+
+        return [];
+    }
+
+    /**
+     * Get the application label
+     *
+     * @param string $application
+     * @return string
+     */
+    protected function getApplicationLabel(string $application): string
+    {
+        
+        return 'label';
+    }
+
+
+
 
     public function getEntities()
     {
@@ -349,45 +505,45 @@ class CdrsController extends Controller
         }
 
         $data->select(
-                'xml_cdr_uuid',
-                'direction',
-                'caller_id_name',
-                'caller_id_number',
-                'caller_destination',
-                'destination_number',
-                'domain_uuid',
-                'extension_uuid',
-                // 'sip_call_id',
-                'source_number',
-                // 'start_stamp',
-                'start_epoch',
-                // 'answer_stamp',
-                // 'answer_epoch',
-                'end_epoch',
-                // 'end_stamp',
-                'duration',
-                'record_path',
-                'record_name',
-                // 'leg',
-                // 'voicemail_message',
-                // 'missed_call',
-                // 'call_center_queue_uuid',
-                // 'cc_side',
-                // 'cc_queue_joined_epoch',
-                // 'cc_queue',
-                // 'cc_agent',
-                // 'cc_agent_bridged',
-                // 'cc_queue_answered_epoch',
-                // 'cc_queue_terminated_epoch',
-                // 'cc_queue_canceled_epoch',
-                'cc_cancel_reason',
-                'cc_cause',
-                // 'waitsec',
-                'hangup_cause',
-                'hangup_cause_q850',
-                'sip_hangup_disposition',
-                'status'
-            );
+            'xml_cdr_uuid',
+            'direction',
+            'caller_id_name',
+            'caller_id_number',
+            'caller_destination',
+            'destination_number',
+            'domain_uuid',
+            'extension_uuid',
+            // 'sip_call_id',
+            'source_number',
+            // 'start_stamp',
+            'start_epoch',
+            // 'answer_stamp',
+            // 'answer_epoch',
+            'end_epoch',
+            // 'end_stamp',
+            'duration',
+            'record_path',
+            'record_name',
+            // 'leg',
+            // 'voicemail_message',
+            // 'missed_call',
+            // 'call_center_queue_uuid',
+            // 'cc_side',
+            // 'cc_queue_joined_epoch',
+            // 'cc_queue',
+            // 'cc_agent',
+            // 'cc_agent_bridged',
+            // 'cc_queue_answered_epoch',
+            // 'cc_queue_terminated_epoch',
+            // 'cc_queue_canceled_epoch',
+            'cc_cancel_reason',
+            'cc_cause',
+            // 'waitsec',
+            'hangup_cause',
+            'hangup_cause_q850',
+            'sip_hangup_disposition',
+            'status'
+        );
 
         //exclude legs that were not answered
         if (!userCheckPermission('xml_cdr_lose_race')) {
