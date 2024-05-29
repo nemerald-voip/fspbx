@@ -235,6 +235,9 @@
                 </button>
             </div>
         </div>
+        <pre>
+        {{form}}
+        </pre>
     </form>
 </template>
 
@@ -372,7 +375,7 @@ const addCondition = () => {
         value: ""
     };
     conditions.value.push(newCondition);
-    //form.destination_conditions.push(newCondition);
+    form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
@@ -380,7 +383,7 @@ const handleConditionActionsUpdate = (newSelectedItem, index) => {
         const updatedCondition = {
             condition_field: conditions.value[index].condition_field,
             condition_expression: conditions.value[index].condition_expression,
-            condition_data: newSelectedItem,
+            condition_data: newSelectedItem[0].value.value,
         };
         conditions.value[index].value = newSelectedItem;
         form.destination_conditions[index] = updatedCondition;

@@ -67,6 +67,10 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'destination_hold_music' => [
+                'nullable',
+                'string',
+            ],
             'destination_description' => [
                 'nullable',
                 'string',
