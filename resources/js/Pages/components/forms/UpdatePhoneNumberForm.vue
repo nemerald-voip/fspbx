@@ -65,7 +65,7 @@
                             <SelectBoxGroup :options="options.music_on_hold"
                                             :search="true"
                                             :allowEmpty="true"
-                                            :selectedItem="null"
+                                            :selectedItem="form.destination_hold_music"
                                             :placeholder="'Choose music on hold'"
                                             @update:modal-value="handleMusicOnHoldUpdate"
                             />
@@ -330,7 +330,11 @@ const submitForm = () => {
 }
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
-    form.destination_hold_music = newSelectedItem.value;
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        form.destination_hold_music = newSelectedItem.value;
+    } else {
+        form.destination_hold_music = null;
+    }
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {
@@ -347,7 +351,11 @@ const handleDomainUpdate = (newSelectedItem) => {
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
-    form.fax_uuid = newSelectedItem.value;
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        form.fax_uuid = newSelectedItem.value;
+    } else {
+        form.fax_uuid = null;
+    }
 }
 
 const handleConditionUpdate = (newSelectedItem, index) => {

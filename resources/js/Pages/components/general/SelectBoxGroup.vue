@@ -77,21 +77,31 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modal-value'])
 
-// let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
-let currentItem = ref(null);
+const findItem = (options, value) => {
+    for (const group of Object.values(options)) {
+        const found = group.find(item => item.value === value);
+        if (found) {
+            return found;
+        }
+    }
+
+    return null;
+};
+
+let currentItem = ref(props.selectedItem === null || props.options === null ? null : findItem(props.options, props.selectedItem));
 
 // Initialize searchKeyword
 let searchKeyword = ref('');
 
 // Watch for changes in selectedItem and update currentItem accordingly
-watch(() => props.selectedItem, (newValue) => {
+/*watch(() => props.selectedItem, (newValue) => {
     if (newValue === null || newValue === undefined || props.options === null || props.options === undefined) {
         currentItem.value = null;
     } else {
         currentItem.value = props.options.find(option => option.value === newValue);
     }
 
-}, { immediate: true });
+}, { immediate: true });*/
 
 // Computed property to filter options based on search keyword
 const filteredOptions = computed(() => {
