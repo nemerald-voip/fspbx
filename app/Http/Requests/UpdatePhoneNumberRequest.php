@@ -67,6 +67,10 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'destination_hold_music' => [
+                'nullable',
+                'string',
+            ],
             'destination_description' => [
                 'nullable',
                 'string',
@@ -112,6 +116,8 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
+            'destination_conditions.*.condition_data' => 'Please select condition action',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }

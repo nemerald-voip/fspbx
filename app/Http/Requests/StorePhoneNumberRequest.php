@@ -65,7 +65,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'string'
             ],
             'destination_conditions.*.condition_expression' => [
-                'nullable',
+                'required_if:destination_conditions.*.condition_field,!=,""',
                 'phone:US'
             ],
             'destination_conditions.*.condition_data' => [
@@ -77,6 +77,10 @@ class StorePhoneNumberRequest extends FormRequest
                 'string',
             ],
             'destination_caller_id_name' => [
+                'nullable',
+                'string',
+            ],
+            'destination_hold_music' => [
                 'nullable',
                 'string',
             ],
@@ -129,6 +133,8 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_number.required' => 'Should be valid US phone number',
             'destination_number.phone' => 'Should be valid US phone number',
             'destination_number.unique' => 'This phone number is already used',
+            'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
+            'destination_conditions.*.condition_data' => 'Please select condition action',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
@@ -168,11 +174,17 @@ class StorePhoneNumberRequest extends FormRequest
         $destination_conditions = [];
         if($this->filled('destination_conditions')) {
             foreach($this->get('destination_conditions') as $action) {
+                if($action['condition_data'][0]['value']['value'] != 'NULL') {
+                    $action['condition_data'] = $action['condition_data'][0]['value']['value'];
+                } else {
+                    $action['condition_data'] = null;
+                }
+                var_dump($action['condition_data']);
                 $destination_conditions[] = [
                     'condition_field' => $action['condition_field'] ?? $action['condition_field']['value'] ?? '',
                     'condition_expression' => $action['condition_expression'] ?? '',
                     'condition_app' => 'transfer',
-                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
+                    'condition_data' => $action['condition_data'] ?? ''
                 ];
             }
         }

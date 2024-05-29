@@ -65,7 +65,7 @@
                             <SelectBoxGroup :options="options.music_on_hold"
                                             :search="true"
                                             :allowEmpty="true"
-                                            :selectedItem="null"
+                                            :selectedItem="form.destination_hold_music"
                                             :placeholder="'Choose music on hold'"
                                             @update:modal-value="handleMusicOnHoldUpdate"
                             />
@@ -235,6 +235,9 @@
                 </button>
             </div>
         </div>
+        <pre>
+        {{form}}
+        </pre>
     </form>
 </template>
 
@@ -327,7 +330,11 @@ const submitForm = () => {
 }
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
-    form.destination_hold_music = newSelectedItem.value;
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        form.destination_hold_music = newSelectedItem.value;
+    } else {
+        form.destination_hold_music = null;
+    }
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {
@@ -344,7 +351,11 @@ const handleDomainUpdate = (newSelectedItem) => {
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
-    form.fax_uuid = newSelectedItem.value;
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        form.fax_uuid = newSelectedItem.value;
+    } else {
+        form.fax_uuid = null;
+    }
 }
 
 const handleConditionUpdate = (newSelectedItem, index) => {
@@ -372,7 +383,7 @@ const addCondition = () => {
         value: ""
     };
     conditions.value.push(newCondition);
-    //form.destination_conditions.push(newCondition);
+    form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
@@ -380,7 +391,7 @@ const handleConditionActionsUpdate = (newSelectedItem, index) => {
         const updatedCondition = {
             condition_field: conditions.value[index].condition_field,
             condition_expression: conditions.value[index].condition_expression,
-            condition_data: newSelectedItem,
+            condition_data: newSelectedItem[0].value.value,
         };
         conditions.value[index].value = newSelectedItem;
         form.destination_conditions[index] = updatedCondition;
