@@ -23,7 +23,7 @@ class CdrsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Cdrs';
-    protected $searchable = ['device_address', 'device_label', 'device_template'];
+    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number'];
 
     public function __construct()
     {
@@ -136,7 +136,7 @@ class CdrsController extends Controller
         $callFlowData = $this->handleTransfers($callFlowData);
 
         // logger($callFlowData);
-        
+
         // Format times
         $callFlowData = $this->formatTimes($callFlowData);
 
@@ -144,27 +144,27 @@ class CdrsController extends Controller
         $callFlowSummary = $callFlowData->map(function ($row) {
             return $this->buildSummaryItem($row);
         })->all();
-        
+
 
         logger($callFlowSummary);
-
-
     }
 
-        /**
+    /**
      * Handle transfers in the call flow array
      *
-     * @param Collection $callFlowArray
+     * @param Collection $callFlowData
      * @return Collection
      */
     protected function handleTransfers($callFlowData)
     {
         $newRows = collect();
 
-        $callFlowData->each(function ($row, $key) use ($callFlowData, $newRows) {
-            if (!empty($row['caller_profile']['destination_number']) &&
+        $callFlowData->each(function ($row) use ($newRows) {
+            if (
+                !empty($row['caller_profile']['destination_number']) &&
                 !empty($row['caller_profile']['callee_id_number']) &&
-                $row['caller_profile']['destination_number'] !== $row['caller_profile']['callee_id_number']) {
+                $row['caller_profile']['destination_number'] !== $row['caller_profile']['callee_id_number']
+            ) {
 
                 $newRow = [
                     'caller_profile' => [
@@ -179,12 +179,12 @@ class CdrsController extends Controller
                 ];
 
                 if (isset($row['times']['transfer_time']) && $row['times']['transfer_time'] > 0) {
-                    $callFlowArray[$key]['times']['profile_end_time'] = $row['times']['transfer_time'];
+                    $row['times']['profile_end_time'] = $row['times']['transfer_time'];
                     $newRow['times']['profile_created_time'] = $row['times']['transfer_time'];
                 }
 
                 if (isset($row['times']['bridged_time']) && $row['times']['bridged_time'] > 0) {
-                    $callFlowArray[$key]['times']['profile_end_time'] = $row['times']['bridged_time'];
+                    $row['times']['profile_end_time'] = $row['times']['bridged_time'];
                     $newRow['times']['profile_created_time'] = $row['times']['bridged_time'];
                 }
 
@@ -194,6 +194,7 @@ class CdrsController extends Controller
 
         return $callFlowData->merge($newRows);
     }
+
 
 
     /**
@@ -271,7 +272,7 @@ class CdrsController extends Controller
      */
     protected function getApplicationLabel(string $application): string
     {
-        
+
         return 'label';
     }
 
@@ -592,11 +593,12 @@ class CdrsController extends Controller
     protected function filterSearch($query, $value)
     {
         // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value) {
-            $query->where('caller_id_name', 'ilike', '%' . $value . '%')
-                ->orWhere('caller_id_number', 'ilike', '%' . $value . '%')
-                ->orWhere('caller_destination', 'ilike', '%' . $value . '%')
-                ->orWhere('destination_number', 'ilike', '%' . $value . '%');
+        $searchable = $this->searchable;
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
+            }
         });
     }
 
@@ -615,7 +617,7 @@ class CdrsController extends Controller
                 // logger($extention);
 
                 $query->where(function ($query) use ($extention) {
-                    $query->where('extension_uuid', 'ilike', '%' . $extention->extension . '%')
+                    $query->where('extension_uuid', 'ilike', '%' . $extention->extension_uuid . '%')
                         ->orWhere('caller_id_number', $extention->extension)
                         ->orWhere('caller_destination', $extention->extension)
                         ->orWhere('source_number', $extention->extension)
