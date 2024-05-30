@@ -233,7 +233,9 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                $ringGroup->groupDestinations()->save($groupsDestinations);
+                if(!empty($groupsDestinations->destination_number)) {
+                    $ringGroup->groupDestinations()->save($groupsDestinations);
+                }
                 $i++;
             }
         }
@@ -475,7 +477,9 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                $ringGroup->groupDestinations()->save($groupsDestinations);
+                if(!empty($groupsDestinations->destination_number)) {
+                    $ringGroup->groupDestinations()->save($groupsDestinations);
+                }
                 $i++;
             }
         }
