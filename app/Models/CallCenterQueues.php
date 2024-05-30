@@ -78,6 +78,7 @@ class CallCenterQueues extends Model
         $this->attributes['queue_greeting'] = '';
         $this->attributes['queue_max_wait_time'] = 0;
         $this->attributes['queue_max_wait_time_with_no_agent'] = 90;
+        $this->attributes['queue_moh_sound'] = 'local_stream://default';
         $this->fill($attributes);
     }
 
