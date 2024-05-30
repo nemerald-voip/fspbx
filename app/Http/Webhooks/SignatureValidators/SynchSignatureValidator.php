@@ -2,7 +2,6 @@
 namespace App\Http\Webhooks\SignatureValidators;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Spatie\WebhookClient\WebhookConfig;
 use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
 
@@ -10,10 +9,8 @@ class SynchSignatureValidator implements SignatureValidator
 {
     public function isValid(Request $request, WebhookConfig $config) : bool {
         
-        //If there is a way to validate that this request came from Commio then let's implement the logic here
+        //If there is a way to validate that this request came from Synch then let's implement the logic here
         // Otherwise it's defaulted to athenticate all post requests
-        logger('Incoming Message from Synch');
-        logger($request);
 
         $apiKey = config('synch.inbound_api_key');  // Retrieve the API key from the config file
         $messageId = $request->header('messageID');  // Assuming the message ID is in the header

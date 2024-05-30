@@ -14,7 +14,7 @@
             </div>
 
 
-            <div class="sm:col-span-12">
+            <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
                     <SelectBox :options="options.templates" :selectedItem="null" :search="true"
@@ -39,7 +39,7 @@
             </div>
 
 
-            <div class="sm:col-span-12">
+            <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                 <div class="mt-2">
                     <SelectBox :options="options.extensions" :selectedItem="null" :search="true"

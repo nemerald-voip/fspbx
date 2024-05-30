@@ -2,16 +2,31 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Jobs\ProcessCommioSMS;
-use Illuminate\Support\Facades\Log;
-use App\Jobs\ProcessCommioSMSToEmail;
+use App\Models\Messages;
+use App\Models\Extensions;
+use App\Models\DomainSettings;
+use App\Models\SmsDestinations;
+use App\Jobs\DeliverSynchInboundSMS;
+use App\Jobs\DeliverSynchSMSToEmail;
 use Illuminate\Support\Facades\Redis;
+use libphonenumber\PhoneNumberFormat;
+use App\Jobs\SendSmsNotificationToSlack;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
 {
+
+    protected $messageConfig;
+    protected $domain_uuid;
+    protected $message;
+    protected $extension_uuid;
+    protected $source;
+    protected $destinations;
+    protected $curentDestination;
+    protected $email;
+    protected $ext;
 
     /**
      * The number of times the job may be attempted.
@@ -78,31 +93,168 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 
-            if ($this->webhookCall->payload['to'] !="") {
-                ProcessCommioSMS::dispatch([
-                    'org_id' => $this->webhookCall->payload['org_id'],
-                    'message_uuid' => $this->webhookCall->payload['message_uuid'],
-                    'to_did' => $this->webhookCall->payload['to'],
-                    'from_did' => $this->webhookCall->payload['from'],
-                    'message' => $this->webhookCall->payload['message']
-                ])->onQueue('messages');
+            try {
+                $this->handleIncomingMessageType();
+                return true;
+            } catch (\Exception $e) {
+                return $this->handleError($e);
             }
-
-            if ($this->webhookCall->payload['email_to'] !="") {
-                ProcessCommioSMSToEmail::dispatch([
-                    'org_id' => $this->webhookCall->payload['org_id'],
-                    'message_uuid' => $this->webhookCall->payload['message_uuid'],
-                    'email_to' => $this->webhookCall->payload['email_to'],
-                    'from_did' => $this->webhookCall->payload['from'],
-                    'message' => $this->webhookCall->payload['message']
-                ])->onQueue('emails');
-            }
-
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
+    }
+
+    private function handleIncomingMessageType()
+    {
+        if ($this->webhookCall->payload['deliveryReceipt']) {
+            $this->handleDeliveryStatusUpdate($this->webhookCall->payload);
+        } else {
+            $this->processMessage($this->webhookCall->payload);
+        } 
+    }
+
+    private function processMessage($payload)
+    {
+        //convert all numbers to e.164 format
+        $this->source = formatPhoneNumber($payload['from'], 'US', PhoneNumberFormat::E164);
+        $this->destinations = $payload['to'];
+
+        foreach($this->destinations as $destination) {
+            $this->curentDestination = formatPhoneNumber($destination, 'US', PhoneNumberFormat::E164);
+
+            $this->message = $payload['text'];
+            $this->messageConfig = $this->getPhoneNumberSmsConfig($this->curentDestination);
+            $this->handleSms();
+        }
 
     }
-}
 
+    private function handleSms()
+    {
+        $this->domain_uuid = $this->messageConfig->domain_uuid;
+
+        $this->extension_uuid = $this->getExtensionUuid();
+
+        if (!$this->extension_uuid && (is_null($this->messageConfig->email) ||  $this->messageConfig->email == "")) {
+            throw new \Exception('Phone number *' . $this->curentDestination . '*  doesnt have an assigned extension or email');
+        }
+
+        if (!is_null($this->messageConfig->email) &&  $this->messageConfig->email != "") {
+            $this->email = $this->messageConfig->email;
+        } else {
+            $this->email = "";
+        }
+
+        if (!is_null($this->messageConfig->chatplan_detail_data) &&  $this->messageConfig->chatplan_detail_data != "") {
+            $this->ext = $this->messageConfig->chatplan_detail_data;
+        } else {
+            $this->ext = "";
+        }
+
+        $message = $this->storeMessage('queued');
+
+        if ($this->ext != "") {
+            DeliverSynchInboundSMS::dispatch([
+                'org_id' => $this->fetchOrgId(),
+                'message_uuid' => $message->message_uuid,
+                'extension' => $this->ext,
+            ])->onQueue('messages');
+        }
+
+        if ($this->email != "") {
+            DeliverSynchSMSToEmail::dispatch([
+                'org_id' => $this->fetchOrgId(),
+                'message_uuid' => $message->message_uuid,
+                'email' => $this->email,
+            ])->onQueue('emails');
+        }
+
+        return true;
+    }
+
+    public function handleDeliveryStatusUpdate()
+    {
+        $message = Messages::where('reference_id', $this->webhookCall->payload['referenceId'])
+            ->first();
+
+        if ($message) {
+            $text = $this->webhookCall->payload['text'];
+            preg_match('/stat:(\w+)/', $text, $matches);
+            $status = $matches[1] ?? 'UNKNOWN'; // Default to 'UNKNOWN' if not found
+
+            if ($status === "DELIVRD") {
+                $message->status = 'delivered';
+                $message->save();
+            }
+        }
+    }
+
+
+    private function getPhoneNumberSmsConfig($destination)
+    {
+        $model = SmsDestinations::where('destination', $destination)->where('enabled', 'true')->first();
+        if (!$model) {
+            throw new \Exception("SMS configuration not found for phone number " . $destination);
+        }
+        return $model;
+    }
+
+
+    private function handleError(\Exception $e)
+    {
+        logger($e->getMessage());
+        $this->storeMessage($e->getMessage());
+        // Log the error or send it to Slack
+        $error = "*Synch Inbound SMS Failed*: From: " . $this->source . " To: " . $this->curentDestination . "\n" . $e->getMessage();
+
+        SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
+
+        return response()->json(['error' => $e->getMessage()], 400);
+    }
+
+    private function storeMessage($status)
+    {
+        $messageModel = new Messages;
+        $messageModel->extension_uuid = (isset($this->extension_uuid)) ? $this->extension_uuid : null;
+        $messageModel->domain_uuid = (isset($this->domain_uuid)) ? $this->domain_uuid : null;
+        $messageModel->source =  (isset($this->source)) ? $this->source : "";
+        $messageModel->destination =  (isset($this->curentDestination)) ? $this->curentDestination : "";
+        $messageModel->message = $this->message;
+        $messageModel->direction = "in";
+        $messageModel->type = 'sms';
+        $messageModel->status = $status;
+        $messageModel->save();
+
+        return $messageModel;
+    }
+
+    protected function fetchOrgId()
+    {
+        $setting = DomainSettings::where('domain_uuid', $this->domain_uuid)
+            ->where('domain_setting_category', 'app shell')
+            ->where('domain_setting_subcategory', 'org_id')
+            ->value('domain_setting_value');
+
+        if (is_null($setting)) {
+            throw new \Exception("From: " . $this->source . " To: " . $this->curentDestination . " \n Org ID not found");
+        }
+
+        return $setting;
+    }
+
+    private function getExtensionUuid()
+    {
+        $extension = Extensions::where('domain_uuid', $this->domain_uuid)
+            ->where('extension', $this->messageConfig->chatplan_detail_data)
+            ->select('extension_uuid')
+            ->first();
+
+        if ($extension) {
+            return $extension->extension_uuid;
+        } else {
+            // Handle the case when no extension is found
+            return null;
+        }
+    }
+}

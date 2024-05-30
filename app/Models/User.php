@@ -6,13 +6,14 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Activitylog\Traits\CausesActivity;
 use App\Models\Traits\Fortify\EmailChallengable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid, TwoFactorAuthenticatable, EmailChallengable;
+    use HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\TraitUuid, TwoFactorAuthenticatable, EmailChallengable, CausesActivity;
 
     protected $table = "v_users";
 
@@ -48,7 +49,15 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'api_key'
+        'api_key',
+        'insert_date',
+        'insert_user',
+        'salt',
+        'update_date',
+        'update_user',
+        'add_date',
+        'add_user',
+        'contact_uuid',
     ];
 
     /**

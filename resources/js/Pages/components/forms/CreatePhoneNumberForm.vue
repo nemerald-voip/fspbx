@@ -52,12 +52,16 @@
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
-                        <TimeoutDestinations
-                            :categories="options.timeout_destinations_categories"
-                            :targets="options.timeout_destinations_targets"
-                            :selectedItems="null"
-                            @update:modal-value="handleTimeoutDestinationUpdate"
-                        />
+                        <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
+                            <MainDestinations
+                                :options="options.timeout_destinations_categories"
+                                :optionTargets="options.timeout_destinations_targets"
+                                :selectedItems="form.destination_actions"
+                                :customClass="'grid-cols-5'"
+                                :maxLimit="6"
+                                @update:modal-value="handleDestinationActionsUpdate"
+                            />
+                        </div>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'"/>
@@ -123,6 +127,61 @@
                         </div>
                     </div>
                     <div class="sm:col-span-12">
+                        <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action'"/>
+                        <div class="border rounded-md pl-4 pr-4 pb-2">
+                            <div v-for="(condition, index) in conditions" :key="index">
+                                <div class="mt-4 grid grid-cols-3 gap-x-2">
+                                    <div>
+                                        <SelectBox :options="page.props.conditions"
+                                                   :search="false"
+                                                   :allowEmpty="true"
+                                                   :selectedItem="condition.condition_field"
+                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
+                                                   :placeholder="'Choose condition'"
+                                        />
+                                    </div>
+                                    <div v-if="condition.condition_field">
+                                        <InputField
+                                            v-model="condition.condition_expression"
+                                            type="text"
+                                            placeholder="Enter phone number"/>
+                                    </div>
+                                    <div v-else />
+                                    <div class="relative">
+                                        <div class="absolute right-0">
+                                            <ejs-tooltip :content="'Remove condition'"
+                                                         position='RightTop' :target="'#delete_condition_tooltip'+index">
+                                                <div :id="'delete_condition_tooltip'+index">
+                                                    <MinusIcon @click="() => removeCondition(index)"
+                                                               class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                                                </div>
+                                            </ejs-tooltip>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2 border-b pb-4">
+                                    <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
+                                    <ConditionDestinations
+                                        :options="options.timeout_destinations_categories"
+                                        :optionTargets="options.timeout_destinations_targets"
+                                        :selectedItems="[condition]"
+                                        :customClass="'grid-cols-4 col-span-2'"
+                                        @update:modal-value="value => handleConditionActionsUpdate(value, index)"
+                                    />
+                                </div>
+                            </div>
+                            <div class="w-fit">
+                                <ejs-tooltip v-if="conditions.length < conditionsMaxLimit" :content="'Add condition'"
+                                             position='RightTop' target="#add_condition_tooltip">
+                                    <div id="add_condition_tooltip">
+                                        <PlusIcon @click="addCondition"
+                                                  class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                                    </div>
+                                </ejs-tooltip>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
                         <div class="mt-2">
                             <InputField
@@ -148,7 +207,7 @@
                         </div>
                     </div>
 
-                    <div class="sm:col-span-12">
+                    <div v-if="page.props.auth.can.domain_select && page.props.auth.can.destination_edit_domain" class="sm:col-span-12">
                         <LabelInputRequired :target="'domain_uuid'" :label="'Owned By (Company Name)'"/>
                         <div class="mt-2">
                             <SelectBox :options="options.domains"
@@ -180,22 +239,25 @@
                 </button>
             </div>
         </div>
-        {{form}}
     </form>
 </template>
 
 <script setup>
-import {defineProps, onMounted, reactive, ref} from 'vue'
+import {defineProps, reactive, ref} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import SelectBoxGroup from "../general/SelectBoxGroup.vue";
-import TimeoutDestinations from "../general/TimeoutDestinations.vue";
+import MainDestinations from "../general/ActionSelect.vue";
+import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
+import {MinusIcon, PlusIcon} from "@heroicons/vue/24/solid/index.js";
+import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
     item: Object,
@@ -206,14 +268,18 @@ const props = defineProps({
 
 const page = usePage();
 
+const conditions = ref([])
+
+const conditionsMaxLimit = 6;
+
 const selectedTab = ref(0)
 
 const form = reactive({
-    domain_uuid: props.item.domain_uuid,
+    domain_uuid: null,
     fax_uuid: null,
-    destination_prefix: 1,
+    destination_prefix: "1",
     destination_number: null,
-    destination_actions: null,
+    destination_actions: [],
     destination_hold_music: null,
     destination_description: null,
     destination_enabled: true,
@@ -221,17 +287,22 @@ const form = reactive({
     destination_cid_name_prefix: null,
     destination_accountcode: null,
     destination_distinctive_ring: null,
+    destination_conditions: [],
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
         form.destination_hold_music = newSelectedItem.value;
+    } else {
+        form.destination_hold_music = null;
+    }
 }
 
 const handleDestinationEnabled = (newSelectedItem) => {
@@ -244,14 +315,60 @@ const handleDestinationRecordEnabled = (newSelectedItem) => {
 
 const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
+    emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
-    form.fax_uuid = newSelectedItem.value;
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        form.fax_uuid = newSelectedItem.value;
+    } else {
+        form.fax_uuid = null;
+    }
 }
 
-const handleTimeoutDestinationUpdate = (newSelectedItem) => {
+const handleConditionUpdate = (newSelectedItem, index) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        const updatedCondition = {
+            condition_field: newSelectedItem.value,
+            condition_expression: conditions.value[index].condition_expression,
+            condition_data: conditions.value[index].condition_data,
+        };
+        conditions.value[index].condition_field = newSelectedItem.value;
+        form.destination_conditions[index] = updatedCondition;
+    }
+}
+
+const handleDestinationActionsUpdate = (newSelectedItem) => {
     form.destination_actions = newSelectedItem;
+}
+
+const addCondition = () => {
+    const newCondition = {
+        condition_field: null,
+        condition_expression: "",
+        selectedCategory: "",
+        categoryTargets: [],
+        value: ""
+    };
+    conditions.value.push(newCondition);
+    //form.destination_conditions.push(newCondition);
+}
+
+const handleConditionActionsUpdate = (newSelectedItem, index) => {
+    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+        const updatedCondition = {
+            condition_field: conditions.value[index].condition_field,
+            condition_expression: conditions.value[index].condition_expression,
+            condition_data: newSelectedItem,
+        };
+        conditions.value[index].value = newSelectedItem;
+        form.destination_conditions[index] = updatedCondition;
+    }
+}
+
+const removeCondition = (index) => {
+    conditions.value.splice(index, 1);
+    form.destination_conditions.splice(index, 1);
 }
 
 </script>

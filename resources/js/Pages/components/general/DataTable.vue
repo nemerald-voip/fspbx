@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div v-if="$slots.action">
-                <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                <div class="flex mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
                     <slot name="action"></slot>
                 </div>
             </div>

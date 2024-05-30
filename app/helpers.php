@@ -1101,6 +1101,24 @@ if (!function_exists('getTimeoutDestinations')) {
     }
 }
 
+if (!function_exists('getTimeoutDestinationsLabels')) {
+    function getTimeoutDestinationsLabels(array $actions, $domain = null): array
+    {
+        $destinations = getTimeoutDestinations($domain);
+        $output = [];
+        foreach($actions as $action) {
+            foreach ($destinations["targets"] as $category => $values) {
+                foreach ($values as $data) {
+                    if ($data["value"] == $action->destination_data) {
+                        $output[] = $destinations["categories"][(string) $category]["name"].' '.$data["name"];
+                    }
+                }
+            }
+        }
+        return $output;
+    }
+}
+
 if (!function_exists('pr')) {
     function pr($arr)
     {

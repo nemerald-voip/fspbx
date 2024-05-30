@@ -73,16 +73,31 @@ class RingGroupsController extends Controller
             return redirect('/');
         }
 
-        $ringGroup = new RingGroups();
+        $ringGroup = new RingGroups([
+            'domain_uuid' => Session::get('domain_uuid'),
+            'insert_date' => date('Y-m-d H:i:s'),
+            'insert_user' => Session::get('user_uuid'),
+            'ring_group_context' => Session::get('domain_name'),
+            'ring_group_enabled' => "true",
+            'ring_group_strategy' => "enterprise",
+            'ring_group_call_timeout' => "30",
+            'ring_group_ringback' => '${us-ring}',
+            'ring_group_call_forward_enabled' => "true",
+            'ring_group_follow_me_enabled' => "true",
+        ]);
+
+        $ringGroup->ring_group_extension = $ringGroup->generateUniqueSequenceNumber();
 
         $ringGroupRingMyPhoneTimeout = 0;
-        $ringGroupDestinations = $ringGroup->getGroupDestinations();
-        if ($ringGroupDestinations->count() > 0) {
-            if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
-                $ringGroupDestinations = $ringGroupDestinations[0]->destination_timeout;
-                unset($ringGroupDestinations[0]);
-            }
-        }
+        $ringGroupDestinations = [];
+        // $ringGroupDestinations = $ringGroup->getGroupDestinations();
+        // if ($ringGroupDestinations->count() > 0) {
+        //     logger($ringGroupDestinations);
+        //     if ($ringGroupDestinations[0]->ring_group_uuid == $ringGroup->ring_group_uuid) {
+        //         $ringGroupDestinations = $ringGroupDestinations[0]->destination_timeout;
+        //         unset($ringGroupDestinations[0]);
+        //     }
+        // }
 
         $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
             ->orWhere('domain_uuid', null)
@@ -113,7 +128,7 @@ class RingGroupsController extends Controller
             ->with('recordings', $recordings)
             ->with('extensions', $this->getDestinationExtensions())
             ->with('timeoutDestinationsByCategory', $timeoutDestinationsByCategory)
-            ->with('destinationsByCategory', 'disabled')
+            ->with('destinationsByCategory', '')
             ->with('ringGroupRingMyPhoneTimeout', $ringGroupRingMyPhoneTimeout)
             ->with('ringGroupDestinations', $ringGroupDestinations);
     }
@@ -146,12 +161,13 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
-        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
-            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
+        if ($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch', 'recordings') . "/" . Session::get('domain_name') . "/" . $attributes['ring_group_ringback'];
         }
 
         $ringGroup = new RingGroups();
         $ringGroup->fill([
+            'domain_uuid' => session('domain_uuid'),
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
@@ -177,8 +193,6 @@ class RingGroupsController extends Controller
             'dialplan_uuid' => Str::uuid(),
         ]);
 
-        $ringGroup->save();
-
         $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
@@ -200,9 +214,12 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
-                $sumDestinationsTimeout += $destination['timeout'];
+                if ($destination['status'] == 'true') {
+                    $sumDestinationsTimeout += $destination['timeout'];
+                }
+
                 // Save the longest timeout
-                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout && $destination['status'] == 'true') {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
                 }
                 if ($destination['prompt'] == 'true') {
@@ -216,14 +233,16 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                $ringGroup->groupDestinations()->save($groupsDestinations);
+                if(!empty($groupsDestinations->destination_number)) {
+                    $ringGroup->groupDestinations()->save($groupsDestinations);
+                }
                 $i++;
             }
         }
 
         $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
-            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
-            'simultaneous' => $longestDestinationsTimeout,
+            'random', 'sequence', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous','enterprise' => $longestDestinationsTimeout,
             default => 0,
         };
 
@@ -386,8 +405,8 @@ class RingGroupsController extends Controller
             $attributes['ring_group_missed_call_category'] = null;
         }
 
-        if($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
-            $attributes['ring_group_ringback'] = getDefaultSetting('switch','recordings'). "/" . Session::get('domain_name') . "/".$attributes['ring_group_ringback'];
+        if ($attributes['ring_group_ringback'] != '${us-ring}' and $attributes['ring_group_ringback'] != 'local_stream://default' and $attributes['ring_group_ringback'] != 'null') {
+            $attributes['ring_group_ringback'] = getDefaultSetting('switch', 'recordings') . "/" . Session::get('domain_name') . "/" . $attributes['ring_group_ringback'];
         }
 
         $ringGroup->update([
@@ -417,8 +436,6 @@ class RingGroupsController extends Controller
 
         $ringGroup->groupDestinations()->delete();
 
-        $ringGroup->save();
-
         $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
@@ -440,9 +457,13 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_delay = $destination['delay'];
                 }
                 $groupsDestinations->destination_timeout = $destination['timeout'];
-                $sumDestinationsTimeout += $destination['timeout'];
+
+                if ($destination['status'] == 'true') {
+                    $sumDestinationsTimeout += $destination['timeout'];
+                }
+
                 // Save the longest timeout
-                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout) {
+                if (($destination['timeout'] + $destination['delay']) > $longestDestinationsTimeout && $destination['status'] == 'true') {
                     $longestDestinationsTimeout = ($destination['timeout'] + $destination['delay']);
                 }
                 if ($destination['prompt'] == 'true') {
@@ -456,16 +477,19 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                $ringGroup->groupDestinations()->save($groupsDestinations);
+                if(!empty($groupsDestinations->destination_number)) {
+                    $ringGroup->groupDestinations()->save($groupsDestinations);
+                }
                 $i++;
             }
         }
 
         $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
-            'random', 'sequence', 'enterprise', 'rollover' => $sumDestinationsTimeout,
-            'simultaneous' => $longestDestinationsTimeout,
+            'random', 'sequence', 'rollover' => $sumDestinationsTimeout,
+            'simultaneous','enterprise' => $longestDestinationsTimeout,
             default => 0,
         };
+
 
         $ringGroup->save();
 

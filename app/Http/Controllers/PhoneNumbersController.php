@@ -5,9 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use App\Models\Destinations;
-use App\Models\DeviceLines;
-use App\Models\Devices;
-use App\Models\Extensions;
 use App\Models\Faxes;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -27,12 +24,12 @@ class PhoneNumbersController extends Controller
     public $filters = [];
     public $sortField;
     public $sortOrder;
-    protected $searchable = ['destination_number', 'destination_caller_id_name'];
+    protected $viewName = 'PhoneNumbers';
+    protected $searchable = ['destination_number', 'destination_data','destination_description'];
 
     public function __construct()
     {
         $this->model = new Destinations();
-
     }
 
     /**
@@ -58,7 +55,7 @@ class PhoneNumbersController extends Controller
         }*/
 
         return Inertia::render(
-            'Phonenumbers',
+            $this->viewName,
             [
                 'data' => function () {
                     return $this->getData();
@@ -83,46 +80,14 @@ class PhoneNumbersController extends Controller
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
+                'conditions' => [
+                    [
+                        'name' => 'Caller ID Number',
+                        'value' => 'caller_id_number'
+                    ]
+                ]
 
-                /*
-                'menus' => function () {
-                    return Session::get('menu');
-                },
-                'domainSelectPermission' => function () {
-                    return Session::get('domain_select');
-                },
-                'domains' => function () {
-                    return Session::get("domains");
-                },
-                'selectedDomain' => function () {
-                    return Session::get('domain_name');
-                },
-                'selectedDomainUuid' => function () {
-                    return Session::get('domain_uuid');
-                },
-                /*'destinationTypes' => function () {
-                    return [
-                        [
-                            "name" => "Inbound",
-                            "value" => "inbound"
-                        ],
-                        [
-                            "name" => "Outbound",
-                            "value" => "outbound"
-                        ],
-                        [
-                            "name" => "Local",
-                            "value" => "local"
-                        ]
-                    ];
-                },*/
-                //'deviceGlobalView' => (isset($this->filters['showGlobal']) && $this->filters['showGlobal']),
-                //'routePhoneNumbersStore' => route('phone-numbers.store'),
-                //'routePhoneNumbersOptions' => route('phoneNumbers.options'),
-                //'routeDevicesOptions' => route('devices.options'),
-                //'routeDevicesBulkUpdate' => route('devices.bulkUpdate'),
-                //'routePhoneNumbers' => route('phone-numbers.index'),
-                //'routeSendEventNotifyAll' => route('extensions.send-event-notify-all')
+
             ]
         );
     }
@@ -303,6 +268,8 @@ class PhoneNumbersController extends Controller
             'destination_prefix',
             'destination_actions',
             'destination_enabled',
+            'destination_description',
+            'destination_data',
             'domain_uuid',
         );
 
@@ -354,9 +321,10 @@ class PhoneNumbersController extends Controller
      */
     public function store(StorePhoneNumberRequest $request): JsonResponse
     {
-        $inputs = $request->validated();
-
         try {
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
 
             $instance = $this->model;
             $instance->fill([
@@ -366,6 +334,7 @@ class PhoneNumbersController extends Controller
                 'destination_prefix' => $inputs['destination_prefix'],
                 'destination_number' => $inputs['destination_number'],
                 'destination_actions' => $inputs['destination_actions'] ?? null,
+                'destination_conditions' => $inputs['destination_conditions'] ?? null,
                 'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,
@@ -394,7 +363,7 @@ class PhoneNumbersController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Destinations  $destinations
+     * @param  Destinations  $destinations
      * @return \Illuminate\Http\Response
      */
     public function show(Destinations $destinations)
@@ -405,7 +374,7 @@ class PhoneNumbersController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Destinations  $phone_number
+     * @param  Destinations  $phone_number
      * @return JsonResponse
      */
     public function edit(Request $request, Destinations $phone_number)
@@ -429,12 +398,12 @@ class PhoneNumbersController extends Controller
      * Update the specified resource in storage.
      *
      * @param  UpdatePhoneNumberRequest  $request
-     * @param  Destinations  $destinations
+     * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function update(UpdatePhoneNumberRequest $request, Destinations $destinations)
+    public function update(UpdatePhoneNumberRequest $request, Destinations $phone_number)
     {
-        if (!$destinations) {
+        if (!$phone_number) {
             // If the model is not found, return an error response
             return response()->json([
                 'success' => false,
@@ -447,12 +416,7 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-
-            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
-            $inputs['device_address'] = $inputs['device_address_modified'];
-
-            // logger($inputs);
-            $destinations->update($inputs);
+            $phone_number->update($inputs);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -471,14 +435,14 @@ class PhoneNumbersController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Destinations  $phone_number
+     * @param  Destinations  $phone_number
      * @return Response
      */
     public function destroy(Destinations $phone_number)
     {
         $phone_number->delete();
 
-        return Inertia::render('Phonenumbers', [
+        return Inertia::render($this->viewName, [
             'data' => function () {
                 return $this->getData();
             },

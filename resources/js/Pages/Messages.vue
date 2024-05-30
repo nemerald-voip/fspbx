@@ -27,12 +27,14 @@
                     Create
                 </button>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
+                    @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
+                    @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -59,14 +61,10 @@
 
                 <TableColumnHeader header="In/Out" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Source" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Destination"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Message"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Type"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Message" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -90,16 +88,16 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.message_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 "
-                        :text="row.created_at_formatted">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.created_at_formatted">
                         <div class="flex items-center">
-                        <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox" name="action_box[]"
-                            :value="row.message_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9" >
-                            {{ row.created_at_formatted }}
+                            <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row.message_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9">
+                                {{ row.created_at_formatted }}
+                            </div>
+
                         </div>
-                       
-                    </div>
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -113,18 +111,19 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.source_formatted" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.destination_formatted" />
 
-                    <TableField class=" px-2 py-2 text-sm text-gray-500"
-                        :text="row.message" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.type" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.status" />
+                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.message" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
+                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
+                            :textColor="determineColor(row.status).textColor"
+                            :ringColor="determineColor(row.status).ringColor" />
+
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -138,8 +137,7 @@
                                     </div>
                                 </ejs-tooltip> -->
 
-                                <ejs-tooltip :content="'Retry'" position='TopCenter'
-                                    target="#restart_tooltip_target">
+                                <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <RestartIcon @click="handleRetry(row.message_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -216,9 +214,9 @@
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
 
-    <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
-        @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
-        :confirm-button-label="'Restart'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
+        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
+        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -238,9 +236,9 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
+import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
-import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
@@ -262,12 +260,12 @@ const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationRestartTrigger = ref(false);
+const confirmationRetryTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmRestartAction = ref(null);
+const confirmRetryAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -295,25 +293,16 @@ const showGlobal = ref(props.showGlobal);
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
+            id: 'bulk_retry',
+            label: 'Retry',
             icon: 'RestartIcon'
         },
         {
-            id: 'bulk_update',
-            label: 'Edit',
-            icon: 'PencilSquareIcon'
-        }
-    ];
-
-    // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
-        actions.push({
             id: 'bulk_delete',
             label: 'Delete',
             icon: 'TrashIcon'
-        });
-    }
+        }
+    ];
 
     return actions;
 });
@@ -423,21 +412,16 @@ const handleBulkActionRequest = (action) => {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
-    if (action === 'bulk_restart') {
-        confirmationRestartTrigger.value = true;
-        confirmRestartAction.value = () => executeBulkRestart();
+
+    if (action === 'bulk_retry') {
+        confirmationRetryTrigger.value = true;
+        confirmRetryAction.value = () => executeBulkRetry();
     }
 }
 
-const executeBulkRestart = () => {
-    axios.post(props.routes.restart,
-        { 'devices': selectedItems.value },
+const executeBulkRetry = () => {
+    axios.post(props.routes.retry,
+        { 'items': selectedItems.value },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -499,19 +483,6 @@ const handleSelectAll = () => {
         });
 
 };
-
-
-const handleCopyToClipboard = (macAddress) => {
-    navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
-        setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
-        }, 500);
-    }).catch((error) => {
-        // Handle the error case
-        console.error('Failed to copy to clipboard:', error);
-    });
-}
 
 
 const handleRetry = (message_uuid) => {
@@ -669,7 +640,7 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    confirmationRestartTrigger.value = false;
+    confirmationRetryTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 
@@ -685,10 +656,36 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
+const determineColor = (status) => {
+  switch (status) {
+    case 'success':
+    case 'emailed':
+    case 'delivered':
+      return {
+        backgroundColor: 'bg-green-50',
+        textColor: 'text-green-700',
+        ringColor: 'ring-green-600/20'
+      };
+    case 'queued':
+      return {
+        backgroundColor: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        ringColor: 'ring-blue-600/20'
+      };
+    default:
+      return {
+        backgroundColor: 'bg-yellow-50',
+        textColor: 'text-yellow-700',
+        ringColor: 'ring-yellow-600/20'
+      };
+  }
+};
+
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

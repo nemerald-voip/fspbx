@@ -59,8 +59,8 @@ class AppCredentials extends Mailable
         // logger($this->attributes['qrCode']);
 
 
-        // return $this->subject(config('app.name', 'Laravel') . ' App Credentials')->view('emails.app.credentials');
-        return $this->subject(config('app.name', 'Laravel') . ' App Credentials');
+        return $this->from(config('mail.from.address'), config('mail.from.name'))
+            ->subject(config('app.name', 'Laravel') . ' App Credentials');
     }
 
     /**

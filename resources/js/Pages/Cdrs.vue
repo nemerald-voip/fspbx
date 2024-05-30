@@ -1,155 +1,208 @@
 
 <template>
-    <MainLayout >
+    <MainLayout>
 
-    <div class="m-3">
-        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Call History</template>
+        <div class="m-3">
+            <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
+                <template #title>Call History</template>
 
-            <template #action>
+                <template #action>
 
-                <button type="button" @click.prevent="exportCsv" :disabled="data.data.length === 0"
-                    class="inline-flex items-center gap-x-1.5 rounded-md  px-2.5 py-1.5 text-sm hover:ring-1 hover:ring-inset hover:ring-blue-700 text-blue-700 shadow-sm
-                    disabled:ring-0 disabled:text-blue-700/50
-                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-                    <DocumentArrowDownIcon class="-ml-0.5 h-5 w-5" aria-hidden="true" />
-                    Export CSV
-                </button>
+                    <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="exportCsv"
+                        :disabled="data.data.length === 0"
+                        class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                        Export CSV
+                    </button>
 
-            </template>
+                    <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
+                        @click.prevent="handleShowGlobal()"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Show global
+                    </button>
 
-            <template #filters>
-                <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <button v-if="showGlobal && page.props.auth.can.cdrs_view_global" type="button"
+                        @click.prevent="handleShowLocal()"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Show local
+                    </button>
+
+                </template>
+
+                <template #filters>
+                    <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        </div>
+                        <input type="search" v-model="filterData.search" name="mobile-search-candidate"
+                            id="mobile-search-candidate"
+                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                            placeholder="Search" />
+                        <input type="search" v-model="filterData.search" name="desktop-search-candidate"
+                            id="desktop-search-candidate"
+                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                            placeholder="Search" />
                     </div>
-                    <input type="search" v-model="filterData.search" name="mobile-search-candidate"
-                        id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
-                    <input type="search" v-model="filterData.search" name="desktop-search-candidate"
-                        id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
-                </div>
 
 
-                <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
-                    <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
-                        @update:date-range="handleUpdateDateRange" />
-                </div>
+                    <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
+                        <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                            @update:date-range="handleUpdateDateRange" />
+                    </div>
 
-                <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="callDirections" :selectedItem="filterData.direction"
-                        :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
-                </div>
+                    <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+                        <SelectBox :options="callDirections" :selectedItem="filterData.direction"
+                            :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
+                    </div>
 
-                <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                    <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
-                        :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
-                </div>
+                    <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+                        <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                            :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                    </div>
 
-            </template>
+                </template>
 
-            <template #navigation>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
-            </template>
-            <template #table-header>
-                <TableColumnHeader header=" "
-                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
-                <TableColumnHeader header="Caller ID Name"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Caller ID Number"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                <TableColumnHeader header="Dialed Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-                <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                </TableColumnHeader>
-            </template>
+                <template #navigation>
+                    <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
+                        :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                        @pagination-change-page="renderRequestedPage" />
+                </template>
+                <template #table-header>
+                    <TableColumnHeader header=" "
+                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
+                    <TableColumnHeader v-if="showGlobal" header="Domain"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Caller ID Name"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
+                    <TableColumnHeader header="Caller ID Number"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
+                    <TableColumnHeader header="Dialed Number"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-            <template #table-body>
-                <tr v-for="row in data.data" :key="row.xml_cdr_uuid">
-                    <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
+                    <TableColumnHeader header="Actions" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+
+                </template>
+
+                <template #table-body>
+                    <tr v-for="row in data.data" :key="row.xml_cdr_uuid">
+                        <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
                         :text="row.direction" /> -->
-                    <TableField :text="row.direction"
-                        class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                        <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
-                            target="#destination_tooltip_target">
-                            <div id="destination_tooltip_target">
-                                <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                                <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
-                                <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
-                            </div>
-                        </ejs-tooltip>
+                        <TableField :text="row.direction"
+                            class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                            <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
+                                target="#destination_tooltip_target">
+                                <div id="destination_tooltip_target">
+                                    <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
+                                    <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
+                                    <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
+                                </div>
+                            </ejs-tooltip>
 
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_number" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_destination" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_number" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
-                            " #action-buttons>
-                            <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying
-                                    " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
-                                    class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-                                <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
-                                    @click="pauseAudio"
-                                    class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+                        </TableField>
 
-                                <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
-                                    class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
+                        <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.domain?.domain_description">
+                            <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                                target="#domain_tooltip_target">
+                                <div id="domain_tooltip_target">
+                                    {{ row.domain?.domain_description }}
+                                </div>
+                            </ejs-tooltip>
+                        </TableField>
+
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.caller_id_number" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.caller_destination" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.destination_number" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                            <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
+                                " #action-buttons>
+                                <div class="flex items-center space-x-2 whitespace-nowrap">
+                                    <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying
+                                        " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
+                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+                                    <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
+                                        @click="pauseAudio"
+                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+
+                                    <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
+                                        class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
+                                </div>
+                            </template>
+                        </TableField>
+
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <template #action-buttons>
+                            <div class="flex items-center whitespace-nowrap justify-center">
+                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'" position='TopCenter'
+                                    target="#view_tooltip_target">
+                                    <div id="view_tooltip_target">
+                                        <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                    </div>
+                                </ejs-tooltip>
+
                             </div>
                         </template>
                     </TableField>
-                </tr>
-            </template>
-            <template #empty>
-                <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
-                    </p>
-                </div>
-            </template>
+                    </tr>
+                </template>
+                <template #empty>
+                    <!-- Conditional rendering for 'no records' message -->
+                    <div v-if="data.data.length === 0" class="text-center my-5 ">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Adjust your search and try again.
+                        </p>
+                    </div>
+                </template>
 
-            <template #loading>
-                <Loading :show="loading" />
-            </template>
+                <template #loading>
+                    <Loading :show="loading" />
+                </template>
 
-            <template #footer>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
-            </template>
+                <template #footer>
+                    <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
+                        :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                        @pagination-change-page="renderRequestedPage" />
+                </template>
 
 
-        </DataTable>
-    </div>
+            </DataTable>
+        </div>
     </MainLayout>
+
+
+    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :header="'Call details'" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+    </CallDetailsModal>
+
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { usePage } from '@inertiajs/vue3'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
@@ -164,6 +217,7 @@ import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
+import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
 import {
     PlayCircleIcon,
     PauseCircleIcon,
@@ -177,13 +231,16 @@ import {
 } from 'date-fns';
 import Loading from "./components/general/Loading.vue";
 
+const page = usePage()
 const today = new Date();
-
 const loading = ref(false)
+const viewModalTrigger = ref(false);
+const loadingModal = ref(false)
 
 
 const props = defineProps({
     data: Object,
+    showGlobal: Boolean,
     startPeriod: String,
     endPeriod: String,
     search: String,
@@ -194,6 +251,8 @@ const props = defineProps({
     selectedEntity: String,
     selectedEntityType: String,
     csvUrl: Object,
+    routes: Object,
+    itemData: Object,
 });
 
 onMounted(() => {
@@ -204,12 +263,15 @@ onMounted(() => {
 
 const filterData = ref({
     search: props.search,
+    showGlobal: props.showGlobal,
     dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
     timezone: props.timezone,
     direction: props.direction,
     entity: props.selectedEntity,
     entityType: props.selectedEntityType,
 });
+
+const showGlobal = ref(props.showGlobal);
 
 const callDirections = [
     { value: null, name: 'All' },
@@ -235,6 +297,34 @@ const getEntities = () => {
 
 }
 
+const handleViewRequest = (itemUuid) => {
+    viewModalTrigger.value = true
+    loadingModal.value = true
+
+    router.get(props.routes.current_page,
+        {
+            itemUuid: itemUuid,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemData',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+                console.log(props.itemData);
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+}
+
 const handleUpdateCallDirectionFilter = (newSelectedItem) => {
     if (newSelectedItem.value == "all") {
         filterData.value.direction = null;
@@ -257,7 +347,10 @@ const handleSearchButtonClick = () => {
         },
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
+        only: [
+            "data",
+            'showGlobal',
+        ],
         onSuccess: (page) => {
             loading.value = false;
         }
@@ -407,6 +500,22 @@ const exportCsv = () => {
 
 
 };
+
+const handleShowGlobal = () => {
+    filterData.value.showGlobal = true;
+    showGlobal.value = true;
+    handleSearchButtonClick();
+}
+
+const handleShowLocal = () => {
+    filterData.value.showGlobal = false;
+    showGlobal.value = false;
+    handleSearchButtonClick();
+}
+
+const handleModalClose = () => {
+    viewModalTrigger.value = false;
+}
 
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

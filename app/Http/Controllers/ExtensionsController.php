@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\AssignDeviceRequest;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
+use Spatie\Activitylog\Facades\CauserResolver;
 
 
 class ExtensionsController extends Controller
@@ -222,21 +223,8 @@ class ExtensionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateCallerID(Request $request, $extension_uuid)
+    public function updateCallerID($extension_uuid)
     {
-        // $request->destination_uuid = '4a40ab82-a9a8-4506-9f48-980cb902bcc4';
-        // $request->extension_uuid = 'a2c612cc-0b8e-4e21-a8d1-81d75e8333f9';
-
-        $destination = Destinations::find($request->destination_uuid);
-        if (!$destination) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => 'Invalid phone number ID submitted. Please, contact your administrator'
-                ]
-            ]);
-        }
-
         $extension = Extensions::find($extension_uuid);
         if (!$extension) {
             return response()->json([
@@ -247,9 +235,22 @@ class ExtensionsController extends Controller
             ]);
         }
 
+        $destination = Destinations::find(request('destination_uuid'));
+        if (!$destination) {
+            return response()->json([
+                'status' => 401,
+                'error' => [
+                    'message' => 'Invalid phone number ID submitted. Please, contact your administrator'
+                ]
+            ]);
+        }
+
+        // set causer for activity log
+        CauserResolver::setCauser($extension);
+
         // Update the caller ID field for user's extension
         // If successful delete cache
-        if ($request->set == "true") {
+        if (request('set') == "true") {
             try {
                 $extension->outbound_caller_id_number = (new PhoneNumber($destination->destination_number, "US"))->formatE164();
             } catch (NumberParseException $e) {

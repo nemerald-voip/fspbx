@@ -256,6 +256,7 @@ class DashboardController extends Controller
         }
 
         $data['time_zone'] = get_domain_setting('time_zone');
+        $data['billing_suspension'] = get_domain_setting('billing_suspension');
 
         return $data;
     }

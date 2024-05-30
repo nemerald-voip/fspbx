@@ -8,52 +8,62 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true"/>
+                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
-                           id="mobile-search-candidate"
-                           class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                           placeholder="Search"/>
+                        id="mobile-search-candidate"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        placeholder="Search" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
-                           id="desktop-search-candidate"
-                           class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                           placeholder="Search"/>
+                        id="desktop-search-candidate"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        placeholder="Search" />
                 </div>
             </template>
 
             <template #action>
                 <button type="button" @click.prevent="handleCreateButtonClick()"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
                 <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
                 <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
             </template>
 
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                           :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
-                           :links="data.links"
-                           @pagination-change-page="renderRequestedPage"/>
+                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                    @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header=" " class="w-4 flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+
+                <TableColumnHeader header=""
+                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                           class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                                      :has-selected-items="selectedItems.length > 0" />
+                        :has-selected-items="selectedItems.length > 0" />
+                    <span class="pl-4">Phone Number</span>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Phone Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Call Actions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Status" class="w-12 px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
-                <TableColumnHeader header="Action" class="w-4 px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+
+
+                <TableColumnHeader v-if="showGlobal" header="Domain"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Call Actions"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Description"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -61,13 +71,13 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
-                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
-                                @click="handleSelectAll">
+                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
-                                @click="handleClearSelection">
+                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            @click="handleClearSelection">
                             Clear selection
                         </button>
                     </div>
@@ -76,32 +86,64 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.destination_uuid">
-                    <TableField class="w-4 whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex">
-                        <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                               :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex"
+                        :text="row.destination_number_formatted">
+                        <div class="flex items-center">
+                            <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9"
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
+                                @click="page.props.auth.can.device_update && handleEditRequest(row.destination_uuid)">
+                                {{ row.destination_number_formatted }}
+                            </div>
+
+                            <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
+                                @click="handleCopyToClipboard(row.destination_number)" target="#copy_tooltip_target">
+                                <div id="copy_tooltip_target">
+                                    <ClipboardDocumentIcon
+                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
+                                </div>
+                            </ejs-tooltip>
+                        </div>
                     </TableField>
+
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                                :text="row.domain_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        {{row.destination_number_prefix}} {{row.destination_number_formatted}}
+                        :text="row.domain?.domain_description">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
+                            <div id="domain_tooltip_target">
+                                {{ row.domain?.domain_description }}
+                            </div>
+                        </ejs-tooltip>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="'Actionssss'" />
-                    <TableField class="w-12 whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <ul v-if="row.destination_actions_formatted">
+                            <li v-for="(action, index) in row.destination_actions_formatted" :key="index">
+                                {{action}}
+                            </li>
+                        </ul>
+                    </TableField>
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_description" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <StatusBadge :enabled="row.destination_enabled" />
                     </TableField>
                     <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit phone number'"
+                                    position='TopLeft' target="#edit_tooltip_target">
                                     <div id="edit_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
-                                                          class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip v-if="page.props.auth.can.destination_delete" :content="'Remove phone number'" position='TopLeft' target="#delete_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.destination_delete" :content="'Remove phone number'"
+                                    position='TopLeft' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
-                                           class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -112,7 +154,7 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400"/>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                     <p class="mt-1 text-sm text-gray-500">
                         Adjust your search and try again.
@@ -126,66 +168,37 @@
 
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                           :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
-                           :links="data.links"
-                           @pagination-change-page="renderRequestedPage"/>
+                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                    @pagination-change-page="renderRequestedPage" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal
-        :show="createModalTrigger"
-        :header="'Add New'"
-        :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'"
-        @close="handleModalClose"
-    >
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
+        @close="handleModalClose">
         <template #modal-body>
-            <CreatePhoneNumberForm
-                :item="itemData"
-                :options="itemOptions"
-                :errors="formErrors"
-                :is-submitting="createFormSubmitting"
-                @submit="handleCreateRequest"
-                @cancel="handleModalClose"
-            />
+            <CreatePhoneNumberForm :item="itemData" :options="itemOptions" :errors="formErrors"
+                :is-submitting="createFormSubmitting" @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-    <AddEditItemModal
-        :show="editModalTrigger"
-        :header="'Update Number'"
-        :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'"
-        @close="handleModalClose"
-    >
+    <AddEditItemModal :show="editModalTrigger" :header="'Update Number'" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
         <template #modal-body>
-            <UpdatePhoneNumberForm
-                :options="itemOptions"
-                :errors="formErrors"
-                :is-submitting="updateFormSubmitting"
-                @submit="handleUpdateRequest"
-                @cancel="handleModalClose"
-            />
+            <UpdatePhoneNumberForm :item="itemData" :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmitting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-    <DeleteConfirmationModal
-        :show="confirmationModalTrigger"
-        @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction"
-    />
-    <Notification
-        :show="notificationShow"
-        :type="notificationType"
-        :messages="notificationMessages"
-        @update:show="hideNotification"
-    />
+    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+        @confirm="confirmDeleteAction" />
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
-import {computed, onMounted, reactive, ref} from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import axios from 'axios';
-import {router, usePage} from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -194,15 +207,16 @@ import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.
 import CreatePhoneNumberForm from "./components/forms/CreatePhoneNumberForm.vue";
 import UpdatePhoneNumberForm from "./components/forms/UpdatePhoneNumberForm.vue";
 import Loading from "./components/general/Loading.vue";
-import {registerLicense} from '@syncfusion/ej2-base';
-import {DocumentTextIcon, MagnifyingGlassIcon, TrashIcon} from "@heroicons/vue/24/solid";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { registerLicense } from '@syncfusion/ej2-base';
+import { DocumentTextIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import Notification from "./components/notifications/Notification.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import StatusBadge from "./components/general/StatusBadge.vue";
-import {PencilSquareIcon} from "@heroicons/vue/24/solid/index.js";
+import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 
 const page = usePage()
 
@@ -222,15 +236,16 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
     itemData: Object,
-    itemOptions: Object
+    itemOptions: Object,
+    conditions: Object
 });
-
 
 const filterData = ref({
     search: null,
@@ -264,9 +279,6 @@ const bulkActions = computed(() => {
     }
 
     return actions;
-});
-
-onMounted(() => {
 });
 
 const handleEditRequest = (itemUuid) => {
@@ -310,10 +322,10 @@ const handleCreateRequest = (form) => {
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-        createFormSubmitting.value = false;
-        handleClearSelection();
-        handleFormErrorResponse(error);
-    });
+            createFormSubmitting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
 
 };
 
@@ -323,16 +335,16 @@ const handleUpdateRequest = (form) => {
 
     axios.put(props.itemData.update_url, form)
         .then((response) => {
-            updateFormSubmiting.value = false;
+            updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-        updateFormSubmiting.value = false;
-        handleClearSelection();
-        handleFormErrorResponse(error);
-    });
+            updateFormSubmitting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
 
 };
 
@@ -401,9 +413,9 @@ const handleSelectAll = () => {
             showNotification('success', response.data.messages);
 
         }).catch((error) => {
-        handleClearSelection();
-        handleErrorResponse(error);
-    });
+            handleClearSelection();
+            handleErrorResponse(error);
+        });
 
 };
 
@@ -508,6 +520,7 @@ const handleFormErrorResponse = (error) => {
 
 }
 
+
 const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
@@ -535,8 +548,6 @@ const handleSelectPageItems = () => {
     }
 };
 
-
-
 const handleClearSelection = () => {
     selectedItems.value = [];
     selectPageItems.value = false;
@@ -561,10 +572,27 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        tooltipCopyContent.value = 'Copied'
+        setTimeout(() => {
+            tooltipCopyContent.value = 'Copy to Clipboard'
+        }, 500);
+    }).catch((error) => {
+        // Handle the error case
+        console.error('Failed to copy to clipboard:', error);
+    });
+}
+
+const getDestinationActionName = ((action) => {
+    return action;
+})
+
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

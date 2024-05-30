@@ -1,6 +1,6 @@
 <template>
-    <span class="inline-flex items-center rounded-md bg-green-100 px-1.5 py-0.5 text-xs font-medium"
-          :class="enabled ? 'text-green-700' : 'text-red-700'">{{ enabled ? enabledLabel : disabledLabel }}</span>
+    <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium"
+          :class="enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">{{ enabled ? enabledLabel : disabledLabel }}</span>
 </template>
 
 <script setup>

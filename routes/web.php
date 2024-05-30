@@ -1,6 +1,6 @@
 <?php
 
-
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\RecordingsController;
 use Illuminate\Support\Facades\Route;
@@ -238,6 +238,11 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
     //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');
+
+    // Activity Log
+    Route::resource('activities', ActivityLogController::class);
+    Route::post('/activities/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activities.bulk.delete');
+    Route::post('/activities/select-all', [ActivityLogController::class, 'selectAll'])->name('activities.select.all');
 });
 
 // Route::group(['prefix' => '/'], function () {

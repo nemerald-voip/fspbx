@@ -115,11 +115,11 @@ class CommioInboundSMS extends Model
         $attributes['orgid'] = $this->org_id;
         $attributes['from'] = $message->source;
         $attributes['email_to'] = $this->email;
-        $attributes['message'] = $this->message;
+        $attributes['message'] = $message->message;
 
         // Logic to deliver the SMS message using email
         // This method should return a boolean indicating whether the message was sent successfully.
-        Mail::to($this->email_to)->send(new SmsToEmail($attributes));
+        Mail::to($this->email)->send(new SmsToEmail($attributes));
 
         if ($message->status = "queued") {
             $message->status = 'emailed';

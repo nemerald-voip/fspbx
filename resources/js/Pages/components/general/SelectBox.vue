@@ -37,26 +37,26 @@
 
                     <ListboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" :value="null" as="template">
                         <li :class="[
-        active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
-        'relative cursor-default select-none py-2 pl-10 pr-4',
-    ]">
+                                active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                                'relative cursor-default select-none py-2 pl-10 pr-4',
+                            ]">
                             <span :class="[
-        selected ? 'font-medium' : 'font-normal',
-        'block truncate',
-    ]">None</span>
+                                selected ? 'font-medium' : 'font-normal',
+                                'block truncate',
+                            ]">None</span>
                         </li>
                     </ListboxOption>
 
                     <ListboxOption v-slot="{ active, selected }" v-for="item in filteredOptions" :key="item.value"
                         :value="item" as="template">
                         <li :class="[
-        active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
-        'relative cursor-default select-none py-2 pl-10 pr-4',
-    ]">
+                                active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                                'relative cursor-default select-none py-2 pl-10 pr-4',
+                            ]">
                             <span :class="[
-        selected ? 'font-medium' : 'font-normal',
-        'block truncate',
-    ]">{{ item.name }}</span>
+                                selected ? 'font-medium' : 'font-normal',
+                                'block truncate',
+                            ]">{{ item.name }}</span>
                             <span v-if="selected"
                                 class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
                                 <CheckIcon class="h-5 w-5" aria-hidden="true" />
