@@ -23,7 +23,7 @@ class CdrsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Cdrs';
-    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number'];
+    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'call_uuid', 'cc_member_session_uuid'];
 
     public function __construct()
     {
@@ -133,17 +133,17 @@ class CdrsController extends Controller
         $callFlowData = collect(json_decode($itemData->call_flow, true));
 
         // Add new rows for transfers
-        $callFlowData = $this->handleTransfers($callFlowData);
+        $callFlowData = $this->handleCallFlowSteps($callFlowData);
 
-        // logger($callFlowData);
-
-        // Format times
-        $callFlowData = $this->formatTimes($callFlowData);
+        // logger($callFlowData->toArray());
 
         // Build the call flow summary
         $callFlowSummary = $callFlowData->map(function ($row) {
             return $this->buildSummaryItem($row);
-        })->all();
+        });
+
+        // Format times
+        $callFlowSummary = $this->formatTimes($callFlowSummary);
 
 
         logger($callFlowSummary);
@@ -155,44 +155,65 @@ class CdrsController extends Controller
      * @param Collection $callFlowData
      * @return Collection
      */
-    protected function handleTransfers($callFlowData)
+    protected function handleCallFlowSteps($callFlowData)
     {
         $newRows = collect();
 
-        $callFlowData->each(function ($row) use ($newRows) {
-            if (
-                !empty($row['caller_profile']['destination_number']) &&
-                !empty($row['caller_profile']['callee_id_number']) &&
-                $row['caller_profile']['destination_number'] !== $row['caller_profile']['callee_id_number']
-            ) {
-
-                $newRow = [
-                    'caller_profile' => [
-                        'destination_number' => $row['caller_profile']['callee_id_number'],
-                        'caller_id_name' => $row['caller_profile']['callee_id_name'],
-                        'caller_id_number' => $row['caller_profile']['caller_id_number']
-                    ],
-                    'times' => [
-                        'profile_created_time' => $row['times']['profile_created_time'],
-                        'profile_end_time' => $row['times']['profile_end_time']
-                    ]
-                ];
-
-                if (isset($row['times']['transfer_time']) && $row['times']['transfer_time'] > 0) {
-                    $row['times']['profile_end_time'] = $row['times']['transfer_time'];
-                    $newRow['times']['profile_created_time'] = $row['times']['transfer_time'];
+        $callFlowData->reduce(function ($carry, $row) use ($newRows) {
+            $insertedNewRow = false;
+        
+            // Check if 'ring_group_uuid' exists in the 'application' array
+            if (isset($row['extension']['application'])) {
+                foreach ($row['extension']['application'] as $application) {
+                    if (isset($application['@attributes']['app_data']) && strpos($application['@attributes']['app_data'], 'ring_group_uuid') !== false) {
+                        // Extract the ring_group_uuid value
+                        preg_match('/ring_group_uuid=([a-f0-9\-]+)/', $application['@attributes']['app_data'], $matches);
+                        if (isset($matches[1]) && $row['times']['bridged_time'] != '0') {
+                            $ringGroupUuid = $matches[1];
+        
+                            $newRow = [
+                                'caller_profile' => [
+                                    'destination_number' => $row['caller_profile']['destination_number'],
+                                    'caller_id_name' => $row['caller_profile']['callee_id_name'],
+                                    'caller_id_number' => $row['caller_profile']['caller_id_number']
+                                ],
+                                'times' => [
+                                    'bridged_time' => '0',
+                                    'created_time' => $row['times']['profile_created_time'],
+                                    'answered_time' => '0',
+                                    'progress_time' => $row['times']['profile_created_time'],
+                                    'transfer_time' => $row['times']['answered_time'],
+                                    'progress_media_time' => $row['times']['profile_created_time'],
+                                    'hangup_time' => 0,
+                                    'profile_created_time' => $row['times']['profile_created_time'],
+                                    'profile_end_time' => $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['profile_end_time']
+                                ]
+                            ];
+        
+                            // Insert the new row right before the current row
+                            $newRows->push($newRow);
+                            $insertedNewRow = true;
+        
+                            // Adjust created time for current row
+                            $row['times']['profile_created_time'] = $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['transfer_time'];
+                            $row['times']['progress_media_time'] = $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['transfer_time'];
+                        }
+                        else {
+                            $row['caller_profile']['callee_id_number'] = $row['caller_profile']['destination_number'];
+                        }
+                    }
                 }
-
-                if (isset($row['times']['bridged_time']) && $row['times']['bridged_time'] > 0) {
-                    $row['times']['profile_end_time'] = $row['times']['bridged_time'];
-                    $newRow['times']['profile_created_time'] = $row['times']['bridged_time'];
-                }
-
-                $newRows->push($newRow);
             }
-        });
-
-        return $callFlowData->merge($newRows);
+        
+            // Push the current row (updated or not) to the new collection
+            $newRows->push($row);
+        
+            // Return the carry for reduce
+            return $carry;
+        }, $callFlowData);
+        
+        return $newRows;
+        
     }
 
 
@@ -200,15 +221,15 @@ class CdrsController extends Controller
     /**
      * Format the times in the call flow array
      *
-     * @param Collection $callFlowArray
+     * @param Collection $callFlowData
      * @return Collection
      */
     protected function formatTimes($callFlowData)
     {
         return $callFlowData->map(function ($row) {
-            foreach ($row['times'] as $name => $value) {
+            foreach ($row as $name => $value) {
                 if (is_numeric($value) && $value > 0) {
-                    $row['times'][$name . 'stamp'] = Carbon::createFromTimestampMs(floatval($value) / 1000)->toDateTimeString();
+                    $row[$name . '_stamp'] = Carbon::createFromTimestamp($value)->toDateTimeString();
                 }
             }
             return $row;
@@ -226,25 +247,40 @@ class CdrsController extends Controller
     {
         // $app = $this->findApp($row['caller_profile']['destination_number']);
 
-        $profileCreatedEpoch = round($row['times']['profile_created_time'] / 1000000);
-        $profileEndEpoch = round($row['times']['profile_end_time'] / 1000000);
+        $profileCreatedEpoch = $this->formatTime($row['times']['profile_created_time']);
+        $profileEndEpoch = $this->formatTime($row['times']['profile_end_time']);
+        $profileTransferEpoch = $this->formatTime($row['times']['transfer_time']);
 
         return [
-            'application_name' => $app['application'] ?? '',
-            'application_label' => $this->getApplicationLabel($app['application'] ?? ''),
-            'destination_uuid' => $app['uuid'] ?? '',
-            'destination_name' => $app['name'] ?? '',
-            'destination_number' => $row['caller_profile']['destination_number'],
-            'destination_label' => $app['label'] ?? '',
-            'destination_status' => $app['status'] ?? '',
-            'destination_description' => $app['description'] ?? '',
-            'start_epoch' => $profileCreatedEpoch,
-            'end_epoch' => $profileEndEpoch,
-            'start_stamp' => Carbon::createFromTimestamp($profileCreatedEpoch)->toDateTimeString(),
-            'end_stamp' => Carbon::createFromTimestamp($profileEndEpoch)->toDateTimeString(),
+            // 'application_name' => $app['application'] ?? '',
+            // 'application_label' => $this->getApplicationLabel($app['application'] ?? ''),
+            // 'destination_uuid' => $app['uuid'] ?? '',
+            // 'destination_name' => $app['name'] ?? '',
+            'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
+            // 'destination_label' => $app['label'] ?? '',
+            // 'destination_status' => $app['status'] ?? '',
+            // 'destination_description' => $app['description'] ?? '',
+            // 'start_epoch' => $profileCreatedEpoch,
+            // 'end_epoch' => $profileEndEpoch,
+            'bridged_time' => $row['times']['bridged_time'] == 0 ? 0 : $this->formatTime($row['times']['bridged_time']),
+            'created_time' => $row['times']['created_time'] == 0 ? 0 : $this->formatTime($row['times']['created_time']),
+            'answered_time' => $row['times']['answered_time'] == 0 ? 0 : $this->formatTime($row['times']['answered_time']),
+            'progress_time' => $row['times']['progress_time'] == 0 ? 0 : $this->formatTime($row['times']['progress_time']),
+            'transfer_time' => $row['times']['transfer_time'] == 0 ? 0 : $this->formatTime($row['times']['transfer_time']),
+            'profile_created_time' => $row['times']['profile_created_time'] == 0 ? 0 : $this->formatTime($row['times']['profile_created_time']),
+            'profile_end_time' => $row['times']['profile_end_time'] == 0 ? 0 : $this->formatTime($row['times']['profile_end_time']),
+            'progress_media_time' => $row['times']['progress_media_time'] == 0 ? 0 : $this->formatTime($row['times']['progress_media_time']),
+            'hangup_time' => $row['times']['hangup_time'] == 0 ? 0 : $this->formatTime($row['times']['hangup_time']),
+            // 'start_stamp' => Carbon::createFromTimestamp($profileCreatedEpoch)->toDateTimeString(),
+            // 'transfer_stamp' => Carbon::createFromTimestamp($profileTransferEpoch)->toDateTimeString(),
+            // 'end_stamp' => Carbon::createFromTimestamp($profileEndEpoch)->toDateTimeString(),
             'duration_seconds' => $profileEndEpoch - $profileCreatedEpoch,
             'duration_formatted' => gmdate('G:i:s', $profileEndEpoch - $profileCreatedEpoch),
         ];
+    }
+
+    private function formatTime($time) {
+        return (int) round($time / 1000000);
     }
 
     /**
