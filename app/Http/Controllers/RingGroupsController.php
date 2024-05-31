@@ -193,10 +193,13 @@ class RingGroupsController extends Controller
             'dialplan_uuid' => Str::uuid(),
         ]);
 
+        $ringGroup->save();
+
         $sumDestinationsTimeout = $longestDestinationsTimeout = 0;
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             $order = 5;
+            $destinationsAdded = [];
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
                     break;
@@ -207,6 +210,11 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
+
+                if(empty($groupsDestinations->destination_number) || in_array($groupsDestinations->destination_number, $destinationsAdded)) {
+                    continue;
+                }
+
                 if ($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
                     $groupsDestinations->destination_delay = $order;
                     $order += 5;
@@ -233,9 +241,8 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                if(!empty($groupsDestinations->destination_number)) {
-                    $ringGroup->groupDestinations()->save($groupsDestinations);
-                }
+                $ringGroup->groupDestinations()->save($groupsDestinations);
+                $destinationsAdded[] = $groupsDestinations->destination_number;
                 $i++;
             }
         }
@@ -440,6 +447,7 @@ class RingGroupsController extends Controller
         if (isset($attributes['ring_group_destinations']) && count($attributes['ring_group_destinations']) > 0) {
             $i = 0;
             $order = 5;
+            $destinationsAdded = [];
             foreach ($attributes['ring_group_destinations'] as $destination) {
                 if ($i > 49) {
                     break;
@@ -450,6 +458,11 @@ class RingGroupsController extends Controller
                 } else {
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
+
+                if(empty($groupsDestinations->destination_number) || in_array($groupsDestinations->destination_number, $destinationsAdded)) {
+                    continue;
+                }
+
                 if ($ringGroup->ring_group_strategy == 'sequence' || $ringGroup->ring_group_strategy == 'rollover') {
                     $groupsDestinations->destination_delay = $order;
                     $order += 5;
@@ -477,9 +490,8 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_enabled = null;
                 }
                 //$groupsDestinations->follow_me_order = $i;
-                if(!empty($groupsDestinations->destination_number)) {
-                    $ringGroup->groupDestinations()->save($groupsDestinations);
-                }
+                $ringGroup->groupDestinations()->save($groupsDestinations);
+                $destinationsAdded[] = $groupsDestinations->destination_number;
                 $i++;
             }
         }
