@@ -9,6 +9,7 @@ use App\Exports\CdrsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
+use App\Models\Dialplans;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
@@ -142,11 +143,56 @@ class CdrsController extends Controller
             return $this->buildSummaryItem($row);
         });
 
+        // logger($callFlowSummary->toArray());
+
+        //calculate the time line and format it
+        $startEpoch = $itemData->start_epoch;
+        $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch) {
+            $timeDifference = $row['profile_created_time'] - $startEpoch;
+            $row['time_line'] = gmdate("H:i:s", $timeDifference); // Human-readable format
+            return $row;
+        });
+
         // Format times
-        $callFlowSummary = $this->formatTimes($callFlowSummary);
+        // $callFlowSummary = $this->formatTimes($callFlowSummary);
+
+        // Get Dialplan App details
+        $callFlowSummary = $callFlowSummary->map(function ($row) {
+            $app = $this->getAppDetails($row);
+
+            return $row;
+        });
 
 
-        logger($callFlowSummary);
+
+        // logger($callFlowSummary->all());
+    }
+
+    /**
+     * Get app details associated with call flow step
+     *
+     */
+    public function getAppDetails($row)
+    {
+        // Convert to E164 format if this is a valid number
+        $destination = formatPhoneNumber($row['destination_number'], "US", 0); // 0 is E164 format
+
+        // Check if the number starts with '+1' and remove it if present
+        if (strpos($destination, '+1') === 0) {
+            $bareNumber = substr($destination, 2);
+        } else {
+            $bareNumber = $destination;
+        }
+
+        $dialplan = Dialplans::where('dialplan_context', $row['context'])
+            ->where(function ($query) use ($destination, $bareNumber) {
+                $query->where('dialplan_number', $destination)
+                    ->orWhere('dialplan_number', '=', $bareNumber)
+                    ->orWhere('dialplan_number', '=', '1' . $bareNumber);
+            })
+            ->first();
+
+        logger($dialplan);
     }
 
     /**
@@ -161,7 +207,7 @@ class CdrsController extends Controller
 
         $callFlowData->reduce(function ($carry, $row) use ($newRows) {
             $insertedNewRow = false;
-        
+
             // Check if 'ring_group_uuid' exists in the 'application' array
             if (isset($row['extension']['application'])) {
                 foreach ($row['extension']['application'] as $application) {
@@ -170,12 +216,13 @@ class CdrsController extends Controller
                         preg_match('/ring_group_uuid=([a-f0-9\-]+)/', $application['@attributes']['app_data'], $matches);
                         if (isset($matches[1]) && $row['times']['bridged_time'] != '0') {
                             $ringGroupUuid = $matches[1];
-        
+
                             $newRow = [
                                 'caller_profile' => [
                                     'destination_number' => $row['caller_profile']['destination_number'],
+                                    'context' => !empty($row['caller_profile']['context']) ? $row['caller_profile']['context'] : '',
                                     'caller_id_name' => $row['caller_profile']['callee_id_name'],
-                                    'caller_id_number' => $row['caller_profile']['caller_id_number']
+                                    'caller_id_number' => $row['caller_profile']['caller_id_number'],
                                 ],
                                 'times' => [
                                     'bridged_time' => '0',
@@ -189,31 +236,29 @@ class CdrsController extends Controller
                                     'profile_end_time' => $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['profile_end_time']
                                 ]
                             ];
-        
+
                             // Insert the new row right before the current row
                             $newRows->push($newRow);
                             $insertedNewRow = true;
-        
+
                             // Adjust created time for current row
                             $row['times']['profile_created_time'] = $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['transfer_time'];
                             $row['times']['progress_media_time'] = $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['transfer_time'];
-                        }
-                        else {
+                        } else {
                             $row['caller_profile']['callee_id_number'] = $row['caller_profile']['destination_number'];
                         }
                     }
                 }
             }
-        
+
             // Push the current row (updated or not) to the new collection
             $newRows->push($row);
-        
+
             // Return the carry for reduce
             return $carry;
         }, $callFlowData);
-        
+
         return $newRows;
-        
     }
 
 
@@ -221,18 +266,27 @@ class CdrsController extends Controller
     /**
      * Format the times in the call flow array
      *
-     * @param Collection $callFlowData
+     * @param Collection $callFlowSummary
      * @return Collection
      */
-    protected function formatTimes($callFlowData)
+    protected function formatTimes($callFlowSummary)
     {
-        return $callFlowData->map(function ($row) {
-            foreach ($row as $name => $value) {
-                if (is_numeric($value) && $value > 0) {
-                    $row[$name . '_stamp'] = Carbon::createFromTimestamp($value)->toDateTimeString();
+        return $callFlowSummary->map(function ($item) {
+            // Define the keys that need to be formatted
+            $timeKeys = [
+                'created_time', 'answered_time', 'progress_time',
+                'transfer_time', 'profile_created_time', 'profile_end_time',
+                'progress_media_time', 'hangup_time'
+            ];
+
+            // Loop through each key and format the time
+            foreach ($timeKeys as $key) {
+                if (isset($item[$key]) && $item[$key] != 0) {
+                    $item[$key] = Carbon::createFromTimestamp($item[$key])->toDateTimeString();
                 }
             }
-            return $row;
+
+            return $item;
         });
     }
 
@@ -249,7 +303,6 @@ class CdrsController extends Controller
 
         $profileCreatedEpoch = $this->formatTime($row['times']['profile_created_time']);
         $profileEndEpoch = $this->formatTime($row['times']['profile_end_time']);
-        $profileTransferEpoch = $this->formatTime($row['times']['transfer_time']);
 
         return [
             // 'application_name' => $app['application'] ?? '',
@@ -257,6 +310,7 @@ class CdrsController extends Controller
             // 'destination_uuid' => $app['uuid'] ?? '',
             // 'destination_name' => $app['name'] ?? '',
             'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
+            'context' => !empty($row['caller_profile']['context']) ? $row['caller_profile']['context'] : '',
             // 'destination_label' => $app['label'] ?? '',
             // 'destination_status' => $app['status'] ?? '',
             // 'destination_description' => $app['description'] ?? '',
@@ -279,7 +333,8 @@ class CdrsController extends Controller
         ];
     }
 
-    private function formatTime($time) {
+    private function formatTime($time)
+    {
         return (int) round($time / 1000000);
     }
 
