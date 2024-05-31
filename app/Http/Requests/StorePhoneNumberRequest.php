@@ -65,8 +65,9 @@ class StorePhoneNumberRequest extends FormRequest
                 'string'
             ],
             'destination_conditions.*.condition_expression' => [
-                'required_if:destination_conditions.*.condition_field,!=,""',
-                'phone:US'
+                'nullable'
+                //'required_if:destination_conditions.*.condition_field,!=,""',
+                //'phone:US'
             ],
             'destination_conditions.*.condition_data' => [
                 'required_if:destination_conditions.*.condition_expression,!=,""',
@@ -174,17 +175,18 @@ class StorePhoneNumberRequest extends FormRequest
         $destination_conditions = [];
         if($this->filled('destination_conditions')) {
             foreach($this->get('destination_conditions') as $action) {
-                if($action['condition_data'][0]['value']['value'] != 'NULL') {
+                /*if($action['condition_data'][0]['value']['value'] != 'NULL') {
                     $action['condition_data'] = $action['condition_data'][0]['value']['value'];
                 } else {
                     $action['condition_data'] = null;
                 }
-                var_dump($action['condition_data']);
+                var_dump($action['condition_data']);*/
                 $destination_conditions[] = [
                     'condition_field' => $action['condition_field'] ?? $action['condition_field']['value'] ?? '',
                     'condition_expression' => $action['condition_expression'] ?? '',
                     'condition_app' => 'transfer',
-                    'condition_data' => $action['condition_data'] ?? ''
+                    //'condition_data' => $action['condition_data'] ?? ''
+                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
                 ];
             }
         }
