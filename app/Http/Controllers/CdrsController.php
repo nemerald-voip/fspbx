@@ -26,7 +26,7 @@ class CdrsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Cdrs';
-    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'call_uuid', 'cc_member_session_uuid'];
+    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'sip_call_id', 'cc_member_session_uuid'];
 
     public function __construct()
     {
@@ -141,7 +141,7 @@ class CdrsController extends Controller
         // Add new rows for transfers
         $callFlowData = $this->handleCallFlowSteps($callFlowData);
 
-        // logger($callFlowData->toArray());
+        // logger($callFlowData);
 
         // Build the call flow summary
         $callFlowSummary = $callFlowData->map(function ($row) {
@@ -219,6 +219,10 @@ class CdrsController extends Controller
                     'pattern' => '/ivr_menu_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
                     'app' => 'Auto Receptionist',
                 ],
+                'call_center_queue_uuid' => [
+                    'pattern' => '/call_center_queue_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
+                    'app' => 'Contact Center Queue',
+                ],
                 'call_direction_inbound' => [
                     'pattern' => '/call_direction=inbound/',
                     'app' => 'Inbound Call',
@@ -234,12 +238,15 @@ class CdrsController extends Controller
                     break; // Stop checking after the first match
                 }
             }
-        } 
+        }
 
-        if (strpos($row['destination_number'], "park+") !== false ){
+        if (strpos($row['destination_number'], "park+") !== false) {
             $row['dialplan_app'] = "Park";
             // $row['dialplan_name'] = $dialplan->dialplan_name;
         }
+
+        // Check if destination is extension
+        
 
         // logger($dialplan);
 
@@ -353,14 +360,23 @@ class CdrsController extends Controller
         $profileCreatedEpoch = $this->formatTime($row['times']['profile_created_time']);
         $profileEndEpoch = $this->formatTime($row['times']['profile_end_time']);
 
-        if (strpos($row['caller_profile']['destination_number'], "park+") !== false) {
-            $destinationNumber = $row['caller_profile']['destination_number'];
-        } else {
+
+        // logger($row);
+
+        if (!empty($row["caller_profile"]["destination_number"]) && (substr($row["caller_profile"]["destination_number"], 0, 4) == 'park' || (substr($row["caller_profile"]["destination_number"], 0, 3) == '*59' && strlen($row["caller_profile"]["destination_number"]) > 3))) {
+            if (strpos($row['caller_profile']['transfer_source'], "park+") !== false) {
+                $destinationNumber = $row['caller_profile']['destination_number'];
+            } else {
+                $destinationNumber = $row['caller_profile']['callee_id_number'];
+            }
+        }
+         else {
             $destinationNumber = !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'];
         }
-
+        
         return [
             'destination_number' => $destinationNumber,
+            // 'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
             'context' => !empty($row['caller_profile']['context']) ? $row['caller_profile']['context'] : '',
             'bridged_time' => $row['times']['bridged_time'] == 0 ? 0 : $this->formatTime($row['times']['bridged_time']),
             'created_time' => $row['times']['created_time'] == 0 ? 0 : $this->formatTime($row['times']['created_time']),
