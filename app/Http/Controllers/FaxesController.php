@@ -784,12 +784,6 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
-        //Check FusionPBX login status
-        // session_start();
-        // if (session_status() === PHP_SESSION_NONE) {
-        //     return redirect()->route('logout');
-        // }
-
         // Get all phone numbers
         $destinations = Destinations::where('destination_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))

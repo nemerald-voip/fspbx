@@ -706,11 +706,6 @@ if (!function_exists('outbound_route_to_bridge')) {
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)
     {
-        // //Check FusionPBX login status
-        // session_start();
-        // if(session_status() === PHP_SESSION_NONE) {
-        //     return redirect()->route('logout');
-        // }
 
         // Get event socket credentials
         $settings = Settings::first();

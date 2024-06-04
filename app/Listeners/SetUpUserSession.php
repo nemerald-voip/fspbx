@@ -2,13 +2,14 @@
 
 namespace App\Listeners;
 
+use dashboard;
 use permissions;
 use App\Models\Domain;
-use App\Models\DefaultSettings;
 use App\Models\DomainSettings;
-use dashboard;
+use App\Models\DefaultSettings;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Session;
 
 
@@ -335,15 +336,17 @@ class SetUpUserSession
             (Session::get('url')['intended'] == "https://" . $_SERVER['HTTP_HOST'] ||
                 Session::get('url')['intended'] == "http://" . $_SERVER['HTTP_HOST'])
         ) {
-            $_SESSION['redirect_url'] = Session::get('url')['intended'] . "/dashboard";
+            $_SESSION['redirect_url'] = RouteServiceProvider::HOME;
         }
         if (
             isset(Session::get('url')['intended']) &&
             Session::get('url')['intended'] != '' &&
             str_contains(Session::get('url')['intended'], '/logout')
         ) {
-            $_SESSION['redirect_url'] = "https://" . $_SERVER['HTTP_HOST'] . "/dashboard";
+            Session::put('url')['intended'] = RouteServiceProvider::HOME;
+            $_SESSION['redirect_url'] = RouteServiceProvider::HOME;
         }
+
         // Send session cookie name to FusionPBX
         $_SESSION['cookie_name'] = config('session.cookie');
 
