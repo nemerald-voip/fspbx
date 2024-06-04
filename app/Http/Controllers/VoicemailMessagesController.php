@@ -27,12 +27,6 @@ class VoicemailMessagesController extends Controller
             return redirect('/');
         }
 
-        //Check FusionPBX login status
-        // session_start();
-        // if (!isset($_SESSION['user'])) {
-        //     return redirect()->route('logout');
-        // }
-
         $data = array();
         $data['voicemail'] = $voicemail;
         $messages = VoicemailMessages::where('voicemail_uuid', $voicemail->voicemail_uuid)->orderBy('created_epoch', 'desc')->get();

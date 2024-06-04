@@ -63,12 +63,6 @@ class ExtensionsController extends Controller
             return redirect('/');
         }
 
-        //Check FusionPBX login status
-        // session_start();
-        // if (!isset($_SESSION['user'])) {
-        //     return redirect()->route('logout');
-        // }
-
         $searchString = $request->get('search');
 
         // Get all registered devices for this domain
@@ -754,12 +748,6 @@ class ExtensionsController extends Controller
         if (!userCheckPermission('extension_add') && !userCheckPermission('extension_edit')) {
             return redirect('/');
         }
-
-        //Check FusionPBX login status
-        // session_start();
-        // if (!isset($_SESSION['user'])) {
-        //     return redirect()->route('logout');
-        // }
 
         $devices = Devices::where('device_enabled', 'true')
             ->where('domain_uuid', Session::get('domain_uuid'))
