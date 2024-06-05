@@ -124,14 +124,14 @@
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_id_number" />
+                            :text="row.caller_id_number_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_destination" />
+                            :text="row.caller_destination_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.destination_number" />
+                            :text="row.destination_number_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
@@ -194,7 +194,7 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :header="'Call details'" :loading="loadingModal"
+    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal"
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
     </CallDetailsModal>
 

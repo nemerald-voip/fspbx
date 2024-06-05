@@ -115,6 +115,7 @@ class CdrsController extends Controller
             ->select([
                 'xml_cdr_uuid',
                 'domain_uuid',
+                'sip_call_id',
                 'extension_uuid',
                 'direction',
                 'caller_id_name',
@@ -124,7 +125,10 @@ class CdrsController extends Controller
                 'answer_epoch',
                 'end_epoch',
                 'duration',
+                'billsec',
+                'waitsec',
                 'call_flow',
+                'status',
 
             ])
             ->first();
@@ -232,7 +236,10 @@ class CdrsController extends Controller
                     'pattern' => '/call_direction=inbound/',
                     'app' => 'Inbound Call',
                 ],
-                // Add more patterns here as needed
+                'date_time' => [
+                    'pattern' => '/\b(?:year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=/',
+                    'app' => 'Schedule',
+                ],
             ];
 
             foreach ($patterns as $key => $info) {
