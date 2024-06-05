@@ -27,6 +27,7 @@ class CdrsController extends Controller
     public $sortOrder;
     protected $viewName = 'Cdrs';
     protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'sip_call_id', 'cc_member_session_uuid'];
+    public $item_domain_uuid;
 
     public function __construct()
     {
@@ -134,6 +135,8 @@ class CdrsController extends Controller
             return null;
         }
 
+        $this->item_domain_uuid = $itemData->domain_uuid;
+
         $callFlowData = collect(json_decode($itemData->call_flow, true));
 
         // logger($callFlowData->toArray());
@@ -173,8 +176,10 @@ class CdrsController extends Controller
         });
 
 
+        $itemData->call_flow = $callFlowSummary;
 
         logger($callFlowSummary->all());
+        return $itemData;
     }
 
     /**
@@ -213,7 +218,7 @@ class CdrsController extends Controller
             $patterns = [
                 'ring_group_uuid' => [
                     'pattern' => '/ring_group_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
-                    'app' => 'Ring group',
+                    'app' => 'Ring Group',
                 ],
                 'ivr_menu_uuid' => [
                     'pattern' => '/ivr_menu_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
@@ -238,15 +243,28 @@ class CdrsController extends Controller
                     break; // Stop checking after the first match
                 }
             }
+
+            return $row;
         }
 
+        // Check if destination is Park
         if (strpos($row['destination_number'], "park+") !== false) {
             $row['dialplan_app'] = "Park";
             // $row['dialplan_name'] = $dialplan->dialplan_name;
+            return $row;
         }
 
         // Check if destination is extension
-        
+        $extension = Extensions::where('domain_uuid', $this->item_domain_uuid)
+            ->where('extension', $row['destination_number'])
+            ->first();
+
+        if ($extension) {
+            $row['dialplan_app'] = "Extension";
+            $row['dialplan_name'] = $extension->effective_caller_id_name;
+            $row['dialplan_description'] = $extension->description;
+        }
+
 
         // logger($dialplan);
 
@@ -264,7 +282,6 @@ class CdrsController extends Controller
         $newRows = collect();
 
         $callFlowData->reduce(function ($carry, $row) use ($newRows) {
-            $insertedNewRow = false;
 
             // Check if 'ring_group_uuid' exists in the 'application' array
             if (isset($row['extension']['application'])) {
@@ -369,11 +386,10 @@ class CdrsController extends Controller
             } else {
                 $destinationNumber = $row['caller_profile']['callee_id_number'];
             }
-        }
-         else {
+        } else {
             $destinationNumber = !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'];
         }
-        
+
         return [
             'destination_number' => $destinationNumber,
             // 'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
