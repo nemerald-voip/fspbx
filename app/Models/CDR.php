@@ -32,7 +32,7 @@ class CDR extends Model
         'record_name',
     ];
 
-        /**
+    /**
      * The booted method of the model
      *
      * Define all attributes here like normal code
@@ -52,31 +52,53 @@ class CDR extends Model
 
         static::retrieved(function ($model) {
             // if ($model->created_at && $model->domain_uuid) {
-                $time_zone = get_local_time_zone($model->domain_uuid);
+            $time_zone = get_local_time_zone($model->domain_uuid);
 
-                $model->created_at_formatted = Carbon::parse($model->created_at)->setTimezone($time_zone)->format('g:i:s A M d, Y');
+            $model->created_at_formatted = Carbon::parse($model->created_at)->setTimezone($time_zone)->format('g:i:s A M d, Y');
 
 
-                if ($model->caller_id_number) {
-                    $model->caller_id_number_formatted = $model->formatPhoneNumber($model->caller_id_number);
+            if ($model->caller_id_number) {
+                $model->caller_id_number_formatted = $model->formatPhoneNumber($model->caller_id_number);
+            }
+
+            if ($model->caller_destination) {
+                $model->caller_destination_formatted = $model->formatPhoneNumber($model->caller_destination);
+            }
+
+            if ($model->destination_number) {
+                $model->destination_number_formatted = $model->formatPhoneNumber($model->destination_number);
+            }
+
+            if ($model->start_epoch) {
+                $model->start_date = Carbon::createFromTimestamp($model->start_epoch, 'UTC')->setTimezone($time_zone)->format('M d, Y');
+                $model->start_time = Carbon::createFromTimestamp($model->start_epoch, 'UTC')->setTimezone($time_zone)->format('g:i:s A');
+            }
+
+            if ($model->duration) {
+                $model->duration_formatted = $model->getFormattedDuration($model->duration);
+            }
+
+            if ($model->billsec) {
+                $model->billsec_formatted = $model->getFormattedDuration($model->billsec);
+            }
+
+            if (is_null($model->waitsec) && $model->start_epoch && $model->answer_epoch) {
+                $model->waitsec_formatted = $model->getFormattedDuration($model->answer_epoch - $model->start_epoch);
+            }
+
+            if (
+                isset($model->status) &&
+                isset($model->hangup_cause) &&
+                isset($model->hangup_cause_q850) &&
+                isset($model->sip_hangup_disposition) &&
+                isset($model->voicemail_message) &&
+                isset($model->missed_call)
+            ) {
+                // Missed call
+                if ($model->voicemail_message == false && $model->missed_call == true && $model->hangup_cause == "NORMAL_CLEARING") {
+                    $model->status = "missed call";
                 }
-
-                if ($model->caller_destination) {
-                    $model->caller_destination_formatted = $model->formatPhoneNumber($model->caller_destination);
-                }
-
-                if ($model->destination_number) {
-                    $model->destination_number_formatted = $model->formatPhoneNumber($model->destination_number);
-                }
-
-                if ($model->start_epoch) {
-                    $model->start_date = Carbon::createFromTimestamp($model->start_epoch,'UTC')->setTimezone($time_zone)->format('M d, Y');
-                    $model->start_time = Carbon::createFromTimestamp($model->start_epoch,'UTC')->setTimezone($time_zone)->format('g:i:s A');
-                }
-
-                if ($model->duration) {
-                    $model->duration_formatted = $model->getFormattedDuration($model->duration);
-                }
+            }
 
 
             // }

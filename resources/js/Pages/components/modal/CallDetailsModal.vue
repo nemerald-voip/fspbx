@@ -93,18 +93,20 @@
                                                                         <div class="flex justify-between py-3 text-sm font-medium">
                                                                             <dt class="text-gray-900">{{ 'Waiting time' }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
-                                                                                {{ item.billsec }}
+                                                                                {{ item.waitsec_formatted }}
                                                                             </dd>
                                                                         </div>
                                                                         <div class="flex justify-between py-3 text-sm font-medium">
                                                                             <dt class="text-gray-900">{{ 'In-call duration' }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
-                                                                                {{ item.duration_formatted }}</dd>
+                                                                                
+                                                                                {{ item.billsec_formatted }}
+                                                                            </dd>
                                                                         </div>
                                                                         <div class="flex justify-between py-3 text-sm font-medium">
                                                                             <dt class="text-gray-900">{{ 'Total duration' }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
-                                                                                {{ item.waitsec }}</dd>
+                                                                                {{ item.duration_formatted }}</dd>
                                                                         </div>
                                                                         <div class="flex justify-between py-3 text-sm font-medium">
                                                                             <dt class="text-gray-900">{{ 'Status' }}</dt>

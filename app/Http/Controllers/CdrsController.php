@@ -128,6 +128,11 @@ class CdrsController extends Controller
                 'billsec',
                 'waitsec',
                 'call_flow',
+                'voicemail_message',
+                'missed_call',
+                'hangup_cause',
+                'hangup_cause_q850',
+                'sip_hangup_disposition',
                 'status',
 
             ])
@@ -182,7 +187,7 @@ class CdrsController extends Controller
 
         $itemData->call_flow = $callFlowSummary;
 
-        logger($callFlowSummary->all());
+        // logger($callFlowSummary->all());
         return $itemData;
     }
 
@@ -656,7 +661,7 @@ class CdrsController extends Controller
             'destination_number',
             'domain_uuid',
             'extension_uuid',
-            // 'sip_call_id',
+            'sip_call_id',
             'source_number',
             // 'start_stamp',
             'start_epoch',
@@ -668,8 +673,8 @@ class CdrsController extends Controller
             'record_path',
             'record_name',
             // 'leg',
-            // 'voicemail_message',
-            // 'missed_call',
+            'voicemail_message',
+            'missed_call',
             // 'call_center_queue_uuid',
             // 'cc_side',
             // 'cc_queue_joined_epoch',
@@ -681,7 +686,7 @@ class CdrsController extends Controller
             // 'cc_queue_canceled_epoch',
             'cc_cancel_reason',
             'cc_cause',
-            // 'waitsec',
+            'waitsec',
             'hangup_cause',
             'hangup_cause_q850',
             'sip_hangup_disposition',
