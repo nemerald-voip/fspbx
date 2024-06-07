@@ -541,6 +541,9 @@ class PhoneNumbersController extends Controller
 
         $dialPlan->save();
 
+        $phoneNumber->dialplan_uuid = $dialPlan->dialplan_uuid;
+        $phoneNumber->save();
+
         $freeswitchSettings = FreeswitchSettings::first();
         $fp = event_socket_create(
             $freeswitchSettings['event_socket_ip_address'],

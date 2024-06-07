@@ -163,8 +163,8 @@ class StorePhoneNumberRequest extends FormRequest
             $destination_caller_id_number = '';
         }
 
-        $destination_actions = [];
-        if($this->filled('destination_actions')) {
+        $destination_actions = null;
+        if($this->filled('destination_actions') && is_array($this->get('destination_actions'))) {
             foreach($this->get('destination_actions') as $action) {
                 $destination_actions[] = [
                     'destination_app' => 'transfer',
@@ -172,8 +172,8 @@ class StorePhoneNumberRequest extends FormRequest
                 ];
             }
         }
-        $destination_conditions = [];
-        if($this->filled('destination_conditions')) {
+        $destination_conditions = null;
+        if($this->filled('destination_conditions') && is_array($this->get('destination_conditions'))) {
             foreach($this->get('destination_conditions') as $action) {
                 /*if($action['condition_data'][0]['value']['value'] != 'NULL') {
                     $action['condition_data'] = $action['condition_data'][0]['value']['value'];

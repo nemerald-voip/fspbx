@@ -86,8 +86,16 @@ class Destinations extends Model
             unset($model->destination_actions_formatted);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
-            $model->destination_actions = json_encode($model->destination_actions);
-            $model->destination_conditions = json_encode($model->destination_conditions);
+            if(!empty($model->destination_actions)) {
+                $model->destination_actions = json_encode($model->destination_actions);
+            } else {
+                $model->destination_actions = null;
+            }
+            if(!empty($model->destination_conditions)) {
+                $model->destination_conditions = json_encode($model->destination_conditions);
+            } else {
+                $model->destination_conditions = null;
+            }
         });
 
         static::retrieved(function ($model) {
@@ -112,7 +120,9 @@ class Destinations extends Model
 
             if ($model->destination_actions) {
                 $model->destination_actions = json_decode($model->destination_actions);
-                $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
+                if(is_array($model->destination_actions)) {
+                    $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
+                }
             }
 
             if ($model->destination_conditions) {

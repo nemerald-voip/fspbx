@@ -124,8 +124,8 @@ class UpdatePhoneNumberRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        $destination_actions = [];
-        if($this->filled('destination_actions')) {
+        $destination_actions = null;
+        if($this->filled('destination_actions') && is_array($this->filled('destination_actions'))) {
             foreach($this->get('destination_actions') as $action) {
                 $destination_actions[] = [
                     'destination_app' => 'transfer',
@@ -133,8 +133,8 @@ class UpdatePhoneNumberRequest extends FormRequest
                 ];
             }
         }
-        $destination_conditions = [];
-        if($this->filled('destination_conditions')) {
+        $destination_conditions = null;
+        if($this->filled('destination_conditions') && is_array($this->get('destination_conditions'))) {
             foreach($this->get('destination_conditions') as $action) {
                 $destination_conditions[] = [
                     'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
@@ -153,6 +153,3 @@ class UpdatePhoneNumberRequest extends FormRequest
         }
     }
 }
-
-// [{"condition_app":"transfer","condition_field":"caller_id_number","condition_expression":"2038567463","condition_data":"152 XML api.us.nemerald.net"}]
-// [{"condition_field":"caller_id_number","condition_expression":"2038567463","condition_app":"transfer","condition_data":"200 XML api.us.nemerald.net"}]
