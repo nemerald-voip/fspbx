@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use App\Models\Destinations;
+use App\Models\Dialplans;
 use App\Models\Faxes;
+use App\Models\FreeswitchSettings;
+use App\Models\FusionCache;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -345,6 +348,8 @@ class PhoneNumbersController extends Controller
             ]);
             $instance->save();
 
+            $this->generateDialPlanXML($instance);
+
             return response()->json([
                 'messages' => ['success' => ['New item created']]
             ], 201);
@@ -418,6 +423,8 @@ class PhoneNumbersController extends Controller
 
             $phone_number->update($inputs);
 
+            $this->generateDialPlanXML($phone_number);
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Item updated.']]
@@ -489,5 +496,60 @@ class PhoneNumbersController extends Controller
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function generateDialPlanXML(Destinations $phoneNumber): void
+    {
+        // Data to pass to the Blade template
+        $data = [
+            'phone_number' => $phoneNumber,
+            'domain_name' => Session::get('domain_name'),
+            'fax_data' => $phoneNumber->fax()->first() ?? null
+        ];
+
+        // Render the Blade template and get the XML content as a string
+        $xml = view('layouts.xml.phone-number-dial-plan-template', $data)->render();
+
+        $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
+
+        if (!$dialPlan) {
+            $dialPlan = new Dialplans();
+            $dialPlan->dialplan_uuid = $phoneNumber->dialplan_uuid;
+            $dialPlan->app_uuid = 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4';
+            $dialPlan->domain_uuid = Session::get('domain_uuid');
+            $dialPlan->dialplan_name = $phoneNumber->destination_number;
+            $dialPlan->dialplan_number = $phoneNumber->destination_number;
+            if (isset($phoneNumber->destination_context)) {
+                $dialPlan->dialplan_context = $phoneNumber->destination_context;
+            }
+            $dialPlan->dialplan_continue = 'false';
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_order = 101;
+            $dialPlan->dialplan_enabled = $phoneNumber->destination_enabled;
+            $dialPlan->dialplan_description = $phoneNumber->destination_description;
+            $dialPlan->insert_date = date('Y-m-d H:i:s');
+            $dialPlan->insert_user = Session::get('user_uuid');
+        } else {
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_name = $phoneNumber->destination_number;
+            $dialPlan->dialplan_number = $phoneNumber->destination_number;
+            $dialPlan->dialplan_enabled = $phoneNumber->destination_enabled;
+            $dialPlan->dialplan_description = $phoneNumber->destination_description;
+            $dialPlan->update_date = date('Y-m-d H:i:s');
+            $dialPlan->update_user = Session::get('user_uuid');
+        }
+
+        $dialPlan->save();
+
+        $freeswitchSettings = FreeswitchSettings::first();
+        $fp = event_socket_create(
+            $freeswitchSettings['event_socket_ip_address'],
+            $freeswitchSettings['event_socket_port'],
+            $freeswitchSettings['event_socket_password']
+        );
+        event_socket_request($fp, 'bgapi reloadxml');
+
+        //clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $phoneNumber->destination_context);
     }
 }

@@ -133,6 +133,11 @@ class Destinations extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
+    public function fax()
+    {
+        return $this->belongsTo(Faxes::class, 'fax_uuid', 'fax_uuid');
+    }
+
     /**
      * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
      *
