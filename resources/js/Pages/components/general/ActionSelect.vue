@@ -99,11 +99,11 @@ onMounted(() => {
 })
 
 const actions = ref([
-   /* {
+    {
         selectedCategory: '',
         categoryTargets: [],
         value: ''
-    }*/
+    }
 ]);
 
 function handleCategoryUpdate(newValue, index) {
