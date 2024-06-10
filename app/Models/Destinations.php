@@ -142,7 +142,7 @@ class Destinations extends Model
 
             if ($model->destination_actions) {
                 $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
-                $actions = [];
+                $actions = null;
                 foreach ($model->destination_actions as $action) {
                     if (!empty($action['destination_data'])) {
                         $actions[] = [
@@ -154,7 +154,7 @@ class Destinations extends Model
             }
 
             if ($model->destination_conditions) {
-                $conditions = [];
+                $conditions = null;
                 foreach ($model->destination_conditions as $condition) {
                     if (!empty($condition['condition_data'])) {
                         $conditions[] = [
@@ -253,20 +253,20 @@ class Destinations extends Model
     // Ensure `destination_actions` is stored as json string in database.
     public function setDestinationActionsAttribute($value)
     {
-        if(is_array($value)) {
+        if(is_array($value) && !empty($value)) {
             $this->attributes['destination_actions'] = json_encode($value);
-        }else{
-            $this->attributes['destination_actions'] = $value;
+        } else {
+            $this->attributes['destination_actions'] = null;
         }
     }
 
     // Ensure `destination_conditions` is stored as json string in database.
     public function setDestinationConditionsAttribute($value)
     {
-        if(is_array($value)) {
+        if(is_array($value) && !empty($value)) {
             $this->attributes['destination_conditions'] = json_encode($value);
-        }else{
-            $this->attributes['destination_conditions'] = $value;
+        } else {
+            $this->attributes['destination_conditions'] = null;
         }
     }
 

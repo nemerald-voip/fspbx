@@ -296,7 +296,7 @@ onMounted(() => {
 
             let selectedCategory = "";
             let selectedCategoryTarget = {};
-console.log(condition);
+
             // look in each category to find the target value
             for (let category of categoryNames) {
                 const foundInCategory = props.options.timeout_destinations_targets[category].find(target => target.value === condition.value || target.value === condition.value.value);

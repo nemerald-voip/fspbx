@@ -1,20 +1,15 @@
 <extension name="{{ $phone_number->destination_number }}" continue="{{ $phone_number->dialplan_continue }}" uuid="{{ $phone_number->destination_number }}">
-    @if(isset($phone_number->destination_conditions))
-        @php
-            $destination_conditions = json_decode($phone_number->destination_conditions);
-        @endphp
-        @if(is_array($destination_conditions) && !empty($destination_conditions))
-            @foreach($destination_conditions as $row)
-                <condition regex="all" break="never">
-                    <regex field="${sip_req_user}" expression="{{ $phone_number->destination_number_regex }}"/>
-                    <regex field="{{ $row->condition_field }}" expression="^\+?1?{{ $row->condition_expression }}"/>
-                    <action application="export" data="call_direction=inbound" inline="true"/>
-                    <action application="set" data="domain_uuid={{ $phone_number->domain_uuid }}" inline="true"/>
-                    <action application="set" data="domain_name={{ $domain_name }}" inline="true"/>
-                    <action application="{{ $row->condition_app }}" data="{{ $row->condition_data }}"/>
-                </condition>
-            @endforeach
-        @endif
+    @if(!empty($phone_number->destination_conditions))
+        @foreach($phone_number->destination_conditions as $row)
+            <condition regex="all" break="never">
+                <regex field="${sip_req_user}" expression="{{ $phone_number->destination_number_regex }}"/>
+                <regex field="{{ $row['condition_field'] }}" expression="^\+?1?{{ $row['condition_expression'] }}"/>
+                <action application="export" data="call_direction=inbound" inline="true"/>
+                <action application="set" data="domain_uuid={{ $phone_number->domain_uuid }}" inline="true"/>
+                <action application="set" data="domain_name={{ $domain_name }}" inline="true"/>
+                <action application="{{ $row['condition_app'] }}" data="{{ $row['condition_data'] }}"/>
+            </condition>
+        @endforeach
     @endif
     <condition field="${sip_req_user}" expression="{{ $phone_number->destination_number_regex }}">
         <action application="export" data="call_direction=inbound" inline="true"/>
@@ -23,15 +18,10 @@
         @if(!empty($destination_hold_music))
             <action application="export" data="hold_music={{ $phone_number->destination_hold_music }}" inline="true"/>
         @endif
-        @if(isset($phone_number->destination_actions))
-            @php
-                $destination_actions = json_decode($phone_number->destination_actions);
-            @endphp
-            @if(is_array($destination_actions) && !empty($destination_actions))
-                @foreach($destination_actions as $row)
-                    <action application="{{$row->destination_app}}" data="{{$row->destination_data}}"/>
-                @endforeach
-            @endif
+        @if(!empty($phone_number->destination_actions))
+            @foreach($phone_number->destination_actions as $row)
+                <action application="{{$row['destination_app']}}" data="{{$row['destination_data']}}"/>
+            @endforeach
         @endif
         @if($phone_number->destination_record)
             <action application="set" data="record_path=${recordings_dir}/${domain_name}/archive/${strftime(%Y)}/${strftime(%b)}/${strftime(%d)}" inline="true"/>
