@@ -78,10 +78,7 @@ onMounted(() => {
             // look in each category to find the target value
             for (let category of categoryNames) {
                 // TODO: probably need to refactor to avoid using the 'destination_data' term
-                const foundInCategory = props.optionTargets[category].find(target =>
-                    target.value === item.value.value
-                );
-
+                const foundInCategory = props.optionTargets[category].find(target => target.value === item.value || target.value === item.value.value);
                 // if found, save the category and target
                 if (foundInCategory) {
                     selectedCategory = category;
@@ -120,9 +117,15 @@ function handleCategoryUpdate(newValue, index) {
 
 function handleTargetUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
-        actions.value[index].value = newValue;
+        actions.value[index].value = newValue.value;
     }
-    emit('update:modal-value', actions.value); // emit the current state on target update
+    const actionsMapped = actions.value.map(action => {
+        return {
+            selectedCategory: action.selectedCategory,
+            value: action.value
+        }
+    });
+    emit('update:modal-value', actionsMapped);
 }
 
 const addAction = () => {
