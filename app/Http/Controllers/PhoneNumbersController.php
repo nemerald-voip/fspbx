@@ -382,8 +382,8 @@ class PhoneNumbersController extends Controller
      * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function edit(Request $request, Destinations $phone_number)
-    {
+//    public function edit(Request $request, Destinations $phone_number)
+ //   {
         //
         /*if (!$request->ajax()) {
             return response()->json([
@@ -397,7 +397,7 @@ class PhoneNumbersController extends Controller
             'status' => 'success',
             'phone_number' => $phone_number
         ]);*/
-    }
+ //   }
 
     /**
      * Update the specified resource in storage.
@@ -443,20 +443,22 @@ class PhoneNumbersController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Destinations  $phone_number
-     * @return Response
+     * @return RedirectResponse
      */
     public function destroy(Destinations $phone_number)
     {
-        $phone_number->delete();
+        try {
+            // throw new \Exception;
 
-        return Inertia::render($this->viewName, [
-            'data' => function () {
-                return $this->getData();
-            },
-            'status' => 'success',
-            'phone_number' => $phone_number,
-            'message' => 'Phone number has been deleted'
-        ]);
+            // Delete Phone Number
+            $phone_number->delete();
+
+            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+        }
     }
 
     /**

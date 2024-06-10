@@ -42,7 +42,6 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-
                 <TableColumnHeader header=""
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
@@ -51,18 +50,13 @@
                         :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">Phone Number</span>
                 </TableColumnHeader>
-
-
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Call Actions"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
                 <TableColumnHeader header="Description"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -196,7 +190,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
 import { router, usePage } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -209,7 +203,7 @@ import UpdatePhoneNumberForm from "./components/forms/UpdatePhoneNumberForm.vue"
 import Loading from "./components/general/Loading.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { DocumentTextIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
@@ -219,7 +213,6 @@ import StatusBadge from "./components/general/StatusBadge.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 
 const page = usePage()
-
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
@@ -257,16 +250,7 @@ const showGlobal = ref(props.showGlobal);
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        /*{
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_update',
-            label: 'Edit',
-            icon: 'PencilSquareIcon'
-        }*/
+
     ];
 
     // Conditionally add the delete action if permission is granted
@@ -279,6 +263,9 @@ const bulkActions = computed(() => {
     }
 
     return actions;
+});
+
+onMounted(() => {
 });
 
 const handleEditRequest = (itemUuid) => {
@@ -418,6 +405,18 @@ const handleSelectAll = () => {
         });
 
 };
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        tooltipCopyContent.value = 'Copied'
+        setTimeout(() => {
+            tooltipCopyContent.value = 'Copy to Clipboard'
+        }, 500);
+    }).catch((error) => {
+        // Handle the error case
+        console.error('Failed to copy to clipboard:', error);
+    });
+}
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -572,21 +571,10 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const handleCopyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-        tooltipCopyContent.value = 'Copied'
-        setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
-        }, 500);
-    }).catch((error) => {
-        // Handle the error case
-        console.error('Failed to copy to clipboard:', error);
-    });
-}
-
+/*
 const getDestinationActionName = ((action) => {
     return action;
-})
+})*/
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
