@@ -235,9 +235,6 @@
                 </button>
             </div>
         </div>
-        <pre>
-        {{form}}
-        </pre>
     </form>
 </template>
 
@@ -296,15 +293,13 @@ onMounted(() => {
     if (form.destination_conditions) {
         conditions.value = form.destination_conditions.map(condition => {
             const categoryNames = Object.keys(props.options.timeout_destinations_targets);
+
             let selectedCategory = "";
             let selectedCategoryTarget = {};
-
+console.log(condition);
             // look in each category to find the target value
             for (let category of categoryNames) {
-                const foundInCategory = props.options.timeout_destinations_targets[category].find(
-                    target => target.value === condition.condition_data
-                );
-
+                const foundInCategory = props.options.timeout_destinations_targets[category].find(target => target.value === condition.value || target.value === condition.value.value);
                 // if found, save the category and target
                 if (foundInCategory) {
                     selectedCategory = category;
@@ -319,7 +314,7 @@ onMounted(() => {
                 condition_expression: condition.condition_expression,
                 selectedCategory: selectedCategory,
                 categoryTargets: props.options.timeout_destinations_targets[selectedCategory] || [],
-                destination_data: selectedCategoryTarget.value
+                value: selectedCategoryTarget.value
             };
         });
     }
@@ -363,7 +358,7 @@ const handleConditionUpdate = (newSelectedItem, index) => {
         const updatedCondition = {
             condition_field: newSelectedItem.value,
             condition_expression: conditions.value[index].condition_expression,
-            condition_data: conditions.value[index].condition_data,
+            value: null,
         };
         conditions.value[index].condition_field = newSelectedItem.value;
         form.destination_conditions[index] = updatedCondition;
@@ -380,7 +375,7 @@ const addCondition = () => {
         condition_expression: "",
         selectedCategory: "",
         categoryTargets: [],
-        value: ""
+        value: null
     };
     conditions.value.push(newCondition);
     form.destination_conditions.push(newCondition);
@@ -391,7 +386,7 @@ const handleConditionActionsUpdate = (newSelectedItem, index) => {
         const updatedCondition = {
             condition_field: conditions.value[index].condition_field,
             condition_expression: conditions.value[index].condition_expression,
-            condition_data: newSelectedItem[0].value.value,
+            value: newSelectedItem[0].value,
         };
         conditions.value[index].value = newSelectedItem;
         form.destination_conditions[index] = updatedCondition;

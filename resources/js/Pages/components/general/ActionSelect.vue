@@ -66,8 +66,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modal-value'])
 
 onMounted(() => {
-    console.log('Selected Items', props.selectedItems)
-    console.log('OptionTargets', props.optionTargets)
     if (props.selectedItems) {
         actions.value = props.selectedItems.map(item => {
             const categoryNames = Object.keys(props.optionTargets);
@@ -77,7 +75,6 @@ onMounted(() => {
 
             // look in each category to find the target value
             for (let category of categoryNames) {
-                // TODO: probably need to refactor to avoid using the 'destination_data' term
                 const foundInCategory = props.optionTargets[category].find(target => target.value === item.value || target.value === item.value.value);
                 // if found, save the category and target
                 if (foundInCategory) {
@@ -116,8 +113,9 @@ function handleCategoryUpdate(newValue, index) {
 }
 
 function handleTargetUpdate(newValue, index) {
+    console.log(newValue)
     if (newValue !== null && newValue !== undefined) {
-        actions.value[index].value = newValue.value;
+        actions.value[index].value = newValue;
     }
     const actionsMapped = actions.value.map(action => {
         return {
@@ -140,7 +138,13 @@ const addAction = () => {
 
 const removeAction = (index) => {
     actions.value.splice(index, 1);
-    emit('update:modal-value', actions.value);
+    const actionsMapped = actions.value.map(action => {
+        return {
+            selectedCategory: action.selectedCategory,
+            value: action.value
+        }
+    });
+    emit('update:modal-value', actionsMapped);
 }
 
 </script>

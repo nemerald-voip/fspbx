@@ -44,11 +44,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_actions.*.destination_app' => [
-                'nullable',
-                Rule::in('transfer')
-            ],
-            'destination_actions.*.destination_data' => [
+            'destination_actions.*.value.value' => [
                 'nullable',
                 'string'
             ],
@@ -56,22 +52,17 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_conditions.*.condition_app' => [
-                'nullable',
-                Rule::in('transfer')
-            ],
             'destination_conditions.*.condition_field' => [
                 'nullable',
-                'string'
+                Rule::in('caller_id_number')
             ],
             'destination_conditions.*.condition_expression' => [
-                'nullable'
-                //'required_if:destination_conditions.*.condition_field,!=,""',
-                //'phone:US'
+                'required_if:destination_conditions.*.condition_field,!=,""',
+                'phone:US'
             ],
-            'destination_conditions.*.condition_data' => [
-                'required_if:destination_conditions.*.condition_expression,!=,""',
-                'string'
+            'destination_conditions.*.value.value' => [
+                'required_if:destination_conditions.*.condition_field,!=,""',
+                'string',
             ],
             'destination_cid_name_prefix' => [
                 'nullable',
@@ -135,7 +126,7 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_number.phone' => 'Should be valid US phone number',
             'destination_number.unique' => 'This phone number is already used',
             'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
-            'destination_conditions.*.condition_data' => 'Please select condition action',
+            'destination_conditions.*.value.value' => 'Please select condition action',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
@@ -162,37 +153,7 @@ class StorePhoneNumberRequest extends FormRequest
         } catch (NumberParseException $e) {
             $destination_caller_id_number = '';
         }
-
-        $destination_actions = null;
-        if($this->filled('destination_actions') && is_array($this->get('destination_actions'))) {
-            foreach($this->get('destination_actions') as $action) {
-                $destination_actions[] = [
-                    'destination_app' => 'transfer',
-                    'destination_data' => $action['value']['value'] ?? $action['destination_data'] ?? '',
-                ];
-            }
-        }
-        $destination_conditions = null;
-        if($this->filled('destination_conditions') && is_array($this->get('destination_conditions'))) {
-            foreach($this->get('destination_conditions') as $action) {
-                /*if($action['condition_data'][0]['value']['value'] != 'NULL') {
-                    $action['condition_data'] = $action['condition_data'][0]['value']['value'];
-                } else {
-                    $action['condition_data'] = null;
-                }
-                var_dump($action['condition_data']);*/
-                $destination_conditions[] = [
-                    'condition_field' => $action['condition_field'] ?? $action['condition_field']['value'] ?? '',
-                    'condition_expression' => $action['condition_expression'] ?? '',
-                    'condition_app' => 'transfer',
-                    //'condition_data' => $action['condition_data'] ?? ''
-                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
-                ];
-            }
-        }
         $this->merge([
-            'destination_actions' => $destination_actions,
-            'destination_conditions' => $destination_conditions,
             'destination_number' => $destination_number_regex,
             'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destination_number_regex.')$',
             'destination_caller_id_number' => $destination_caller_id_number

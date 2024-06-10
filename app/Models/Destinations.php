@@ -86,13 +86,35 @@ class Destinations extends Model
             unset($model->destination_actions_formatted);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
+
             if(!empty($model->destination_actions)) {
-                $model->destination_actions = json_encode($model->destination_actions);
+                $actions = [];
+                foreach ($model->destination_actions as $action) {
+                    if(! empty($action['value']['value'])) {
+                        $actions[] = [
+                            'destination_app' => 'transfer',
+                            'destination_data' => $action['value']['value'],
+                        ];
+                    }
+                }
+                $model->destination_actions = json_encode($actions);
             } else {
                 $model->destination_actions = null;
             }
+
             if(!empty($model->destination_conditions)) {
-                $model->destination_conditions = json_encode($model->destination_conditions);
+                $conditions = [];
+                foreach ($model->destination_conditions as $condition) {
+                    if(! empty($condition['value']['value'])) {
+                        $conditions[] = [
+                            'condition_field' => $condition['condition_field'],
+                            'condition_expression' => $condition['condition_expression'],
+                            'condition_app' => 'transfer',
+                            'condition_data' => $condition['value']['value']
+                        ];
+                    }
+                }
+                $model->destination_conditions = json_encode($conditions);
             } else {
                 $model->destination_conditions = null;
             }
@@ -120,13 +142,40 @@ class Destinations extends Model
 
             if ($model->destination_actions) {
                 $model->destination_actions = json_decode($model->destination_actions);
+
                 if(is_array($model->destination_actions)) {
                     $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
+                }
+
+                $actions = [];
+                if (is_array($model->destination_actions)) {
+                        foreach ($model->destination_actions as $action) {
+                            if (!empty($action->destination_data)) {
+                                $actions[] = [
+                                    'value' => ['value' => $action->destination_data],
+                                ];
+                            }
+                        }
+                    $model->destination_actions = $actions;
                 }
             }
 
             if ($model->destination_conditions) {
                 $model->destination_conditions = json_decode($model->destination_conditions);
+
+                $conditions = [];
+                if (is_array($model->destination_conditions)) {
+                    foreach ($model->destination_conditions as $condition) {
+                        if (!empty($condition->condition_data)) {
+                            $conditions[] = [
+                                'condition_field' => $condition->condition_field,
+                                'condition_expression' => $condition->condition_expression,
+                                'value' => ['value' => $condition->condition_data],
+                            ];
+                        }
+                    }
+                    $model->destination_conditions = $conditions;
+                }
             }
 
             $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);

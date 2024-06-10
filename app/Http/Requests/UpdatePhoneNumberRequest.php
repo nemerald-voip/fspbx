@@ -31,11 +31,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_actions.*.destination_app' => [
-                'nullable',
-                Rule::in('transfer')
-            ],
-            'destination_actions.*.destination_data' => [
+            'destination_actions.*.value.value' => [
                 'nullable',
                 'string'
             ],
@@ -43,21 +39,17 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_conditions.*.condition_app' => [
-                'nullable',
-                Rule::in('transfer')
-            ],
             'destination_conditions.*.condition_field' => [
                 'nullable',
-                'string'
+                Rule::in('caller_id_number')
             ],
             'destination_conditions.*.condition_expression' => [
-                'nullable',
-                'string'
+                'required_if:destination_conditions.*.condition_field,!=,""',
+                'phone:US'
             ],
-            'destination_conditions.*.condition_data' => [
-                'required_if:destination_conditions.*.condition_expression,!=,""',
-                'string'
+            'destination_conditions.*.value.value' => [
+                'required_if:destination_conditions.*.condition_field,!=,""',
+                'string',
             ],
             'destination_cid_name_prefix' => [
                 'nullable',
@@ -117,37 +109,13 @@ class UpdatePhoneNumberRequest extends FormRequest
     {
         return [
             'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
-            'destination_conditions.*.condition_data' => 'Please select condition action',
+            'destination_conditions.*.value.value' => 'Please select condition action',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
     public function prepareForValidation(): void
     {
-        $destination_actions = null;
-        if($this->filled('destination_actions') && is_array($this->filled('destination_actions'))) {
-            foreach($this->get('destination_actions') as $action) {
-                $destination_actions[] = [
-                    'destination_app' => 'transfer',
-                    'destination_data' => $action['value']['value'] ?? $action['destination_data'] ?? '',
-                ];
-            }
-        }
-        $destination_conditions = null;
-        if($this->filled('destination_conditions') && is_array($this->get('destination_conditions'))) {
-            foreach($this->get('destination_conditions') as $action) {
-                $destination_conditions[] = [
-                    'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
-                    'condition_expression' => $action['condition_expression'] ?? null,
-                    'condition_app' => 'transfer',
-                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
-                ];
-            }
-        }
-        $this->merge([
-            'destination_actions' => $destination_actions,
-            'destination_conditions' => $destination_conditions
-        ]);
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }

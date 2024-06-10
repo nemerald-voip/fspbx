@@ -136,8 +136,8 @@
                                                    :search="false"
                                                    :allowEmpty="true"
                                                    :selectedItem="condition.condition_field"
-                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
                                                    :placeholder="'Choose condition'"
+                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
                                         />
                                     </div>
                                     <div v-if="condition.condition_field">
@@ -164,7 +164,7 @@
                                     <ConditionDestinations
                                         :options="options.timeout_destinations_categories"
                                         :optionTargets="options.timeout_destinations_targets"
-                                        :selectedItems="[condition]"
+                                        :selectedItems="condition.value"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:modal-value="value => handleConditionActionsUpdate(value, index)"
                                     />
@@ -239,9 +239,6 @@
                 </button>
             </div>
         </div>
-        <pre>
-        {{form}}
-        </pre>
     </form>
 </template>
 
@@ -334,7 +331,7 @@ const handleConditionUpdate = (newSelectedItem, index) => {
         const updatedCondition = {
             condition_field: newSelectedItem.value,
             condition_expression: conditions.value[index].condition_expression,
-            condition_data: conditions.value[index].condition_data,
+            value: null,
         };
         conditions.value[index].condition_field = newSelectedItem.value;
         form.destination_conditions[index] = updatedCondition;
@@ -351,10 +348,9 @@ const addCondition = () => {
         condition_expression: "",
         selectedCategory: "",
         categoryTargets: [],
-        value: ""
+        value: null
     };
     conditions.value.push(newCondition);
-    //form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
@@ -362,7 +358,7 @@ const handleConditionActionsUpdate = (newSelectedItem, index) => {
         const updatedCondition = {
             condition_field: conditions.value[index].condition_field,
             condition_expression: conditions.value[index].condition_expression,
-            condition_data: newSelectedItem,
+            value: newSelectedItem[0].value,
         };
         conditions.value[index].value = newSelectedItem;
         form.destination_conditions[index] = updatedCondition;

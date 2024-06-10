@@ -346,9 +346,9 @@ class PhoneNumbersController extends Controller
                 'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
                 'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
             ]);
-            $instance->save();
+;           $instance->save();
 
-            $this->generateDialPlanXML($instance);
+            //$this->generateDialPlanXML($instance);
 
             return response()->json([
                 'messages' => ['success' => ['New item created']]
@@ -423,14 +423,14 @@ class PhoneNumbersController extends Controller
 
             $phone_number->update($inputs);
 
-            $this->generateDialPlanXML($phone_number);
+            //$this->generateDialPlanXML($phone_number);
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Item updated.']]
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e);
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
