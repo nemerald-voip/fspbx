@@ -378,7 +378,7 @@ const addCondition = () => {
         value: null
     };
     conditions.value.push(newCondition);
-    form.destination_conditions.push(newCondition);
+    //form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {

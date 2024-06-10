@@ -1104,7 +1104,7 @@ if (!function_exists('getTimeoutDestinationsLabels')) {
         foreach($actions as $action) {
             foreach ($destinations["targets"] as $category => $values) {
                 foreach ($values as $data) {
-                    if ($data["value"] == $action->destination_data) {
+                    if ($data["value"] == $action['destination_data']) {
                         $output[] = $destinations["categories"][(string) $category]["name"].' '.$data["name"];
                     }
                 }

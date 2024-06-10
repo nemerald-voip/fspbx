@@ -355,7 +355,7 @@ class PhoneNumbersController extends Controller
             ], 201);
         } catch (\Exception $e) {
             // Log the error message
-            logger($e->getMessage());
+            logger($e);
 
             // Handle any other exception that may occur
             return response()->json([
@@ -423,12 +423,8 @@ class PhoneNumbersController extends Controller
 
             $phone_number->update($inputs);
 
-            //$this->generateDialPlanXML($phone_number);
+            $this->generateDialPlanXML($phone_number);
 
-            // Return a JSON response indicating success
-            return response()->json([
-                'messages' => ['success' => ['Item updated.']]
-            ], 200);
         } catch (\Exception $e) {
             logger($e);
             // Handle any other exception that may occur

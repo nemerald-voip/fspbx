@@ -141,41 +141,30 @@ class Destinations extends Model
             //'timeout_destinations_targets' => $timeoutDestinations['targets']
 
             if ($model->destination_actions) {
-                $model->destination_actions = json_decode($model->destination_actions);
-
-                if(is_array($model->destination_actions)) {
-                    $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
-                }
-
+                $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
                 $actions = [];
-                if (is_array($model->destination_actions)) {
-                        foreach ($model->destination_actions as $action) {
-                            if (!empty($action->destination_data)) {
-                                $actions[] = [
-                                    'value' => ['value' => $action->destination_data],
-                                ];
-                            }
-                        }
-                    $model->destination_actions = $actions;
+                foreach ($model->destination_actions as $action) {
+                    if (!empty($action['destination_data'])) {
+                        $actions[] = [
+                            'value' => ['value' => $action['destination_data']],
+                        ];
+                    }
                 }
+                $model->destination_actions = $actions;
             }
 
             if ($model->destination_conditions) {
-                $model->destination_conditions = json_decode($model->destination_conditions);
-
                 $conditions = [];
-                if (is_array($model->destination_conditions)) {
-                    foreach ($model->destination_conditions as $condition) {
-                        if (!empty($condition->condition_data)) {
-                            $conditions[] = [
-                                'condition_field' => $condition->condition_field,
-                                'condition_expression' => $condition->condition_expression,
-                                'value' => ['value' => $condition->condition_data],
-                            ];
-                        }
+                foreach ($model->destination_conditions as $condition) {
+                    if (!empty($condition['condition_data'])) {
+                        $conditions[] = [
+                            'condition_field' => $condition['condition_field'],
+                            'condition_expression' => $condition['condition_expression'],
+                            'value' => ['value' => $condition['condition_data']],
+                        ];
                     }
-                    $model->destination_conditions = $conditions;
                 }
+                $model->destination_conditions = $conditions;
             }
 
             $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);
@@ -239,6 +228,46 @@ class Destinations extends Model
     public function setDestinationRecordAttribute($value): void
     {
         $this->attributes['destination_record'] = $value ? 'true' : 'false';
+    }
+
+    // Ensure `destination_actions` is treated as an array.
+    public function getDestinationActionsAttribute($value)
+    {
+        if(is_string($value)) {
+            return json_decode($value, true);
+        }
+
+        return $value;
+    }
+
+    // Ensure `destination_conditions` is treated as an array.
+    public function getDestinationConditionsAttribute($value)
+    {
+        if(is_string($value)) {
+            return json_decode($value, true);
+        }
+
+        return $value;
+    }
+
+    // Ensure `destination_actions` is stored as json string in database.
+    public function setDestinationActionsAttribute($value)
+    {
+        if(is_array($value)) {
+            $this->attributes['destination_actions'] = json_encode($value);
+        }else{
+            $this->attributes['destination_actions'] = $value;
+        }
+    }
+
+    // Ensure `destination_conditions` is stored as json string in database.
+    public function setDestinationConditionsAttribute($value)
+    {
+        if(is_array($value)) {
+            $this->attributes['destination_conditions'] = json_encode($value);
+        }else{
+            $this->attributes['destination_conditions'] = $value;
+        }
     }
 
     // public function getDestinationNumberAttribute($value): ?string
