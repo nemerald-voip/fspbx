@@ -173,8 +173,9 @@ class UploadArchiveFiles extends Command
 
                 }
             } catch (\Exception $ex) {
+                logger($ex->getMessage());
                 if (!empty($call_recording->record_name)) {
-
+                    logger($ex->getMessage());
                     array_push($failed, ['msg' => $ex->getMessage(), 'name' => $call_recording->record_name]);
                 }
             }

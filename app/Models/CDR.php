@@ -42,12 +42,15 @@ class CDR extends Model
     {
         static::saving(function ($model) {
             // Remove attributes before saving to database
+            unset($model->created_at_formatted);
             unset($model->caller_id_number_formatted);
             unset($model->caller_destination_formatted);
             unset($model->destination_number_formatted);
             unset($model->start_date);
             unset($model->start_time);
-            unset($model->duration);
+            unset($model->duration_formatted);
+            unset($model->billsec_formatted);
+            unset($model->waitsec_formatted);
         });
 
         static::retrieved(function ($model) {
