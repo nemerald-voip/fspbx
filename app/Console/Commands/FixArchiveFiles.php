@@ -61,10 +61,6 @@ class UploadArchiveFiles extends Command
         // logger($recordings);
 
         foreach ($recordings as $call_recording) {
-
-            // logger($recordings->count());
-
-            // logger($call_recording->archive_recording->object_key);
             try {
 
                 if ($call_recording->archive_recording) {
