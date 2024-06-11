@@ -88,9 +88,8 @@ class PhoneNumbersController extends Controller
                         'name' => 'Caller ID Number',
                         'value' => 'caller_id_number'
                     ]
-                ]
-
-
+                ],
+                'domain' => Session::get('domain_uuid')
             ]
         );
     }

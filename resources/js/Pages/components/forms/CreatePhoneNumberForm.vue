@@ -275,11 +275,11 @@ const conditionsMaxLimit = 6;
 const selectedTab = ref(0)
 
 const form = reactive({
-    domain_uuid: null,
+    domain_uuid: page.props.domain,
     fax_uuid: null,
     destination_prefix: "1",
     destination_number: null,
-    destination_actions: [],
+    destination_actions: null,
     destination_hold_music: null,
     destination_description: null,
     destination_enabled: true,
