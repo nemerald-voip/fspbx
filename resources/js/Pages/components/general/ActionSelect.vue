@@ -94,13 +94,7 @@ onMounted(() => {
     }
 })
 
-const actions = ref([
-    {
-        selectedCategory: '',
-        categoryTargets: [],
-        value: ''
-    }
-]);
+const actions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
@@ -113,7 +107,6 @@ function handleCategoryUpdate(newValue, index) {
 }
 
 function handleTargetUpdate(newValue, index) {
-    console.log(newValue)
     if (newValue !== null && newValue !== undefined) {
         actions.value[index].value = newValue;
     }
