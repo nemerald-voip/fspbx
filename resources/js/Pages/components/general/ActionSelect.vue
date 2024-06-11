@@ -75,7 +75,7 @@ onMounted(() => {
 
             // look in each category to find the target value
             for (let category of categoryNames) {
-                const foundInCategory = props.optionTargets[category].find(target => target.value === item.value || target.value === item.value.value);
+                const foundInCategory = props.optionTargets[category].find(target => target.value === item.value || target.value === item.value?.value);
                 // if found, save the category and target
                 if (foundInCategory) {
                     selectedCategory = category;
