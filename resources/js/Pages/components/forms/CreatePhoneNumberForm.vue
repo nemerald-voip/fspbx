@@ -164,7 +164,7 @@
                                     <ConditionDestinations
                                         :options="options.timeout_destinations_categories"
                                         :optionTargets="options.timeout_destinations_targets"
-                                        :selectedItems="condition.value"
+                                        :selectedItems="[condition]"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:modal-value="value => handleConditionActionsUpdate(value, index)"
                                     />
@@ -294,6 +294,16 @@ const form = reactive({
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const submitForm = () => {
+    // Transform conditions before submit
+    form.destination_conditions = conditions.value.map(condition => {
+        return {
+            "condition_field": condition.condition_field,
+            "condition_expression": condition.condition_expression,
+            "value": {
+                "value": condition.value
+            }
+        }
+    })
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -328,13 +338,7 @@ const handleFaxUpdate = (newSelectedItem) => {
 
 const handleConditionUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        const updatedCondition = {
-            condition_field: newSelectedItem.value,
-            condition_expression: conditions.value[index].condition_expression,
-            value: null,
-        };
         conditions.value[index].condition_field = newSelectedItem.value;
-        form.destination_conditions[index] = updatedCondition;
     }
 }
 
@@ -355,19 +359,12 @@ const addCondition = () => {
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        const updatedCondition = {
-            condition_field: conditions.value[index].condition_field,
-            condition_expression: conditions.value[index].condition_expression,
-            value: newSelectedItem[0].value,
-        };
-        conditions.value[index].value = newSelectedItem;
-        form.destination_conditions[index] = updatedCondition;
+        conditions.value[index].value = newSelectedItem[0].value.value;
     }
 }
 
 const removeCondition = (index) => {
     conditions.value.splice(index, 1);
-    form.destination_conditions.splice(index, 1);
 }
 
 </script>
