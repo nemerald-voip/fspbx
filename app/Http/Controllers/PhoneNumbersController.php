@@ -47,16 +47,6 @@ class PhoneNumbersController extends Controller
             return redirect('/');
         }
 
-        // die('asdasdasd');
-
-        /*$this->filters = [];
-
-        $this->filters['search'] = $request->filterData['search'] ?? null;
-
-        if (!empty($request->filterData['showGlobal'])) {
-            $this->filters['showGlobal'] = $request->filterData['showGlobal'] == 'true';
-        }*/
-
         return Inertia::render(
             $this->viewName,
             [
@@ -188,26 +178,6 @@ class PhoneNumbersController extends Controller
         } else {
             $data = $data->get(); // This will return a collection
         }
-
-        //if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
-            // Access domains through the session and filter extensions by those domains
-        //    $domainUuids = Session::get('domains')->pluck('domain_uuid');
-        //}
-
-        //foreach ($data as $phoneNumber) {
-            /*$device->device_address_tokenized = $device->device_address;
-            $device->device_address = formatMacAddress($device->device_address);
-            if ($device->lines()->first() && $device->lines()->first()->extension()) {
-                $device->extension = $device->lines()->first()->extension()->extension;
-                $device->extension_description = ($device->lines()->first()->extension()->effective_caller_id_name) ? '('.trim($device->lines()->first()->extension()->effective_caller_id_name).')' : '';
-                $device->extension_uuid = $device->lines()->first()->extension()->extension_uuid;
-                $device->extension_edit_path = route('extensions.edit', $device->lines()->first()->extension());
-                $device->send_notify_path = route('extensions.send-event-notify',
-                    $device->lines()->first()->extension());
-            }*/
-            //$phoneNumber->edit_path = route('phone-numbers.edit', $phoneNumber);
-            //$phoneNumber->destroy_path = route('phone-numbers.destroy', $phoneNumber);
-        //}
         return $data;
     }
 
@@ -232,7 +202,7 @@ class PhoneNumbersController extends Controller
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e);
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
@@ -443,7 +413,7 @@ class PhoneNumbersController extends Controller
             return redirect()->back()->with('message', ['server' => ['Item deleted']]);
         } catch (\Exception $e) {
             // Log the error message
-            logger($e->getMessage());
+            logger($e);
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
     }
@@ -479,7 +449,7 @@ class PhoneNumbersController extends Controller
             DB::rollBack();
 
             // Log the error message
-            logger($e->getMessage());
+            logger($e);
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]

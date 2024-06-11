@@ -7,6 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use libphonenumber\NumberParseException;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class UpdatePhoneNumberRequest extends FormRequest
 {
@@ -92,13 +94,26 @@ class UpdatePhoneNumberRequest extends FormRequest
     /**
      * Handle a failed validation attempt.
      *
-     * @param Validator $validator
+     * @param  Validator  $validator
      * @return void
      */
     protected function failedValidation(Validator $validator): void
     {
         // Get the original error messages from the validator
-        $errors = $validator->errors();
+        $errors = $validator->errors()->toArray();
+        $customMessages = [];
+        foreach ($errors as $field => $message) {
+            if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
+                $index = (int) $matches[1]; // Add 1 to make it 1-indexed
+                $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
+            }
+            if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
+                $index = (int) $matches[1]; // Add 1 to make it 1-indexed
+                $customMessages[$field][] = "Please select action on condition ".($index + 1);
+            }
+        }
+
+        $errors = array_merge($errors, $customMessages);
 
         $responseData = array('errors' => $errors);
 
@@ -108,14 +123,28 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
-            'destination_conditions.*.value.value' => 'Please select condition action',
+            'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
+            'destination_conditions.*.value.value' => 'Please select action on condition',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
     public function prepareForValidation(): void
     {
+        if ($this->has('destination_conditions')) {
+            $destinationConditions = [];
+            foreach ($this->get('destination_conditions') as $condition) {
+                try {
+                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
+                } catch (NumberParseException $e) {
+                    //
+                }
+                $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
+                $destinationConditions[] = $condition;
+            }
+            $this->merge(['destination_conditions' => $destinationConditions]);
+        }
+
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }

@@ -111,7 +111,20 @@ class StorePhoneNumberRequest extends FormRequest
     protected function failedValidation(Validator $validator): void
     {
         // Get the original error messages from the validator
-        $errors = $validator->errors();
+        $errors = $validator->errors()->toArray();
+        $customMessages = [];
+        foreach ($errors as $field => $message) {
+            if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
+                $index = (int) $matches[1]; // Add 1 to make it 1-indexed
+                $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
+            }
+            if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
+                $index = (int) $matches[1]; // Add 1 to make it 1-indexed
+                $customMessages[$field][] = "Please select action on condition ".($index + 1);
+            }
+        }
+
+        $errors = array_merge($errors, $customMessages);
 
         $responseData = array('errors' => $errors);
 
@@ -125,8 +138,8 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_number.required' => 'Should be valid US phone number',
             'destination_number.phone' => 'Should be valid US phone number',
             'destination_number.unique' => 'This phone number is already used',
-            'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
-            'destination_conditions.*.value.value' => 'Please select condition action',
+            'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
+            'destination_conditions.*.value.value' => 'Please select action on condition',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
@@ -137,27 +150,43 @@ class StorePhoneNumberRequest extends FormRequest
         $prefix = $this->get('destination_prefix');
         $phone = preg_replace("/[^0-9]/", "", $prefix.$phone);
         try {
-            $destination_number_regex = (new PhoneNumber(
+            $destinationNumberRegex = (new PhoneNumber(
                 $phone,
                 "US"
             ))->formatE164();
         } catch (NumberParseException $e) {
-            $destination_number_regex = '';
+            $destinationNumberRegex = '';
         }
-        $destination_number_regex = str_replace('+1', '', $destination_number_regex);
+        $destinationNumberRegex = str_replace('+1', '', $destinationNumberRegex);
         try {
-            $destination_caller_id_number = (new PhoneNumber(
+            $destinationCallerIdNumber = (new PhoneNumber(
                 $phone,
                 "US"
             ))->formatE164();
         } catch (NumberParseException $e) {
-            $destination_caller_id_number = '';
+            $destinationCallerIdNumber = '';
         }
+
         $this->merge([
-            'destination_number' => $destination_number_regex,
-            'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destination_number_regex.')$',
-            'destination_caller_id_number' => $destination_caller_id_number
+            'destination_number' => $destinationNumberRegex,
+            'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destinationNumberRegex.')$',
+            'destination_caller_id_number' => $destinationCallerIdNumber
         ]);
+
+        if ($this->has('destination_conditions')) {
+            $destinationConditions = [];
+            foreach ($this->get('destination_conditions') as $condition) {
+                try {
+                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
+                } catch (NumberParseException $e) {
+                    //
+                }
+                $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
+                $destinationConditions[] = $condition;
+            }
+            $this->merge(['destination_conditions' => $destinationConditions]);
+        }
+
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
