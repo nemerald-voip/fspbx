@@ -91,26 +91,15 @@ class CDR extends Model
 
             if ($model->sip_hangup_disposition && $model->direction) {
                 $dispositions = [
-                    'send_bye' => [
-                        'inbound' => 'The recipient hung up.',
-                        'outbound' => 'The recipient hung up.'
-                    ],
-                    'recv_bye' => [
-                        'inbound' => 'The caller hung up.',
-                        'outbound' => 'The caller hung up.'
-                    ],
-                    'send_refuse' => [
-                        'inbound' => 'We refused the call (e.g., busy or unavailable).',
-                        'outbound' => 'The person we called refused the call (e.g., busy or unavailable).'
-                    ],
-                    'send_cancel' => [
-                        'inbound' => 'Not applicable.',
-                        'outbound' => 'We canceled the call before it was answered.'
-                    ],
+                    'send_bye' => 'The recipient hung up.',
+                    'recv_bye' => 'The caller hung up.',
+                    'send_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
+                    'send_cancel' => 'The call was canceled before it was answered.',
+                    'recv_cancel' => 'The call was canceled before it was answered.',
                 ];
-
-                if (isset($dispositions[$model->sip_hangup_disposition][$model->direction])) {
-                    $model->call_disposition = $dispositions[$model->sip_hangup_disposition][$model->direction];
+            
+                if (isset($dispositions[$model->sip_hangup_disposition])) {
+                    $model->call_disposition = $dispositions[$model->sip_hangup_disposition];
                 } else {
                     $model->call_disposition = 'Unknown disposition.';
                 }
