@@ -54,6 +54,7 @@ class Destinations extends Model
         'destination_type_text',
         'destination_app',
         'destination_data',
+        'destination_distinctive_ring',
         'destination_alternate_app',
         'destination_alternate_data',
         'destination_order',
@@ -86,38 +87,6 @@ class Destinations extends Model
             unset($model->destination_actions_formatted);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
-
-            if(!empty($model->destination_actions)) {
-                $actions = [];
-                foreach ($model->destination_actions as $action) {
-                    if(! empty($action['value']['value'])) {
-                        $actions[] = [
-                            'destination_app' => 'transfer',
-                            'destination_data' => $action['value']['value'],
-                        ];
-                    }
-                }
-                $model->destination_actions = json_encode($actions);
-            } else {
-                $model->destination_actions = null;
-            }
-
-            if(!empty($model->destination_conditions)) {
-                $conditions = [];
-                foreach ($model->destination_conditions as $condition) {
-                    if(! empty($condition['value']['value'])) {
-                        $conditions[] = [
-                            'condition_field' => $condition['condition_field'],
-                            'condition_expression' => $condition['condition_expression'],
-                            'condition_app' => 'transfer',
-                            'condition_data' => $condition['value']['value']
-                        ];
-                    }
-                }
-                $model->destination_conditions = json_encode($conditions);
-            } else {
-                $model->destination_conditions = null;
-            }
         });
 
         static::retrieved(function ($model) {
@@ -136,11 +105,8 @@ class Destinations extends Model
                 }
             }
 
-            //$timeoutDestinations = getTimeoutDestinations();
-            //'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
-            //'timeout_destinations_targets' => $timeoutDestinations['targets']
-
             if ($model->destination_actions) {
+                $model->destination_actions = json_decode($model->destination_actions, true);
                 $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
                 $actions = null;
                 foreach ($model->destination_actions as $action) {
@@ -154,6 +120,7 @@ class Destinations extends Model
             }
 
             if ($model->destination_conditions) {
+                $model->destination_conditions = json_decode($model->destination_conditions, true);
                 $conditions = null;
                 foreach ($model->destination_conditions as $condition) {
                     if (!empty($condition['condition_data'])) {
@@ -229,85 +196,4 @@ class Destinations extends Model
     {
         $this->attributes['destination_record'] = $value ? 'true' : 'false';
     }
-
-    // Ensure `destination_actions` is treated as an array.
-    public function getDestinationActionsAttribute($value)
-    {
-        if(is_string($value)) {
-            return json_decode($value, true);
-        }
-
-        return $value;
-    }
-
-    // Ensure `destination_conditions` is treated as an array.
-    public function getDestinationConditionsAttribute($value)
-    {
-        if(is_string($value)) {
-            return json_decode($value, true);
-        }
-
-        return $value;
-    }
-
-    // Ensure `destination_actions` is stored as json string in database.
-    public function setDestinationActionsAttribute($value)
-    {
-        if(is_array($value) && !empty($value)) {
-            $this->attributes['destination_actions'] = json_encode($value);
-        } else {
-            $this->attributes['destination_actions'] = null;
-        }
-    }
-
-    // Ensure `destination_conditions` is stored as json string in database.
-    public function setDestinationConditionsAttribute($value)
-    {
-        if(is_array($value) && !empty($value)) {
-            $this->attributes['destination_conditions'] = json_encode($value);
-        } else {
-            $this->attributes['destination_conditions'] = null;
-        }
-    }
-
-    // public function getDestinationNumberAttribute($value): ?string
-    // {
-    //     //Get libphonenumber object
-    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-    //     //try to convert phone number to National format
-    //     try {
-    //         $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-    //         if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-    //             return $phoneNumberUtil
-    //                 ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-    //         } else {
-    //             return $value;
-    //         }
-    //     } catch (NumberParseException $e) {
-
-    //         // Do nothing and leave the number as is
-    //         return $value;
-    //     }
-    // }
-
-    // public function getDestinationCallerIdNumberAttribute($value): ?string
-    // {
-    //     //Get libphonenumber object
-    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-    //     //try to convert phone number to National format
-    //     try {
-    //         $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-    //         if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-    //             return $phoneNumberUtil
-    //                 ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-    //         } else {
-    //             return $value;
-    //         }
-    //     } catch (NumberParseException $e) {
-    //         // Do nothing and leave the number as is
-    //         return $value;
-    //     }
-    // }
 }

@@ -329,6 +329,8 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
+            $inputs = $this->processActionConditionInputs($inputs);
+
             $instance = $this->model;
             $instance->fill([
                 'domain_uuid' => $inputs['domain_uuid'],
@@ -336,8 +338,8 @@ class PhoneNumbersController extends Controller
                 'destination_type' => 'inbound',
                 'destination_prefix' => $inputs['destination_prefix'],
                 'destination_number' => $inputs['destination_number'],
-                'destination_actions' => $inputs['destination_actions'] ?? null,
-                'destination_conditions' => $inputs['destination_conditions'] ?? null,
+                'destination_actions' => $inputs['destination_actions'],
+                'destination_conditions' => $inputs['destination_conditions'],
                 'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,
@@ -348,7 +350,7 @@ class PhoneNumbersController extends Controller
             ]);
 ;           $instance->save();
 
-            //$this->generateDialPlanXML($instance);
+            $this->generateDialPlanXML($instance);
 
             return response()->json([
                 'messages' => ['success' => ['New item created']]
@@ -382,22 +384,10 @@ class PhoneNumbersController extends Controller
      * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-//    public function edit(Request $request, Destinations $phone_number)
- //   {
-        //
-        /*if (!$request->ajax()) {
-            return response()->json([
-                'message' => 'XHR request expected'
-            ], 405);
-        }
-
-        $phone_number->update_path = route('phone-numbers.update', $phone_number);
-
-        return response()->json([
-            'status' => 'success',
-            'phone_number' => $phone_number
-        ]);*/
- //   }
+    public function edit(Request $request, Destinations $phone_number)
+    {
+         //
+    }
 
     /**
      * Update the specified resource in storage.
@@ -420,6 +410,8 @@ class PhoneNumbersController extends Controller
             $inputs = array_map(function ($value) {
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
+
+            $inputs = $this->processActionConditionInputs($inputs);
 
             $phone_number->update($inputs);
 
@@ -496,7 +488,7 @@ class PhoneNumbersController extends Controller
         }
     }
 
-    public function generateDialPlanXML(Destinations $phoneNumber): void
+    private function generateDialPlanXML(Destinations $phoneNumber): void
     {
         // Data to pass to the Blade template
         $data = [
@@ -552,5 +544,46 @@ class PhoneNumbersController extends Controller
 
         //clear fusionpbx cache
         FusionCache::clear("dialplan:" . $phoneNumber->destination_context);
+    }
+
+    /**
+     * Probably need to move this to somewhere else like helper
+     * @param  array  $inputs
+     * @return array
+     */
+    private function processActionConditionInputs(array $inputs): array
+    {
+        if (!empty($inputs['destination_actions'])) {
+            $actions = [];
+            foreach ($inputs['destination_actions'] as $action) {
+                if (!empty($action['value']['value'])) {
+                    $actions[] = [
+                        'destination_app' => 'transfer',
+                        'destination_data' => $action['value']['value'],
+                    ];
+                }
+            }
+            $inputs['destination_actions'] = json_encode($actions);
+        } else {
+            $inputs['destination_actions'] = null;
+        }
+        if (!empty($inputs['destination_conditions'])) {
+            $conditions = [];
+            foreach ($inputs['destination_conditions'] as $condition) {
+                if (!empty($condition['value']['value'])) {
+                    $conditions[] = [
+                        'condition_field' => $condition['condition_field'],
+                        'condition_expression' => $condition['condition_expression'],
+                        'condition_app' => 'transfer',
+                        'condition_data' => $condition['value']['value']
+                    ];
+                }
+            }
+            $inputs['destination_conditions'] = json_encode($conditions);
+        } else {
+            $inputs['destination_conditions'] = null;
+        }
+
+        return $inputs;
     }
 }

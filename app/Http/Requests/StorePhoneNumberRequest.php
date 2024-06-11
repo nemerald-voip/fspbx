@@ -105,7 +105,7 @@ class StorePhoneNumberRequest extends FormRequest
     /**
      * Handle a failed validation attempt.
      *
-     * @param Validator $validator
+     * @param  Validator  $validator
      * @return void
      */
     protected function failedValidation(Validator $validator): void

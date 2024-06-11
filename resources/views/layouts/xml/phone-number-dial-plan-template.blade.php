@@ -1,6 +1,9 @@
 <extension name="{{ $phone_number->destination_number }}" continue="{{ $phone_number->dialplan_continue }}" uuid="{{ $phone_number->destination_number }}">
     @if(!empty($phone_number->destination_conditions))
-        @foreach($phone_number->destination_conditions as $row)
+        @php
+            $destination_conditions = json_decode($phone_number->destination_conditions, true)
+        @endphp
+        @foreach($destination_conditions as $row)
             <condition regex="all" break="never">
                 <regex field="${sip_req_user}" expression="{{ $phone_number->destination_number_regex }}"/>
                 <regex field="{{ $row['condition_field'] }}" expression="^\+?1?{{ $row['condition_expression'] }}"/>
@@ -19,7 +22,10 @@
             <action application="export" data="hold_music={{ $phone_number->destination_hold_music }}" inline="true"/>
         @endif
         @if(!empty($phone_number->destination_actions))
-            @foreach($phone_number->destination_actions as $row)
+            @php
+                $destination_actions = json_decode($phone_number->destination_actions, true)
+            @endphp
+            @foreach($destination_actions as $row)
                 <action application="{{$row['destination_app']}}" data="{{$row['destination_data']}}"/>
             @endforeach
         @endif
