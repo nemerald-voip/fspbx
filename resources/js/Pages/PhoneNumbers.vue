@@ -102,10 +102,10 @@
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description">
+                        :text="row.domain?.domain_description || row.domain?.domain_name">
                         <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
                             <div id="domain_tooltip_target">
-                                {{ row.domain?.domain_description }}
+                                {{ row.domain?.domain_description || row.domain?.domain_name }}
                             </div>
                         </ejs-tooltip>
                     </TableField>
