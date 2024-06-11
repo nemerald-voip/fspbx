@@ -89,6 +89,37 @@ class CDR extends Model
                 $model->waitsec_formatted = $model->getFormattedDuration($model->answer_epoch - $model->start_epoch);
             }
 
+            if ($model->sip_hangup_disposition && $model->direction) {
+                $dispositions = [
+                    'send_bye' => [
+                        'inbound' => 'The recipient hung up.',
+                        'outbound' => 'The recipient hung up.'
+                    ],
+                    'recv_bye' => [
+                        'inbound' => 'The caller hung up.',
+                        'outbound' => 'The caller hung up.'
+                    ],
+                    'send_refuse' => [
+                        'inbound' => 'We refused the call (e.g., busy or unavailable).',
+                        'outbound' => 'The person we called refused the call (e.g., busy or unavailable).'
+                    ],
+                    'send_cancel' => [
+                        'inbound' => 'Not applicable.',
+                        'outbound' => 'We canceled the call before it was answered.'
+                    ],
+                ];
+
+                if (isset($dispositions[$model->sip_hangup_disposition][$model->direction])) {
+                    $model->call_disposition = $dispositions[$model->sip_hangup_disposition][$model->direction];
+                } else {
+                    $model->call_disposition = 'Unknown disposition.';
+                }
+            }
+
+            logger('here');
+            logger($model->waitsec);
+            logger($model->waitsec_formatted);
+
             if (
                 isset($model->status) &&
                 isset($model->hangup_cause) &&

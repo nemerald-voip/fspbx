@@ -177,7 +177,7 @@
                                                     <h2 id="timeline-title" class="text-lg font-medium text-gray-900">
                                                         Timeline</h2>
 
-                                                    <!-- Activity Feed -->
+                                                    <!-- Timeline Feed -->
                                                     <div class="flow-root">
                                                         <ul role="list" class="mb-8">
                                                             <!-- Loop through call_flow items -->
@@ -370,7 +370,14 @@
                                                                                     <a
                                                                                         class="font-medium text-gray-900">End</a>
                                                                                 </div>
-                                                                                <p class="mt-0.5 text-sm text-gray-500"></p>
+                                                                                <p class="mt-0.5 text-sm text-gray-500">
+                                                                                    <div v-if="item.call_disposition">
+                                                                                        {{ item.call_disposition }}
+                                                                                    </div>
+
+                                                                                 
+
+                                                                                </p>
                                                                             </div>
                                                                             <div class="mt-2 text-sm text-gray-700">
                                                                                 <p></p>
