@@ -283,7 +283,7 @@ const form = reactive({
     destination_cid_name_prefix: props.item.destination_cid_name_prefix,
     destination_accountcode: props.item.destination_accountcode,
     destination_distinctive_ring: props.item.destination_distinctive_ring,
-    destination_conditions: props.item.destination_conditions,
+    destination_conditions: props.item.destination_conditions ?? [],
     _token: page.props.csrf_token,
 })
 
@@ -321,6 +321,16 @@ onMounted(() => {
 });
 
 const submitForm = () => {
+    // Transform conditions before submit
+    form.destination_conditions = conditions.value.map(condition => {
+        return {
+            "condition_field": condition.condition_field,
+            "condition_expression": condition.condition_expression,
+            "value": {
+                "value": condition.value
+            }
+        }
+    })
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -355,13 +365,7 @@ const handleFaxUpdate = (newSelectedItem) => {
 
 const handleConditionUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        const updatedCondition = {
-            condition_field: newSelectedItem.value,
-            condition_expression: conditions.value[index].condition_expression,
-            value: null,
-        };
         conditions.value[index].condition_field = newSelectedItem.value;
-        form.destination_conditions[index] = updatedCondition;
     }
 }
 
@@ -378,24 +382,16 @@ const addCondition = () => {
         value: null
     };
     conditions.value.push(newCondition);
-    //form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        const updatedCondition = {
-            condition_field: conditions.value[index].condition_field,
-            condition_expression: conditions.value[index].condition_expression,
-            value: newSelectedItem[0].value,
-        };
-        conditions.value[index].value = newSelectedItem;
-        form.destination_conditions[index] = updatedCondition;
+        conditions.value[index].value = newSelectedItem[0].value.value;
     }
 }
 
 const removeCondition = (index) => {
     conditions.value.splice(index, 1);
-    form.destination_conditions.splice(index, 1);
 }
 
 </script>
