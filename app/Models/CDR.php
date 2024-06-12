@@ -86,12 +86,8 @@ class CDR extends Model
                 $model->billsec_formatted = $model->getFormattedDuration($model->billsec);
             }
 
-            if (is_null($model->waitsec) && $model->start_epoch && $model->answer_epoch) {
+            if ($model->start_epoch && $model->answer_epoch) {
                 $model->waitsec_formatted = $model->getFormattedDuration($model->answer_epoch - $model->start_epoch);
-            }
-
-            if (!is_null($model->waitsec)) {
-                $model->waitsec_formatted = $model->getFormattedDuration($model->waitsec);
             }
 
             if ($model->sip_hangup_disposition && $model->direction) {
