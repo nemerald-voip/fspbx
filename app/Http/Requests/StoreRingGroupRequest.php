@@ -166,7 +166,7 @@ class StoreRingGroupRequest extends FormRequest
         return [
             'ring_group_extension.ring_group_unique' => 'This number is already used',
             'ring_group_extension.RingGroupExists' => 'This number is already used',
-            'timeout_category.required' => 'This options is required',
+            'timeout_category.required' => 'Timeout option is required',
             'ring_group_destinations.*.target_external.phone' => 'Should be valid US phone number or extension id',
             'ring_group_destinations.*.target_external.required_if' => 'This is the required field',
             'ring_group_destinations.*.target_internal.ExtensionExists' => 'Should be valid destination',
