@@ -51,6 +51,7 @@ class CDR extends Model
             unset($model->duration_formatted);
             unset($model->billsec_formatted);
             unset($model->waitsec_formatted);
+            unset($model->call_disposition);
         });
 
         static::retrieved(function ($model) {
@@ -89,6 +90,10 @@ class CDR extends Model
                 $model->waitsec_formatted = $model->getFormattedDuration($model->answer_epoch - $model->start_epoch);
             }
 
+            if (!is_null($model->waitsec)) {
+                $model->waitsec_formatted = $model->getFormattedDuration($model->waitsec);
+            }
+
             if ($model->sip_hangup_disposition && $model->direction) {
                 $dispositions = [
                     'send_bye' => 'The recipient hung up.',
@@ -105,9 +110,9 @@ class CDR extends Model
                 }
             }
 
-            logger('here');
-            logger($model->waitsec);
-            logger($model->waitsec_formatted);
+            // logger('here');
+            // logger($model->waitsec);
+            // logger($model->waitsec_formatted);
 
             if (
                 isset($model->status) &&
