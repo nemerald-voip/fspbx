@@ -5,18 +5,10 @@ namespace App\Console\Commands;
 use Carbon\Carbon;
 use App\Models\CDR;
 use App\Models\Domain;
-use App\Models\DomainSettings;
-use App\Models\DefaultSettings;
 use Illuminate\Console\Command;
-use App\Jobs\SendS3UploadReport;
-use App\Models\ArchiveRecording;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
-use Symfony\Component\Process\Process;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
-class UploadArchiveFiles extends Command
+
+class FixArchiveFiles extends Command
 {
     /**
      * The name and signature of the console command.
