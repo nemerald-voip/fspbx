@@ -187,7 +187,7 @@ class CdrsController extends Controller
 
         $itemData->call_flow = $callFlowSummary;
 
-        logger($callFlowSummary->all());
+        // logger($callFlowSummary->all());
         return $itemData;
     }
 
@@ -244,6 +244,10 @@ class CdrsController extends Controller
                 'date_time' => [
                     'pattern' => '/\b(?:year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=/',
                     'app' => 'Schedule',
+                ],
+                'application_rxfax' => [
+                    'pattern' => '/application="rxfax"/',
+                    'app' => 'Virtual Fax',
                 ],
             ];
 
