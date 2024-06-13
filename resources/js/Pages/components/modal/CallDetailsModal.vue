@@ -526,7 +526,7 @@
                                                                                 <div class="relative px-1">
                                                                                     <div
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
-                                                                                        <FaxIcon
+                                                                                        <SupportAgent
                                                                                             class="h-5 w-5 text-gray-500"
                                                                                             aria-hidden="true" />
                                                                                     </div>
