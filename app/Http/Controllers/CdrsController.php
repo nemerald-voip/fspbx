@@ -262,7 +262,16 @@ class CdrsController extends Controller
         // Check if destination is Park
         if (strpos($row['destination_number'], "park+") !== false) {
             $row['dialplan_app'] = "Park";
-            // $row['dialplan_name'] = $dialplan->dialplan_name;
+            $row['dialplan_name'] = substr($row['destination_number'], 6);
+            $row['dialplan_description'] = '';
+            return $row;
+        }
+
+        // Check if destination is voicemail
+        if ((substr($row['destination_number'], 0, 3) == '*99') !== false) {
+            $row['dialplan_app'] = "Voicemail";
+            $row['dialplan_name'] = substr($row['destination_number'], 3);
+            $row['dialplan_description'] = '';
             return $row;
         }
 

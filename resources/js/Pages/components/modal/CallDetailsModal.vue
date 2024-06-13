@@ -392,6 +392,43 @@
                                                                             </div>
                                                                         </template>
 
+                                                                        <template v-if="flow.dialplan_app === 'Voicemail'">
+                                                                            <div>
+                                                                                <div class="relative px-1">
+                                                                                    <div
+                                                                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
+                                                                                        <VoicemailIcon
+                                                                                            class="h-5 w-5 text-gray-500"
+                                                                                            aria-hidden="true" />
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="min-w-0 flex-1 py-0">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
+                                                                                        {{ flow.dialplan_app }}
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
+                                                                                        Voicemail {{ flow.dialplan_name }}
+                                                                                    </div>
+                                                                                    <p v-if="item.voicemail_message">
+                                                                                        The caller left a message
+                                                                                    </p>
+                                                                                    <p v-else="item.voicemail_message">
+                                                                                        The caller did not leave a message
+                                                                                    </p>
+
+                                                                                    <p class="mt-0.5 text-sm text-gray-500">
+                                                                                        {{ flow.duration_formatted }}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+
                                                                         <template v-if="flow.dialplan_app === 'Schedule'">
                                                                             <div>
                                                                                 <div class="relative px-1">
@@ -517,6 +554,7 @@ import AlternativeRouteIcon from "../icons/AlternativeRouteIcon.vue"
 import IvrIcon from "../icons/IvrIcon.vue"
 import SupportAgent from "../icons/SupportAgent.vue"
 import CallEndIcon from "../icons/CallEndIcon.vue"
+import VoicemailIcon from "../icons/VoicemailIcon.vue"
 
 
 const emit = defineEmits(['close'])
