@@ -465,7 +465,7 @@
                                                                                 <div class="relative px-1">
                                                                                     <div
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
-                                                                                        <CalendarDaysIcon
+                                                                                        <FaxIcon
                                                                                             class="h-5 w-5 text-gray-500"
                                                                                             aria-hidden="true" />
                                                                                     </div>
@@ -586,6 +586,7 @@ import IvrIcon from "../icons/IvrIcon.vue"
 import SupportAgent from "../icons/SupportAgent.vue"
 import CallEndIcon from "../icons/CallEndIcon.vue"
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
+import FaxIcon from "../icons/FaxIcon.vue"
 
 
 const emit = defineEmits(['close'])
