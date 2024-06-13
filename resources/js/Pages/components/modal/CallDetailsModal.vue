@@ -228,6 +228,25 @@
                                                                 </div>
                                                             </li>
 
+                                                            <li v-if="item.direction == 'outbound'">
+                                                                <div class="relative pb-8">
+                                                                    <span
+                                                                        class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
+                                                                        aria-hidden="true"></span>
+                                                                    <div class="relative flex items-start space-x-3">
+                                                                        <div class="relative">
+                                                                            <div
+                                                                                class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                                <PhoneLocalIcon class="w-4 h-4 mr-2" /> Call
+                                                                                to
+                                                                                {{ item.caller_destination_formatted
+                                                                                }}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+
                                                             <!-- Loop through call_flow items -->
                                                             <li v-for="(flow, index) in item.call_flow" :key="index">
                                                                 <div class="relative pb-8">
@@ -235,7 +254,7 @@
                                                                         class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
                                                                         aria-hidden="true"></span>
                                                                     <div class="relative flex items-start space-x-3">
-                                                                        <template
+                                                                        <!-- <template
                                                                             v-if="flow.dialplan_app === 'Outbound Call'">
                                                                             <div class="relative">
                                                                                 <div
@@ -258,6 +277,42 @@
                                                                                     <p>{{ flow.comment }} </p>
                                                                                 </div>
                                                                             </div>
+                                                                        </template> -->
+
+                                                                        <template
+                                                                            v-if="flow.dialplan_app === 'Outbound Call'">
+                                                                            <div>
+                                                                                <div class="relative px-1">
+                                                                                    <div
+                                                                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
+                                                                                        <!-- <DialpadIcon class="w-4 h-4 mr-2" /> -->
+                                                                                        <DialpadIcon
+                                                                                            class="h-5 w-5 text-gray-500"
+                                                                                            aria-hidden="true" />
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="min-w-0 flex-1">
+                                                                                <div>
+                                                                                    <div class="text-sm">
+                                                                                        <div
+                                                                                            class="font-medium text-gray-900">
+                                                                                            <span
+                                                                                                class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                                {{ flow.time_line }}
+                                                                                            </span>
+                                                                                            {{ flow.destination_number }}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <p class="mt-0.5 text-sm text-gray-500">
+                                                                                        {{ flow.duration_formatted }}</p>
+                                                                                </div>
+                                                                                <div class="mt-2 text-sm text-gray-700">
+                                                                                    <p>{{ flow.comment }}</p>
+                                                                                </div>
+                                                                            </div>
+
                                                                         </template>
 
 
