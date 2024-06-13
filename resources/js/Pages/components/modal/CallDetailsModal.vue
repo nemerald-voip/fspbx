@@ -254,31 +254,6 @@
                                                                         class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
                                                                         aria-hidden="true"></span>
                                                                     <div class="relative flex items-start space-x-3">
-                                                                        <!-- <template
-                                                                            v-if="flow.dialplan_app === 'Outbound Call'">
-                                                                            <div class="relative">
-                                                                                <div
-                                                                                    class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
-                                                                                    <PhoneOutgoingIcon
-                                                                                        class="w-4 h-4 mr-2" />
-                                                                                    Call to
-                                                                                    {{ item.caller_destination_formatted }}
-                                                                                </div>
-
-                                                                            </div>
-                                                                            <div class="min-w-0 flex-1">
-                                                                                <div>
-
-                                                                                    <p class="mt-1 text-sm text-gray-500">
-                                                                                        {{
-                                                                                            flow.time_line }} </p>
-                                                                                </div>
-                                                                                <div class="mt-2 text-sm text-gray-700">
-                                                                                    <p>{{ flow.comment }} </p>
-                                                                                </div>
-                                                                            </div>
-                                                                        </template> -->
-
                                                                         <template
                                                                             v-if="flow.dialplan_app === 'Outbound Call'">
                                                                             <div>
@@ -516,6 +491,37 @@
                                                                         </template>
 
                                                                         <template v-if="flow.dialplan_app === 'Virtual Fax'">
+                                                                            <div>
+                                                                                <div class="relative px-1">
+                                                                                    <div
+                                                                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
+                                                                                        <FaxIcon
+                                                                                            class="h-5 w-5 text-gray-500"
+                                                                                            aria-hidden="true" />
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="min-w-0 flex-1 py-0">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
+                                                                                        {{ flow.dialplan_app }}
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
+                                                                                        {{ flow.dialplan_name }}
+                                                                                        ({{ flow.destination_number }})
+                                                                                    </div>
+                                                                                    <p class="mt-0.5 text-sm text-gray-500">
+                                                                                        {{ flow.duration_formatted }}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+
+                                                                        <template v-if="flow.dialplan_app === 'Contact Center Queue'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div

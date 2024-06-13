@@ -148,7 +148,7 @@ class CdrsController extends Controller
 
         $callFlowData = collect(json_decode($itemData->call_flow, true));
 
-        logger($callFlowData->toArray());
+        // logger($callFlowData->toArray());
 
         // Add new rows for transfers
         $callFlowData = $this->handleCallFlowSteps($callFlowData);
