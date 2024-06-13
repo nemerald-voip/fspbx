@@ -167,7 +167,7 @@ class CdrsController extends Controller
         $direction = $itemData->direction;
         $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch, $direction) {
             $timeDifference = $row['profile_created_time'] - $startEpoch;
-            $row['time_line'] = gmdate("H:i:s", $timeDifference); // Human-readable format
+            $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60); // Human-readable format
             if ($direction == "outbound") {
                 $row['dialplan_app'] = "Outbound Call";
             }
@@ -187,7 +187,7 @@ class CdrsController extends Controller
 
         $itemData->call_flow = $callFlowSummary;
 
-        // logger($callFlowSummary->all());
+        logger($callFlowSummary->all());
         return $itemData;
     }
 
@@ -402,6 +402,16 @@ class CdrsController extends Controller
             $destinationNumber = !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'];
         }
 
+        $durationInSeconds = $profileEndEpoch - $profileCreatedEpoch;
+        $minutes = floor($durationInSeconds / 60);
+        $seconds = $durationInSeconds % 60;
+
+        if ($minutes > 0) {
+            $durationFormatted = sprintf('%02d min %02d s', $minutes, $seconds);
+        } else {
+            $durationFormatted = sprintf('%02d s', $seconds);
+        }
+
         return [
             'destination_number' => $destinationNumber,
             // 'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
@@ -415,8 +425,8 @@ class CdrsController extends Controller
             'profile_end_time' => $row['times']['profile_end_time'] == 0 ? 0 : $this->formatTime($row['times']['profile_end_time']),
             'progress_media_time' => $row['times']['progress_media_time'] == 0 ? 0 : $this->formatTime($row['times']['progress_media_time']),
             'hangup_time' => $row['times']['hangup_time'] == 0 ? 0 : $this->formatTime($row['times']['hangup_time']),
-            'duration_seconds' => $profileEndEpoch - $profileCreatedEpoch,
-            'duration_formatted' => gmdate('G:i:s', $profileEndEpoch - $profileCreatedEpoch),
+            'duration_seconds' => $durationInSeconds,
+            'duration_formatted' => $durationFormatted,
         ];
     }
 

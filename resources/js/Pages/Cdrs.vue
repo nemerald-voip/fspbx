@@ -313,7 +313,7 @@ const handleViewRequest = (itemUuid) => {
             ],
             onSuccess: (page) => {
                 loadingModal.value = false;
-                console.log(props.itemData);
+                // console.log(props.itemData);
             },
             onFinish: () => {
                 loadingModal.value = false;

@@ -90,25 +90,32 @@
 
                                                                 <div class="sm:col-span-2">
                                                                     <dl class="divide-y divide-gray-200">
-                                                                        <div class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'Waiting time' }}</dt>
+                                                                        <div
+                                                                            class="flex justify-between py-3 text-sm font-medium">
+                                                                            <dt class="text-gray-900">{{ 'Waiting time' }}
+                                                                            </dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
                                                                                 {{ item.waitsec_formatted }}
                                                                             </dd>
                                                                         </div>
-                                                                        <div class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'In-call duration' }}</dt>
+                                                                        <div
+                                                                            class="flex justify-between py-3 text-sm font-medium">
+                                                                            <dt class="text-gray-900">{{ 'In-call duration'
+                                                                            }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
-                                                                                
+
                                                                                 {{ item.billsec_formatted }}
                                                                             </dd>
                                                                         </div>
-                                                                        <div class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'Total duration' }}</dt>
+                                                                        <div
+                                                                            class="flex justify-between py-3 text-sm font-medium">
+                                                                            <dt class="text-gray-900">{{ 'Total duration' }}
+                                                                            </dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
                                                                                 {{ item.duration_formatted }}</dd>
                                                                         </div>
-                                                                        <div class="flex justify-between py-3 text-sm font-medium">
+                                                                        <div
+                                                                            class="flex justify-between py-3 text-sm font-medium">
                                                                             <dt class="text-gray-900">{{ 'Status' }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
                                                                                 {{ item.status }}</dd>
@@ -178,8 +185,49 @@
                                                         Timeline</h2>
 
                                                     <!-- Timeline Feed -->
-                                                    <div class="flow-root">
+                                                    <div class="flow-root mt-2">
                                                         <ul role="list" class="mb-8">
+
+                                                            <!-- Separate first element -->
+                                                            <li v-if="item.direction == 'inbound'">
+                                                                <div class="relative pb-8">
+                                                                    <span
+                                                                        class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
+                                                                        aria-hidden="true"></span>
+                                                                    <div class="relative flex items-start space-x-3">
+                                                                        <!-- <template> -->
+                                                                        <div class="relative">
+                                                                            <div
+                                                                                class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                                <PhoneIncomingIcon class="w-4 h-4 mr-2" />
+                                                                                Call from
+                                                                                {{ item.caller_id_number_formatted }}
+                                                                            </div>
+                                                                        </div>
+                                                                        <!-- </template> -->
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+
+                                                            <li v-if="item.direction == 'local'">
+                                                                <div class="relative pb-8">
+                                                                    <span
+                                                                        class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
+                                                                        aria-hidden="true"></span>
+                                                                    <div class="relative flex items-start space-x-3">
+                                                                        <div class="relative">
+                                                                            <div
+                                                                                class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                                <PhoneLocalIcon class="w-4 h-4 mr-2" /> Call
+                                                                                to
+                                                                                {{ item.caller_destination_formatted
+                                                                                }}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+
                                                             <!-- Loop through call_flow items -->
                                                             <li v-for="(flow, index) in item.call_flow" :key="index">
                                                                 <div class="relative pb-8">
@@ -190,60 +238,64 @@
                                                                         <template
                                                                             v-if="flow.dialplan_app === 'Outbound Call'">
                                                                             <div class="relative">
-                                                                                <img class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 ring-8 ring-white"
-                                                                                    :src="'https://avataaars.io/?avatarStyle=Circle&topType=LongHairStraight&accessoriesType=Blank&hairColor=BrownDark&facialHairType=Blank&clotheType=BlazerShirt&eyeType=Default&eyebrowType=Default&mouthType=Default&skinColor=Light'" />
-                                                                                <span
-                                                                                    class="absolute -bottom-0.5 -right-1 rounded-tl bg-white px-0.5 py-px">
-                                                                                    <ChatBubbleLeftEllipsisIcon
-                                                                                        class="h-5 w-5 text-gray-400"
-                                                                                        aria-hidden="true" />
-                                                                                </span>
+                                                                                <div
+                                                                                    class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                                    <PhoneOutgoingIcon
+                                                                                        class="w-4 h-4 mr-2" />
+                                                                                    Call to
+                                                                                    {{ item.caller_destination_formatted }}
+                                                                                </div>
+
                                                                             </div>
                                                                             <div class="min-w-0 flex-1">
                                                                                 <div>
-                                                                                    <div class="text-sm">
-                                                                                        <a
-                                                                                            class="font-medium text-gray-900">{{
-                                                                                                flow.destination_number }}</a>
-                                                                                    </div>
-                                                                                    <p class="mt-0.5 text-sm text-gray-500">
+
+                                                                                    <p class="mt-1 text-sm text-gray-500">
                                                                                         {{
-                                                                                            flow.time_line }}</p>
+                                                                                            flow.time_line }} </p>
                                                                                 </div>
                                                                                 <div class="mt-2 text-sm text-gray-700">
-                                                                                    <p>{{ flow.comment }}</p>
+                                                                                    <p>{{ flow.comment }} </p>
                                                                                 </div>
                                                                             </div>
                                                                         </template>
 
+
+
                                                                         <template
                                                                             v-if="flow.dialplan_app === 'Inbound Call'">
-                                                                            <div class="relative">
-                                                                                <img class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 ring-8 ring-white"
-                                                                                    :src="'https://avataaars.io/?avatarStyle=Circle&topType=LongHairStraight&accessoriesType=Blank&hairColor=BrownDark&facialHairType=Blank&clotheType=BlazerShirt&eyeType=Default&eyebrowType=Default&mouthType=Default&skinColor=Light'" />
-
-                                                                                <span
-                                                                                    class="absolute -bottom-0.5 -right-1 rounded-tl bg-white px-0.5 py-px">
-                                                                                    <ChatBubbleLeftEllipsisIcon
-                                                                                        class="h-5 w-5 text-gray-400"
-                                                                                        aria-hidden="true" />
-                                                                                </span>
+                                                                            <div>
+                                                                                <div class="relative px-1">
+                                                                                    <div
+                                                                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
+                                                                                        <!-- <DialpadIcon class="w-4 h-4 mr-2" /> -->
+                                                                                        <DialpadIcon
+                                                                                            class="h-5 w-5 text-gray-500"
+                                                                                            aria-hidden="true" />
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
+
                                                                             <div class="min-w-0 flex-1">
                                                                                 <div>
                                                                                     <div class="text-sm">
-                                                                                        <a
-                                                                                            class="font-medium text-gray-900">{{
-                                                                                                flow.destination_number }}</a>
+                                                                                        <div
+                                                                                            class="font-medium text-gray-900">
+                                                                                            <span
+                                                                                                class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                                {{ flow.time_line }}
+                                                                                            </span>
+                                                                                            {{ flow.destination_number }}
+                                                                                        </div>
                                                                                     </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{
-                                                                                            flow.time_line }}</p>
+                                                                                        {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                                 <div class="mt-2 text-sm text-gray-700">
                                                                                     <p>{{ flow.comment }}</p>
                                                                                 </div>
                                                                             </div>
+
                                                                         </template>
 
                                                                         <template v-if="flow.dialplan_app === 'Extension'">
@@ -251,45 +303,60 @@
                                                                                 <div class="relative px-1">
                                                                                     <div
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
-                                                                                        <UserCircleIcon
+                                                                                        <ContactPhoneIcon
                                                                                             class="h-5 w-5 text-gray-500"
                                                                                             aria-hidden="true" />
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="min-w-0 flex-1 py-1.5">
-                                                                                <div class="text-sm text-gray-500">
-                                                                                    <a class="font-medium text-gray-900">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
                                                                                         {{ flow.dialplan_app }}
-                                                                                        {{ flow.destination_number }}</a>
-
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
+                                                                                        {{ flow.dialplan_name }}
+                                                                                        ({{ flow.destination_number }})
+                                                                                    </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{
-                                                                                            flow.time_line }}</p>
+                                                                                        {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                             </div>
                                                                         </template>
+
 
                                                                         <template v-if="flow.dialplan_app === 'Ring Group'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
-                                                                                        <UserCircleIcon
+                                                                                        <UserGroupIcon
                                                                                             class="h-5 w-5 text-gray-500"
                                                                                             aria-hidden="true" />
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="min-w-0 flex-1 py-1.5">
-                                                                                <div class="text-sm text-gray-500">
-                                                                                    <a class="font-medium text-gray-900">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
                                                                                         {{ flow.dialplan_app }}
-                                                                                        {{ flow.destination_number }}</a>
-
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
+                                                                                        {{ flow.dialplan_name }}
+                                                                                        ({{ flow.destination_number }})
+                                                                                    </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{
-                                                                                            flow.time_line }}</p>
+                                                                                        {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                             </div>
                                                                         </template>
@@ -299,21 +366,28 @@
                                                                                 <div class="relative px-1">
                                                                                     <div
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
-                                                                                        <TagIcon
+                                                                                        <IvrIcon
                                                                                             class="h-5 w-5 text-gray-500"
                                                                                             aria-hidden="true" />
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="min-w-0 flex-1 py-0">
-                                                                                <div
-                                                                                    class="text-sm leading-8 text-gray-500">
-                                                                                    <a class="font-medium text-gray-900">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
                                                                                         {{ flow.dialplan_app }}
-                                                                                        {{ flow.destination_number }}</a>
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
+                                                                                        {{ flow.dialplan_name }}
+                                                                                        ({{ flow.destination_number }})
+                                                                                    </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{ flow.time_line }}</p>
-
+                                                                                        {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                             </div>
                                                                         </template>
@@ -323,22 +397,28 @@
                                                                                 <div class="relative px-1">
                                                                                     <div
                                                                                         class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
-                                                                                        <TagIcon
+                                                                                        <CalendarDaysIcon
                                                                                             class="h-5 w-5 text-gray-500"
                                                                                             aria-hidden="true" />
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="min-w-0 flex-1 py-0">
-                                                                                <div
-                                                                                    class="text-sm leading-8 text-gray-500">
-                                                                                    <a class="font-medium text-gray-900">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
                                                                                         {{ flow.dialplan_app }}
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
                                                                                         {{ flow.dialplan_name }}
-                                                                                        {{ flow.destination_number }}</a>
+                                                                                        ({{ flow.destination_number }})
+                                                                                    </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{ flow.time_line }}</p>
-
+                                                                                        {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                             </div>
                                                                         </template>
@@ -355,27 +435,32 @@
 
                                                                     <div class="relative flex items-start space-x-3">
                                                                         <div class="relative">
-                                                                            <img class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 ring-8 ring-white"
-                                                                                :src="'https://avataaars.io/?avatarStyle=Circle&topType=LongHairStraight&accessoriesType=Blank&hairColor=BrownDark&facialHairType=Blank&clotheType=BlazerShirt&eyeType=Default&eyebrowType=Default&mouthType=Default&skinColor=Light'" />
-                                                                            <span
-                                                                                class="absolute -bottom-0.5 -right-1 rounded-tl bg-white px-0.5 py-px">
-                                                                                <ChatBubbleLeftEllipsisIcon
-                                                                                    class="h-5 w-5 text-gray-400"
-                                                                                    aria-hidden="true" />
-                                                                            </span>
+                                                                            <div
+                                                                                class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                                <CallEndIcon class="w-4 h-4 mr-2" />
+                                                                                End of the call
+
+                                                                            </div>
                                                                         </div>
+                                                                        <!-- <div class="relative">
+                                                                            <span
+                                                                                class="rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                                End of the call
+                                                                            </span>
+
+                                                                        </div> -->
                                                                         <div class="min-w-0 flex-1">
                                                                             <div>
-                                                                                <div class="text-sm">
+                                                                                <!-- <div class="text-sm">
                                                                                     <a
-                                                                                        class="font-medium text-gray-900">End</a>
-                                                                                </div>
+                                                                                        class="font-medium text-gray-900">End of the call</a>
+                                                                                </div> -->
                                                                                 <p class="mt-0.5 text-sm text-gray-500">
-                                                                                    <div v-if="item.call_disposition">
-                                                                                        {{ item.call_disposition }}
-                                                                                    </div>
+                                                                                <div v-if="item.call_disposition">
+                                                                                    {{ item.call_disposition }}
+                                                                                </div>
 
-                                                                                 
+
 
                                                                                 </p>
                                                                             </div>
@@ -416,6 +501,23 @@
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import Loading from "../general/Loading.vue";
+
+import PhoneOutgoingIcon from "../icons/PhoneOutgoingIcon.vue"
+import PhoneIncomingIcon from "../icons/PhoneIncomingIcon.vue"
+import PhoneLocalIcon from "../icons/PhoneLocalIcon.vue"
+
+import {
+    UserGroupIcon,
+    CalendarDaysIcon
+} from "@heroicons/vue/24/solid";
+
+import ContactPhoneIcon from "../icons/ContactPhoneIcon.vue"
+import DialpadIcon from "../icons/DialpadIcon.vue"
+import AlternativeRouteIcon from "../icons/AlternativeRouteIcon.vue"
+import IvrIcon from "../icons/IvrIcon.vue"
+import SupportAgent from "../icons/SupportAgent.vue"
+import CallEndIcon from "../icons/CallEndIcon.vue"
+
 
 const emit = defineEmits(['close'])
 
