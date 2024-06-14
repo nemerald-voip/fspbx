@@ -41,7 +41,7 @@
                 @foreach($extensions as $group => $exts)
                     <optgroup label="{{$group}}">
                         @foreach($exts as $ext)
-                            <option value="{{ $ext->getId() }}" @if($value == $ext->getId()) selected @endif>
+                            <option value="{{ $ext->getId() }}" @if((string)$value === (string)$ext->getId()) selected @endif>
                                 {{ $ext->getName() }}
                             </option>
                         @endforeach
