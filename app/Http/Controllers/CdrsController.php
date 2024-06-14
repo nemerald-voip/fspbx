@@ -185,7 +185,7 @@ class CdrsController extends Controller
 
         $itemData->call_flow = $callFlowSummary;
 
-        // logger($callFlowSummary->all());
+        logger($callFlowSummary->all());
         return $itemData;
     }
 
@@ -418,7 +418,7 @@ class CdrsController extends Controller
         $seconds = $durationInSeconds % 60;
 
         if ($minutes > 0) {
-            $durationFormatted = sprintf('%02d min %02d s', $minutes, $seconds);
+            $durationFormatted = sprintf('%d min %02d s', $minutes, $seconds);
         } else {
             $durationFormatted = sprintf('%02d s', $seconds);
         }
