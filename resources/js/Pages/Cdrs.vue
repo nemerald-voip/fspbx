@@ -91,7 +91,8 @@
                     </TableColumnHeader>
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                    <TableColumnHeader header="Actions" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+                    <TableColumnHeader header="Actions"
+                        class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
 
                 </template>
 
@@ -131,7 +132,8 @@
                             :text="row.destination_number_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration_formatted" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.duration_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
@@ -151,20 +153,20 @@
                         </TableField>
 
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap justify-center">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'" position='TopCenter'
-                                    target="#view_tooltip_target">
-                                    <div id="view_tooltip_target">
-                                        <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                            <template #action-buttons>
+                                <div class="flex items-center whitespace-nowrap justify-center">
+                                    <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'"
+                                        position='TopCenter' target="#view_tooltip_target">
+                                        <div id="view_tooltip_target">
+                                            <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                    </div>
-                                </ejs-tooltip>
+                                        </div>
+                                    </ejs-tooltip>
 
-                            </div>
-                        </template>
-                    </TableField>
+                                </div>
+                            </template>
+                        </TableField>
                     </tr>
                 </template>
                 <template #empty>
@@ -194,10 +196,12 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
+        @close="handleModalClose">
     </CallDetailsModal>
 
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
@@ -218,6 +222,7 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
+import Notification from "./components/notifications/Notification.vue";
 import {
     PlayCircleIcon,
     PauseCircleIcon,
@@ -236,6 +241,9 @@ const today = new Date();
 const loading = ref(false)
 const viewModalTrigger = ref(false);
 const loadingModal = ref(false)
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
 
 
 const props = defineProps({
@@ -312,11 +320,18 @@ const handleViewRequest = (itemUuid) => {
                 'itemData',
             ],
             onSuccess: (page) => {
-                loadingModal.value = false;
-                // console.log(props.itemData);
+                console.log(props.itemData);
+                if (!props.itemData) {
+                    viewModalTrigger.value = false;
+                    showNotification('error', { error: ['Unable to retrieve this item'] });
+                } else {
+                    loadingModal.value = false;
+                    viewModalTrigger.value = true;
+                }
+
             },
             onFinish: () => {
-                loadingModal.value = false;
+                // loadingModal.value = false;
             },
             onError: (errors) => {
                 console.log(errors);
@@ -517,6 +532,17 @@ const handleModalClose = () => {
     viewModalTrigger.value = false;
 }
 
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
+
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

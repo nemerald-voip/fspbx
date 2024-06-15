@@ -110,83 +110,91 @@ class CdrsController extends Controller
 
     public function getItemData()
     {
-        // Get item data
-        $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
-            ->select([
-                'xml_cdr_uuid',
-                'domain_uuid',
-                'sip_call_id',
-                'extension_uuid',
-                'direction',
-                'caller_id_name',
-                'caller_id_number',
-                'caller_destination',
-                'start_epoch',
-                'answer_epoch',
-                'end_epoch',
-                'duration',
-                'billsec',
-                'waitsec',
-                'call_flow',
-                'voicemail_message',
-                'missed_call',
-                'hangup_cause',
-                'hangup_cause_q850',
-                'sip_hangup_disposition',
-                'status',
+        try {
 
-            ])
-            ->first();
+            // Get item data
+            $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
+                ->select([
+                    'xml_cdr_uuid',
+                    'domain_uuid',
+                    'sip_call_id',
+                    'extension_uuid',
+                    'direction',
+                    'caller_id_name',
+                    'caller_id_number',
+                    'caller_destination',
+                    'start_epoch',
+                    'answer_epoch',
+                    'end_epoch',
+                    'duration',
+                    'billsec',
+                    'waitsec',
+                    'call_flow',
+                    'voicemail_message',
+                    'missed_call',
+                    'hangup_cause',
+                    'hangup_cause_q850',
+                    'sip_hangup_disposition',
+                    'status',
 
-        // logger($itemData);
+                ])
+                ->first();
 
-        if (!$itemData) {
+            // logger($itemData);
+
+            if (!$itemData) {
+                return null;
+            }
+
+            $this->item_domain_uuid = $itemData->domain_uuid;
+
+            $callFlowData = collect(json_decode($itemData->call_flow, true));
+
+            // logger($callFlowData->toArray());
+
+            // Add new rows for transfers
+            $callFlowData = $this->handleCallFlowSteps($callFlowData);
+
+            // Build the call flow summary
+            $callFlowSummary = $callFlowData->map(function ($row) {
+                return $this->buildSummaryItem($row);
+            });
+
+            // logger($callFlowSummary->toArray());
+
+            //calculate the time line and format it
+            $startEpoch = $itemData->start_epoch;
+            $direction = $itemData->direction;
+            $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch, $direction) {
+                $timeDifference = $row['profile_created_time'] - $startEpoch;
+                $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60); // Human-readable format
+                if ($direction == "outbound") {
+                    $row['dialplan_app'] = "Outbound Call";
+                }
+                return $row;
+            });
+
+            // Format times
+            $callFlowSummary = $this->formatTimes($callFlowSummary);
+
+            // Get Dialplan App details
+            $callFlowSummary = $callFlowSummary->map(function ($row) {
+                $row = $this->getAppDetails($row);
+
+                return $row;
+            });
+
+
+            $itemData->call_flow = $callFlowSummary;
+
+            // logger($callFlowSummary->all());
+            return $itemData;
+            
+        } catch (\Exception $e) {
+            // Handle the exception
+            logger($e->getMessage());
             return null;
         }
-
-        $this->item_domain_uuid = $itemData->domain_uuid;
-
-        $callFlowData = collect(json_decode($itemData->call_flow, true));
-
-        // logger($callFlowData->toArray());
-
-        // Add new rows for transfers
-        $callFlowData = $this->handleCallFlowSteps($callFlowData);
-
-        // Build the call flow summary
-        $callFlowSummary = $callFlowData->map(function ($row) {
-            return $this->buildSummaryItem($row);
-        });
-
-        // logger($callFlowSummary->toArray());
-
-        //calculate the time line and format it
-        $startEpoch = $itemData->start_epoch;
-        $direction = $itemData->direction;
-        $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch, $direction) {
-            $timeDifference = $row['profile_created_time'] - $startEpoch;
-            $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60); // Human-readable format
-            if ($direction == "outbound") {
-                $row['dialplan_app'] = "Outbound Call";
-            }
-            return $row;
-        });
-
-        // Format times
-        $callFlowSummary = $this->formatTimes($callFlowSummary);
-
-        // Get Dialplan App details
-        $callFlowSummary = $callFlowSummary->map(function ($row) {
-            $row = $this->getAppDetails($row);
-
-            return $row;
-        });
-
-
-        $itemData->call_flow = $callFlowSummary;
-
-        logger($callFlowSummary->all());
-        return $itemData;
     }
 
     /**
