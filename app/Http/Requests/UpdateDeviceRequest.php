@@ -48,6 +48,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_template' => [
                 'required',
                 'string',
+                Rule::notIn(['NULL']),
             ],
             'extension' => [
                 'nullable',
@@ -93,7 +94,8 @@ class UpdateDeviceRequest extends FormRequest
             'device_profile_uuid.required' => 'Profile is required',
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
-            'domain_uuid.not_in' => 'Company must be selected.'
+            'domain_uuid.not_in' => 'Company must be selected.',
+            'device_template.not_in' => 'Device template must be selected.'
         ];
     }
 
