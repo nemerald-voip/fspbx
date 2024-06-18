@@ -459,11 +459,14 @@ class PhoneNumbersController extends Controller
 
     private function generateDialPlanXML(Destinations $phoneNumber): void
     {
+
+        // logger($phoneNumber);
         // Data to pass to the Blade template
         $data = [
             'phone_number' => $phoneNumber,
             'domain_name' => Session::get('domain_name'),
-            'fax_data' => $phoneNumber->fax()->first() ?? null
+            'fax_data' => $phoneNumber->fax()->first() ?? null,
+            'dialplan_continue' => 'false',
         ];
 
         // Render the Blade template and get the XML content as a string
