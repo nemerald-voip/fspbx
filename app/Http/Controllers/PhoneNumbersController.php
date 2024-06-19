@@ -132,8 +132,8 @@ class PhoneNumbersController extends Controller
         $domainsCollection = Session::get("domains");
         foreach ($domainsCollection as $domain) {
             $domains[] = [
-                'name' => $domain->domain_name,
-                'value' => $domain->domain_uuid
+                'value' => $domain->domain_uuid,
+                'name' => $domain->domain_description
             ];
         }
         $timeoutDestinations = getTimeoutDestinations();
