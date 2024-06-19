@@ -484,7 +484,7 @@ class PhoneNumbersController extends Controller
             if (isset($phoneNumber->destination_context)) {
                 $dialPlan->dialplan_context = $phoneNumber->destination_context;
             }
-            $dialPlan->dialplan_continue = 'false';
+            $dialPlan->dialplan_continue = $data['dialplan_continue'];
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_order = 101;
             $dialPlan->dialplan_enabled = $phoneNumber->destination_enabled;

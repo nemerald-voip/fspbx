@@ -78,7 +78,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                 Rule::exists('v_fax', 'fax_uuid')
             ],
             'destination_enabled' => [
-                Rule::in(['true', 'false']),
+                Rule::in([true, false]),
             ],
             'destination_record' => [
                 Rule::in([true, false]),
@@ -148,14 +148,5 @@ class UpdatePhoneNumberRequest extends FormRequest
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
-
-        if($this->has('destination_enabled')){
-            if ($this->destination_enabled) {
-                $this->merge(['destination_enabled' => 'true']);
-            } else {
-                $this->merge(['destination_enabled' => 'false']);
-            }
-        }
-
     }
 }
