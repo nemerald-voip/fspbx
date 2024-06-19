@@ -101,8 +101,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'fax_uuid'" :label="'Fax detection'"/>
                         <div class="mt-2">
-                            <SelectBox :options="options.faxes"
-                                       :search="true"
+                            <ComboBox :options="options.faxes"
                                        :allowEmpty="true"
                                        :selectedItem="form.fax_uuid"
                                        :placeholder="'Choose fax'"
@@ -129,8 +128,6 @@
                                 <div class="mt-4 grid grid-cols-3 gap-x-2">
                                     <div>
                                         <SelectBox :options="page.props.conditions"
-                                                   :search="false"
-                                                   :allowEmpty="true"
                                                    :selectedItem="condition.condition_field"
                                                    :placeholder="'Choose condition'"
                                                    @update:modal-value="value => handleConditionUpdate(value, index)"
@@ -206,9 +203,8 @@
                     <div v-if="page.props.auth.can.domain_select && page.props.auth.can.destination_edit_domain" class="sm:col-span-12">
                         <LabelInputRequired :target="'domain_uuid'" :label="'Owned By (Company Name)'"/>
                         <div class="mt-2">
-                            <SelectBox :options="options.domains"
+                            <ComboBox :options="options.domains"
                                        :selectedItem="form.domain_uuid"
-                                       :search="true"
                                        :placeholder="'Choose company'"
                                        @update:modal-value="handleDomainUpdate"
                                        :error="errors?.domain_uuid && errors.domain_uuid.length > 0"
@@ -251,6 +247,7 @@ import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
+import ComboBox from "../general/ComboBox.vue";
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
 import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
