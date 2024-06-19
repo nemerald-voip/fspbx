@@ -66,8 +66,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'"/>
                         <div class="mt-2">
-                            <SelectBoxGroup :options="options.music_on_hold"
-                                            :search="true"
+                            <ComboBoxGroup :options="options.music_on_hold"
                                             :allowEmpty="true"
                                             :selectedItem="null"
                                             :placeholder="'Choose music on hold'"
@@ -243,7 +242,7 @@ import {defineProps, reactive, ref} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
-import SelectBoxGroup from "../general/SelectBoxGroup.vue";
+import ComboBoxGroup from "../general/ComboBoxGroup.vue";
 import MainDestinations from "../general/ActionSelect.vue";
 import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
