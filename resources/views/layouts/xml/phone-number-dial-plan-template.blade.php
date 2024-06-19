@@ -1,4 +1,4 @@
-<extension name="{{ $phone_number->destination_number }}" continue="{{ $phone_number->dialplan_continue }}" uuid="{{ $phone_number->destination_number }}">
+<extension name="{{ $phone_number->destination_number }}" continue="{{ $dialplan_continue }}" uuid="{{ $phone_number->dialplan_uuid }}">
     @if(!empty($phone_number->destination_conditions))
         @php
             $destination_conditions = json_decode($phone_number->destination_conditions, true)
@@ -39,7 +39,7 @@
         @endif
         @if($phone_number->destination_cid_name_prefix && !empty($phone_number->destination_cid_name_prefix)) {
             <action application="set" data="effective_caller_id_name={{$phone_number->destination_cid_name_prefix}}#${caller_id_name}" inline="false"/>;
-        @endif;
+        @endif
         @if($phone_number->destination_distinctive_ring && !empty($phone_number->destination_distinctive_ring))
             <action application="export" data="sip_h_Alert-Info={{$phone_number->destination_distinctive_ring}}" inline="true"/>
         @endif

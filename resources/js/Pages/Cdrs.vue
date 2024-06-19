@@ -13,6 +13,7 @@
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                         Export CSV
+                        <Spinner :show="isExporting" />
                     </button>
 
                     <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
@@ -235,6 +236,7 @@ import {
     startOfDay, endOfDay,
 } from 'date-fns';
 import Loading from "./components/general/Loading.vue";
+import Spinner from "./components/general/Spinner.vue";
 
 const page = usePage()
 const today = new Date();
@@ -244,6 +246,7 @@ const loadingModal = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const isExporting = ref(null);
 
 
 const props = defineProps({
@@ -483,12 +486,11 @@ const handleUpdateDateRange = (newDateRange) => {
 }
 
 const exportCsv = () => {
-
     filterData.value.download = 'true';
 
-    let url = `/call-detail-records`;
+    isExporting.value = true;
 
-    axios.post(url, {
+    axios.post(props.routes.current_page, {
         filterData: filterData._rawValue,
     }, {
         responseType: 'blob'
@@ -505,12 +507,14 @@ const exportCsv = () => {
             window.URL.revokeObjectURL(url); // Free up memory
 
             filterData.value.download = 'false'; // Reset download flag on success
-
+            showNotification('success', response.data.messages);
+            isExporting.value = false;
         })
         .catch(error => {
             console.error('There was an error with the request:', error);
             filterData.value.download = 'false'; // Reset download flag on error
-
+            isExporting.value = false;
+            handleErrorResponse(error);
         });
 
 
