@@ -36,7 +36,7 @@
                 <ComboboxOptions
                     class="absolute z-10 mt-1 px-2 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
 
-                    <ComboboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" :value="null" as="template">
+                    <ComboboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" as="template">
                         <li :class="[
                             active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
                             'relative cursor-default select-none py-2 pl-10 pr-4',
@@ -87,7 +87,7 @@ const props = defineProps({
     options: [Array, null],
     selectedItem: [String, null],
     placeholder: [String, null],
-    search: [Boolean, null],
+    //search: [Boolean, null],
     allowEmpty: { type: [Boolean], default: false },
     showClear: { type: [Boolean], default: false },
     showUndo: { type: [Boolean], default: false },
