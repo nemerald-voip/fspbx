@@ -47,7 +47,7 @@ class Dialplans extends Model
 
     /**
      * Get the dialplan details this Dialplan object associated with.
-     *  returns Eloqeunt Object
+     *  returns Eloquent Object
      */
     public function dialplan_details()
     {
