@@ -9,11 +9,11 @@
                 <template #action>
 
                     <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="exportCsv"
-                        :disabled="data.data.length === 0"
+                        :disabled="isExporting"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                         Export CSV
-                        <Spinner :show="isExporting" />
+                        <Spinner class="ml-1" :show="isExporting" />
                     </button>
 
                     <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
@@ -490,7 +490,7 @@ const exportCsv = () => {
 
     isExporting.value = true;
 
-    axios.post(props.routes.current_page, {
+    axios.post(props.routes.export, {
         filterData: filterData._rawValue,
     }, {
         responseType: 'blob'
@@ -546,6 +546,25 @@ const showNotification = (type, messages = null) => {
     notificationType.value = type;
     notificationMessages.value = messages;
     notificationShow.value = true;
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

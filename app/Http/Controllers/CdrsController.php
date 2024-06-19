@@ -4,19 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\CDR;
 use Inertia\Inertia;
+use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Exports\CdrsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
-use App\Models\Dialplans;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
+use function GuzzleHttp\Promise\queue;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-use function GuzzleHttp\Promise\queue;
+use Spatie\SimpleExcel\SimpleExcelWriter;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CdrsController extends Controller
 {
@@ -53,12 +54,12 @@ class CdrsController extends Controller
         }
 
 
-        if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
-            $cdrs = $this->getData(false);
-            $export = new CdrsExport($cdrs);
+        // if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
+        //     $cdrs = $this->getData(false);
+        //     $export = new CdrsExport($cdrs);
 
-            return Excel::download($export, 'call-detail-records.csv');
-        }
+        //     return Excel::download($export, 'call-detail-records.csv');
+        // }
 
 
         // return view('layouts.cdrs.index')->with($data);
@@ -102,6 +103,7 @@ class CdrsController extends Controller
                 ),
                 'routes' => [
                     'current_page' => route('cdrs.index'),
+                    'export' => route('cdrs.export'),
                 ]
 
             ]
@@ -189,7 +191,6 @@ class CdrsController extends Controller
 
             // logger($callFlowSummary->all());
             return $itemData;
-            
         } catch (\Exception $e) {
             // Handle the exception
             logger($e->getMessage());
@@ -806,6 +807,73 @@ class CdrsController extends Controller
                 //     echo "i equals 2";
                 //     break;
         }
+    }
+
+    /**
+     * Get all items
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function export()
+    {
+        try {
+            // if (request()->get('showGlobal')) {
+            //     $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            // } else {
+            //     $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+            //         ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            // }
+            // logger(request());
+
+            $cdrs = $this->getData(false); // returns collection
+
+            // logger($cdrs->count());
+
+            $writer = SimpleExcelWriter::streamDownload('call-detail-records.csv');
+
+            $count = 0;
+
+            foreach ($cdrs as $cdr) {
+                $writer->addRow([
+                    'ID' => $cdr['xml_cdr_uuid'],
+                    'Direction' => $cdr['direction'],
+                    'Caller ID Name' => $cdr['caller_id_name'],
+                    'Caller ID Number' => $cdr['caller_id_number_formatted'],
+                    'Dialed Number' => $cdr['caller_destination_formatted'],
+                    'Recipient' => $cdr['destination_number_formatted'],
+                    'Date' => $cdr['start_date'],
+                    'Time' => $cdr['start_time'],
+                    'Duration' => $cdr['duration_formatted'],
+                    'Status' => $cdr['status'],
+                ]);
+            
+                $count++;
+            
+                if ($count % 1000 === 0) {
+                    flush(); // Flush the buffer every 1000 rows
+                }
+            }
+
+            // $writer->toBrowser();
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Items exported']],
+                'blob' => $writer->toBrowser(),
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to export items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to export']]
+        ], 500); // 500 Internal Server Error for any other errors
     }
 
     /**

@@ -60,8 +60,8 @@ Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeControll
     ->name('email-challenge.new-code');
 Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'store']);
 
-    // Csrf token
-    Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
+// Csrf token
+Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
 
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
@@ -87,6 +87,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
     Route::post('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.download');
     Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
+    Route::post('/call-detail-records/export', [CdrsController::class, 'export'])->name('cdrs.export');
 
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
