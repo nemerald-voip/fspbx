@@ -1,17 +1,14 @@
 <template>
     <div :class="['mt-2 mb-2 grid gap-x-2', customClass]" v-for="(action, index) in actions"
          :key="index">
-        <SelectBox :options="options"
-                   :search="true"
-                   :allowEmpty="true"
+        <ComboBox :options="options"
                    :placeholder="'Choose category'"
                    :class="'col-span-2'"
                    :selectedItem="action.selectedCategory"
                    @update:modal-value="value => handleCategoryUpdate(value, index)"
         />
-        <SelectBox v-if="action.selectedCategory"
+        <ComboBox v-if="action.selectedCategory"
                    :options="action.categoryTargets"
-                   :search="true"
                    :class="'col-span-2'"
                    :placeholder="'Choose target action'"
                    :selectedItem="action.value.value"
@@ -48,7 +45,8 @@
 <script setup>
 import {ref,onMounted} from 'vue'
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
-import SelectBox from "./SelectBox.vue";
+import SelectBox from "../general/SelectBox.vue";
+import ComboBox from "../general/ComboBox.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
