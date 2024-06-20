@@ -285,7 +285,6 @@ const filterData = ref({
 const showGlobal = ref(props.showGlobal);
 
 const callDirections = [
-    { value: null, name: 'All' },
     { value: 'outbound', name: 'Outbound' },
     { value: 'inbound', name: 'Inbound' },
     { value: 'local', name: 'Local' },
@@ -344,7 +343,7 @@ const handleViewRequest = (itemUuid) => {
 }
 
 const handleUpdateCallDirectionFilter = (newSelectedItem) => {
-    if (newSelectedItem.value == "all") {
+    if (newSelectedItem.value == "NULL") {
         filterData.value.direction = null;
     } else {
         filterData.value.direction = newSelectedItem.value;
@@ -486,8 +485,6 @@ const handleUpdateDateRange = (newDateRange) => {
 }
 
 const exportCsv = () => {
-    filterData.value.download = 'true';
-
     isExporting.value = true;
 
     axios.post(props.routes.export, {

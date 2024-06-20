@@ -11,14 +11,15 @@ use Illuminate\Queue\InteractsWithQueue;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use App\Services\CdrDataService;
+
 
 class ExportCdrs implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $cdrs;
+    protected $params;
 
     /**
      * The number of times the job may be attempted.
@@ -67,10 +68,11 @@ class ExportCdrs implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($cdrs)
+    public function __construct($params, protected CdrDataService $cdrDataService)
     {
 
-        $this->cdrs = $cdrs;
+        $this->params = $params;
+
     }
 
     /**
@@ -93,11 +95,13 @@ class ExportCdrs implements ShouldQueue
         // Allow only 1 job every 60 second
         Redis::throttle('default')->allow(1)->every(60)->then(function () {
 
+            $cdrs = $this->cdrDataService->getData($this->params);
+
             $writer = SimpleExcelWriter::streamDownload('call-detail-records.csv');
 
             $count = 0;
 
-            foreach ($this->cdrs as $cdr) {
+            foreach ($cdrs as $cdr) {
                 $writer->addRow([
                     'ID' => $cdr['xml_cdr_uuid'],
                     'Direction' => $cdr['direction'],
