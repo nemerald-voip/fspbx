@@ -55,7 +55,7 @@ class CdrDataService
         $this->model = new CDR();
         $data =  $this->model::query();
 
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
+        if ($filters['showGlobal']== 'true') {
             $data->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
             }]);

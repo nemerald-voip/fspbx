@@ -93,27 +93,27 @@ class ExportCdrs implements ShouldQueue
     public function handle()
     {
         // Allow only 1 job every 60 second
-        Redis::throttle('default')->allow(1)->every(60)->then(function () {
+        Redis::throttle('default')->allow(1)->every(30)->then(function () {
 
             $cdrs = $this->cdrDataService->getData($this->params);
 
-            $writer = SimpleExcelWriter::streamDownload('call-detail-records.csv');
+            // $writer = SimpleExcelWriter::streamDownload('call-detail-records.csv');
 
             $count = 0;
 
             foreach ($cdrs as $cdr) {
-                $writer->addRow([
-                    'ID' => $cdr['xml_cdr_uuid'],
-                    'Direction' => $cdr['direction'],
-                    'Caller ID Name' => $cdr['caller_id_name'],
-                    'Caller ID Number' => $cdr['caller_id_number_formatted'],
-                    'Dialed Number' => $cdr['caller_destination_formatted'],
-                    'Recipient' => $cdr['destination_number_formatted'],
-                    'Date' => $cdr['start_date'],
-                    'Time' => $cdr['start_time'],
-                    'Duration' => $cdr['duration_formatted'],
-                    'Status' => $cdr['status'],
-                ]);
+                // $writer->addRow([
+                //     'ID' => $cdr['xml_cdr_uuid'],
+                //     'Direction' => $cdr['direction'],
+                //     'Caller ID Name' => $cdr['caller_id_name'],
+                //     'Caller ID Number' => $cdr['caller_id_number_formatted'],
+                //     'Dialed Number' => $cdr['caller_destination_formatted'],
+                //     'Recipient' => $cdr['destination_number_formatted'],
+                //     'Date' => $cdr['start_date'],
+                //     'Time' => $cdr['start_time'],
+                //     'Duration' => $cdr['duration_formatted'],
+                //     'Status' => $cdr['status'],
+                // ]);
             
                 $count++;
                 logger($count);
