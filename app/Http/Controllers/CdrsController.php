@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CDR;
 use Inertia\Inertia;
+use App\Jobs\ExportCdrs;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Exports\CdrsExport;
@@ -14,8 +15,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 use function GuzzleHttp\Promise\queue;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 
+use Illuminate\Support\Facades\Storage;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -52,18 +53,6 @@ class CdrsController extends Controller
         if ($request->callUuid) {
             $callUuid = $request->callUuid;
         }
-
-
-        // if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
-        //     $cdrs = $this->getData(false);
-        //     $export = new CdrsExport($cdrs);
-
-        //     return Excel::download($export, 'call-detail-records.csv');
-        // }
-
-
-        // return view('layouts.cdrs.index')->with($data);
-
 
         return Inertia::render(
             $this->viewName,
@@ -653,12 +642,6 @@ class CdrsController extends Controller
             $cdrs = $cdrs->get(); // This will return a collection
         }
 
-        $cdrs->transform(function ($cdr) {
-            $cdr->start_date = $cdr->start_date;
-            $cdr->start_time = $cdr->start_time;
-
-            return $cdr;
-        });
         return $cdrs;
     }
 
@@ -824,42 +807,16 @@ class CdrsController extends Controller
             //         ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
             // }
             // logger(request());
+            logger("here");
 
-            $cdrs = $this->getData(false); // returns collection
+            $cdrs = $this->getData(false); // returns lazy collection
 
-            // logger($cdrs->count());
-
-            $writer = SimpleExcelWriter::streamDownload('call-detail-records.csv');
-
-            $count = 0;
-
-            foreach ($cdrs as $cdr) {
-                $writer->addRow([
-                    'ID' => $cdr['xml_cdr_uuid'],
-                    'Direction' => $cdr['direction'],
-                    'Caller ID Name' => $cdr['caller_id_name'],
-                    'Caller ID Number' => $cdr['caller_id_number_formatted'],
-                    'Dialed Number' => $cdr['caller_destination_formatted'],
-                    'Recipient' => $cdr['destination_number_formatted'],
-                    'Date' => $cdr['start_date'],
-                    'Time' => $cdr['start_time'],
-                    'Duration' => $cdr['duration_formatted'],
-                    'Status' => $cdr['status'],
-                ]);
-            
-                $count++;
-            
-                if ($count % 1000 === 0) {
-                    flush(); // Flush the buffer every 1000 rows
-                }
-            }
-
-            // $writer->toBrowser();
+            ExportCdrs::dispatch($cdrs);
+            logger('Dispatched the job');
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Items exported']],
-                'blob' => $writer->toBrowser(),
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());

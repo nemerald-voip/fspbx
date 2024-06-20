@@ -2,14 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Mail\AppCredentials;
-use App\Models\DefaultSettings;
+
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Spatie\SimpleExcel\SimpleExcelWriter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -98,7 +97,7 @@ class ExportCdrs implements ShouldQueue
 
             $count = 0;
 
-            foreach ($cdrs as $cdr) {
+            foreach ($this->cdrs as $cdr) {
                 $writer->addRow([
                     'ID' => $cdr['xml_cdr_uuid'],
                     'Direction' => $cdr['direction'],
