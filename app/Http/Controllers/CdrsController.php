@@ -679,11 +679,10 @@ class CdrsController extends Controller
             // $cdrs = $this->getData(false); // returns lazy collection
 
             ExportCdrs::dispatch($params,$this->cdrDataService);
-            logger('Dispatched the job');
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Items exported']],
+                'messages' => ['success' => ['Report is being generated in the background. We\'ll email you a link when it\'s ready to download.']],
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());

@@ -42,6 +42,11 @@ return [
             'visibility' => 'public',
         ],
 
+        'export' => [
+            'driver' => 'local',
+            'root' => storage_path('app/export'),
+        ],
+
         'voicemail' => [
             'driver' => 'local',
             'root' => '/var/lib/freeswitch/storage/voicemail/default',

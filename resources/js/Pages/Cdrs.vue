@@ -489,33 +489,52 @@ const exportCsv = () => {
 
     axios.post(props.routes.export, {
         filterData: filterData._rawValue,
-    }, {
-        responseType: 'blob'
     })
         .then(response => {
-            // Create a blob link to download
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link); // Clean up
-            window.URL.revokeObjectURL(url); // Free up memory
-
-            filterData.value.download = 'false'; // Reset download flag on success
             showNotification('success', response.data.messages);
             isExporting.value = false;
         })
         .catch(error => {
             console.error('There was an error with the request:', error);
-            filterData.value.download = 'false'; // Reset download flag on error
             isExporting.value = false;
             handleErrorResponse(error);
         });
 
 
 };
+
+// const exportCsv = () => {
+//     isExporting.value = true;
+
+//     axios.post(props.routes.export, {
+//         filterData: filterData._rawValue,
+//     }, {
+//         responseType: 'blob'
+//     })
+//         .then(response => {
+//             // Create a blob link to download
+//             const url = window.URL.createObjectURL(new Blob([response.data]));
+//             const link = document.createElement('a');
+//             link.href = url;
+//             link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
+//             document.body.appendChild(link);
+//             link.click();
+//             document.body.removeChild(link); // Clean up
+//             window.URL.revokeObjectURL(url); // Free up memory
+
+//             filterData.value.download = 'false'; // Reset download flag on success
+//             showNotification('success', response.data.messages);
+//             isExporting.value = false;
+//         })
+//         .catch(error => {
+//             console.error('There was an error with the request:', error);
+//             filterData.value.download = 'false'; // Reset download flag on error
+//             isExporting.value = false;
+//             handleErrorResponse(error);
+//         });
+
+
+// };
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
