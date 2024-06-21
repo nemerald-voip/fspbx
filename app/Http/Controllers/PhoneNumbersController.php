@@ -569,7 +569,7 @@ class PhoneNumbersController extends Controller
             $dialPlan->dialplan_details()->delete();
         }
 
-        $detailOrder = 10;
+        $detailOrder = 20;
         $detailGroup = 0;
 
         if($phoneNumber->destination_conditions) {
@@ -593,15 +593,18 @@ class PhoneNumbersController extends Controller
                 $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
                 $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
                 $dialPlanDetails->dialplan_detail_tag = "regex";
-                if (!empty($condition->condition_app)) {
+                /*if (!empty($condition->condition_app)) {
                     $dialPlanDetails->dialplan_detail_type = $condition->condition_app;
                 } else {
                     $dialPlanDetails->dialplan_detail_type = "regex";
-                }
+                }*/
+                $dialPlanDetails->dialplan_detail_type = '${sip_req_user}';
                 $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
                 $dialPlanDetails->dialplan_detail_group = $detailGroup;
                 $dialPlanDetails->dialplan_detail_order = $detailOrder;
                 $dialPlanDetails->save();
+
+                //die;
 
                 $detailOrder += 10;
 
@@ -610,7 +613,7 @@ class PhoneNumbersController extends Controller
                 $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
                 $dialPlanDetails->dialplan_detail_tag = "regex";
                 $dialPlanDetails->dialplan_detail_type = $condition->condition_field;
-                $dialPlanDetails->dialplan_detail_data = '^'.$condition->condition_expression.'$';
+                $dialPlanDetails->dialplan_detail_data = '^\+?'.$phoneNumber->destination_prefix.'?'.$condition->condition_expression.'$';
                 $dialPlanDetails->dialplan_detail_group = $detailGroup;
                 $dialPlanDetails->dialplan_detail_order = $detailOrder;
                 $dialPlanDetails->save();
@@ -638,7 +641,8 @@ class PhoneNumbersController extends Controller
         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
         $dialPlanDetails->dialplan_detail_tag = "condition";
-        $dialPlanDetails->dialplan_detail_type = "destination_number";
+        $dialPlanDetails->dialplan_detail_type = '${sip_req_user}';
+        //$dialPlanDetails->dialplan_detail_type = 'destination_number';
         $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
         $dialPlanDetails->dialplan_detail_group = $detailGroup;
         $dialPlanDetails->dialplan_detail_order = $detailOrder;
