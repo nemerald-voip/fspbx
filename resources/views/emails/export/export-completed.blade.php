@@ -7,10 +7,6 @@
 
 <p>The CSV you requested is ready to be downloaded.</p>
 
-<p>You can download it from the following link:</p>
-
-<p><a href="{{ $attributes['fileUrl'] }}">{{ $attributes['fileUrl'] }}</a></p>
-
 
 <table class="action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation">
     <tr>
