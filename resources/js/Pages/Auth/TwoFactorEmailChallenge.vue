@@ -105,6 +105,7 @@ const props = defineProps({
 const logoUrl = ref('/storage/logo.png');
 const isLoading = ref(false);
 const isLoadingNewCode = ref(false);
+const errorMessage = ref(null);
 
 
 // Function to handle form submission
