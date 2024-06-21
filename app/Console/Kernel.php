@@ -20,6 +20,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('UploadArchiveFiles')
                 ->dailyAt('01:00')->timezone('America/Los_Angeles');
 
+        // Clear the export directory daily
+        $schedule->command('storage:clear-export-directory')->daily();
+
         // you’d like to see graphs of how your queues are doing, run this
         $schedule->command('horizon:snapshot')->everyFiveMinutes();
 
@@ -44,6 +47,8 @@ class Kernel extends ConsoleKernel
        Commands\UploadArchiveFiles::class,
        Commands\MigrationShowLastBatch::class,
        Commands\MigrationDeleteLastBatch::class,
+       Commands\ClearExportDirectory::class,
+
     ];
     
     protected function commands()
