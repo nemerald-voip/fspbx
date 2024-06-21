@@ -651,7 +651,9 @@ class CdrsController extends Controller
             $params['paginate'] = false;
             $params['filterData'] = request()->filterData;
             $params['domain_uuid'] = session('domain_uuid');
-            $params['domains'] = session('domains')->pluck('domain_uuid');
+            if (session('domains')) {
+                $params['domains'] = session('domains')->pluck('domain_uuid');
+            }
             $params['searchable'] = $this->searchable;
     
             if (!empty(request('filterData.dateRange'))) {
