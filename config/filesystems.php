@@ -44,7 +44,9 @@ return [
 
         'export' => [
             'driver' => 'local',
-            'root' => storage_path('app/export'),
+            'root' => storage_path('app/public/export'),
+            'url' => env('APP_URL') . '/storage/export',
+            'visibility' => 'public',
         ],
 
         'voicemail' => [

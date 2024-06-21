@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Jobs\SendExportCompletedNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 
@@ -104,8 +105,6 @@ class ExportCdrs implements ShouldQueue
 
             // Define the path to the CSV file within the export directory
             $pathToCsv = Storage::disk('export')->path($uniqueFilename);
-            logger($pathToCsv);
-
 
             $writer = SimpleExcelWriter::create($pathToCsv);
 
@@ -126,7 +125,6 @@ class ExportCdrs implements ShouldQueue
                 ]);
 
                 $count++;
-                logger($count);
 
                 if ($count % 1000 === 0) {
                     flush(); // Flush the buffer every 1000 rows
@@ -134,10 +132,11 @@ class ExportCdrs implements ShouldQueue
             }
 
             // Generate a public URL for the file
-            $fileUrl = Storage::disk('export')->url($uniqueFilename);
-            logger($fileUrl);
+            $this->params['fileUrl'] = Storage::disk('export')->url($uniqueFilename);
 
-            Mail::to($this->params['user_email'])->send(new CdrExportCompleted($fileUrl));
+            SendExportCompletedNotification::dispatch($this->params)->onQueue('emails');
+
+            // Mail::to($this->params['user_email'])->send(new CdrExportCompleted($fileUrl));
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
