@@ -646,15 +646,6 @@ class CdrsController extends Controller
     public function export()
     {
         try {
-            // if (request()->get('showGlobal')) {
-            //     $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            // } else {
-            //     $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-            //         ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            // }
-            // logger(request());
-            logger("here");
-
             $params['paginate'] = false;
             $params['filterData'] = request()->filterData;
             $params['domain_uuid'] = session('domain_uuid');
@@ -675,6 +666,8 @@ class CdrsController extends Controller
             $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
     
             $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
+
+            $params['user_email']=auth()->user()->user_email;
 
             // $cdrs = $this->getData(false); // returns lazy collection
 

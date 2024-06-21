@@ -5,6 +5,7 @@ namespace App\Jobs;
 
 use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
+use App\Mail\CdrExportCompleted;
 use App\Services\CdrDataService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
@@ -132,7 +133,12 @@ class ExportCdrs implements ShouldQueue
                 }
             }
 
-            
+            // Generate a public URL for the file
+            $fileUrl = Storage::disk('export')->url($uniqueFilename);
+            logger($fileUrl);
+
+            Mail::to($this->params['user_email'])->send(new CdrExportCompleted($fileUrl));
+
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(60);

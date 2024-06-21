@@ -5,7 +5,7 @@ namespace App\Mail;
 use Illuminate\Mail\Mailables\Content;
 
 
-class SmsToEmail extends BaseMailable
+class CdrExportCompleted extends BaseMailable
 {
     /**
      * Build the message.
@@ -18,7 +18,7 @@ class SmsToEmail extends BaseMailable
         $this->buildMessageHeaders();
 
         return $this->from(config('mail.from.address'), config('mail.from.name'))
-        ->subject('SMS Notification: New Message from ' . $this->attributes['from'])
+        ->subject('Call history report')
             ->from($this->attributes['smtp_from'], $this->attributes['smtp_from_name']);
 
     }
@@ -29,8 +29,8 @@ class SmsToEmail extends BaseMailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.messages.message',
-            text: 'emails.messages.message-text'
+            view: 'emails.export.completed',
+            text: 'emails.export.completed-text'
         );
     }
 }
