@@ -331,7 +331,7 @@ const submitForm = () => {
 }
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+    if (newSelectedItem !== null && newSelectedItem.value !== undefined) {
         form.destination_hold_music = newSelectedItem.value;
     } else {
         form.destination_hold_music = null;
@@ -352,7 +352,7 @@ const handleDomainUpdate = (newSelectedItem) => {
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+    if (newSelectedItem !== null && newSelectedItem.value !== undefined) {
         form.fax_uuid = newSelectedItem.value;
     } else {
         form.fax_uuid = null;
