@@ -29,6 +29,9 @@
                         <option value="ivrs" @if($destinationsByCategory == 'ivrs') selected="selected" @endif>
                             Auto Receptionist
                         </option>
+                        <option value="recordings" @if($destinationsByCategory == 'recordings') selected="selected" @endif>
+                            Recordings
+                        </option>
                         <option value="others" @if($destinationsByCategory == 'others') selected="selected" @endif>
                             Miscellaneous
                         </option>
