@@ -57,7 +57,7 @@
                     </div>
 
                     <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                        <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                        <ComboBox :options="entities" :selectedItem="filterData.entity" :search="true"
                             :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
                     </div>
 
@@ -218,6 +218,7 @@ import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import SelectBox from "./components/general/SelectBox.vue"
+import ComboBox from "./components/general/ComboBox.vue"
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';

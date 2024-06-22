@@ -136,7 +136,7 @@ const filteredOptions = computed(() => {
 
 // Compute the classes based on the error state
 const inputClass = computed(() => {
-    let baseClasses = 'w-full text-gray-900 border-0 cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm sm:leading-6';
+    let baseClasses = 'w-full text-gray-900 border-0 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left ring-1 ring-inset focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm sm:leading-6';
     if (props.error) {
         return `${baseClasses} ring-red-600 focus-visible:ring-offset-red-600`; // Apply red ring if there's an error
     }
