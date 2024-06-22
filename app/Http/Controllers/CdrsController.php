@@ -243,6 +243,10 @@ class CdrsController extends Controller
                     'pattern' => '/application="rxfax"/',
                     'app' => 'Virtual Fax',
                 ],
+                'call_flow_uuid' => [
+                    'pattern' => '/call_flow_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
+                    'app' => 'Call Flow',
+                ],
             ];
 
             foreach ($patterns as $key => $info) {
