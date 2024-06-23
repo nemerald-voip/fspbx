@@ -5,8 +5,15 @@ namespace App\Mail;
 use Illuminate\Mail\Mailables\Content;
 
 
-class SmsToEmail extends BaseMailable
+class CdrExportCompleted extends BaseMailable
 {
+
+    public function __construct($fileUrl)
+    {
+        $attributes['fileUrl'] = $fileUrl; // Add your additional variable here
+        parent::__construct($attributes);
+    }
+
     /**
      * Build the message.
      *
@@ -18,8 +25,7 @@ class SmsToEmail extends BaseMailable
         $this->buildMessageHeaders();
 
         return $this->from(config('mail.from.address'), config('mail.from.name'))
-        ->subject('SMS Notification: New Message from ' . $this->attributes['from'])
-            ->from($this->attributes['smtp_from'], $this->attributes['smtp_from_name']);
+        ->subject('Call history report');
 
     }
 
@@ -29,8 +35,8 @@ class SmsToEmail extends BaseMailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.messages.message',
-            text: 'emails.messages.message-text'
+            view: 'emails.export.export-completed',
+            text: 'emails.export.export-completed-text'
         );
     }
 }

@@ -122,7 +122,7 @@ class EmailChallengeController extends Controller
             'links' => [
                 'email-challenge' => "/email-challenge",
             ],
-            'status' => session('status'),
+            'status' => 'Verification code has been resent',
         ]);
     }
 

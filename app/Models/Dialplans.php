@@ -47,7 +47,7 @@ class Dialplans extends Model
 
     /**
      * Get the dialplan details this Dialplan object associated with.
-     *  returns Eloqeunt Object
+     *  returns Eloquent Object
      */
     public function dialplan_details()
     {
@@ -59,4 +59,25 @@ class Dialplans extends Model
         return $this->hasOne(Faxes::class,'dialplan_uuid','dialplan_uuid');
     }
 
+    /**
+     * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
+     *
+     * @param  string|null  $value
+     * @return bool
+     */
+    public function getDialplanEnabledAttribute(?string $value): bool
+    {
+        return $value === 'true';
+    }
+
+    /**
+     * Set the dialplan_enabled attribute.
+     *
+     * @param  bool $value
+     * @return void
+     */
+    public function setDialplanEnabledAttribute($value): void
+    {
+        $this->attributes['dialplan_enabled'] = $value ? 'true' : 'false';
+    }
 }

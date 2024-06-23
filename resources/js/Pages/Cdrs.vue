@@ -9,10 +9,11 @@
                 <template #action>
 
                     <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="exportCsv"
-                        :disabled="data.data.length === 0"
+                        :disabled="isExporting"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                         Export CSV
+                        <Spinner class="ml-1" :show="isExporting" />
                     </button>
 
                     <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
@@ -56,7 +57,7 @@
                     </div>
 
                     <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                        <SelectBox :options="entities" :selectedItem="filterData.entity" :search="true"
+                        <ComboBox :options="entities" :selectedItem="filterData.entity" :search="true"
                             :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
                     </div>
 
@@ -91,7 +92,8 @@
                     </TableColumnHeader>
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                    <TableColumnHeader header="Actions" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+                    <TableColumnHeader header="Actions"
+                        class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
 
                 </template>
 
@@ -124,14 +126,15 @@
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_id_number" />
+                            :text="row.caller_id_number_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_destination" />
+                            :text="row.caller_destination_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.destination_number" />
+                            :text="row.destination_number_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.duration_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
@@ -151,20 +154,20 @@
                         </TableField>
 
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap justify-center">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'" position='TopCenter'
-                                    target="#view_tooltip_target">
-                                    <div id="view_tooltip_target">
-                                        <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                            <template #action-buttons>
+                                <div class="flex items-center whitespace-nowrap justify-center">
+                                    <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'"
+                                        position='TopCenter' target="#view_tooltip_target">
+                                        <div id="view_tooltip_target">
+                                            <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                    </div>
-                                </ejs-tooltip>
+                                        </div>
+                                    </ejs-tooltip>
 
-                            </div>
-                        </template>
-                    </TableField>
+                                </div>
+                            </template>
+                        </TableField>
                     </tr>
                 </template>
                 <template #empty>
@@ -194,10 +197,12 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :header="'Call details'" :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
+        @close="handleModalClose">
     </CallDetailsModal>
 
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
@@ -213,11 +218,13 @@ import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import SelectBox from "./components/general/SelectBox.vue"
+import ComboBox from "./components/general/ComboBox.vue"
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
+import Notification from "./components/notifications/Notification.vue";
 import {
     PlayCircleIcon,
     PauseCircleIcon,
@@ -230,12 +237,17 @@ import {
     startOfDay, endOfDay,
 } from 'date-fns';
 import Loading from "./components/general/Loading.vue";
+import Spinner from "./components/general/Spinner.vue";
 
 const page = usePage()
 const today = new Date();
 const loading = ref(false)
 const viewModalTrigger = ref(false);
 const loadingModal = ref(false)
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
+const isExporting = ref(null);
 
 
 const props = defineProps({
@@ -274,7 +286,6 @@ const filterData = ref({
 const showGlobal = ref(props.showGlobal);
 
 const callDirections = [
-    { value: null, name: 'All' },
     { value: 'outbound', name: 'Outbound' },
     { value: 'inbound', name: 'Inbound' },
     { value: 'local', name: 'Local' },
@@ -312,11 +323,18 @@ const handleViewRequest = (itemUuid) => {
                 'itemData',
             ],
             onSuccess: (page) => {
-                loadingModal.value = false;
                 console.log(props.itemData);
+                if (!props.itemData) {
+                    viewModalTrigger.value = false;
+                    showNotification('error', { error: ['Unable to retrieve this item'] });
+                } else {
+                    loadingModal.value = false;
+                    viewModalTrigger.value = true;
+                }
+
             },
             onFinish: () => {
-                loadingModal.value = false;
+                // loadingModal.value = false;
             },
             onError: (errors) => {
                 console.log(errors);
@@ -326,7 +344,7 @@ const handleViewRequest = (itemUuid) => {
 }
 
 const handleUpdateCallDirectionFilter = (newSelectedItem) => {
-    if (newSelectedItem.value == "all") {
+    if (newSelectedItem.value == "NULL") {
         filterData.value.direction = null;
     } else {
         filterData.value.direction = newSelectedItem.value;
@@ -468,38 +486,56 @@ const handleUpdateDateRange = (newDateRange) => {
 }
 
 const exportCsv = () => {
+    isExporting.value = true;
 
-    filterData.value.download = 'true';
-
-    let url = `/call-detail-records`;
-
-    axios.post(url, {
+    axios.post(props.routes.export, {
         filterData: filterData._rawValue,
-    }, {
-        responseType: 'blob'
     })
         .then(response => {
-            // Create a blob link to download
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link); // Clean up
-            window.URL.revokeObjectURL(url); // Free up memory
-
-            filterData.value.download = 'false'; // Reset download flag on success
-
+            showNotification('success', response.data.messages);
+            isExporting.value = false;
         })
         .catch(error => {
             console.error('There was an error with the request:', error);
-            filterData.value.download = 'false'; // Reset download flag on error
-
+            isExporting.value = false;
+            handleErrorResponse(error);
         });
 
 
 };
+
+// const exportCsv = () => {
+//     isExporting.value = true;
+
+//     axios.post(props.routes.export, {
+//         filterData: filterData._rawValue,
+//     }, {
+//         responseType: 'blob'
+//     })
+//         .then(response => {
+//             // Create a blob link to download
+//             const url = window.URL.createObjectURL(new Blob([response.data]));
+//             const link = document.createElement('a');
+//             link.href = url;
+//             link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
+//             document.body.appendChild(link);
+//             link.click();
+//             document.body.removeChild(link); // Clean up
+//             window.URL.revokeObjectURL(url); // Free up memory
+
+//             filterData.value.download = 'false'; // Reset download flag on success
+//             showNotification('success', response.data.messages);
+//             isExporting.value = false;
+//         })
+//         .catch(error => {
+//             console.error('There was an error with the request:', error);
+//             filterData.value.download = 'false'; // Reset download flag on error
+//             isExporting.value = false;
+//             handleErrorResponse(error);
+//         });
+
+
+// };
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -517,6 +553,36 @@ const handleModalClose = () => {
     viewModalTrigger.value = false;
 }
 
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
+
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

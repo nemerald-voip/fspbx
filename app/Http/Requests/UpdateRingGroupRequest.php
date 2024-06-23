@@ -83,7 +83,7 @@ class UpdateRingGroupRequest extends FormRequest
                 'ExtensionExists:'.Session::get('domain_uuid')
             ],
             'timeout_category' => [
-                'in:disabled,ringgroup,dialplans,extensions,timeconditions,ivrs,voicemails,others'
+                'in:disabled,ringgroup,dialplans,extensions,timeconditions,ivrs,voicemails,recordings,others'
             ],
             'timeout_action_ringgroup' => [
                 'required_if:timeout_category,==,ringgroup',

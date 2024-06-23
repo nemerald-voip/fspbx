@@ -7,6 +7,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use libphonenumber\NumberParseException;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class UpdatePhoneNumberRequest extends FormRequest
 {
@@ -31,11 +33,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_actions.*.destination_app' => [
-                'nullable',
-                Rule::in('transfer')
-            ],
-            'destination_actions.*.destination_data' => [
+            'destination_actions.*.value.value' => [
                 'nullable',
                 'string'
             ],
@@ -43,21 +41,17 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_conditions.*.condition_app' => [
-                'nullable',
-                Rule::in('transfer')
-            ],
             'destination_conditions.*.condition_field' => [
                 'nullable',
-                'string'
+                Rule::in('caller_id_number')
             ],
             'destination_conditions.*.condition_expression' => [
-                'nullable',
-                'string'
+                'required_if:destination_conditions.*.condition_field,!=,""',
+                'phone:US'
             ],
-            'destination_conditions.*.condition_data' => [
-                'required_if:destination_conditions.*.condition_expression,!=,""',
-                'string'
+            'destination_conditions.*.value.value' => [
+                'required_if:destination_conditions.*.condition_field,!=,""',
+                'string',
             ],
             'destination_cid_name_prefix' => [
                 'nullable',
@@ -100,13 +94,26 @@ class UpdatePhoneNumberRequest extends FormRequest
     /**
      * Handle a failed validation attempt.
      *
-     * @param Validator $validator
+     * @param  Validator  $validator
      * @return void
      */
     protected function failedValidation(Validator $validator): void
     {
         // Get the original error messages from the validator
-        $errors = $validator->errors();
+        $errors = $validator->errors()->toArray();
+        $customMessages = [];
+        foreach ($errors as $field => $message) {
+            if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
+                $index = (int) $matches[1]; // Add 1 to make it 1-indexed
+                $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
+            }
+            if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
+                $index = (int) $matches[1]; // Add 1 to make it 1-indexed
+                $customMessages[$field][] = "Please select action on condition ".($index + 1);
+            }
+        }
+
+        $errors = array_merge($errors, $customMessages);
 
         $responseData = array('errors' => $errors);
 
@@ -116,43 +123,30 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_conditions.*.condition_expression' => 'Should be valid US phone number',
-            'destination_conditions.*.condition_data' => 'Please select condition action',
+            'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
+            'destination_conditions.*.value.value' => 'Please select action on condition',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
     public function prepareForValidation(): void
     {
-        $destination_actions = [];
-        if($this->filled('destination_actions')) {
-            foreach($this->get('destination_actions') as $action) {
-                $destination_actions[] = [
-                    'destination_app' => 'transfer',
-                    'destination_data' => $action['value']['value'] ?? $action['destination_data'] ?? '',
-                ];
+        if ($this->has('destination_conditions')) {
+            $destinationConditions = [];
+            foreach ($this->get('destination_conditions') as $condition) {
+                try {
+                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
+                } catch (NumberParseException $e) {
+                    //
+                }
+                $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
+                $destinationConditions[] = $condition;
             }
+            $this->merge(['destination_conditions' => $destinationConditions]);
         }
-        $destination_conditions = [];
-        if($this->filled('destination_conditions')) {
-            foreach($this->get('destination_conditions') as $action) {
-                $destination_conditions[] = [
-                    'condition_field' => $action['condition_field']['value'] ?? $action['condition_field'] ?? '',
-                    'condition_expression' => $action['condition_expression'] ?? null,
-                    'condition_app' => 'transfer',
-                    'condition_data' => $action['condition_data'][0]['value']['value'] ?? $action['condition_data'] ?? ''
-                ];
-            }
-        }
-        $this->merge([
-            'destination_actions' => $destination_actions,
-            'destination_conditions' => $destination_conditions
-        ]);
+
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
     }
 }
-
-// [{"condition_app":"transfer","condition_field":"caller_id_number","condition_expression":"2038567463","condition_data":"152 XML api.us.nemerald.net"}]
-// [{"condition_field":"caller_id_number","condition_expression":"2038567463","condition_app":"transfer","condition_data":"200 XML api.us.nemerald.net"}]

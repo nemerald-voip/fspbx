@@ -54,6 +54,7 @@ class Destinations extends Model
         'destination_type_text',
         'destination_app',
         'destination_data',
+        'destination_distinctive_ring',
         'destination_alternate_app',
         'destination_alternate_data',
         'destination_order',
@@ -86,8 +87,6 @@ class Destinations extends Model
             unset($model->destination_actions_formatted);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
-            $model->destination_actions = json_encode($model->destination_actions);
-            $model->destination_conditions = json_encode($model->destination_conditions);
         });
 
         static::retrieved(function ($model) {
@@ -106,17 +105,37 @@ class Destinations extends Model
                 }
             }
 
-            //$timeoutDestinations = getTimeoutDestinations();
-            //'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
-            //'timeout_destinations_targets' => $timeoutDestinations['targets']
-
-            if ($model->destination_actions) {
-                $model->destination_actions = json_decode($model->destination_actions);
-                $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
+            if (!empty($model->destination_actions)) {
+                $model->destination_actions = json_decode($model->destination_actions, true);
+                if(is_array($model->destination_actions)) {
+                    $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
+                    $actions = null;
+                    foreach ($model->destination_actions as $action) {
+                        if (!empty($action['destination_data'])) {
+                            $actions[] = [
+                                'value' => ['value' => $action['destination_data']],
+                            ];
+                        }
+                    }
+                    $model->destination_actions = $actions;
+                }
             }
 
-            if ($model->destination_conditions) {
-                $model->destination_conditions = json_decode($model->destination_conditions);
+            if (!empty($model->destination_conditions)) {
+                $model->destination_conditions = json_decode($model->destination_conditions, true);
+                if(is_array($model->destination_conditions)) {
+                    $conditions = null;
+                    foreach ($model->destination_conditions as $condition) {
+                        if (!empty($condition['condition_data'])) {
+                            $conditions[] = [
+                                'condition_field' => $condition['condition_field'],
+                                'condition_expression' => $condition['condition_expression'],
+                                'value' => ['value' => $condition['condition_data']],
+                            ];
+                        }
+                    }
+                    $model->destination_conditions = $conditions;
+                }
             }
 
             $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);
@@ -131,6 +150,11 @@ class Destinations extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function fax()
+    {
+        return $this->belongsTo(Faxes::class, 'fax_uuid', 'fax_uuid');
     }
 
     /**
@@ -176,45 +200,4 @@ class Destinations extends Model
     {
         $this->attributes['destination_record'] = $value ? 'true' : 'false';
     }
-
-    // public function getDestinationNumberAttribute($value): ?string
-    // {
-    //     //Get libphonenumber object
-    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-    //     //try to convert phone number to National format
-    //     try {
-    //         $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-    //         if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-    //             return $phoneNumberUtil
-    //                 ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-    //         } else {
-    //             return $value;
-    //         }
-    //     } catch (NumberParseException $e) {
-
-    //         // Do nothing and leave the number as is
-    //         return $value;
-    //     }
-    // }
-
-    // public function getDestinationCallerIdNumberAttribute($value): ?string
-    // {
-    //     //Get libphonenumber object
-    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-    //     //try to convert phone number to National format
-    //     try {
-    //         $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-    //         if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-    //             return $phoneNumberUtil
-    //                 ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-    //         } else {
-    //             return $value;
-    //         }
-    //     } catch (NumberParseException $e) {
-    //         // Do nothing and leave the number as is
-    //         return $value;
-    //     }
-    // }
 }

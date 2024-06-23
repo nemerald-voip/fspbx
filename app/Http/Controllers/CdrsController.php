@@ -4,19 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\CDR;
 use Inertia\Inertia;
+use App\Jobs\ExportCdrs;
+use App\Models\Dialplans;
 use App\Models\Extensions;
-use App\Exports\CdrsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
-use App\Models\Dialplans;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
+use App\Services\CdrDataService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
-use function GuzzleHttp\Promise\queue;
 
 class CdrsController extends Controller
 {
@@ -27,9 +25,12 @@ class CdrsController extends Controller
     public $sortOrder;
     protected $viewName = 'Cdrs';
     protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'sip_call_id', 'cc_member_session_uuid'];
+    public $item_domain_uuid;
+    protected $cdrDataService;
 
-    public function __construct()
+    public function __construct(CdrDataService $cdrDataService)
     {
+        $this->cdrDataService = $cdrDataService;
         $this->model = new CDR();
     }
 
@@ -50,18 +51,6 @@ class CdrsController extends Controller
         if ($request->callUuid) {
             $callUuid = $request->callUuid;
         }
-
-
-        if (isset($request->filterData['download']) && $request->filterData['download'] === 'true') {
-            $cdrs = $this->getData(false);
-            $export = new CdrsExport($cdrs);
-
-            return Excel::download($export, 'call-detail-records.csv');
-        }
-
-
-        // return view('layouts.cdrs.index')->with($data);
-
 
         return Inertia::render(
             $this->viewName,
@@ -101,6 +90,7 @@ class CdrsController extends Controller
                 ),
                 'routes' => [
                     'current_page' => route('cdrs.index'),
+                    'export' => route('cdrs.export'),
                 ]
 
             ]
@@ -109,72 +99,90 @@ class CdrsController extends Controller
 
     public function getItemData()
     {
-        // Get item data
-        $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
-            ->select([
-                'xml_cdr_uuid',
-                'domain_uuid',
-                'extension_uuid',
-                'direction',
-                'caller_id_name',
-                'caller_id_number',
-                'caller_destination',
-                'start_epoch',
-                'answer_epoch',
-                'end_epoch',
-                'duration',
-                'call_flow',
+        try {
 
-            ])
-            ->first();
+            // Get item data
+            $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
+                ->select([
+                    'xml_cdr_uuid',
+                    'domain_uuid',
+                    'sip_call_id',
+                    'extension_uuid',
+                    'direction',
+                    'caller_id_name',
+                    'caller_id_number',
+                    'caller_destination',
+                    'start_epoch',
+                    'answer_epoch',
+                    'end_epoch',
+                    'duration',
+                    'billsec',
+                    'waitsec',
+                    'call_flow',
+                    'voicemail_message',
+                    'missed_call',
+                    'hangup_cause',
+                    'hangup_cause_q850',
+                    'sip_hangup_disposition',
+                    'status',
 
-        // logger($itemData);
+                ])
+                ->first();
 
-        if (!$itemData) {
+            // logger($itemData);
+
+            if (!$itemData) {
+                return null;
+            }
+
+            $this->item_domain_uuid = $itemData->domain_uuid;
+
+            $callFlowData = collect(json_decode($itemData->call_flow, true));
+
+            // logger($callFlowData->toArray());
+
+            // Add new rows for transfers
+            $callFlowData = $this->handleCallFlowSteps($callFlowData);
+
+            // Build the call flow summary
+            $callFlowSummary = $callFlowData->map(function ($row) {
+                return $this->buildSummaryItem($row);
+            });
+
+            // logger($callFlowSummary->toArray());
+
+            //calculate the time line and format it
+            $startEpoch = $itemData->start_epoch;
+            $direction = $itemData->direction;
+            $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch, $direction) {
+                $timeDifference = $row['profile_created_time'] - $startEpoch;
+                $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60); // Human-readable format
+                if ($direction == "outbound") {
+                    $row['dialplan_app'] = "Outbound Call";
+                }
+                return $row;
+            });
+
+            // Format times
+            $callFlowSummary = $this->formatTimes($callFlowSummary);
+
+            // Get Dialplan App details
+            $callFlowSummary = $callFlowSummary->map(function ($row) {
+                $row = $this->getAppDetails($row);
+
+                return $row;
+            });
+
+
+            $itemData->call_flow = $callFlowSummary;
+
+            // logger($callFlowSummary->all());
+            return $itemData;
+        } catch (\Exception $e) {
+            // Handle the exception
+            logger($e->getMessage());
             return null;
         }
-
-        $callFlowData = collect(json_decode($itemData->call_flow, true));
-
-        // logger($callFlowData->toArray());
-
-        // Add new rows for transfers
-        $callFlowData = $this->handleCallFlowSteps($callFlowData);
-
-        // logger($callFlowData);
-
-        // Build the call flow summary
-        $callFlowSummary = $callFlowData->map(function ($row) {
-            return $this->buildSummaryItem($row);
-        });
-
-        // logger($callFlowSummary->toArray());
-
-        //calculate the time line and format it
-        $startEpoch = $itemData->start_epoch;
-        $direction = $itemData->direction;
-        $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch, $direction) {
-            $timeDifference = $row['profile_created_time'] - $startEpoch;
-            $row['time_line'] = gmdate("H:i:s", $timeDifference); // Human-readable format
-            if ($direction == "outbound") {
-                $row['dialplan_app'] = "Outbound Call";
-            }
-            return $row;
-        });
-
-        // Format times
-        $callFlowSummary = $this->formatTimes($callFlowSummary);
-
-        // Get Dialplan App details
-        $callFlowSummary = $callFlowSummary->map(function ($row) {
-            $row = $this->getAppDetails($row);
-
-            return $row;
-        });
-
-
-
-        logger($callFlowSummary->all());
     }
 
     /**
@@ -213,7 +221,7 @@ class CdrsController extends Controller
             $patterns = [
                 'ring_group_uuid' => [
                     'pattern' => '/ring_group_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
-                    'app' => 'Ring group',
+                    'app' => 'Ring Group',
                 ],
                 'ivr_menu_uuid' => [
                     'pattern' => '/ivr_menu_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
@@ -227,7 +235,18 @@ class CdrsController extends Controller
                     'pattern' => '/call_direction=inbound/',
                     'app' => 'Inbound Call',
                 ],
-                // Add more patterns here as needed
+                'date_time' => [
+                    'pattern' => '/\b(?:year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=/',
+                    'app' => 'Schedule',
+                ],
+                'application_rxfax' => [
+                    'pattern' => '/application="rxfax"/',
+                    'app' => 'Virtual Fax',
+                ],
+                'call_flow_uuid' => [
+                    'pattern' => '/call_flow_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
+                    'app' => 'Call Flow',
+                ],
             ];
 
             foreach ($patterns as $key => $info) {
@@ -238,15 +257,37 @@ class CdrsController extends Controller
                     break; // Stop checking after the first match
                 }
             }
+
+            return $row;
         }
 
+        // Check if destination is Park
         if (strpos($row['destination_number'], "park+") !== false) {
             $row['dialplan_app'] = "Park";
-            // $row['dialplan_name'] = $dialplan->dialplan_name;
+            $row['dialplan_name'] = substr($row['destination_number'], 6);
+            $row['dialplan_description'] = '';
+            return $row;
+        }
+
+        // Check if destination is voicemail
+        if ((substr($row['destination_number'], 0, 3) == '*99') !== false) {
+            $row['dialplan_app'] = "Voicemail";
+            $row['dialplan_name'] = substr($row['destination_number'], 3);
+            $row['dialplan_description'] = '';
+            return $row;
         }
 
         // Check if destination is extension
-        
+        $extension = Extensions::where('domain_uuid', $this->item_domain_uuid)
+            ->where('extension', $row['destination_number'])
+            ->first();
+
+        if ($extension) {
+            $row['dialplan_app'] = "Extension";
+            $row['dialplan_name'] = $extension->effective_caller_id_name;
+            $row['dialplan_description'] = $extension->description;
+        }
+
 
         // logger($dialplan);
 
@@ -264,7 +305,6 @@ class CdrsController extends Controller
         $newRows = collect();
 
         $callFlowData->reduce(function ($carry, $row) use ($newRows) {
-            $insertedNewRow = false;
 
             // Check if 'ring_group_uuid' exists in the 'application' array
             if (isset($row['extension']['application'])) {
@@ -369,11 +409,20 @@ class CdrsController extends Controller
             } else {
                 $destinationNumber = $row['caller_profile']['callee_id_number'];
             }
-        }
-         else {
+        } else {
             $destinationNumber = !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'];
         }
-        
+
+        $durationInSeconds = $profileEndEpoch - $profileCreatedEpoch;
+        $minutes = floor($durationInSeconds / 60);
+        $seconds = $durationInSeconds % 60;
+
+        if ($minutes > 0) {
+            $durationFormatted = sprintf('%d min %02d s', $minutes, $seconds);
+        } else {
+            $durationFormatted = sprintf('%02d s', $seconds);
+        }
+
         return [
             'destination_number' => $destinationNumber,
             // 'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
@@ -387,8 +436,8 @@ class CdrsController extends Controller
             'profile_end_time' => $row['times']['profile_end_time'] == 0 ? 0 : $this->formatTime($row['times']['profile_end_time']),
             'progress_media_time' => $row['times']['progress_media_time'] == 0 ? 0 : $this->formatTime($row['times']['progress_media_time']),
             'hangup_time' => $row['times']['hangup_time'] == 0 ? 0 : $this->formatTime($row['times']['hangup_time']),
-            'duration_seconds' => $profileEndEpoch - $profileCreatedEpoch,
-            'duration_formatted' => gmdate('G:i:s', $profileEndEpoch - $profileCreatedEpoch),
+            'duration_seconds' => $durationInSeconds,
+            'duration_formatted' => $durationFormatted,
         ];
     }
 
@@ -536,9 +585,17 @@ class CdrsController extends Controller
     }
 
 
-    public function getData($paginate = 50)
+    //Most of this function has been moved to CdrDataService service container
+    public function getData()
     {
-        // request('filterData.search')
+        $params['paginate'] = 50;
+        $params['filterData'] = request()->filterData;
+        $params['domain_uuid'] = session('domain_uuid');
+        if (session('domains')) {
+            $params['domains'] = session('domains')->pluck('domain_uuid');
+        }
+        $params['searchable'] = $this->searchable;
+
         if (!empty(request('filterData.dateRange'))) {
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
@@ -547,140 +604,32 @@ class CdrsController extends Controller
             $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
         }
 
+        $params['filterData']['startPeriod'] = $startPeriod;
+        $params['filterData']['endPeriod'] = $endPeriod;
+        $params['filterData']['sortField'] = request()->get('sortField', 'start_epoch');
+        $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
+
+        $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
+
         $this->filters = [
             'startPeriod' => $startPeriod,
             'endPeriod' => $endPeriod,
+            'showGlobal' => request('filterData.showGlobal') ?? null,
+            'direction' => request('filterData.direction') ?? null,
+            'search' => request('filterData.search') ?? null,
+            'entity' => request('filterData.entity') ?? null,
+            'entityType' => request('filterData.entityType') ?? null
         ];
 
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
-        // Check if direction parameter is present and not empty
-        if (!empty(request('filterData.direction'))) {
-            $this->filters['direction'] = request('filterData.direction');
-        }
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Check if search parameter is present and not empty
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.entity'))) {
-            $this->filters['entity'] = request('filterData.entity');
-        }
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.entityType'))) {
-            $this->filters['entityType'] = request('filterData.entityType');
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'start_epoch'); // Default to 'start_epoch'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to ascending
+        return $this->cdrDataService->getData($params);
 
 
-        $cdrs = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $cdrs = $cdrs->paginate($paginate);
-        } else {
-            $cdrs = $cdrs->get(); // This will return a collection
-        }
-
-        $cdrs->transform(function ($cdr) {
-            $cdr->start_date = $cdr->start_date;
-            $cdr->start_time = $cdr->start_time;
-
-            return $cdr;
-        });
-        return $cdrs;
     }
 
-    public function builder($filters = [])
-    {
-
-        $data =  $this->model::query();
-
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $data->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-            }]);
-            // Access domains through the session and filter by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $data->whereHas('domain', function ($query) use ($domainUuids) {
-                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
-            });
-        } else {
-            // Directly filter by the session's domain_uuid
-            $domainUuid = Session::get('domain_uuid');
-            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        }
-
-        $data->select(
-            'xml_cdr_uuid',
-            'direction',
-            'caller_id_name',
-            'caller_id_number',
-            'caller_destination',
-            'destination_number',
-            'domain_uuid',
-            'extension_uuid',
-            // 'sip_call_id',
-            'source_number',
-            // 'start_stamp',
-            'start_epoch',
-            // 'answer_stamp',
-            // 'answer_epoch',
-            'end_epoch',
-            // 'end_stamp',
-            'duration',
-            'record_path',
-            'record_name',
-            // 'leg',
-            // 'voicemail_message',
-            // 'missed_call',
-            // 'call_center_queue_uuid',
-            // 'cc_side',
-            // 'cc_queue_joined_epoch',
-            // 'cc_queue',
-            // 'cc_agent',
-            // 'cc_agent_bridged',
-            // 'cc_queue_answered_epoch',
-            // 'cc_queue_terminated_epoch',
-            // 'cc_queue_canceled_epoch',
-            'cc_cancel_reason',
-            'cc_cause',
-            // 'waitsec',
-            'hangup_cause',
-            'hangup_cause_q850',
-            'sip_hangup_disposition',
-            'status'
-        );
-
-        //exclude legs that were not answered
-        if (!userCheckPermission('xml_cdr_lose_race')) {
-            $data->where('hangup_cause', '!=', 'LOSE_RACE');
-        }
-
-        foreach ($filters as $field => $value) {
-            if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                $this->$method($data, $value);
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
-        return $data;
-    }
+    // This function has been moved to CdrDataService service container
+    // public function builder($filters = [])
+    // {
+    // }
 
     protected function getTimezone()
     {
@@ -694,61 +643,61 @@ class CdrsController extends Controller
         return $timezone;
     }
 
-    protected function filterStartPeriod($query, $value)
-    {
-        $query->where('start_epoch', '>=', $value->getTimestamp());
-    }
 
-    protected function filterEndPeriod($query, $value)
+    /**
+     * Get all items
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function export()
     {
-        $query->where('start_epoch', '<=', $value->getTimestamp());
-    }
-
-    protected function filterDirection($query, $value)
-    {
-        $query->where('direction', 'ilike', '%' . $value . '%');
-    }
-
-    protected function filterSearch($query, $value)
-    {
-        // Case-insensitive partial string search in the specified fields
-        $searchable = $this->searchable;
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
+        try {
+            $params['paginate'] = false;
+            $params['filterData'] = request()->filterData;
+            $params['domain_uuid'] = session('domain_uuid');
+            if (session('domains')) {
+                $params['domains'] = session('domains')->pluck('domain_uuid');
             }
-        });
-    }
+            $params['searchable'] = $this->searchable;
+    
+            if (!empty(request('filterData.dateRange'))) {
+                $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
+                $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
+            } else {
+                $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
+                $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+            }
+    
+            $params['filterData']['startPeriod'] = $startPeriod;
+            $params['filterData']['endPeriod'] = $endPeriod;
+            $params['filterData']['sortField'] = request()->get('sortField', 'start_epoch');
+            $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
+    
+            $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
 
-    protected function filterEntity($query, $value)
-    {
-        if (!isset($this->filters['entityType'])) {
-            return;
+            $params['user_email']=auth()->user()->user_email;
+
+            // $cdrs = $this->getData(false); // returns lazy collection
+
+            ExportCdrs::dispatch($params,$this->cdrDataService);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Report is being generated in the background. We\'ll email you a link when it\'s ready to download.']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to export items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
-        switch ($this->filters['entityType']) {
-            case 'queue':
-                $query->where('call_center_queue_uuid', 'ilike', '%' . $value . '%');
-                break;
-            case 'extension':
 
-                $extention = Extensions::find($value);
-                // logger($extention);
-
-                $query->where(function ($query) use ($extention) {
-                    $query->where('extension_uuid', 'ilike', '%' . $extention->extension_uuid . '%')
-                        ->orWhere('caller_id_number', $extention->extension)
-                        ->orWhere('caller_destination', $extention->extension)
-                        ->orWhere('source_number', $extention->extension)
-                        ->orWhere('destination_number', $extention->extension);
-                });
-
-
-                break;
-                // case 2:
-                //     echo "i equals 2";
-                //     break;
-        }
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to export']]
+        ], 500); // 500 Internal Server Error for any other errors
     }
 
     /**

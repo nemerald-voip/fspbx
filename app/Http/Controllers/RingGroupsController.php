@@ -117,6 +117,7 @@ class RingGroupsController extends Controller
             'timeconditions',
             'voicemails',
             'ivrs',
+            'recordings',
             'others'
         ] as $category) {
             $timeoutDestinationsByCategory[$category] = getDestinationByCategory($category)['list'];
@@ -171,7 +172,7 @@ class RingGroupsController extends Controller
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
-            'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
+            'ring_group_timeout_app' => $attributes['timeout_category'] == 'disabled' ? null : ($attributes['timeout_category'] == 'recordings' ? 'lua' : 'transfer'),
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'] ?? null,
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'] ?? null,
@@ -359,6 +360,7 @@ class RingGroupsController extends Controller
             'timeconditions',
             'voicemails',
             'ivrs',
+            'recordings',
             'others'
         ] as $category) {
             $c = getDestinationByCategory($category, $ringGroup->ring_group_timeout_data);
@@ -368,6 +370,7 @@ class RingGroupsController extends Controller
             $timeoutDestinationsByCategory[$category] = $c['list'];
         }
         unset($c, $category);
+        logger($timeoutDestinationsByCategory['ivrs']);
 
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)
@@ -420,7 +423,7 @@ class RingGroupsController extends Controller
             'ring_group_name' => $attributes['ring_group_name'],
             'ring_group_extension' => $attributes['ring_group_extension'],
             'ring_group_greeting' => $attributes['ring_group_greeting'] ?? null,
-            'ring_group_timeout_app' => ($attributes['timeout_category'] != 'disabled') ? 'transfer' : null,
+            'ring_group_timeout_app' => $attributes['timeout_category'] == 'disabled' ? null : ($attributes['timeout_category'] == 'recordings' ? 'lua' : 'transfer'),
             'ring_group_timeout_data' => $attributes['ring_group_timeout_data'],
             'ring_group_cid_name_prefix' => $attributes['ring_group_cid_name_prefix'] ?? null,
             'ring_group_cid_number_prefix' => $attributes['ring_group_cid_number_prefix'] ?? null,

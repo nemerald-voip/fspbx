@@ -968,6 +968,12 @@ if (!function_exists('getDestinationByCategory')) {
                     ->orderBy('ivr_menu_extension')
                     ->get();
                 break;
+            case 'recordings':
+                    $rows = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+                        //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                        ->orderBy('recording_name')
+                        ->get();
+                    break;
             case 'voicemails':
                 $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
                     ->where('voicemail_enabled', 'true')
@@ -1022,6 +1028,11 @@ if (!function_exists('getDestinationByCategory')) {
                         $label = $row->ivr_menu_extension . " - " . $row->ivr_menu_name;
                         $app_name = "Auto Receptionist";
                         break;
+                    case 'recordings':
+                            $id = sprintf('streamfile.lua %s', $row->recording_filename);
+                            $label = $row->recording_name;
+                            $app_name = "Recordings";
+                            break;
                     case 'others':
                         $id = $row['id'];
                         $label = $row['label'];
@@ -1104,7 +1115,7 @@ if (!function_exists('getTimeoutDestinationsLabels')) {
         foreach($actions as $action) {
             foreach ($destinations["targets"] as $category => $values) {
                 foreach ($values as $data) {
-                    if ($data["value"] == $action->destination_data) {
+                    if ($data["value"] == $action['destination_data']) {
                         $output[] = $destinations["categories"][(string) $category]["name"].' '.$data["name"];
                     }
                 }

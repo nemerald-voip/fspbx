@@ -6,7 +6,7 @@
         <main>
             <div class="mx-auto max-w-8xl px-4 py-10 sm:px-6 lg:px-8">
                 <div
-                    class="mx-auto grid max-w-2xl grid-cols-1 grid-rows-1 items-start gap-x-8 gap-y-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+                    class="mx-auto grid max-w-2xl grid-cols-1 grid-rows-1 items-start gap-x-8 gap-y-8 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:pb-36">
                     <!-- Company summary -->
                     <div class="lg:col-start-3 lg:row-end-1">
                         <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-900/5">
@@ -54,9 +54,17 @@
                                             class="pr-3 text-green-600 text-nowrap">
                                             Online: {{ counts.local_reg_count }}
                                         </span>
+                                        <span v-else
+                                            class="pr-3 text-green-600 text-nowrap">
+                                            Online: 0
+                                        </span>
                                         <span v-if="counts.local_reg_count && counts.local_reg_count >= 0"
                                             class=" text-rose-600 text-nowrap">
                                             Offline: {{ counts.extensions - counts.local_reg_count }}
+                                        </span>
+                                        <span v-else
+                                            class=" text-rose-600 text-nowrap">
+                                            Offline: {{ counts.extensions  }}
                                         </span>
                                     </dd>
                                 </div>

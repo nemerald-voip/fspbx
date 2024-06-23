@@ -1,8 +1,6 @@
 <?php
 
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\PhoneNumbersController;
-use App\Http\Controllers\RecordingsController;
+use Aws\Sns\Message;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -14,18 +12,21 @@ use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\PolycomLogController;
+use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use Aws\Sns\Message;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,9 @@ Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeControll
     ->name('email-challenge.new-code');
 Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'store']);
 
+// Csrf token
+Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
+
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
 //     $data = "Your data to be use in blade file";
@@ -83,6 +87,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
     Route::post('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.download');
     Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
+    Route::post('/call-detail-records/export', [CdrsController::class, 'export'])->name('cdrs.export');
 
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
@@ -243,6 +248,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('activities', ActivityLogController::class);
     Route::post('/activities/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activities.bulk.delete');
     Route::post('/activities/select-all', [ActivityLogController::class, 'selectAll'])->name('activities.select.all');
+
 });
 
 // Route::group(['prefix' => '/'], function () {

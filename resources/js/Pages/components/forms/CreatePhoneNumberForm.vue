@@ -51,7 +51,7 @@
                         </div>
                     </div>
                     <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'destination_actions'" :label="'If not answered, calls will be sent'"/>
+                        <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
                                 :options="options.timeout_destinations_categories"
@@ -66,8 +66,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'"/>
                         <div class="mt-2">
-                            <SelectBoxGroup :options="options.music_on_hold"
-                                            :search="true"
+                            <ComboBoxGroup :options="options.music_on_hold"
                                             :allowEmpty="true"
                                             :selectedItem="null"
                                             :placeholder="'Choose music on hold'"
@@ -105,8 +104,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'fax_uuid'" :label="'Fax detection'"/>
                         <div class="mt-2">
-                            <SelectBox :options="options.faxes"
-                                       :search="true"
+                            <ComboBox :options="options.faxes"
                                        :allowEmpty="true"
                                        :selectedItem="null"
                                        :placeholder="'Choose fax'"
@@ -133,11 +131,9 @@
                                 <div class="mt-4 grid grid-cols-3 gap-x-2">
                                     <div>
                                         <SelectBox :options="page.props.conditions"
-                                                   :search="false"
-                                                   :allowEmpty="true"
                                                    :selectedItem="condition.condition_field"
-                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
                                                    :placeholder="'Choose condition'"
+                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
                                         />
                                     </div>
                                     <div v-if="condition.condition_field">
@@ -210,9 +206,8 @@
                     <div v-if="page.props.auth.can.domain_select && page.props.auth.can.destination_edit_domain" class="sm:col-span-12">
                         <LabelInputRequired :target="'domain_uuid'" :label="'Owned By (Company Name)'"/>
                         <div class="mt-2">
-                            <SelectBox :options="options.domains"
+                            <ComboBox :options="options.domains"
                                        :selectedItem="form.domain_uuid"
-                                       :search="true"
                                        :placeholder="'Choose company'"
                                        @update:modal-value="handleDomainUpdate"
                                        :error="errors?.domain_uuid && errors.domain_uuid.length > 0"
@@ -247,7 +242,7 @@ import {defineProps, reactive, ref} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
-import SelectBoxGroup from "../general/SelectBoxGroup.vue";
+import ComboBoxGroup from "../general/ComboBoxGroup.vue";
 import MainDestinations from "../general/ActionSelect.vue";
 import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
@@ -255,6 +250,7 @@ import Textarea from "../general/Textarea.vue";
 import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
+import ComboBox from "../general/ComboBox.vue";
 import {MinusIcon, PlusIcon} from "@heroicons/vue/24/solid/index.js";
 import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
@@ -275,11 +271,11 @@ const conditionsMaxLimit = 6;
 const selectedTab = ref(0)
 
 const form = reactive({
-    domain_uuid: null,
+    domain_uuid: page.props.domain,
     fax_uuid: null,
     destination_prefix: "1",
     destination_number: null,
-    destination_actions: [],
+    destination_actions: null,
     destination_hold_music: null,
     destination_description: null,
     destination_enabled: true,
@@ -294,11 +290,21 @@ const form = reactive({
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const submitForm = () => {
+    // Transform conditions before submit
+    form.destination_conditions = conditions.value.map(condition => {
+        return {
+            "condition_field": condition.condition_field,
+            "condition_expression": condition.condition_expression,
+            "value": {
+                "value": condition.value
+            }
+        }
+    })
     emits('submit', form); // Emit the event with the form data
 }
 
 const handleMusicOnHoldUpdate = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+    if (newSelectedItem !== null && newSelectedItem.value !== undefined) {
         form.destination_hold_music = newSelectedItem.value;
     } else {
         form.destination_hold_music = null;
@@ -319,7 +325,7 @@ const handleDomainUpdate = (newSelectedItem) => {
 }
 
 const handleFaxUpdate = (newSelectedItem) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
+    if (newSelectedItem !== null && newSelectedItem.value !== undefined) {
         form.fax_uuid = newSelectedItem.value;
     } else {
         form.fax_uuid = null;
@@ -328,13 +334,7 @@ const handleFaxUpdate = (newSelectedItem) => {
 
 const handleConditionUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        const updatedCondition = {
-            condition_field: newSelectedItem.value,
-            condition_expression: conditions.value[index].condition_expression,
-            condition_data: conditions.value[index].condition_data,
-        };
         conditions.value[index].condition_field = newSelectedItem.value;
-        form.destination_conditions[index] = updatedCondition;
     }
 }
 
@@ -348,27 +348,30 @@ const addCondition = () => {
         condition_expression: "",
         selectedCategory: "",
         categoryTargets: [],
-        value: ""
+        value: null
     };
     conditions.value.push(newCondition);
-    //form.destination_conditions.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newSelectedItem, index) => {
     if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        const updatedCondition = {
-            condition_field: conditions.value[index].condition_field,
-            condition_expression: conditions.value[index].condition_expression,
-            condition_data: newSelectedItem,
-        };
-        conditions.value[index].value = newSelectedItem;
-        form.destination_conditions[index] = updatedCondition;
+        conditions.value[index].value = newSelectedItem[0].value.value;
     }
 }
 
 const removeCondition = (index) => {
     conditions.value.splice(index, 1);
-    form.destination_conditions.splice(index, 1);
 }
 
 </script>
+
+
+<style>
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
+}
+</style>

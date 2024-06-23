@@ -17,7 +17,7 @@
             <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.templates" :selectedItem="null" :search="true"
+                    <ComboBox :options="options.templates" :selectedItem="null" :search="true"
                         :placeholder="'Choose template'" @update:modal-value="handleTemplateUpdate" 
                         :error="errors?.device_template && errors.device_template.length > 0"/>
                 </div>
@@ -31,7 +31,7 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.profiles" :selectedItem="null" :search="true"
+                    <ComboBox :options="options.profiles" :selectedItem="null" :search="true"
                         :placeholder="'Choose profile'" @update:modal-value="handleProfileUpdate" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -42,7 +42,7 @@
             <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.extensions" :selectedItem="null" :search="true"
+                    <ComboBox :options="options.extensions" :selectedItem="null" :search="true"
                         :placeholder="'Choose extension'" @update:modal-value="handleExtensionUpdate" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -73,6 +73,7 @@ import { usePage } from '@inertiajs/vue3';
 
 
 import SelectBox from "../general/SelectBox.vue";
+import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";

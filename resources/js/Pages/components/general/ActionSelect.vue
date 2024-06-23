@@ -1,17 +1,14 @@
 <template>
     <div :class="['mt-2 mb-2 grid gap-x-2', customClass]" v-for="(action, index) in actions"
          :key="index">
-        <SelectBox :options="options"
-                   :search="true"
-                   :allowEmpty="true"
+        <ComboBox :options="options"
                    :placeholder="'Choose category'"
                    :class="'col-span-2'"
                    :selectedItem="action.selectedCategory"
                    @update:modal-value="value => handleCategoryUpdate(value, index)"
         />
-        <SelectBox v-if="action.selectedCategory"
+        <ComboBox v-if="action.selectedCategory"
                    :options="action.categoryTargets"
-                   :search="true"
                    :class="'col-span-2'"
                    :placeholder="'Choose target action'"
                    :selectedItem="action.value.value"
@@ -48,7 +45,8 @@
 <script setup>
 import {ref,onMounted} from 'vue'
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
-import SelectBox from "./SelectBox.vue";
+import SelectBox from "../general/SelectBox.vue";
+import ComboBox from "../general/ComboBox.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
@@ -75,11 +73,7 @@ onMounted(() => {
 
             // look in each category to find the target value
             for (let category of categoryNames) {
-                // TODO: probably need to refactor to avoid using the 'destination_data' term
-                const foundInCategory = props.optionTargets[category].find(target =>
-                    target.value === item.destination_data
-                );
-
+                const foundInCategory = props.optionTargets[category].find(target => target.value === item.value || target.value === item.value?.value);
                 // if found, save the category and target
                 if (foundInCategory) {
                     selectedCategory = category;
@@ -98,13 +92,7 @@ onMounted(() => {
     }
 })
 
-const actions = ref([
-    {
-        selectedCategory: '',
-        categoryTargets: [],
-        value: ''
-    }
-]);
+const actions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
@@ -120,7 +108,13 @@ function handleTargetUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
         actions.value[index].value = newValue;
     }
-    emit('update:modal-value', actions.value); // emit the current state on target update
+    const actionsMapped = actions.value.map(action => {
+        return {
+            selectedCategory: action.selectedCategory,
+            value: action.value
+        }
+    });
+    emit('update:modal-value', actionsMapped);
 }
 
 const addAction = () => {
@@ -135,7 +129,13 @@ const addAction = () => {
 
 const removeAction = (index) => {
     actions.value.splice(index, 1);
-    emit('update:modal-value', actions.value);
+    const actionsMapped = actions.value.map(action => {
+        return {
+            selectedCategory: action.selectedCategory,
+            value: action.value
+        }
+    });
+    emit('update:modal-value', actionsMapped);
 }
 
 </script>
