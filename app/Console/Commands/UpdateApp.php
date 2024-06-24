@@ -35,6 +35,7 @@ class UpdateApp extends Command
         $this->runArtisanCommand('config:cache');
         $this->runArtisanCommand('route:cache');
         $this->runArtisanCommand('queue:restart');
+        $this->runArtisanCommand('db:seed');
         $this->executeCommand('npm install');
         $this->executeCommand('npm run build', 300);
 

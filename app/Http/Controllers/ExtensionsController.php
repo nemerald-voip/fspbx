@@ -780,28 +780,30 @@ class ExtensionsController extends Controller
 
         //try to convert emergency caller ID to e164 format
         if ($extension->emergency_caller_id_number) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($extension->emergency_caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $extension->emergency_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
-            }
+            $$extension->emergency_caller_id_number = formatPhoneNumber($extension->emergency_caller_id_number, "US", 0); // 0 is E164 format
+            // try {
+            //     $phoneNumberObject = $phoneNumberUtil->parse($extension->emergency_caller_id_number, 'US');
+            //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+            //         $extension->emergency_caller_id_number = $phoneNumberUtil
+            //             ->format($phoneNumberObject, PhoneNumberFormat::E164);
+            //     }
+            // } catch (NumberParseException $e) {
+            //     // Do nothing and leave the numbner as is
+            // }
         }
 
         //try to convert caller ID to e164 format
         if ($extension->outbound_caller_id_number) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $extension->outbound_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
-            }
+            $$extension->outbound_caller_id_number = formatPhoneNumber($extension->outbound_caller_id_number, "US", 0); // 0 is E164 format
+            // try {
+            //     $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
+            //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+            //         $extension->outbound_caller_id_number = $phoneNumberUtil
+            //             ->format($phoneNumberObject, PhoneNumberFormat::E164);
+            //     }
+            // } catch (NumberParseException $e) {
+            //     // Do nothing and leave the numbner as is
+            // }
         }
 
         foreach ($destinations as $destination) {
@@ -930,6 +932,7 @@ class ExtensionsController extends Controller
             'directory_visible' => 'present',
             'directory_exten_visible' => 'present',
             'enabled' => 'present',
+            'suspended' => 'present',
             'description' => "nullable|string|max:100",
             'outbound_caller_id_number' => "present",
             'emergency_caller_id_number' => 'present',
@@ -1073,6 +1076,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['directory_visible']) && $attributes['directory_visible'] == "on") $attributes['directory_visible'] = "true";
         if (isset($attributes['directory_exten_visible']) && $attributes['directory_exten_visible'] == "on") $attributes['directory_exten_visible'] = "true";
         if (isset($attributes['enabled']) && $attributes['enabled'] == "on") $attributes['enabled'] = "true";
+        if (isset($attributes['suspended']) && $attributes['suspended'] == "on") $attributes['suspended'] = true; else  $attributes['suspended'] = false;
         if (isset($attributes['voicemail_enabled']) && $attributes['voicemail_enabled'] == "on") $attributes['voicemail_enabled'] = "true";
         if (isset($attributes['voicemail_transcription_enabled']) && $attributes['voicemail_transcription_enabled'] == "on") $attributes['voicemail_transcription_enabled'] = "true";
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "false") $attributes['voicemail_local_after_email'] = "true";
@@ -1252,6 +1256,13 @@ class ExtensionsController extends Controller
         if (isset($extension->voicemail)) {
             $extension->voicemail->update($attributes);
         }
+
+        if ($extension->advSettings) {
+            $extension->advSettings->update($attributes);
+        } else {
+            $extension->advSettings()->create($attributes);
+        }
+        logger($extension->advSettings);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
