@@ -124,6 +124,10 @@ class Extensions extends Model
             ? trim($extension->extension . ' - ' . $extension->effective_caller_id_name)
             : trim($extension->extension);
         });
+
+        static::deleting(function ($extension) {
+            $extension->advSettings()->delete();
+        });
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -168,6 +172,15 @@ class Extensions extends Model
     public function mobile_app()
     {
         return $this->hasOne(MobileAppUsers::class, 'extension_uuid', 'extension_uuid');
+    }
+
+    /**
+     * Get the voicemail associated with this extension.
+     *  returns Eloqeunt Object
+     */
+    public function advSettings()
+    {
+        return $this->hasOne(ExtensionAdvSettings::class, 'extension_uuid', 'extension_uuid');    
     }
 
     /**

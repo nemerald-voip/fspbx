@@ -37,11 +37,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'message_settings_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
-            // [
-            //     'application_name'       => 'Example Application 1',
-            //     'permission_name'        => 'edit',
-            //     'permission_description' => 'Allows editing of Example Application 1 resources',
-            // ],
+            [
+                'application_name'       => 'Extensions',
+                'permission_name'        => 'extension_suspended',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
     
@@ -66,6 +66,14 @@ class DatabaseSeeder extends Seeder
         $group_permissions = [
             [
                 'permission_name'        => 'message_settings_list_view',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'extension_suspended',
                 'permission_protected'   => 'true',
                 'permission_assigned'    => 'true',
                 'group_name'            => "superadmin",

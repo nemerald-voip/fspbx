@@ -305,6 +305,29 @@
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
+
+                                                    <div class="row">
+                                                        <div class="col-lg-4 col-sm-8">
+                                                            <div class="mb-3">
+                                                                <label  class="form-label">Suspended </label>
+                                                                <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                    data-bs-content="This prevents users from making or receiving calls except for emergency calls. The most common reason for suspensions is billing issues.">
+                                                                    <i class="uil uil-info-circle"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-2">
+                                                            <div class="mb-3 text-sm-end">
+                                                                <input type="hidden" name="suspended" value="false">
+                                                                <input type="checkbox" id="suspended-switch" name="suspended"
+                                                                @if ($extension->advSettings && $extension->advSettings->suspended) checked @endif
+                                                                @if (!userCheckPermission('extension_suspended')) disabled @endif
+                                                                data-switch="warning"/>
+                                                                <label for="suspended-switch" data-on-label="On" data-off-label="Off"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div> <!-- end row -->
+                                                    
                                             </div>
 
                                         </div> <!-- end row-->
