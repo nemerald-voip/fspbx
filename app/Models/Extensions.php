@@ -116,13 +116,20 @@ class Extensions extends Model
         static::saving(function ($model) {
             // Remove 'destination_formatted' attribute before saving to database
             unset($model->name_formatted);
+            unset($model->suspended);
         });
 
-        static::retrieved(function ($extension) {
+        static::retrieved(function ($model) {
             // Format the name to look like "202 - Chris Fourmont"
-            $extension->name_formatted = !empty($extension->effective_caller_id_name) 
-            ? trim($extension->extension . ' - ' . $extension->effective_caller_id_name)
-            : trim($extension->extension);
+            $model->name_formatted = !empty($model->effective_caller_id_name)
+                ? trim($model->extension . ' - ' . $model->effective_caller_id_name)
+                : trim($model->extension);
+
+            if ($model->advSettings) {
+                $model->suspended = $model->advSettings->suspended;
+            } else {
+                $model->suspended = false;
+            }
         });
 
         static::deleting(function ($extension) {
@@ -133,16 +140,16 @@ class Extensions extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-        ->logFillable()
-        ->logOnlyDirty()
-        ->dontSubmitEmptyLogs()
-        ->logExcept([
-            'create_date',
-            'create_user',
-            'update_date',
-            'update_user',
-            'password',
-        ]);
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept([
+                'create_date',
+                'create_user',
+                'update_date',
+                'update_user',
+                'password',
+            ]);
         // Chain fluent methods for configuration options
     }
 
@@ -180,7 +187,7 @@ class Extensions extends Model
      */
     public function advSettings()
     {
-        return $this->hasOne(ExtensionAdvSettings::class, 'extension_uuid', 'extension_uuid');    
+        return $this->hasOne(ExtensionAdvSettings::class, 'extension_uuid', 'extension_uuid');
     }
 
     /**

@@ -6,11 +6,11 @@ use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Registered;
 use App\Listeners\NotifySuperadminListener;
+use App\Events\ExtensionSuspendedStatusChanged;
 use App\Listeners\UpdateUserWhenExtensionIsUpdated;
 use App\Listeners\SuspendUserWhenExtensionIsDeleted;
-use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use App\Listeners\HandleExtensionSuspendedStatusChange;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -21,9 +21,6 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
-        ],
         Login::class => [
             'App\Listeners\SetUpUserSession',
         ],
@@ -35,7 +32,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         ExtensionDeleted::class => [
             SuspendUserWhenExtensionIsDeleted::class
-        ]
+        ],
+        ExtensionSuspendedStatusChanged::class => [
+            HandleExtensionSuspendedStatusChange::class,
+        ],
 
 
     ];

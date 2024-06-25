@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Extensions;
 use Illuminate\Database\Eloquent\Model;
+use App\Events\ExtensionSuspendedStatusChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ExtensionAdvSettings extends Model
@@ -37,36 +38,41 @@ class ExtensionAdvSettings extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-
-    ];
+    protected $hidden = [];
 
 
     protected static function booted()
-{
-    static::saving(function ($model) {
+    {
+        static::saving(function ($model) {
 
-        // Check if the model is being created or updated
-        if ($model->exists) {
-            // The model is being updated
-            $model->updated_at = now();
-        } else {
-            // The model is being created
-            $model->created_at = now();
-            $model->updated_at = now();
-        }
-    });
+            // Check if the model is being created or updated
+            if ($model->exists) {
+                // The model is being updated
+                $model->updated_at = now();
+            } else {
+                // The model is being created
+                $model->created_at = now();
+                $model->updated_at = now();
+            }
+        });
 
-}
+        static::updated(function ($model) {
+            // Check if the 'status' field was updated
+            if ($model->isDirty('suspended')) {
+                // Load the relationship
+                $model->load('extension');
+                event(new ExtensionSuspendedStatusChanged($model));
+                
+                
+            }
+        });
+    }
 
     /**
      * Get the extension this setting belongs to.
      */
     public function extension()
     {
-        return $this->hasOne(Extensions::class,'extension','voicemail_id')
-            ->where('domain_uuid', $this->domain_uuid);
+        return $this->hasOne(Extensions::class, 'extension_uuid', 'extension_uuid');    
     }
- 
-
 }

@@ -111,7 +111,9 @@
                     <a href="{{ route('extensions.edit', $extension) }}"
                         class="text-body fw-bold me-1">{{ $extension['effective_caller_id_name'] }}
                     </a>
-                    @if ($extension['do_not_disturb'] == 'true')
+                    @if ($extension->suspended == 'true')
+                        <small><span class="badge badge-outline-danger">Suspended</span></small>
+                    @elseif ($extension->do_not_disturb == 'true')
                         <small><span class="badge badge-outline-danger">DND</span></small>
                     @endif
                     @if ($extension['forward_all_enabled'] == 'true')

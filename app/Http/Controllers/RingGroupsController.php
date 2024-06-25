@@ -370,7 +370,6 @@ class RingGroupsController extends Controller
             $timeoutDestinationsByCategory[$category] = $c['list'];
         }
         unset($c, $category);
-        logger($timeoutDestinationsByCategory['ivrs']);
 
         return view('layouts.ringgroups.createOrUpdate')
             ->with('ringGroup', $ringGroup)

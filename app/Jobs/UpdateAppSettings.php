@@ -91,7 +91,11 @@ class UpdateAppSettings implements ShouldQueue
         Redis::throttle('ringotel')->allow(2)->every(1)->then(function () {
 
             //If there is no app then just return
-            if(!isset($this->mobile_app)) return;
+            if(!isset($this->mobile_app)) {
+                // If there is no app for this user, delete the job from the queue
+                $this->delete();
+                return;
+            }
 
             // Send request to delеte user
             $response = appsUpdateUser($this->mobile_app);
