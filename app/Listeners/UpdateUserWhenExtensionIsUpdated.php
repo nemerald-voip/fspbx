@@ -103,11 +103,13 @@ class UpdateUserWhenExtensionIsUpdated implements ShouldQueue
 
             if (!$origEmail) {
                 // No email was assigned to this extension before, return 
+                $this->delete();
                 return;
             }
 
             if ($origEmail === $email) {
                 // Email wasn't updated 
+                $this->delete();
                 return;
             }
 
@@ -121,6 +123,7 @@ class UpdateUserWhenExtensionIsUpdated implements ShouldQueue
             // if there are more than one voicemails with this email abort and return
             if ($voicemails->count() >= 1) {
                 // There are multiple extensions with the same email address
+                $this->delete();
                 return;
             } 
             
@@ -135,6 +138,7 @@ class UpdateUserWhenExtensionIsUpdated implements ShouldQueue
                 foreach ($user->user_groups as $group) {
                     // if the user has superadmin permissions abort
                     if ($group->group_name == "superadmin"){
+                        $this->delete();
                         return;
                     }
                 }

@@ -7,8 +7,10 @@ use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
 use App\Listeners\NotifySuperadminListener;
+use App\Events\ExtensionSuspendedStatusChanged;
 use App\Listeners\UpdateUserWhenExtensionIsUpdated;
 use App\Listeners\SuspendUserWhenExtensionIsDeleted;
+use App\Listeners\HandleExtensionSuspendedStatusChange;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -30,7 +32,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         ExtensionDeleted::class => [
             SuspendUserWhenExtensionIsDeleted::class
-        ]
+        ],
+        ExtensionSuspendedStatusChanged::class => [
+            HandleExtensionSuspendedStatusChange::class,
+        ],
 
 
     ];

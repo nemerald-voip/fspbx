@@ -619,6 +619,7 @@ class ExtensionsController extends Controller
         }
 
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
+        // if($attributes['suspended']) $attributes['do_not_disturb'] = "true";
 
         $extension->fill($attributes);
 
@@ -1145,6 +1146,8 @@ class ExtensionsController extends Controller
         }
 
         if (isset($attributes['do_not_disturb']) && $attributes['do_not_disturb'] == "true") $attributes['do_not_disturb'] = "true";
+        // if($attributes['suspended']) $attributes['do_not_disturb'] = "true";
+
         $attributes['update_date'] = date("Y-m-d H:i:s");
         $attributes['update_user'] = Session::get('user_uuid');
 
@@ -1262,7 +1265,6 @@ class ExtensionsController extends Controller
         } else {
             $extension->advSettings()->create($attributes);
         }
-        logger($extension->advSettings);
 
         //clear the destinations session array
         if (isset($_SESSION['destinations']['array'])) {
