@@ -320,7 +320,7 @@
                                                             <div class="mb-3 text-sm-end">
                                                                 <input type="hidden" name="suspended" value="false">
                                                                 <input type="checkbox" id="suspended-switch" name="suspended"
-                                                                @if ($extension->advSettings && $extension->advSettings->suspended) checked @endif
+                                                                @if ($extension->suspended) checked @endif
                                                                 @if (!userCheckPermission('extension_suspended')) disabled @endif
                                                                 data-switch="warning"/>
                                                                 <label for="suspended-switch" data-on-label="On" data-off-label="Off"></label>
@@ -455,6 +455,9 @@
                                                         <div class="col-4">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Voicemail enabled </label>
+                                                                @if ($extension->suspended)
+                                                                    <p class="text-danger mb-2">This option is unavailable because the extension is suspended.</p>
+                                                                @endif
                                                             </div>
                                                         </div>
                                                         <div class="col-2">
@@ -462,6 +465,7 @@
                                                                 <input type="hidden" name="voicemail_enabled" value="false">
                                                                 <input type="checkbox" id="voicemail_enabled" name="voicemail_enabled"
                                                                 @if ($extension->voicemail->exists && $extension->voicemail->voicemail_enabled == "true") checked @endif
+                                                                @if ($extension->suspended) disabled @endif
                                                                 data-switch="primary"/>
                                                                 <label for="voicemail_enabled" data-on-label="On" data-off-label="Off"></label>
                                                                 <div class="text-danger voicemail_enabled_err error_message"></div>
@@ -1558,11 +1562,16 @@
                                                 <div class="col-lg-12">
                                                     <h4 class="mb-2 mt-0">Do not disturb</h4>
                                                     <p class="text-muted mb-2">Avoid calls to the extension.</p>
+                                                    @if ($extension->suspended)
+                                                        <p class="text-danger mb-2">This option is unavailable because the extension is suspended.</p>
+                                                    @endif
+                                                    
                                                     <div class="row">
                                                         <div class="mb-2">
                                                             <input type="hidden" name="do_not_disturb" value="false">
                                                             <input type="checkbox" id="do_not_disturb" value="true" name="do_not_disturb"
                                                                    @if ($extension->do_not_disturb == "true") checked @endif
+                                                                   @if ($extension->suspended) disabled @endif
                                                                    data-switch="danger"/>
                                                             <label for="do_not_disturb" data-on-label="On" data-off-label="Off"></label>
                                                         </div>
@@ -1725,6 +1734,7 @@
                     if(response.redirect_url){
                         window.location=response.redirect_url;
                     } else {
+                        window.location.reload();
                         $('.loading').hide();
                     }
 

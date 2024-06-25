@@ -70,7 +70,8 @@ class ExtensionsController extends Controller
 
         // Get all extensions
         $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('extension');
+            ->orderBy('extension')
+            ->with('advSettings');
 
         if ($searchString) {
             $extensions->where(function ($query) use ($searchString) {
@@ -781,7 +782,7 @@ class ExtensionsController extends Controller
 
         //try to convert emergency caller ID to e164 format
         if ($extension->emergency_caller_id_number) {
-            $$extension->emergency_caller_id_number = formatPhoneNumber($extension->emergency_caller_id_number, "US", 0); // 0 is E164 format
+            $extension->emergency_caller_id_number = formatPhoneNumber($extension->emergency_caller_id_number, "US", 0); // 0 is E164 format
             // try {
             //     $phoneNumberObject = $phoneNumberUtil->parse($extension->emergency_caller_id_number, 'US');
             //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
@@ -795,7 +796,7 @@ class ExtensionsController extends Controller
 
         //try to convert caller ID to e164 format
         if ($extension->outbound_caller_id_number) {
-            $$extension->outbound_caller_id_number = formatPhoneNumber($extension->outbound_caller_id_number, "US", 0); // 0 is E164 format
+            $extension->outbound_caller_id_number = formatPhoneNumber($extension->outbound_caller_id_number, "US", 0); // 0 is E164 format
             // try {
             //     $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
             //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
