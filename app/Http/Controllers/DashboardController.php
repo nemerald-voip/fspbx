@@ -16,6 +16,7 @@ use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
 use App\Models\Destinations;
+use App\Models\Messages;
 use Illuminate\Support\Carbon;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
@@ -128,6 +129,13 @@ class DashboardController extends Controller
             //Call Flow Count
             $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_id)
                 ->where('call_flow_enabled', 'true')
+                ->count();
+        }
+
+        //Messages Count
+        if (userCheckPermission("message_settings_list_view")) {
+            $counts['messages'] = Messages::where('domain_uuid', $domain_id)
+                ->whereRaw("created_at >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
                 ->count();
         }
 
@@ -297,6 +305,9 @@ class DashboardController extends Controller
         }
         if (userCheckPermission("fax_view")) {
             $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];
+        }
+        if (userCheckPermission("message_settings_list_view")) {
+            $apps[] = ['name' => 'Messages', 'href' => '/messages', 'icon' => 'UsersIcon', 'slug' => 'messages'];
         }
 
         if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
