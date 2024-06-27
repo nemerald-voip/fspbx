@@ -9,6 +9,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\MessagesController;
@@ -248,6 +249,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('activities', ActivityLogController::class);
     Route::post('/activities/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activities.bulk.delete');
     Route::post('/activities/select-all', [ActivityLogController::class, 'selectAll'])->name('activities.select.all');
+
+    // Reports
+    Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
 
 });
 

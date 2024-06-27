@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
     {
         Model::unguard();
 
+        $this->createGroups();
+
         $this->createMobileAppSettings();
 
         $this->createPermissions();
@@ -28,6 +30,37 @@ class DatabaseSeeder extends Seeder
 
         Model::reguard();
 
+    }
+
+    private function createGroups()
+    {
+
+        $groups = [
+            [
+                'group_name'        => 'Message Admin',
+                'group_protected'   => 'true',
+                'group_level'       => 20,
+                'group_description' => "Message Admin Group",
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
+
+        ];
+
+        foreach ($groups as $group) {
+            $existing_item = Groups::where('group_name', $group['group_name'])
+                ->first();
+
+            if (empty($existing_item)) {
+                // Add new group
+                Groups::create([
+                    'group_name'        => $group['group_name'],
+                    'group_protected'   => $group['group_protected'],
+                    'group_level'       => $group['group_level'],
+                    'group_description' => $group['group_description'],
+                    'insert_date'       => $group['insert_date'],
+                ]);
+            }
+        }
     }
 
     private function createPermissions() {
@@ -62,7 +95,6 @@ class DatabaseSeeder extends Seeder
 
     private function createGroupPermissions()
     {
-
         $group_permissions = [
             [
                 'permission_name'        => 'message_settings_list_view',
@@ -70,6 +102,14 @@ class DatabaseSeeder extends Seeder
                 'permission_assigned'    => 'true',
                 'group_name'            => "superadmin",
                 'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'message_settings_list_view',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "Message Admin",
+                'group_uuid'            => Groups::where('group_name', "Message Admin")->value('group_uuid'),
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
@@ -85,6 +125,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($group_permissions as $permission) {
             $existing_item = GroupPermissions::where('permission_name', $permission['permission_name'])
+                ->where('group_uuid', $permission['group_uuid'])
                 ->first();
 
             if (empty($existing_item)) {

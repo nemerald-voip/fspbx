@@ -6,8 +6,6 @@ use Carbon\Carbon;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Notifications\Notifiable;
 use libphonenumber\NumberParseException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -95,10 +93,11 @@ class CDR extends Model
                     'send_bye' => 'The recipient hung up.',
                     'recv_bye' => 'The caller hung up.',
                     'send_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
+                    'recv_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
                     'send_cancel' => 'The call was canceled before it was answered.',
                     'recv_cancel' => 'The call was canceled before it was answered.',
                 ];
-            
+
                 if (isset($dispositions[$model->sip_hangup_disposition])) {
                     $model->call_disposition = $dispositions[$model->sip_hangup_disposition];
                 } else {
@@ -116,13 +115,49 @@ class CDR extends Model
                 isset($model->hangup_cause_q850) &&
                 isset($model->sip_hangup_disposition) &&
                 isset($model->voicemail_message) &&
-                isset($model->missed_call)
+                isset($model->missed_call) &&
+                isset($model->cc_cancel_reason) &&
+                isset($model->cc_cause)
             ) {
                 // Missed call
                 if ($model->voicemail_message == false && $model->missed_call == true && $model->hangup_cause == "NORMAL_CLEARING") {
                     $model->status = "missed call";
                 }
+
+                // Abandon call
+                if ($model->status == "missed call" && $model->cc_cancel_reason == "BREAK_OUT" && $model->cc_cause == "cancel") {
+                    $model->status = "abandoned";
+                }              
+
             }
+
+
+            // Call center answered call
+            if ($model->cc_cause == 'answered') {
+                $model->cc_result = 'Answered';
+            }
+
+            if ($model->cc_cause == 'cancel') {
+                switch ($model->cc_cancel_reason) {
+                    case 'NONE':
+                        $model->cc_result = "No specific reason";
+                        break;
+                    case 'NO_AGENT_TIMEOUT':
+                        $model->cc_result = "No agents in queue";
+                        break;
+                    case 'BREAK_OUT':
+                        $model->cc_result = "Abandoned";
+                        break;
+                    case 'EXIT_WITH_KEY':
+                            $model->cc_result = "The caller pressed the exit key";
+                            break; 
+                    case 'TIMEOUT':
+                        $model->cc_result = "Queue timeout reached";
+                        break;
+
+                }
+            }  
+
 
 
             // }

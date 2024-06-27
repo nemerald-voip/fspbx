@@ -547,6 +547,8 @@
                                                                                         ({{ flow.destination_number }})
                                                                                     </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
+                                                                                        Result: {{ item.cc_result }}</p>
+                                                                                    <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                             </div>

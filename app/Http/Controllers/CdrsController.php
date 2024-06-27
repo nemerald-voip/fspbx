@@ -123,6 +123,8 @@ class CdrsController extends Controller
                     'missed_call',
                     'hangup_cause',
                     'hangup_cause_q850',
+                    'cc_cancel_reason',
+                    'cc_cause',
                     'sip_hangup_disposition',
                     'status',
 
