@@ -67,6 +67,11 @@ class AppsController extends Controller
             )
          );
 
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+        if($hidePassInEmail !== null) {
+            $data['params']['params']['hidePassInEmail'] = $hidePassInEmail;
+        }
+
         $response = Http::ringotel()
             //->dd()
             ->timeout(5)
