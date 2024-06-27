@@ -93,6 +93,7 @@ class CDR extends Model
                     'send_bye' => 'The recipient hung up.',
                     'recv_bye' => 'The caller hung up.',
                     'send_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
+                    'recv_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
                     'send_cancel' => 'The call was canceled before it was answered.',
                     'recv_cancel' => 'The call was canceled before it was answered.',
                 ];
@@ -147,6 +148,9 @@ class CDR extends Model
                     case 'BREAK_OUT':
                         $model->cc_result = "Abandoned";
                         break;
+                    case 'EXIT_WITH_KEY':
+                            $model->cc_result = "The caller pressed the exit key";
+                            break; 
                     case 'TIMEOUT':
                         $model->cc_result = "Queue timeout reached";
                         break;
