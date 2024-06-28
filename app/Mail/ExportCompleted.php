@@ -5,13 +5,12 @@ namespace App\Mail;
 use Illuminate\Mail\Mailables\Content;
 
 
-class CdrExportCompleted extends BaseMailable
+class ExportCompleted extends BaseMailable
 {
 
-    public function __construct($fileUrl)
+    public function __construct($params)
     {
-        $attributes['fileUrl'] = $fileUrl; // Add your additional variable here
-        parent::__construct($attributes);
+        parent::__construct($params);
     }
 
     /**
@@ -24,8 +23,8 @@ class CdrExportCompleted extends BaseMailable
         // Add line unsubscrible header
         $this->buildMessageHeaders();
 
-        return $this->from(config('mail.from.address'), config('mail.from.name'))
-        ->subject('Call history report');
+        return $this->from(config('mail.from.address'), config('mail.from.name'));
+        // ->subject('Call history report');
 
     }
 

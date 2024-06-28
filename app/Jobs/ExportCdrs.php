@@ -5,9 +5,7 @@ namespace App\Jobs;
 
 use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
-use App\Mail\CdrExportCompleted;
 use App\Services\CdrDataService;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
@@ -133,10 +131,9 @@ class ExportCdrs implements ShouldQueue
 
             // Generate a public URL for the file
             $this->params['fileUrl'] = Storage::disk('export')->url($uniqueFilename);
+            $this->params['email_subject'] = 'Call history report';
 
             SendExportCompletedNotification::dispatch($this->params)->onQueue('emails');
-
-            // Mail::to($this->params['user_email'])->send(new CdrExportCompleted($fileUrl));
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
