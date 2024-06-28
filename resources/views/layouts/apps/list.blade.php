@@ -97,6 +97,7 @@
                                             </td>
                                             <td>
                                                 {{ $domain->domain_name }}
+                                                <input type="hidden" name="dont_send_user_credentials" @if (get_domain_setting('dont_send_user_credentials', $domain->domain_uuid) == "true") value="true" @else value="false" @endif />
                                             </td>
                                             <td>
                                                 @if ($domain->status == 'true')
@@ -453,7 +454,7 @@
                                         <h2 class="mt-0"><i class="mdi mdi-check-all"></i></h2>
                                         <h3 class="mt-0">Success !</h3>
 
-                                        <p class="w-75 mb-2 mx-auto">New organization is provisiomed and ready to be used.
+                                        <p class="w-75 mb-2 mx-auto">New organization is provisioned and ready to be used.
                                         </p>
 
                                     </div>
@@ -682,6 +683,7 @@
                 $('#organization_uuid').val($.trim($(this).val()));
                 $('#connection_domain').val($.trim($(this).closest("tr").find('td:eq(2)').text()));
                 $('#connection_name').val($.trim($(this).closest("tr").find('td:eq(1)').text()));
+                $('#dont_send_user_credentials').prop('checked', $.trim($(this).closest("tr").find('input[name=dont_send_user_credentials]').val()) === 'true');
                 $('#connection_organization_uuid').val($.trim($(this).val()));
             });
 
