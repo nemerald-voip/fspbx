@@ -272,13 +272,18 @@
                                 $('#createMobileAppSuccessModal').modal("show");
                                 $('#createMobileAppSuccessModalLabel').text("Create mobile app user");
                                 $('#createMobileAppSuccessModalTitle').text(
-                                    'New mobile app user was sucessfully created.');
+                                    'New mobile app user was successfully created.');
                                 $('#usernameSpan').text(response.user.username);
                                 $('#extensionSpan').text(response.user.username);
-                                $('#passwordSpan').text(response.user.password);
+                                if(response.user.password != null) {
+                                    $('#passwordSpan').text(response.user.password);
+                                } else {
+                                    $('#passwordSpan').text('Check your email for the password');
+                                }
                                 $('#domainSpan').text(response.user.domain);
-                                $('#qrCode').html('<img src="data:image/png;base64, ' + response
-                                    .qrcode + '" />');
+                                if(response.qrcode !== null) {
+                                    $('#qrCode').html('<img src="data:image/png;base64, ' + response.qrcode + '" />');
+                                }
                             } else if (response.user.status == -1) {
                                 $('#createMobileAppDeactivatedSuccessModal').modal("show");
                             }
@@ -493,10 +498,15 @@
 
                         $('#usernameSpan').text(response.user.username);
                         $('#extensionSpan').text(response.user.username);
-                        $('#passwordSpan').text(response.user.password);
+                        if(response.user.password != null) {
+                            $('#passwordSpan').text(response.user.password);
+                        } else {
+                            $('#passwordSpan').text('Check your email for the password');
+                        }
                         $('#domainSpan').text(response.user.domain);
-                        $('#qrCode').html('<img src="data:image/png;base64, ' + response.qrcode + '" />');
-
+                        if(response.qrcode !== null) {
+                            $('#qrCode').html('<img src="data:image/png;base64, ' + response.qrcode + '" />');
+                        }
                     }
                 })
                 .fail(function(jqXHR, testStatus, error) {

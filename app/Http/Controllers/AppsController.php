@@ -742,7 +742,7 @@ class AppsController extends Controller
     /**
      * Submit new user request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createUser(Request $request)
     {
@@ -800,16 +800,26 @@ class AppsController extends Controller
         $appUser->save();
         // Log::info($response);
 
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
         $qrcode = "";
-        if ($request->activate == 'on'){
-            // Generate QR code
-            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-                '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        if($hidePassInEmail == 'false') {
+            if ($request->activate == 'on'){
+                // Generate QR code
+                $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
+                    '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+            }
+        } else {
+            $response['result']['password'] = null;
         }
 
         return response()->json([
             'user' => $response['result'],
-            'qrcode' => base64_encode($qrcode),
+            'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
             'status' => 'success',
             'message' => 'The user has been successfully created'
         ]);
@@ -862,7 +872,7 @@ class AppsController extends Controller
     /**
      * Submit password reset request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function resetPassword(Request $request, Extensions $extension)
     {
@@ -894,16 +904,27 @@ class AppsController extends Controller
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
-        // Generate QR code
-        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-            '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
+        $qrcode = "";
+        if($hidePassInEmail == 'false') {
+            // Generate QR code
+            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
+                '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        } else {
+            $response['result']['password'] = null;
+        }
 
         return response()->json([
             'user' => $response['result'],
-            'qrcode' => base64_encode($qrcode),
+            'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
             'status' => 200,
             'success' => [
-                'message' => 'The mobile app password was succesfully reset'
+                'message' => 'The mobile app password was successfully reset'
             ]
         ]);
     }
