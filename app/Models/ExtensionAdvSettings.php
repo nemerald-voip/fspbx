@@ -56,7 +56,7 @@ class ExtensionAdvSettings extends Model
             }
         });
 
-        static::updated(function ($model) {
+        static::saved(function ($model) {
             // Check if the 'status' field was updated
             if ($model->isDirty('suspended')) {
                 // Load the relationship

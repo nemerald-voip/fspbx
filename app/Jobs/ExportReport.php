@@ -130,6 +130,7 @@ class ExportReport implements ShouldQueue
 
             // Generate a public URL for the file
             $this->params['fileUrl'] = Storage::disk('export')->url($uniqueFilename);
+            $this->params['email_subject'] = config('app.name', 'Laravel') . ' report';
 
             SendExportCompletedNotification::dispatch($this->params)->onQueue('emails');
 
