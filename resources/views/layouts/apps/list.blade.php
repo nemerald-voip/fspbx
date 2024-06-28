@@ -216,6 +216,20 @@
                                     <input type="hidden" id="organization_uuid" name="organization_uuid">
                                 </div>
 
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label class="form-label">Mobile app configuration</label>
+                                        <div class="mb-3">
+                                            <div class="form-check mb-2">
+                                                <input type="hidden" name="dont_send_user_credentials" value="false">
+                                                <input type="checkbox" class="form-check-input" id="dont_send_user_credentials" name="dont_send_user_credentials" value="true" />
+                                                <label class="form-check-label" for="dont_send_user_credentials">Don't send user credentials in a plain text</label>
+                                            </div>
+                                            <span class="help-block"><small>If enabled, users in this organization will need to follow a one-time link to get their app login credentials.</small></span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="alert alert-danger" id="appOrganizationError" style="display:none">
                                     <ul></ul>
                                 </div>
@@ -344,12 +358,9 @@
                                                                 <label class="form-check-label"
                                                                     for="connection_private_list">Private user list</label>
                                                             </div>
-
                                                         </div>
                                                     </div>
                                                 </div>
-
-
                                             </div>
                                         </div>
                                     </div>

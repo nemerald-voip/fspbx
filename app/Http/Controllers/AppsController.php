@@ -57,20 +57,26 @@ class AppsController extends Controller
      */
     public function createOrganization(Request $request)
     {
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
+        if(isset($request->dont_send_user_credentials)) {
+            $hidePassInEmail = $request->dont_send_user_credentials == 'true' ? 'true' : 'false';
+        }
 
         $data = array(
             'method' => 'createOrganization',
             'params' => array(
                 'name' => $request->organization_name,
                 'region' => $request->organization_region,
-                'domain' => $request->organization_domain
+                'domain' => $request->organization_domain,
+                'params' => array(
+                    'hidePassInEmail' => $hidePassInEmail == 'true'
+                )
             )
-         );
-
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
-        if($hidePassInEmail !== null) {
-            $data['params']['params']['hidePassInEmail'] = $hidePassInEmail;
-        }
+        );
 
         $response = Http::ringotel()
             //->dd()
@@ -102,6 +108,16 @@ class AppsController extends Controller
                     'message' => 'Organization was created succesfully, but unable to store Org ID in database',
                 ]);
             }
+
+            $domainSettingsModel = DomainSettings::create([
+                'domain_uuid' => $request->organization_uuid,
+                'domain_setting_category' => 'mobile_apps',
+                'domain_setting_subcategory' => 'dont_send_user_credentials',
+                'domain_setting_name' => 'boolean',
+                'domain_setting_value' => $hidePassInEmail,
+                'domain_setting_enabled' => true,
+            ]);
+            $domainSettingsModel->save();
 
             // Get connection port from database or env file
             $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
