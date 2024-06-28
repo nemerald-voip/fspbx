@@ -743,10 +743,6 @@ class AppsController extends Controller
         // Send request to create user
         $response = appsCreateUser($mobile_app);
 
-// https://shell.ringotel.co/otl?t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MTk0NjE4MzgsImFjY2lkIjoiMTY1MDQ4NzQ3MzY3NzQzOTQyMjAiLCJpZCI6IjE3MTk0NjE4MzcwNTczNjYyMzcwIiwibmFtZSI6IkRleHRlciAiLCJvcmdpZCI6IjE2NTgzODE3OTE4NzM1ODQ2MzUyIiwiYXBwX2xpbmtzIjp7IndpbmRvd3MiOiJodHRwczovL2FwcHMucmluZ290ZWwuY28vUmluZ290ZWwvV2luZG93cyIsIm1hYyI6Imh0dHBzOi8vYXBwcy5yaW5nb3RlbC5jby9SaW5nb3RlbC9tYWNPUyIsImFuZHJvaWQiOiJodHRwczovL3BsYXkuZ29vZ2xlLmNvbS9zdG9yZS9hcHBzL2RldGFpbHM_aWQ9c21pbGUucmluZ290ZWwiLCJpb3MiOiJodHRwczovL2FwcHMuYXBwbGUuY29tL3VhL2FwcC9yaW5nb3RlbC9pZDExNzYyNDY5OTkifSwiY3JlYXRlZCI6MTcxOTQ2MTgzODAyMiwiZXhwIjoxNzE5NzIxMDM4fQ.5dc9jSgjhbsZ74_PlGRXOiaF5i05VqmtFJDR1_DudDg
-
-        logger($response);
-
         //If there is an error return failed status
         if (isset($response['error'])) {
             return response()->json([
