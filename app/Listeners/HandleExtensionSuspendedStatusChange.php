@@ -84,8 +84,12 @@ class HandleExtensionSuspendedStatusChange implements ShouldQueue
         if ($event->model->extension) {
             if ($event->model->suspended) {
                 $event->model->extension->do_not_disturb = 'true';
+                $event->model->extension->directory_visible = 'false';
+                $event->model->extension->directory_exten_visible = 'false';
             } else {
                 $event->model->extension->do_not_disturb = 'false';
+                $event->model->extension->directory_visible = 'true';
+                $event->model->extension->directory_exten_visible = 'true';
             }
             $event->model->extension->save();
         } 
