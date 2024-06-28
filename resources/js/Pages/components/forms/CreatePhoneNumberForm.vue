@@ -346,7 +346,7 @@ const handleDestinationActionsUpdate = (newSelectedItem) => {
 
 const addCondition = () => {
     const newCondition = {
-        id: Date.now(),  // adding unique ID
+        id: Math.random().toString(36).slice(2, 7),
         condition_field: null,
         condition_expression: "",
         selectedCategory: "",

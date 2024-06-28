@@ -123,7 +123,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action'"/>
                         <div class="border rounded-md pl-4 pr-4 pb-2">
-                            <div v-for="(condition, index) in conditions" :key="index">
+                            <div v-for="(condition, index) in conditions" :key="condition.id">
                                 <div class="mt-4 grid grid-cols-3 gap-x-2">
                                     <div>
                                         <SelectBox :options="page.props.conditions"
@@ -144,7 +144,7 @@
                                             <ejs-tooltip :content="'Remove condition'"
                                                          position='RightTop' :target="'#delete_condition_tooltip'+index">
                                                 <div :id="'delete_condition_tooltip'+index">
-                                                    <MinusIcon @click="() => removeCondition(index)"
+                                                    <MinusIcon @click="() => removeCondition(condition.id)"
                                                                class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
                                                 </div>
                                             </ejs-tooltip>
@@ -306,6 +306,7 @@ onMounted(() => {
 
             // return a new conditions object
             return {
+                id: Math.random().toString(36).slice(2, 7),
                 condition_field: condition.condition_field,
                 condition_expression: condition.condition_expression,
                 selectedCategory: selectedCategory,
@@ -371,6 +372,7 @@ const handleDestinationActionsUpdate = (newSelectedItem) => {
 
 const addCondition = () => {
     const newCondition = {
+        id: Math.random().toString(36).slice(2, 7),
         condition_field: null,
         condition_expression: "",
         selectedCategory: "",
@@ -386,8 +388,8 @@ const handleConditionActionsUpdate = (newSelectedItem, index) => {
     }
 }
 
-const removeCondition = (index) => {
-    conditions.value.splice(index, 1);
+const removeCondition = (id) => {
+    conditions.value = conditions.value.filter(el => el.id !== id);
 }
 
 </script>
