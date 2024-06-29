@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Jobs\ExportReport;
+use App\Services\RingotelApiService;
 
 class ReportsController extends Controller
 {
@@ -66,7 +67,6 @@ class ReportsController extends Controller
     public function store()
     {
 
-        logger(request('reportName'));
         try {
 
             if (request('reportName') == "Active and suspended extensions per domain") {
@@ -98,13 +98,18 @@ class ReportsController extends Controller
                 ];
             });
 
+            // Get App count
+            if(config('ringotel.token') <> "") {
+                $this->getAppCount();
+            }
+
             // logger($domainData);
 
             $params['user_email'] = auth()->user()->user_email;
 
             // $cdrs = $this->getData(false); // returns lazy collection
 
-            ExportReport::dispatch($params,$domainData);
+            // ExportReport::dispatch($params,$domainData);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -123,5 +128,24 @@ class ReportsController extends Controller
             'success' => false,
             'errors' => ['server' => ['Failed to export']]
         ], 500); // 500 Internal Server Error for any other errors
+    }
+
+
+    private function getAppCount() 
+    {
+        $ringotelApiService = app(RingotelApiService::class);
+        try {
+            $organizations = $ringotelApiService->getOrganizations();
+
+            logger($organizations);
+            // logger($organizations);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage(),
+                ],
+            ], 400);
+        }
     }
 }
