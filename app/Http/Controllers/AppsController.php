@@ -448,10 +448,10 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getOrganizations(RingotelApiService $ringotelService)
+    public function getOrganizations(RingotelApiService $ringotelApiService)
     {
 
-        $this->ringotelApiService = $ringotelService;
+        $this->ringotelApiService = $ringotelApiService;
         try {
             $organizations = $this->ringotelApiService->getOrganizations();
             $orgs = $this->ringotelApiService->matchLocalDomains($organizations);
@@ -470,6 +470,39 @@ class AppsController extends Controller
         return response()->json([
             'cloud_orgs' => $orgs,
             'local_orgs' => $domains,
+            'status' => 200,
+            'success' => [
+                'message' => 'The request processed successfully'
+            ]
+        ]);
+    }
+
+
+    /**
+     * Submit getUsers request to Ringotel API
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getUsersByOrgId(RingotelApiService $ringotelApiService, $orgId)
+    {
+
+        $this->ringotelApiService = $ringotelApiService;
+        try {
+            $users = $this->ringotelApiService->getUsersByOrgId($orgId);
+ 
+            logger($users);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage(),
+                ],
+            ], 400);
+        }
+
+
+        return response()->json([
+            'users' => $users,
             'status' => 200,
             'success' => [
                 'message' => 'The request processed successfully'

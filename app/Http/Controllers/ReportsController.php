@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Jobs\ExportReport;
-use App\Services\RingotelApiService;
+use App\Jobs\FetchRingotelOrganizations;
 
 class ReportsController extends Controller
 {
@@ -70,46 +70,9 @@ class ReportsController extends Controller
         try {
 
             if (request('reportName') == "Active and suspended extensions per domain") {
-
-                $domains = Domain::select(
-                    'domain_uuid',
-                    'domain_name',
-                    'domain_description',
-                )
-                    ->with(['extensions' => function ($query) {
-                        $query->select('extension_uuid', 'domain_uuid');
-                    }])
-                    ->get();
+                $this->handleActiveAndSuspendedExtensionsReport();
             }
 
-            // Iterate through the collection to count extensions and suspended extensions
-            $domainData = $domains->map(function ($domain) {
-                $totalExtensions = $domain->extensions->count();
-                $suspendedExtensions = $domain->extensions->where('suspended', true)->count();
-                $activeExtensions = $totalExtensions - $suspendedExtensions;
-
-                return [
-                    'domain_uuid' => $domain->domain_uuid,
-                    'domain_name' => $domain->domain_name,
-                    'domain_description' => $domain->domain_description,
-                    'total_extensions' => $totalExtensions,
-                    'suspended_extensions' => $suspendedExtensions,
-                    'active_extensions' => $activeExtensions,
-                ];
-            });
-
-            // Get App count
-            if(config('ringotel.token') <> "") {
-                $this->getAppCount();
-            }
-
-            // logger($domainData);
-
-            $params['user_email'] = auth()->user()->user_email;
-
-            // $cdrs = $this->getData(false); // returns lazy collection
-
-            // ExportReport::dispatch($params,$domainData);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -131,21 +94,48 @@ class ReportsController extends Controller
     }
 
 
-    private function getAppCount() 
+    private function handleActiveAndSuspendedExtensionsReport()
     {
-        $ringotelApiService = app(RingotelApiService::class);
-        try {
-            $organizations = $ringotelApiService->getOrganizations();
+        $domains = Domain::select(
+            'domain_uuid',
+            'domain_name',
+            'domain_description',
+        )
+            ->with(['extensions' => function ($query) {
+                $query->select('extension_uuid', 'domain_uuid');
+            }])
+            ->get();
 
-            logger($organizations);
-            // logger($organizations);
-        } catch (\Exception $e) {
-            logger($e->getMessage());
-            return response()->json([
-                'error' => [
-                    'message' => $e->getMessage(),
-                ],
-            ], 400);
+        // Iterate through the collection to count extensions and suspended extensions
+        $domainData = $domains->map(function ($domain) {
+            $totalExtensions = $domain->extensions->count();
+            $suspendedExtensions = $domain->extensions->where('suspended', true)->count();
+            $activeExtensions = $totalExtensions - $suspendedExtensions;
+
+            return [
+                'domain_uuid' => $domain->domain_uuid,
+                'domain_name' => $domain->domain_name,
+                'domain_description' => $domain->domain_description,
+                'total_extensions' => $totalExtensions,
+                'suspended_extensions' => $suspendedExtensions,
+                'active_extensions' => $activeExtensions,
+            ];
+        });
+
+        $params['user_email'] = auth()->user()->user_email;
+
+
+        if (config('ringotel.token') <> "") {
+            // Chain the jobs to get Ringotel extension data
+            FetchRingotelOrganizations::withChain([
+                new ExportReport($params, $domainData)
+            ])->dispatch($params, $domainData);
+        } else {
+            // If Ringotel is not activated dispatch the report
+            ExportReport::dispatch($params, $domainData);
         }
+
+
     }
+
 }

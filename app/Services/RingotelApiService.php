@@ -43,6 +43,33 @@ class RingotelApiService
         });
     }
 
+    public function getUsersByOrgId($orgId)
+    {
+        $data = [
+            'method' => 'getUsers',
+            'orgid' => $orgId,
+        ];
+
+        $response = Http::ringotel()
+            ->timeout(5)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) use ($orgId) {
+                throw new \Exception("Unable to retrieve users for organization ID: $orgId");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return $response['result'];
+    }
+
     public function matchLocalDomains($organizations)
     {
 
