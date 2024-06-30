@@ -66,45 +66,12 @@ class ReportsController extends Controller
     public function store()
     {
 
-        logger(request('reportName'));
         try {
 
             if (request('reportName') == "Active and suspended extensions per domain") {
-
-                $domains = Domain::select(
-                    'domain_uuid',
-                    'domain_name',
-                    'domain_description',
-                )
-                    ->with(['extensions' => function ($query) {
-                        $query->select('extension_uuid', 'domain_uuid');
-                    }])
-                    ->get();
+                $this->handleActiveAndSuspendedExtensionsReport();
             }
 
-            // Iterate through the collection to count extensions and suspended extensions
-            $domainData = $domains->map(function ($domain) {
-                $totalExtensions = $domain->extensions->count();
-                $suspendedExtensions = $domain->extensions->where('suspended', true)->count();
-                $activeExtensions = $totalExtensions - $suspendedExtensions;
-
-                return [
-                    'domain_uuid' => $domain->domain_uuid,
-                    'domain_name' => $domain->domain_name,
-                    'domain_description' => $domain->domain_description,
-                    'total_extensions' => $totalExtensions,
-                    'suspended_extensions' => $suspendedExtensions,
-                    'active_extensions' => $activeExtensions,
-                ];
-            });
-
-            // logger($domainData);
-
-            $params['user_email'] = auth()->user()->user_email;
-
-            // $cdrs = $this->getData(false); // returns lazy collection
-
-            ExportReport::dispatch($params,$domainData);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -123,5 +90,55 @@ class ReportsController extends Controller
             'success' => false,
             'errors' => ['server' => ['Failed to export']]
         ], 500); // 500 Internal Server Error for any other errors
+    }
+
+
+    private function handleActiveAndSuspendedExtensionsReport()
+    {
+        $domains = Domain::select(
+            'domain_uuid',
+            'domain_name',
+            'domain_description',
+        )
+            ->with(['extensions' => function ($query) {
+                $query->select('extension_uuid', 'domain_uuid');
+            }])
+            ->with(['extensions.mobile_app' => function ($query) {
+                $query->select('mobile_app_user_uuid', 'extension_uuid', 'status');
+            }])
+            ->get();
+
+        // Iterate through the collection to count extensions and suspended extensions
+        $domainData = $domains->map(function ($domain) {
+            $totalExtensions = $domain->extensions->count();
+            $suspendedExtensions = $domain->extensions->where('suspended', true)->count();
+            $activeExtensions = $totalExtensions - $suspendedExtensions;
+
+            $activeMobileApps = 0;
+            foreach ($domain->extensions as $extension) {
+                if ($extension->mobile_app) {
+                    if ($extension->mobile_app->status == 1) {
+                        $activeMobileApps++;
+                    }
+                }
+            }
+
+            return [
+                'domain_uuid' => $domain->domain_uuid,
+                'domain_name' => $domain->domain_name,
+                'domain_description' => $domain->domain_description,
+                'total_extensions' => $totalExtensions,
+                'suspended_extensions' => $suspendedExtensions,
+                'active_extensions' => $activeExtensions,
+                'active_mobile_apps' => $activeMobileApps,
+            ];
+        });
+
+        $params['user_email'] = auth()->user()->user_email;
+
+        ExportReport::dispatch($params, $domainData);
+
+
+
     }
 }
