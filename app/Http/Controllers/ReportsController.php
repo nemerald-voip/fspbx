@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Jobs\ExportReport;
-use App\Jobs\FetchRingotelOrganizations;
 
 class ReportsController extends Controller
 {
@@ -104,6 +103,9 @@ class ReportsController extends Controller
             ->with(['extensions' => function ($query) {
                 $query->select('extension_uuid', 'domain_uuid');
             }])
+            ->with(['extensions.mobile_app' => function ($query) {
+                $query->select('mobile_app_user_uuid', 'extension_uuid', 'status');
+            }])
             ->get();
 
         // Iterate through the collection to count extensions and suspended extensions
@@ -112,6 +114,15 @@ class ReportsController extends Controller
             $suspendedExtensions = $domain->extensions->where('suspended', true)->count();
             $activeExtensions = $totalExtensions - $suspendedExtensions;
 
+            $activeMobileApps = 0;
+            foreach ($domain->extensions as $extension) {
+                if ($extension->mobile_app) {
+                    if ($extension->mobile_app->status == 1) {
+                        $activeMobileApps++;
+                    }
+                }
+            }
+
             return [
                 'domain_uuid' => $domain->domain_uuid,
                 'domain_name' => $domain->domain_name,
@@ -119,23 +130,15 @@ class ReportsController extends Controller
                 'total_extensions' => $totalExtensions,
                 'suspended_extensions' => $suspendedExtensions,
                 'active_extensions' => $activeExtensions,
+                'active_mobile_apps' => $activeMobileApps,
             ];
         });
 
         $params['user_email'] = auth()->user()->user_email;
 
+        ExportReport::dispatch($params, $domainData);
 
-        if (config('ringotel.token') <> "") {
-            // Chain the jobs to get Ringotel extension data
-            FetchRingotelOrganizations::withChain([
-                new ExportReport($params, $domainData)
-            ])->dispatch($params, $domainData);
-        } else {
-            // If Ringotel is not activated dispatch the report
-            ExportReport::dispatch($params, $domainData);
-        }
 
 
     }
-
 }

@@ -111,15 +111,17 @@ class ExportReport implements ShouldQueue
             $count = 0;
 
             foreach ($this->data as $item) {
-                $writer->addRow([
-                    'domain_uuid' => $item['domain_uuid'],
-                    'Domain Name' => $item['domain_name'],
-                    'Domain Description' => $item['domain_description'],
-                    'Total Extensions' => $item['total_extensions'],
-                    'Suspended Extensions' => $item['suspended_extensions'],
-                    'Active Extensions' => $item['active_extensions'],
+                $row = [];
 
-                ]);
+                // Dynamically create the row with keys as column names
+                foreach ($item as $key => $value) {
+                    // Convert camel case to snake case, then replace underscores with spaces and convert to title case
+                    $formattedKey = Str::title(str_replace('_', ' ', Str::snake($key)));
+
+                    $row[$formattedKey] = $value;
+                }
+
+                $writer->addRow($row);
 
                 $count++;
 
