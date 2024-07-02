@@ -1,6 +1,6 @@
 <template>
     <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }" :preset-dates="presetDates"
-        :enable-time-picker="false" auto-apply @update:model-value="handleDate">
+        :enable-time-picker="false" auto-apply @update:model-value="handleDate" :timezone="timezone">
         <template #preset-date-range-button="{ label, value, presetDate }">
             <span role="button" :tabindex="0" @click="presetDate(value)" @keyup.enter.prevent="presetDate(value)"
                 @keyup.space.prevent="presetDate(value)">
@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { ref,watch } from 'vue';
+import { ref,watch,onMounted } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import moment from 'moment-timezone';
 
@@ -28,6 +28,8 @@ const props = defineProps({
     timezone: String,
 });
 
+// const timezoneConfig = { timezone: props.timezone };
+
 // Initial date range
 const dateRange = ref();
 dateRange.value = props.dateRange;
@@ -35,6 +37,13 @@ dateRange.value = props.dateRange;
 watch(() => props.dateRange, (newDateRange) => {
     dateRange.value = [...newDateRange]; // Create a new array to ensure reactivity
 });
+
+
+// onMounted(() => {
+//     //request list of entities
+//     console.log('time');
+//     console.log(props.dateRange);
+// })
 
 const today = new Date();
 
@@ -56,7 +65,10 @@ const convertToNewTimezoneAndKeepTime = (date) => {
 }
 
 const handleDate = (modelData) => {
-    dateRange.value = [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])], 
+    console.log(dateRange.value);
+    // dateRange.value = [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])], 
+    let newDateRange = [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])];
+    // console.log(newDateRange);
     emit('update:dateRange', dateRange.value);
 }
 
