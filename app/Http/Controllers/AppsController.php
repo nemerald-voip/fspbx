@@ -9,16 +9,20 @@ use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
 use App\Jobs\SendAppCredentials;
+use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
+use Exception;
 use Illuminate\Support\Facades\Session;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppsController extends Controller
 {
+    protected $ringotelApiService;
+
     /**
      * Display a listing of the resource.
      *
@@ -465,60 +469,61 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getOrganizations(Request $request)
+    public function getOrganizations(RingotelApiService $ringotelApiService)
     {
 
-        // Send request to get all Organizations
-        $response = appsGetOrganizations();
-
-        //If there is an error return failed status
-        if (isset($response['error'])) {
+        $this->ringotelApiService = $ringotelApiService;
+        try {
+            $organizations = $this->ringotelApiService->getOrganizations();
+            $orgs = $this->ringotelApiService->matchLocalDomains($organizations);
+            $domains = Session::get('domains');
+            // logger($organizations);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
             return response()->json([
-                'status' => 401,
                 'error' => [
-                    'message' => $response['error']['message'],
+                    'message' => $e->getMessage(),
                 ],
-            ])->getData(true);
-        } elseif (!isset($response['result'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => "An unknown error has occurred",
-                ],
-            ])->getData(true);
+            ], 400);
         }
 
-        $orgs = DB::table('v_domain_settings')
-        -> join('v_domains', 'v_domains.domain_uuid', '=', 'v_domain_settings.domain_uuid')
-        -> where('domain_setting_category', 'app shell')
-        -> where ('domain_setting_subcategory', 'org_id')
-        -> get([
-            'v_domain_settings.domain_uuid',
-            'domain_setting_value AS org_id',
-            'domain_name',
-            'domain_description',
-        ]);
-
-        $domains = Session::get('domains');
-
-
-        $org_array = array();
-        foreach ($response['result'] as $organization) {
-            foreach ($orgs as $org) {
-                if ($organization['id'] == $org->org_id) {
-                    $organization['domain_uuid'] = $org->domain_uuid;
-                    $organization['domain_name'] = $org->domain_name;
-                    $organization['domain_description'] = $org->domain_description;
-                }
-            }
-            $org_array[] = $organization;
-        }
-
-        // Log::alert($org_array);
 
         return response()->json([
-            'cloud_orgs' => $org_array,
+            'cloud_orgs' => $orgs,
             'local_orgs' => $domains,
+            'status' => 200,
+            'success' => [
+                'message' => 'The request processed successfully'
+            ]
+        ]);
+    }
+
+
+    /**
+     * Submit getUsers request to Ringotel API
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getUsersByOrgId(RingotelApiService $ringotelApiService, $orgId)
+    {
+
+        $this->ringotelApiService = $ringotelApiService;
+        try {
+            $users = $this->ringotelApiService->getUsersByOrgId($orgId);
+ 
+            logger($users);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage(),
+                ],
+            ], 400);
+        }
+
+
+        return response()->json([
+            'users' => $users,
             'status' => 200,
             'success' => [
                 'message' => 'The request processed successfully'

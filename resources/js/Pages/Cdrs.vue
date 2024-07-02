@@ -276,7 +276,8 @@ onMounted(() => {
 const filterData = ref({
     search: props.search,
     showGlobal: props.showGlobal,
-    dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
+    dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
+    // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
     timezone: props.timezone,
     direction: props.direction,
     entity: props.selectedEntity,

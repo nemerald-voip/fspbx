@@ -1,6 +1,21 @@
 <template>
     <form @submit.prevent="submitForm">
         <div>
+            <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                <div class="sm:col-span-12">
+                    <div class="rounded-md bg-blue-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <InformationCircleIcon class="h-5 w-5 text-blue-400" aria-hidden="true" />
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">Select a new option to apply to all items, use the clear button to unset current settings, or leave unchanged to keep existing values </p>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="border-b border-gray-200 mb-4">
                 <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                     <a href="#"
@@ -21,33 +36,7 @@
             <div v-if="selectedTab === 0">
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div class="sm:col-span-12">
-                        <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'"/>
-                        <div class="mt-2">
-                            <InputField
-                                v-model="form.destination_prefix"
-                                type="text"
-                                id="destination_prefix"
-                                name="destination_prefix"
-                                placeholder="Enter country code"
-                                disabled="disabled"
-                            />
-                        </div>
-                    </div>
-                    <div class="sm:col-span-12">
-                        <LabelInputRequired :target="'destination_number'" :label="'Phone Number'"/>
-                        <div class="mt-2">
-                            <InputField
-                                v-model="form.destination_number"
-                                type="text"
-                                id="destination_number"
-                                name="destination_number"
-                                placeholder="Enter phone number"
-                                disabled="disabled"
-                            />
-                        </div>
-                    </div>
-                    <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
+                        <LabelInputOptional :target="'destination_actions'" :label="'Routing (Leave blank to keep existing setting)'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
                                 :options="options.timeout_destinations_categories"
@@ -65,7 +54,8 @@
                             <ComboBoxGroup :options="options.music_on_hold"
                                             :allowEmpty="true"
                                             :selectedItem="form.destination_hold_music"
-                                            :placeholder="'Choose music on hold'"
+                                            :placeholder="placeholderText('destination_hold_music')"
+                                            :showUndo="form.destination_hold_music === 'NULL'"
                                             @update:modal-value="handleMusicOnHoldUpdate"
                             />
                         </div>
@@ -73,7 +63,7 @@
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_description'" :label="'Description'"/>
                         <div class="mt-2">
-                            <Textarea v-model="form.destination_description" name="destination_description" rows="2" />
+                            <Textarea v-model="form.destination_description" name="destination_description" :placeholder="placeholderText('destination_description')" rows="2" />
                         </div>
                     </div>
                     <div class="sm:col-span-12">
@@ -103,7 +93,8 @@
                             <ComboBox :options="options.faxes"
                                        :allowEmpty="true"
                                        :selectedItem="form.fax_uuid"
-                                       :placeholder="'Choose fax'"
+                                       :placeholder="placeholderText('fax_uuid')"
+                                       :showUndo="form.fax_uuid === 'NULL'"
                                        @update:modal-value="handleFaxUpdate"
                             />
                         </div>
@@ -116,12 +107,12 @@
                                 type="text"
                                 id="destination_cid_name_prefix"
                                 name="destination_cid_name_prefix"
-                                placeholder="Enter caller prefix"
+                                :placeholder="placeholderText('destination_cid_name_prefix')"
                                 :error="errors?.destination_cid_name_prefix && errors.destination_cid_name_prefix.length > 0"/>
                         </div>
                     </div>
                     <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action'"/>
+                        <LabelInputOptional :target="'destination_conditions'" :label="'If the condition matches, perform action (Leave blank to keep existing setting)'"/>
                         <div class="border rounded-md pl-4 pr-4 pb-2">
                             <div v-for="(condition, index) in conditions" :key="condition.id">
                                 <div class="mt-4 grid grid-cols-3 gap-x-2">
@@ -181,7 +172,7 @@
                                 type="text"
                                 id="destination_accountcode"
                                 name="destination_accountcode"
-                                placeholder="Enter account code"
+                                :placeholder="placeholderText('destination_accountcode')"
                                 :error="errors?.destination_accountcode && errors.destination_accountcode.length > 0"/>
                         </div>
                     </div>
@@ -194,7 +185,7 @@
                                 type="text"
                                 id="destination_distinctive_ring"
                                 name="destination_distinctive_ring"
-                                placeholder="Enter distinctive ring"
+                                :placeholder="placeholderText('destination_distinctive_ring')"
                                 :error="errors?.destination_distinctive_ring && errors.destination_distinctive_ring.length > 0"/>
                         </div>
                     </div>
@@ -204,7 +195,8 @@
                         <div class="mt-2">
                             <ComboBox :options="options.domains"
                                        :selectedItem="form.domain_uuid"
-                                       :placeholder="'Choose company'"
+                                       :placeholder="placeholderText('domain_uuid')"
+                                       :showUndo="form.domain_uuid === 'NULL'"
                                        @update:modal-value="handleDomainUpdate"
                                        :error="errors?.domain_uuid && errors.domain_uuid.length > 0"
                             />
@@ -250,9 +242,10 @@ import ComboBox from "../general/ComboBox.vue";
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
 import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import {InformationCircleIcon} from "@heroicons/vue/20/solid/index.js";
 
 const props = defineProps({
-    item: Object,
+    items: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
@@ -267,55 +260,22 @@ const conditionsMaxLimit = 6;
 const selectedTab = ref(0)
 
 const form = reactive({
-    domain_uuid: props.item.domain_uuid,
-    fax_uuid: props.item.fax_uuid,
-    destination_prefix: props.item.destination_prefix,
-    destination_number: props.item.destination_number,
-    destination_actions: props.item.destination_actions,
-    destination_hold_music: props.item.destination_hold_music,
-    destination_description: props.item.destination_description,
-    destination_enabled: props.item.destination_enabled,
-    destination_record: props.item.destination_record,
-    destination_cid_name_prefix: props.item.destination_cid_name_prefix,
-    destination_accountcode: props.item.destination_accountcode,
-    destination_distinctive_ring: props.item.destination_distinctive_ring,
-    destination_conditions: props.item.destination_conditions ?? [],
+    items: props.items,
+    domain_uuid: null,
+    fax_uuid: null,
+    destination_actions: null,
+    destination_hold_music: null,
+    destination_description: null,
+    destination_enabled: null,
+    destination_record: null,
+    destination_cid_name_prefix: null,
+    destination_accountcode: null,
+    destination_distinctive_ring: null,
+    destination_conditions: [],
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
-
-onMounted(() => {
-    if (form.destination_conditions) {
-        conditions.value = form.destination_conditions.map(condition => {
-            const categoryNames = Object.keys(props.options.timeout_destinations_targets);
-
-            let selectedCategory = "";
-            let selectedCategoryTarget = {};
-
-            // look in each category to find the target value
-            for (let category of categoryNames) {
-                const foundInCategory = props.options.timeout_destinations_targets[category].find(target => target.value === condition.value || target.value === condition.value.value);
-                // if found, save the category and target
-                if (foundInCategory) {
-                    selectedCategory = category;
-                    selectedCategoryTarget = foundInCategory;
-                    break;
-                }
-            }
-
-            // return a new conditions object
-            return {
-                id: Math.random().toString(36).slice(2, 7),
-                condition_field: condition.condition_field,
-                condition_expression: condition.condition_expression,
-                selectedCategory: selectedCategory,
-                categoryTargets: props.options.timeout_destinations_targets[selectedCategory] || [],
-                value: selectedCategoryTarget.value
-            };
-        });
-    }
-});
 
 const submitForm = () => {
     // Transform conditions before submit
@@ -390,6 +350,18 @@ const handleConditionActionsUpdate = (newSelectedItem, index) => {
 
 const removeCondition = (id) => {
     conditions.value = conditions.value.filter(el => el.id !== id);
+}
+
+// Function to determine placeholder based on the current value
+function placeholderText(fieldName) {
+    const fieldValue = form[fieldName];
+    if (fieldValue === null || fieldValue === '') {
+        return "Keep existing setting";
+    } else if (fieldValue === "NULL") {
+        return "Current settings will be cleared";
+    } else {
+        return fieldValue; // Use the actual value as the placeholder
+    }
 }
 
 </script>

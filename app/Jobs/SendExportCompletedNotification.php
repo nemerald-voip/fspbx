@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use Illuminate\Http\Request;
 use Illuminate\Bus\Queueable;
-use App\Mail\CdrExportCompleted;
+use App\Mail\ExportCompleted;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
@@ -92,7 +92,7 @@ class SendExportCompletedNotification implements ShouldQueue
         Redis::throttle('email')->allow(2)->every(1)->then(function () {
 
             // Send email notification to user that the export has been completed
-            Mail::to($this->params['user_email'])->send(new CdrExportCompleted($this->params['fileUrl']));
+            Mail::to($this->params['user_email'])->send(new ExportCompleted($this->params));
 
 
         }, function () {

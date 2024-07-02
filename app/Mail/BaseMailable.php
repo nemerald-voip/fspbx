@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use App\Models\DefaultSettings;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
 
 abstract class BaseMailable extends Mailable
 {
@@ -54,5 +55,16 @@ abstract class BaseMailable extends Mailable
         $this->withSymfonyMessage(function ($message) {
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            // from: new Address('jeffrey@example.com', 'Jeffrey Way'),
+            subject: $this->attributes['email_subject'],
+        );
     }
 }

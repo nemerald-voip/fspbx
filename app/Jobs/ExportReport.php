@@ -5,7 +5,9 @@ namespace App\Jobs;
 
 use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
+use App\Mail\CdrExportCompleted;
 use App\Services\CdrDataService;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
@@ -17,11 +19,12 @@ use App\Jobs\SendExportCompletedNotification;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
 
-class ExportCdrs implements ShouldQueue
+class ExportReport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $params;
+    protected $data;
 
     /**
      * The number of times the job may be attempted.
@@ -70,10 +73,11 @@ class ExportCdrs implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($params, protected CdrDataService $cdrDataService)
+    public function __construct($params, $data)
     {
 
         $this->params = $params;
+        $this->data = $data;
     }
 
     /**
@@ -96,8 +100,6 @@ class ExportCdrs implements ShouldQueue
         // Allow only 1 job every 60 second
         Redis::throttle('default')->allow(1)->every(30)->then(function () {
 
-            $cdrs = $this->cdrDataService->getData($this->params);
-
             // Generate a unique filename
             $uniqueFilename = Str::uuid() . '.csv';
 
@@ -108,19 +110,18 @@ class ExportCdrs implements ShouldQueue
 
             $count = 0;
 
-            foreach ($cdrs as $cdr) {
-                $writer->addRow([
-                    'ID' => $cdr['xml_cdr_uuid'],
-                    'Direction' => $cdr['direction'],
-                    'Caller ID Name' => $cdr['caller_id_name'],
-                    'Caller ID Number' => $cdr['caller_id_number_formatted'],
-                    'Dialed Number' => $cdr['caller_destination_formatted'],
-                    'Recipient' => $cdr['destination_number_formatted'],
-                    'Date' => $cdr['start_date'],
-                    'Time' => $cdr['start_time'],
-                    'Duration' => $cdr['duration_formatted'],
-                    'Status' => $cdr['status'],
-                ]);
+            foreach ($this->data as $item) {
+                $row = [];
+
+                // Dynamically create the row with keys as column names
+                foreach ($item as $key => $value) {
+                    // Convert camel case to snake case, then replace underscores with spaces and convert to title case
+                    $formattedKey = Str::title(str_replace('_', ' ', Str::snake($key)));
+
+                    $row[$formattedKey] = $value;
+                }
+
+                $writer->addRow($row);
 
                 $count++;
 
@@ -131,9 +132,11 @@ class ExportCdrs implements ShouldQueue
 
             // Generate a public URL for the file
             $this->params['fileUrl'] = Storage::disk('export')->url($uniqueFilename);
-            $this->params['email_subject'] = 'Call history report';
+            $this->params['email_subject'] = config('app.name', 'Laravel') . ' report';
 
             SendExportCompletedNotification::dispatch($this->params)->onQueue('emails');
+
+            // Mail::to($this->params['user_email'])->send(new CdrExportCompleted($fileUrl));
 
         }, function () {
             // Could not obtain lock; this job will be re-queued

@@ -1734,8 +1734,12 @@
                     if(response.redirect_url){
                         window.location=response.redirect_url;
                     } else {
-                        window.location.reload();
                         $('.loading').hide();
+                        setTimeout(function() {
+                            window.location.reload();
+                            $('.loading').hide();
+                        }, 2000);
+                        
                     }
 
                 }

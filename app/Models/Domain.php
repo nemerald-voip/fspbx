@@ -54,6 +54,14 @@ class Domain extends Model
         return $this->hasMany(Voicemails::class,'domain_uuid','domain_uuid');
     }
 
+     /**
+     * Get the extensions that belong to the domain.
+     */
+    public function extensions()
+    {
+        return $this->hasMany(Extensions::class,'domain_uuid','domain_uuid');
+    }
+
     /**
      * Get the voicemails that belong to the domain.
      */

@@ -586,6 +586,7 @@
                                         '</td>' +
                                         '</tr>';
                                 });
+                                $("#appsTable").empty();
                                 $("#appsTable").append(newRows);
 
                                 $('.appDomainSelect2').select2({
@@ -609,9 +610,8 @@
 
                         }
                     })
-                    .fail(function(jqXHR, testStatus, error) {
-                        //console.log(error);
-                        printErrorMsg(error);
+                    .fail(function(jqXHR, status, error) {
+                        printErrorMsg(jqXHR.responseJSON.error.message);
                         $('#loader').hide();
 
                     });

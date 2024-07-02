@@ -252,6 +252,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Reports
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
 
 });
 
