@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkUpdateDeviceRequest;
+use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use App\Models\Destinations;
@@ -69,6 +71,7 @@ class PhoneNumbersController extends Controller
                     'current_page' => route('phone-numbers.index'),
                     'store' => route('phone-numbers.store'),
                     'select_all' => route('phone-numbers.select.all'),
+                    'bulk_update' => route('phone-numbers.bulk.update'),
                     'bulk_delete' => route('phone-numbers.bulk.delete'),
                    // 'select_all' => route('messages.settings.select.all'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
@@ -357,6 +360,64 @@ class PhoneNumbersController extends Controller
     public function edit(Request $request, Destinations $phone_number)
     {
          //
+    }
+
+    /**
+     * Bulk update requested items
+     *
+     * @param  BulkUpdatePhoneNumberRequest  $request
+     * @return JsonResponse
+     */
+    public function bulkUpdate(BulkUpdatePhoneNumberRequest  $request): JsonResponse
+    {
+        // $request->items has items IDs that need to be updated
+        // $request->validated has the update data
+
+        try {
+            // Prepare the data for updating
+            $inputs = collect($request->validated())
+                ->filter(function ($value) {
+                    return $value !== null;
+                })->toArray();
+
+            /*if (isset($inputs['device_template'])) {
+                $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
+                if ($inputs['device_vendor'] === 'poly') {
+                    $inputs['device_vendor'] = 'polycom';
+                }
+            }
+
+            if (isset($inputs['extension'])) {
+                $extension = $inputs['extension'];
+                unset($inputs['extension']);
+            } else {
+                $extension = null;
+            }
+
+            if (sizeof($inputs) > 0) {
+                $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
+                    ->update($inputs);
+            }
+
+            if ($extension) {
+                // First, we are deleting all existing device lines
+                $this->deleteDeviceLines(request('items'));
+
+                // Create new lines
+                $this->createDeviceLines(request('items'), $extension);
+            }*/
+
+            return response()->json([
+                'messages' => ['success' => ['Selected items updated']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update selected items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 
     /**
