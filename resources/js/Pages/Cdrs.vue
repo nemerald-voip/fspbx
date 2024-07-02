@@ -270,14 +270,6 @@ const props = defineProps({
 onMounted(() => {
     //request list of entities
     getEntities();
-    console.log(props.startPeriod);
-    console.log(props.endPeriod);
-    // console.log([moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()]);
-
-    const startDate = moment.tz(props.startPeriod, props.timezone).startOf('day').format();
-    const endDate = moment.tz(props.endPeriod, props.timezone).endOf('day').format();
-    
-    console.log([startDate, endDate]);
 })
 
 
