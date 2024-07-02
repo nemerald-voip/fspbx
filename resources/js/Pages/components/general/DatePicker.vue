@@ -28,8 +28,6 @@ const props = defineProps({
     timezone: String,
 });
 
-// const timezoneConfig = { timezone: props.timezone };
-
 // Initial date range
 const dateRange = ref();
 dateRange.value = props.dateRange;
@@ -39,11 +37,6 @@ watch(() => props.dateRange, (newDateRange) => {
 });
 
 
-// onMounted(() => {
-//     //request list of entities
-//     console.log('time');
-//     console.log(props.dateRange);
-// })
 
 const today = new Date();
 
@@ -58,17 +51,7 @@ const presetDates = ref([
 
 const emit = defineEmits(['update:dateRange']);
 
-const convertToNewTimezoneAndKeepTime = (date) => {
-    let localTime = moment(date);
-    let convertedDate = moment.tz(localTime.format('YYYY-MM-DDTHH:mm:ss'), props.timezone);
-    return convertedDate.format();
-}
-
 const handleDate = (modelData) => {
-    console.log(dateRange.value);
-    // dateRange.value = [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])], 
-    let newDateRange = [convertToNewTimezoneAndKeepTime(dateRange.value[0]), convertToNewTimezoneAndKeepTime(dateRange.value[1])];
-    // console.log(newDateRange);
     emit('update:dateRange', dateRange.value);
 }
 
