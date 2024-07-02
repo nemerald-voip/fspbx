@@ -382,6 +382,16 @@ class PhoneNumbersController extends Controller
 
             $inputs = $this->processActionConditionInputs($inputs);
 
+            if($inputs['destination_actions'] == null) {
+                unset($inputs['destination_actions']);
+            }
+
+            if($inputs['destination_conditions'] == null) {
+                unset($inputs['destination_conditions']);
+            }
+
+            //var_dump($inputs);
+
             /*if (isset($inputs['device_template'])) {
                 $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
                 if ($inputs['device_vendor'] === 'poly') {
