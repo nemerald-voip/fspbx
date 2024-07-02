@@ -99,8 +99,6 @@ class DashboardController extends Controller
         $params['domain_uuid'] = session('domain_uuid');
         $params['filterData']['startPeriod'] = $startPeriod;
         $params['filterData']['endPeriod'] = $endPeriod;
-        $params['filterData']['sortField'] = request()->get('sortField', 'start_epoch');
-        $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
 
         $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
         $cdrs = $cdrDataService->getData($params);
