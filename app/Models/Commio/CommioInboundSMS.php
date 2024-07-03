@@ -116,6 +116,7 @@ class CommioInboundSMS extends Model
         $attributes['from'] = $message->source;
         $attributes['email_to'] = $this->email;
         $attributes['message'] = $message->message;
+        $attributes['email_subject'] = 'SMS Notification: New Message from ' . $message->source;
 
         // Logic to deliver the SMS message using email
         // This method should return a boolean indicating whether the message was sent successfully.
