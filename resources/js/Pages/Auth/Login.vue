@@ -17,6 +17,10 @@
                     {{ errorMessage }}
                 </div>
 
+                <div v-if="page.props.flash.error" class="mb-4 font-medium text-sm text-red-600 dark:text-red-400">
+                    {{ page.props.flash.error }}
+                </div>
+
                 <form class="space-y-6" action="#" method="POST">
                     <div>
                         <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">Email
