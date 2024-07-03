@@ -380,6 +380,18 @@ class PhoneNumbersController extends Controller
                     return $value !== null;
                 })->toArray();
 
+            $inputs = $this->processActionConditionInputs($inputs);
+
+            if($inputs['destination_actions'] == null) {
+                unset($inputs['destination_actions']);
+            }
+
+            if($inputs['destination_conditions'] == null) {
+                unset($inputs['destination_conditions']);
+            }
+
+            //var_dump($inputs);
+
             /*if (isset($inputs['device_template'])) {
                 $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
                 if ($inputs['device_vendor'] === 'poly') {
@@ -392,14 +404,14 @@ class PhoneNumbersController extends Controller
                 unset($inputs['extension']);
             } else {
                 $extension = null;
-            }
+            }*/
 
             if (sizeof($inputs) > 0) {
                 $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
                     ->update($inputs);
             }
 
-            if ($extension) {
+            /*if ($extension) {
                 // First, we are deleting all existing device lines
                 $this->deleteDeviceLines(request('items'));
 
@@ -623,7 +635,7 @@ class PhoneNumbersController extends Controller
         return $inputs;
     }
 
-    private function generateDialplanDetails(Destinations $phoneNumber, Dialplans $dialPlan)
+    private function generateDialplanDetails(Destinations $phoneNumber, Dialplans $dialPlan): void
     {
         // Remove existing device lines
         if ($dialPlan->dialplan_details()->exists()) {

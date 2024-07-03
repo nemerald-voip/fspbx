@@ -155,6 +155,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('phone-numbers', PhoneNumbersController::class);
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
+    Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

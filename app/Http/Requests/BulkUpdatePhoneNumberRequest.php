@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Domain;
+use App\Models\Faxes;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -75,18 +77,24 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
             ],
             'fax_uuid' => [
                 'nullable',
-                Rule::exists('v_fax', 'fax_uuid')
+                Rule::when(
+                    function ($input) {
+                        // Check if the value is not the literal string "NULL"
+                        return $input['fax_uuid'] !== 'NULL';
+                    },
+                    Rule::exists(Faxes::class, 'fax_uuid'),
+                )
             ],
             'destination_enabled' => [
-                Rule::in([true, false]),
+                Rule::in([null, true, false]),
             ],
             'destination_record' => [
-                Rule::in([true, false]),
+                Rule::in([null, true, false]),
             ],
             'domain_uuid' => [
-                'required',
+                'nullable',
                 Rule::notIn(['NULL']),
-                Rule::exists('v_domains', 'domain_uuid')
+                Rule::exists(Domain::class, 'domain_uuid')
             ],
         ];
     }
@@ -143,10 +151,6 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
                 $destinationConditions[] = $condition;
             }
             $this->merge(['destination_conditions' => $destinationConditions]);
-        }
-
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
     }
 }
