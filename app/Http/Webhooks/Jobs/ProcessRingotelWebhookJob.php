@@ -12,7 +12,7 @@ use libphonenumber\PhoneNumberUtil;
 use App\Jobs\ProcessCommioSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
-use App\Services\SynchMessageProvider;
+use App\Services\SinchMessageProvider;
 use App\Services\CommioMessageProvider;
 use App\Jobs\SendSmsNotificationToSlack;
 use libphonenumber\NumberParseException;
@@ -241,8 +241,8 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         switch ($carrier) {
             case 'thinq':
                 return new CommioMessageProvider();
-            case 'synch':
-                return new SynchMessageProvider();
+            case 'sinch':
+                return new SinchMessageProvider();
                 // Add cases for other carriers
             default:
                 throw new \Exception("Unsupported carrier");

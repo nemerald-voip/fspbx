@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Synch;
+namespace App\Models\Sinch;
 
 use App\Mail\SmsToEmail;
 use App\Models\Messages;
@@ -17,7 +17,7 @@ use App\Jobs\SendSmsNotificationToSlack;
  * @property string|null $email
  * @property string|null $extension
  */
-class SynchInboundSMS extends Model
+class SinchInboundSMS extends Model
 {
     public $org_id;
     public $message_uuid;
@@ -118,6 +118,7 @@ class SynchInboundSMS extends Model
         $attributes['from'] = $message->source;
         $attributes['email_to'] = $this->email;
         $attributes['message'] = $message->message;
+        $attributes['email_subject'] = 'SMS Notification: New Message from ' . $message->source;
 
         // Logic to deliver the SMS message using email
         // This method should return a boolean indicating whether the message was sent successfully.
