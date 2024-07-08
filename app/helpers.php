@@ -165,7 +165,7 @@ if (!function_exists('appsGetOrganization')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -243,7 +243,7 @@ if (!function_exists('appsGetConnections')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -273,7 +273,7 @@ if (!function_exists('appsDeleteConnection')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -304,7 +304,7 @@ if (!function_exists('appsGetUsers')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -344,7 +344,7 @@ if (!function_exists('appsCreateUser')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -374,7 +374,7 @@ if (!function_exists('appsDeleteUser')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -412,7 +412,7 @@ if (!function_exists('appsUpdateUser')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -443,7 +443,7 @@ if (!function_exists('appsResetPassword')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -475,7 +475,7 @@ if (!function_exists('appsSetStatus')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
@@ -505,7 +505,7 @@ if (!function_exists('appsDeleteOrganization')) {
 
         $response = Http::ringotel()
             //->dd()
-            ->timeout(5)
+            ->timeout(30)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {

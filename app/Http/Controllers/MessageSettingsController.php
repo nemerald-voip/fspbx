@@ -81,7 +81,7 @@ class MessageSettingsController extends Controller
         // Define the options for the 'carrier' field
         $carrierOptions = [
             ['value' => 'thinq', 'name' => 'ThinQ'],
-            ['value' => 'synch', 'name' => 'Synch'],
+            ['value' => 'sinch', 'name' => 'Sinch'],
         ];
 
         // Define the options for the 'chatplan_detail_data' field

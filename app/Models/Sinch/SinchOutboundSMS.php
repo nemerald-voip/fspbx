@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Synch;
+namespace App\Models\Sinch;
 
 use App\Models\Messages;
 use Illuminate\Support\Facades\Http;
@@ -10,7 +10,7 @@ use App\Jobs\SendSmsNotificationToSlack;
 /**
  * @property string|null $message_uuid
  */
-class SynchOutboundSMS extends Model
+class SinchOutboundSMS extends Model
 {
     public $message_uuid;
 
@@ -28,7 +28,7 @@ class SynchOutboundSMS extends Model
             return;
         }
 
-        // Logic to send the SMS message using a third-party Synch API,
+        // Logic to send the SMS message using a third-party Sinch API,
         // This method should return a boolean indicating whether the message was sent successfully.
 
         $data = array(
@@ -41,11 +41,11 @@ class SynchOutboundSMS extends Model
         );
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('synch.api_key'),
+            'Authorization' => 'Bearer ' . config('sinch.api_key'),
             'Content-Type' => 'application/json'
         ])
             ->asJson()
-            ->post(config('synch.message_broker_url') . "/publishMessages", $data);
+            ->post(config('sinch.message_broker_url') . "/publishMessages", $data);
 
         // Get result
         if (isset($response)) {
@@ -75,7 +75,7 @@ class SynchOutboundSMS extends Model
     
             $message->save();
         } else {
-            logger()->error('SMS error. No response received from Synch API.');
+            logger()->error('SMS error. No response received from Sinch API.');
             $message->status = 'failed';
             $message->save();
             $this->handleError($message);

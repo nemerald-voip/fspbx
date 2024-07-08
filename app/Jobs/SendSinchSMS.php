@@ -4,14 +4,14 @@ namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Redis;
-use App\Models\Synch\SynchOutboundSMS;
+use App\Models\Sinch\SinchOutboundSMS;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class SendSynchSMS implements ShouldQueue
+class SendSinchSMS implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -89,7 +89,7 @@ class SendSynchSMS implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 
-            $sms = new SynchOutboundSMS();
+            $sms = new SinchOutboundSMS();
             $sms->message_uuid = $this->message_uuid;
             $sms->send();
 

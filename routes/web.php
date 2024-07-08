@@ -51,7 +51,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 // Webhooks
 Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
-Route::webhooks('webhook/synch/sms', 'synch_messaging');
+Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
@@ -155,6 +155,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('phone-numbers', PhoneNumbersController::class);
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
+    Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -594,6 +594,7 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
+    bulkUpdateModalTrigger.value = false;
 }
 
 const hideNotification = () => {
