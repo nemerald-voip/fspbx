@@ -6,8 +6,8 @@ use App\Models\Messages;
 use App\Models\Extensions;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
-use App\Jobs\DeliverSynchInboundSMS;
-use App\Jobs\DeliverSynchSMSToEmail;
+use App\Jobs\DeliverSinchInboundSMS;
+use App\Jobs\DeliverSinchSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
 use App\Jobs\SendSmsNotificationToSlack;
@@ -15,7 +15,7 @@ use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
-class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
+class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
 {
 
     protected $messageConfig;
@@ -155,7 +155,7 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
         $message = $this->storeMessage('queued');
 
         if ($this->ext != "") {
-            DeliverSynchInboundSMS::dispatch([
+            DeliverSinchInboundSMS::dispatch([
                 'org_id' => $this->fetchOrgId(),
                 'message_uuid' => $message->message_uuid,
                 'extension' => $this->ext,
@@ -163,7 +163,7 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
         }
 
         if ($this->email != "") {
-            DeliverSynchSMSToEmail::dispatch([
+            DeliverSinchSMSToEmail::dispatch([
                 'org_id' => $this->fetchOrgId(),
                 'message_uuid' => $message->message_uuid,
                 'email' => $this->email,
@@ -206,7 +206,7 @@ class ProcessSynchWebhookJob extends SpatieProcessWebhookJob
         logger($e->getMessage());
         $this->storeMessage($e->getMessage());
         // Log the error or send it to Slack
-        $error = "*Synch Inbound SMS Failed*: From: " . $this->source . " To: " . $this->curentDestination . "\n" . $e->getMessage();
+        $error = "*Sinch Inbound SMS Failed*: From: " . $this->source . " To: " . $this->curentDestination . "\n" . $e->getMessage();
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
 

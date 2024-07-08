@@ -13,7 +13,7 @@ use App\Models\MessageSetting;
 use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use App\Services\SynchMessageProvider;
+use App\Services\SinchMessageProvider;
 use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
 use App\Jobs\SendSmsNotificationToSlack;
@@ -307,8 +307,8 @@ class MessagesController extends Controller
         switch ($carrier) {
             case 'thinq':
                 return new CommioMessageProvider();
-            case 'synch':
-                return new SynchMessageProvider();
+            case 'sinch':
+                return new SinchMessageProvider();
                 // Add cases for other carriers
             default:
                 throw new \Exception("Unsupported carrier");

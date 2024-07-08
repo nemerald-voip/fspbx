@@ -129,7 +129,7 @@ return [
              * This package supports multiple webhook receiving endpoints. If you only have
              * one endpoint receiving webhooks, you can use 'default'.
              */
-            'name' => 'synch_messaging',
+            'name' => 'sinch_messaging',
 
             /*
              * We expect that every webhook call will be signed using a secret. This secret
@@ -149,12 +149,12 @@ return [
              */
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
-            'signature_validator' => \App\Http\Webhooks\SignatureValidators\SynchSignatureValidator::class,
+            'signature_validator' => \App\Http\Webhooks\SignatureValidators\SinchSignatureValidator::class,
             
             /*
              * This class determines if the webhook call should be stored and processed.
              */
-            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\SynchWebhookProfile::class,
+            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\SinchWebhookProfile::class,
 
             /*
              * This class determines the response on a valid webhook call.
@@ -182,7 +182,7 @@ return [
              *
              * This should be set to a class that extends \Spatie\WebhookClient\Jobs\ProcessWebhookJob.
              */
-            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessSynchWebhookJob::class,
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessSinchWebhookJob::class,
         ],
 
         [
