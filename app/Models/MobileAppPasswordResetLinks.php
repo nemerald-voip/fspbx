@@ -35,4 +35,12 @@ class MobileAppPasswordResetLinks extends Model
         $this->attributes['created_at'] = date('Y-m-d H:i:s');
         $this->fill($attributes);
     }
+
+    /**
+     * Get extension that this mobile app belongs to
+     */
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
 }

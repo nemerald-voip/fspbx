@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Providers\RouteServiceProvider;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Models\MobileAppPasswordResetLinks;
+use App\Models\MobileAppUsers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppsCredentialsController extends Controller
 {
@@ -18,72 +16,61 @@ class AppsCredentialsController extends Controller
      * @param  Request  $request
      * @return \Inertia\Response
      */
-    public function getPasswordByToken(Request $request)
+    public function getPasswordByToken(Request $request): \Inertia\Response
     {
+        $appCredentials = MobileAppPasswordResetLinks::where('token', $request->token)->first();
 
-        var_dump($request->token);
-
-        print '======';
-
-        var_dump(route('appsGetPasswordByToken', Str::random(40)));
-        //var_dump($request);
-        die;
-
-        if (!$request->hasChallengedUser()) {
-            throw new HttpResponseException(redirect()->route('login'));
+        // If reset password link not found throw an error
+        if (!$appCredentials) {
+            abort(403, 'The link does not exist or expired. Contact your administrator');
         }
 
-        if (!Session::has('code')) {
-            $this->generateAndStoreCode($request->challengedUser());
-        }
+        $extension = $appCredentials->extension()->first();
+        $extensionDomain = $extension->domain()->first();
 
-        return Inertia::render('Auth/TwoFactorEmailChallenge', [
-            'links' => [
-                'email-challenge' => "/email-challenge",
-            ],
-            'status' => session('status'),
-        ]);
+        return Inertia::render('Auth/MobileAppGetPassword',
+            [
+                'display_name' => $extension->effective_caller_id_name,
+                'domain' => ($extensionDomain->domain_description) ?: $extensionDomain->domain_name,
+                'username' => $extension->extension,
+                'extension' => $extension->extension,
+                'routes' => [
+                    'retrieve_password' => route('appsRetrievePasswordByToken', $request->token),
+                ]
+            ]);
     }
 
     /**
-     * Attempt to authenticate a new session using the email challenge code.
+     * Attempt to retrieve the mobile app password.
      *
-     * @param  TwoFactorLoginRequest  $request
-     * @return mixed
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(TwoFactorLoginRequest $request)
+    public function retrievePasswordByToken(Request $request): \Illuminate\Http\JsonResponse
     {
-        $request->validate([
-            'code' => [
-                'required',
-                'max:6',
-                function ($attribute, $value, $fail) {
-                    if ((string) $value !== (string) session('code')) {
-                        $fail('Supplied authentication code is invalid.');
-                    }
-                    if (now()->greaterThan(session('code_expiration'))) {
-                        $fail('The code has expired.');
-                    }
-                },
-            ],
-            'remember' => [
-                'nullable',
-            ]
-        ]);
+        $appCredentials = MobileAppPasswordResetLinks::where('token', $request->token)->first();
 
-        Auth::login($request->challengedUser());
-        $request->session()->regenerate();
-
-        // If request has remember option then store browser details
-        if ($request->get('remember')) {
-            $this->storeCookieIfNotInDB($request);
+        // If reset password link not found throw an error
+        if (!$appCredentials) {
+            abort(403, 'The link does not exist or expired. Contact your administrator');
         }
 
-        // return app(TwoFactorLoginResponse::class);
-        if ($request->session()->has('url.intended')) {
-            return Inertia::location(session('url.intended'));
+        try {
+            $appUser = MobileAppUsers::where('extension_uuid', $appCredentials->extension_uuid)->first();
+            $response = appsResetPassword($appUser->org_id, $appUser->user_id, true);
+            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
+                    '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+            return response()->json([
+                'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
+                'password' => $response['result']['password']
+            ]);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to retrieve credentials']]
+            ], 500);
         }
-
-        return redirect()->intended(RouteServiceProvider::HOME);
     }
 }
