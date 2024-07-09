@@ -18,8 +18,8 @@
                 <td>
 
                   <a href="{{ $attributes['google_play_link'] ?? '' }}">
-                    <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto 
-                      !important;" width="189" alt="Download for Android" data-proportionally-constrained="true" data-responsive="true" 
+                    <img class="max-width" border="0" style="display:block; color:#000000; text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto
+                      !important;" width="189" alt="Download for Android" data-proportionally-constrained="true" data-responsive="true"
                       src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/88af7fc9-c74b-43ec-a1e2-a712cd1d3052/646x250.png">
                   </a>
 
@@ -38,8 +38,8 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $attributes['apple_store_link'] ?? '' }}"><img class="max-width" border="0" style="display:block; color:#000000; 
-                    text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto !important;" width="174" alt="Download for iOS" data-proportionally-constrained="true" data-responsive="true" 
+                  <a href="{{ $attributes['apple_store_link'] ?? '' }}"><img class="max-width" border="0" style="display:block; color:#000000;
+                    text-decoration:none; font-family:Helvetica, arial, sans-serif; font-size:16px; height:auto !important;" width="174" alt="Download for iOS" data-proportionally-constrained="true" data-responsive="true"
                     src="https://cdn.mcauto-images-production.sendgrid.net/b9e58e76174a4c84/bb2daef8-a40d-4eed-8fb4-b4407453fc94/320x95.png">
                   </a>
                 </td>
@@ -117,14 +117,19 @@
         <tr>
           <td class="attributes_item"><strong>Username:</strong> {{ $attributes['username'] ?? ''}}</td>
         </tr>
-        <tr>
-          <td class="attributes_item"><strong>Password:</strong> {{ $attributes['password'] ?? ''}}</td>
-        </tr>
+        @if($attributes['password_link'])
+          <tr>
+            <td class="attributes_item"><strong>Password:</strong> <a href="{{ $attributes['password_link'] }}">Get password</a></td>
+          </tr>
+        @elseif($attributes['password'])
+          <tr>
+            <td class="attributes_item"><strong>Password:</strong> {{ $attributes['password'] }}</td>
+          </tr>
+        @endif
       </table>
     </td>
     <td>
       <img src="data:image/png;base64, {!! base64_encode($attributes['qrCode']) !!} ">
-
     </td>
   </tr>
 </table>

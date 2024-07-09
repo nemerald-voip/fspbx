@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Domain;
 use App\Models\Extensions;
+use App\Models\MobileAppPasswordResetLinks;
 use Aws\Mobile\MobileClient;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\AppCredentialsGenerated;
 use Exception;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppsController extends Controller
@@ -796,11 +798,22 @@ class AppsController extends Controller
 
         // If success and user is activated send user email with credentials
         if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
+            if($hidePassInEmail == 'true') {
+                // Include get-password link and remove password value
+                $passwordToken = Str::random(40);
+                $response['result']['password_link'] = route('appsGetPasswordByToken', $passwordToken);
+                $response['result']['password'] = null;
+                MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                $appCredentials = new MobileAppPasswordResetLinks();
+                $appCredentials->token = $passwordToken;
+                $appCredentials->extension_uuid = $extension->extension_uuid;
+                $appCredentials->save();
+            }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
         // Delete any prior info from database
-        $appUser = MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
+        MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
 
         // Save returned user info in database
         $appUser = new MobileAppUsers();
@@ -914,6 +927,17 @@ class AppsController extends Controller
 
         // If success and user is activated send user email with credentials
         if (isset($extension->voicemail->voicemail_mail_to)){
+            if($hidePassInEmail == 'true') {
+                // Include get-password link and remove password value
+                $passwordToken = Str::random(40);
+                $response['result']['password_link'] = route('appsGetPasswordByToken', $passwordToken);
+                $response['result']['password'] = null;
+                MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                $appCredentials = new MobileAppPasswordResetLinks();
+                $appCredentials->token = $passwordToken;
+                $appCredentials->extension_uuid = $extension->extension_uuid;
+                $appCredentials->save();
+            }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppsCredentialsController;
 use Aws\Sns\Message;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
@@ -63,6 +64,9 @@ Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeControl
 
 // Csrf token
 Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
+
+// Get mobile app password
+Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 
 // Route::get('preview-email', function () {
 //     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
