@@ -60,6 +60,9 @@ class AppsCredentialsController extends Controller
             $response = appsResetPassword($appUser->org_id, $appUser->user_id, true);
             $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
                     '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+
+            MobileAppPasswordResetLinks::where('token', $request->token)->delete();
+
             return response()->json([
                 'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
                 'password' => $response['result']['password']
