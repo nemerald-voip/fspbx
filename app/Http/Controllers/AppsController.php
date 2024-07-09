@@ -26,7 +26,7 @@ class AppsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function index()
     {
@@ -57,7 +57,7 @@ class AppsController extends Controller
     /**
      * Submit request to create a new organization to Ringotel
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createOrganization(Request $request)
     {
@@ -162,7 +162,7 @@ class AppsController extends Controller
     /**
      * Submit request to destroy organization to Ringotel
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroyOrganization(Request $request, Domain $domain)
     {
@@ -231,6 +231,7 @@ class AppsController extends Controller
 
 
 
+        // !!!!! TODO: The code below is unreachable, do we need it ? !!!!!
         // If successful store Org ID and return success status
         if (isset($response['result'])){
 
@@ -291,7 +292,7 @@ class AppsController extends Controller
     /**
      * Submit request to create connection to Ringotel
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createConnection (Request $request)
     {
@@ -467,7 +468,7 @@ class AppsController extends Controller
     /**
      * Submit getOrganizations request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getOrganizations(RingotelApiService $ringotelApiService)
     {
@@ -502,7 +503,7 @@ class AppsController extends Controller
     /**
      * Submit getUsers request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getUsersByOrgId(RingotelApiService $ringotelApiService, $orgId)
     {
@@ -510,7 +511,7 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
         try {
             $users = $this->ringotelApiService->getUsersByOrgId($orgId);
- 
+
             logger($users);
         } catch (\Exception $e) {
             logger($e->getMessage());
@@ -535,7 +536,7 @@ class AppsController extends Controller
     /**
      * Return Ringotel app user settings
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncOrganizations(Request $request)
     {
@@ -576,7 +577,7 @@ class AppsController extends Controller
     /**
      * Sync Ringotel app users from the cloud
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncUsers(Request $request, Domain $domain)
     {
@@ -680,7 +681,7 @@ class AppsController extends Controller
     /**
      * Return Ringotel app user settings
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function mobileAppUserSettings(Request $request, Extensions $extension)
     {
@@ -753,6 +754,12 @@ class AppsController extends Controller
     {
         $extension = Extensions::find($request->extension_uuid);
 
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
         $mobile_app = [
             'org_id' => $request->org_id,
             'conn_id' => $request->connection,
@@ -764,6 +771,7 @@ class AppsController extends Controller
             'authname' => $extension->extension,
             'password' => $extension->password,
             'status' => ($request->activate == 'on') ? 1 : -1,
+            'no_email' => $hidePassInEmail == 'true'
         ];
 
         // Send request to create user
@@ -804,12 +812,6 @@ class AppsController extends Controller
         $appUser->status = $response['result']['status'];
         $appUser->save();
         // Log::info($response);
-
-        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
-        if ($hidePassInEmail === null) {
-            $hidePassInEmail = 'false';
-        }
 
         $qrcode = "";
         if($hidePassInEmail == 'false') {
@@ -884,8 +886,14 @@ class AppsController extends Controller
 
         $mobile_app = $request->mobile_app;
 
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
         // Send request to reset password
-        $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id']);
+        $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id'], $hidePassInEmail == 'true');
 
         //If there is an error return failed status
         if (isset($response['error'])) {
@@ -907,12 +915,6 @@ class AppsController extends Controller
         // If success and user is activated send user email with credentials
         if (isset($extension->voicemail->voicemail_mail_to)){
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
-        }
-
-        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
-        if ($hidePassInEmail === null) {
-            $hidePassInEmail = 'false';
         }
 
         $qrcode = "";

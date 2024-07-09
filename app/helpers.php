@@ -172,7 +172,7 @@ if (!function_exists('appsGetOrganization')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive organization",
+                        'message' => "Unable to retrieve organization",
                     ],
                 ])->getData(true);
             })
@@ -311,7 +311,7 @@ if (!function_exists('appsGetUsers')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive connections",
+                        'message' => "Unable to retrieve connections",
                     ],
                 ])->getData(true);
             })
@@ -339,6 +339,7 @@ if (!function_exists('appsCreateUser')) {
                 'authname' => $mobile_app['authname'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
+                "noemail" => $mobile_app['no_email']
             )
         );
 
@@ -431,13 +432,14 @@ if (!function_exists('appsUpdateUser')) {
 
 // Reset password for mobile app user via Ringotel API call
 if (!function_exists('appsResetPassword')) {
-    function appsResetPassword($org_id, $user_id)
+    function appsResetPassword($org_id, $user_id, $no_email = false)
     {
         $data = array(
             'method' => 'resetUserPassword',
             'params' => array(
                 'id' => $user_id,
                 'orgid' => $org_id,
+                'noemail' => $no_email
             )
         );
 
@@ -831,7 +833,7 @@ if (!function_exists('get_registrations')) {
 }
 
 
-//Updated sip regisration function
+//Updated sip registration function
 if (!function_exists('sipRegistrations')) {
     function sipRegistrations()
     {
