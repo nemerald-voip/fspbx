@@ -5,18 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Domain;
 use App\Models\Extensions;
 use App\Models\MobileAppPasswordResetLinks;
-use Aws\Mobile\MobileClient;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\AppCredentialsGenerated;
-use Exception;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -129,6 +124,9 @@ class AppsController extends Controller
             $passwordUrlShow = get_domain_setting('password_url_show');
             if ($passwordUrlShow === null) {
                 $passwordUrlShow = 'false';
+            }
+            if(isset($request->password_url_show)) {
+                $passwordUrlShow = $request->password_url_show == 'true' ? 'true' : 'false';
             }
             $domainSettingsModel = DomainSettings::create([
                 'domain_uuid' => $request->organization_uuid,
