@@ -111,7 +111,7 @@ class AppsController extends Controller
                     'organization_domain' => $request->organization_domain,
                     'organization_region' => $request->organization_region,
                     'org_id' => $response['result']['id'],
-                    'message' => 'Organization was created succesfully, but unable to store Org ID in database',
+                    'message' => 'Organization was created successfully, but unable to store Org ID in database',
                 ]);
             }
 
@@ -122,8 +122,26 @@ class AppsController extends Controller
                 'domain_setting_name' => 'boolean',
                 'domain_setting_value' => $hidePassInEmail,
                 'domain_setting_enabled' => true,
+                'domain_setting_description' => "Don't include user credentials in the welcome email"
             ]);
             $domainSettingsModel->save();
+
+            $passwordUrlShow = get_domain_setting('password_url_show');
+            if ($passwordUrlShow === null) {
+                $passwordUrlShow = 'false';
+            }
+            $domainSettingsModel = DomainSettings::create([
+                'domain_uuid' => $request->organization_uuid,
+                'domain_setting_category' => 'mobile_apps',
+                'domain_setting_subcategory' => 'password_url_show',
+                'domain_setting_name' => 'boolean',
+                'domain_setting_value' => $passwordUrlShow,
+                'domain_setting_enabled' => true,
+                'domain_setting_description' => "Display the 'Get Password' link on the success pop-up notification"
+            ]);
+            $domainSettingsModel->save();
+
+            unset($domainSettingsModel, $passwordUrlShow, $hidePassInEmail);
 
             // Get connection port from database or env file
             $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
@@ -140,7 +158,7 @@ class AppsController extends Controller
                 'connection_port' => ($port) ? $port : config("ringotel.connection_port"),
                 'outbound_proxy' => ($proxy) ? $proxy : config("ringotel.outbound_proxy"),
                 'success' => [
-                    'message' => 'Organization created succesfully',
+                    'message' => 'Organization created successfully',
                 ]
             ]);
         // Otherwise return failed status

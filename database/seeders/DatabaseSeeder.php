@@ -210,7 +210,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Don't include user credentials in the welcome email",
             ],
-
+            [
+                'default_setting_category'      => 'mobile_apps',
+                'default_setting_subcategory'   => 'password_url_show',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Display the 'Get Password' link on the success pop-up notification",
+            ],
 
         ];
 

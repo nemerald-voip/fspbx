@@ -98,6 +98,7 @@
                                             <td>
                                                 {{ $domain->domain_name }}
                                                 <input type="hidden" name="dont_send_user_credentials" @if (get_domain_setting('dont_send_user_credentials', $domain->domain_uuid) == "true") value="true" @else value="false" @endif />
+                                                <input type="hidden" name="password_url_show" @if (get_domain_setting('password_url_show', $domain->domain_uuid) == "true") value="true" @else value="false" @endif />
                                             </td>
                                             <td>
                                                 @if ($domain->status == 'true')
@@ -226,7 +227,15 @@
                                                 <input type="checkbox" class="form-check-input" id="dont_send_user_credentials" name="dont_send_user_credentials" value="true" />
                                                 <label class="form-check-label" for="dont_send_user_credentials">Don't send user credentials in a plain text</label>
                                             </div>
-                                            <span class="help-block"><small>If enabled, users in this organization will need to follow a one-time link to get their app login credentials.</small></span>
+                                            <span class="help-block"><small>If this option is enabled, users within this organization will need to follow a one-time link to retrieve their app password.</small></span>
+                                        </div>
+                                        <div class="mb-3" id="password_url_show_div" style="display: none;">
+                                            <div class="form-check mb-2">
+                                                <input type="hidden" name="password_url_show" value="false">
+                                                <input type="checkbox" class="form-check-input" id="password_url_show" name="password_url_show" value="true" />
+                                                <label class="form-check-label" for="password_url_show">Display the 'Get Password' link on the success pop-up notification</label>
+                                            </div>
+                                            <span class="help-block"><small>If this option is enabled, users within this organization will be able to view a one-time link to retrieve their app password from the success pop-up notification.</small></span>
                                         </div>
                                     </div>
                                 </div>
@@ -539,6 +548,15 @@
                 dropdownParent: $("#appSyncModal")
             });
 
+            $('#dont_send_user_credentials').change(function(){
+                if($(this).prop('checked')) {
+                    $('#password_url_show_div').show();
+                }
+                else {
+                    $('#password_url_show_div').hide();
+                }
+            });
+
             // Open Organization Sync Modal
             $('.orgSyncButton').on('click', function(e) {
                 e.preventDefault();
@@ -684,6 +702,7 @@
                 $('#connection_domain').val($.trim($(this).closest("tr").find('td:eq(2)').text()));
                 $('#connection_name').val($.trim($(this).closest("tr").find('td:eq(1)').text()));
                 $('#dont_send_user_credentials').prop('checked', $.trim($(this).closest("tr").find('input[name=dont_send_user_credentials]').val()) === 'true');
+                $('#password_url_show').prop('checked', $.trim($(this).closest("tr").find('input[name=password_url_show]').val()) === 'true');
                 $('#connection_organization_uuid').val($.trim($(this).val()));
             });
 
