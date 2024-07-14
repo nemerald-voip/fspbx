@@ -99,8 +99,8 @@ if (!function_exists('getFusionPBXPreviousURL')) {
             $url = substr($previous_url, 0, strpos(url()->previous(), "/faxes/")) . "/faxes";
         } elseif (strpos($previous_url, "/voicemails/")) {
             $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/")) . "/voicemails";
-        } elseif (strpos($previous_url, "/contact-center")) {
-            $url = "/dashboard";
+        } elseif (strpos($previous_url, "/contact-center/")) {
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/contact-center/")) . "/dashboard1";
         } else {
             $url = $previous_url;
         }
