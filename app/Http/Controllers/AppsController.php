@@ -776,18 +776,21 @@ class AppsController extends Controller
             ])->getData(true);
         }
 
+        $includePasswordUrl = null;
         // If success and user is activated send user email with credentials
         if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
             if($hidePassInEmail == 'true') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
-                $response['result']['password_link'] = route('appsGetPasswordByToken', $passwordToken);
                 $response['result']['password'] = null;
                 MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                 $appCredentials = new MobileAppPasswordResetLinks();
                 $appCredentials->token = $passwordToken;
                 $appCredentials->extension_uuid = $extension->extension_uuid;
                 $appCredentials->save();
+
+                $passwordUrlShow = get_domain_setting('password_url_show', $extension->domain()->first()->domain_uuid) ?? 'false';
+                $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
             }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
@@ -815,6 +818,7 @@ class AppsController extends Controller
             }
         } else {
             $response['result']['password'] = null;
+            $response['result']['password_url'] = $includePasswordUrl;
         }
 
         return response()->json([
@@ -905,18 +909,21 @@ class AppsController extends Controller
             ])->getData(true);
         }
 
+        $includePasswordUrl = null;
         // If success and user is activated send user email with credentials
         if (isset($extension->voicemail->voicemail_mail_to)){
             if($hidePassInEmail == 'true') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
-                $response['result']['password_link'] = route('appsGetPasswordByToken', $passwordToken);
                 $response['result']['password'] = null;
                 MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                 $appCredentials = new MobileAppPasswordResetLinks();
                 $appCredentials->token = $passwordToken;
                 $appCredentials->extension_uuid = $extension->extension_uuid;
                 $appCredentials->save();
+
+                $passwordUrlShow = get_domain_setting('password_url_show', $extension->domain()->first()->domain_uuid) ?? 'false';
+                $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
             }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
@@ -928,6 +935,7 @@ class AppsController extends Controller
                 '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
         } else {
             $response['result']['password'] = null;
+            $response['result']['password_url'] = $includePasswordUrl;
         }
 
         return response()->json([
@@ -948,6 +956,11 @@ class AppsController extends Controller
      */
     public function setStatus(Request $request, Extensions $extension)
     {
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
 
         $mobile_app = $request->mobile_app;
         $mobile_app['status'] = (int)$mobile_app['status'];
@@ -956,6 +969,7 @@ class AppsController extends Controller
         $mobile_app['email'] = ($extension->voicemail['voicemail_mail_to']) ? $extension->voicemail['voicemail_mail_to'] : "";
         $mobile_app['ext'] = $extension['extension'];
         $mobile_app['password'] = $extension->password;
+        $mobile_app['no_email'] = $hidePassInEmail == 'true';
 
         $appUser = $extension->mobile_app;
 

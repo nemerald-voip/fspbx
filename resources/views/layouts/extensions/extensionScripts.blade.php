@@ -277,6 +277,8 @@
                                 $('#extensionSpan').text(response.user.username);
                                 if(response.user.password != null) {
                                     $('#passwordSpan').text(response.user.password);
+                                } else if(response.user.password_url != null) {
+                                    $('#passwordSpan').html(`<a href="${response.user.password_url}" target="_blank">Get password</a>`);
                                 } else {
                                     $('#passwordSpan').text('Check your email for the password');
                                 }
@@ -500,6 +502,8 @@
                         $('#extensionSpan').text(response.user.username);
                         if(response.user.password != null) {
                             $('#passwordSpan').text(response.user.password);
+                        } else if(response.user.password_url != null) {
+                            $('#passwordSpan').html(`<a href="${response.user.password_url}" target="_blank">Get password</a>`);
                         } else {
                             $('#passwordSpan').text('Check your email for the password');
                         }
