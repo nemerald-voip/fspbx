@@ -216,7 +216,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "false",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Display the 'Get Password' link on the success pop-up notification",
+                'default_setting_description'   => "Display 'Get Password' link on the success notification pop-up",
             ],
 
         ];

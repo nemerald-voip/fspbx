@@ -58,14 +58,9 @@ class AppsController extends Controller
      */
     public function createOrganization(Request $request)
     {
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
-        if ($hidePassInEmail === null) {
-            $hidePassInEmail = 'false';
-        }
-
-        if(isset($request->dont_send_user_credentials)) {
-            $hidePassInEmail = $request->dont_send_user_credentials == 'true' ? 'true' : 'false';
-        }
+        $request->dont_send_user_credentials = isset($request->dont_send_user_credentials)
+            ? $request->dont_send_user_credentials == 'true' ? 'true' : 'false'
+            : get_domain_setting('dont_send_user_credentials') ?? 'false';
 
         $data = array(
             'method' => 'createOrganization',
@@ -74,7 +69,7 @@ class AppsController extends Controller
                 'region' => $request->organization_region,
                 'domain' => $request->organization_domain,
                 'params' => array(
-                    'hidePassInEmail' => $hidePassInEmail == 'true'
+                    'hidePassInEmail' => $request->dont_send_user_credentials == 'true'
                 )
             )
         );
@@ -109,37 +104,6 @@ class AppsController extends Controller
                     'message' => 'Organization was created successfully, but unable to store Org ID in database',
                 ]);
             }
-
-            $domainSettingsModel = DomainSettings::create([
-                'domain_uuid' => $request->organization_uuid,
-                'domain_setting_category' => 'mobile_apps',
-                'domain_setting_subcategory' => 'dont_send_user_credentials',
-                'domain_setting_name' => 'boolean',
-                'domain_setting_value' => $hidePassInEmail,
-                'domain_setting_enabled' => true,
-                'domain_setting_description' => "Don't include user credentials in the welcome email"
-            ]);
-            $domainSettingsModel->save();
-
-            $passwordUrlShow = get_domain_setting('password_url_show');
-            if ($passwordUrlShow === null) {
-                $passwordUrlShow = 'false';
-            }
-            if(isset($request->password_url_show)) {
-                $passwordUrlShow = $request->password_url_show == 'true' ? 'true' : 'false';
-            }
-            $domainSettingsModel = DomainSettings::create([
-                'domain_uuid' => $request->organization_uuid,
-                'domain_setting_category' => 'mobile_apps',
-                'domain_setting_subcategory' => 'password_url_show',
-                'domain_setting_name' => 'boolean',
-                'domain_setting_value' => $passwordUrlShow,
-                'domain_setting_enabled' => true,
-                'domain_setting_description' => "Display the 'Get Password' link on the success pop-up notification"
-            ]);
-            $domainSettingsModel->save();
-
-            unset($domainSettingsModel, $passwordUrlShow, $hidePassInEmail);
 
             // Get connection port from database or env file
             $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);

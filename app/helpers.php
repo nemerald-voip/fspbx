@@ -111,15 +111,13 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 if (!function_exists('appsStoreOrganizationDetails')) {
     function appsStoreOrganizationDetails(Request $request)
     {
-
         // Delete any existing records
-        $deleted = DB::table('v_domain_settings')
+        DB::table('v_domain_settings')
             ->where('domain_uuid', '=', $request->organization_uuid)
-            ->where('domain_setting_category', '=', 'app shell')
             ->delete();
 
         // Store new records
-        $domainSettingsModel = DomainSettings::create([
+        $domainSetting1 = DomainSettings::create([
             'domain_uuid' => $request->organization_uuid,
             'domain_setting_category' => 'app shell',
             'domain_setting_subcategory' => 'org_id',
@@ -127,8 +125,32 @@ if (!function_exists('appsStoreOrganizationDetails')) {
             'domain_setting_value' => $request->org_id,
             'domain_setting_enabled' => true,
         ]);
-        $saved = $domainSettingsModel->save();
-        if ($saved) {
+
+        $domainSetting2 = DomainSettings::create([
+            'domain_uuid' => $request->organization_uuid,
+            'domain_setting_category' => 'mobile_apps',
+            'domain_setting_subcategory' => 'dont_send_user_credentials',
+            'domain_setting_name' => 'boolean',
+            'domain_setting_value' => $request->dont_send_user_credentials,
+            'domain_setting_enabled' => true,
+            'domain_setting_description' => "Don't include user credentials in the welcome email"
+        ]);
+
+        $passwordUrlShow = isset($request->password_url_show)
+            ? ($request->password_url_show == 'true' ? 'true' : 'false')
+            :  (get_domain_setting('password_url_show') ?? 'false');
+
+        $domainSetting3 = DomainSettings::create([
+            'domain_uuid' => $request->organization_uuid,
+            'domain_setting_category' => 'mobile_apps',
+            'domain_setting_subcategory' => 'password_url_show',
+            'domain_setting_name' => 'boolean',
+            'domain_setting_value' => $passwordUrlShow,
+            'domain_setting_enabled' => true,
+            'domain_setting_description' => "Display 'Get Password' link on the success notification pop-up"
+        ]);
+
+        if ($domainSetting1->save() && $domainSetting2->save() && $domainSetting3->save()) {
             return true;
         } else {
             return false;
