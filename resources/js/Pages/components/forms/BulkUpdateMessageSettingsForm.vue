@@ -17,7 +17,7 @@
                 <LabelInputOptional :target="'carrier'" :label="'Message Provider'" />
                 <div class="mt-2">
                     <SelectBox :options="options.carrier" :selectedItem="null"
-                        :search="true" :placeholder="'Choose carrier'" @update:modal-value="handleUpdateCarrier" />
+                        :search="true" :placeholder="'Choose carrier'" @update:model-value="handleUpdateCarrier" />
                 </div>
 
             </div>
@@ -26,7 +26,7 @@
                 <LabelInputOptional :target="'extension'" :label="'Extension'" />
                 <div class="mt-2">
                     <SelectBox :options="options.chatplan_detail_data" :selectedItem="null"
-                        :search="true" :placeholder="'Choose extension'" @update:modal-value="handleUpdateExtension" />
+                        :search="true" :placeholder="'Choose extension'" @update:model-value="handleUpdateExtension" />
                 </div>
                 <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p>

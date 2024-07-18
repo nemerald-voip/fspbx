@@ -1,5 +1,5 @@
 <template>
-    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:modal-value', value)">
+    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:model-value', value)">
         <div class="relative">
 
 
@@ -93,7 +93,7 @@ const props = defineProps({
     error: Boolean,
 });
 
-const emit = defineEmits(['update:modal-value'])
+const emit = defineEmits(['update:model-value'])
 
 // let currentItem = ref(props.selectedItem === null ? null : props.options.find(option => option.value === props.selectedItem));
 let currentItem = ref(null);
@@ -103,12 +103,12 @@ let searchKeyword = ref('');
 
 const clearValue = () => {
     currentItem.value = null;
-    emit('update:modal-value', { value: "NULL" });
+    emit('update:model-value', { value: "NULL" });
 }
 
 const undoValue = () => {
     currentItem.value = null;
-    emit('update:modal-value', { value: null });
+    emit('update:model-value', { value: null });
 }
 
 // Watch for changes in selectedItem and update currentItem accordingly

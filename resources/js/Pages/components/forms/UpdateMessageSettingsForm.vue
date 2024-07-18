@@ -16,8 +16,8 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'carrier'" :label="'Message Provider'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.carrier" :selectedItem="item.carrier"
-                        :search="true" :placeholder="'Choose carrier'" @update:modal-value="handleUpdateCarrier" />
+                    <ComboBox :options="options.carrier" :selectedItem="item.carrier"
+                        :search="true" :placeholder="'Choose carrier'" @update:model-value="handleUpdateCarrier" />
                 </div>
                 <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p>
@@ -26,8 +26,8 @@
             <div class="sm:col-span-12">
                 <LabelInputOptional :target="'extension'" :label="'Extension'" />
                 <div class="mt-2">
-                    <SelectBox :options="options.chatplan_detail_data" :selectedItem="item.chatplan_detail_data"
-                        :search="true" :placeholder="'Choose extension'" @update:modal-value="handleUpdateExtension" />
+                    <ComboBox :options="options.chatplan_detail_data" :selectedItem="item.chatplan_detail_data"
+                        :search="true" :placeholder="'Choose extension'" @update:model-value="handleUpdateExtension" />
                 </div>
                 <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p>
@@ -78,6 +78,7 @@ import { usePage } from '@inertiajs/vue3';
 
 
 import SelectBox from "../general/SelectBox.vue";
+import ComboBox from "../general/ComboBox.vue";
 import Textarea from "../general/Textarea.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";

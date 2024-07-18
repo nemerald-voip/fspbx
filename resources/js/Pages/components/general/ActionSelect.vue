@@ -5,14 +5,14 @@
                    :placeholder="'Choose category'"
                    :class="'col-span-2'"
                    :selectedItem="action.selectedCategory"
-                   @update:modal-value="value => handleCategoryUpdate(value, index)"
+                   @update:model-value="value => handleCategoryUpdate(value, index)"
         />
         <ComboBox v-if="action.selectedCategory"
                    :options="action.categoryTargets"
                    :class="'col-span-2'"
                    :placeholder="'Choose target action'"
                    :selectedItem="action.value.value"
-                   @update:modal-value="value => handleTargetUpdate(value, index)"
+                   @update:model-value="value => handleTargetUpdate(value, index)"
         />
         <template v-else>
             <div></div>
@@ -61,7 +61,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['update:modal-value'])
+const emit = defineEmits(['update:model-value'])
 
 onMounted(() => {
     if (props.selectedItems) {
@@ -114,7 +114,7 @@ function handleTargetUpdate(newValue, index) {
             value: action.value
         }
     });
-    emit('update:modal-value', actionsMapped);
+    emit('update:model-value', actionsMapped);
 }
 
 const addAction = () => {
@@ -135,7 +135,7 @@ const removeAction = (index) => {
             value: action.value
         }
     });
-    emit('update:modal-value', actionsMapped);
+    emit('update:model-value', actionsMapped);
 }
 
 </script>

@@ -1,5 +1,5 @@
 <template>
-    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:modal-value', value)">
+    <Listbox v-model="currentItem" @update:modelValue="value => emit('update:model-value', value)">
         <div class="relative">
             <ListboxButton
                 class="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-gray-300 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm">
@@ -75,7 +75,7 @@ const props = defineProps({
     allowEmpty: {type: [Boolean], default: false},
 });
 
-const emit = defineEmits(['update:modal-value'])
+const emit = defineEmits(['update:model-value'])
 
 const findItem = (options, value) => {
     for (const group of Object.values(options)) {

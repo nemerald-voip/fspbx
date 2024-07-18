@@ -1,5 +1,5 @@
 <template>
-    <Combobox v-model="currentItem" @update:modelValue="value => emit('update:modal-value', value)">
+    <Combobox v-model="currentItem" @update:modelValue="value => emit('update:model-value', value)">
         <div class="relative">
             <ComboboxButton class="w-full">
                 <ComboboxInput :class="inputClass" @change="searchKeyword = $event.target.value"
@@ -90,7 +90,7 @@ const props = defineProps({
     error: Boolean,
 });
 
-const emit = defineEmits(['update:modal-value'])
+const emit = defineEmits(['update:model-value'])
 
 const findItem = (options, value) => {
     for (const group of Object.values(options)) {
@@ -107,12 +107,12 @@ let currentItem = ref(props.selectedItem === null || props.options === null ? nu
 
 const clearValue = () => {
     currentItem.value = null;
-    emit('update:modal-value', { value: "NULL" });
+    emit('update:model-value', { value: "NULL" });
 }
 
 const undoValue = () => {
     currentItem.value = null;
-    emit('update:modal-value', { value: null });
+    emit('update:model-value', { value: null });
 }
 
 const displayValue = (currentItem) => {

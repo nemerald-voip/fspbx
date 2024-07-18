@@ -53,12 +53,12 @@
 
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <SelectBox :options="callDirections" :selectedItem="filterData.direction"
-                            :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
+                            :placeholder="'Call Direction'" @update:model-value="handleUpdateCallDirectionFilter" />
                     </div>
 
                     <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
                         <ComboBox :options="entities" :selectedItem="filterData.entity" :search="true"
-                            :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                            :placeholder="'Users or Groups'" @update:model-value="handleUpdateUserOrGroupFilter" />
                     </div>
 
                 </template>

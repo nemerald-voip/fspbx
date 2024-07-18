@@ -55,7 +55,7 @@
                                 :selectedItems="form.destination_actions"
                                 :customClass="'grid-cols-5'"
                                 :maxLimit="6"
-                                @update:modal-value="handleDestinationActionsUpdate"
+                                @update:model-value="handleDestinationActionsUpdate"
                             />
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                                             :allowEmpty="true"
                                             :selectedItem="form.destination_hold_music"
                                             :placeholder="'Choose music on hold'"
-                                            @update:modal-value="handleMusicOnHoldUpdate"
+                                            @update:model-value="handleMusicOnHoldUpdate"
                             />
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                                        :allowEmpty="true"
                                        :selectedItem="form.fax_uuid"
                                        :placeholder="'Choose fax'"
-                                       @update:modal-value="handleFaxUpdate"
+                                       @update:model-value="handleFaxUpdate"
                             />
                         </div>
                     </div>
@@ -129,7 +129,7 @@
                                         <SelectBox :options="page.props.conditions"
                                                    :selectedItem="condition.condition_field"
                                                    :placeholder="'Choose condition'"
-                                                   @update:modal-value="value => handleConditionUpdate(value, index)"
+                                                   @update:model-value="value => handleConditionUpdate(value, index)"
                                         />
                                     </div>
                                     <div v-if="condition.condition_field">
@@ -158,7 +158,7 @@
                                         :optionTargets="options.timeout_destinations_targets"
                                         :selectedItems="[condition]"
                                         :customClass="'grid-cols-4 col-span-2'"
-                                        @update:modal-value="value => handleConditionActionsUpdate(value, index)"
+                                        @update:model-value="value => handleConditionActionsUpdate(value, index)"
                                     />
                                 </div>
                             </div>
@@ -205,7 +205,7 @@
                             <ComboBox :options="options.domains"
                                        :selectedItem="form.domain_uuid"
                                        :placeholder="'Choose company'"
-                                       @update:modal-value="handleDomainUpdate"
+                                       @update:model-value="handleDomainUpdate"
                                        :error="errors?.domain_uuid && errors.domain_uuid.length > 0"
                             />
                         </div>

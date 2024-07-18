@@ -18,7 +18,7 @@
                 <LabelInputRequired :target="'template'" :label="'Device Template'" />
                 <div class="mt-2">
                     <ComboBox :options="options.templates" :selectedItem="null" :search="true"
-                        :placeholder="'Choose template'" @update:modal-value="handleTemplateUpdate" 
+                        :placeholder="'Choose template'" @update:model-value="handleTemplateUpdate" 
                         :error="errors?.device_template && errors.device_template.length > 0"/>
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
@@ -32,7 +32,7 @@
                 <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
                 <div class="mt-2">
                     <ComboBox :options="options.profiles" :selectedItem="null" :search="true"
-                        :placeholder="'Choose profile'" @update:modal-value="handleProfileUpdate" />
+                        :placeholder="'Choose profile'" @update:model-value="handleProfileUpdate" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p> -->
@@ -43,7 +43,7 @@
                 <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                 <div class="mt-2">
                     <ComboBox :options="options.extensions" :selectedItem="null" :search="true"
-                        :placeholder="'Choose extension'" @update:modal-value="handleExtensionUpdate" />
+                        :placeholder="'Choose extension'" @update:model-value="handleExtensionUpdate" />
                 </div>
                 <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p> -->
