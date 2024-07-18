@@ -324,7 +324,7 @@ const handleViewRequest = (itemUuid) => {
                 'itemData',
             ],
             onSuccess: (page) => {
-                console.log(props.itemData);
+                // console.log(props.itemData);
                 if (!props.itemData) {
                     viewModalTrigger.value = false;
                     showNotification('error', { error: ['Unable to retrieve this item'] });

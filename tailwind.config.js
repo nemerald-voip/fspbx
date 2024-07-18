@@ -4,6 +4,7 @@ export default {
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
         "./resources/**/*.vue",
+        "./Modules/**/Resources/assets/js/**/*.vue", // Include module Vue files
     ],
     // prefix: 'tw-',
     // corePlugins: {
