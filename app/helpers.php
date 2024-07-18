@@ -272,7 +272,7 @@ if (!function_exists('appsGetConnections')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive connections",
+                        'message' => "Unable to retrieve connections",
                     ],
                 ])->getData(true);
             })
@@ -312,7 +312,7 @@ if (!function_exists('appsDeleteConnection')) {
     }
 }
 
-// Get a list of all user for this organizaion and connection
+// Get a list of all user for this organization and connection
 if (!function_exists('appsGetUsers')) {
     function appsGetUsers($org_id, $conn_id)
     {
@@ -361,7 +361,7 @@ if (!function_exists('appsCreateUser')) {
                 'authname' => $mobile_app['authname'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
-                "noemail" => $mobile_app['no_email']
+                'noemail' => $mobile_app['no_email']
             )
         );
 
@@ -430,6 +430,7 @@ if (!function_exists('appsUpdateUser')) {
                 'authname' => $mobile_app['ext'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
+                'noemail' => $mobile_app['no_email']
             )
         );
 
