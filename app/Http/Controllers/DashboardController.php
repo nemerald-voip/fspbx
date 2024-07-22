@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CallCenterQueues;
 use Linfo\Linfo;
 use App\Models\CDR;
 use App\Models\User;
@@ -10,14 +9,16 @@ use Inertia\Inertia;
 use App\Models\Faxes;
 use App\Models\Devices;
 use App\Models\IvrMenus;
+use App\Models\Messages;
 use App\Models\CallFlows;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
 use App\Models\Destinations;
-use App\Models\Messages;
 use Illuminate\Support\Carbon;
+use App\Models\CallCenterQueues;
+use App\Services\CdrDataService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
@@ -86,9 +87,23 @@ class DashboardController extends Controller
             ->count();
 
         //CDR Count
-        $counts['cdrs'] = CDR::where('domain_uuid', $domain_id)
-            ->whereRaw("start_stamp >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
-            ->count();
+        // $counts['cdrs'] = CDR::where('domain_uuid', $domain_id)
+        //     ->whereRaw("start_stamp >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
+        //     ->count();
+
+        $cdrDataService = new CdrDataService();
+        $timezone = get_local_time_zone(Session::get('domain_uuid'));
+        $startPeriod = Carbon::now($timezone)->startOfDay()->setTimeZone('UTC');
+        $endPeriod = Carbon::now($timezone)->endOfDay()->setTimeZone('UTC');
+        $params['paginate'] = false;
+        $params['domain_uuid'] = session('domain_uuid');
+        $params['filterData']['startPeriod'] = $startPeriod;
+        $params['filterData']['endPeriod'] = $endPeriod;
+
+        $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
+        $cdrs = $cdrDataService->getData($params);
+
+        $counts['cdrs'] = $cdrs->count();
 
         if (userCheckPermission("ring_group_view")) {
             //Ring group count

@@ -183,6 +183,14 @@
                 :is-submitting="updateFormSubmitting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+                      @close="handleModalClose">
+        <template #modal-body>
+            <BulkUpdatePhoneNumberForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
+                                  :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
+                                  @domain-selected="getItemOptions" />
+        </template>
+    </AddEditItemModal>
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -211,6 +219,8 @@ import Notification from "./components/notifications/Notification.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import StatusBadge from "./components/general/StatusBadge.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
+import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
+import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberForm.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -220,11 +230,13 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
+const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const confirmDeleteAction = ref(null);
 const createFormSubmitting = ref(null);
 const updateFormSubmitting = ref(null);
+const bulkUpdateFormSubmitting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -250,7 +262,11 @@ const showGlobal = ref(props.showGlobal);
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-
+        {
+            id: 'bulk_update',
+            label: 'Edit',
+            icon: 'PencilSquareIcon'
+        }
     ];
 
     // Conditionally add the delete action if permission is granted
@@ -365,6 +381,12 @@ const executeSingleDelete = (url) => {
 }
 
 const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
+    }
     if (action === 'bulk_delete') {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
@@ -382,6 +404,21 @@ const executeBulkDelete = () => {
             handleClearSelection();
             handleModalClose();
             handleErrorResponse(error);
+        });
+}
+
+const handleBulkUpdateRequest = (form) => {
+    bulkUpdateFormSubmitting.value = true
+    axios.post(`${props.routes.bulk_update}`, form)
+        .then((response) => {
+            bulkUpdateFormSubmitting.value = false;
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            bulkUpdateFormSubmitting.value = false;
+            handleFormErrorResponse(error);
         });
 }
 
@@ -557,6 +594,7 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
+    bulkUpdateModalTrigger.value = false;
 }
 
 const hideNotification = () => {

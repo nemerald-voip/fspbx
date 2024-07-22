@@ -53,12 +53,12 @@
 
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <SelectBox :options="callDirections" :selectedItem="filterData.direction"
-                            :placeholder="'Call Direction'" @update:modal-value="handleUpdateCallDirectionFilter" />
+                            :placeholder="'Call Direction'" @update:model-value="handleUpdateCallDirectionFilter" />
                     </div>
 
                     <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
                         <ComboBox :options="entities" :selectedItem="filterData.entity" :search="true"
-                            :placeholder="'Users or Groups'" @update:modal-value="handleUpdateUserOrGroupFilter" />
+                            :placeholder="'Users or Groups'" @update:model-value="handleUpdateUserOrGroupFilter" />
                     </div>
 
                 </template>
@@ -276,7 +276,8 @@ onMounted(() => {
 const filterData = ref({
     search: props.search,
     showGlobal: props.showGlobal,
-    dateRange: [moment(props.startPeriod).startOf('day').format(), moment(props.endPeriod).endOf('day').format()],
+    dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
+    // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
     timezone: props.timezone,
     direction: props.direction,
     entity: props.selectedEntity,
@@ -323,7 +324,7 @@ const handleViewRequest = (itemUuid) => {
                 'itemData',
             ],
             onSuccess: (page) => {
-                console.log(props.itemData);
+                // console.log(props.itemData);
                 if (!props.itemData) {
                     viewModalTrigger.value = false;
                     showNotification('error', { error: ['Unable to retrieve this item'] });

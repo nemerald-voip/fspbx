@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Extensions;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class MobileAppUsers extends Model
 {
@@ -16,5 +17,13 @@ class MobileAppUsers extends Model
     protected $primaryKey = 'mobile_app_user_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    /**
+     * Get extesnion that this mobile app belongs to 
+     */
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
 
 }

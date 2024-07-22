@@ -17,9 +17,7 @@ class SmsToEmail extends BaseMailable
         // Add line unsubscrible header
         $this->buildMessageHeaders();
 
-        return $this->from(config('mail.from.address'), config('mail.from.name'))
-        ->subject('SMS Notification: New Message from ' . $this->attributes['from'])
-            ->from($this->attributes['smtp_from'], $this->attributes['smtp_from_name']);
+        return $this->from(config('mail.from.address'), config('mail.from.name'));
 
     }
 
