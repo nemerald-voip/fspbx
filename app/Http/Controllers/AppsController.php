@@ -789,7 +789,7 @@ class AppsController extends Controller
                 $appCredentials->extension_uuid = $extension->extension_uuid;
                 $appCredentials->save();
 
-                $passwordUrlShow = get_domain_setting('password_url_show', $extension->domain()->first()->domain_uuid) ?? 'false';
+                $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
                 $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
             }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
@@ -921,8 +921,7 @@ class AppsController extends Controller
                 $appCredentials->token = $passwordToken;
                 $appCredentials->extension_uuid = $extension->extension_uuid;
                 $appCredentials->save();
-
-                $passwordUrlShow = get_domain_setting('password_url_show', $extension->domain()->first()->domain_uuid) ?? 'false';
+                $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
                 $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
             }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
