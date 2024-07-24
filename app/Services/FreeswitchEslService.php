@@ -62,9 +62,13 @@ class FreeswitchEslService
 
     function convertEslResponse($eslEvent)
     {
-        $response = $eslEvent->getBody();
+        $response = trim($eslEvent->getBody());
 
-        if ($eslEvent->getBody()) {
+        if ($response === '+OK') {
+            return null;
+        }
+
+        if ($response) {
             // Check if the response contains CSV-like data
             if (strpos($response, '|') !== false) {
                 return $this->convertEslResponseToArray($response);
