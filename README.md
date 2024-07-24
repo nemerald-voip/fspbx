@@ -37,11 +37,11 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 Before you begin, ensure you have met the following requirements:
 
-- PHP 8.0 or higher
+- PHP 8.1
 - Composer
 - Node.js and npm
 - MySQL or PostgreSQL
-- FusionPBX installed
+- FusionPBX 5.1 installed
 
 ## Installation
 
@@ -58,21 +58,28 @@ Before you begin, ensure you have met the following requirements:
    cd public
    git clone https://github.com/fusionpbx/fusionpbx.git
    
-3. **Replace index.php file install folder**
+3. **Install FusionPBX as per their installation requirements.**
+   For now, installing and maintaining a working version of FusionPBX is required. FS PBX provided a modern and updated GUI for it. 
 
-4. **Environment Configuration**
+4. **Replace index.php file**
+
+   ```bash
+   rm public/index.php
+   cp install/index.php public/
+
+5. **Environment Configuration**
    Copy the `.env.example` to `.env` and configure your database and other environment settings.
 
    ```bash
     cp .env.example .env
     php artisan key:generate
 
-5. **Run Migrations**
+6. **Run Migrations**
 
    ```bash
     php artisan migrate
 
-5. **Run the update command**
+7. **Run the update command**
 
    ```bash
     php artisan app:update
