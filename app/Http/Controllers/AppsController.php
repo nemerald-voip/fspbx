@@ -776,10 +776,9 @@ class AppsController extends Controller
             ])->getData(true);
         }
 
-        $includePasswordUrl = null;
         // If success and user is activated send user email with credentials
         if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
-            if($hidePassInEmail == 'true') {
+            if($hidePassInEmail == 'true' && $request->activate == 'on') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
                 $response['result']['password'] = null;
@@ -791,6 +790,7 @@ class AppsController extends Controller
 
                 $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
                 $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                $response['result']['password_url'] = $includePasswordUrl;
             }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
@@ -818,7 +818,6 @@ class AppsController extends Controller
             }
         } else {
             $response['result']['password'] = null;
-            $response['result']['password_url'] = $includePasswordUrl;
         }
 
         return response()->json([
@@ -923,6 +922,7 @@ class AppsController extends Controller
                 $appCredentials->save();
                 $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
                 $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                $response['result']['password_url'] = $includePasswordUrl;
             }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
@@ -934,7 +934,6 @@ class AppsController extends Controller
                 '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
         } else {
             $response['result']['password'] = null;
-            $response['result']['password_url'] = $includePasswordUrl;
         }
 
         return response()->json([

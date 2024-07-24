@@ -117,11 +117,11 @@
         <tr>
           <td class="attributes_item"><strong>Username:</strong> {{ $attributes['username'] ?? ''}}</td>
         </tr>
-        @if($attributes['password_url'])
+        @if(isset($attributes['password_url']))
           <tr>
             <td class="attributes_item"><strong>Password:</strong> <a href="{{ $attributes['password_url'] }}">Get password</a></td>
           </tr>
-        @elseif($attributes['password'])
+        @elseif(isset($attributes['password']))
           <tr>
             <td class="attributes_item"><strong>Password:</strong> {{ $attributes['password'] }}</td>
           </tr>
