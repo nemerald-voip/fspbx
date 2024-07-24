@@ -136,21 +136,7 @@ if (!function_exists('appsStoreOrganizationDetails')) {
             'domain_setting_description' => "Don't include user credentials in the welcome email"
         ]);
 
-        $passwordUrlShow = isset($request->password_url_show)
-            ? ($request->password_url_show == 'true' ? 'true' : 'false')
-            :  (get_domain_setting('password_url_show') ?? 'false');
-
-        $domainSetting3 = DomainSettings::create([
-            'domain_uuid' => $request->organization_uuid,
-            'domain_setting_category' => 'mobile_apps',
-            'domain_setting_subcategory' => 'password_url_show',
-            'domain_setting_name' => 'boolean',
-            'domain_setting_value' => $passwordUrlShow,
-            'domain_setting_enabled' => true,
-            'domain_setting_description' => "Display 'Get Password' link on the success notification pop-up"
-        ]);
-
-        if ($domainSetting1->save() && $domainSetting2->save() && $domainSetting3->save()) {
+        if ($domainSetting1->save() && $domainSetting2->save()/* && $domainSetting3->save()*/) {
             return true;
         } else {
             return false;

@@ -832,7 +832,7 @@ class AppsController extends Controller
     /**
      * Submit delete user request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteUser(Request $request, Extensions $extension)
     {

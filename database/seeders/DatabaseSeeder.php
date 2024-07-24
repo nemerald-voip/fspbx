@@ -75,6 +75,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'extension_suspended',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Mobile Apps',
+                'permission_name'        => 'mobile_apps_password_url_show',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -114,6 +119,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'permission_name'        => 'extension_suspended',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'mobile_apps_password_url_show',
                 'permission_protected'   => 'true',
                 'permission_assigned'    => 'true',
                 'group_name'            => "superadmin",
@@ -210,14 +223,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Don't include user credentials in the welcome email",
             ],
-            [
+            /*[
                 'default_setting_category'      => 'mobile_apps',
                 'default_setting_subcategory'   => 'password_url_show',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "false",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Display 'Get Password' link on the success notification pop-up",
-            ],
+            ],*/
 
         ];
 

@@ -229,14 +229,6 @@
                                             </div>
                                             <span class="help-block"><small>If this option is enabled, users within this organization will need to follow a one-time link to retrieve their app password.</small></span>
                                         </div>
-                                        <div class="mb-3" id="password_url_show_div" style="display: none;">
-                                            <div class="form-check mb-2">
-                                                <input type="hidden" name="password_url_show" value="false">
-                                                <input type="checkbox" class="form-check-input" id="password_url_show" name="password_url_show" value="true" />
-                                                <label class="form-check-label" for="password_url_show">Display 'Get Password' link on the success notification pop-up</label>
-                                            </div>
-                                            <span class="help-block"><small>If this option is enabled, users within this organization will be able to view a one-time link to retrieve their app password from the success pop-up notification.</small></span>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -548,18 +540,6 @@
                 dropdownParent: $("#appSyncModal")
             });
 
-            let dontSendUserCredentials = $('#dont_send_user_credentials');
-            let passwordUrlShowDiv = $('#password_url_show_div');
-
-            dontSendUserCredentials.change(function(){
-                if($(this).prop('checked')) {
-                    passwordUrlShowDiv.show();
-                }
-                else {
-                    passwordUrlShowDiv.hide();
-                }
-            });
-
             // Open Organization Sync Modal
             $('.orgSyncButton').on('click', function(e) {
                 e.preventDefault();
@@ -707,15 +687,7 @@
 
                 let dontSendUserCredentialsFlag = $.trim($(this).closest("tr").find('input[name=dont_send_user_credentials]').val()) === 'true'
                 $('#dont_send_user_credentials').prop('checked', dontSendUserCredentialsFlag);
-                $('#password_url_show').prop('checked', $.trim($(this).closest("tr").find('input[name=password_url_show]').val()) === 'true');
                 $('#connection_organization_uuid').val($.trim($(this).val()));
-
-                if(dontSendUserCredentialsFlag) {
-                    $('#password_url_show_div').show();
-                }
-                else {
-                    $('#password_url_show_div').hide();
-                }
             });
 
             // Provision new organization
