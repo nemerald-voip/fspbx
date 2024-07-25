@@ -781,7 +781,6 @@ class AppsController extends Controller
             if($hidePassInEmail == 'true' && $request->activate == 'on') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
-                $response['result']['password'] = null;
                 MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                 $appCredentials = new MobileAppPasswordResetLinks();
                 $appCredentials->token = $passwordToken;
@@ -914,7 +913,6 @@ class AppsController extends Controller
             if($hidePassInEmail == 'true') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
-                $response['result']['password'] = null;
                 MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                 $appCredentials = new MobileAppPasswordResetLinks();
                 $appCredentials->token = $passwordToken;

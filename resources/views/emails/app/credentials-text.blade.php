@@ -14,9 +14,9 @@ Use these credentials to log in:
 
 Domain: {{ $attributes['domain'] ?? ''}}
 Username: {{ $attributes['username'] ?? ''}}
-@if(isset($attributes['password_url']))
+@if(!empty($attributes['password_url']))
 Password: {{ $attributes['password_url'] }}
-@elseif(isset($attributes['password']))
+@elseif(!empty($attributes['password']))
 Password: {{ $attributes['password'] }}
 @endif
 

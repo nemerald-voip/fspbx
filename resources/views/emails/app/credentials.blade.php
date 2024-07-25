@@ -117,11 +117,11 @@
         <tr>
           <td class="attributes_item"><strong>Username:</strong> {{ $attributes['username'] ?? ''}}</td>
         </tr>
-        @if(isset($attributes['password_url']))
+        @if(!empty($attributes['password_url']))
           <tr>
             <td class="attributes_item"><strong>Password:</strong> <a href="{{ $attributes['password_url'] }}">Get password</a></td>
           </tr>
-        @elseif(isset($attributes['password']))
+        @elseif(!empty($attributes['password']))
           <tr>
             <td class="attributes_item"><strong>Password:</strong> {{ $attributes['password'] }}</td>
           </tr>
@@ -129,7 +129,9 @@
       </table>
     </td>
     <td>
-      <img src="data:image/png;base64, {!! base64_encode($attributes['qrCode']) !!} ">
+        @if(empty($attributes['password_url']))
+            <img src="data:image/png;base64, {!! base64_encode($attributes['qrCode']) !!} ">
+        @endif
     </td>
   </tr>
 </table>
