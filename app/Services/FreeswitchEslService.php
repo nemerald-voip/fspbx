@@ -64,6 +64,11 @@ class FreeswitchEslService
     {
         $response = trim($eslEvent->getBody());
 
+        // Check for '+OK Job-UUID' pattern and extract the Job-UUID
+        if (preg_match('/^\+OK Job-UUID: ([a-f0-9-]+)$/i', $response, $matches)) {
+            return ['job_uuid' => $matches[1]];
+        }
+
         if ($response === '+OK') {
             return null;
         }
