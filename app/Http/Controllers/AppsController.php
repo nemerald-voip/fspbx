@@ -4,19 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Domain;
 use App\Models\Extensions;
-use Aws\Mobile\MobileClient;
+use App\Models\MobileAppPasswordResetLinks;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\AppCredentialsGenerated;
-use Exception;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppsController extends Controller
@@ -26,7 +23,7 @@ class AppsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function index()
     {
@@ -57,19 +54,25 @@ class AppsController extends Controller
     /**
      * Submit request to create a new organization to Ringotel
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createOrganization(Request $request)
     {
+        $request->dont_send_user_credentials = isset($request->dont_send_user_credentials)
+            ? $request->dont_send_user_credentials == 'true' ? 'true' : 'false'
+            : get_domain_setting('dont_send_user_credentials') ?? 'false';
 
         $data = array(
             'method' => 'createOrganization',
             'params' => array(
                 'name' => $request->organization_name,
                 'region' => $request->organization_region,
-                'domain' => $request->organization_domain
+                'domain' => $request->organization_domain,
+                'params' => array(
+                    'hidePassInEmail' => $request->dont_send_user_credentials == 'true'
+                )
             )
-         );
+        );
 
         $response = Http::ringotel()
             //->dd()
@@ -98,7 +101,7 @@ class AppsController extends Controller
                     'organization_domain' => $request->organization_domain,
                     'organization_region' => $request->organization_region,
                     'org_id' => $response['result']['id'],
-                    'message' => 'Organization was created succesfully, but unable to store Org ID in database',
+                    'message' => 'Organization was created successfully, but unable to store Org ID in database',
                 ]);
             }
 
@@ -117,7 +120,7 @@ class AppsController extends Controller
                 'connection_port' => ($port) ? $port : config("ringotel.connection_port"),
                 'outbound_proxy' => ($proxy) ? $proxy : config("ringotel.outbound_proxy"),
                 'success' => [
-                    'message' => 'Organization created succesfully',
+                    'message' => 'Organization created successfully',
                 ]
             ]);
         // Otherwise return failed status
@@ -141,7 +144,7 @@ class AppsController extends Controller
     /**
      * Submit request to destroy organization to Ringotel
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroyOrganization(Request $request, Domain $domain)
     {
@@ -210,6 +213,7 @@ class AppsController extends Controller
 
 
 
+        // !!!!! TODO: The code below is unreachable, do we need it ? !!!!!
         // If successful store Org ID and return success status
         if (isset($response['result'])){
 
@@ -270,7 +274,7 @@ class AppsController extends Controller
     /**
      * Submit request to create connection to Ringotel
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createConnection (Request $request)
     {
@@ -446,7 +450,7 @@ class AppsController extends Controller
     /**
      * Submit getOrganizations request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getOrganizations(RingotelApiService $ringotelApiService)
     {
@@ -481,7 +485,7 @@ class AppsController extends Controller
     /**
      * Submit getUsers request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getUsersByOrgId(RingotelApiService $ringotelApiService, $orgId)
     {
@@ -489,7 +493,7 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
         try {
             $users = $this->ringotelApiService->getUsersByOrgId($orgId);
- 
+
             logger($users);
         } catch (\Exception $e) {
             logger($e->getMessage());
@@ -514,7 +518,7 @@ class AppsController extends Controller
     /**
      * Return Ringotel app user settings
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncOrganizations(Request $request)
     {
@@ -555,7 +559,7 @@ class AppsController extends Controller
     /**
      * Sync Ringotel app users from the cloud
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncUsers(Request $request, Domain $domain)
     {
@@ -659,7 +663,7 @@ class AppsController extends Controller
     /**
      * Return Ringotel app user settings
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function mobileAppUserSettings(Request $request, Extensions $extension)
     {
@@ -726,11 +730,17 @@ class AppsController extends Controller
     /**
      * Submit new user request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createUser(Request $request)
     {
         $extension = Extensions::find($request->extension_uuid);
+
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
 
         $mobile_app = [
             'org_id' => $request->org_id,
@@ -743,6 +753,7 @@ class AppsController extends Controller
             'authname' => $extension->extension,
             'password' => $extension->password,
             'status' => ($request->activate == 'on') ? 1 : -1,
+            'no_email' => $hidePassInEmail == 'true'
         ];
 
         // Send request to create user
@@ -767,11 +778,24 @@ class AppsController extends Controller
 
         // If success and user is activated send user email with credentials
         if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
+            if($hidePassInEmail == 'true' && $request->activate == 'on') {
+                // Include get-password link and remove password value
+                $passwordToken = Str::random(40);
+                MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                $appCredentials = new MobileAppPasswordResetLinks();
+                $appCredentials->token = $passwordToken;
+                $appCredentials->extension_uuid = $extension->extension_uuid;
+                $appCredentials->save();
+
+                $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+                $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                $response['result']['password_url'] = $includePasswordUrl;
+            }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
         // Delete any prior info from database
-        $appUser = MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
+        MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
 
         // Save returned user info in database
         $appUser = new MobileAppUsers();
@@ -785,15 +809,19 @@ class AppsController extends Controller
         // Log::info($response);
 
         $qrcode = "";
-        if ($request->activate == 'on'){
-            // Generate QR code
-            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-                '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        if($hidePassInEmail == 'false') {
+            if ($request->activate == 'on'){
+                // Generate QR code
+                $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
+                    '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+            }
+        } else {
+            $response['result']['password'] = null;
         }
 
         return response()->json([
             'user' => $response['result'],
-            'qrcode' => base64_encode($qrcode),
+            'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
             'status' => 'success',
             'message' => 'The user has been successfully created'
         ]);
@@ -802,7 +830,7 @@ class AppsController extends Controller
     /**
      * Submit delete user request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteUser(Request $request, Extensions $extension)
     {
@@ -846,15 +874,21 @@ class AppsController extends Controller
     /**
      * Submit password reset request to Ringotel API
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function resetPassword(Request $request, Extensions $extension)
     {
 
         $mobile_app = $request->mobile_app;
 
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
         // Send request to reset password
-        $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id']);
+        $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id'], $hidePassInEmail == 'true');
 
         //If there is an error return failed status
         if (isset($response['error'])) {
@@ -873,21 +907,39 @@ class AppsController extends Controller
             ])->getData(true);
         }
 
+        $includePasswordUrl = null;
         // If success and user is activated send user email with credentials
         if (isset($extension->voicemail->voicemail_mail_to)){
+            if($hidePassInEmail == 'true') {
+                // Include get-password link and remove password value
+                $passwordToken = Str::random(40);
+                MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                $appCredentials = new MobileAppPasswordResetLinks();
+                $appCredentials->token = $passwordToken;
+                $appCredentials->extension_uuid = $extension->extension_uuid;
+                $appCredentials->save();
+                $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+                $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                $response['result']['password_url'] = $includePasswordUrl;
+            }
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
-        // Generate QR code
-        $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-            '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        $qrcode = "";
+        if($hidePassInEmail == 'false') {
+            // Generate QR code
+            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
+                '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+        } else {
+            $response['result']['password'] = null;
+        }
 
         return response()->json([
             'user' => $response['result'],
-            'qrcode' => base64_encode($qrcode),
+            'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
             'status' => 200,
             'success' => [
-                'message' => 'The mobile app password was succesfully reset'
+                'message' => 'The mobile app password was successfully reset'
             ]
         ]);
     }
@@ -900,6 +952,11 @@ class AppsController extends Controller
      */
     public function setStatus(Request $request, Extensions $extension)
     {
+        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
 
         $mobile_app = $request->mobile_app;
         $mobile_app['status'] = (int)$mobile_app['status'];
@@ -908,6 +965,7 @@ class AppsController extends Controller
         $mobile_app['email'] = ($extension->voicemail['voicemail_mail_to']) ? $extension->voicemail['voicemail_mail_to'] : "";
         $mobile_app['ext'] = $extension['extension'];
         $mobile_app['password'] = $extension->password;
+        $mobile_app['no_email'] = $hidePassInEmail == 'true';
 
         $appUser = $extension->mobile_app;
 

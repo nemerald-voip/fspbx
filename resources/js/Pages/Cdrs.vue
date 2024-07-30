@@ -61,6 +61,12 @@
                             :placeholder="'Users or Groups'" @update:model-value="handleUpdateUserOrGroupFilter" />
                     </div>
 
+                    <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+                        <ComboBox :options="statusOptions" :selectedItem="selectedStatuses" :multiple="true"
+                            :placeholder="'Status'" @apply-selection="handleSelectedStatusUpdate" @update:model-value="handleSelectedStatusUpdate" :error="null" />
+                    </div>
+
+
                 </template>
 
                 <template #navigation>
@@ -248,6 +254,7 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isExporting = ref(null);
+const selectedStatuses = ref([]);
 
 
 const props = defineProps({
@@ -265,6 +272,7 @@ const props = defineProps({
     csvUrl: Object,
     routes: Object,
     itemData: Object,
+    statusOptions: Object,
 });
 
 onMounted(() => {
@@ -291,6 +299,10 @@ const callDirections = [
     { value: 'inbound', name: 'Inbound' },
     { value: 'local', name: 'Local' },
 ]
+
+const handleSelectedStatusUpdate = (updatedStatuses) => {
+    filterData.value.statuses = updatedStatuses;
+};
 
 const getEntities = () => {
     filterData.value.entity = null;
@@ -384,6 +396,7 @@ const handleFiltersReset = () => {
     filterData.value.direction = null;
     filterData.value.entity = null;
     filterData.value.entityType = null;
+    filterData.value.statuses = [];
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();

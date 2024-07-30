@@ -32,9 +32,9 @@ class CdrDataService
             'direction' => $params['filterData']['direction'] ?? null,
             'search' => $params['filterData']['search'] ?? null,
             'entity' => $params['filterData']['entity'] ?? null,
-            'entityType' => $params['filterData']['entityType'] ?? null
+            'entityType' => $params['filterData']['entityType'] ?? null,
+            'status' => $params['filterData']['selectedStatuses'] ?? null
         ];
-
 
         $this->sortField = $params['filterData']['sortField'] ?? 'start_epoch';
         $this->sortOrder = $params['filterData']['sortOrder'] ?? 'desc';
@@ -173,6 +173,14 @@ class CdrDataService
                 });
                 break;
         }
+    }
+
+    protected function filterStatus($query, $array)
+    {
+        if ($array) {
+            $query->whereIn('status', $array);
+        }
+        
     }
 
 }
