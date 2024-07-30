@@ -196,6 +196,8 @@ class CdrDataService
                                   ->where('cc_cancel_reason', 'BREAK_OUT')
                                   ->where('cc_cause', 'cancel');
                         });
+                    } elseif ($status === 'voicemail') {
+                        $query->orWhere('voicemail_message', true);
                     } else {
                         $query->orWhere('status', $status);
                     }
