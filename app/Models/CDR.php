@@ -115,9 +115,7 @@ class CDR extends Model
                 isset($model->hangup_cause_q850) &&
                 isset($model->sip_hangup_disposition) &&
                 isset($model->voicemail_message) &&
-                isset($model->missed_call) &&
-                isset($model->cc_cancel_reason) &&
-                isset($model->cc_cause)
+                isset($model->missed_call)
             ) {
                 // Missed call
                 if ($model->voicemail_message == false && $model->missed_call == true && $model->hangup_cause == "NORMAL_CLEARING") {
@@ -125,10 +123,14 @@ class CDR extends Model
                 }
 
                 // Abandon call
-                if ($model->status == "missed call" && $model->cc_cancel_reason == "BREAK_OUT" && $model->cc_cause == "cancel") {
+                if (isset($model->cc_cancel_reason) && 
+                    isset($model->cc_cause) && 
+                    $model->status == "missed call" && 
+                    $model->cc_cancel_reason == "BREAK_OUT" && 
+                    $model->cc_cause == "cancel"
+                ) {
                     $model->status = "abandoned";
-                }              
-
+                }
             }
 
 
@@ -149,14 +151,13 @@ class CDR extends Model
                         $model->cc_result = "Abandoned";
                         break;
                     case 'EXIT_WITH_KEY':
-                            $model->cc_result = "The caller pressed the exit key";
-                            break; 
+                        $model->cc_result = "The caller pressed the exit key";
+                        break;
                     case 'TIMEOUT':
                         $model->cc_result = "Queue timeout reached";
                         break;
-
                 }
-            }  
+            }
 
 
 

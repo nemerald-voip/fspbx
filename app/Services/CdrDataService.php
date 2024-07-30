@@ -178,9 +178,34 @@ class CdrDataService
     protected function filterStatus($query, $array)
     {
         if ($array) {
-            $query->whereIn('status', $array);
+            $query->where(function ($query) use ($array) {
+                foreach ($array as $status) {
+                    if ($status === 'missed call') {
+                        $query->orWhere(function ($query) {
+                            $query->where('voicemail_message', false)
+                                  ->where('missed_call', true)
+                                  ->where('hangup_cause', 'NORMAL_CLEARING')
+                                  ->whereNull('cc_cancel_reason') // Ensure cc_cancel_reason is not set
+                                  ->whereNull('cc_cause'); // Ensure cc_cause is not set
+                        });
+                    } elseif ($status === 'abandoned') {
+                        $query->orWhere(function ($query) {
+                            $query->where('voicemail_message', false)
+                                  ->where('missed_call', true)
+                                  ->where('hangup_cause', 'NORMAL_CLEARING')
+                                  ->where('cc_cancel_reason', 'BREAK_OUT')
+                                  ->where('cc_cause', 'cancel');
+                        });
+                    } else {
+                        $query->orWhere('status', $status);
+                    }
+                }
+            });
         }
         
     }
+
+
+    
 
 }
