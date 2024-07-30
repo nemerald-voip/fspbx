@@ -929,7 +929,7 @@ class ExtensionsController extends Controller
                     ->ignore($extension->voicemail->voicemail_uuid ?? 0, 'voicemail_uuid')
                     ->where('domain_uuid', Session::get('domain_uuid')),
             ],
-            'voicemail_mail_to' => 'nullable|email:rfc,dns',
+            'voicemail_mail_to' => 'nullable|email:rfc',
             'users' => 'nullable|array',
             'directory_visible' => 'present',
             'directory_exten_visible' => 'present',
