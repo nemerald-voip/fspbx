@@ -24,7 +24,7 @@ class CdrsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Cdrs';
-    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'sip_call_id', 'cc_member_session_uuid'];
+    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'sip_call_id', 'cc_member_session_uuid', 'status'];
     public $item_domain_uuid;
     protected $cdrDataService;
 
@@ -80,6 +80,9 @@ class CdrsController extends Controller
                     fn () =>
                     $this->getRecordingUrl($callUuid)
                 ),
+                'statusOptions' => function () {
+                    return $this->getStatusOptions();
+                },
                 'entities' => Inertia::lazy(
                     fn () =>
                     $this->getEntities()
@@ -490,6 +493,36 @@ class CdrsController extends Controller
         return $entities;
     }
 
+    public function getStatusOptions()
+    {
+        return [
+            [
+                'name' => 'Answered',
+                'value' => 'answered'
+            ],
+            [
+                'name' => 'No Answer',
+                'value' => 'no_answer'
+            ],
+            [
+                'name' => 'Cancelled',
+                'value' => 'cancelled'
+            ],
+            [
+                'name' => 'Voicemail',
+                'value' => 'voicemail'
+            ],
+            [
+                'name' => 'Missed Call',
+                'value' => 'missed call'
+            ],
+            [
+                'name' => 'Abandoned',
+                'value' => 'abandoned'
+            ],
+        ];
+    }
+
 
     public function getRecordingUrl($callUuid)
     {
@@ -623,9 +656,18 @@ class CdrsController extends Controller
             'entityType' => request('filterData.entityType') ?? null
         ];
 
+        if (!empty(request('filterData.statuses'))) {
+            $statuses = request('filterData.statuses');
+
+            $selectedStatuses = array_map(function ($status) {
+                return $status['value'];
+            }, array_filter($statuses, function ($status) {
+                return isset($status['value']);
+            }));
+            $params['filterData']['selectedStatuses'] = $selectedStatuses;
+        }
+
         return $this->cdrDataService->getData($params);
-
-
     }
 
     // This function has been moved to CdrDataService service container
@@ -661,7 +703,7 @@ class CdrsController extends Controller
                 $params['domains'] = session('domains')->pluck('domain_uuid');
             }
             $params['searchable'] = $this->searchable;
-    
+
             if (!empty(request('filterData.dateRange'))) {
                 $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
                 $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
@@ -669,19 +711,19 @@ class CdrsController extends Controller
                 $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
                 $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
             }
-    
+
             $params['filterData']['startPeriod'] = $startPeriod;
             $params['filterData']['endPeriod'] = $endPeriod;
             $params['filterData']['sortField'] = request()->get('sortField', 'start_epoch');
             $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
-    
+
             $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
 
-            $params['user_email']=auth()->user()->user_email;
+            $params['user_email'] = auth()->user()->user_email;
 
             // $cdrs = $this->getData(false); // returns lazy collection
 
-            ExportCdrs::dispatch($params,$this->cdrDataService);
+            ExportCdrs::dispatch($params, $this->cdrDataService);
 
             // Return a JSON response indicating success
             return response()->json([
