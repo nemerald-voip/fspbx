@@ -347,7 +347,7 @@ if (!function_exists('appsCreateUser')) {
                 'authname' => $mobile_app['authname'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
-                'noemail' => $mobile_app['no_email']
+                'noemail' => $mobile_app['no_email'] ?? false
             )
         );
 
@@ -416,7 +416,7 @@ if (!function_exists('appsUpdateUser')) {
                 'authname' => $mobile_app['ext'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
-                'noemail' => $mobile_app['no_email']
+                'noemail' => $mobile_app['no_email'] ?? false
             )
         );
 
