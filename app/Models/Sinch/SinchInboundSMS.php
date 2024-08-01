@@ -38,6 +38,10 @@ class SinchInboundSMS extends Model
             return false;
         }
 
+        // logger('orgid '. $this->org_id);
+        // logger('from '. $message->source);
+        // logger('to '. $this->extension);
+        // logger('content '. $message->message);
 
         // Logic to deliver the SMS message using a third-party Ringotel API,
         // This method should return a boolean indicating whether the message was sent successfully.
@@ -59,7 +63,7 @@ class SinchInboundSMS extends Model
             $this->updateMessageStatus($message, $response);
         } catch (\Throwable $e) {
             logger("Error delivering SMS to Ringotel: {$e->getMessage()}");
-            SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*. From: " . $this->source . " To: " . $this->extension . "\nError delivering SMS to Ringotel")->onQueue('messages');
+            SendSmsNotificationToSlack::dispatch("*Sinch Inbound SMS Failed*. From: " . $this->source . " To: " . $this->extension . "\nError delivering SMS to Ringotel")->onQueue('messages');
             return false;
         }
 
@@ -75,12 +79,12 @@ class SinchInboundSMS extends Model
             } else {
                 $message->status = 'failed';
                 $errorDetail = json_encode($response['result']);
-                SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Error: No message ID received. Details: " . $errorDetail)->onQueue('messages');
+                SendSmsNotificationToSlack::dispatch("*Sinch Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Error: No message ID received. Details: " . $errorDetail)->onQueue('messages');
             }
         } else {
             $message->status = 'failed';
             $errorDetail = isset($response['error']) ? json_encode($response['error']) : 'Unknown error';
-            SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
+            SendSmsNotificationToSlack::dispatch("*Sinch Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
         }
         $message->save();
     }
