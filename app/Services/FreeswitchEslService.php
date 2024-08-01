@@ -62,9 +62,18 @@ class FreeswitchEslService
 
     function convertEslResponse($eslEvent)
     {
-        $response = $eslEvent->getBody();
+        $response = trim($eslEvent->getBody());
 
-        if ($eslEvent->getBody()) {
+        // Check for '+OK Job-UUID' pattern and extract the Job-UUID
+        if (preg_match('/^\+OK Job-UUID: ([a-f0-9-]+)$/i', $response, $matches)) {
+            return ['job_uuid' => $matches[1]];
+        }
+
+        if ($response === '+OK') {
+            return null;
+        }
+
+        if ($response) {
             // Check if the response contains CSV-like data
             if (strpos($response, '|') !== false) {
                 return $this->convertEslResponseToArray($response);

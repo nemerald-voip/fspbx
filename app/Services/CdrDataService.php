@@ -32,9 +32,9 @@ class CdrDataService
             'direction' => $params['filterData']['direction'] ?? null,
             'search' => $params['filterData']['search'] ?? null,
             'entity' => $params['filterData']['entity'] ?? null,
-            'entityType' => $params['filterData']['entityType'] ?? null
+            'entityType' => $params['filterData']['entityType'] ?? null,
+            'status' => $params['filterData']['selectedStatuses'] ?? null
         ];
-
 
         $this->sortField = $params['filterData']['sortField'] ?? 'start_epoch';
         $this->sortOrder = $params['filterData']['sortOrder'] ?? 'desc';
@@ -174,5 +174,40 @@ class CdrDataService
                 break;
         }
     }
+
+    protected function filterStatus($query, $array)
+    {
+        if ($array) {
+            $query->where(function ($query) use ($array) {
+                foreach ($array as $status) {
+                    if ($status === 'missed call') {
+                        $query->orWhere(function ($query) {
+                            $query->where('voicemail_message', false)
+                                  ->where('missed_call', true)
+                                  ->where('hangup_cause', 'NORMAL_CLEARING')
+                                  ->whereNull('cc_cancel_reason') // Ensure cc_cancel_reason is not set
+                                  ->whereNull('cc_cause'); // Ensure cc_cause is not set
+                        });
+                    } elseif ($status === 'abandoned') {
+                        $query->orWhere(function ($query) {
+                            $query->where('voicemail_message', false)
+                                  ->where('missed_call', true)
+                                  ->where('hangup_cause', 'NORMAL_CLEARING')
+                                  ->where('cc_cancel_reason', 'BREAK_OUT')
+                                  ->where('cc_cause', 'cancel');
+                        });
+                    } elseif ($status === 'voicemail') {
+                        $query->orWhere('voicemail_message', true);
+                    } else {
+                        $query->orWhere('status', $status);
+                    }
+                }
+            });
+        }
+        
+    }
+
+
+    
 
 }

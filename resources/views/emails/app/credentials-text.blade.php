@@ -14,7 +14,11 @@ Use these credentials to log in:
 
 Domain: {{ $attributes['domain'] ?? ''}}
 Username: {{ $attributes['username'] ?? ''}}
-Password: {{ $attributes['password'] ?? ''}}
+@if(!empty($attributes['password_url']))
+Password: {{ $attributes['password_url'] }}
+@elseif(!empty($attributes['password']))
+Password: {{ $attributes['password'] }}
+@endif
 
 Once you have logged in, start communicating with the users within your organization. You can make and receive phone calls through your extension, put calls on hold, transfer calls, park calls, and much more.
 

@@ -111,15 +111,13 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 if (!function_exists('appsStoreOrganizationDetails')) {
     function appsStoreOrganizationDetails(Request $request)
     {
-
         // Delete any existing records
-        $deleted = DB::table('v_domain_settings')
+        DB::table('v_domain_settings')
             ->where('domain_uuid', '=', $request->organization_uuid)
-            ->where('domain_setting_category', '=', 'app shell')
             ->delete();
 
         // Store new records
-        $domainSettingsModel = DomainSettings::create([
+        $domainSetting1 = DomainSettings::create([
             'domain_uuid' => $request->organization_uuid,
             'domain_setting_category' => 'app shell',
             'domain_setting_subcategory' => 'org_id',
@@ -127,8 +125,18 @@ if (!function_exists('appsStoreOrganizationDetails')) {
             'domain_setting_value' => $request->org_id,
             'domain_setting_enabled' => true,
         ]);
-        $saved = $domainSettingsModel->save();
-        if ($saved) {
+
+        $domainSetting2 = DomainSettings::create([
+            'domain_uuid' => $request->organization_uuid,
+            'domain_setting_category' => 'mobile_apps',
+            'domain_setting_subcategory' => 'dont_send_user_credentials',
+            'domain_setting_name' => 'boolean',
+            'domain_setting_value' => $request->dont_send_user_credentials,
+            'domain_setting_enabled' => true,
+            'domain_setting_description' => "Don't include user credentials in the welcome email"
+        ]);
+
+        if ($domainSetting1->save() && $domainSetting2->save()/* && $domainSetting3->save()*/) {
             return true;
         } else {
             return false;
@@ -172,7 +180,7 @@ if (!function_exists('appsGetOrganization')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive organization",
+                        'message' => "Unable to retrieve organization",
                     ],
                 ])->getData(true);
             })
@@ -250,7 +258,7 @@ if (!function_exists('appsGetConnections')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive connections",
+                        'message' => "Unable to retrieve connections",
                     ],
                 ])->getData(true);
             })
@@ -290,7 +298,7 @@ if (!function_exists('appsDeleteConnection')) {
     }
 }
 
-// Get a list of all user for this organizaion and connection
+// Get a list of all user for this organization and connection
 if (!function_exists('appsGetUsers')) {
     function appsGetUsers($org_id, $conn_id)
     {
@@ -311,7 +319,7 @@ if (!function_exists('appsGetUsers')) {
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to retrive connections",
+                        'message' => "Unable to retrieve connections",
                     ],
                 ])->getData(true);
             })
@@ -339,6 +347,7 @@ if (!function_exists('appsCreateUser')) {
                 'authname' => $mobile_app['authname'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
+                'noemail' => $mobile_app['no_email'] ?? false
             )
         );
 
@@ -407,6 +416,7 @@ if (!function_exists('appsUpdateUser')) {
                 'authname' => $mobile_app['ext'],
                 'password' => $mobile_app['password'],
                 'status' => $mobile_app['status'],
+                'noemail' => $mobile_app['no_email'] ?? false
             )
         );
 
@@ -431,13 +441,14 @@ if (!function_exists('appsUpdateUser')) {
 
 // Reset password for mobile app user via Ringotel API call
 if (!function_exists('appsResetPassword')) {
-    function appsResetPassword($org_id, $user_id)
+    function appsResetPassword($org_id, $user_id, $no_email = false)
     {
         $data = array(
             'method' => 'resetUserPassword',
             'params' => array(
                 'id' => $user_id,
                 'orgid' => $org_id,
+                'noemail' => $no_email
             )
         );
 
@@ -831,7 +842,7 @@ if (!function_exists('get_registrations')) {
 }
 
 
-//Updated sip regisration function
+//Updated sip registration function
 if (!function_exists('sipRegistrations')) {
     function sipRegistrations()
     {

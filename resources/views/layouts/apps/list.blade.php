@@ -97,6 +97,8 @@
                                             </td>
                                             <td>
                                                 {{ $domain->domain_name }}
+                                                <input type="hidden" name="dont_send_user_credentials" @if (get_domain_setting('dont_send_user_credentials', $domain->domain_uuid) == "true") value="true" @else value="false" @endif />
+                                                <input type="hidden" name="password_url_show" @if (get_domain_setting('password_url_show', $domain->domain_uuid) == "true") value="true" @else value="false" @endif />
                                             </td>
                                             <td>
                                                 @if ($domain->status == 'true')
@@ -214,6 +216,20 @@
                                         </div>
                                     </div>
                                     <input type="hidden" id="organization_uuid" name="organization_uuid">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label class="form-label">Mobile app configuration</label>
+                                        <div class="mb-3">
+                                            <div class="form-check mb-2">
+                                                <input type="hidden" name="dont_send_user_credentials" value="false">
+                                                <input type="checkbox" class="form-check-input" id="dont_send_user_credentials" name="dont_send_user_credentials" value="true" />
+                                                <label class="form-check-label" for="dont_send_user_credentials">Don't send user credentials in a plain text</label>
+                                            </div>
+                                            <span class="help-block"><small>If this option is enabled, users within this organization will need to follow a one-time link to retrieve their app password.</small></span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="alert alert-danger" id="appOrganizationError" style="display:none">
@@ -344,12 +360,9 @@
                                                                 <label class="form-check-label"
                                                                     for="connection_private_list">Private user list</label>
                                                             </div>
-
                                                         </div>
                                                     </div>
                                                 </div>
-
-
                                             </div>
                                         </div>
                                     </div>
@@ -442,7 +455,7 @@
                                         <h2 class="mt-0"><i class="mdi mdi-check-all"></i></h2>
                                         <h3 class="mt-0">Success !</h3>
 
-                                        <p class="w-75 mb-2 mx-auto">New organization is provisiomed and ready to be used.
+                                        <p class="w-75 mb-2 mx-auto">New organization is provisioned and ready to be used.
                                         </p>
 
                                     </div>
@@ -671,6 +684,9 @@
                 $('#organization_uuid').val($.trim($(this).val()));
                 $('#connection_domain').val($.trim($(this).closest("tr").find('td:eq(2)').text()));
                 $('#connection_name').val($.trim($(this).closest("tr").find('td:eq(1)').text()));
+
+                let dontSendUserCredentialsFlag = $.trim($(this).closest("tr").find('input[name=dont_send_user_credentials]').val()) === 'true'
+                $('#dont_send_user_credentials').prop('checked', dontSendUserCredentialsFlag);
                 $('#connection_organization_uuid').val($.trim($(this).val()));
             });
 

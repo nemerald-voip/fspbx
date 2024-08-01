@@ -75,14 +75,19 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'extension_suspended',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Mobile Apps',
+                'permission_name'        => 'mobile_apps_password_url_show',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
-    
+
         foreach ($permissions as $permission) {
             $existingPermission = Permissions::where('application_name', $permission['application_name'])
                                              ->where('permission_name', $permission['permission_name'])
                                              ->first();
-    
+
             if (is_null($existingPermission)) {
                 Permissions::create([
                     'application_name'        => $permission['application_name'],
@@ -114,6 +119,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'permission_name'        => 'extension_suspended',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'mobile_apps_password_url_show',
                 'permission_protected'   => 'true',
                 'permission_assigned'    => 'true',
                 'group_name'            => "superadmin",
@@ -202,8 +215,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "1 - US East, 2 - US West, 3 - Europe (Frankfurt), 4 - Asia Pacific (Singapore), 5 - Europe (London)",
             ],
-
-
+            [
+                'default_setting_category'      => 'mobile_apps',
+                'default_setting_subcategory'   => 'dont_send_user_credentials',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Don't include user credentials in the welcome email",
+            ],
+            /*[
+                'default_setting_category'      => 'mobile_apps',
+                'default_setting_subcategory'   => 'password_url_show',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Display 'Get Password' link on the success notification pop-up",
+            ],*/
 
         ];
 
