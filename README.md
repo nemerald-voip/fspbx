@@ -13,6 +13,10 @@ This project started as a fork of the FusionPBX system but has been extensively 
 - **Tailwind CSS**: Modern and utility-first CSS framework for styling.
 - **Modular Design**: Easy to extend and maintain.
 
+## Video Installation tutorial in 10 minutes
+
+https://youtu.be/7v8sepsqnH4
+
 ## Screenshots
 <img width="2365" alt="image" src="https://github.com/user-attachments/assets/66921621-ab47-4457-ab11-14888c6419ae">
 
