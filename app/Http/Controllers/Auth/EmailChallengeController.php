@@ -135,24 +135,28 @@ class EmailChallengeController extends Controller
     protected function storeCookieIfNotInDB($request)
     {
         $user = $request->challengedUser();
-        $two_factor_cookies = json_decode($user->two_factor_cookies);
-        if (!is_array($two_factor_cookies)){
-            $two_factor_cookies = [];
-        }
-
+        $userAdvFields = $user->user_adv_fields; // Load the related UserAdvFields model
+    
+        // Decode the existing two_factor_cookies, or initialize an empty array if null
+        $two_factor_cookies = json_decode($userAdvFields->two_factor_cookies, true) ?? [];
+    
         $two_factor_cookie = Cookie::get('__TWO_FACTOR_EMAIL');
-
-        if (!in_array($two_factor_cookie,$two_factor_cookies)) {
-            $two_factor_cookie = md5($request->header('User-Agent') .' ' . $request->ip());
+    
+        if (!in_array($two_factor_cookie, $two_factor_cookies)) {
+            $two_factor_cookie = md5($request->header('User-Agent') . ' ' . $request->ip());
             $two_factor_cookies[] = $two_factor_cookie;
+    
+            // Limit the array to the last 3 cookies
             if (count($two_factor_cookies) > 3) {
                 array_shift($two_factor_cookies);
             }
-
+    
+            // Ensure unique values
             $two_factor_cookies = array_unique($two_factor_cookies);
-
-            $user->user_adv_fields->two_factor_cookies = json_encode($two_factor_cookies);
-            $user->user_adv_fields->save();
+    
+            // Encode and save the updated cookies back to the UserAdvFields model
+            $userAdvFields->two_factor_cookies = json_encode($two_factor_cookies);
+            $userAdvFields->save(); // Save the changes to the database
 
             $lifetime = 60 * 24 * 7; //7 days
             Cookie::queue('__TWO_FACTOR_EMAIL',$two_factor_cookie,$lifetime);
