@@ -17,6 +17,9 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 https://youtu.be/7v8sepsqnH4
 
+[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/7v8sepsqnH4/0.jpg)](https://www.youtube.com/watch?v=7v8sepsqnH4)
+
+
 ## Screenshots
 <img width="2365" alt="image" src="https://github.com/user-attachments/assets/66921621-ab47-4457-ab11-14888c6419ae">
 
