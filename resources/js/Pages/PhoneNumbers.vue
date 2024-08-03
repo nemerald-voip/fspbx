@@ -335,7 +335,7 @@ const handleCreateRequest = (form) => {
 const handleUpdateRequest = (form) => {
     updateFormSubmitting.value = true;
     formErrors.value = null;
-
+    
     axios.put(props.itemData.update_url, form)
         .then((response) => {
             updateFormSubmitting.value = false;

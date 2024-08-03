@@ -31,7 +31,7 @@ class PhoneNumbersController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'PhoneNumbers';
-    protected $searchable = ['destination_number', 'destination_data','destination_description'];
+    protected $searchable = ['destination_number', 'destination_data', 'destination_description'];
 
     public function __construct()
     {
@@ -44,7 +44,8 @@ class PhoneNumbersController extends Controller
      * @param  Request  $request
      * @return Redirector|Response|RedirectResponse|Application
      */
-    public function index(Request $request
+    public function index(
+        Request $request
     ): Redirector|Response|RedirectResponse|Application {
         if (!userCheckPermission("destination_view")) {
             return redirect('/');
@@ -73,7 +74,7 @@ class PhoneNumbersController extends Controller
                     'select_all' => route('phone-numbers.select.all'),
                     'bulk_update' => route('phone-numbers.bulk.update'),
                     'bulk_delete' => route('phone-numbers.bulk.delete'),
-                   // 'select_all' => route('messages.settings.select.all'),
+                    // 'select_all' => route('messages.settings.select.all'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
@@ -107,6 +108,7 @@ class PhoneNumbersController extends Controller
                 'destination_cid_name_prefix',
                 'destination_accountcode',
                 'destination_distinctive_ring',
+                'destination_context',
             ])
             ->first();
 
@@ -127,7 +129,7 @@ class PhoneNumbersController extends Controller
         ]);
         foreach ($faxesCollection as $fax) {
             $faxes[] = [
-                'name' => $fax->fax_extension.' '.$fax->fax_name,
+                'name' => $fax->fax_extension . ' ' . $fax->fax_name,
                 'value' => $fax->fax_uuid
             ];
         }
@@ -320,10 +322,24 @@ class PhoneNumbersController extends Controller
                 'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
                 'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
                 'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
-            ]);
-;           $instance->save();
+            ]);;
+            $instance->save();
 
             $this->generateDialPlanXML($instance);
+
+            //clear fusionpbx cache
+            if (isset($inputs['destination_number'])) {
+                FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_number']);
+
+                if (isset($inputs['destination_prefix'])) {
+                    FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_prefix'] . $inputs['destination_number']);
+            
+                    // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
+                    if ("+" . $inputs['destination_prefix'] !== $inputs['destination_prefix']) {
+                        FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":+" . $inputs['destination_prefix'] . $inputs['destination_number']);
+                    }
+                }
+            }
 
             return response()->json([
                 'messages' => ['success' => ['New item created']]
@@ -359,7 +375,7 @@ class PhoneNumbersController extends Controller
      */
     public function edit(Request $request, Destinations $phone_number)
     {
-         //
+        //
     }
 
     /**
@@ -382,11 +398,11 @@ class PhoneNumbersController extends Controller
 
             $inputs = $this->processActionConditionInputs($inputs);
 
-            if($inputs['destination_actions'] == null) {
+            if ($inputs['destination_actions'] == null) {
                 unset($inputs['destination_actions']);
             }
 
-            if($inputs['destination_conditions'] == null) {
+            if ($inputs['destination_conditions'] == null) {
                 unset($inputs['destination_conditions']);
             }
 
@@ -460,6 +476,21 @@ class PhoneNumbersController extends Controller
 
             $this->generateDialPlanXML($phone_number);
 
+            //clear fusionpbx cache
+            if (isset($inputs['destination_number'])) {
+                FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_number']);
+
+                if (isset($inputs['destination_prefix'])) {
+                    FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_prefix'] . $inputs['destination_number']);
+            
+                    // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
+                    if ("+" . $inputs['destination_prefix'] !== $inputs['destination_prefix']) {
+                        FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":+" . $inputs['destination_prefix'] . $inputs['destination_number']);
+                    }
+                }
+            }
+            
+            
         } catch (\Exception $e) {
             logger($e);
             // Handle any other exception that may occur
@@ -517,7 +548,6 @@ class PhoneNumbersController extends Controller
             return response()->json([
                 'messages' => ['server' => ['All selected items have been deleted successfully.']],
             ], 200);
-
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
             DB::rollBack();
@@ -645,7 +675,7 @@ class PhoneNumbersController extends Controller
         $detailOrder = 20;
         $detailGroup = 0;
 
-        if($phoneNumber->destination_conditions) {
+        if ($phoneNumber->destination_conditions) {
             $conditions = json_decode($phoneNumber->destination_conditions);
             foreach ($conditions as $condition) {
                 $dialPlanDetails = new DialplanDetails();
@@ -686,7 +716,7 @@ class PhoneNumbersController extends Controller
                 $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
                 $dialPlanDetails->dialplan_detail_tag = "regex";
                 $dialPlanDetails->dialplan_detail_type = $condition->condition_field;
-                $dialPlanDetails->dialplan_detail_data = '^\+?'.$phoneNumber->destination_prefix.'?'.$condition->condition_expression.'$';
+                $dialPlanDetails->dialplan_detail_data = '^\+?' . $phoneNumber->destination_prefix . '?' . $condition->condition_expression . '$';
                 $dialPlanDetails->dialplan_detail_group = $detailGroup;
                 $dialPlanDetails->dialplan_detail_order = $detailOrder;
                 $dialPlanDetails->save();
@@ -705,7 +735,6 @@ class PhoneNumbersController extends Controller
 
                 $detailOrder += 10;
                 $detailGroup += 10;
-
             }
         }
 
@@ -729,7 +758,7 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
             $dialPlanDetails->dialplan_detail_tag = "action";
             $dialPlanDetails->dialplan_detail_type = "set";
-            $dialPlanDetails->dialplan_detail_data = "effective_caller_id_name=".$phoneNumber->destination_cid_name_prefix."#\${caller_id_name}";
+            $dialPlanDetails->dialplan_detail_data = "effective_caller_id_name=" . $phoneNumber->destination_cid_name_prefix . "#\${caller_id_name}";
             $dialPlanDetails->dialplan_detail_inline = "false";
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -744,7 +773,7 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
             $dialPlanDetails->dialplan_detail_tag = "action";
             $dialPlanDetails->dialplan_detail_type = "export";
-            $dialPlanDetails->dialplan_detail_data = "accountcode=".$phoneNumber->destination_accountcode;
+            $dialPlanDetails->dialplan_detail_data = "accountcode=" . $phoneNumber->destination_accountcode;
             $dialPlanDetails->dialplan_detail_inline = "true";
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -759,7 +788,7 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
             $dialPlanDetails->dialplan_detail_tag = "action";
             $dialPlanDetails->dialplan_detail_type = "export";
-            $dialPlanDetails->dialplan_detail_data = "hold_music=".$phoneNumber->destination_hold_music;
+            $dialPlanDetails->dialplan_detail_data = "hold_music=" . $phoneNumber->destination_hold_music;
             $dialPlanDetails->dialplan_detail_inline = "true";
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -775,7 +804,7 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
             $dialPlanDetails->dialplan_detail_tag = "action";
             $dialPlanDetails->dialplan_detail_type = "export";
-            $dialPlanDetails->dialplan_detail_data = "sip_h_Alert-Info=".$phoneNumber->destination_distinctive_ring;
+            $dialPlanDetails->dialplan_detail_data = "sip_h_Alert-Info=" . $phoneNumber->destination_distinctive_ring;
             $dialPlanDetails->dialplan_detail_inline = "true";
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -808,7 +837,7 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
             $dialPlanDetails->dialplan_detail_tag = "action";
             $dialPlanDetails->dialplan_detail_type = "set";
-            $dialPlanDetails->dialplan_detail_data = "execute_on_tone_detect=transfer ".$phoneNumber->fax()->first()->fax_extension." XML \${domain_name}";
+            $dialPlanDetails->dialplan_detail_data = "execute_on_tone_detect=transfer " . $phoneNumber->fax()->first()->fax_extension . " XML \${domain_name}";
             $dialPlanDetails->dialplan_detail_inline = "true";
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -924,7 +953,7 @@ class PhoneNumbersController extends Controller
             $detailOrder += 10;
         }
 
-        if($phoneNumber->destination_actions) {
+        if ($phoneNumber->destination_actions) {
             $actions = json_decode($phoneNumber->destination_actions);
             foreach ($actions as $action) {
                 //add to the dialplan_details array

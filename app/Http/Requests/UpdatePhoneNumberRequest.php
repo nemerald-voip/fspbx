@@ -25,6 +25,14 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'destination_number' => [
+                'required',
+                Rule::unique('App\Models\Destinations', 'destination_number')
+                    ->ignore($this->get('destination_uuid'), 'destination_uuid')
+            ],
+            'destination_prefix' => [
+                'nullable'
+            ],
             'destination_accountcode' => [
                 'nullable',
                 'string',
@@ -47,7 +55,6 @@ class UpdatePhoneNumberRequest extends FormRequest
             ],
             'destination_conditions.*.condition_expression' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
-                'phone:US'
             ],
             'destination_conditions.*.value.value' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
@@ -88,6 +95,10 @@ class UpdatePhoneNumberRequest extends FormRequest
                 Rule::notIn(['NULL']),
                 Rule::exists('v_domains', 'domain_uuid')
             ],
+            'destination_context' => [
+                'nullable',
+                'string',
+            ],
         ];
     }
 
@@ -105,11 +116,11 @@ class UpdatePhoneNumberRequest extends FormRequest
         foreach ($errors as $field => $message) {
             if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
-                $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
+                $customMessages[$field][] = "Please use valid US phone number on condition " . ($index + 1);
             }
             if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
-                $customMessages[$field][] = "Please select action on condition ".($index + 1);
+                $customMessages[$field][] = "Please select action on condition " . ($index + 1);
             }
         }
 

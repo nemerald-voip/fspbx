@@ -28,13 +28,11 @@ class StorePhoneNumberRequest extends FormRequest
         return [
             'destination_number' => [
                 'required',
-                'phone:US',
                 Rule::unique('App\Models\Destinations', 'destination_number')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                    ->ignore($this->get('destination_uuid'), 'destination_uuid')
             ],
             'destination_prefix' => [
-                'required',
-                Rule::in('1')
+                'nullable'
             ],
             'destination_accountcode' => [
                 'nullable',
@@ -99,6 +97,10 @@ class StorePhoneNumberRequest extends FormRequest
                 Rule::notIn(['NULL']),
                 Rule::exists('v_domains', 'domain_uuid')
             ],
+            'destination_context' => [
+                'nullable',
+                'string',
+            ],
         ];
     }
 
@@ -134,9 +136,7 @@ class StorePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_prefix.required' => 'Country code is required',
-            'destination_number.required' => 'Should be valid US phone number',
-            'destination_number.phone' => 'Should be valid US phone number',
+            'destination_number.required' => 'Phone number is required',
             'destination_number.unique' => 'This phone number is already used',
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
             'destination_conditions.*.value.value' => 'Please select action on condition',
@@ -148,30 +148,30 @@ class StorePhoneNumberRequest extends FormRequest
     {
         $phone = $this->get('destination_number');
         $prefix = $this->get('destination_prefix');
-        $phone = preg_replace("/[^0-9]/", "", $prefix.$phone);
-        try {
-            $destinationNumberRegex = (new PhoneNumber(
-                $phone,
-                "US"
-            ))->formatE164();
-        } catch (NumberParseException $e) {
-            $destinationNumberRegex = '';
-        }
-        $destinationNumberRegex = str_replace('+1', '', $destinationNumberRegex);
-        try {
-            $destinationCallerIdNumber = (new PhoneNumber(
-                $phone,
-                "US"
-            ))->formatE164();
-        } catch (NumberParseException $e) {
-            $destinationCallerIdNumber = '';
-        }
+        // $phone = preg_replace("/[^0-9]/", "", $prefix.$phone);
+        // try {
+        //     $destinationNumberRegex = (new PhoneNumber(
+        //         $phone,
+        //         "US"
+        //     ))->formatE164();
+        // } catch (NumberParseException $e) {
+        //     $destinationNumberRegex = '';
+        // }
+        // $destinationNumberRegex = str_replace('+1', '', $destinationNumberRegex);
+        // try {
+        //     $destinationCallerIdNumber = (new PhoneNumber(
+        //         $phone,
+        //         "US"
+        //     ))->formatE164();
+        // } catch (NumberParseException $e) {
+        //     $destinationCallerIdNumber = '';
+        // }
 
-        $this->merge([
-            'destination_number' => $destinationNumberRegex,
-            'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destinationNumberRegex.')$',
-            'destination_caller_id_number' => $destinationCallerIdNumber
-        ]);
+        // $this->merge([
+        //     'destination_number' => $destinationNumberRegex,
+        //     'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destinationNumberRegex.')$',
+        //     'destination_caller_id_number' => $destinationCallerIdNumber
+        // ]);
 
         if ($this->has('destination_conditions')) {
             $destinationConditions = [];

@@ -304,7 +304,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'UserGroupIcon', 'slug' => 'ring_groups'];
         }
         if (userCheckPermission("destination_view")) {
-            $apps[] = ['name' => 'Phone Numbers', 'href' => '/app/destinations/destinations.php', 'icon' => 'DialpadIcon', 'slug' => 'phone_numbers'];
+            $apps[] = ['name' => 'Phone Numbers', 'href' => 'phone-numbers', 'icon' => 'DialpadIcon', 'slug' => 'phone_numbers'];
         }
         if (userCheckPermission("ivr_menu_view")) {
             $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => '/app/ivr_menus/ivr_menus.php', 'icon' => 'IvrIcon', 'slug' => 'ivrs'];
