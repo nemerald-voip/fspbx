@@ -69,6 +69,7 @@ Before you begin, ensure you have met the following requirements:
    ```bash
    cd install
    sh install.sh
+    ```
 
 4.**Run database migration script**
 
