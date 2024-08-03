@@ -56,6 +56,7 @@ Before you begin, ensure you have met the following requirements:
    ```bash
    cd /var/www
    git clone https://github.com/nemerald-voip/laravel-freeswitch.git freeswitchpbx
+   ```
 
 2. **Move FusionPBX repository into public folder**
 
@@ -63,18 +64,20 @@ Before you begin, ensure you have met the following requirements:
    cd freeswitchpbx
    mkdir public
    mv ../fusionpbx/* public/
+   ```
    
 3.  **Run FS PBX installation script**
 
    ```bash
    cd install
    sh install.sh
-    ```
+   ```
 
-4.**Run database migration script**
+4. **Run database migration script**
 
    ```bash
-    php artisan migrate
+   php artisan migrate
+   ```
 
 5. **Edit .env file**
 Add your mail server in .env file 
@@ -82,7 +85,8 @@ Add your mail server in .env file
 6. **Run the update command**
 
    ```bash
-    php artisan app:update
+   php artisan app:update
+   ```
 
 7. **Update your menu links to point to new pages**
 
