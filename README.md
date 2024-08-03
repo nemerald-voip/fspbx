@@ -44,10 +44,7 @@ https://youtu.be/7v8sepsqnH4
 
 Before you begin, ensure you have met the following requirements:
 
-- PHP 8.1
-- Composer
-- Node.js and npm
-- MySQL or PostgreSQL
+- Debian 11 or 12
 - FusionPBX 5.1 installed
 
 ## Installation
@@ -57,39 +54,36 @@ Before you begin, ensure you have met the following requirements:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/nemerald-voip/laravel-freeswitch.git
+   cd /var/www
+   git clone https://github.com/nemerald-voip/laravel-freeswitch.git freeswitchpbx
 
-2. **Clone FusionPBX repository into public folder**
+2. **Move FusionPBX repository into public folder**
 
    ```bash
-   cd public
-   git clone https://github.com/fusionpbx/fusionpbx.git
+   cd freeswitchpbx
+   mkdir public
+   mv ../fusionpbx/* public/
    
-3. **Install FusionPBX as per their installation requirements.**
-   For now, installing and maintaining a working version of FusionPBX is required. FS PBX provided a modern and updated GUI for it. 
-
-4. **Replace index.php file**
+3.  **Run FS PBX installation script**
 
    ```bash
-   rm public/index.php
-   cp install/index.php public/
+   cd install
+   sh install.sh
 
-5. **Environment Configuration**
-   Copy the `.env.example` to `.env` and configure your database and other environment settings.
-
-   ```bash
-    cp .env.example .env
-    php artisan key:generate
-
-6. **Run Migrations**
+4.**Run database migration script**
 
    ```bash
     php artisan migrate
 
-7. **Run the update command**
+5. **Edit .env file**
+Add your mail server in .env file 
+
+6. **Run the update command**
 
    ```bash
     php artisan app:update
+
+7. **Update your menu links to point to new pages**
 
 ### Usage
 After completing the installation steps, you can access the application at your domain.
