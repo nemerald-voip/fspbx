@@ -327,20 +327,6 @@ class PhoneNumbersController extends Controller
 
             $this->generateDialPlanXML($instance);
 
-            //clear fusionpbx cache
-            if (isset($inputs['destination_number'])) {
-                FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_number']);
-
-                if (isset($inputs['destination_prefix'])) {
-                    FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_prefix'] . $inputs['destination_number']);
-            
-                    // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
-                    if ("+" . $inputs['destination_prefix'] !== $inputs['destination_prefix']) {
-                        FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":+" . $inputs['destination_prefix'] . $inputs['destination_number']);
-                    }
-                }
-            }
-
             return response()->json([
                 'messages' => ['success' => ['New item created']]
             ], 201);
@@ -475,22 +461,6 @@ class PhoneNumbersController extends Controller
             $phone_number->update($inputs);
 
             $this->generateDialPlanXML($phone_number);
-
-            //clear fusionpbx cache
-            if (isset($inputs['destination_number'])) {
-                FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_number']);
-
-                if (isset($inputs['destination_prefix'])) {
-                    FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":" . $inputs['destination_prefix'] . $inputs['destination_number']);
-            
-                    // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
-                    if ("+" . $inputs['destination_prefix'] !== $inputs['destination_prefix']) {
-                        FusionCache::clear("dialplan:" . $inputs['destination_context'] . ":+" . $inputs['destination_prefix'] . $inputs['destination_number']);
-                    }
-                }
-            }
-            
-            
         } catch (\Exception $e) {
             logger($e);
             // Handle any other exception that may occur
@@ -507,13 +477,22 @@ class PhoneNumbersController extends Controller
      * @param  Destinations  $phone_number
      * @return RedirectResponse
      */
-    public function destroy(Destinations $phone_number)
+    public function destroy(Destinations $phoneNumber)
     {
         try {
-            // throw new \Exception;
+            //Get dialplan details
+            $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
+
+            // Delete dialplan
+            if ($dialPlan) {
+                $dialPlan->delete();
+            }
 
             // Delete Phone Number
-            $phone_number->delete();
+            $phoneNumber->delete();
+
+            //clear fusionpbx cache
+            $this->clearCache($phoneNumber);
 
             return redirect()->back()->with('message', ['server' => ['Item deleted']]);
         } catch (\Exception $e) {
@@ -590,7 +569,7 @@ class PhoneNumbersController extends Controller
             }
             $dialPlan->dialplan_continue = $data['dialplan_continue'];
             $dialPlan->dialplan_xml = $xml;
-            $dialPlan->dialplan_order = 101;
+            $dialPlan->dialplan_order = 100;
             $dialPlan->dialplan_enabled = $phoneNumber->destination_enabled;
             $dialPlan->dialplan_description = $phoneNumber->destination_description;
             $dialPlan->insert_date = date('Y-m-d H:i:s');
@@ -612,16 +591,16 @@ class PhoneNumbersController extends Controller
 
         $this->generateDialplanDetails($phoneNumber, $dialPlan);
 
-        $freeswitchSettings = FreeswitchSettings::first();
-        $fp = event_socket_create(
-            $freeswitchSettings['event_socket_ip_address'],
-            $freeswitchSettings['event_socket_port'],
-            $freeswitchSettings['event_socket_password']
-        );
-        event_socket_request($fp, 'bgapi reloadxml');
+        // $freeswitchSettings = FreeswitchSettings::first();
+        // $fp = event_socket_create(
+        //     $freeswitchSettings['event_socket_ip_address'],
+        //     $freeswitchSettings['event_socket_port'],
+        //     $freeswitchSettings['event_socket_password']
+        // );
+        // event_socket_request($fp, 'bgapi reloadxml');
 
         //clear fusionpbx cache
-        FusionCache::clear("dialplan:" . $phoneNumber->destination_context);
+        $this->clearCache($phoneNumber);
     }
 
     /**
@@ -664,6 +643,25 @@ class PhoneNumbersController extends Controller
 
         return $inputs;
     }
+
+
+    private function clearCache($phoneNumber)
+    {
+        if (isset($phoneNumber->destination_number)) {
+            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
+
+            if (isset($phoneNumber->destination_prefix)) {
+                FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
+
+                // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
+                if ("+" . $phoneNumber->destination_prefix !== $phoneNumber->destination_prefix) {
+                    logger('Clear cache');
+                    FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
+                }
+            }
+        }
+    }
+
 
     private function generateDialplanDetails(Destinations $phoneNumber, Dialplans $dialPlan): void
     {
