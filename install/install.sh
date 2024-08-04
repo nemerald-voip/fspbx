@@ -98,7 +98,7 @@ else
 fi
 
 # Include the install_esl_extension.sh script
- sh ./install/install_esl_extension.sh
+sh /var/www/freeswitchpbx/install/install_esl_extension.sh 
 if [ $? -eq 0 ]; then
     print_success "ESL extension installation script executed successfully."
 else
