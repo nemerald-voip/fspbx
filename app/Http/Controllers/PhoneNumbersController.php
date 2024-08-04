@@ -655,7 +655,6 @@ class PhoneNumbersController extends Controller
 
                 // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
                 if ("+" . $phoneNumber->destination_prefix !== $phoneNumber->destination_prefix) {
-                    logger('Clear cache');
                     FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
                 }
             }
