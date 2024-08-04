@@ -258,13 +258,13 @@ fi
 
 
 # Copy .env.example to .env
-# cp .env.example .env
-# if [ $? -eq 0 ]; then
-#     print_success ".env file created successfully from .env.example."
-# else
-#     print_error "Error occurred while copying .env.example to .env."
-#     exit 1
-# fi
+cp .env.example .env
+if [ $? -eq 0 ]; then
+    print_success ".env file created successfully from .env.example."
+else
+    print_error "Error occurred while copying .env.example to .env."
+    exit 1
+fi
 
 # Install Composer dependencies without interaction
 composer install --no-interaction
