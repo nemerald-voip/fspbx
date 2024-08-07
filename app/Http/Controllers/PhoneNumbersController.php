@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
@@ -10,8 +9,8 @@ use App\Models\Destinations;
 use App\Models\DialplanDetails;
 use App\Models\Dialplans;
 use App\Models\Faxes;
-use App\Models\FreeswitchSettings;
 use App\Models\FusionCache;
+use App\Services\ActionsService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -142,7 +141,11 @@ class PhoneNumbersController extends Controller
                 'name' => $domain->domain_description
             ];
         }
-        $timeoutDestinations = getTimeoutDestinations();
+
+        $actionsService = new ActionsService();
+        $actions = $actionsService->getData();
+
+        pr($actions);
 
         unset($faxesCollection, $domainsCollection, $fax, $domain);
 
@@ -150,8 +153,8 @@ class PhoneNumbersController extends Controller
             'music_on_hold' => getMusicOnHoldCollection(),
             'faxes' => $faxes,
             'domains' => $domains,
-            'timeout_destinations_categories' => array_values($timeoutDestinations['categories']),
-            'timeout_destinations_targets' => $timeoutDestinations['targets']
+            'timeout_destinations_categories' => array_values($actions['categories']),
+            'timeout_destinations_targets' => $actions['targets']
         ];
     }
 
