@@ -50,6 +50,7 @@
                             {{ errors.destination_number[0] }}
                         </div>
                     </div>
+                    {{options.actions}}
                     <div class="sm:col-span-full">
                         <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
@@ -234,6 +235,9 @@
                 </button>
             </div>
         </div>
+        <pre>
+        {{form.destination_actions}}
+            </pre>
     </form>
 </template>
 

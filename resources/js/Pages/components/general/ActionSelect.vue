@@ -2,18 +2,15 @@
     <div v-for="(action, index) in actions" :key="index"
          :class="['mt-2 mb-2 grid gap-x-2', customClass]">
         <ComboBox :options="Object.entries(props.options).map(([key, value]) => {
-        return {
-            name: value.name,
-            value: key
-        }
-    })"
+                        return { name: value.name, value: key }
+                    })"
                   :placeholder="'Choose category'"
                   :class="'col-span-2'"
-                  :selectedItem="action.selectedCategory"
+                  :selectedItem="action.selectedItem"
                   @update:model-value="value => handleCategoryUpdate(value, index)"
         />
-        <ComboBox v-if="action.selectedCategory"
-                  :options="action.selectedCategory.options"
+        <ComboBox v-if="action.selectedItem"
+                  :options="action.selectedItem.options"
                   :class="'col-span-2'"
                   :placeholder="'Choose target action'"
                   :selectedItem="action.value.value"
@@ -70,8 +67,8 @@ onMounted(() => {
         actions.value = props.selectedItems.map(item => {
             const categoryNames = Object.keys(props.options);
 
-            let selectedCategory = '';
-            let selectedCategoryTarget = {};
+            let selectedItem = '';
+            let selectedItemTarget = {};
 
             // look in each category to find the target value
             for (let category of categoryNames) {
@@ -79,16 +76,16 @@ onMounted(() => {
                 const foundInCategory = categoryEntry.options.find(target => target.value === item.value || target.value === item.value?.value);
                 // if found, save the category and target
                 if (foundInCategory) {
-                    selectedCategory = categoryEntry;
-                    selectedCategoryTarget = foundInCategory;
+                    selectedItem = categoryEntry;
+                    selectedItemTarget = foundInCategory;
                     break;
                 }
             }
 
             // return a new action object
             return {
-                selectedCategory: selectedCategory,
-                value: selectedCategoryTarget
+                name: selectedItem,
+                value: selectedItemTarget
             }
         })
     }
@@ -97,12 +94,13 @@ onMounted(() => {
 const actions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
-    if (newValue !== null && newValue !== undefined) {
-        actions.value[index].selectedCategory = props.options[newValue.value];
+    console.log(newValue)
+    /*if (newValue !== null && newValue !== undefined) {
+        actions.value[index].selectedItem = props.options[newValue.value];
     }else{
-        actions.value[index].selectedCategory.options = [];
-        actions.value[index].selectedCategory = '';
-    }
+        actions.value[index].selectedItem.options = [];
+        actions.value[index].selectedItem = '';
+    }*/
 }
 
 function handleTargetUpdate(newValue, index) {
@@ -112,9 +110,9 @@ function handleTargetUpdate(newValue, index) {
 
     const actionsMapped = actions.value.map((action) => {
         return {
-            selectedCategory:
+            name:
                 Object.entries(props.options).find(
-                    ([key, val]) => val.label === action.selectedCategory.label
+                    ([key, val]) => val.label === action.selectedItem.label
                 )?.[0],
             value: action.value,
         };
@@ -126,7 +124,7 @@ function handleTargetUpdate(newValue, index) {
 const addAction = () => {
     if (actions.value.length < props.maxLimit) {
         actions.value.push({
-            selectedCategory: '',
+            name: '',
             value: ''
         });
     }
@@ -136,9 +134,9 @@ const removeAction = (index) => {
     actions.value.splice(index, 1);
     const actionsMapped = actions.value.map(action => {
         return {
-            selectedCategory:
+            name:
                 Object.entries(options).find(([key, val]) =>
-                    val.label === action.selectedCategory.label
+                    val.label === action.selectedItem.label
                 )?.[0],
             value: action.value,
         };
