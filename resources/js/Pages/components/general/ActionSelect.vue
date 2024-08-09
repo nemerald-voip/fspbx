@@ -1,18 +1,23 @@
 <template>
-    <div :class="['mt-2 mb-2 grid gap-x-2', customClass]" v-for="(action, index) in actions"
-         :key="index">
-        <ComboBox :options="options"
-                   :placeholder="'Choose category'"
-                   :class="'col-span-2'"
-                   :selectedItem="action.selectedCategory"
-                   @update:model-value="value => handleCategoryUpdate(value, index)"
+    <div v-for="(action, index) in actions" :key="index"
+         :class="['mt-2 mb-2 grid gap-x-2', customClass]">
+        <ComboBox :options="Object.entries(props.options).map(([key, value]) => {
+        return {
+            label: value.label,
+            value: key
+        }
+    })"
+                  :placeholder="'Choose category'"
+                  :class="'col-span-2'"
+                  :selectedItem="action.selectedCategory"
+                  @update:model-value="value => handleCategoryUpdate(value, index)"
         />
         <ComboBox v-if="action.selectedCategory"
-                   :options="action.categoryTargets"
-                   :class="'col-span-2'"
-                   :placeholder="'Choose target action'"
-                   :selectedItem="action.value.value"
-                   @update:model-value="value => handleTargetUpdate(value, index)"
+                  :options="action.selectedCategory.options"
+                  :class="'col-span-2'"
+                  :placeholder="'Choose target action'"
+                  :selectedItem="action.value.value"
+                  @update:model-value="value => handleTargetUpdate(value, index)"
         />
         <template v-else>
             <div></div>
@@ -29,7 +34,6 @@
                 </ejs-tooltip>
             </div>
         </div>
-
     </div>
     <div v-if="maxLimit > 1" class="w-fit">
         <ejs-tooltip v-if="actions.length < maxLimit" :content="'Add action'"
@@ -50,9 +54,7 @@ import ComboBox from "../general/ComboBox.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
-    //itemOptions: Object,
     options: [Array, null],
-    optionTargets: [Array, Object, null],
     selectedItems: [Array, Object, null],
     maxLimit: { type: Number, default: 1 },
     customClass: {
@@ -66,17 +68,18 @@ const emit = defineEmits(['update:model-value'])
 onMounted(() => {
     if (props.selectedItems) {
         actions.value = props.selectedItems.map(item => {
-            const categoryNames = Object.keys(props.optionTargets);
+            const categoryNames = Object.keys(props.options);
 
             let selectedCategory = '';
             let selectedCategoryTarget = {};
 
             // look in each category to find the target value
             for (let category of categoryNames) {
-                const foundInCategory = props.optionTargets[category].find(target => target.value === item.value || target.value === item.value?.value);
+                const categoryEntry = props.options[category];
+                const foundInCategory = categoryEntry.options.find(target => target.value === item.value || target.value === item.value?.value);
                 // if found, save the category and target
                 if (foundInCategory) {
-                    selectedCategory = category;
+                    selectedCategory = categoryEntry;
                     selectedCategoryTarget = foundInCategory;
                     break;
                 }
@@ -85,7 +88,6 @@ onMounted(() => {
             // return a new action object
             return {
                 selectedCategory: selectedCategory,
-                categoryTargets: props.optionTargets[selectedCategory] || [],
                 value: selectedCategoryTarget
             }
         })
@@ -96,10 +98,9 @@ const actions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
-        actions.value[index].selectedCategory = newValue.value;
-        actions.value[index].categoryTargets = props.optionTargets[newValue.value] || [];
-    } else {
-        actions.value[index].categoryTargets = [];
+        actions.value[index].selectedCategory = props.options[newValue.value];
+    }else{
+        actions.value[index].selectedCategory.options = [];
         actions.value[index].selectedCategory = '';
     }
 }
@@ -108,12 +109,17 @@ function handleTargetUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
         actions.value[index].value = newValue;
     }
-    const actionsMapped = actions.value.map(action => {
+
+    const actionsMapped = actions.value.map((action) => {
         return {
-            selectedCategory: action.selectedCategory,
-            value: action.value
-        }
+            selectedCategory:
+                Object.entries(props.options).find(
+                    ([key, val]) => val.label === action.selectedCategory.label
+                )?.[0],
+            value: action.value,
+        };
     });
+
     emit('update:model-value', actionsMapped);
 }
 
@@ -121,7 +127,6 @@ const addAction = () => {
     if (actions.value.length < props.maxLimit) {
         actions.value.push({
             selectedCategory: '',
-            categoryTargets: [],
             value: ''
         });
     }
@@ -131,9 +136,12 @@ const removeAction = (index) => {
     actions.value.splice(index, 1);
     const actionsMapped = actions.value.map(action => {
         return {
-            selectedCategory: action.selectedCategory,
-            value: action.value
-        }
+            selectedCategory:
+                Object.entries(options).find(([key, val]) =>
+                    val.label === action.selectedCategory.label
+                )?.[0],
+            value: action.value,
+        };
     });
     emit('update:model-value', actionsMapped);
 }

@@ -145,16 +145,13 @@ class PhoneNumbersController extends Controller
         $actionsService = new ActionsService();
         $actions = $actionsService->getData();
 
-        pr($actions);
-
-        unset($faxesCollection, $domainsCollection, $fax, $domain);
+        unset($faxesCollection, $domainsCollection, $fax, $domain, $actionsService);
 
         return [
             'music_on_hold' => getMusicOnHoldCollection(),
             'faxes' => $faxes,
             'domains' => $domains,
-            'timeout_destinations_categories' => array_values($actions['categories']),
-            'timeout_destinations_targets' => $actions['targets']
+            'actions' => $actions
         ];
     }
 

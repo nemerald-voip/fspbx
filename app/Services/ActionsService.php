@@ -15,74 +15,83 @@ class ActionsService
     protected ?string $domain = null;
 
     protected array $categories = [
-        'call_centers',
-        'call_flows',
-        'dialplans',
-        'extensions',
-        'fax',
-        'ivr_menus',
-        'recordings',
-        'ring_groups',
-        'time_conditions',
-        'tones',
-        'voicemails',
-        'other'
+        //'call_centers' => 'Call Center',
+        //'call_flows' => 'Call Flow',
+        //'dialplans' => 'Dial Plan',
+        'extensions' => 'Extension',
+        //'fax' => 'Fax',
+        //'ivr_menus' => 'IVR',
+        //'recordings' => 'Recording',
+        //'ring_groups' => 'Ring Group',
+        //'time_conditions' => 'Time Condition',
+        //'tones' => 'Tone',
+        //'voicemails' => 'Voicemail',
+        //'other' => 'Other'
     ];
 
     public function __construct($domain = null)
     {
         if ($domain !== null) {
-            logger("getTimeoutDestinations does not support $domain argument yet. ".__FILE__);
+            logger("ActionService does not support $domain argument yet. ".__FILE__);
         }
     }
 
     public function getData(): array
     {
-        // TODO: refactor the getDestinationByCategory function to use $domain
-        $output = [
-            'categories' => [],
-            'targets' => [],
-        ];
-        foreach ($this->categories as $i => $category) {
-            $data = $this->getDestinationByCategory($category)['list'];
-            foreach ($data as $b => $d) {
-                $output['categories'][$category] = [
-                    'name' => $d['app_name'],
-                    'value' => $category
-                ];
-
-                //[$i] = ;
-                //$output['categories'][$i] = ;
-                $output['targets'][$category][] = [
-                    'name' => $d['label'],
-                    'value' => $d['id']
-                ];
-            }
+        $output = [];
+        foreach ($this->categories as $key => $label) {
+            $output[$key] = [
+                'label' => $label,
+                'options' => $this->{ucfirst($key).'Options'}()
+            ];
         }
 
         return $output;
     }
 
-    protected function getDestinationByCategory($category/*, $data = null*/): array
+    protected function extensionsOptions(): array
+    {
+        $options = [];
+        $rows = Extensions::select('extension', 'effective_caller_id_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s XML %s', $row->extension, Session::get('domain_name')),
+                'label' => $row->extension." - ".$row->effective_caller_id_name
+            ];
+        }
+        return $options;
+    }
+
+    /*
+    protected function getOptionsByCategory($key): array
     {
         $output = [];
         //$selectedCategory = null;
         //$selectedDestination = null;
         $rows = null;
 
-        $domain_uuid = Session::get('domain_uuid');
-        $domain_name = Session::get('domain_name');
 
-        switch ($category) {
+
+        return $this->{ucfirst($key).'Options'}();
+
+
+
+
+
+        switch ($key) {
             case 'call_centers':
             case 'call_flows':
             case 'fax':
             case 'time_conditions':
             case 'tones':
-                $rows = [];
+                $options = [];
                 break;
-            case 'dialplans':
-                $rows = Dialplans::where('domain_uuid', $domain_uuid)
+            /*case 'dialplans':
+                $options = Dialplans::select('dialplan_name')
+                    ->where('domain_uuid', $domain_uuid)
                     ->where('dialplan_enabled', 'true')
                     ->where('dialplan_destination', 'true')
                     ->where('dialplan_number', '<>', '')
@@ -90,34 +99,36 @@ class ActionsService
                     ->get();
                 break;
             case 'extensions':
-                $rows = Extensions::where('domain_uuid', $domain_uuid)
+                $options = Extensions::select('extension', 'effective_caller_id_name')
+                    ->where('domain_uuid', $domain_uuid)
                     ->orderBy('extension')
                     ->get();
                 break;
-            case 'ivr_menus':
-                $rows = IvrMenus::where('domain_uuid', $domain_uuid)
+            /*case 'ivr_menus':
+                $options = IvrMenus::where('domain_uuid', $domain_uuid)
                     ->orderBy('ivr_menu_extension')
                     ->get();
                 break;
             case 'recordings':
-                $rows = Recordings::where('domain_uuid', $domain_uuid)
+                $options = Recordings::where('domain_uuid', $domain_uuid)
                     ->orderBy('recording_name')
                     ->get();
                 break;
             case 'ring_groups':
-                $rows = RingGroups::where('domain_uuid', $domain_uuid)
+                $options = RingGroups::where('domain_uuid', $domain_uuid)
                     ->where('ring_group_enabled', 'true')
                     ->orderBy('ring_group_extension')
                     ->get();
                 break;
             case 'voicemails':
-                $rows = Voicemails::where('domain_uuid', $domain_uuid)
+                $options = Voicemails::select('voicemail_id', 'voicemail_description')
+                    ->where('domain_uuid', $domain_uuid)
                     ->where('voicemail_enabled', 'true')
                     ->orderBy('voicemail_id')
                     ->get();
                 break;
             case 'other':
-                $rows = [
+                $options = [
                     [
                         'id' => sprintf('*98 XML %s', $domain_name),
                         'label' => 'Check Voicemail'
@@ -132,10 +143,10 @@ class ActionsService
                         'label' => 'Record'
                     ]
                 ];
-                break;
-        }
+                break;*/
+        //}
 
-        if ($rows) {
+       /* if ($rows) {
             foreach ($rows as $row) {
                 switch ($category) {
                     case 'call_centers':
@@ -192,11 +203,6 @@ class ActionsService
 
 
                 if (isset($id)) {
-                    // Check if the id matches the data
-                    /*if ($id == $data || 'transfer:'.$id == $data) {
-                        $selectedCategory = $category;
-                        $selectedDestination = $id;
-                    }*/
 
                     // Add to the output array
                     $output[] = [
@@ -206,14 +212,10 @@ class ActionsService
                     ];
                 }
             }
-        }
+        }*/
 
-        return [
-            //'selectedCategory' => $selectedCategory,
-            //'selectedDestination' => $selectedDestination,
-            'list' => $output
-        ];
-    }
+        //return $output;
+    //}
 
     protected function getTimeoutDestinationsLabels(array $actions, $domain = null): array
     {

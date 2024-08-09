@@ -54,8 +54,7 @@
                         <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
-                                :options="options.timeout_destinations_categories"
-                                :optionTargets="options.timeout_destinations_targets"
+                                :options="options.actions"
                                 :selectedItems="form.destination_actions"
                                 :customClass="'grid-cols-5'"
                                 :maxLimit="6"
@@ -160,8 +159,7 @@
                                 <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2 border-b pb-4">
                                     <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
                                     <ConditionDestinations
-                                        :options="options.timeout_destinations_categories"
-                                        :optionTargets="options.timeout_destinations_targets"
+                                        :options="options.actions"
                                         :selectedItems="[condition]"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:model-value="value => handleConditionActionsUpdate(value, index)"
