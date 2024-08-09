@@ -3,7 +3,7 @@
          :class="['mt-2 mb-2 grid gap-x-2', customClass]">
         <ComboBox :options="Object.entries(props.options).map(([key, value]) => {
         return {
-            label: value.label,
+            name: value.name,
             value: key
         }
     })"

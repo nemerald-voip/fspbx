@@ -41,7 +41,7 @@ class ActionsService
         $output = [];
         foreach ($this->categories as $key => $label) {
             $output[$key] = [
-                'label' => $label,
+                'name' => $label,
                 'options' => $this->{ucfirst($key).'Options'}()
             ];
         }
@@ -59,7 +59,7 @@ class ActionsService
         foreach ($rows as $row) {
             $options[] = [
                 'value' => sprintf('%s XML %s', $row->extension, Session::get('domain_name')),
-                'label' => $row->extension." - ".$row->effective_caller_id_name
+                'name' => $row->extension." - ".$row->effective_caller_id_name
             ];
         }
         return $options;
