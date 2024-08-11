@@ -98,7 +98,7 @@ else
 fi
 
 # Include the install_esl_extension.sh script
-sh /var/www/freeswitchpbx/install/install_esl_extension.sh 
+sh /var/www/fspbx/install/install_esl_extension.sh 
 if [ $? -eq 0 ]; then
     print_success "ESL extension installation script executed successfully."
 else
@@ -159,11 +159,11 @@ else
 fi
 
 # Change to the Freeswitch PBX directory
-cd /var/www/freeswitchpbx/
+cd /var/www/fspbx/
 if [ $? -eq 0 ]; then
-    print_success "Changed to /var/www/freeswitchpbx/ directory."
+    print_success "Changed to /var/www/fspbx/ directory."
 else
-    print_error "Error occurred while changing directory to /var/www/freeswitchpbx/."
+    print_error "Error occurred while changing directory to /var/www/fspbx/."
     exit 1
 fi
 
@@ -192,7 +192,7 @@ else
     print_success "No existing fusionpbx site in sites-available to remove."
 fi
 
-cp install/nginx_site_config.conf /etc/nginx/sites-available/freeswitchpbx.conf
+cp install/nginx_site_config.conf /etc/nginx/sites-available/fspbx.conf
 if [ $? -eq 0 ]; then
     print_success "Copied new Nginx site config to sites-available."
 else
@@ -201,18 +201,18 @@ else
 fi
 
 # Check if symbolic link already exists and remove it if necessary
-if [ -L /etc/nginx/sites-enabled/freeswitchpbx.conf ]; then
-    rm /etc/nginx/sites-enabled/freeswitchpbx.conf
+if [ -L /etc/nginx/sites-enabled/fspbx.conf ]; then
+    rm /etc/nginx/sites-enabled/fspbx.conf
     if [ $? -eq 0 ]; then
-        print_success "Existing symbolic link for freeswitchpbx.conf removed."
+        print_success "Existing symbolic link for fspbx.conf removed."
     else
-        print_error "Error occurred while removing existing symbolic link for freeswitchpbx.conf."
+        print_error "Error occurred while removing existing symbolic link for fspbx.conf."
         exit 1
     fi
 fi
 
-# Create symbolic link for freeswitchpbx.conf
-ln -s /etc/nginx/sites-available/freeswitchpbx.conf /etc/nginx/sites-enabled/freeswitchpbx.conf
+# Create symbolic link for fspbx.conf
+ln -s /etc/nginx/sites-available/fspbx.conf /etc/nginx/sites-enabled/fspbx.conf
 if [ $? -eq 0 ]; then
     print_success "Linked new Nginx site config to sites-enabled."
 else
@@ -314,7 +314,7 @@ fi
 
 
 # Update document root in config.conf
-sudo sed -i 's|document.root = /var/www/fusionpbx|document.root = /var/www/freeswitchpbx/public|' /etc/fusionpbx/config.conf
+sudo sed -i 's|document.root = /var/www/fusionpbx|document.root = /var/www/fspbx/public|' /etc/fusionpbx/config.conf
 if [ $? -eq 0 ]; then
     print_success "Updated document root in config.conf successfully."
 else
@@ -328,7 +328,7 @@ DB_USERNAME=$(grep '^database.0.username' /etc/fusionpbx/config.conf | cut -d ' 
 DB_PASSWORD=$(grep '^database.0.password' /etc/fusionpbx/config.conf | cut -d ' ' -f 3)
 
 # Update .env file with database credentials
-sudo sed -i "s|^DB_DATABASE=.*|DB_DATABASE=$DB_NAME|" /var/www/freeswitchpbx/.env
+sudo sed -i "s|^DB_DATABASE=.*|DB_DATABASE=$DB_NAME|" /var/www/fspbx/.env
 if [ $? -eq 0 ]; then
     print_success "Updated DB_DATABASE in .env file successfully."
 else
@@ -336,7 +336,7 @@ else
     exit 1
 fi
 
-sudo sed -i "s|^DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" /var/www/freeswitchpbx/.env
+sudo sed -i "s|^DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" /var/www/fspbx/.env
 if [ $? -eq 0 ]; then
     print_success "Updated DB_USERNAME in .env file successfully."
 else
@@ -344,7 +344,7 @@ else
     exit 1
 fi
 
-sudo sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /var/www/freeswitchpbx/.env
+sudo sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /var/www/fspbx/.env
 if [ $? -eq 0 ]; then
     print_success "Updated DB_PASSWORD in .env file successfully."
 else
@@ -363,7 +363,7 @@ else
 fi
 
 # Update APP_URL in .env file with external IP
-sudo sed -i "s|^APP_URL=.*|APP_URL=https://$EXTERNAL_IP|" /var/www/freeswitchpbx/.env
+sudo sed -i "s|^APP_URL=.*|APP_URL=https://$EXTERNAL_IP|" /var/www/fspbx/.env
 if [ $? -eq 0 ]; then
     print_success "Updated APP_URL in .env file successfully."
 else
@@ -372,7 +372,7 @@ else
 fi
 
 # Update SESSION_DOMAIN in .env file with external IP
-sudo sed -i "s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=$EXTERNAL_IP|" /var/www/freeswitchpbx/.env
+sudo sed -i "s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=$EXTERNAL_IP|" /var/www/fspbx/.env
 if [ $? -eq 0 ]; then
     print_success "Updated SESSION_DOMAIN in .env file successfully."
 else
@@ -381,7 +381,7 @@ else
 fi
 
 # Update SANCTUM_STATEFUL_DOMAINS in .env file with external IP
-sudo sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=$EXTERNAL_IP|" /var/www/freeswitchpbx/.env
+sudo sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=$EXTERNAL_IP|" /var/www/fspbx/.env
 if [ $? -eq 0 ]; then
     print_success "Updated SANCTUM_STATEFUL_DOMAINS in .env file successfully."
 else
@@ -411,7 +411,7 @@ else
 fi
 
 # Copy assets to storage/app/public
-sudo cp /var/www/freeswitchpbx/install/assets/* /var/www/freeswitchpbx/storage/app/public/
+sudo cp /var/www/fspbx/install/assets/* /var/www/fspbx/storage/app/public/
 if [ $? -eq 0 ]; then
     print_success "Assets copied to storage/app/public successfully."
 else
@@ -420,7 +420,7 @@ else
 fi
 
 # Download and replace the groups.php file
-sudo curl -o /var/www/freeswitchpbx/public/resources/classes/groups.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/groups.php
+sudo curl -o /var/www/fspbx/public/resources/classes/groups.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/groups.php
 if [ $? -eq 0 ]; then
     print_success "groups.php file downloaded and replaced successfully."
 else
@@ -429,7 +429,7 @@ else
 fi
 
 # Download and replace the xml_cdr.php file
-sudo curl -o /var/www/freeswitchpbx/public/app/xml_cdr/resources/classes/xml_cdr.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/xml_cdr/resources/classes/xml_cdr.php
+sudo curl -o /var/www/fspbx/public/app/xml_cdr/resources/classes/xml_cdr.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/xml_cdr/resources/classes/xml_cdr.php
 if [ $? -eq 0 ]; then
     print_success "xml_cdr.php file downloaded and replaced successfully."
 else
@@ -438,7 +438,7 @@ else
 fi
 
 # Download and replace the permissions.php file
-sudo curl -o /var/www/freeswitchpbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
+sudo curl -o /var/www/fspbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
 if [ $? -eq 0 ]; then
     print_success "permissions.php file downloaded and replaced successfully."
 else
@@ -447,17 +447,17 @@ else
 fi
 
 
-# Change ownership of the entire freeswitchpbx directory to www-data
-sudo chown -R www-data:www-data /var/www/freeswitchpbx
+# Change ownership of the entire fspbx directory to www-data
+sudo chown -R www-data:www-data /var/www/fspbx
 if [ $? -eq 0 ]; then
-    print_success "Ownership of /var/www/freeswitchpbx and its contents changed to www-data successfully."
+    print_success "Ownership of /var/www/fspbx and its contents changed to www-data successfully."
 else
-    print_error "Error occurred while changing ownership of /var/www/freeswitchpbx."
+    print_error "Error occurred while changing ownership of /var/www/fspbx."
     exit 1
 fi
 
 # Set directory permissions to 755
-sudo find /var/www/freeswitchpbx -type d -exec chmod 755 {} \;
+sudo find /var/www/fspbx -type d -exec chmod 755 {} \;
 if [ $? -eq 0 ]; then
     print_success "All directories set to 755 permissions successfully."
 else
@@ -466,7 +466,7 @@ else
 fi
 
 # Set file permissions to 644
-sudo find /var/www/freeswitchpbx -type f -exec chmod 644 {} \;
+sudo find /var/www/fspbx -type f -exec chmod 644 {} \;
 if [ $? -eq 0 ]; then
     print_success "All files set to 644 permissions successfully."
 else
@@ -475,7 +475,7 @@ else
 fi
 
 # Change group ownership to www-data for storage and bootstrap/cache
-sudo chgrp -R www-data /var/www/freeswitchpbx/storage /var/www/freeswitchpbx/bootstrap/cache
+sudo chgrp -R www-data /var/www/fspbx/storage /var/www/fspbx/bootstrap/cache
 if [ $? -eq 0 ]; then
     print_success "Group ownership of storage and bootstrap/cache changed to www-data successfully."
 else
@@ -484,7 +484,7 @@ else
 fi
 
 # Set permissions to ug+rwx for storage and bootstrap/cache
-sudo chmod -R ug+rwx /var/www/freeswitchpbx/storage /var/www/freeswitchpbx/bootstrap/cache
+sudo chmod -R ug+rwx /var/www/fspbx/storage /var/www/fspbx/bootstrap/cache
 if [ $? -eq 0 ]; then
     print_success "Permissions set to ug+rwx for storage and bootstrap/cache successfully."
 else
@@ -494,7 +494,7 @@ fi
 
 
 # Update settings for email_queue service
-sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/freeswitchpbx/public|" /etc/systemd/system/email_queue.service
+sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated WorkingDirectory for email_queue service successfully."
 else
@@ -502,7 +502,7 @@ else
     exit 1
 fi
 
-sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/email_queue/resources/service/email_queue.php|ExecStart=/usr/bin/php /var/www/freeswitchpbx/public/app/email_queue/resources/service/email_queue.php|" /etc/systemd/system/email_queue.service
+sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/email_queue/resources/service/email_queue.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/email_queue/resources/service/email_queue.php|" /etc/systemd/system/email_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated ExecStart for email_queue service successfully."
 else
@@ -512,7 +512,7 @@ fi
 
 # Update settings for fax_queue service
 # Copy fax_queue service file
-sudo cp /var/www/freeswitchpbx/public/app/fax_queue/resources/service/debian.service /etc/systemd/system/fax_queue.service
+sudo cp /var/www/fspbx/public/app/fax_queue/resources/service/debian.service /etc/systemd/system/fax_queue.service
 if [ $? -eq 0 ]; then
     print_success "fax_queue service file copied successfully."
 else
@@ -529,7 +529,7 @@ else
     exit 1
 fi
 
-sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/freeswitchpbx/public|" /etc/systemd/system/fax_queue.service
+sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/fax_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated WorkingDirectory for fax_queue service successfully."
 else
@@ -537,7 +537,7 @@ else
     exit 1
 fi
 
-sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/fax_queue/resources/service/fax_queue.php|ExecStart=/usr/bin/php /var/www/freeswitchpbx/public/app/fax_queue/resources/service/fax_queue.php|" /etc/systemd/system/fax_queue.service
+sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/fax_queue/resources/service/fax_queue.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/fax_queue/resources/service/fax_queue.php|" /etc/systemd/system/fax_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated ExecStart for fax_queue service successfully."
 else
@@ -546,7 +546,7 @@ else
 fi
 
 # Update settings for event_guard service
-sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/freeswitchpbx/public|" /etc/systemd/system/event_guard.service
+sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/event_guard.service
 if [ $? -eq 0 ]; then
     print_success "Updated WorkingDirectory for event_guard service successfully."
 else
@@ -554,7 +554,7 @@ else
     exit 1
 fi
 
-sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/event_guard/resources/service/event_guard.php|ExecStart=/usr/bin/php /var/www/freeswitchpbx/public/app/event_guard/resources/service/event_guard.php|" /etc/systemd/system/event_guard.service
+sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/event_guard/resources/service/event_guard.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/event_guard/resources/service/event_guard.php|" /etc/systemd/system/event_guard.service
 if [ $? -eq 0 ]; then
     print_success "Updated ExecStart for event_guard service successfully."
 else
