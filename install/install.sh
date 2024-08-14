@@ -106,6 +106,15 @@ else
     exit 1
 fi
 
+# Include the add_web_server_to_sudoers.sh script
+sh /var/www/fspbx/install/add_web_server_to_sudoers.sh 
+if [ $? -eq 0 ]; then
+    print_success "add_web_server_to_sudoers.sh script executed successfully."
+else
+    print_error "Error occurred while executing add_web_server_to_sudoers.sh script."
+    exit 1
+fi
+
 # Install Composer
 curl -sS https://getcomposer.org/installer | php
 if [ $? -eq 0 ]; then
