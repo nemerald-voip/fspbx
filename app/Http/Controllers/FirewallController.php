@@ -130,6 +130,8 @@ class FirewallController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
+        $eventGuardLogs = $this->getEventGuardLogs();
+
         return $data->values(); // Ensure re-indexing of the collection
     }
 
