@@ -7,10 +7,13 @@ use Inertia\Inertia;
 use App\Mail\SmsToEmail;
 use App\Models\Messages;
 use App\Models\Extensions;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MessageSetting;
 use App\Models\SmsDestinations;
+use Illuminate\Support\Collection;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Services\SinchMessageProvider;
@@ -18,6 +21,7 @@ use Symfony\Component\Process\Process;
 use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
 use App\Jobs\SendSmsNotificationToSlack;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class FirewallController extends Controller
@@ -85,30 +89,18 @@ class FirewallController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'created_at'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+        $this->sortField = request()->get('sortField', 'ip'); // Default to 'created_at'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
-        // Apply pagination if requested
+        // Apply pagination manually
         if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
+            $data = $this->paginateCollection($data, $paginate);
         }
 
-        if (isset($this->filters['showGlobal']) && $this->filters['showGlobal']) {
-            // Access domains through the session and filter extensions by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            // $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
-            //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        } else {
-            // get extensions for session domain
-            // $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-            //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        }
-
-
+        logger($data);
+        logger(auth()->user()->domain_uuid);
 
         return $data;
     }
@@ -120,41 +112,8 @@ class FirewallController extends Controller
     public function builder(array $filters = [])
     {
 
-        logger('here');
         $data =  $this->getBlockedIps();
-
-        logger($data);
-
-        // if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-        //     $data->with(['domain' => function ($query) {
-        //         $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-        //     }]);
-        //     // Access domains through the session and filter devices by those domains
-        //     $domainUuids = Session::get('domains')->pluck('domain_uuid');
-        //     $data->whereHas('domain', function ($query) use ($domainUuids) {
-        //         $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
-        //     });
-        // } else {
-        //     // Directly filter devices by the session's domain_uuid
-        //     $domainUuid = Session::get('domain_uuid');
-        //     $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        // }
-
-
-        // $data->select(
-        //     'message_uuid',
-        //     'extension_uuid',
-        //     'domain_uuid',
-        //     'source',
-        //     'destination',
-        //     'message',
-        //     'direction',
-        //     'type',
-        //     'status',
-        //     'created_at'
-
-        // );
-        return;
+        // logger($data);
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
@@ -164,10 +123,14 @@ class FirewallController extends Controller
             }
         }
 
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        // Apply sorting using sortBy or sortByDesc depending on the sort order
+        if ($this->sortOrder === 'asc') {
+            $data = $data->sortBy($this->sortField);
+        } else {
+            $data = $data->sortByDesc($this->sortField);
+        }
 
-        return $data;
+        return $data->values(); // Ensure re-indexing of the collection
     }
 
     /**
@@ -191,45 +154,72 @@ class FirewallController extends Controller
         // Get the full iptables output including all chains
         $process = new Process(['sudo', 'iptables', '-L', '-n']);
         $process->run();
-    
+
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
-    
+
         $output = $process->getOutput();
-        logger($output); // Log the output for debugging
-    
+
         $blockedIps = [];
         $currentChain = '';
         $lines = explode("\n", $output);
-    
+
+        $hostname = gethostname();
+
         foreach ($lines as $line) {
             // Detect the start of a new chain
             if (preg_match('/^Chain\s+(\S+)/', $line, $matches)) {
                 $currentChain = $matches[1];
                 continue;
             }
-    
+
             // Check if the line contains a DROP or REJECT action
             if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
                 // Extract the source IP address (typically the 4th or 5th column)
                 $parts = preg_split('/\s+/', $line);
                 if (isset($parts[3]) && filter_var($parts[3], FILTER_VALIDATE_IP)) {
                     $blockedIps[] = [
+                        'uuid' => Str::uuid()->toString(),
+                        'hostname' => $hostname,
                         'ip' => $parts[3],
-                        'chain' => $currentChain
+                        'filter' => $currentChain,
+                        'status' => 'blocked',
                     ];
                 }
             }
         }
-    
+
         // Return the list of blocked IPs, ensuring uniqueness
-        return array_unique($blockedIps, SORT_REGULAR);
+        // return array_unique($blockedIps, SORT_REGULAR);
+
+        // Convert the array to a Laravel collection and return it
+        return collect($blockedIps)->unique();
     }
 
 
-    
-    
+    /**
+     * Paginate a given collection.
+     *
+     * @param \Illuminate\Support\Collection $items
+     * @param int $perPage
+     * @param int|null $page
+     * @param array $options
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function paginateCollection($items, $perPage = 50, $page = null, $options = [])
+    {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        return new LengthAwarePaginator(
+            $items->forPage($page, $perPage),
+            $items->count(),
+            $perPage,
+            $page,
+            $options
+        );
+    }
+
 
 
     public function retry()
