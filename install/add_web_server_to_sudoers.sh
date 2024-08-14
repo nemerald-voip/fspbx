@@ -24,7 +24,8 @@ check_command() {
 SUDOERS_FILE="/etc/sudoers"
 BACKUP_SUDOERS="/etc/sudoers.bak"
 SUDOERS_TEMP=$(mktemp)
-PERMISSION="www-data ALL=(ALL) NOPASSWD: /sbin/iptables"
+IPTABLES_PERMISSION="www-data ALL=(ALL) NOPASSWD: /sbin/iptables"
+FAIL2BAN_PERMISSION="www-data ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client"
 
 if [ -f "$SUDOERS_FILE" ]; then
     sudo cp "$SUDOERS_FILE" "$BACKUP_SUDOERS"
@@ -34,26 +35,35 @@ else
     exit 1
 fi
 
-# Check if the permission is already present
-if ! sudo grep -qF "$PERMISSION" "$SUDOERS_FILE"; then
-    # Add the permission if not present
-    sudo cat "$SUDOERS_FILE" > "$SUDOERS_TEMP"
-    echo "$PERMISSION" | sudo tee -a "$SUDOERS_TEMP" > /dev/null
+# Function to add permission to sudoers file if not already present
+add_permission() {
+    local PERMISSION=$1
 
-    # Validate the new sudoers file
-    sudo visudo -c -f "$SUDOERS_TEMP"
-    if [ $? -eq 0 ]; then
-        sudo cp "$SUDOERS_TEMP" "$SUDOERS_FILE"
-        check_command "Sudoers file updated successfully." "Failed to update sudoers file."
+    # Check if the permission is already present
+    if ! sudo grep -qF "$PERMISSION" "$SUDOERS_FILE"; then
+        # Add the permission if not present
+        sudo cat "$SUDOERS_FILE" > "$SUDOERS_TEMP"
+        echo "$PERMISSION" | sudo tee -a "$SUDOERS_TEMP" > /dev/null
+
+        # Validate the new sudoers file
+        sudo visudo -c -f "$SUDOERS_TEMP"
+        if [ $? -eq 0 ]; then
+            sudo cp "$SUDOERS_TEMP" "$SUDOERS_FILE"
+            check_command "Sudoers file updated successfully with permission: $PERMISSION" "Failed to update sudoers file with permission: $PERMISSION"
+        else
+            print_error "The sudoers file update failed validation for permission: $PERMISSION. The original file has been preserved."
+            exit 1
+        fi
     else
-        print_error "The sudoers file update failed validation. The original file has been preserved."
-        exit 1
+        print_success "Permission already exists in the sudoers file: $PERMISSION. No changes made."
     fi
-else
-    print_success "Permission already exists in the sudoers file. No changes made."
-fi
+}
+
+# Add iptables and fail2ban-client permissions
+add_permission "$IPTABLES_PERMISSION"
+add_permission "$FAIL2BAN_PERMISSION"
 
 # Cleanup temporary files
 rm "$SUDOERS_TEMP"
 
-print_success "Web server user now allowed execute iptables commands without password!"
+print_success "Web server user now allowed to execute iptables and fail2ban-client commands without a password!"

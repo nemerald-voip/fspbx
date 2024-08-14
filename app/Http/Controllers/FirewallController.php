@@ -33,7 +33,7 @@ class FirewallController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Firewall';
-    protected $searchable = ['source', 'destination', 'message'];
+    protected $searchable = ['hostname', 'ip', 'filter', 'extension', 'user_agent'];
 
     public function __construct()
     {
@@ -47,6 +47,9 @@ class FirewallController extends Controller
      */
     public function index(Request $request)
     {
+        if (!userCheckPermission("firewall_list_view")) {
+            return redirect('/');
+        }
 
         return Inertia::render(
             $this->viewName,
@@ -54,13 +57,10 @@ class FirewallController extends Controller
                 'data' => function () {
                     return $this->getData();
                 },
-                // 'showGlobal' => function () {
-                //     return request('filterData.showGlobal') === 'true';
-                // },
 
                 'routes' => [
                     'current_page' => route('firewall.index'),
-                    // 'store' => route('messages.store'),
+                    'unblock' => route('firewall.unblock'),
                     // 'select_all' => route('messages.select.all'),
                     // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
@@ -82,13 +82,6 @@ class FirewallController extends Controller
             $this->filters['search'] = request('filterData.search');
         }
 
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'ip'); // Default to 'created_at'
         $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
@@ -100,9 +93,6 @@ class FirewallController extends Controller
             $data = $this->paginateCollection($data, $paginate);
         }
 
-        // logger($data);
-        logger(auth()->user()->domain_uuid);
-
         return $data;
     }
 
@@ -113,16 +103,8 @@ class FirewallController extends Controller
     public function builder(array $filters = [])
     {
 
+        // get a list of blocked IPs from iptables
         $data =  $this->getBlockedIps();
-        // logger($data);
-
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
-            }
-        }
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
         if ($this->sortOrder === 'asc') {
@@ -131,48 +113,55 @@ class FirewallController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
+        // Get a list of IPs blocked by Event Guard
         $eventGuardLogs = $this->getEventGuardLogs();
 
         $data = $this->combineEventGuardLogs($data, $eventGuardLogs);
 
-        logger($data);
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    // Pass the collection by reference to modify it directly
+                    $data = $this->$method($data, $value);
+                }
+            }
+        }
 
-
+        // logger($data);
 
         return $data->values(); // Ensure re-indexing of the collection
     }
 
     /**
-     * @param $query
+     * @param $collection
      * @param $value
      * @return void
      */
-    protected function filterSearch($query, $value)
+    protected function filterSearch($collection, $value)
     {
         $searchable = $this->searchable;
+
         // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
+        $collection = $collection->filter(function ($item) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
+                if (stripos($item[$field], $value) !== false) {
+                    return true;
+                }
             }
+            return false;
         });
+
+        return $collection;
     }
+
 
     public function getBlockedIps()
     {
-        // Get the full iptables output including all chains
-        $process = new Process(['sudo', 'iptables', '-L', '-n']);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-
-        $output = $process->getOutput();
+        $result = $this->getIptablesRules();
 
         $blockedIps = [];
         $currentChain = '';
-        $lines = explode("\n", $output);
+        $lines = explode("\n", $result);
 
         $hostname = gethostname();
 
@@ -185,13 +174,15 @@ class FirewallController extends Controller
 
             // Check if the line contains a DROP or REJECT action
             if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                // Extract the source IP address (typically the 4th or 5th column)
+                // Extract the source IP address 
                 $parts = preg_split('/\s+/', $line);
-                if (isset($parts[3]) && filter_var($parts[3], FILTER_VALIDATE_IP)) {
+                if (isset($parts[4]) && filter_var($parts[4], FILTER_VALIDATE_IP)) {
                     $blockedIps[] = [
                         'uuid' => Str::uuid()->toString(),
                         'hostname' => $hostname,
-                        'ip' => $parts[3],
+                        'ip' => $parts[4],
+                        'extension' => null,
+                        'user_agent' => null,
                         'filter' => $currentChain,
                         'status' => 'blocked',
                     ];
@@ -206,17 +197,32 @@ class FirewallController extends Controller
         return collect($blockedIps)->unique();
     }
 
+    public function getIptablesRules()
+    {
+        // Get the full iptables output including all chains
+        $process = new Process(['sudo', 'iptables', '-L', '-n', '--line-numbers']);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+
+        $output = $process->getOutput();
+        return $output;
+    }
+
     public function getEventGuardLogs()
     {
         $logs = EventGuardLogs::select(
-            'event_guard_log_uuid', 
-            'hostname', 
-            'log_date', 
-            'filter', 
-            'ip_address', 
+            'event_guard_log_uuid',
+            'hostname',
+            'log_date',
+            'filter',
+            'ip_address',
             'extension',
-            'user_agent', 
-            'log_status')
+            'user_agent',
+            'log_status'
+        )
             ->get();
 
         return $logs;
@@ -263,6 +269,7 @@ class FirewallController extends Controller
             $ip = $item['ip'];
             if (isset($groupedLogs[$ip])) {
                 $log = $groupedLogs[$ip]->first();
+                $item['uuid'] = $log->event_guard_log_uuid;
                 $item['extension'] = $log->extension;
                 $item['user_agent'] = $log->user_agent;
                 $item['date'] = $log->log_date_formatted;
@@ -273,9 +280,70 @@ class FirewallController extends Controller
     }
 
 
-    public function retry()
+    public function destroy()
     {
         try {
+            // Unblock the IPs in fail2ban
+            foreach (request('items') as $ip) {
+                $fail2banProcess = new Process(['sudo', 'fail2ban-client', 'unban', 'ip', $ip]);
+                $fail2banProcess->run();
+
+                if (!$fail2banProcess->isSuccessful()) {
+                    // logger()->error("Failed to unban IP $ip in fail2ban: " . $fail2banProcess->getErrorOutput());
+                    throw new ProcessFailedException($fail2banProcess);
+                } else {
+                    logger("IP $ip is succesfully unbanned in fail2ban");
+                }
+            }
+
+            $result = $this->getIptablesRules();
+
+            $lines = explode("\n", $result);
+            $rulesToDelete = [];
+
+            $currentChain = null;
+
+            foreach ($lines as $line) {
+                // Detect the start of a new chain
+                if (preg_match('/^Chain\s+(\S+)/', $line, $matches)) {
+                    $currentChain = $matches[1];
+                    continue;
+                }
+
+                // Check each IP in the provided list
+                foreach (request('items') as $ip) {
+                    // Check if the line contains the IP address and a DROP/REJECT action
+                    if (strpos($line, $ip) !== false && (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false)) {
+                        // Extract the line number (first column)
+                        $parts = preg_split('/\s+/', $line);
+                        if (isset($parts[0]) && is_numeric($parts[0]) && $currentChain) {
+                            $rulesToDelete[] = ['chain' => $currentChain, 'line' => $parts[0]];
+                        }
+                    }
+                }
+            }
+
+            if (!empty($rulesToDelete)) {
+                foreach ($rulesToDelete as $rule) {
+                    // Delete the rule from the specified chain
+                    $deleteProcess = new Process(['sudo', 'iptables', '-D', $rule['chain'], $rule['line']]);
+                    $deleteProcess->run();
+
+                    if (!$deleteProcess->isSuccessful()) {
+                        throw new ProcessFailedException($deleteProcess);
+                    } else {
+                        logger("IP $ip is succesfully unbanned in iptables");
+                    }
+                }
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Request to unblock IP addresses was successful']]
+            ], 200);
+
+
+            return;
             //Get items info as a collection
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
                 ->get();
@@ -378,52 +446,5 @@ class FirewallController extends Controller
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500); // 500 Internal Server Error for any other errors
         }
-    }
-
-
-    private function getPhoneNumberSmsConfig($from, $domainUuid)
-    {
-        $phoneNumberSmsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
-            ->where('chatplan_detail_data', $from)
-            ->first();
-
-        if (!$phoneNumberSmsConfig) {
-            throw new \Exception("SMS configuration not found for extension " . $from);
-        }
-
-        return $phoneNumberSmsConfig;
-    }
-
-    private function getMessageProvider($carrier)
-    {
-        switch ($carrier) {
-            case 'thinq':
-                return new CommioMessageProvider();
-            case 'sinch':
-                return new SinchMessageProvider();
-                // Add cases for other carriers
-            default:
-                throw new \Exception("Unsupported carrier");
-        }
-    }
-
-
-    private function updateMessageStatus($message, $response)
-    {
-        if (isset($response['result']) && !empty($response['result'])) {
-            if (isset($response['result']['messageid'])) {
-                $message->status = 'success';
-                $message->reference_id = $response['result']['messageid'];
-            } else {
-                $message->status = 'failed';
-                $errorDetail = json_encode($response['result']);
-                SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Error: No message ID received. Details: " . $errorDetail)->onQueue('messages');
-            }
-        } else {
-            $message->status = 'failed';
-            $errorDetail = isset($response['error']) ? json_encode($response['error']) : 'Unknown error';
-            SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
-        }
-        $message->save();
     }
 }

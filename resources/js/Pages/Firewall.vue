@@ -76,9 +76,8 @@
                 <tr v-for="row in data.data" :key="row.uuid">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.hostname">
                         <div class="flex items-center">
-                            <input v-if="row.hostname" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row.message_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.hostname" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.ip" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.hostname }}
                             </div>
@@ -91,11 +90,10 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.filter" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.extension" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.extension" />
 
-                    <TableField class="truncate px-2 py-2 text-sm text-gray-500" :text="row.user_agent" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
+                    <TableField class="truncate max-w-64 px-2 py-2 text-sm text-gray-500" :text="row.user_agent" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.date" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
                         <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
                             :textColor="determineColor(row.status).textColor"
@@ -106,29 +104,17 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                    </div>
-                                </ejs-tooltip> -->
+                                <!-- <RestartIcon @click="handleRetry(row.message_uuid)"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
 
-                                <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRetry(row.message_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
 
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
-                                    target="#delete_tooltip_target">
-                                    <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    <div class="flex items-center  font-medium text-blue-600 hover:text-blue-500 hover:cursor-pointer"
+                                        @click="handleSingleItemDeleteRequest(row.ip)">
+                                        Unblock
                                     </div>
-                                </ejs-tooltip> -->
+
+
                             </div>
                         </template>
                     </TableField>
@@ -165,36 +151,16 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <!-- <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
-    </AddEditItemModal>
+    </AddEditItemModal> -->
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
-
-    <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
-        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
-        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm unblocking selected IP addreses.'"
+        :confirm-button-label="'Unblock'" cancel-button-label="Cancel" :loading="confirmationModalLoading"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -210,20 +176,12 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import Badge from "./components/general/Badge.vue";
-import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue";
-import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
-import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 
 const page = usePage()
@@ -238,8 +196,7 @@ const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationRetryTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const confirmationModalLoading = ref(false);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
@@ -249,11 +206,9 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
     // itemData: Object,
     // itemOptions: Object,
@@ -262,24 +217,18 @@ const props = defineProps({
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
 });
 
-const showGlobal = ref(props.showGlobal);
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_retry',
-            label: 'Retry',
-            icon: 'RestartIcon'
+            id: 'bulk_unblock',
+            label: 'Unblock',
+            icon: ''
         },
-        {
-            id: 'bulk_delete',
-            label: 'Delete',
-            icon: 'TrashIcon'
-        }
+
     ];
 
     return actions;
@@ -337,83 +286,42 @@ const handleCreateRequest = (form) => {
 
 };
 
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
 
-    axios.put(props.itemData.update_url, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleSingleItemDeleteRequest = (url) => {
+const handleSingleItemDeleteRequest = (ip) => {
     confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
+    confirmDeleteAction.value = () => executeSingleDelete(ip);
 }
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
+const executeSingleDelete = (ip) => {
+    confirmationModalLoading.value = true;
 
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
-    }
-
-    if (action === 'bulk_retry') {
-        confirmationRetryTrigger.value = true;
-        confirmRetryAction.value = () => executeBulkRetry();
-    }
-}
-
-const executeBulkRetry = () => {
-    axios.post(props.routes.retry,
-        { 'items': selectedItems.value },
+    axios.post(props.routes.unblock,
+        { 'items': [ip] },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
-            handleClearSelection();
+            handleSearchButtonClick();
+            confirmationModalLoading.value = false;
         }).catch((error) => {
-            handleClearSelection();
             handleModalClose();
-            handleFormErrorResponse(error);
+            handleErrorResponse(error);
+            confirmationModalLoading.value = false;
         });
+
+
 }
 
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_unblock') {
+        confirmationModalTrigger.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+}
+
+
 const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+    axios.post(props.routes.unblock, { items: selectedItems.value })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -426,20 +334,6 @@ const executeBulkDelete = () => {
         });
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
 
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true
@@ -463,7 +357,7 @@ const handleSelectAll = () => {
 };
 
 
-const handleRetry = (message_uuid) => {
+const handleUnblock = (message_uuid) => {
     axios.post(props.routes.retry,
         { 'items': [message_uuid] },
     )
@@ -478,17 +372,6 @@ const handleRetry = (message_uuid) => {
 }
 
 
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -500,7 +383,6 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;
@@ -600,7 +482,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItems.value = props.data.data.map(item => item.ip);
     } else {
         selectedItems.value = [];
     }
@@ -616,10 +498,7 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     createModalTrigger.value = false;
-    editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    confirmationRetryTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
 }
 
 const hideNotification = () => {
@@ -635,35 +514,21 @@ const showNotification = (type, messages = null) => {
 }
 
 const determineColor = (status) => {
-  switch (status) {
-    case 'success':
-    case 'emailed':
-    case 'delivered':
-      return {
-        backgroundColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        ringColor: 'ring-green-600/20'
-      };
-    case 'queued':
-      return {
-        backgroundColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        ringColor: 'ring-blue-600/20'
-      };
-    default:
-      return {
-        backgroundColor: 'bg-yellow-50',
-        textColor: 'text-yellow-700',
-        ringColor: 'ring-yellow-600/20'
-      };
-  }
+    switch (status) {
+        case 'blocked':
+            return {
+                backgroundColor: 'bg-rose-50',
+                textColor: 'text-rose-700',
+                ringColor: 'ring-rose-600/20'
+            };
+        default:
+            return {
+                backgroundColor: 'bg-yellow-50',
+                textColor: 'text-yellow-700',
+                ringColor: 'ring-yellow-600/20'
+            };
+    }
 };
 
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
-
-<style>
-@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
