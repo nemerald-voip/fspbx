@@ -94,7 +94,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.extension" />
 
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.user_agent" />
+                    <TableField class="truncate px-2 py-2 text-sm text-gray-500" :text="row.user_agent" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
                         <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"

@@ -10,6 +10,7 @@ use App\Models\Extensions;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Models\EventGuardLogs;
 use App\Models\MessageSetting;
 use App\Models\SmsDestinations;
 use Illuminate\Support\Collection;
@@ -99,7 +100,7 @@ class FirewallController extends Controller
             $data = $this->paginateCollection($data, $paginate);
         }
 
-        logger($data);
+        // logger($data);
         logger(auth()->user()->domain_uuid);
 
         return $data;
@@ -131,6 +132,12 @@ class FirewallController extends Controller
         }
 
         $eventGuardLogs = $this->getEventGuardLogs();
+
+        $data = $this->combineEventGuardLogs($data, $eventGuardLogs);
+
+        logger($data);
+
+
 
         return $data->values(); // Ensure re-indexing of the collection
     }
@@ -199,6 +206,22 @@ class FirewallController extends Controller
         return collect($blockedIps)->unique();
     }
 
+    public function getEventGuardLogs()
+    {
+        $logs = EventGuardLogs::select(
+            'event_guard_log_uuid', 
+            'hostname', 
+            'log_date', 
+            'filter', 
+            'ip_address', 
+            'extension',
+            'user_agent', 
+            'log_status')
+            ->get();
+
+        return $logs;
+    }
+
 
     /**
      * Paginate a given collection.
@@ -222,6 +245,32 @@ class FirewallController extends Controller
         );
     }
 
+
+    /**
+     * Combine event guard logs with blocked IPs data
+     *
+     * @param  Collection  $data
+     * @param  Collection  $eventGuardLogs
+     * @return Collection
+     */
+    protected function combineEventGuardLogs($data, $eventGuardLogs)
+    {
+        // Group event guard logs by IP address for easy lookup
+        $groupedLogs = $eventGuardLogs->groupBy('ip_address');
+
+        // Add additional fields from event guard logs to the data array
+        return $data->map(function ($item) use ($groupedLogs) {
+            $ip = $item['ip'];
+            if (isset($groupedLogs[$ip])) {
+                $log = $groupedLogs[$ip]->first();
+                $item['extension'] = $log->extension;
+                $item['user_agent'] = $log->user_agent;
+                $item['date'] = $log->log_date_formatted;
+                // Add any other fields you need here
+            }
+            return $item;
+        });
+    }
 
 
     public function retry()
