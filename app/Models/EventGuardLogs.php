@@ -3,10 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Support\Carbon;
-use libphonenumber\PhoneNumberUtil;
-use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use libphonenumber\NumberParseException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class EventGuardLogs extends Model
