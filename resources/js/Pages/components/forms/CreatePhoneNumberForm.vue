@@ -20,7 +20,7 @@
 
             <div v-if="selectedTab === 0">
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    <div class="sm:col-span-12">
+                    <div class="sm:col-span-1">
                         <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'"/>
                         <div class="mt-2">
                             <InputField
@@ -35,7 +35,7 @@
                             {{ errors.destination_prefix[0] }}
                         </div>
                     </div>
-                    <div class="sm:col-span-12">
+                    <div class="sm:col-span-2">
                         <LabelInputRequired :target="'destination_number'" :label="'Phone Number'"/>
                         <div class="mt-2">
                             <InputField
@@ -50,7 +50,7 @@
                             {{ errors.destination_number[0] }}
                         </div>
                     </div>
-                    <div class="sm:col-span-12">
+                    <div class="sm:col-span-full">
                         <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
@@ -63,7 +63,7 @@
                             />
                         </div>
                     </div>
-                    <div class="sm:col-span-12">
+                    <div class="sm:col-span-full">
                         <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'"/>
                         <div class="mt-2">
                             <ComboBoxGroup :options="options.music_on_hold"
@@ -74,13 +74,13 @@
                             />
                         </div>
                     </div>
-                    <div class="sm:col-span-12">
+                    <div class="sm:col-span-full">
                         <LabelInputOptional :target="'destination_description'" :label="'Description'"/>
                         <div class="mt-2">
                             <Textarea v-model="form.destination_description" name="destination_description" rows="2" />
                         </div>
                     </div>
-                    <div class="sm:col-span-12">
+                    <div class="sm:col-span-full">
                         <Toggle
                             :target="'destination_enabled'"
                             :label="'Enable'"
@@ -275,7 +275,7 @@ const selectedTab = ref(0)
 const form = reactive({
     domain_uuid: page.props.domain,
     fax_uuid: null,
-    destination_prefix: "1",
+    destination_prefix: null,
     destination_number: null,
     destination_actions: null,
     destination_hold_music: null,
@@ -286,6 +286,7 @@ const form = reactive({
     destination_accountcode: null,
     destination_distinctive_ring: null,
     destination_conditions: [],
+    destination_context: 'public',
     _token: page.props.csrf_token,
 })
 

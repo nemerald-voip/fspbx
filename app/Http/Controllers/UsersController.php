@@ -245,7 +245,7 @@ class UsersController extends Controller
             'user_email' => [
                 'required',
                 Rule::unique('App\Models\User','user_email')->ignore($user->user_uuid,'user_uuid'),
-                'email:rfc,dns'
+                'email:rfc'
             ],
             'groups' => 'required|array',
             'time_zone' => 'nullable',

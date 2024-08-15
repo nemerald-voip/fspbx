@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AppsCredentialsController;
 use Aws\Sns\Message;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
@@ -13,6 +12,7 @@ use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
+use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
@@ -26,6 +26,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -224,6 +225,15 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/message-settings/select-all', [MessageSettingsController::class, 'selectAll'])->name('messages.settings.select.all');
     Route::post('/message-settings/bulk-delete', [MessageSettingsController::class, 'bulkDelete'])->name('messages.settings.bulk.delete');
     Route::post('/message-settings/bulk-update', [MessageSettingsController::class, 'bulkUpdate'])->name('messages.settings.bulk.update');
+
+
+    // Firewall
+    Route::resource('firewall', FirewallController::class);
+    Route::post('firewall/unblock', [FirewallController::class, 'destroy'])->name('firewall.unblock');
+    Route::post('/firewall/block', [FirewallController::class, 'store'])->name('firewall.block');
+    Route::post('/firewall/select-all', [FirewallController::class, 'selectAll'])->name('firewall.select.all');
+
+
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');
