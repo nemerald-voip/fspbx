@@ -55,13 +55,13 @@ Before you begin, ensure you have met the following requirements:
 
    ```bash
    cd /var/www
-   git clone https://github.com/nemerald-voip/laravel-freeswitch.git freeswitchpbx
+   git clone https://github.com/nemerald-voip/fspbx.git fspbx
    ```
 
 2. **Move FusionPBX repository into public folder**
 
    ```bash
-   cd freeswitchpbx
+   cd fspbx
    mkdir public
    mv ../fusionpbx/* public/
    ```

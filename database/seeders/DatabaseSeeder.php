@@ -80,6 +80,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'mobile_apps_password_url_show',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Firewall',
+                'permission_name'        => 'firewall_list_view',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -133,6 +138,15 @@ class DatabaseSeeder extends Seeder
                 'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'permission_name'        => 'firewall_list_view',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+
 
         ];
 
