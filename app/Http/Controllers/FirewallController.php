@@ -2,26 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Inertia\Inertia;
-use App\Mail\SmsToEmail;
-use App\Models\Messages;
-use App\Models\Extensions;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\DomainSettings;
 use App\Models\EventGuardLogs;
-use App\Models\MessageSetting;
-use App\Models\SmsDestinations;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
-use App\Services\SinchMessageProvider;
 use Symfony\Component\Process\Process;
-use App\Services\CommioMessageProvider;
-use Illuminate\Support\Facades\Session;
-use App\Jobs\SendSmsNotificationToSlack;
+use App\Http\Requests\StoreIpBlockRequest;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -61,7 +50,8 @@ class FirewallController extends Controller
                 'routes' => [
                     'current_page' => route('firewall.index'),
                     'unblock' => route('firewall.unblock'),
-                    // 'select_all' => route('messages.select.all'),
+                    'block' => route('firewall.block'),
+                    'select_all' => route('firewall.select.all'),
                     // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
                     // 'retry' => route('messages.retry'),
@@ -351,5 +341,116 @@ class FirewallController extends Controller
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \App\Http\Requests\StoreIpBlockRequest  $request
+     * @return JsonResponse
+     */
+    public function store(StoreIpBlockRequest $request): JsonResponse
+    {
+        try {
+            $inputs = $request->validated();
+
+            $ip = $inputs['ip_address'];
+
+            // Ensure the chain exists
+            $this->ensureChainExists('fs_pbx_deny_access');
+
+            // Add the IP to the fs_pbx_deny_access chain
+            $blockProcess = new Process(['sudo', 'iptables', '-A', 'fs_pbx_deny_access', '-s', $ip, '-j', 'DROP']);
+            $blockProcess->run();
+
+            if (!$blockProcess->isSuccessful()) {
+                throw new ProcessFailedException($blockProcess);
+            }
+
+            // Save the current iptables rules
+            $saveProcess = new Process(['sudo', 'iptables-save']);
+            $saveProcess->run();
+
+            if (!$saveProcess->isSuccessful()) {
+                throw new ProcessFailedException($saveProcess);
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['New item created']]
+            ], 201);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to create new item']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Ensure that the specified chain exists, and create it if it doesn't.
+     *
+     * @param string $chain
+     * @return void
+     */
+    protected function ensureChainExists($chain)
+    {
+        // Check if the chain already exists
+        $checkChainProcess = new Process(['sudo', 'iptables', '-L', $chain]);
+        $checkChainProcess->run();
+
+        // If the chain does not exist, create it
+        if (!$checkChainProcess->isSuccessful()) {
+            $createChainProcess = new Process(['sudo', 'iptables', '-N', $chain]);
+            $createChainProcess->run();
+
+            if (!$createChainProcess->isSuccessful()) {
+                throw new ProcessFailedException($createChainProcess);
+            }
+
+            // Insert the chain into the INPUT chain to ensure it's processed
+            $insertChainProcess = new Process(['sudo', 'iptables', '-I', 'INPUT', '-j', $chain]);
+            $insertChainProcess->run();
+
+            if (!$insertChainProcess->isSuccessful()) {
+                throw new ProcessFailedException($insertChainProcess);
+            }
+        }
+    }
+
+    /**
+     * Get all items
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function selectAll()
+    {
+        try {
+
+            // This needs work.
+            $ips = [];
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $ips,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to select all items']]
+        ], 500); // 500 Internal Server Error for any other errors
     }
 }
