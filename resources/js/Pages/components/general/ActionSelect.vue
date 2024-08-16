@@ -6,14 +6,14 @@
                     })"
                   :placeholder="'Choose category'"
                   :class="'col-span-2'"
-                  :selectedItem="action.selectedItem"
+                  :selectedItem="action.value"
                   @update:model-value="value => handleCategoryUpdate(value, index)"
         />
-        <ComboBox v-if="action.selectedItem"
-                  :options="action.selectedItem.options"
+        <ComboBox v-if="action.targetOptions"
+                  :options="action.targetOptions"
                   :class="'col-span-2'"
                   :placeholder="'Choose target action'"
-                  :selectedItem="action.value.value"
+                  :selectedItem="action.targetValue"
                   @update:model-value="value => handleTargetUpdate(value, index)"
         />
         <template v-else>
@@ -41,17 +41,19 @@
             </div>
         </ejs-tooltip>
     </div>
+    <pre>
+    {{actions}}
+        </pre>
 </template>
 
 <script setup>
 import {ref,onMounted} from 'vue'
 import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
-import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
-    options: [Array, null],
+    options: [Object, null],
     selectedItems: [Array, Object, null],
     maxLimit: { type: Number, default: 1 },
     customClass: {
@@ -95,27 +97,30 @@ const actions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
     console.log(newValue)
-    /*if (newValue !== null && newValue !== undefined) {
-        actions.value[index].selectedItem = props.options[newValue.value];
+    if (newValue !== null && newValue !== undefined && newValue.value !== 'NULL') {
+        actions.value[index].name = newValue.name;
+        actions.value[index].value = newValue.value;
+        actions.value[index].targetOptions = props.options[newValue.value]?.options || [];
+        actions.value[index].targetName = '';
+        actions.value[index].targetValue = '';
     }else{
-        actions.value[index].selectedItem.options = [];
-        actions.value[index].selectedItem = '';
-    }*/
+        actions.value[index].name = '';
+        actions.value[index].value = '';
+        actions.value[index].targetOptions = [];
+        actions.value[index].targetName = '';
+        actions.value[index].targetValue = '';
+    }
 }
 
 function handleTargetUpdate(newValue, index) {
+    console.log(newValue);
     if (newValue !== null && newValue !== undefined) {
-        actions.value[index].value = newValue;
+        actions.value[index].targetName = newValue.name;
+        actions.value[index].targetValue = newValue.value;
     }
 
-    const actionsMapped = actions.value.map((action) => {
-        return {
-            name:
-                Object.entries(props.options).find(
-                    ([key, val]) => val.label === action.selectedItem.label
-                )?.[0],
-            value: action.value,
-        };
+    const actionsMapped = actions.value.map(({name, value, targetName, targetValue}) => {
+        return { name, value, targetName, targetValue };
     });
 
     emit('update:model-value', actionsMapped);
@@ -125,14 +130,17 @@ const addAction = () => {
     if (actions.value.length < props.maxLimit) {
         actions.value.push({
             name: '',
-            value: ''
+            value: '',
+            targetOptions: [],
+            targetName: '',
+            targetValue: '',
         });
     }
 };
 
 const removeAction = (index) => {
     actions.value.splice(index, 1);
-    const actionsMapped = actions.value.map(action => {
+    /*const actionsMapped = actions.value.map(action => {
         return {
             name:
                 Object.entries(options).find(([key, val]) =>
@@ -140,8 +148,8 @@ const removeAction = (index) => {
                 )?.[0],
             value: action.value,
         };
-    });
-    emit('update:model-value', actionsMapped);
+    });*/
+    emit('update:model-value', actions);
 }
 
 </script>

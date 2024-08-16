@@ -19,6 +19,7 @@
             </div>
 
             <div v-if="selectedTab === 0">
+                {{options.actions}}
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div class="sm:col-span-1">
                         <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'"/>
@@ -50,7 +51,6 @@
                             {{ errors.destination_number[0] }}
                         </div>
                     </div>
-                    {{options.actions}}
                     <div class="sm:col-span-full">
                         <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
@@ -89,6 +89,9 @@
                         />
                     </div>
                 </div>
+                <pre>
+                    {{form.destination_actions}}
+                </pre>
             </div>
 
             <div v-if="selectedTab === 1">
@@ -130,7 +133,7 @@
                             <div v-for="(condition, index) in conditions" :key="condition.id">
                                 <div class="mt-4 grid grid-cols-3 gap-x-2">
                                     <div>
-                                        <SelectBox :options="page.props.conditions"
+                                        <ComboBox :options="page.props.conditions"
                                                    :selectedItem="condition.condition_field"
                                                    :placeholder="'Choose condition'"
                                                    @update:model-value="value => handleConditionUpdate(value, index)"
@@ -161,11 +164,11 @@
                                     <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
                                     <ConditionDestinations
                                         :options="options.actions"
-                                        :selectedItems="[condition]"
+
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:model-value="value => handleConditionActionsUpdate(value, index)"
                                     />
-                                </div>
+                                </div><!--     :selectedItems="[condition]" -->
                             </div>
                             <div class="w-fit">
                                 <ejs-tooltip v-if="conditions.length < conditionsMaxLimit" :content="'Add condition'"
@@ -177,6 +180,9 @@
                                 </ejs-tooltip>
                             </div>
                         </div>
+                        <pre>
+                        {{conditions}}
+                            </pre>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
@@ -219,6 +225,9 @@
                         </div>
                     </div>
                 </div>
+                <pre>
+                    {{form.destination_conditions}}
+                </pre>
             </div>
         </div>
         <div class="border-t mt-4 sm:mt-4 ">
@@ -235,9 +244,6 @@
                 </button>
             </div>
         </div>
-        <pre>
-        {{form.destination_actions}}
-            </pre>
     </form>
 </template>
 
@@ -272,7 +278,7 @@ const conditions = ref([])
 
 const conditionsMaxLimit = 6;
 
-const selectedTab = ref(0)
+const selectedTab = ref(1)
 
 const form = reactive({
     domain_uuid: page.props.domain,
@@ -352,17 +358,19 @@ const addCondition = () => {
         id: Math.random().toString(36).slice(2, 7),
         condition_field: null,
         condition_expression: "",
-        selectedCategory: "",
-        categoryTargets: [],
-        value: null
+        condition_target: ""
     };
     conditions.value.push(newCondition);
 }
 
-const handleConditionActionsUpdate = (newSelectedItem, index) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        conditions.value[index].value = newSelectedItem[0].value.value;
+const handleConditionActionsUpdate = (newValue, index) => {
+    console.log(newValue)
+    if (newValue !== null && newValue !== undefined) {
+        conditions.value[index].condition_target = newValue[0].targetValue
     }
+    //if (newSelectedItem !== null && newSelectedItem !== undefined) {
+    //    conditions.value[index].value = newSelectedItem[0].value.value;
+    //}
 }
 
 const removeCondition = (id) => {
@@ -381,3 +389,6 @@ div[data-lastpass-root] {
     display: none !important
 }
 </style>
+
+<script setup lang="ts">
+</script>

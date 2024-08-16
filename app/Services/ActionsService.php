@@ -17,9 +17,9 @@ class ActionsService
     protected array $categories = [
         //'call_centers' => 'Call Center',
         //'call_flows' => 'Call Flow',
-        //'dialplans' => 'Dial Plan',
+        'dialplans' => 'Dial Plan',
         'extensions' => 'Extension',
-        //'fax' => 'Fax',
+        //'faxes' => 'Fax',
         //'ivr_menus' => 'IVR',
         //'recordings' => 'Recording',
         //'ring_groups' => 'Ring Group',
@@ -60,6 +60,25 @@ class ActionsService
             $options[] = [
                 'value' => sprintf('%s XML %s', $row->extension, Session::get('domain_name')),
                 'name' => $row->extension." - ".$row->effective_caller_id_name
+            ];
+        }
+        return $options;
+    }
+
+    protected function dialplansOptions(): array
+    {
+        $options = [];
+        $rows = Dialplans::select('dialplan_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->where('dialplan_enabled', 'true')
+            ->where('dialplan_destination', 'true')
+            ->where('dialplan_number', '<>', '')
+            ->orderBy('dialplan_name')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s XML %s', $row->dialplan_name, Session::get('domain_name')),
+                'name' => $row->dialplan_name
             ];
         }
         return $options;
