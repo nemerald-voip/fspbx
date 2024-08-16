@@ -55,7 +55,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="8">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -145,18 +145,12 @@
     </div>
 
 
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-
-
-    <!-- <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="createModalTrigger" :header="'Block new IP address'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateNewIpBlockForm :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
-    </AddEditItemModal> -->
+    </AddEditItemModal>
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm unblocking selected IP addreses.'"
@@ -175,8 +169,10 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import CreateNewIpBlockForm from "./components/forms/CreateNewIpBlockForm.vue";
 import Loading from "./components/general/Loading.vue";
 import Badge from "./components/general/Badge.vue";
 import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
@@ -190,18 +186,13 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalLoading = ref(false);
 const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmRetryAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -271,7 +262,7 @@ const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.store, form)
+    axios.post(props.routes.block, form)
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);

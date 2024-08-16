@@ -230,6 +230,10 @@ Route::group(['middleware' => 'auth'], function () {
     // Firewall
     Route::resource('firewall', FirewallController::class);
     Route::post('firewall/unblock', [FirewallController::class, 'destroy'])->name('firewall.unblock');
+    Route::post('/firewall/block', [FirewallController::class, 'store'])->name('firewall.block');
+    Route::post('/firewall/select-all', [FirewallController::class, 'selectAll'])->name('firewall.select.all');
+
+
 
     // Email Queues
     Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.list');
