@@ -2,22 +2,30 @@
 
 namespace App\Http\Controllers;
 
-// use cache;
+use Inertia\Inertia;
 use App\Models\Domain;
-use App\Models\Extensions;
 use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\VoicemailGreetings;
-use Illuminate\Support\Facades\Log;
 use App\Models\VoicemailDestinations;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 
 class VoicemailController extends Controller
 {
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'Voicemails';
+    protected $searchable = ['source', 'destination', 'message'];
+
+    public function __construct()
+    {
+        $this->model = new Voicemails();
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -32,36 +40,127 @@ class VoicemailController extends Controller
         if (!userCheckPermission("voicemail_view")) {
             return redirect('/');
         }
-        $data = array();
 
-        $searchString = $request->get('search');
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
 
-        $domain_uuid = Session::get('domain_uuid');
+                'routes' => [
+                    'current_page' => route('voicemails.index'),
+                    'store' => route('messages.store'),
+                    'select_all' => route('messages.select.all'),
+                    'bulk_delete' => route('messages.bulk.delete'),
+                    'bulk_update' => route('messages.bulk.update'),
+                    'retry' => route('messages.retry'),
+                ]
+            ]
+        );
 
-        $voicemails = Voicemails::where('domain_uuid', $domain_uuid)->orderBy('voicemail_id', 'asc');
-        if ($searchString) {
-            $voicemails->where(function ($query) use ($searchString) {
-                $query->where('voicemail_id', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('voicemail_mail_to', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('voicemail_description', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
-            });
+        // $data = array();
+
+        // $searchString = $request->get('search');
+
+        // $domain_uuid = Session::get('domain_uuid');
+
+        // $voicemails = Voicemails::where('domain_uuid', $domain_uuid)->orderBy('voicemail_id', 'asc');
+        // if ($searchString) {
+        //     $voicemails->where(function ($query) use ($searchString) {
+        //         $query->where('voicemail_id', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+        //             ->orWhere('voicemail_mail_to', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
+        //             ->orWhere('voicemail_description', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
+        //     });
+        // }
+
+        // $voicemails = $voicemails->paginate(10)->onEachSide(1);
+
+        // $data['searchString'] = $searchString;
+
+        // $data['voicemails'] = $voicemails;
+        // return view('layouts.voicemails.list')
+        //     ->with($data)
+        //     ->with('permissions', $permissions);
+    }
+
+    /**
+     *  Get data
+     */
+    public function getData($paginate = 50)
+    {
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
         }
 
-        $voicemails = $voicemails->paginate(10)->onEachSide(1);
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'voicemail_id'); // Default to 'voicemail_id'
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
 
-        $data['searchString'] = $searchString;
+        $data = $this->builder($this->filters);
 
-        //assign permissions
-        $permissions['add_new'] = userCheckPermission('voicemail_add');
-        $permissions['edit'] = userCheckPermission('voicemail_edit');
-        $permissions['delete'] = userCheckPermission('voicemail_delete');
-        $permissions['voicemail_message_view'] = userCheckPermission('voicemail_message_view');
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
 
-        $data['voicemails'] = $voicemails;
-        return view('layouts.voicemails.list')
-            ->with($data)
-            ->with('permissions', $permissions);
+        return $data;
     }
+
+    /**
+     * @param  array  $filters
+     * @return Builder
+     */
+    public function builder(array $filters = [])
+    {
+        $data =  $this->model::query();
+        $domainUuid = session('domain_uuid');
+        $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
+
+
+        $data->select(
+            'voicemail_uuid',
+            'voicemail_id',
+            'voicemail_mail_to',
+            'voicemail_enabled',
+            'voicemail_description',
+
+        );
+
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
+                }
+            }
+        }
+
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
+
+        return $data;
+    }
+
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value)
+    {
+        $searchable = $this->searchable;
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
+            }
+        });
+    }
+
 
     /**
      * Show the create voicemail form.
