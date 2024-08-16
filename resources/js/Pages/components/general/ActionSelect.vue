@@ -63,29 +63,27 @@ const props = defineProps({
 const emit = defineEmits(['update:model-value'])
 
 onMounted(() => {
-    if (props.selectedItems) {
+    if (props.selectedItems && props.selectedItems.length > 0) {
         actions.value = props.selectedItems.map(item => {
-            const categoryNames = Object.keys(props.options);
-
             let selectedItem = '';
             let selectedItemTarget = {};
 
             // look in each category to find the target value
-            for (let category of categoryNames) {
-                const categoryEntry = props.options[category];
-                const foundInCategory = categoryEntry.options.find(target => target.value === item.value || target.value === item.value?.value);
-                // if found, save the category and target
+            if(props.options.hasOwnProperty(item.value)){
+                const categoryEntry = props.options[item.value];
+                const foundInCategory = categoryEntry.options.find(target => target.value === item.targetValue);
                 if (foundInCategory) {
                     selectedItem = categoryEntry;
                     selectedItemTarget = foundInCategory;
-                    break;
                 }
             }
 
             // return a new action object
             return {
-                name: selectedItem,
-                value: selectedItemTarget
+                ...item,
+                value: item.value,
+                targetOptions: selectedItem.options,
+                targetValue: selectedItemTarget.value,
             }
         })
     } else {

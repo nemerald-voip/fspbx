@@ -160,12 +160,12 @@
                                     <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
                                     <ConditionDestinations
                                         :options="options.actions"
-                                        :selectedItems="null"
+                                        :selectedItems="condition.condition_target"
                                         :initWith="1"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:model-value="value => handleConditionActionsUpdate(value, index)"
                                     />
-                                </div><!--     :selectedItems="[condition]" -->
+                                </div>
                             </div>
                             <div class="w-fit">
                                 <ejs-tooltip v-if="conditions.length < conditionsMaxLimit" :content="'Add condition'"
@@ -219,6 +219,9 @@
                         </div>
                     </div>
                 </div>
+                <pre>
+                    {{conditions}}
+                </pre>
             </div>
         </div>
         <div class="border-t mt-4 sm:mt-4 ">
@@ -235,6 +238,7 @@
                 </button>
             </div>
         </div>
+        <pre>{{form}}</pre>
     </form>
 </template>
 
@@ -284,7 +288,7 @@ const form = reactive({
     destination_cid_name_prefix: null,
     destination_accountcode: null,
     destination_distinctive_ring: null,
-    destination_conditions: [],
+    destination_conditions: null,
     destination_context: 'public',
     _token: page.props.csrf_token,
 })
@@ -294,11 +298,12 @@ const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 const submitForm = () => {
     // Transform conditions before submit
     form.destination_conditions = conditions.value.map(condition => {
+        console.log(condition)
         return {
             "condition_field": condition.condition_field,
             "condition_expression": condition.condition_expression,
             "value": {
-                "value": condition.value
+                "value": condition.condition_target[0]?.targetValue ?? null
             }
         }
     })
@@ -350,19 +355,15 @@ const addCondition = () => {
         id: Math.random().toString(36).slice(2, 7),
         condition_field: null,
         condition_expression: "",
-        condition_target: ""
+        condition_target: []
     };
     conditions.value.push(newCondition);
 }
 
 const handleConditionActionsUpdate = (newValue, index) => {
-    console.log(newValue)
     if (newValue !== null && newValue !== undefined) {
-        conditions.value[index].condition_target = newValue[0].targetValue
+        conditions.value[index].condition_target.push(newValue[0]);
     }
-    //if (newSelectedItem !== null && newSelectedItem !== undefined) {
-    //    conditions.value[index].value = newSelectedItem[0].value.value;
-    //}
 }
 
 const removeCondition = (id) => {
