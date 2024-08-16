@@ -382,6 +382,3 @@ div[data-lastpass-root] {
     display: none !important
 }
 </style>
-
-<script setup lang="ts">
-</script>

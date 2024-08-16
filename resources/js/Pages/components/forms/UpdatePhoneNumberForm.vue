@@ -50,8 +50,7 @@
                         <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
-                                :options="options.timeout_destinations_categories"
-                                :optionTargets="options.timeout_destinations_targets"
+                                :options="options.actions"
                                 :selectedItems="form.destination_actions"
                                 :customClass="'grid-cols-5'"
                                 :maxLimit="6"
@@ -126,7 +125,7 @@
                             <div v-for="(condition, index) in conditions" :key="condition.id">
                                 <div class="mt-4 grid grid-cols-3 gap-x-2">
                                     <div>
-                                        <SelectBox :options="page.props.conditions"
+                                        <ComboBox :options="page.props.conditions"
                                                    :selectedItem="condition.condition_field"
                                                    :placeholder="'Choose condition'"
                                                    @update:model-value="value => handleConditionUpdate(value, index)"
@@ -141,22 +140,24 @@
                                     <div v-else />
                                     <div class="relative">
                                         <div class="absolute right-0">
-                                            <ejs-tooltip :content="'Remove condition'"
-                                                         position='RightTop' :target="'#delete_condition_tooltip'+index">
-                                                <div :id="'delete_condition_tooltip'+index">
-                                                    <MinusIcon @click="() => removeCondition(condition.id)"
-                                                               class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                                            <div id="delete_condition_tooltip" class="relative">
+                                                <div class="absolute right-0">
+                                                    <ejs-tooltip :content="'Remove condition'"
+                                                                 position='RightTop' :target="'#delete_condition_tooltip'+index">
+                                                        <MinusIcon @click="() => removeCondition(condition.id)"
+                                                                   class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+                                                    </ejs-tooltip>
                                                 </div>
-                                            </ejs-tooltip>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2 border-b pb-4">
+                                <div v-if="condition.condition_expression" class="grid grid-cols-3 gap-x-2 border-b pb-4">
                                     <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
                                     <ConditionDestinations
-                                        :options="options.timeout_destinations_categories"
-                                        :optionTargets="options.timeout_destinations_targets"
-                                        :selectedItems="[condition]"
+                                        :options="options.actions"
+                                        :selectedItems="condition.condition_target"
+                                        :initWith="1"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:model-value="value => handleConditionActionsUpdate(value, index)"
                                     />
@@ -214,6 +215,9 @@
                         </div>
                     </div>
                 </div>
+                <pre>
+                    {{conditions}}
+                </pre>
             </div>
         </div>
         <div class="border-t mt-4 sm:mt-4 ">
@@ -230,11 +234,12 @@
                 </button>
             </div>
         </div>
+        <pre>{{form}}</pre>
     </form>
 </template>
 
 <script setup>
-import {defineProps, onMounted, reactive, ref} from 'vue'
+import {defineProps, reactive, ref} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
@@ -247,7 +252,7 @@ import {usePage} from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
-import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
+import {MinusIcon, PlusIcon} from "@heroicons/vue/24/solid/index.js";
 import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
@@ -280,13 +285,13 @@ const form = reactive({
     destination_cid_name_prefix: props.item.destination_cid_name_prefix,
     destination_accountcode: props.item.destination_accountcode,
     destination_distinctive_ring: props.item.destination_distinctive_ring,
-    destination_conditions: props.item.destination_conditions ?? [],
+    destination_conditions: props.item.destination_conditions ?? null,
     destination_context: props.item.destination_context,
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
-
+/*
 onMounted(() => {
     if (form.destination_conditions) {
         conditions.value = form.destination_conditions.map(condition => {
@@ -318,15 +323,16 @@ onMounted(() => {
         });
     }
 });
-
+*/
 const submitForm = () => {
     // Transform conditions before submit
     form.destination_conditions = conditions.value.map(condition => {
+        console.log(condition)
         return {
             "condition_field": condition.condition_field,
             "condition_expression": condition.condition_expression,
             "value": {
-                "value": condition.value
+                "value": condition.condition_target[0]?.targetValue ?? null
             }
         }
     })
@@ -362,9 +368,10 @@ const handleFaxUpdate = (newSelectedItem) => {
     }
 }
 
-const handleConditionUpdate = (newSelectedItem, index) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        conditions.value[index].condition_field = newSelectedItem.value;
+const handleConditionUpdate = (newValue, index) => {
+    console.log(newValue)
+    if (newValue !== null && newValue !== undefined) {
+        conditions.value[index].condition_field = newValue.value;
     }
 }
 
@@ -377,16 +384,14 @@ const addCondition = () => {
         id: Math.random().toString(36).slice(2, 7),
         condition_field: null,
         condition_expression: "",
-        selectedCategory: "",
-        categoryTargets: [],
-        value: null
+        condition_target: []
     };
     conditions.value.push(newCondition);
 }
 
-const handleConditionActionsUpdate = (newSelectedItem, index) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        conditions.value[index].value = newSelectedItem[0].value.value;
+const handleConditionActionsUpdate = (newValue, index) => {
+    if (newValue !== null && newValue !== undefined) {
+        conditions.value[index].condition_target.push(newValue[0]);
     }
 }
 
