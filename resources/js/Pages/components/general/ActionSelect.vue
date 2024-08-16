@@ -41,9 +41,6 @@
             </div>
         </ejs-tooltip>
     </div>
-    <pre>
-    {{actions}}
-        </pre>
 </template>
 
 <script setup>
@@ -56,6 +53,7 @@ const props = defineProps({
     options: [Object, null],
     selectedItems: [Array, Object, null],
     maxLimit: { type: Number, default: 1 },
+    initWith: { type: Number, default: 0 },
     customClass: {
         type: String,
         default: 'grid-cols-5'
@@ -90,13 +88,18 @@ onMounted(() => {
                 value: selectedItemTarget
             }
         })
+    } else {
+        if(props.initWith > 0) {
+            for(let i=0; i<props.initWith; i++){
+                addAction();
+            }
+        }
     }
 })
 
 const actions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
-    console.log(newValue)
     if (newValue !== null && newValue !== undefined && newValue.value !== 'NULL') {
         actions.value[index].name = newValue.name;
         actions.value[index].value = newValue.value;
@@ -113,7 +116,6 @@ function handleCategoryUpdate(newValue, index) {
 }
 
 function handleTargetUpdate(newValue, index) {
-    console.log(newValue);
     if (newValue !== null && newValue !== undefined) {
         actions.value[index].targetName = newValue.name;
         actions.value[index].targetValue = newValue.value;

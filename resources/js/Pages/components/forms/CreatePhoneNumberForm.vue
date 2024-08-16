@@ -19,7 +19,6 @@
             </div>
 
             <div v-if="selectedTab === 0">
-                {{options.actions}}
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div class="sm:col-span-1">
                         <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'"/>
@@ -89,9 +88,6 @@
                         />
                     </div>
                 </div>
-                <pre>
-                    {{form.destination_actions}}
-                </pre>
             </div>
 
             <div v-if="selectedTab === 1">
@@ -160,11 +156,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-if="condition.condition_field" class="grid grid-cols-3 gap-x-2 border-b pb-4">
+                                <div v-if="condition.condition_expression" class="grid grid-cols-3 gap-x-2 border-b pb-4">
                                     <ArrowCurvedRightIcon class="mt-2 h-10 w-10"/>
                                     <ConditionDestinations
                                         :options="options.actions"
-
+                                        :selectedItems="null"
+                                        :initWith="1"
                                         :customClass="'grid-cols-4 col-span-2'"
                                         @update:model-value="value => handleConditionActionsUpdate(value, index)"
                                     />
@@ -180,9 +177,6 @@
                                 </ejs-tooltip>
                             </div>
                         </div>
-                        <pre>
-                        {{conditions}}
-                            </pre>
                     </div>
                     <div class="sm:col-span-12">
                         <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
@@ -225,9 +219,6 @@
                         </div>
                     </div>
                 </div>
-                <pre>
-                    {{form.destination_conditions}}
-                </pre>
             </div>
         </div>
         <div class="border-t mt-4 sm:mt-4 ">
@@ -278,7 +269,7 @@ const conditions = ref([])
 
 const conditionsMaxLimit = 6;
 
-const selectedTab = ref(1)
+const selectedTab = ref(0)
 
 const form = reactive({
     domain_uuid: page.props.domain,
@@ -343,9 +334,10 @@ const handleFaxUpdate = (newSelectedItem) => {
     }
 }
 
-const handleConditionUpdate = (newSelectedItem, index) => {
-    if (newSelectedItem !== null && newSelectedItem !== undefined) {
-        conditions.value[index].condition_field = newSelectedItem.value;
+const handleConditionUpdate = (newValue, index) => {
+    console.log(newValue)
+    if (newValue !== null && newValue !== undefined) {
+        conditions.value[index].condition_field = newValue.value;
     }
 }
 
