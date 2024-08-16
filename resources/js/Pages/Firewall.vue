@@ -55,7 +55,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="8">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
