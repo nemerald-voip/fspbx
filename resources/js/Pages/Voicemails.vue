@@ -27,22 +27,7 @@
                     Create
                 </button>
 
-                <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Profiles
-                </a>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
-                    @click.prevent="handleShowGlobal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
-                </button>
-
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
-                    @click.prevent="handleShowLocal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
-                </button>
             </template>
 
             <template #navigation>
@@ -64,7 +49,7 @@
                 <TableColumnHeader header="Email address" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -95,19 +80,34 @@
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
                                 @click="page.props.auth.can.voicemail_update && handleEditRequest(row.voicemail_uuid)">
-                                {{ row.voicemail_id }}
+                                <span v-if="row.extension" class="flex items-center">
+                                    <UserIcon class="mr-2 h-5 w-5 text-indigo-500" />
+                                    {{ row.extension.name_formatted }}
+                                </span>
+                                <span v-else class="flex items-center">
+                                    <UserGroupIcon class="mr-2 h-5 w-5 text-green-500" />
+                                    {{ row.voicemail_id }} - Team Voicemail
+                                </span>
                             </div>
                         </div>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_mail_to" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500":text="row.voicemail_enabled" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500":text="row.voicemail_enabled" >
+                        <Badge v-if="row.voicemail_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
+                            textColor="text-green-700"
+                            ringColor="ring-green-600/20" />
+                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50"
+                            textColor="text-rose-700"
+                            ringColor="ring-rose-600/20" />
+
+                        </TableField>
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
+                            <div class="flex items-center whitespace-nowrap justify-end">
                                 <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
@@ -168,14 +168,14 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Box'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
@@ -224,9 +224,12 @@ import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
-import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
+import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
 import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import Badge from "@generalComponents/Badge.vue";
+import { UserGroupIcon, UserIcon } from "@heroicons/vue/24/outline";
+
 
 const page = usePage()
 const loading = ref(false)
@@ -255,7 +258,6 @@ let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
     itemData: Object,
     itemOptions: Object,
@@ -628,7 +630,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
     } else {
         selectedItems.value = [];
     }

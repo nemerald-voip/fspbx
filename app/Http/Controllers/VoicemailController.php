@@ -97,7 +97,7 @@ class VoicemailController extends Controller
 
         // Add sorting criteria
         $this->sortField = request()->get('sortField', 'voicemail_id'); // Default to 'voicemail_id'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
@@ -120,6 +120,9 @@ class VoicemailController extends Controller
         $data =  $this->model::query();
         $domainUuid = session('domain_uuid');
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
+        $data->with(['extension' => function ($query) {
+            $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
+        }]);
 
 
         $data->select(
