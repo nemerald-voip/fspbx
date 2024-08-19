@@ -64,7 +64,7 @@ class FirewallController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData($paginate = 10)
     {
 
         // Check if search parameter is present and not empty
@@ -232,13 +232,19 @@ class FirewallController extends Controller
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
-        return new LengthAwarePaginator(
+
+        $paginator = new LengthAwarePaginator(
             $items->forPage($page, $perPage),
             $items->count(),
             $perPage,
             $page,
             $options
         );
+
+        // Manually set the path to the current route with proper parameters
+        $paginator->setPath(url()->current());
+
+        return $paginator;
     }
 
 
@@ -430,9 +436,32 @@ class FirewallController extends Controller
     public function selectAll()
     {
         try {
-
-            // This needs work.
             $ips = [];
+
+            // Get the full iptables output including all chains
+            $process = new Process(['sudo', 'iptables', '-L', '-n']);
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
+
+            $output = $process->getOutput();
+            $lines = explode("\n", $output);
+
+            foreach ($lines as $line) {
+                // Check if the line contains a DROP or REJECT action
+                if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
+                    // Extract the source IP address (typically the 4th or 5th column)
+                    $parts = preg_split('/\s+/', $line);
+                    if (isset($parts[3]) && filter_var($parts[3], FILTER_VALIDATE_IP)) {
+                        $ips[] = $parts[3];
+                    }
+                }
+            }
+
+            // Ensure uniqueness in case an IP is blocked in multiple chains
+            $ips = array_unique($ips);
 
             // Return a JSON response indicating success
             return response()->json([
