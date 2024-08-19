@@ -3,8 +3,8 @@
 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
     <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
       <nav class="space-y-1">
-        <a v-for="item in navigation" :key="item.name" :href="item.href" :class="[item.current ? 'bg-gray-200 text-indigo-700 hover:bg-white hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']" :aria-current="item.current ? 'page' : undefined">
-          <component :is="item.icon" :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']" aria-hidden="true" />
+        <a v-for="item in props.options.navigation" :key="item.name" :href="item.href" :class="[item.current ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']" :aria-current="item.current ? 'page' : undefined">
+          <component :is="iconComponents[item.icon]" :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']" aria-hidden="true" />
           <span class="truncate">{{ item.name }}</span>
         </a>
       </nav>
@@ -13,9 +13,9 @@
     <div class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
       <form action="#" method="POST">
         <div class="shadow sm:overflow-hidden sm:rounded-md">
-          <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
+          <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
             <div>
-              <h3 class="text-base font-semibold leading-6 text-gray-900">Profile</h3>
+              <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
               <p class="mt-1 text-sm text-gray-500">This information will be displayed publicly so be careful what you share.</p>
             </div>
 
@@ -76,9 +76,9 @@
 
       <form action="#" method="POST">
         <div class="shadow sm:overflow-hidden sm:rounded-md">
-          <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
+          <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
             <div>
-              <h3 class="text-base font-semibold leading-6 text-gray-900">Personal Information</h3>
+              <h3 class="text-base font-semibold leading-6 text-gray-900">Greetings</h3>
               <p class="mt-1 text-sm text-gray-500">Use a permanent address where you can recieve mail.</p>
             </div>
 
@@ -136,9 +136,9 @@
 
       <form action="#" method="POST">
         <div class="shadow sm:overflow-hidden sm:rounded-md">
-          <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
+          <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
             <div>
-              <h3 class="text-base font-semibold leading-6 text-gray-900">Notifications</h3>
+              <h3 class="text-base font-semibold leading-6 text-gray-900">Advanced</h3>
               <p class="mt-1 text-sm text-gray-500">Provide basic information about the job. Be specific with the job title.</p>
             </div>
 
@@ -223,9 +223,10 @@ import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
+import VoicemailIcon from "../icons/VoicemailIcon.vue"
 
 //Delete next line
-import { CreditCardIcon, KeyIcon, SquaresPlusIcon, UserCircleIcon, UserGroupIcon } from '@heroicons/vue/24/outline'
+import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
 
 const props = defineProps({
@@ -234,13 +235,20 @@ const props = defineProps({
     errors: Object,
 });
 
-const navigation = [
-  { name: 'Account', href: '#', icon: UserCircleIcon, current: true },
-  { name: 'Password', href: '#', icon: KeyIcon, current: false },
-  { name: 'Plan & Billing', href: '#', icon: CreditCardIcon, current: false },
-  { name: 'Team', href: '#', icon: UserGroupIcon, current: false },
-  { name: 'Integrations', href: '#', icon: SquaresPlusIcon, current: false },
-]
+// Map icon names to their respective components
+const iconComponents = {
+    'Cog6ToothIcon': Cog6ToothIcon,
+    'MusicalNoteIcon': MusicalNoteIcon,
+    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+};
+
+// const navigation = [
+//   { name: 'Account', href: '#', icon: UserCircleIcon, current: true },
+//   { name: 'Password', href: '#', icon: KeyIcon, current: false },
+//   { name: 'Plan & Billing', href: '#', icon: CreditCardIcon, current: false },
+//   { name: 'Team', href: '#', icon: UserGroupIcon, current: false },
+//   { name: 'Integrations', href: '#', icon: SquaresPlusIcon, current: false },
+// ]
 
 const page = usePage();
 

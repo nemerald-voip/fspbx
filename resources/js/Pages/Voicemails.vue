@@ -260,7 +260,6 @@ const props = defineProps({
     data: Object,
     routes: Object,
     itemData: Object,
-    itemOptions: Object,
 });
 
 
@@ -269,7 +268,7 @@ const filterData = ref({
     showGlobal: props.showGlobal,
 });
 
-const showGlobal = ref(props.showGlobal);
+const itemOptions = ref({})
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -493,20 +492,6 @@ const handleCopyToClipboard = (macAddress) => {
 }
 
 
-const handleRestart = (device_uuid) => {
-    axios.post(props.routes.restart,
-        { 'devices': [device_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
-
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -562,28 +547,40 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+const getItemOptions = () => {
 
+    axios.post(props.routes.item_options)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            console.log(response.data.navigation);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
         });
+
+    // router.get(props.routes.item_options,
+    //     {
+    //         'domain_uuid': domain_uuid,
+    //     },
+    //     {
+    //         preserveScroll: true,
+    //         preserveState: true,
+    //         only: [
+    //             'itemOptions',
+    //         ],
+    //         onSuccess: (page) => {
+    //             loadingModal.value = false;
+    //         },
+    //         onFinish: () => {
+    //             loadingModal.value = false;
+    //         },
+    //         onError: (errors) => {
+    //             console.log(errors);
+    //         },
+
+    //     });
 }
 
 const handleFormErrorResponse = (error) => {

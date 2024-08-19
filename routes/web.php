@@ -128,6 +128,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
+    Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
 
     // Voicemail Messages
     Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index'])->name('voicemails.messages.index');

@@ -50,11 +50,11 @@ class VoicemailController extends Controller
 
                 'routes' => [
                     'current_page' => route('voicemails.index'),
-                    'store' => route('messages.store'),
-                    'select_all' => route('messages.select.all'),
-                    'bulk_delete' => route('messages.bulk.delete'),
-                    'bulk_update' => route('messages.bulk.update'),
-                    'retry' => route('messages.retry'),
+                    // 'store' => route('messages.store'),
+                    // 'select_all' => route('messages.select.all'),
+                    // 'bulk_delete' => route('messages.bulk.delete'),
+                    // 'bulk_update' => route('messages.bulk.update'),
+                    'item_options' => route('voicemails.item.options'),
                 ]
             ]
         );
@@ -553,5 +553,75 @@ class VoicemailController extends Controller
                 ]);
             }
         }
+    }
+
+
+    public function getItemOptions()
+    {
+        $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+
+        $navigation = [
+            [
+                'name' => 'Settings',
+                'href' => '#',
+                'icon' => 'Cog6ToothIcon',
+                'current' => true,
+            ],
+            [
+                'name' => 'Greetings',
+                'href' => '#',
+                'icon' => 'MusicalNoteIcon',
+                'current' => false,
+            ],
+            [
+                'name' => 'Advanced',
+                'href' => '#',
+                'icon' => 'AdjustmentsHorizontalIcon',
+                'current' => false,
+            ],
+
+        ];
+
+
+        // Construct the itemOptions object
+        $itemOptions = [
+            'navigation' => $navigation,
+            // 'profiles' => getProfileCollection($domain_uuid),
+            // 'extensions' => $extensionOptions,
+            // 'domains' => $domainOptions,
+            // Define options for other fields as needed
+        ];
+        return $itemOptions;
+        
+        
+        // Define the options for the 'extensions' field
+        $extensions = Extensions::where('domain_uuid', $domain_uuid)
+            ->get([
+                'extension_uuid',
+                'extension',
+                'effective_caller_id_name',
+            ]);
+
+        $extensionOptions = [];
+        // Loop through each extension and create an option
+        foreach ($extensions as $extension) {
+            $extensionOptions[] = [
+                'value' => $extension->extension,
+                'name' => $extension->name_formatted,
+            ];
+        }
+
+        // $domainOptions = [];
+        // // Loop through each domain and create an option
+        // if (session('domains')) {
+        //     foreach (session('domains') as $domain) {
+        //         $domainOptions[] = [
+        //             'value' => $domain->domain_uuid,
+        //             'name' => $domain->domain_description,
+        //         ];
+        //     }
+        // }
+
+
     }
 }
