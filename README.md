@@ -93,6 +93,23 @@ Add your mail server in .env file
 ### Usage
 After completing the installation steps, you can access the application at your domain.
 
+
+### How to update
+After pulling the updates, run this command to install them.
+
+   ```bash
+   php artisan app:update
+   ```
+Check if there are any pending database updates.
+
+   ```bash
+   php artisan migrate:status
+   ```
+If you find any updates pending, run this command to install them. 
+   ```bash
+   php artisan migrate
+   ```
+
 ### Contact
 For any questions or feedback, please contact us for support.
 
