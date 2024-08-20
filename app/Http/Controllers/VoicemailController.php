@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Domain;
+use App\Models\Extensions;
 use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -563,37 +564,22 @@ class VoicemailController extends Controller
         $navigation = [
             [
                 'name' => 'Settings',
-                'href' => '#',
                 'icon' => 'Cog6ToothIcon',
-                'current' => true,
+                'slug' => 'settings',
             ],
             [
                 'name' => 'Greetings',
-                'href' => '#',
                 'icon' => 'MusicalNoteIcon',
-                'current' => false,
+                'slug' => 'greetings',
             ],
             [
                 'name' => 'Advanced',
-                'href' => '#',
                 'icon' => 'AdjustmentsHorizontalIcon',
-                'current' => false,
+                'slug' => 'advanced',
             ],
 
         ];
 
-
-        // Construct the itemOptions object
-        $itemOptions = [
-            'navigation' => $navigation,
-            // 'profiles' => getProfileCollection($domain_uuid),
-            // 'extensions' => $extensionOptions,
-            // 'domains' => $domainOptions,
-            // Define options for other fields as needed
-        ];
-        return $itemOptions;
-        
-        
         // Define the options for the 'extensions' field
         $extensions = Extensions::where('domain_uuid', $domain_uuid)
             ->get([
@@ -603,13 +589,24 @@ class VoicemailController extends Controller
             ]);
 
         $extensionOptions = [];
-        // Loop through each extension and create an option
-        foreach ($extensions as $extension) {
-            $extensionOptions[] = [
-                'value' => $extension->extension,
-                'name' => $extension->name_formatted,
-            ];
-        }
+            // Loop through each extension and create an option
+            foreach ($extensions as $extension) {
+                $extensionOptions[] = [
+                    'value' => $extension->extension,
+                    'name' => $extension->name_formatted,
+                ];
+            }
+
+
+        // Construct the itemOptions object
+        $itemOptions = [
+            'navigation' => $navigation,
+            'extensions' => $extensionOptions,
+            // 'extensions' => $extensionOptions,
+            // 'domains' => $domainOptions,
+            // Define options for other fields as needed
+        ];
+        return $itemOptions;
 
         // $domainOptions = [];
         // // Loop through each domain and create an option

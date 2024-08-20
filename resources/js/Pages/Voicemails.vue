@@ -553,7 +553,7 @@ const getItemOptions = () => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(response.data.navigation);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
