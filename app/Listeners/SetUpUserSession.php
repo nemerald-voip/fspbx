@@ -213,25 +213,40 @@ class SetUpUserSession
                     ->where('domain_enabled', '=', 't')
                     ->orderBy('domain_name', 'asc')
                     ->orderBy('domain_description', 'asc')
-                    ->get([
+                    ->selectRaw('coalesce(domain_description, domain_name) as domain_description')
+                    ->addSelect([
                         'domain_uuid',
                         'domain_parent_uuid',
                         'domain_name',
                         'domain_enabled',
-                        DB::Raw('coalesce(domain_description , domain_name) as domain_description')
-                    ]);
+                    ])
+                    ->get();
+
             } elseif (userCheckPermission("domain_select")) {
-                $domains = DB::table('v_domains')
-                    ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
-                    ->where('v_domains.domain_enabled', '=', 't')
-                    ->where('user_uuid', '=', $event->user->user_uuid)
-                    ->get([
+                $domains = Domain::where('v_domains.domain_enabled', '=', 't')
+                    ->whereHas('user_permissions', function ($query) use ($event) {
+                        $query->where('user_uuid', '=', $event->user->user_uuid);
+                    })
+                    ->selectRaw('coalesce(domain_description, domain_name) as domain_description')
+                    ->addSelect([
                         'v_domains.domain_uuid',
                         'v_domains.domain_parent_uuid',
                         'v_domains.domain_name',
                         'v_domains.domain_enabled',
-                        DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
-                    ]);
+                    ])
+                    ->get();
+
+                // $domains = DB::table('v_domains')
+                //     ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
+                //     ->where('v_domains.domain_enabled', '=', 't')
+                //     ->where('user_uuid', '=', $event->user->user_uuid)
+                //     ->get([
+                //         'v_domains.domain_uuid',
+                //         'v_domains.domain_parent_uuid',
+                //         'v_domains.domain_name',
+                //         'v_domains.domain_enabled',
+                //         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
+                //     ]);
 
                 $domains_from_groups = DB::table('v_domains')
                     ->join('domain_group_relations', 'v_domains.domain_uuid', '=', 'domain_group_relations.domain_uuid')
@@ -246,6 +261,7 @@ class SetUpUserSession
                         'v_domains.domain_enabled',
                         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
                     ]);
+                
 
                 // foreach ($domains_from_groups as $domain_from_group) {
                 //     if (!$domains->contains($domain_from_group)) {
