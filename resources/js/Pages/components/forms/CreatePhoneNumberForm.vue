@@ -298,12 +298,11 @@ const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 const submitForm = () => {
     // Transform conditions before submit
     form.destination_conditions = conditions.value.map(condition => {
-        console.log(condition)
         return {
             "condition_field": condition.condition_field,
             "condition_expression": condition.condition_expression,
-            "value": {
-                "value": condition.condition_target[0]?.targetValue ?? null
+            "condition_target": {
+                "targetValue": condition.condition_target[0]?.targetValue ?? null
             }
         }
     })

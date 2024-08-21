@@ -42,7 +42,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_actions.*.value.value' => [
+            'destination_actions.*.targetValue' => [
                 'nullable',
                 'string'
             ],
@@ -58,7 +58,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'required_if:destination_conditions.*.condition_field,!=,""',
                 'phone:US'
             ],
-            'destination_conditions.*.value.value' => [
+            'destination_conditions.*.condition_target.targetValue' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
                 'string',
             ],
@@ -120,7 +120,7 @@ class StorePhoneNumberRequest extends FormRequest
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
                 $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
             }
-            if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
+            if (preg_match('/destination_conditions\.(\d+)\.condition_target.targetValue/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
                 $customMessages[$field][] = "Please select action on condition ".($index + 1);
             }
@@ -139,7 +139,7 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_number.required' => 'Phone number is required',
             'destination_number.unique' => 'This phone number is already used',
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
-            'destination_conditions.*.value.value' => 'Please select action on condition',
+            'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }

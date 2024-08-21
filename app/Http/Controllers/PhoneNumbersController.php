@@ -613,10 +613,10 @@ class PhoneNumbersController extends Controller
         if (!empty($inputs['destination_actions'])) {
             $actions = [];
             foreach ($inputs['destination_actions'] as $action) {
-                if (!empty($action['value']['value'])) {
+                if (!empty($action['targetValue'])) {
                     $actions[] = [
                         'destination_app' => 'transfer',
-                        'destination_data' => $action['value']['value'],
+                        'destination_data' => $action['targetValue'],
                     ];
                 }
             }
@@ -627,12 +627,12 @@ class PhoneNumbersController extends Controller
         if (!empty($inputs['destination_conditions'])) {
             $conditions = [];
             foreach ($inputs['destination_conditions'] as $condition) {
-                if (!empty($condition['value']['value'])) {
+                if (!empty($condition['condition_target']['targetValue'])) {
                     $conditions[] = [
                         'condition_field' => $condition['condition_field'],
                         'condition_expression' => $condition['condition_expression'],
                         'condition_app' => 'transfer',
-                        'condition_data' => $condition['value']['value']
+                        'condition_data' => $condition['condition_target']['targetValue']
                     ];
                 }
             }

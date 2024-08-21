@@ -128,13 +128,9 @@ class Destinations extends Model
                     foreach ($model->destination_conditions as $condition) {
                         if (!empty($condition['condition_data'])) {
                             $conditions[] = [
-                                //'id' => 'sss',
                                 'condition_field' => $condition['condition_field'],
                                 'condition_expression' => $condition['condition_expression'],
                                 'condition_target' => [
-                                    //'name' => '',
-                                    //'value' => '',
-                                    //'targetName' => '',
                                     'targetValue' => $condition['condition_data']
                                 ],
                             ];

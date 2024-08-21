@@ -299,8 +299,7 @@ onBeforeMount(() => {
         form.destination_actions = form.destination_actions.map(action => {
             const targetValue = action.targetValue.toLowerCase();
             let matchedAction = action;
-            for (const key in props.options.actions) {
-                const actionGroup = props.options.actions[key];
+            for (const [key, actionGroup] of Object.entries(props.options.actions)) {
                 const option = actionGroup.options.find(opt => opt.value.toLowerCase() === targetValue);
                 if (option) {
                     matchedAction = {
@@ -315,48 +314,39 @@ onBeforeMount(() => {
             return matchedAction;
         });
     }
-
-    /*
     if (form.destination_conditions) {
         conditions.value = form.destination_conditions.map(condition => {
-            const categoryNames = Object.keys(props.options.timeout_destinations_targets);
-
-            let selectedCategory = "";
-            let selectedCategoryTarget = {};
-
-            // look in each category to find the target value
-            for (let category of categoryNames) {
-                const foundInCategory = props.options.timeout_destinations_targets[category].find(target => target.value === condition.value || target.value === condition.value.value);
-                // if found, save the category and target
-                if (foundInCategory) {
-                    selectedCategory = category;
-                    selectedCategoryTarget = foundInCategory;
+            const targetValue = condition.condition_target.targetValue.toLowerCase();
+            let targetMatched = null;
+            for (const [key, actionGroup] of Object.entries(props.options.actions)) {
+                const option = actionGroup.options.find(opt => opt.value.toLowerCase() === targetValue);
+                if (option) {
+                    targetMatched = {
+                        name: actionGroup.name,
+                        value: key,
+                        targetName: option.name,
+                        targetValue: option.value,
+                    };
                     break;
                 }
             }
-
-            // return a new conditions object
             return {
-                id: Math.random().toString(36).slice(2, 7),
-                condition_field: condition.condition_field,
-                condition_expression: condition.condition_expression,
-                selectedCategory: selectedCategory,
-                categoryTargets: props.options.timeout_destinations_targets[selectedCategory] || [],
-                value: selectedCategoryTarget.value
+                ...condition,
+                id: Math.random().toString(36).slice(2, 7),  // Assuming `generateUniqueId()` is a function to generate unique IDs
+                condition_target: targetMatched ? [targetMatched] : condition.condition_target,
             };
         });
-    }*/
+    }
 });
 
 const submitForm = () => {
     // Transform conditions before submit
     form.destination_conditions = conditions.value.map(condition => {
-        console.log(condition)
         return {
             "condition_field": condition.condition_field,
             "condition_expression": condition.condition_expression,
-            "value": {
-                "value": condition.condition_target[0]?.targetValue ?? null
+            "condition_target": {
+                "targetValue": condition.condition_target[0]?.targetValue ?? null
             }
         }
     })
