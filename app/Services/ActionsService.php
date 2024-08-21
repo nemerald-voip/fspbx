@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\CallCenterQueues;
+use App\Models\CallFlows;
 use App\Models\Dialplans;
 use App\Models\Extensions;
+use App\Models\Faxes;
 use App\Models\IvrMenus;
 use App\Models\Recordings;
 use App\Models\RingGroups;
@@ -15,18 +18,18 @@ class ActionsService
     protected ?string $domain = null;
 
     protected array $categories = [
-        //'call_centers' => 'Call Center',
-        //'call_flows' => 'Call Flow',
-        'dialplans' => 'Dial Plan',
+        'call_centers' => 'Call Center',
+        'call_flows' => 'Call Flow',
+        'dial_plans' => 'Dial Plan',
         'extensions' => 'Extension',
-        //'faxes' => 'Fax',
-        //'ivr_menus' => 'IVR',
-        //'recordings' => 'Recording',
-        //'ring_groups' => 'Ring Group',
+        'faxes' => 'Fax',
+        'ivr_menus' => 'IVR',
+        'recordings' => 'Recording',
+        'ring_groups' => 'Ring Group',
         //'time_conditions' => 'Time Condition',
         //'tones' => 'Tone',
-        //'voicemails' => 'Voicemail',
-        //'other' => 'Other'
+        'voicemails' => 'Voicemail',
+        'other' => 'Other'
     ];
 
     public function __construct($domain = null)
@@ -49,6 +52,54 @@ class ActionsService
         return $output;
     }
 
+    protected function call_centersOptions(): array
+    {
+        $options = [];
+        $rows = CallCenterQueues::select('queue_extension', 'queue_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('queue_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->queue_extension, Session::get('domain_name')),
+                'name' => $row->queue_extension." - ".$row->queue_name
+            ];
+        }
+        return $options;
+    }
+
+    protected function call_flowsOptions(): array
+    {
+        $options = [];
+        $rows = CallFlows::select('call_flow_extension', 'call_flow_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('call_flow_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->call_flow_extension, Session::get('domain_name')),
+                'name' => $row->call_flow_extension." - ".$row->call_flow_name
+            ];
+        }
+        return $options;
+    }
+
+    protected function faxesOptions(): array
+    {
+        $options = [];
+        $rows = Faxes::select('fax_extension', 'fax_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('fax_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->fax_extension, Session::get('domain_name')),
+                'name' => $row->fax_extension." - ".$row->fax_name
+            ];
+        }
+        return $options;
+    }
+
     protected function extensionsOptions(): array
     {
         $options = [];
@@ -58,14 +109,14 @@ class ActionsService
             ->get();
         foreach ($rows as $row) {
             $options[] = [
-                'value' => sprintf('%s XML %s', $row->extension, Session::get('domain_name')),
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->extension, Session::get('domain_name')),
                 'name' => $row->extension." - ".$row->effective_caller_id_name
             ];
         }
         return $options;
     }
 
-    protected function dialplansOptions(): array
+    protected function dial_plansOptions(): array
     {
         $options = [];
         $rows = Dialplans::select('dialplan_name')
@@ -77,164 +128,136 @@ class ActionsService
             ->get();
         foreach ($rows as $row) {
             $options[] = [
-                'value' => sprintf('%s XML %s', $row->dialplan_name, Session::get('domain_name')),
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->dialplan_name, Session::get('domain_name')),
                 'name' => $row->dialplan_name
             ];
         }
         return $options;
     }
 
-    /*
-    protected function getOptionsByCategory($key): array
+    protected function ivr_menusOptions(): array
     {
-        $output = [];
-        //$selectedCategory = null;
-        //$selectedDestination = null;
-        $rows = null;
+        $options = [];
+        $rows = IvrMenus::select('ivr_menu_extension', 'ivr_menu_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('ivr_menu_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->ivr_menu_extension, Session::get('domain_name')),
+                'name' => $row->ivr_menu_extension." - ".$row->ivr_menu_name
+            ];
+        }
+        return $options;
+    }
 
+    protected function recordingsOptions(): array
+    {
+        $options = [];
+        $rows = Recordings::select('recording_filename', 'recording_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('recording_name')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:streamfile.lua %s', 'lua', $row->recording_filename),
+                'name' => $row->recording_name
+            ];
+        }
+        return $options;
+    }
 
+    protected function ring_groupsOptions(): array
+    {
+        $options = [];
+        $rows = RingGroups::select('ring_group_extension', 'ring_group_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('ring_group_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->ring_group_extension, Session::get('domain_name')),
+                'name' => $row->ring_group_extension." - ".$row->ring_group_name
+            ];
+        }
+        return $options;
+    }
 
-        return $this->{ucfirst($key).'Options'}();
-
-
-
-
-
-        switch ($key) {
-            case 'call_centers':
-            case 'call_flows':
-            case 'fax':
-            case 'time_conditions':
-            case 'tones':
-                $options = [];
-                break;
-            /*case 'dialplans':
-                $options = Dialplans::select('dialplan_name')
-                    ->where('domain_uuid', $domain_uuid)
-                    ->where('dialplan_enabled', 'true')
-                    ->where('dialplan_destination', 'true')
-                    ->where('dialplan_number', '<>', '')
-                    ->orderBy('dialplan_name')
-                    ->get();
-                break;
-            case 'extensions':
-                $options = Extensions::select('extension', 'effective_caller_id_name')
-                    ->where('domain_uuid', $domain_uuid)
-                    ->orderBy('extension')
-                    ->get();
-                break;
-            /*case 'ivr_menus':
-                $options = IvrMenus::where('domain_uuid', $domain_uuid)
-                    ->orderBy('ivr_menu_extension')
-                    ->get();
-                break;
-            case 'recordings':
-                $options = Recordings::where('domain_uuid', $domain_uuid)
-                    ->orderBy('recording_name')
-                    ->get();
-                break;
-            case 'ring_groups':
-                $options = RingGroups::where('domain_uuid', $domain_uuid)
-                    ->where('ring_group_enabled', 'true')
-                    ->orderBy('ring_group_extension')
-                    ->get();
-                break;
-            case 'voicemails':
-                $options = Voicemails::select('voicemail_id', 'voicemail_description')
-                    ->where('domain_uuid', $domain_uuid)
-                    ->where('voicemail_enabled', 'true')
-                    ->orderBy('voicemail_id')
-                    ->get();
-                break;
-            case 'other':
-                $options = [
-                    [
-                        'id' => sprintf('*98 XML %s', $domain_name),
-                        'label' => 'Check Voicemail'
-                    ],
-                    [
-                        'id' => sprintf('*411 XML %s', $domain_name),
-                        'label' => 'Company Directory'
-                    ],
-                    ['id' => 'hangup:', 'label' => 'Hangup'],
-                    [
-                        'id' => sprintf('*732 XML %s', $domain_name),
-                        'label' => 'Record'
-                    ]
-                ];
-                break;*/
-        //}
-
-       /* if ($rows) {
-            foreach ($rows as $row) {
-                switch ($category) {
-                    case 'call_centers':
-                    case 'call_flows':
-                    case 'fax':
-                    case 'time_conditions':
-                    case 'tones':
-                        $rows = [];
-                        break;
-                    case 'dialplans':
-                        $rows = Dialplans::where('domain_uuid', $domain_uuid)
-                            ->where('dialplan_enabled', 'true')
-                            ->where('dialplan_destination', 'true')
-                            ->where('dialplan_number', '<>', '')
-                            ->orderBy('dialplan_name')
-                            ->get();
-                        break;
-                    case 'extensions':
-                        $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
-                        $label = $row->extension." - ".$row->effective_caller_id_name;
-                        $app_name = "Extension";
-                        break;
-                    case 'ivr_menus':
-                        $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
-                        $label = $row->ivr_menu_extension." - ".$row->ivr_menu_name;
-                        $app_name = "Auto Receptionist";
-                        break;
-                    case 'recordings':
-                        $id = sprintf('streamfile.lua %s', $row->recording_filename);
-                        $label = $row->recording_name;
-                        $app_name = "Recordings";
-                        break;
-                    case 'ring_groups':
-                        $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
-                        $label = $row->ring_group_extension." - ".$row->ring_group_name;
-                        $app_name = "Ring Group";
-                        break;
-                    case 'voicemails':
-                        $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
-                        $label = $row->voicemail_id;
-                        if ($row->extension) {
-                            $label .= " - ".$row->extension->effective_caller_id_name;
-                        } elseif ($row->voicemail_description != '') {
-                            $label .= " - ".$row->voicemail_description;
-                        }
-                        $app_name = "Voicemail";
-                        break;
-                    case 'other':
-                        $id = $row['id'];
-                        $label = $row['label'];
-                        $app_name = "Miscellaneous";
-                        break;
-                }
-
-
-                if (isset($id)) {
-
-                    // Add to the output array
-                    $output[] = [
-                        'id' => $id,
-                        'label' => $label,
-                        'app_name' => $app_name,
-                    ];
-                }
-            }
+    protected function time_conditionsOptions(): array
+    {
+        $options = [];
+        /*$rows = RingGroups::select('ring_group_extension', 'ring_group_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('ring_group_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name')),
+                'name' => $row->ring_group_extension." - ".$row->ring_group_name
+            ];
         }*/
+        return $options;
+    }
 
-        //return $output;
-    //}
+    protected function tonesOptions(): array
+    {
+        // [{"destination_app":"playback","destination_data":"tone_stream:\/\/v"},
+        //{"destination_app":"playback","destination_data":"tone_stream:\/\/%(500,500,480,620)"},
+        //{"destination_app":"playback","destination_data":"tone_stream:\/\/v"},
+        //{"destination_app":"playback","destination_data":"tone_stream:\/\/%(330,15,950);%(330,15,1400);%(330,1000,1800)"},
+        //{"destination_app":"playback","destination_data":"tone_stream:\/\/%(274,0,913.8);%(274,0,1370.6);%(380,0,1776.7)"}]
+        $options = [];
+        // TODO
+        /*$rows = RingGroups::select('ring_group_extension', 'ring_group_name')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('ring_group_extension')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name')),
+                'name' => $row->ring_group_extension." - ".$row->ring_group_name
+            ];
+        }*/
+        return $options;
+    }
+
+    protected function voicemailsOptions(): array
+    {
+        $options = [];
+        $rows = Voicemails::select('voicemail_id', 'voicemail_description')
+            ->where('domain_uuid', Session::get('domain_uuid'))
+            ->orderBy('voicemail_id')
+            ->get();
+        foreach ($rows as $row) {
+            $options[] = [
+                'value' => sprintf('%s:%s%s XML %s', 'transfer', '*99', $row->voicemail_id, Session::get('domain_name')),
+                'name' => $row->voicemail_id." - ".$row->voicemail_description
+            ];
+        }
+        return $options;
+    }
+
+    protected function otherOptions(): array
+    {
+        return [
+            [
+                'value' => sprintf('%s:%s XML %s', 'transfer', '*98', Session::get('domain_name')),
+                'name' => 'Check Voicemail'
+            ],
+            [
+                'value' => sprintf('%s:%s XML %s', 'transfer', '*411', Session::get('domain_name')),
+                'name' => 'Company Directory'
+            ],
+            [
+                'value' => 'hangup:',
+                'name' => 'Hangup'
+            ],
+            [
+                'value' => sprintf('%s:%s XML %s', 'transfer', '*732', Session::get('domain_name')),
+                'name' => 'Record'
+            ]
+        ];
+    }
 
     protected function getTimeoutDestinationsLabels(array $actions, $domain = null): array
     {
