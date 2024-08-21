@@ -20,18 +20,8 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
 
-                            <SwitchGroup as="div" class="flex items-center justify-between gap-2">
-                                <span class="flex flex-grow flex-col">
-                                    <SwitchLabel as="span" class="text-sm font-medium leading-6 text-gray-900" passive>
-                                        Enabled</SwitchLabel>
-
-                                </span>
-                                <Switch v-model="voicemail_enabled"
-                                    :class="[voicemail_enabled ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
-                                    <span aria-hidden="true"
-                                        :class="[voicemail_enabled ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                </Switch>
-                            </SwitchGroup>
+                            <Toggle label="Status" :enabled="form.voicemail_enabled"
+                                @update:status="handleEnabledSettingUpdate" />
 
                             <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
                         </div>
@@ -44,7 +34,7 @@
 
                             <div class="col-span-3 sm:col-span-2">
                                 <LabelInputOptional target="voicemail_password" label="PIN" class="truncate" />
-                                <InputField type="text" name="voicemail_password" id="voicemail_password" class="mt-2" />
+                                <InputField type="password" name="voicemail_password" id="voicemail_password" class="mt-2" />
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
@@ -61,52 +51,26 @@
 
                             <div class="divide-y divide-gray-200 col-span-6">
 
-                                <Toggle label="Voicemail Transcription" description="Convert voicemail messages to text using AI-powered transcription."
-                                    :enabled="form.voicemail_transcription_enabled" @update:status="handleTranscriptionSettingUpdate"
+                                <Toggle label="Voicemail Transcription"
+                                    description="Convert voicemail messages to text using AI-powered transcription."
+                                    :enabled="form.voicemail_transcription_enabled"
+                                    @update:status="handleTranscriptionSettingUpdate" customClass="py-4" />
+
+                                <Toggle label="Email Notifications"
+                                    description="Receive an email when a new voicemail is received."
+                                    :enabled="form.voicemail_email_notification_enabled"
+                                    @update:status="handleEmailNotificationSettingUpdate" customClass="py-4" />
+
+                                <Toggle label="Automatically Delete Voicemail After Email"
+                                    description="Remove voicemail from the cloud once the email is sent."
+                                    :enabled="form.voicemail_delete" @update:status="handleEmailNotificationSettingUpdate"
                                     customClass="py-4" />
-
-                                <Toggle label="Email Notifications" description="Receive an email when a new voicemail is received."
-                                    :enabled="form.voicemail_email_notification_enabled" @update:status="handleEmailNotificationSettingUpdate"
-                                    customClass="py-4" />
-
-
-                                <SwitchGroup as="div" class="flex items-center justify-between py-4">
-                                    <span class="flex flex-grow flex-col">
-                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900"
-                                            passive>
-                                            Email Notifications</SwitchLabel>
-                                        <SwitchDescription as="span" class="text-sm text-gray-500">
-                                            Receive an email when a new voicemail is received.
-                                        </SwitchDescription>
-                                    </span>
-                                    <Switch v-model="voicemail_email_notification_enabled"
-                                        :class="[voicemail_email_notification_enabled ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
-                                        <span aria-hidden="true"
-                                            :class="[voicemail_email_notification_enabled ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                    </Switch>
-                                </SwitchGroup>
-
-                                <SwitchGroup as="div" class="flex items-center justify-between py-4">
-                                    <span class="flex flex-grow flex-col">
-                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900"
-                                            passive>
-                                            Automatically Delete Voicemail After Email</SwitchLabel>
-                                        <SwitchDescription as="span" class="text-sm text-gray-500">
-                                            Remove voicemail from the cloud once the email is sent.
-                                        </SwitchDescription>
-                                    </span>
-                                    <Switch v-model="voicemail_delete"
-                                        :class="[voicemail_delete ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
-                                        <span aria-hidden="true"
-                                            :class="[voicemail_delete ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                    </Switch>
-                                </SwitchGroup>
 
                             </div>
 
                             <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
-                                <label class="mb-1 block text-sm font-medium leading-6 text-gray-900">Copy Voicemail to
-                                    Other Extensions</label>
+                                <LabelInputOptional label="Copy Voicemail to
+                                    Other Extensions" class="truncate mb-1" />
 
                                 <ComboBox :options="options.extensions" :search="true" multiple
                                     :placeholder="'Enter name or extension'"
@@ -327,9 +291,6 @@ const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
-const voicemail_enabled = ref(true)
-const voicemail_email_notification_enabled = ref(true)
-const voicemail_delete = ref(false)
 const voicemail_tutorial = ref(false)
 const voicemail_play_recording_instructions = ref(true)
 
@@ -345,10 +306,10 @@ const iconComponents = {
 const page = usePage();
 
 const form = reactive({
-    device_address: null,
+    voicemail_enabled: true,
     voicemail_transcription_enabled: true,
-    device_profile_uuid: null,
-    extension: null,
+    voicemail_email_notification_enabled: true,
+    voicemail_delete: false,
     _token: page.props.csrf_token,
 })
 
@@ -359,15 +320,15 @@ const submitForm = () => {
 }
 
 const handleTranscriptionSettingUpdate = (newSelectedItem) => {
-    form.device_template = newSelectedItem.value
+    form.voicemail_transcription_enabled = newSelectedItem.value
 }
 
-const handleProfileUpdate = (newSelectedItem) => {
-    form.device_profile_uuid = newSelectedItem.value
+const handleEmailNotificationSettingUpdate = (newSelectedItem) => {
+    form.voicemail_email_notification_enabled = newSelectedItem.value
 }
 
-const handleExtensionUpdate = (newSelectedItem) => {
-    form.extension = newSelectedItem.value
+const handleEnabledSettingUpdate = (newSelectedItem) => {
+    form.voicemail_enabled = newSelectedItem.value
 }
 
 
