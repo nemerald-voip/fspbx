@@ -614,10 +614,7 @@ class PhoneNumbersController extends Controller
             $actions = [];
             foreach ($inputs['destination_actions'] as $action) {
                 if (!empty($action['targetValue'])) {
-                    $actions[] = [
-                        'destination_app' => 'transfer',
-                        'destination_data' => $action['targetValue'],
-                    ];
+                    $actions[] = $this->findActionConditionApp($action['targetValue']);
                 }
             }
             $inputs['destination_actions'] = json_encode($actions);
@@ -628,12 +625,10 @@ class PhoneNumbersController extends Controller
             $conditions = [];
             foreach ($inputs['destination_conditions'] as $condition) {
                 if (!empty($condition['condition_target']['targetValue'])) {
-                    $conditions[] = [
-                        'condition_field' => $condition['condition_field'],
-                        'condition_expression' => $condition['condition_expression'],
-                        'condition_app' => 'transfer',
-                        'condition_data' => $condition['condition_target']['targetValue']
-                    ];
+                    $data = $this->findActionConditionApp($condition['condition_target']['targetValue'], 'condition');
+                    $data['condition_field'] = $condition['condition_field'];
+                    $data['condition_expression'] = $condition['condition_expression'];
+                    $conditions[] = $data;
                 }
             }
             $inputs['destination_conditions'] = json_encode($conditions);
@@ -644,6 +639,14 @@ class PhoneNumbersController extends Controller
         return $inputs;
     }
 
+    private function findActionConditionApp($action, $prefix = 'destination') {
+        $pattern = '/^(transfer|lua|playback):(.*)$/';
+        if (preg_match($pattern, $action, $matches)) {
+            return [$prefix.'_app' => $matches[1], $prefix.'_data' => trim($matches[2])];
+        } else {
+            throw new \Exception('Unknown action: ' . $action);
+        }
+    }
 
     private function clearCache($phoneNumber)
     {
@@ -660,7 +663,6 @@ class PhoneNumbersController extends Controller
             }
         }
     }
-
 
     private function generateDialplanDetails(Destinations $phoneNumber, Dialplans $dialPlan): void
     {
@@ -966,394 +968,5 @@ class PhoneNumbersController extends Controller
                 $detailOrder += 10;
             }
         }
-
-
-
-        //set initial value of the row id
-        /*
-        $y=0;
-
-        //increment the dialplan detail order
-        $dialplan_detail_order = $dialplan_detail_order + 10;
-        $dialplan_detail_group = 0;
-
-        //add the dialplan detail destination conditions
-        if (!empty($conditions)) {
-            foreach($conditions as $row) {
-                //prepare the expression
-                if (is_numeric($row['condition_expression']) && strlen($destination_number) == strlen($row['condition_expression']) && !empty($destination_prefix)) {
-                    $condition_expression = '\+?'.$destination_prefix.'?'.$row['condition_expression'];
-                }
-                else {
-                    $condition_expression = str_replace("+", "\+", $row['condition_expression']);
-                }
-
-                //add to the dialplan_details array - condition regex='all'
-                $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-                $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "condition";
-                $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = 'regex';
-                $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = 'all';
-                $dialplan["dialplan_details"][$y]["dialplan_detail_break"] = 'never';
-                $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-                $y++;
-
-                //increment the dialplan detail order
-                $dialplan_detail_order = $dialplan_detail_order + 10;
-
-                //check the destination number
-                $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-                $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "regex";
-                if (!empty($destination_condition_field)) {
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = $destination_condition_field;
-                }
-                elseif (!empty($_SESSION['dialplan']['destination']['text'])) {
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = $_SESSION['dialplan']['destination']['text'];
-                }
-                else {
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "regex";
-                }
-                $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = $destination_number_regex;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-                $y++;
-
-                //increment the dialplan detail order
-                $dialplan_detail_order = $dialplan_detail_order + 10;
-
-                $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-                $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "regex";
-                $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = $row['condition_field'];
-                $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = '^'.$condition_expression.'$';
-                $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-                $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-                $y++;
-
-                if (isset($row['condition_app']) && !empty($row['condition_app'])) {
-                    if ($destination->valid($row['condition_app'].':'.$row['condition_data'])) {
-
-                        //increment the dialplan detail order
-                        $dialplan_detail_order = $dialplan_detail_order + 10;
-
-                        $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-                        $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-                        $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-                        $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = xml::sanitize($row['condition_app']);
-                        $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = xml::sanitize($row['condition_data']);
-                        $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-                        $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-                        $y++;
-
-                    }
-                }
-
-                //increment the dialplan detail order
-                $dialplan_detail_order = $dialplan_detail_order + 10;
-                $dialplan_detail_group = $dialplan_detail_group + 10;
-            }
-        }
-
-        =----
-
-        //check the destination number
-        $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-        $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-        $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "condition";
-        if (!empty($destination_condition_field)) {
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = $destination_condition_field;
-        }
-        elseif (!empty($_SESSION['dialplan']['destination']['text'])) {
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = $_SESSION['dialplan']['destination']['text'];
-        }
-        else {
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "destination_number";
-        }
-        $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = $destination_number_regex;
-        $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-        $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-
-        $y++;
-
-        //increment the dialplan detail order
-        $dialplan_detail_order = $dialplan_detail_order + 10;
-
-        //add this only if using application bridge
-        if (!empty($destination_app) && $destination_app == 'bridge') {
-            //add hangup_after_bridge
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "hangup_after_bridge=true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add continue_on_fail
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "continue_on_fail=true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-        }
-
-        //increment the dialplan detail order
-        $dialplan_detail_order = $dialplan_detail_order + 10;
-
-        //set the caller id name prefix
-        if (!empty($destination_cid_name_prefix)) {
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "effective_caller_id_name=".$destination_cid_name_prefix."#\${caller_id_name}";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "false";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //set the call accountcode
-        if (!empty($destination_accountcode)) {
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "export";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "accountcode=".$destination_accountcode;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //set the call carrier
-        if (!empty($destination_carrier)) {
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "carrier=$destination_carrier";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //set the hold music
-        if (!empty($destination_hold_music)) {
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "export";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "hold_music=".$destination_hold_music;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //set the distinctive ring
-        if (!empty($destination_distinctive_ring)) {
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "export";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "sip_h_Alert-Info=".$destination_distinctive_ring;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //add fax detection
-        if (is_uuid($fax_uuid)) {
-
-            //add set tone detect_hits=1
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "tone_detect_hits=1";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //execute on tone detect
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "execute_on_tone_detect=transfer ".$fax_extension." XML \${domain_name}";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add tone_detect fax 1100 r +5000
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "tone_detect";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "fax 1100 r +5000";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //add option record to the dialplan
-        if ($destination_record == "true") {
-
-            //add a variable
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "record_path=\${recordings_dir}/\${domain_name}/archive/\${strftime(%Y)}/\${strftime(%b)}/\${strftime(%d)}";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add a variable
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "record_name=\${uuid}.\${record_ext}";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add a variable
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "record_append=true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add a variable
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "record_in_progress=true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add a variable
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "set";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "recording_follow_transfer=true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "true";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-
-            //add a variable
-            $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = "record_session";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = "\${record_path}/\${record_name}";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = "false";
-            $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-            $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-            $y++;
-
-            //increment the dialplan detail order
-            $dialplan_detail_order = $dialplan_detail_order + 10;
-        }
-
-        //add the actions
-        foreach($destination_actions as $field) {
-            $action_array = explode(":", $field, 2);
-            $action_app = $action_array[0] ?? null;
-            $action_data = $action_array[1] ?? null;
-            if (isset($action_array[0]) && !empty($action_array[0])) {
-                if ($destination->valid($action_app.':'.$action_data)) {
-                    //add to the dialplan_details array
-                    $dialplan["dialplan_details"][$y]["domain_uuid"] = $domain_uuid;
-                    $dialplan["dialplan_details"][$y]["dialplan_uuid"] = $dialplan_uuid;
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_tag"] = "action";
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_type"] = $action_app;
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_data"] = $action_data;
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_group"] = $dialplan_detail_group;
-                    $dialplan["dialplan_details"][$y]["dialplan_detail_order"] = $dialplan_detail_order;
-
-                    //set inline to true
-                    if ($action_app == 'set' || $action_app == 'export') {
-                        $dialplan["dialplan_details"][$y]["dialplan_detail_inline"] = 'true';
-                    }
-                    $y++;
-
-                    //increment the dialplan detail order
-                    $dialplan_detail_order = $dialplan_detail_order + 10;
-                }
-            }
-        }
-        */
     }
 }

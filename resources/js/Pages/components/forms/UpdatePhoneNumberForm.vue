@@ -300,7 +300,7 @@ onBeforeMount(() => {
             const targetValue = action.targetValue.toLowerCase();
             let matchedAction = action;
             for (const [key, actionGroup] of Object.entries(props.options.actions)) {
-                const option = actionGroup.options.find(opt => opt.value.toLowerCase() === targetValue);
+                const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
                 if (option) {
                     matchedAction = {
                         name: actionGroup.name,
@@ -319,7 +319,7 @@ onBeforeMount(() => {
             const targetValue = condition.condition_target.targetValue.toLowerCase();
             let targetMatched = null;
             for (const [key, actionGroup] of Object.entries(props.options.actions)) {
-                const option = actionGroup.options.find(opt => opt.value.toLowerCase() === targetValue);
+                const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
                 if (option) {
                     targetMatched = {
                         name: actionGroup.name,
@@ -341,6 +341,7 @@ onBeforeMount(() => {
 
 const submitForm = () => {
     // Transform conditions before submit
+    console.log(conditions.value)
     form.destination_conditions = conditions.value.map(condition => {
         return {
             "condition_field": condition.condition_field,
@@ -383,7 +384,6 @@ const handleFaxUpdate = (newSelectedItem) => {
 }
 
 const handleConditionUpdate = (newValue, index) => {
-    console.log(newValue)
     if (newValue !== null && newValue !== undefined) {
         conditions.value[index].condition_field = newValue.value;
     }
@@ -405,6 +405,7 @@ const addCondition = () => {
 
 const handleConditionActionsUpdate = (newValue, index) => {
     if (newValue !== null && newValue !== undefined) {
+        conditions.value[index].condition_target = [];
         conditions.value[index].condition_target.push(newValue[0]);
     }
 }
