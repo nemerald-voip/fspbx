@@ -20,8 +20,8 @@
                         <div class="flex justify-between items-center">
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
 
-                            <SwitchGroup as="div" class="flex items-center justify-between">
-                                <span class="pr-2 flex flex-grow flex-col">
+                            <SwitchGroup as="div" class="flex items-center justify-between gap-2">
+                                <span class="flex flex-grow flex-col">
                                     <SwitchLabel as="span" class="text-sm font-medium leading-6 text-gray-900" passive>
                                         Enabled</SwitchLabel>
 
@@ -38,57 +38,42 @@
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-3 sm:col-span-2">
-                                <label for="voicemail_id"
-                                    class="truncate block text-sm font-medium leading-6 text-gray-900">Voicemail
-                                    Extension</label>
-                                <input type="text" name="voicemail_id" id="voicemail_id"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                                <LabelInputOptional target="voicemail_id" label="Voicemail Extension" class="truncate" />
+                                <InputField type="text" name="voicemail_id" id="voicemail_id" class="mt-2" />
                             </div>
 
                             <div class="col-span-3 sm:col-span-2">
-                                <label for="voicemail_password"
-                                    class="block text-sm font-medium leading-6 text-gray-900">PIN</label>
-                                <input type="text" name="voicemail_password" id="voicemail_password"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                                <LabelInputOptional target="voicemail_password" label="PIN" class="truncate" />
+                                <InputField type="text" name="voicemail_password" id="voicemail_password" class="mt-2" />
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
-                                <label for="voicemail_mail_to"
-                                    class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
-                                <input type="text" name="voicemail_mail_to" id="voicemail_mail_to"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                                <LabelInputOptional target="voicemail_mail_to" label="Email address" class="truncate" />
+                                <InputField type="text" name="voicemail_mail_to" id="voicemail_mail_to" class="mt-2" />
                             </div>
 
                             <div class="col-span-6">
-                                <label for="voicemail_description"
-                                    class="block text-sm font-medium leading-6 text-gray-900">Description</label>
+                                <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
                                 <div class="mt-2">
-                                    <textarea id="voicemail_description" name="voicemail_description" rows="2"
-                                        class="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                        placeholder="" />
+                                    <Textarea id="voicemail_description" name="voicemail_description" rows="2" />
                                 </div>
                             </div>
 
                             <div class="divide-y divide-gray-200 col-span-6">
 
-                                <SwitchGroup as="div" class="flex items-center justify-between py-4">
-                                    <span class="flex flex-grow flex-col">
-                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900" passive>
-                                            Voicemail Transcription</SwitchLabel>
-                                        <SwitchDescription as="span" class="text-sm text-gray-500">
-                                            Convert voicemail messages to text using AI-powered transcription.
-                                        </SwitchDescription>
-                                    </span>
-                                    <Switch v-model="voicemail_transcription_enabled"
-                                        :class="[voicemail_transcription_enabled ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
-                                        <span aria-hidden="true"
-                                            :class="[voicemail_transcription_enabled ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                    </Switch>
-                                </SwitchGroup>
+                                <Toggle label="Voicemail Transcription" description="Convert voicemail messages to text using AI-powered transcription."
+                                    :enabled="form.voicemail_transcription_enabled" @update:status="handleTranscriptionSettingUpdate"
+                                    customClass="py-4" />
+
+                                <Toggle label="Email Notifications" description="Receive an email when a new voicemail is received."
+                                    :enabled="form.voicemail_email_notification_enabled" @update:status="handleEmailNotificationSettingUpdate"
+                                    customClass="py-4" />
+
 
                                 <SwitchGroup as="div" class="flex items-center justify-between py-4">
                                     <span class="flex flex-grow flex-col">
-                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900" passive>
+                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900"
+                                            passive>
                                             Email Notifications</SwitchLabel>
                                         <SwitchDescription as="span" class="text-sm text-gray-500">
                                             Receive an email when a new voicemail is received.
@@ -103,7 +88,8 @@
 
                                 <SwitchGroup as="div" class="flex items-center justify-between py-4">
                                     <span class="flex flex-grow flex-col">
-                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900" passive>
+                                        <SwitchLabel as="span" class="pr-2 text-sm font-medium leading-6 text-gray-900"
+                                            passive>
                                             Automatically Delete Voicemail After Email</SwitchLabel>
                                         <SwitchDescription as="span" class="text-sm text-gray-500">
                                             Remove voicemail from the cloud once the email is sent.
@@ -254,7 +240,8 @@
                                     <SwitchLabel as="span" class="text-sm font-medium leading-6 text-gray-900" passive>
                                         Play Recording Instructions</SwitchLabel>
                                     <SwitchDescription as="span" class="pr-2 text-sm text-gray-500">
-                                        Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."
+                                        Play a prompt instructing callers to "Record your message after the tone. Stop
+                                        speaking to end the recording."
                                     </SwitchDescription>
                                 </span>
                                 <Switch v-model="voicemail_play_recording_instructions"
@@ -268,11 +255,27 @@
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-3 sm:col-span-2">
-                                <label for="voicemail_alternate_greet_id"
-                                    class="truncate block text-sm font-medium leading-6 text-gray-900">Spoken Number Override</label>
+                                <div class="flex items-center gap-1">
+                                    <label for="voicemail_alternate_greet_id"
+                                        class="block text-sm font-medium leading-6 text-gray-900">Announce Voicemail
+                                        Extension as
+                                    </label>
+                                    <Popover>
+                                        <template v-slot:popover-button>
+                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
+                                        </template>
+                                        <template v-slot:popover-panel>
+                                            <div>The parameter allows you to override the voicemail extension number spoken
+                                                by the system in the voicemail greeting. This controls system greetings that
+                                                read back an extension number, not user recorded greetings.</div>
+                                        </template>
+                                    </Popover>
+                                </div>
+
                                 <input type="text" name="voicemail_alternate_greet_id" id="voicemail_alternate_greet_id"
                                     class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
                             </div>
+
                         </div>
 
 
@@ -295,11 +298,16 @@ import { usePage } from '@inertiajs/vue3';
 import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
+import Popover from "@generalComponents/Popover.vue";
+import Textarea from "@generalComponents/Textarea.vue";
+import Toggle from "@generalComponents/Toggle.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
+import { InformationCircleIcon } from "@heroicons/vue/24/outline";
+
 
 
 //Delete next line
@@ -320,7 +328,6 @@ const setActiveTab = (tabSlug) => {
 };
 
 const voicemail_enabled = ref(true)
-const voicemail_transcription_enabled = ref(true)
 const voicemail_email_notification_enabled = ref(true)
 const voicemail_delete = ref(false)
 const voicemail_tutorial = ref(false)
@@ -339,7 +346,7 @@ const page = usePage();
 
 const form = reactive({
     device_address: null,
-    device_template: null,
+    voicemail_transcription_enabled: true,
     device_profile_uuid: null,
     extension: null,
     _token: page.props.csrf_token,
@@ -351,7 +358,7 @@ const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
-const handleTemplateUpdate = (newSelectedItem) => {
+const handleTranscriptionSettingUpdate = (newSelectedItem) => {
     form.device_template = newSelectedItem.value
 }
 
