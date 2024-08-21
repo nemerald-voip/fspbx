@@ -239,7 +239,7 @@
 </template>
 
 <script setup>
-import {defineProps, reactive, ref} from 'vue'
+import {defineProps, reactive, ref, onBeforeMount} from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
@@ -267,6 +267,8 @@ const page = usePage();
 
 const conditions = ref([])
 
+const actions = ref([]);
+
 const conditionsMaxLimit = 6;
 
 const selectedTab = ref(0)
@@ -285,14 +287,36 @@ const form = reactive({
     destination_cid_name_prefix: props.item.destination_cid_name_prefix,
     destination_accountcode: props.item.destination_accountcode,
     destination_distinctive_ring: props.item.destination_distinctive_ring,
-    destination_conditions: props.item.destination_conditions ?? null,
+    destination_conditions: props.item.destination_conditions,
     destination_context: props.item.destination_context,
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
-/*
-onMounted(() => {
+
+onBeforeMount(() => {
+    if (form.destination_actions) {
+        form.destination_actions = form.destination_actions.map(action => {
+            const targetValue = action.targetValue.toLowerCase();
+            let matchedAction = action;
+            for (const key in props.options.actions) {
+                const actionGroup = props.options.actions[key];
+                const option = actionGroup.options.find(opt => opt.value.toLowerCase() === targetValue);
+                if (option) {
+                    matchedAction = {
+                        name: actionGroup.name,
+                        value: key,
+                        targetName: option.name,
+                        targetValue: option.value,
+                    };
+                    break;
+                }
+            }
+            return matchedAction;
+        });
+    }
+
+    /*
     if (form.destination_conditions) {
         conditions.value = form.destination_conditions.map(condition => {
             const categoryNames = Object.keys(props.options.timeout_destinations_targets);
@@ -321,9 +345,9 @@ onMounted(() => {
                 value: selectedCategoryTarget.value
             };
         });
-    }
+    }*/
 });
-*/
+
 const submitForm = () => {
     // Transform conditions before submit
     form.destination_conditions = conditions.value.map(condition => {

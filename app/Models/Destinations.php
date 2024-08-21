@@ -113,7 +113,7 @@ class Destinations extends Model
                     foreach ($model->destination_actions as $action) {
                         if (!empty($action['destination_data'])) {
                             $actions[] = [
-                                'value' => ['value' => $action['destination_data']],
+                                'targetValue' => $action['destination_data'],
                             ];
                         }
                     }
@@ -128,9 +128,15 @@ class Destinations extends Model
                     foreach ($model->destination_conditions as $condition) {
                         if (!empty($condition['condition_data'])) {
                             $conditions[] = [
+                                //'id' => 'sss',
                                 'condition_field' => $condition['condition_field'],
                                 'condition_expression' => $condition['condition_expression'],
-                                'value' => ['value' => $condition['condition_data']],
+                                'condition_target' => [
+                                    //'name' => '',
+                                    //'value' => '',
+                                    //'targetName' => '',
+                                    'targetValue' => $condition['condition_data']
+                                ],
                             ];
                         }
                     }
