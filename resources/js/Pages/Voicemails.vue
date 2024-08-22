@@ -330,6 +330,8 @@ const handleEditRequest = (itemUuid) => {
 }
 
 const handleCreateRequest = (form) => {
+    console.log(form);
+
     createFormSubmiting.value = true;
     formErrors.value = null;
 

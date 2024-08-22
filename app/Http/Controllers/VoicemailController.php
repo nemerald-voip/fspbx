@@ -13,6 +13,7 @@ use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StoreVoicemailRequest;
 
 class VoicemailController extends Controller
 {
@@ -51,7 +52,7 @@ class VoicemailController extends Controller
 
                 'routes' => [
                     'current_page' => route('voicemails.index'),
-                    // 'store' => route('messages.store'),
+                    'store' => route('voicemails.store'),
                     // 'select_all' => route('messages.select.all'),
                     // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
@@ -121,8 +122,9 @@ class VoicemailController extends Controller
         $data =  $this->model::query();
         $domainUuid = session('domain_uuid');
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        $data->with(['extension' => function ($query) {
-            $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
+        $data->with(['extension' => function ($query) use ($domainUuid) {
+            $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                  ->where('domain_uuid', $domainUuid);
         }]);
 
 
@@ -227,9 +229,10 @@ class VoicemailController extends Controller
         return view('layouts.voicemails.createOrUpdate')->with($data);
     }
 
-    public function store(Request $request, Voicemails $voicemail)
+    public function store(StoreVoicemailRequest $request)
     {
 
+        return;
         if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
             return redirect('/');
         }
@@ -247,11 +250,6 @@ class VoicemailController extends Controller
             'voicemail_id' => [
                 'required',
                 'numeric',
-                Rule::unique('App\Models\Extensions', 'extension')
-                    ->ignore($request->extension, 'extension_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
-                Rule::unique('App\Models\Voicemails', 'voicemail_id')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
             ],
             'voicemail_password' => 'numeric|digits_between:3,10',
             'voicemail_mail_to' => 'nullable|email:rfc,dns',
@@ -597,13 +595,20 @@ class VoicemailController extends Controller
                 ];
             }
 
+        $voicemail = new Voicemails();
+        $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
+        $voicemail->voicemail_password = $voicemail->voicemail_id;
+        // logger($voicemail);
+
+        $permissions = $this->getUserPermissions();
+        // logger($permissions);
 
         // Construct the itemOptions object
         $itemOptions = [
             'navigation' => $navigation,
             'extensions' => $extensionOptions,
-            // 'extensions' => $extensionOptions,
-            // 'domains' => $domainOptions,
+            'voicemail' => $voicemail,
+            'permissions' => $permissions,
             // Define options for other fields as needed
         ];
         return $itemOptions;
@@ -619,6 +624,21 @@ class VoicemailController extends Controller
         //     }
         // }
 
+    }
 
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
+        $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
+        $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
+        $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
+
+        // $permissions['manage_voicemail_copies'] = false;
+        // $permissions['manage_voicemail_transcription'] = false;
+        // $permissions['manage_voicemail_auto_delete'] = false;
+        // $permissions['manage_voicemail_recording_instructions'] = false;
+
+        return $permissions;
     }
 }

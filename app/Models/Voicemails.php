@@ -47,14 +47,14 @@ class Voicemails extends Model
         'update_user'
     ];
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
-    }
+    // public function __construct(array $attributes = [])
+    // {
+    //     parent::__construct();
+    //     $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+    //     $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+    //     $this->attributes['insert_user'] = Session::get('user_uuid');
+    //     $this->fill($attributes);
+    // }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -66,21 +66,43 @@ class Voicemails extends Model
     ];
 
     /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $model->insert_date = date('Y-m-d H:i:s');
+            $model->insert_user = session('user_uuid');
+        });
+
+        static::saving(function ($model) {
+            if (!$model->domain_uuid) {
+                $model->domain_uuid = session('domain_uuid');
+            }
+        });
+    }
+
+    /**
      * Get the extension voicemail belongs to.
      */
-    public function extension()
+    public function extension($domain_uuid = null)
     {
-        return $this->hasOne(Extensions::class,'extension','voicemail_id')
-            ->where('domain_uuid', $this->domain_uuid);
+        $domain_uuid = $domain_uuid ?: session('domain_uuid');
+        return $this->hasOne(Extensions::class, 'extension', 'voicemail_id')
+                    ->where('domain_uuid', $domain_uuid);
     }
 
     /**
      * Get the voicemail destinations belongs to.
      */
-    public function greetings()
+    public function greetings($domain_uuid = null)
     {
-        return $this->hasMany(VoicemailGreetings::class,'voicemail_id','voicemail_id')
-            ->where('domain_uuid', $this->domain_uuid);
+        $domain_uuid = $domain_uuid ?: session('domain_uuid');
+        return $this->hasMany(VoicemailGreetings::class, 'voicemail_id', 'voicemail_id')
+                    ->where('domain_uuid', $domain_uuid);
     }
 
 
@@ -89,8 +111,7 @@ class Voicemails extends Model
      */
     public function messages()
     {
-        return $this->hasMany(VoicemailMessages::class,'voicemail_uuid','voicemail_uuid')
-            ->where('domain_uuid', $this->domain_uuid);
+        return $this->hasMany(VoicemailMessages::class, 'voicemail_uuid', 'voicemail_uuid');
     }
 
     /**
@@ -139,6 +160,44 @@ class Voicemails extends Model
     public function getName()
     {
         return $this->voicemail_id.' - '.$this->voicemail_mail_to;
+    }
+
+
+    /**
+     * Generates a unique sequence number.
+     *
+     * @return int|null The generated sequence number, or null if unable to generate.
+     */
+    public function generateUniqueSequenceNumber()
+    {
+
+        // Voicemails will have extensions in the range between 9100 and 9150 by default
+        $rangeStart = 9100;
+        $rangeEnd = 9150;
+
+        $domainUuid = session('domain_uuid');
+
+        // Fetch all used extensions in one combined query
+        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
+            ->where('dialplan_number', 'not like', '*%')
+            ->pluck('dialplan_number')
+            ->unique();
+
+        // Find the first available extension
+        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
+            if (!$usedExtensions->contains($ext)) {
+                // This is your unique extension
+                $uniqueExtension = $ext;
+                break;
+            }
+        }
+
+        if(isset($uniqueExtension)) {
+            return (string) $uniqueExtension;
+        }
+
+        // Return null if unable to generate a unique sequence number
+        return null;
     }
 
 }

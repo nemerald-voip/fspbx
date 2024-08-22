@@ -9,32 +9,48 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
+                    <ExclamationCircleIcon v-if="errors?.voicemail_id && item.slug === 'settings'"
+                class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
                 </a>
             </nav>
         </aside>
 
-        <div class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
-            <form v-if="activeTab === 'settings'" action="#" method="POST">
+        <form @submit.prevent="submitForm" class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+            <div v-if="activeTab === 'settings'">
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div class="flex justify-between items-center">
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
 
-                            <Toggle label="Status" :enabled="form.voicemail_enabled"
-                                @update:status="handleEnabledSettingUpdate" />
+                            <Toggle label="Status" v-model="form.voicemail_enabled" />
 
                             <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-3 sm:col-span-2">
-                                <LabelInputOptional target="voicemail_id" label="Voicemail Extension" class="truncate" />
-                                <InputField type="text" name="voicemail_id" id="voicemail_id" class="mt-2" />
+                                <LabelInputRequired target="voicemail_id" label="Voicemail Extension" class="truncate" />
+                                <InputField v-model="form.voicemail_id" type="text" name="voicemail_id" id="voicemail_id"
+                                    class="mt-2" :error="!!errors?.voicemail_id"/>
+                                <div v-if="errors?.voicemail_id" class="mt-2 text-xs text-red-600">
+                                    {{ errors.voicemail_id[0] }}
+                                </div>
                             </div>
 
                             <div class="col-span-3 sm:col-span-2">
-                                <LabelInputOptional target="voicemail_password" label="PIN" class="truncate" />
-                                <InputField type="password" name="voicemail_password" id="voicemail_password" class="mt-2" />
+                                <LabelInputRequired target="voicemail_password" label="Password" class="truncate" />
+                                <InputFieldWithIcon v-model="form.voicemail_password" id="voicemail_password"
+                                    name="voicemail_password" :type="showPassword ? 'text' : 'password'"
+                                    :error="!!errors?.voicemail_password">
+                                    <template #icon>
+                                        <VisibilityIcon @click="togglePasswordVisibility"
+                                            class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                            aria-hidden="true" />
+                                    </template>
+                                </InputFieldWithIcon>
+                                <div v-if="errors?.voicemail_password" class="mt-2 text-xs text-red-600">
+                                    {{ errors.voicemail_password[0] }}
+                                </div>
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
@@ -51,24 +67,24 @@
 
                             <div class="divide-y divide-gray-200 col-span-6">
 
-                                <Toggle label="Voicemail Transcription"
+                                <Toggle v-if="options.permissions.manage_voicemail_transcription"
+                                    label="Voicemail Transcription"
                                     description="Convert voicemail messages to text using AI-powered transcription."
-                                    :enabled="form.voicemail_transcription_enabled"
-                                    @update:status="handleTranscriptionSettingUpdate" customClass="py-4" />
+                                    v-model="form.voicemail_transcription_enabled" customClass="py-4" />
 
                                 <Toggle label="Email Notifications"
                                     description="Receive an email when a new voicemail is received."
-                                    :enabled="form.voicemail_email_notification_enabled"
-                                    @update:status="handleEmailNotificationSettingUpdate" customClass="py-4" />
+                                    v-model="form.voicemail_email_notification_enabled" customClass="py-4" />
 
-                                <Toggle label="Automatically Delete Voicemail After Email"
+                                <Toggle v-if="options.permissions.manage_voicemail_auto_delete"
+                                    label="Automatically Delete Voicemail After Email"
                                     description="Remove voicemail from the cloud once the email is sent."
-                                    :enabled="form.voicemail_delete" @update:status="handleEmailNotificationSettingUpdate"
-                                    customClass="py-4" />
+                                    v-model="form.voicemail_delete" customClass="py-4" />
 
                             </div>
 
-                            <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
+                            <div v-if="options.permissions.manage_voicemail_copies"
+                                class="col-span-4 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputOptional label="Copy Voicemail to
                                     Other Extensions" class="truncate mb-1" />
 
@@ -90,14 +106,19 @@
 
                     </div>
                     <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+
                         <button type="submit"
-                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                            ref="saveButtonRef" :disabled="isSubmitting">
+                            <Spinner :show="isSubmitting" />
+                            Save
+                        </button>
                     </div>
                 </div>
-            </form>
+            </div>
 
 
-            <form v-if="activeTab === 'greetings'" action="#" method="POST">
+            <div v-if="activeTab === 'greetings'" action="#" method="POST">
                 <div class="shadow sm:overflow-hidden sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
@@ -171,9 +192,9 @@
                             class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
                     </div>
                 </div>
-            </form>
+            </div>
 
-            <form v-if="activeTab === 'advanced'" action="#" method="POST">
+            <div v-if="activeTab === 'advanced'" action="#" method="POST">
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
@@ -184,60 +205,40 @@
 
                         <div class="divide-y divide-gray-200 col-span-6">
 
-                            <SwitchGroup as="div" class="flex items-center justify-between py-4">
-                                <span class="flex flex-grow flex-col">
-                                    <SwitchLabel as="span" class="text-sm font-medium leading-6 text-gray-900" passive>
-                                        Play Voicemail Tutorial</SwitchLabel>
-                                    <SwitchDescription as="span" class="pr-2 text-sm text-gray-500">
-                                        Provide user with a guided tutorial when accessing voicemail for the first time.
-                                    </SwitchDescription>
-                                </span>
-                                <Switch v-model="voicemail_tutorial"
-                                    :class="[voicemail_tutorial ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
-                                    <span aria-hidden="true"
-                                        :class="[voicemail_tutorial ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                </Switch>
-                            </SwitchGroup>
+                            <Toggle label="Play Voicemail Tutorial"
+                                description="Provide user with a guided tutorial when accessing voicemail for the first time."
+                                v-model="form.voicemail_tutorial" customClass="py-4" />
 
-                            <SwitchGroup as="div" class="flex items-center justify-between py-4">
-                                <span class="flex flex-grow flex-col">
-                                    <SwitchLabel as="span" class="text-sm font-medium leading-6 text-gray-900" passive>
-                                        Play Recording Instructions</SwitchLabel>
-                                    <SwitchDescription as="span" class="pr-2 text-sm text-gray-500">
-                                        Play a prompt instructing callers to "Record your message after the tone. Stop
-                                        speaking to end the recording."
-                                    </SwitchDescription>
-                                </span>
-                                <Switch v-model="voicemail_play_recording_instructions"
-                                    :class="[voicemail_play_recording_instructions ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
-                                    <span aria-hidden="true"
-                                        :class="[voicemail_play_recording_instructions ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                </Switch>
-                            </SwitchGroup>
+                            <Toggle v-if="options.permissions.manage_voicemail_auto_delete"
+                                label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
+                                        speaking to end the recording."'
+                                v-model="form.manage_voicemail_recording_instructions" customClass="py-4" />
 
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-3 sm:col-span-2">
                                 <div class="flex items-center gap-1">
-                                    <label for="voicemail_alternate_greet_id"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Announce Voicemail
-                                        Extension as
-                                    </label>
+                                    <LabelInputOptional target="voicemail_alternate_greet_id" label="Announce Voicemail
+                                        Extension as" />
+
                                     <Popover>
                                         <template v-slot:popover-button>
                                             <InformationCircleIcon class="h-5 w-5 text-blue-500" />
                                         </template>
                                         <template v-slot:popover-panel>
-                                            <div>The parameter allows you to override the voicemail extension number spoken
-                                                by the system in the voicemail greeting. This controls system greetings that
+                                            <div>The parameter allows you to override the voicemail extension number
+                                                spoken
+                                                by the system in the voicemail greeting. This controls system greetings
+                                                that
                                                 read back an extension number, not user recorded greetings.</div>
                                         </template>
                                     </Popover>
                                 </div>
 
-                                <input type="text" name="voicemail_alternate_greet_id" id="voicemail_alternate_greet_id"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                                <InputField type="password" name="voicemail_alternate_greet_id"
+                                    id="voicemail_alternate_greet_id" class="mt-2" />
+
                             </div>
 
                         </div>
@@ -249,8 +250,8 @@
                             class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </template>
 
@@ -262,15 +263,19 @@ import { usePage } from '@inertiajs/vue3';
 import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
+import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
 import Popover from "@generalComponents/Popover.vue";
 import Textarea from "@generalComponents/Textarea.vue";
+import VisibilityIcon from "@icons/VisibilityIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
-import Spinner from "../general/Spinner.vue";
+import Spinner from "@generalComponents/Spinner.vue";
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
+import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+
 
 
 
@@ -291,9 +296,11 @@ const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
-const voicemail_tutorial = ref(false)
-const voicemail_play_recording_instructions = ref(true)
+const showPassword = ref(false);
 
+const togglePasswordVisibility = () => {
+    showPassword.value = !showPassword.value;
+};
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -307,9 +314,13 @@ const page = usePage();
 
 const form = reactive({
     voicemail_enabled: true,
+    voicemail_id: props.options.voicemail.voicemail_id,
+    voicemail_password: props.options.voicemail.voicemail_password,
     voicemail_transcription_enabled: true,
     voicemail_email_notification_enabled: true,
     voicemail_delete: false,
+    voicemail_tutorial: false,
+    voicemail_play_recording_instructions: true,
     _token: page.props.csrf_token,
 })
 
@@ -319,21 +330,10 @@ const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
-const handleTranscriptionSettingUpdate = (newSelectedItem) => {
-    form.voicemail_transcription_enabled = newSelectedItem.value
-}
-
-const handleEmailNotificationSettingUpdate = (newSelectedItem) => {
-    form.voicemail_email_notification_enabled = newSelectedItem.value
-}
-
-const handleEnabledSettingUpdate = (newSelectedItem) => {
-    form.voicemail_enabled = newSelectedItem.value
-}
-
-
 const handleUpdateCopyToField = (newSelectedItem) => {
     filterData.value.entity = newSelectedItem.value;
     filterData.value.entityType = newSelectedItem.type;
 }
+
+
 </script>
