@@ -71,6 +71,14 @@ class Domain extends Model
     }
 
     /**
+     * Get the list of users permitted to access the domain.
+     */
+    public function user_permissions()
+    {
+        return $this->hasMany(UserDomainPermission::class,'domain_uuid','domain_uuid');
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>

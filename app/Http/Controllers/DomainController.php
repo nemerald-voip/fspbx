@@ -109,6 +109,7 @@ class DomainController extends Controller
      */
     public function filterDomainsFusionPBX(Request $request)
     {
+        logger('here');
         // Retrieve domains from session
         $domains = Session::get('domains');
 
@@ -128,11 +129,9 @@ class DomainController extends Controller
         
         // logger($domains);
 
-        // Convert the collection back to an array of associative arrays
         $domains = $domains->map(function ($domain) {
-            return (array) $domain;
+            return $domain->toArray();
         })->values()->all();
-
 
         echo json_encode($domains, true);
     }
