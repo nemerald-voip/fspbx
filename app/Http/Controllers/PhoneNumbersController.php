@@ -142,7 +142,7 @@ class PhoneNumbersController extends Controller
             ];
         }
 
-        $actionsService = new ActionsService();
+        $actionsService = ActionsService::getInstance();
         $actions = $actionsService->getData();
 
         unset($faxesCollection, $domainsCollection, $fax, $domain, $actionsService);
