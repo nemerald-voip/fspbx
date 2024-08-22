@@ -219,9 +219,6 @@
                         </div>
                     </div>
                 </div>
-                <pre>
-                    {{conditions}}
-                </pre>
             </div>
         </div>
         <div class="border-t mt-4 sm:mt-4 ">
@@ -238,7 +235,6 @@
                 </button>
             </div>
         </div>
-        <pre>{{form}}</pre>
     </form>
 </template>
 

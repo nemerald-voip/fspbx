@@ -6,7 +6,6 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use libphonenumber\NumberParseException;
 use Propaganistas\LaravelPhone\PhoneNumber;
@@ -173,13 +172,24 @@ class StorePhoneNumberRequest extends FormRequest
         //     'destination_caller_id_number' => $destinationCallerIdNumber
         // ]);
 
+        try {
+            $this->merge([
+                'destination_number' => str_replace('+1', '', (new PhoneNumber($phone, "US"))->formatE164()),
+            ]);
+        } catch (NumberParseException $e) {
+            $this->merge([
+                'destination_number' => null
+            ]);
+        }
+
         if ($this->has('destination_conditions')) {
             $destinationConditions = [];
             foreach ($this->get('destination_conditions') as $condition) {
                 try {
-                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
+                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'],
+                        "US"))->formatE164();
                 } catch (NumberParseException $e) {
-                    //
+                    $condition['condition_expression'] = null;
                 }
                 $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
                 $destinationConditions[] = $condition;
