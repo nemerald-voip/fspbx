@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ActionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
@@ -108,7 +109,8 @@ class Destinations extends Model
             if (!empty($model->destination_actions)) {
                 $model->destination_actions = json_decode($model->destination_actions, true);
                 if(is_array($model->destination_actions)) {
-                    $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
+                    $actionsService = ActionsService::getInstance();
+                    $model->destination_actions_formatted = $actionsService->findLabel($model->destination_actions);
                     $actions = null;
                     foreach ($model->destination_actions as $action) {
                         if (!empty($action['destination_data'])) {

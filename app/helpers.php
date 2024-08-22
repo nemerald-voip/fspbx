@@ -944,6 +944,9 @@ if (!function_exists('convertEslResponseToXml')) {
 }
 
 if (!function_exists('getDestinationByCategory')) {
+    /**
+     * @deprecated Please consider to use Services/ActionsService instead
+     */
     function getDestinationByCategory($category, $data = null)
     {
         $output = [];
@@ -1079,6 +1082,9 @@ if (!function_exists('getDestinationByCategory')) {
 }
 
 if (!function_exists('getTimeoutDestinations')) {
+    /**
+     * @deprecated Please consider to use Services/ActionsService instead
+     */
     function getTimeoutDestinations($domain = null)
     {
         if ($domain !== null) {
@@ -1119,6 +1125,9 @@ if (!function_exists('getTimeoutDestinations')) {
 }
 
 if (!function_exists('getTimeoutDestinationsLabels')) {
+    /**
+     * @deprecated Please consider to use Services/ActionsService instead
+     */
     function getTimeoutDestinationsLabels(array $actions, $domain = null): array
     {
         $destinations = getTimeoutDestinations($domain);
