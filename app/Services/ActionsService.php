@@ -26,7 +26,7 @@ class ActionsService
         'ivr_menus' => 'IVR',
         'recordings' => 'Recording',
         'ring_groups' => 'Ring Group',
-        //'time_conditions' => 'Time Condition',
+        'time_conditions' => 'Time Condition',
         //'tones' => 'Tone',
         'voicemails' => 'Voicemail',
         'other' => 'Other'
@@ -186,16 +186,17 @@ class ActionsService
     protected function time_conditionsOptions(): array
     {
         $options = [];
-        /*$rows = RingGroups::select('ring_group_extension', 'ring_group_name')
+        $rows = Dialplans::select('dialplan_name', 'dialplan_number')
             ->where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('ring_group_extension')
+            ->where('app_uuid', '4b821450-926b-175a-af93-a03c441818b1')
+            ->orderBy('dialplan_number')
             ->get();
         foreach ($rows as $row) {
             $options[] = [
-                'value' => sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name')),
-                'name' => $row->ring_group_extension." - ".$row->ring_group_name
+                'value' => sprintf('%s:%s XML %s', 'transfer', $row->dialplan_number, Session::get('domain_name')),
+                'name' => $row->dialplan_number." - ".$row->dialplan_name
             ];
-        }*/
+        }
         return $options;
     }
 

@@ -339,7 +339,6 @@ const handleFaxUpdate = (newSelectedItem) => {
 }
 
 const handleConditionUpdate = (newValue, index) => {
-    console.log(newValue)
     if (newValue !== null && newValue !== undefined) {
         conditions.value[index].condition_field = newValue.value;
     }

@@ -341,7 +341,6 @@ onBeforeMount(() => {
 
 const submitForm = () => {
     // Transform conditions before submit
-    console.log(conditions.value)
     form.destination_conditions = conditions.value.map(condition => {
         return {
             "condition_field": condition.condition_field,
