@@ -590,7 +590,7 @@ class VoicemailController extends Controller
             // Loop through each extension and create an option
             foreach ($extensions as $extension) {
                 $extensionOptions[] = [
-                    'value' => $extension->extension,
+                    'value' => $extension->extension_uuid,
                     'name' => $extension->name_formatted,
                 ];
             }
@@ -598,6 +598,10 @@ class VoicemailController extends Controller
         $voicemail = new Voicemails();
         $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
         $voicemail->voicemail_password = $voicemail->voicemail_id;
+        $voicemail->voicemail_file = get_domain_setting('voicemail_file');
+        $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
+        $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
+        $voicemail->voicemail_tutorial = 'false';
         // logger($voicemail);
 
         $permissions = $this->getUserPermissions();

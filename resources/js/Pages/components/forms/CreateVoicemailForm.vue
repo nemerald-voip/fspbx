@@ -9,7 +9,7 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="errors?.voicemail_id && item.slug === 'settings'"
+                    <ExclamationCircleIcon v-if="(errors?.voicemail_id || errors?.voicemail_password || errors?.voicemail_mail_to) && item.slug === 'settings'"
                 class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
                 </a>
             </nav>
@@ -38,7 +38,7 @@
                             </div>
 
                             <div class="col-span-3 sm:col-span-2">
-                                <LabelInputRequired target="voicemail_password" label="Password" class="truncate" />
+                                <LabelInputOptional target="voicemail_password" label="Password" class="truncate" />
                                 <InputFieldWithIcon v-model="form.voicemail_password" id="voicemail_password"
                                     name="voicemail_password" :type="showPassword ? 'text' : 'password'"
                                     :error="!!errors?.voicemail_password">
@@ -55,13 +55,21 @@
 
                             <div class="col-span-6 sm:col-span-3">
                                 <LabelInputOptional target="voicemail_mail_to" label="Email address" class="truncate" />
-                                <InputField type="text" name="voicemail_mail_to" id="voicemail_mail_to" class="mt-2" />
+                                <InputField v-model="form.voicemail_mail_to" type="text" name="voicemail_mail_to" id="voicemail_mail_to" class="mt-2" 
+                                :error="!!errors?.voicemail_mail_to" />
+                                <div v-if="errors?.voicemail_mail_to" class="mt-2 text-xs text-red-600">
+                                    {{ errors.voicemail_mail_to[0] }}
+                                </div>
                             </div>
 
                             <div class="col-span-6">
                                 <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
                                 <div class="mt-2">
-                                    <Textarea id="voicemail_description" name="voicemail_description" rows="2" />
+                                    <Textarea v-model="form.voicemail_description" id="voicemail_description" name="voicemail_description" rows="2" 
+                                    :error="!!errors?.voicemail_description" />
+                                </div>
+                                <div v-if="errors?.voicemail_description" class="mt-2 text-xs text-red-600">
+                                    {{ errors.voicemail_description[0] }}
                                 </div>
                             </div>
 
@@ -72,9 +80,9 @@
                                     description="Convert voicemail messages to text using AI-powered transcription."
                                     v-model="form.voicemail_transcription_enabled" customClass="py-4" />
 
-                                <Toggle label="Email Notifications"
-                                    description="Receive an email when a new voicemail is received."
-                                    v-model="form.voicemail_email_notification_enabled" customClass="py-4" />
+                                <Toggle label="Attach File to Email Notifications"
+                                    description="Attach voicemail recording file to the email notification."
+                                    v-model="form.voicemail_email_attachment" customClass="py-4" />
 
                                 <Toggle v-if="options.permissions.manage_voicemail_auto_delete"
                                     label="Automatically Delete Voicemail After Email"
@@ -209,7 +217,7 @@
                                 description="Provide user with a guided tutorial when accessing voicemail for the first time."
                                 v-model="form.voicemail_tutorial" customClass="py-4" />
 
-                            <Toggle v-if="options.permissions.manage_voicemail_auto_delete"
+                            <Toggle v-if="options.permissions.manage_voicemail_recording_instructions"
                                 label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
                                         speaking to end the recording."'
                                 v-model="form.manage_voicemail_recording_instructions" customClass="py-4" />
@@ -316,11 +324,14 @@ const form = reactive({
     voicemail_enabled: true,
     voicemail_id: props.options.voicemail.voicemail_id,
     voicemail_password: props.options.voicemail.voicemail_password,
-    voicemail_transcription_enabled: true,
-    voicemail_email_notification_enabled: true,
-    voicemail_delete: false,
-    voicemail_tutorial: false,
+    voicemail_mail_to: null,
+    voicemail_description: null,
+    voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
+    voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
+    voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
+    voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
     voicemail_play_recording_instructions: true,
+    voicemail_copies: null,
     _token: page.props.csrf_token,
 })
 
@@ -330,10 +341,9 @@ const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
-const handleUpdateCopyToField = (newSelectedItem) => {
-    filterData.value.entity = newSelectedItem.value;
-    filterData.value.entityType = newSelectedItem.type;
+const handleUpdateCopyToField = (extensions) => {
+    console.log(extensions);
+    form.voicemail_copies = extensions.map(extension => extension.value);
 }
-
 
 </script>
