@@ -92,7 +92,7 @@ class ActionsService
             foreach ($data as $values) {
                 foreach ($values['options'] as $value) {
                     if (str_contains($value["value"], $action['destination_app'].':'.$action['destination_data'])) {
-                        $output[] = $value["name"];
+                        $output[] = $values['name'].' '.$value["name"];
                     }
                 }
             }
