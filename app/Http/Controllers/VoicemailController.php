@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreVoicemailRequest;
+use App\Http\Requests\UpdateVoicemailRequest;
 
 class VoicemailController extends Controller
 {
@@ -270,8 +271,9 @@ class VoicemailController extends Controller
         }
     }
 
-    function update(Request $request, Voicemails $voicemail)
+    function update(UpdateVoicemailRequest $request)
     {
+        return;
 
         if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
             return redirect('/');
@@ -539,78 +541,130 @@ class VoicemailController extends Controller
 
     public function getItemOptions()
     {
-        $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+        try {
 
-        $navigation = [
-            [
-                'name' => 'Settings',
-                'icon' => 'Cog6ToothIcon',
-                'slug' => 'settings',
-            ],
-            [
-                'name' => 'Greetings',
-                'icon' => 'MusicalNoteIcon',
-                'slug' => 'greetings',
-            ],
-            [
-                'name' => 'Advanced',
-                'icon' => 'AdjustmentsHorizontalIcon',
-                'slug' => 'advanced',
-            ],
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
-        ];
-
-        // Define the options for the 'extensions' field
-        $extensions = Extensions::where('domain_uuid', $domain_uuid)
-            ->get([
-                'extension_uuid',
-                'extension',
-                'effective_caller_id_name',
-            ]);
-
-        $extensionOptions = [];
-        // Loop through each extension and create an option
-        foreach ($extensions as $extension) {
-            $extensionOptions[] = [
-                'value' => $extension->extension_uuid,
-                'name' => $extension->name_formatted,
+            // Base navigation array without Greetings
+            $navigation = [
+                [
+                    'name' => 'Settings',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'settings',
+                ],
+                [
+                    'name' => 'Advanced',
+                    'icon' => 'AdjustmentsHorizontalIcon',
+                    'slug' => 'advanced',
+                ],
             ];
+
+            // Only add the Greetings tab if item_uuid exists and insert it in the second position
+            if ($item_uuid) {
+                $greetingsTab = [
+                    'name' => 'Greetings',
+                    'icon' => 'MusicalNoteIcon',
+                    'slug' => 'greetings',
+                ];
+
+                // Insert Greetings tab at the second position (index 1)
+                array_splice($navigation, 1, 0, [$greetingsTab]);
+            }
+
+            $voicemails =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
+                ->with(['extension' => function ($query) use ($domain_uuid) {
+                    $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                        ->where('domain_uuid', $domain_uuid);
+                }])
+                ->select(
+                    'voicemail_uuid',
+                    'voicemail_id',
+                    'voicemail_description',
+
+                )
+                ->orderBy('voicemail_id', 'asc')
+                ->get();
+
+            // Transform the collection into the desired array format
+            $voicemailOptions = $voicemails->map(function ($voicemail) {
+                return [
+                    'value' => $voicemail->voicemail_uuid,
+                    'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+                ];
+            })->toArray();
+
+
+            // Check if item_uuid exists to find an existing voicemail
+            if ($item_uuid) {
+                // Find existing voicemail by item_uuid
+                $voicemail = Voicemails::with(['voicemail_destinations' => function ($query) {
+                    $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
+                }])->where('voicemail_uuid', $item_uuid)->first();
+
+                // If a voicemail exists, use it; otherwise, create a new one
+                if (!$voicemail) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+                // Define the update route
+                $updateRoute = route('voicemails.update', ['voicemail' => $item_uuid]);
+            } else {
+                // Create a new voicemail if item_uuid is not provided
+                $voicemail = $this->model;
+                $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
+                $voicemail->voicemail_password = $voicemail->voicemail_id;
+                $voicemail->voicemail_file = get_domain_setting('voicemail_file');
+                $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
+                $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
+                $voicemail->voicemail_tutorial = 'false';
+                $voicemail->voicemail_enabled = 'true';
+                $voicemail->voicemail_recording_instructions = 'true';
+            }
+
+            // logger($voicemail);
+
+            $permissions = $this->getUserPermissions();
+            // logger($permissions);
+
+            // Extract voicemail_destinations and format it for frontend
+            $voicemailCopies = [];
+            if ($voicemail->voicemail_destinations) {
+                $voicemailCopies = $voicemail->voicemail_destinations->map(function ($destination) {
+                    return [
+                        'value' => $destination->voicemail_uuid_copy, // Set the value to voicemail_uuid_copy
+                        'name' => ''
+                    ];
+                })->toArray();
+            }
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'navigation' => $navigation,
+                'all_voicemails' => $voicemailOptions,
+                'voicemail' => $voicemail,
+                'permissions' => $permissions,
+                'voicemail_copies' => $voicemailCopies,
+                // Define options for other fields as needed
+            ];
+
+            // Include the update route if item_uuid exists
+            if ($item_uuid) {
+                $itemOptions['update_route'] = $updateRoute;
+            }
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
-
-        $voicemail = new Voicemails();
-        $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
-        $voicemail->voicemail_password = $voicemail->voicemail_id;
-        $voicemail->voicemail_file = get_domain_setting('voicemail_file');
-        $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
-        $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
-        $voicemail->voicemail_tutorial = 'false';
-        $voicemail->voicemail_enabled = 'true';
-        // logger($voicemail);
-
-        $permissions = $this->getUserPermissions();
-        // logger($permissions);
-
-        // Construct the itemOptions object
-        $itemOptions = [
-            'navigation' => $navigation,
-            'extensions' => $extensionOptions,
-            'voicemail' => $voicemail,
-            'permissions' => $permissions,
-            // Define options for other fields as needed
-        ];
-        return $itemOptions;
-
-        // $domainOptions = [];
-        // // Loop through each domain and create an option
-        // if (session('domains')) {
-        //     foreach (session('domains') as $domain) {
-        //         $domainOptions[] = [
-        //             'value' => $domain->domain_uuid,
-        //             'name' => $domain->domain_description,
-        //         ];
-        //     }
-        // }
-
     }
 
     public function getUserPermissions()

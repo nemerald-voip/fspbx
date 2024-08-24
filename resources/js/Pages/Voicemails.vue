@@ -168,18 +168,17 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Box'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
+            <UpdateVoicemailForm :item="itemData" :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
@@ -225,7 +224,7 @@ import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
-import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
+import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { UserGroupIcon, UserIcon } from "@heroicons/vue/24/outline";
@@ -304,34 +303,10 @@ const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
     formErrors.value = null;
     loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
+    getItemOptions(itemUuid);
 }
 
 const handleCreateRequest = (form) => {
-    console.log(form);
-
     createFormSubmiting.value = true;
     formErrors.value = null;
 
@@ -354,7 +329,7 @@ const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.put(props.itemData.update_url, form)
+    axios.put(form.update_route, form)
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
@@ -536,40 +511,19 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = () => {
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
 
-    axios.post(props.routes.item_options)
+    axios.post(props.routes.item_options, payload)
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
             handleErrorResponse(error);
         });
-
-    // router.get(props.routes.item_options,
-    //     {
-    //         'domain_uuid': domain_uuid,
-    //     },
-    //     {
-    //         preserveScroll: true,
-    //         preserveState: true,
-    //         only: [
-    //             'itemOptions',
-    //         ],
-    //         onSuccess: (page) => {
-    //             loadingModal.value = false;
-    //         },
-    //         onFinish: () => {
-    //             loadingModal.value = false;
-    //         },
-    //         onError: (errors) => {
-    //             console.log(errors);
-    //         },
-
-    //     });
 }
 
 const handleFormErrorResponse = (error) => {

@@ -28,7 +28,7 @@ class VoicemailDestinations extends Model
     protected static function booted()
     {
         static::creating(function ($model) {
-            $model->insert_date = date('Y-m-d H:i:s');
+            $model->insert_date = now();
             $model->insert_user = session('user_uuid');
         });
 

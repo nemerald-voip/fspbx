@@ -102,7 +102,7 @@
                                     Other Extensions" class="truncate mb-1" />
 
                                 <ComboBox :options="options.all_voicemails" :search="true" multiple
-                                    :placeholder="'Enter name or extension'"
+                                    :placeholder="'Enter name or extension'" :selectedItem="options.voicemail_copies"
                                     @update:model-value="handleUpdateCopyToField" />
                                 <div class="mt-1 text-sm text-gray-500">
                                     Automatically send a copy of the voicemail to selected additional extensions.
@@ -333,19 +333,20 @@ const iconComponents = {
 const page = usePage();
 
 const form = reactive({
-    voicemail_enabled: true,
+    voicemail_enabled: props.options.voicemail.voicemail_enabled,
     voicemail_id: props.options.voicemail.voicemail_id,
     voicemail_password: props.options.voicemail.voicemail_password,
-    voicemail_mail_to: null,
-    voicemail_description: null,
+    voicemail_mail_to: props.options.voicemail.voicemail_mail_to,
+    voicemail_description: props.options.voicemail.voicemail_description,
     voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
     voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
     voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
     voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
     voicemail_play_recording_instructions: props.options.voicemail.voicemail_play_recording_instructions === "true",
-    voicemail_copies: null,
-    voicemail_alternate_greet_id: null,
+    voicemail_copies: props.options.voicemail_copies,
+    voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
     voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
+    update_route: props.options.update_route,
     _token: page.props.csrf_token,
 })
 
