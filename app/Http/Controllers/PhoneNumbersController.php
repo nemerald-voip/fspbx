@@ -322,6 +322,7 @@ class PhoneNumbersController extends Controller
                 'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
                 'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
                 'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
+                'destination_context' => $inputs['destination_context'] ?? 'public',
             ]);;
             $instance->save();
 
@@ -648,8 +649,27 @@ class PhoneNumbersController extends Controller
         }
     }
 
-    private function clearCache($phoneNumber)
+    private function clearCache($phoneNumber): void
     {
+        //logger('--------------');
+        //logger($phoneNumber);
+        //logger('--------------');
+        if (isset($phoneNumber->destination_prefix) && is_numeric($phoneNumber->destination_prefix) && isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
+          //  logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+            //logger("dialplan:". $phoneNumber->destination_context.":+".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":+".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+        }
+        if (isset($phoneNumber->destination_number) && str_starts_with($phoneNumber->destination_number, '+') && is_numeric(str_replace('+', '', $phoneNumber->destination_number))) {
+            //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
+        }
+        if (isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
+            //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
+        }
+
+       /*
         if (isset($phoneNumber->destination_number)) {
             FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
 
@@ -661,7 +681,7 @@ class PhoneNumbersController extends Controller
                     FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
                 }
             }
-        }
+        }*/
     }
 
     private function generateDialplanDetails(Destinations $phoneNumber, Dialplans $dialPlan): void
