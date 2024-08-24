@@ -61,9 +61,7 @@ class Voicemails extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-
-    ];
+    protected $hidden = [];
 
     /**
      * The booted method of the model
@@ -92,7 +90,7 @@ class Voicemails extends Model
     {
         $domain_uuid = $domain_uuid ?: session('domain_uuid');
         return $this->hasOne(Extensions::class, 'extension', 'voicemail_id')
-                    ->where('domain_uuid', $domain_uuid);
+            ->where('domain_uuid', $domain_uuid);
     }
 
     /**
@@ -102,7 +100,7 @@ class Voicemails extends Model
     {
         $domain_uuid = $domain_uuid ?: session('domain_uuid');
         return $this->hasMany(VoicemailGreetings::class, 'voicemail_id', 'voicemail_id')
-                    ->where('domain_uuid', $domain_uuid);
+            ->where('domain_uuid', $domain_uuid);
     }
 
 
@@ -119,21 +117,21 @@ class Voicemails extends Model
      */
     public function voicemail_destinations()
     {
-        return $this->hasMany(VoicemailDestinations::class,'voicemail_uuid','voicemail_uuid');
+        return $this->hasMany(VoicemailDestinations::class, 'voicemail_uuid', 'voicemail_uuid');
     }
 
 
     /**
      * Get all forward destinations for this voicemail
      *
-    */
+     */
     public function forward_destinations()
     {
 
-        $voicemail_destinations = VoicemailDestinations::where ('voicemail_uuid', $this->voicemail_uuid)
-        ->get([
-            'voicemail_uuid_copy',
-        ]);
+        $voicemail_destinations = VoicemailDestinations::where('voicemail_uuid', $this->voicemail_uuid)
+            ->get([
+                'voicemail_uuid_copy',
+            ]);
 
         $destinations = collect();
         foreach ($voicemail_destinations as $voicemail_destination) {
@@ -141,7 +139,6 @@ class Voicemails extends Model
         }
 
         return $destinations;
-
     }
 
     /**
@@ -149,7 +146,7 @@ class Voicemails extends Model
      */
     public function domain()
     {
-        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
     public function getId()
@@ -159,7 +156,7 @@ class Voicemails extends Model
 
     public function getName()
     {
-        return $this->voicemail_id.' - '.$this->voicemail_mail_to;
+        return $this->voicemail_id . ' - ' . $this->voicemail_mail_to;
     }
 
 
@@ -177,10 +174,18 @@ class Voicemails extends Model
 
         $domainUuid = session('domain_uuid');
 
-        // Fetch all used extensions in one combined query
+        // Fetch all used extensions from Dialplans, Voicemails, and Extensions
         $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
             ->where('dialplan_number', 'not like', '*%')
             ->pluck('dialplan_number')
+            ->merge(
+                Voicemails::where('domain_uuid', $domainUuid)
+                    ->pluck('voicemail_id')
+            )
+            ->merge(
+                Extensions::where('domain_uuid', $domainUuid)
+                    ->pluck('extension')
+            )
             ->unique();
 
         // Find the first available extension
@@ -192,12 +197,11 @@ class Voicemails extends Model
             }
         }
 
-        if(isset($uniqueExtension)) {
+        if (isset($uniqueExtension)) {
             return (string) $uniqueExtension;
         }
 
         // Return null if unable to generate a unique sequence number
         return null;
     }
-
 }

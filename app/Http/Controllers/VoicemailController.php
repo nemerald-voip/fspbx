@@ -236,50 +236,21 @@ class VoicemailController extends Controller
         try {
             $this->model->fill($inputs);
 
-            // Save the Voicemails instance to the database
-            // $this->model->save();
+            // Save the model instance to the database
+            $this->model->save();
 
-            // Optionally, log the created voicemail or return a response
-            logger($this->model);
+            // Check if voicemail_copies is present and is an array
+            if (isset($inputs['voicemail_copies']) && is_array($inputs['voicemail_copies'])) {
+                // Prepare data for VoicemailDestinations
+                foreach ($inputs['voicemail_copies'] as $copyUuid) {
+                    // Create a new VoicemailDestinations instance and set the fields
+                    $voicemailDestination = new VoicemailDestinations();
+                    $voicemailDestination->voicemail_uuid = $this->model->voicemail_uuid; // Set the parent voicemail UUID
+                    $voicemailDestination->voicemail_uuid_copy = $copyUuid; // Set the copy UUID
 
-
-            return;
-
-            $instance->fill([
-                'device_address' => $inputs['device_address_modified'],
-                'domain_uuid' => $inputs['domain_uuid'],
-                'device_label' => $extension->extension ?? null,
-                'device_vendor' => $vendor,
-                'device_enabled' => 'true',
-                'device_enabled_date' => date('Y-m-d H:i:s'),
-                'device_template' => $inputs['device_template'],
-                'device_profile_uuid' => $inputs['device_profile_uuid'],
-                'device_description' => '',
-            ]);
-            $instance->save();  // Save the new model instance to the database
-
-            if ($extension) {
-                // Create device lines
-                $instance->lines = new DeviceLines();
-                $instance->lines->fill([
-                    'device_uuid' => $instance->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                ]);
-                $instance->lines->save();
+                    // Save the VoicemailDestinations instance
+                    $voicemailDestination->save();
+                }
             }
 
             // Return a JSON response indicating success
@@ -288,7 +259,8 @@ class VoicemailController extends Controller
             ], 201);
         } catch (\Exception $e) {
             // Log the error message
-            logger($e->getMessage());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
 
             // Handle any other exception that may occur
             return response()->json([
