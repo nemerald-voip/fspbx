@@ -9,8 +9,10 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="(errors?.voicemail_id || errors?.voicemail_password || errors?.voicemail_mail_to) && item.slug === 'settings'"
-                class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+                    <ExclamationCircleIcon v-if="((errors?.voicemail_id || errors?.voicemail_password) && item.slug === 'settings') ||
+                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')" class="ml-2 h-5 w-5 text-red-500"
+                        aria-hidden="true" />
+
                 </a>
             </nav>
         </aside>
@@ -31,7 +33,7 @@
                             <div class="col-span-3 sm:col-span-2">
                                 <LabelInputRequired target="voicemail_id" label="Voicemail Extension" class="truncate" />
                                 <InputField v-model="form.voicemail_id" type="text" name="voicemail_id" id="voicemail_id"
-                                    class="mt-2" :error="!!errors?.voicemail_id"/>
+                                    class="mt-2" :error="!!errors?.voicemail_id" />
                                 <div v-if="errors?.voicemail_id" class="mt-2 text-xs text-red-600">
                                     {{ errors.voicemail_id[0] }}
                                 </div>
@@ -40,8 +42,11 @@
                             <div class="col-span-3 sm:col-span-2">
                                 <LabelInputOptional target="voicemail_password" label="Password" class="truncate" />
                                 <InputFieldWithIcon v-model="form.voicemail_password" id="voicemail_password"
-                                    name="voicemail_password" :type="showPassword ? 'text' : 'password'"
-                                    :error="!!errors?.voicemail_password">
+                                    name="voicemail_password" 
+                                    type="text"
+                                    autocomplete="shut-up-google"
+                                    :error="!!errors?.voicemail_password"
+                                    class="password-field">
                                     <template #icon>
                                         <VisibilityIcon @click="togglePasswordVisibility"
                                             class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
@@ -55,8 +60,8 @@
 
                             <div class="col-span-6 sm:col-span-3">
                                 <LabelInputOptional target="voicemail_mail_to" label="Email address" class="truncate" />
-                                <InputField v-model="form.voicemail_mail_to" type="text" name="voicemail_mail_to" id="voicemail_mail_to" class="mt-2" 
-                                :error="!!errors?.voicemail_mail_to" />
+                                <InputField v-model="form.voicemail_mail_to" type="text" name="voicemail_mail_to"
+                                    id="voicemail_mail_to" class="mt-2" :error="!!errors?.voicemail_mail_to" />
                                 <div v-if="errors?.voicemail_mail_to" class="mt-2 text-xs text-red-600">
                                     {{ errors.voicemail_mail_to[0] }}
                                 </div>
@@ -65,8 +70,8 @@
                             <div class="col-span-6">
                                 <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
                                 <div class="mt-2">
-                                    <Textarea v-model="form.voicemail_description" id="voicemail_description" name="voicemail_description" rows="2" 
-                                    :error="!!errors?.voicemail_description" />
+                                    <Textarea v-model="form.voicemail_description" id="voicemail_description"
+                                        name="voicemail_description" rows="2" :error="!!errors?.voicemail_description" />
                                 </div>
                                 <div v-if="errors?.voicemail_description" class="mt-2 text-xs text-red-600">
                                     {{ errors.voicemail_description[0] }}
@@ -107,10 +112,6 @@
                             </div>
 
                         </div>
-
-
-
-
 
                     </div>
                     <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
@@ -220,7 +221,7 @@
                             <Toggle v-if="options.permissions.manage_voicemail_recording_instructions"
                                 label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
                                         speaking to end the recording."'
-                                v-model="form.manage_voicemail_recording_instructions" customClass="py-4" />
+                                v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
 
                         </div>
 
@@ -244,8 +245,13 @@
                                     </Popover>
                                 </div>
 
-                                <InputField type="password" name="voicemail_alternate_greet_id"
+                                <InputField v-model="form.voicemail_alternate_greet_id" type="text"
+                                    name="voicemail_alternate_greet_id" :error="!!errors?.voicemail_alternate_greet_id"
                                     id="voicemail_alternate_greet_id" class="mt-2" />
+
+                                <div v-if="errors?.voicemail_alternate_greet_id" class="mt-2 text-xs text-red-600">
+                                    {{ errors.voicemail_alternate_greet_id[0] }}
+                                </div>
 
                             </div>
 
@@ -268,7 +274,6 @@ import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
-import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
@@ -297,6 +302,7 @@ const props = defineProps({
     errors: Object,
 });
 
+
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 
@@ -307,7 +313,13 @@ const setActiveTab = (tabSlug) => {
 const showPassword = ref(false);
 
 const togglePasswordVisibility = () => {
-    showPassword.value = !showPassword.value;
+  showPassword.value = !showPassword.value;
+  const passwordInput = document.getElementById("voicemail_password");
+  if (showPassword.value) {
+    passwordInput.style.webkitTextSecurity = "none"; // Show text
+  } else {
+    passwordInput.style.webkitTextSecurity = "disc"; // Mask text
+  }
 };
 
 // Map icon names to their respective components
@@ -332,6 +344,8 @@ const form = reactive({
     voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
     voicemail_play_recording_instructions: true,
     voicemail_copies: null,
+    voicemail_alternate_greet_id: null,
+    voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
     _token: page.props.csrf_token,
 })
 
@@ -342,8 +356,15 @@ const submitForm = () => {
 }
 
 const handleUpdateCopyToField = (extensions) => {
-    console.log(extensions);
     form.voicemail_copies = extensions.map(extension => extension.value);
 }
 
 </script>
+
+<style scoped>
+/* This will mask the text input to behave like a password field */
+.password-field {
+  -webkit-text-security: disc; /* For Chrome and Safari */
+  -moz-text-security: disc; /* For Firefox */
+}
+</style>

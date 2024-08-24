@@ -494,19 +494,6 @@ const handleCopyToClipboard = (macAddress) => {
 }
 
 
-
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
-
 const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
@@ -555,7 +542,7 @@ const getItemOptions = () => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

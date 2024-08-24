@@ -124,7 +124,7 @@ class VoicemailController extends Controller
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         $data->with(['extension' => function ($query) use ($domainUuid) {
             $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                  ->where('domain_uuid', $domainUuid);
+                ->where('domain_uuid', $domainUuid);
         }]);
 
 
@@ -231,61 +231,71 @@ class VoicemailController extends Controller
 
     public function store(StoreVoicemailRequest $request)
     {
+        $inputs = $request->validated();
 
-        return;
-        if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
-            return redirect('/');
+        try {
+            $this->model->fill($inputs);
+
+            // Save the Voicemails instance to the database
+            // $this->model->save();
+
+            // Optionally, log the created voicemail or return a response
+            logger($this->model);
+
+
+            return;
+
+            $instance->fill([
+                'device_address' => $inputs['device_address_modified'],
+                'domain_uuid' => $inputs['domain_uuid'],
+                'device_label' => $extension->extension ?? null,
+                'device_vendor' => $vendor,
+                'device_enabled' => 'true',
+                'device_enabled_date' => date('Y-m-d H:i:s'),
+                'device_template' => $inputs['device_template'],
+                'device_profile_uuid' => $inputs['device_profile_uuid'],
+                'device_description' => '',
+            ]);
+            $instance->save();  // Save the new model instance to the database
+
+            if ($extension) {
+                // Create device lines
+                $instance->lines = new DeviceLines();
+                $instance->lines->fill([
+                    'device_uuid' => $instance->device_uuid,
+                    'line_number' => '1',
+                    'server_address' => Session::get('domain_name'),
+                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                    'server_address_primary' => get_domain_setting('server_address_primary'),
+                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                    'display_name' => $extension->extension,
+                    'user_id' => $extension->extension,
+                    'auth_id' => $extension->extension,
+                    'label' => $extension->extension,
+                    'password' => $extension->password,
+                    'sip_port' => get_domain_setting('line_sip_port'),
+                    'sip_transport' => get_domain_setting('line_sip_transport'),
+                    'register_expires' => get_domain_setting('line_register_expires'),
+                    'enabled' => 'true',
+                ]);
+                $instance->lines->save();
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['New item created']]
+            ], 201);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to create new item']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
-
-        $attributes = [
-            'voicemail_id' => 'voicemail extension number',
-            'voicemail_password' => 'voicemail PIN',
-            'greeting_id' => 'extension number',
-            'voicemail_mail_to' => 'email address',
-            'voicemail_enabled' => 'enabled',
-            'voicemail_description' => 'description',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'voicemail_id' => [
-                'required',
-                'numeric',
-            ],
-            'voicemail_password' => 'numeric|digits_between:3,10',
-            'voicemail_mail_to' => 'nullable|email:rfc,dns',
-            'voicemail_enabled' => 'present',
-            'voicemail_tutorial' => 'present',
-            'voicemail_alternate_greet_id' => 'nullable|numeric',
-            'voicemail_description' => 'nullable|string|max:100',
-            'voicemail_transcription_enabled' => 'present',
-            // 'voicemail_attach_file' => 'present',
-            'voicemail_file' => 'present',
-            'voicemail_local_after_email' => 'present',
-            'extension' => "uuid",
-
-        ], [], $attributes);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
-        }
-
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-        $attributes['domain_uuid'] = Session::get('domain_uuid');
-        $voicemail->fill($attributes);
-        $voicemail->save();
-
-        //clear the destinations session array
-        if (isset($_SESSION['destinations']['array'])) {
-            unset($_SESSION['destinations']['array']);
-        }
-
-        return response()->json([
-            'voicemail' => $voicemail->voicemail_uuid,
-            'redirect_url' => route('voicemails.edit', ['voicemail' => $voicemail->voicemail_uuid]),
-            'status' => 'success',
-            'message' => 'Voicemail has been created'
-        ]);
     }
 
     function update(Request $request, Voicemails $voicemail)
@@ -587,13 +597,13 @@ class VoicemailController extends Controller
             ]);
 
         $extensionOptions = [];
-            // Loop through each extension and create an option
-            foreach ($extensions as $extension) {
-                $extensionOptions[] = [
-                    'value' => $extension->extension_uuid,
-                    'name' => $extension->name_formatted,
-                ];
-            }
+        // Loop through each extension and create an option
+        foreach ($extensions as $extension) {
+            $extensionOptions[] = [
+                'value' => $extension->extension_uuid,
+                'name' => $extension->name_formatted,
+            ];
+        }
 
         $voicemail = new Voicemails();
         $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
@@ -602,6 +612,7 @@ class VoicemailController extends Controller
         $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
         $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
         $voicemail->voicemail_tutorial = 'false';
+        $voicemail->voicemail_enabled = 'true';
         // logger($voicemail);
 
         $permissions = $this->getUserPermissions();

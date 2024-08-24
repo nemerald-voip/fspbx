@@ -39,6 +39,7 @@ class StoreVoicemailRequest extends FormRequest
             'voicemail_transcription_enabled' => 'present',
             'voicemail_file' => 'present',
             'voicemail_local_after_email' => 'present',
+            'voicemail_recording_instructions' => 'present',
             'voicemail_copies' => 'nullable|array',
             'extension' => "uuid",
         ];
@@ -80,8 +81,6 @@ class StoreVoicemailRequest extends FormRequest
     public function prepareForValidation(): void
     {
 
-        logger($this);
-
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
@@ -91,17 +90,50 @@ class StoreVoicemailRequest extends FormRequest
             $this->merge([
                 'voicemail_local_after_email' => $this->voicemail_delete ? 'false' : 'true',
             ]);
+        } else {
+            //merge default value
+            $this->merge([
+                'voicemail_local_after_email' => get_domain_setting('keep_local'),
+            ]);
         }
 
         if ($this->has('voicemail_email_attachment')) {
             $this->merge([
                 'voicemail_file' => $this->voicemail_email_attachment ? 'attach' : '',
             ]);
+        } else {
+            // Merge default value
+            $this->merge([
+                'voicemail_file' => get_domain_setting('voicemail_file'),
+            ]);
         }
 
         if ($this->has('voicemail_transcription_enabled')) {
             $this->merge([
                 'voicemail_transcription_enabled' => $this->voicemail_transcription_enabled ? 'true' : 'false',
+            ]);
+        } else {
+            // Merge default value
+            $this->merge([
+                'voicemail_transcription_enabled' => get_domain_setting('transcription_enabled_default'),
+            ]);
+        }
+
+        if ($this->has('voicemail_tutorial')) {
+            $this->merge([
+                'voicemail_tutorial' => $this->voicemail_tutorial ? 'true' : 'false',
+            ]);
+        }
+
+        if ($this->has('voicemail_enabled')) {
+            $this->merge([
+                'voicemail_enabled' => $this->voicemail_enabled ? 'true' : 'false',
+            ]);
+        }
+
+        if ($this->has('voicemail_play_recording_instructions')) {
+            $this->merge([
+                'voicemail_recording_instructions' => $this->voicemail_play_recording_instructions ? 'true' : 'false',
             ]);
         }
 
@@ -149,6 +181,7 @@ class StoreVoicemailRequest extends FormRequest
             'voicemail_mail_to' => 'email address',
             'voicemail_enabled' => 'enabled',
             'voicemail_description' => 'description',
+            'voicemail_alternate_greet_id' => 'value',
         ];
     }
 }
