@@ -24,11 +24,14 @@ class UpdateVoicemailRequest extends FormRequest
 
     public function rules(): array
     {
+        //get current UUID from route model binding
+        $currentUuid = $this->route('voicemail');
+
         return [
             'voicemail_id' => [
                 'required',
                 'numeric',
-                new UniqueExtension,
+                new UniqueExtension($currentUuid),
             ],
             'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
             'voicemail_mail_to' => 'nullable|email:rfc',
