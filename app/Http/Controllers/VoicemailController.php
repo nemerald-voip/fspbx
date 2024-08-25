@@ -271,48 +271,55 @@ class VoicemailController extends Controller
         }
     }
 
-    function update(UpdateVoicemailRequest $request)
+    function update(UpdateVoicemailRequest $request, $uuid)
     {
+        $inputs = $request->validated();
+
+        try {
+            // Retrieve the item by ID from the route parameter
+            $voicemail = $this->model->findOrFail($uuid);
+    
+            // Update the voicemail with the new inputs
+            $voicemail->fill($inputs);
+    
+            // Save the updated voicemail to the database
+            $voicemail->save();
+    
+            // Check if voicemail_copies is present and is an array
+            if (isset($inputs['voicemail_copies']) && is_array($inputs['voicemail_copies'])) {
+                // Delete existing voicemail copies for this voicemail
+                VoicemailDestinations::where('voicemail_uuid', $voicemail->voicemail_uuid)->delete();
+    
+                // Prepare data for new VoicemailDestinations
+                foreach ($inputs['voicemail_copies'] as $copyUuid) {
+                    // Create a new VoicemailDestinations instance and set the fields
+                    $voicemailDestination = new VoicemailDestinations();
+                    $voicemailDestination->voicemail_uuid = $voicemail->voicemail_uuid; // Set the parent voicemail UUID
+                    $voicemailDestination->voicemail_uuid_copy = $copyUuid; // Set the copy UUID
+    
+                    // Save the VoicemailDestinations instance
+                    $voicemailDestination->save();
+                }
+            }
+    
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Item updated successfully']]
+            ], 200);  // 200 OK for successful update
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+    
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update item']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+
         return;
 
-        if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
-            return redirect('/');
-        }
-
-        $attributes = [
-            'voicemail_id' => 'voicemail extension number',
-            'voicemail_password' => 'voicemail PIN',
-            'greeting_id' => 'extension number',
-            'voicemail_mail_to' => 'email address',
-            'voicemail_enabled' => 'enabled',
-            'voicemail_description' => 'description',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'voicemail_id' => [
-                'required',
-                'numeric',
-                Rule::unique('App\Models\Voicemails', 'voicemail_id')
-                    ->ignore($request->voicemail_id, 'voicemail_id')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
-            ],
-            'voicemail_password' => 'numeric|digits_between:3,10',
-            'voicemail_mail_to' => 'nullable|email:rfc,dns',
-            'voicemail_enabled' => 'present',
-            'voicemail_tutorial' => 'present',
-            'voicemail_alternate_greet_id' => 'nullable|numeric',
-            'voicemail_description' => 'nullable|string|max:100',
-            'voicemail_transcription_enabled' => 'nullable',
-            // 'voicemail_attach_file' => 'present',
-            'voicemail_file' => 'present',
-            'voicemail_local_after_email' => 'present',
-            'extension' => "uuid",
-
-        ], [], $attributes);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
-        }
 
         // Retrieve the validated input assign all attributes
         $attributes = $validator->validated();

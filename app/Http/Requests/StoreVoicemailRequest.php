@@ -45,38 +45,6 @@ class StoreVoicemailRequest extends FormRequest
         ];
     }
 
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param Validator $validator
-     * @return void
-     * @throws ValidationException
-     */
-    // protected function failedValidation(Validator $validator)
-    // {
-    //     // Get the original error messages from the validator
-    //     $errors = $validator->errors();
-
-    //     // Check if the specific error for device_address_modified.unique exists
-    //     if ($errors->has('device_address_modified')) {
-    //         // Add the error to the device_address field instead
-    //         $errors->add('device_address', $errors->first('device_address_modified'));
-
-    //         // Optionally, remove the error from device_address_modified if it should only be reported under device_address
-    //         $errors->forget('device_address_modified');
-    //     }
-
-    //     $responseData = array('errors' => $errors);
-
-    //     throw new HttpResponseException(response()->json($responseData, 422)); 
-    // }
-
-    // public function messages(): array
-    // {
-    //     return [
-    //         'device_address.required' => 'MAC address is required',
-    //     ];
-    // }
 
     public function prepareForValidation(): void
     {
