@@ -342,7 +342,7 @@ const form = reactive({
     voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
     voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
     voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
-    voicemail_play_recording_instructions: props.options.voicemail.voicemail_play_recording_instructions === "true",
+    voicemail_play_recording_instructions: props.options.voicemail.voicemail_recording_instructions === "true",
     voicemail_copies: null,
     voicemail_alternate_greet_id: null,
     voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",

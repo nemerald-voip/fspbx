@@ -587,7 +587,7 @@ class VoicemailController extends Controller
                 // Transform greetings into the desired array format
                 $greetingsArray = $voicemail->greetings->map(function ($greeting) {
                     return [
-                        'value' => $greeting->voicemail_id,
+                        'value' => $greeting->greeting_id,
                         'name' => $greeting->greeting_name,
                     ];
                 })->toArray();

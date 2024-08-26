@@ -49,6 +49,7 @@ class UpdateVoicemailRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        // logger($this);
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }

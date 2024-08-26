@@ -10,8 +10,8 @@
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon v-if="((errors?.voicemail_id || errors?.voicemail_password) && item.slug === 'settings') ||
-                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')" class="ml-2 h-5 w-5 text-red-500"
-                        aria-hidden="true" />
+                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
+                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
             </nav>
@@ -42,11 +42,8 @@
                             <div class="col-span-3 sm:col-span-2">
                                 <LabelInputOptional target="voicemail_password" label="Password" class="truncate" />
                                 <InputFieldWithIcon v-model="form.voicemail_password" id="voicemail_password"
-                                    name="voicemail_password" 
-                                    type="text"
-                                    autocomplete="shut-up-google"
-                                    :error="!!errors?.voicemail_password"
-                                    class="password-field">
+                                    name="voicemail_password" type="text" autocomplete="shut-up-google"
+                                    :error="!!errors?.voicemail_password" class="password-field">
                                     <template #icon>
                                         <VisibilityIcon @click="togglePasswordVisibility"
                                             class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
@@ -137,12 +134,17 @@
 
                         <div class="grid grid-cols-6 gap-6">
 
-                            <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
+                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputOptional label="Select greeting" class="truncate mb-1" />
 
-                                <ComboBox :options="options.greetings" :search="true"
-                                    :placeholder="'Select greeting'" :selectedItem="options.voicemail.greeting_id"
-                                    @update:model-value="handleUpdateGreetingField" />
+                                <div class="flex items-center whitespace-nowrap gap-2">
+                                    <ComboBox :options="options.greetings" :search="false" :placeholder="'Select greeting'"
+                                        :selectedItem="options.voicemail.greeting_id"
+                                        @update:model-value="handleUpdateGreetingField" />
+                                    <PlusIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                </div>
                                 <div class="mt-1 text-sm text-gray-500">
                                     Customize the message that callers hear when they reach your voicemail.
                                 </div>
@@ -150,9 +152,41 @@
                             </div>
 
 
+                            
 
-                            <div class="col-span-6 sm:col-span-3 lg:col-span-2">
-                                
+                            <div class="col-span-6 ">
+
+                                <fieldset>
+                                    <legend class="text-sm font-semibold leading-6 text-gray-900">Add new greeting</legend>
+                                    <p class="mt-1 text-sm leading-6 text-gray-600">Select a method for creating a new greeting.</p>
+                                    <div class="mt-3 space-y-6 sm:flex sm:items-center sm:space-x-10 sm:space-y-0">
+                                        <div 
+                                            class="flex items-center">
+                                            <input id="greeting-ai" name="greeting-ai" type="radio"
+                                                :checked="false"
+                                                class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                                            <label for="greeting-ai"
+                                                class="ml-3 block text-sm font-medium leading-6 text-gray-900">Text-to-speech</label>
+                                        </div>
+                                        <div 
+                                            class="flex items-center">
+                                            <input id="greeting-upload" name="greeting-upload" type="radio"
+                                                :checked="false"
+                                                class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                                            <label for="greeting-upload"
+                                                class="ml-3 block text-sm font-medium leading-6 text-gray-900">Upload</label>
+                                        </div>
+                                        <div 
+                                            class="flex items-center">
+                                            <input id="greeting-call" name="greeting-call" type="radio"
+                                                :checked="false"
+                                                class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                                            <label for="greeting-call"
+                                                class="ml-3 block text-sm font-medium leading-6 text-gray-900">Phone call</label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
                             </div>
                         </div>
                     </div>
@@ -248,6 +282,8 @@ import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
+
 
 
 
@@ -273,13 +309,13 @@ const setActiveTab = (tabSlug) => {
 const showPassword = ref(false);
 
 const togglePasswordVisibility = () => {
-  showPassword.value = !showPassword.value;
-  const passwordInput = document.getElementById("voicemail_password");
-  if (showPassword.value) {
-    passwordInput.style.webkitTextSecurity = "none"; // Show text
-  } else {
-    passwordInput.style.webkitTextSecurity = "disc"; // Mask text
-  }
+    showPassword.value = !showPassword.value;
+    const passwordInput = document.getElementById("voicemail_password");
+    if (showPassword.value) {
+        passwordInput.style.webkitTextSecurity = "none"; // Show text
+    } else {
+        passwordInput.style.webkitTextSecurity = "disc"; // Mask text
+    }
 };
 
 // Map icon names to their respective components
@@ -302,7 +338,7 @@ const form = reactive({
     voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
     voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
     voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
-    voicemail_play_recording_instructions: props.options.voicemail.voicemail_play_recording_instructions === "true",
+    voicemail_play_recording_instructions: props.options.voicemail.voicemail_recording_instructions === "true",
     voicemail_copies: props.options.voicemail_copies,
     voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
     voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
@@ -330,7 +366,8 @@ const handleUpdateGreetingField = (greeting) => {
 <style scoped>
 /* This will mask the text input to behave like a password field */
 .password-field {
-  -webkit-text-security: disc; /* For Chrome and Safari */
-  -moz-text-security: disc; /* For Firefox */
-}
-</style>
+    -webkit-text-security: disc;
+    /* For Chrome and Safari */
+    -moz-text-security: disc;
+    /* For Firefox */
+}</style>

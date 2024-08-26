@@ -41,6 +41,7 @@ class Voicemails extends Model
         'voicemail_description',
         'voicemail_name_base64',
         'voicemail_tutorial',
+        'voicemail_recording_instructions',
         'insert_date',
         'insert_user',
         'update_date',
