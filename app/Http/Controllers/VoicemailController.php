@@ -278,30 +278,35 @@ class VoicemailController extends Controller
         try {
             // Retrieve the item by ID from the route parameter
             $voicemail = $this->model->findOrFail($uuid);
-    
+
             // Update the voicemail with the new inputs
             $voicemail->fill($inputs);
-    
+
             // Save the updated voicemail to the database
             $voicemail->save();
-    
+
             // Check if voicemail_copies is present and is an array
             if (isset($inputs['voicemail_copies']) && is_array($inputs['voicemail_copies'])) {
                 // Delete existing voicemail copies for this voicemail
                 VoicemailDestinations::where('voicemail_uuid', $voicemail->voicemail_uuid)->delete();
-    
+
                 // Prepare data for new VoicemailDestinations
                 foreach ($inputs['voicemail_copies'] as $copyUuid) {
                     // Create a new VoicemailDestinations instance and set the fields
                     $voicemailDestination = new VoicemailDestinations();
                     $voicemailDestination->voicemail_uuid = $voicemail->voicemail_uuid; // Set the parent voicemail UUID
                     $voicemailDestination->voicemail_uuid_copy = $copyUuid; // Set the copy UUID
-    
+
                     // Save the VoicemailDestinations instance
                     $voicemailDestination->save();
                 }
             }
-    
+
+            //clear the destinations session array
+            if (isset($_SESSION['destinations']['array'])) {
+                unset($_SESSION['destinations']['array']);
+            }
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Item updated successfully']]
@@ -310,55 +315,13 @@ class VoicemailController extends Controller
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // report($e);
-    
+
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to update item']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
-        return;
-
-
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-        if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "fasle") $attributes['voicemail_local_after_email'] = "true";
-        // $attributes['domain_uuid'] = Session::get('domain_uuid');
-
-        $attributes['update_date'] = date("Y-m-d H:i:s");
-        $attributes['update_user'] = Session::get('user_uuid');
-        $voicemail->update($attributes);
-
-
-        //delete destinations before updating
-        $voicemail->voicemail_destinations()->delete();
-
-        if ($request->has('voicemail_destinations')) {
-            $voicemail_destinations = $request->voicemail_destinations;
-            //updating destinations
-            foreach ($voicemail_destinations as $des) {
-                $vm_des = new VoicemailDestinations();
-                $vm_des->domain_uuid = Session::get('domain_uuid');
-                // $vm_des->voicemail_destination_uuid=$des;
-                $vm_des->voicemail_uuid_copy = $des;
-                $vm_des->update_date = date("Y-m-d H:i:s");
-                $vm_des->update_user = Session::get('user_uuid');
-                $voicemail->voicemail_destinations()->save($vm_des);
-            }
-        }
-
-        //clear the destinations session array
-        if (isset($_SESSION['destinations']['array'])) {
-            unset($_SESSION['destinations']['array']);
-        }
-
-        return response()->json([
-            'voicemail' => $voicemail->voicemail_id,
-            //'request' => $attributes,
-            'status' => 'success',
-            'message' => 'Voicemail has been updated'
-        ]);
     }
 
     /**
@@ -605,14 +568,36 @@ class VoicemailController extends Controller
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
                 // Find existing voicemail by item_uuid
-                $voicemail = Voicemails::with(['voicemail_destinations' => function ($query) {
-                    $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
-                }])->where('voicemail_uuid', $item_uuid)->first();
+                $voicemail = Voicemails::with([
+                    'voicemail_destinations' => function ($query) {
+                        $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
+                    },
+                    'greetings' => function ($query) use ($domain_uuid) {
+                        $query->select('voicemail_id', 'greeting_id', 'greeting_name')
+                            ->where('domain_uuid', $domain_uuid);
+                    }
+                ])->where('voicemail_uuid', $item_uuid)->first();
+
 
                 // If a voicemail exists, use it; otherwise, create a new one
                 if (!$voicemail) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
+
+                // Transform greetings into the desired array format
+                $greetingsArray = $voicemail->greetings->map(function ($greeting) {
+                    return [
+                        'value' => $greeting->voicemail_id,
+                        'name' => $greeting->greeting_name,
+                    ];
+                })->toArray();
+
+                // Add the default options at the beginning of the array
+                array_unshift(
+                    $greetingsArray,
+                    ['value' => '0', 'name' => 'None'],
+                    ['value' => '-1', 'name' => 'Default']
+                );
 
                 // Define the update route
                 $updateRoute = route('voicemails.update', ['voicemail' => $item_uuid]);
@@ -628,8 +613,6 @@ class VoicemailController extends Controller
                 $voicemail->voicemail_enabled = 'true';
                 $voicemail->voicemail_recording_instructions = 'true';
             }
-
-            // logger($voicemail);
 
             $permissions = $this->getUserPermissions();
             // logger($permissions);
@@ -652,6 +635,7 @@ class VoicemailController extends Controller
                 'voicemail' => $voicemail,
                 'permissions' => $permissions,
                 'voicemail_copies' => $voicemailCopies,
+                'greetings' => $greetingsArray
                 // Define options for other fields as needed
             ];
 

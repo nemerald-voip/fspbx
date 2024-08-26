@@ -127,7 +127,7 @@
             </div>
 
 
-            <div v-if="activeTab === 'greetings'" action="#" method="POST">
+            <div v-if="activeTab === 'greetings'">
                 <div class="shadow sm:overflow-hidden sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
@@ -136,63 +136,23 @@
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="first-name" class="block text-sm font-medium leading-6 text-gray-900">First
-                                    name</label>
-                                <input type="text" name="first-name" id="first-name" autocomplete="given-name"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+
+                            <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
+                                <LabelInputOptional label="Select greeting" class="truncate mb-1" />
+
+                                <ComboBox :options="options.greetings" :search="true"
+                                    :placeholder="'Select greeting'" :selectedItem="options.voicemail.greeting_id"
+                                    @update:model-value="handleUpdateGreetingField" />
+                                <div class="mt-1 text-sm text-gray-500">
+                                    Customize the message that callers hear when they reach your voicemail.
+                                </div>
+
                             </div>
 
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="last-name" class="block text-sm font-medium leading-6 text-gray-900">Last
-                                    name</label>
-                                <input type="text" name="last-name" id="last-name" autocomplete="family-name"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                            </div>
 
-                            <div class="col-span-6 sm:col-span-4">
-                                <label for="email-address" class="block text-sm font-medium leading-6 text-gray-900">Email
-                                    address</label>
-                                <input type="text" name="email-address" id="email-address" autocomplete="email"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="country"
-                                    class="block text-sm font-medium leading-6 text-gray-900">Country</label>
-                                <select id="country" name="country" autocomplete="country-name"
-                                    class="mt-2 block w-full rounded-md border-0 bg-white py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    <option>United States</option>
-                                    <option>Canada</option>
-                                    <option>Mexico</option>
-                                </select>
-                            </div>
-
-                            <div class="col-span-6">
-                                <label for="street-address" class="block text-sm font-medium leading-6 text-gray-900">Street
-                                    address</label>
-                                <input type="text" name="street-address" id="street-address" autocomplete="street-address"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-6 lg:col-span-2">
-                                <label for="city" class="block text-sm font-medium leading-6 text-gray-900">City</label>
-                                <input type="text" name="city" id="city" autocomplete="address-level2"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                            </div>
 
                             <div class="col-span-6 sm:col-span-3 lg:col-span-2">
-                                <label for="region" class="block text-sm font-medium leading-6 text-gray-900">State /
-                                    Province</label>
-                                <input type="text" name="region" id="region" autocomplete="address-level1"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-3 lg:col-span-2">
-                                <label for="postal-code" class="block text-sm font-medium leading-6 text-gray-900">ZIP /
-                                    Postal code</label>
-                                <input type="text" name="postal-code" id="postal-code" autocomplete="postal-code"
-                                    class="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                                
                             </div>
                         </div>
                     </div>
@@ -347,6 +307,7 @@ const form = reactive({
     voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
     voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
     update_route: props.options.update_route,
+    greeting_id: props.options.voicemail.greeting_id,
     _token: page.props.csrf_token,
 })
 
@@ -358,6 +319,10 @@ const submitForm = () => {
 
 const handleUpdateCopyToField = (voicemails) => {
     form.voicemail_copies = voicemails.map(voicemail => voicemail.value);
+}
+
+const handleUpdateGreetingField = (greeting) => {
+    form.greeting_id = greeting.value;
 }
 
 </script>

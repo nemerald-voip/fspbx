@@ -6,7 +6,6 @@ use Closure;
 use App\Models\Faxes;
 use App\Models\IvrMenus;
 use App\Models\CallFlows;
-use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;

@@ -81,6 +81,26 @@ class Voicemails extends Model
                 $model->domain_uuid = session('domain_uuid');
             }
         });
+
+        // static::retrieved(function ($model) {
+        //     if ($model->greeting_id==null) {
+        //         $model->greeting_id = -1;
+        //     }
+        // });
+    }
+
+    // Accessor for greeting_id
+    public function getGreetingIdAttribute($value)
+    {
+        // Return -1 if greeting_id is null and has been requested
+        return $value === null ? '-1' : (string) $value;
+    }
+
+    // Mutator for greeting_id
+    public function setGreetingIdAttribute($value)
+    {
+        // Convert the value to null if it is '-1', otherwise convert it to an integer
+        $this->attributes['greeting_id'] = $value === '-1' ? null : (int) $value;
     }
 
     /**

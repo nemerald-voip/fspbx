@@ -6,9 +6,6 @@ use App\Rules\UniqueExtension;
 use Illuminate\Support\Facades\Auth;
 use App\Rules\ValidVoicemailPassword;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateVoicemailRequest extends FormRequest
 {
@@ -35,6 +32,7 @@ class UpdateVoicemailRequest extends FormRequest
             ],
             'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
             'voicemail_mail_to' => 'nullable|email:rfc',
+            'greeting_id' => 'required|string',
             'voicemail_enabled' => 'present',
             'voicemail_tutorial' => 'present',
             'voicemail_alternate_greet_id' => 'nullable|numeric',
@@ -112,6 +110,13 @@ class UpdateVoicemailRequest extends FormRequest
             $sanitizedDescription = $this->sanitizeInput($this->voicemail_description);
             $this->merge(['voicemail_description' => $sanitizedDescription]);
         }
+
+        if ($this->has('greeting_id')) {
+            if ($this->greeting_id == 'NULL') {
+                $this->merge(['greeting_id' => '-1']);
+            }
+           
+        }
     }
 
     /**
@@ -147,7 +152,7 @@ class UpdateVoicemailRequest extends FormRequest
         return [
             'voicemail_id' => 'voicemail extension',
             'voicemail_password' => 'voicemail password',
-            'greeting_id' => 'extension number',
+            'greeting_id' => 'greeting',
             'voicemail_mail_to' => 'email address',
             'voicemail_enabled' => 'enabled',
             'voicemail_description' => 'description',
