@@ -109,7 +109,6 @@ class DomainController extends Controller
      */
     public function filterDomainsFusionPBX(Request $request)
     {
-        logger('here');
         // Retrieve domains from session
         $domains = Session::get('domains');
 
