@@ -53,7 +53,7 @@
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
                     <LabelInputOptional label="Voice" class="truncate mb-1" />
                     <ComboBox :options="voices" :search="true" :placeholder="'Choose voice'"
-                        :selectedItem="voices[0]?.value" @update:model-value="handleUpdateVoice" :error="!!errors?.voice"/>
+                        :selectedItem="voices[0]?.value" @update:model-value="handleUpdateVoice" :error="!!errors?.voice" />
                     <div v-if="errors?.voice" class="mt-2 text-xs text-red-600">
                         {{ errors.voice[0] }}
                     </div>
@@ -69,8 +69,7 @@
                 </div>
 
                 <div class="content-end col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.prevent="generateGreeting"
-                        :class="{'mb-6': errors?.voice || errors?.speed}"
+                    <button @click.prevent="generateGreeting" :class="{ 'mb-6': errors?.voice || errors?.speed }"
                         class="inline-flex justify-center rounded-md bg-white px-5 py-2 gap-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
                         Generate
                         <Spinner class="ml-1" :color="'text-gray-700'" :show="isFormSubmiting" />
@@ -78,18 +77,34 @@
                     </button>
                 </div>
 
-                <div v-if="audioUrl" class="col-span-6 mt-4">
-                    <audio controls :src="audioUrl"></audio>
+                <div v-if="audioUrl" class="col-span-6 sm:col-span-4 mt-2">
+                    <audio controls :src="audioUrl" class="w-full"></audio>
                 </div>
 
-                <div v-if="errors?.server" class="col-span-6 mt-2 text-xs text-red-600">
-                        {{ errors.server[0] }}
+                <div v-if="audioUrl" class="content-center col-span-2 text-sm font-medium leading-6 text-gray-900">
+                    <button @click.prevent="saveGreeting"
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500">
+                        Apply
+                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isSaving" />
+                        <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
+                    </button>
+                </div>
+
+                <div v-if="errors?.server" class="col-span-6 rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">{{ errors.server[0] }}</h3>
+                            
+                        </div>
                     </div>
+                </div>
 
             </div>
         </div>
     </div>
-
 </template>
   
 <script setup>
@@ -99,8 +114,9 @@ import { usePage } from '@inertiajs/vue3';
 import ComboBox from '../general/ComboBox.vue';
 import Textarea from '@generalComponents/Textarea.vue';
 import LabelInputOptional from '../general/LabelInputOptional.vue';
-import { PlayCircleIcon } from '@heroicons/vue/24/solid';
 import Spinner from "@generalComponents/Spinner.vue";
+import { XCircleIcon } from '@heroicons/vue/20/solid'
+
 
 const props = defineProps({
     voices: Object,
@@ -108,12 +124,16 @@ const props = defineProps({
     route: String,
 });
 
+const emits = defineEmits(['greeting-saved']);
+
 const page = usePage();
 
 const selectedGreetingMethod = ref('text-to-speech');
 const isFormSubmiting = ref(null);
+const isSaving = ref(null);
 const errors = ref(null);
 const audioUrl = ref(null);
+const applyUrl = ref(null);
 
 const greetingForm = reactive({
     input: null,
@@ -132,8 +152,6 @@ const handleUpdateSpeed = (speed) => {
 
 const generateGreeting = () => {
     // Functionality to generate greeting
-    console.log(greetingForm);
-
     isFormSubmiting.value = true;
     errors.value = null;
     audioUrl.value = null; // Reset audio URL
@@ -144,9 +162,33 @@ const generateGreeting = () => {
             // console.log(response.data);
             if (response.data.success) {
                 audioUrl.value = response.data.file_url; // Set the audio URL
+                applyUrl.value = response.data.apply_url; // Set the audio URL
             }
         }).catch((error) => {
             isFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
+};
+
+const saveGreeting = () => {
+    // Functionality to generate greeting
+    isSaving.value = true;
+    errors.value = null;
+
+    axios.post(applyUrl.value)
+        .then((response) => {
+            isSaving.value = false;
+            console.log(response.data);
+            if (response.data.success) {
+                // Emit the event with the greeting_id and greeting_name
+                emits('greeting-saved', {
+                    greeting_id: response.data.greeting_id,
+                    greeting_name: response.data.greeting_name
+                });
+            }
+
+        }).catch((error) => {
+            isSaving.value = false;
             handleFormErrorResponse(error);
         });
 };

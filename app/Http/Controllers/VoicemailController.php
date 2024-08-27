@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Extensions;
 use App\Models\Voicemails;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\OpenAIService;
 use Illuminate\Validation\Rule;
@@ -713,22 +714,34 @@ class VoicemailController extends Controller
             $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
 
             $domainName = session('domain_name');
-            $fileName = 'Generated_' . now()->format('Ymd_His') . '.' . $responseFormat; // Generates filename like Generated_20240826_153045.wav
+
+            // Delete all temp files
+            $this->deleteTempFiles($domainName . '/' . $voicemail->voicemail_id);
+
+            $fileName = 'temp_' . now()->format('Ymd_His') . '.' . $responseFormat; // Generates filename like temp_20240826_153045.wav
             $filePath = $domainName . '/' . $voicemail->voicemail_id . '/' . $fileName;
 
             // Save file to the voicemail disk with domain folder
             Storage::disk('voicemail')->put($filePath, $response);
 
             // Generate the file URL using the defined route
-            $fileUrl = route('voicemail.file', [
+            $fileUrl = route('voicemail.file.serve', [
                 'domain' => $domainName,
                 'voicemail_id' => $voicemail->voicemail_id,
+                'file' => $fileName,
+            ]);
+
+            // Generate the file URL using the defined route
+            $applyUrl = route('voicemail.file.apply', [
+                'domain' => $domainName,
+                'voicemail' => $voicemail,
                 'file' => $fileName,
             ]);
 
             return response()->json([
                 'success' => true,
                 'file_url' => $fileUrl,
+                'apply_url' => $applyUrl,
             ]);
 
             return response()->json($response);
@@ -750,10 +763,95 @@ class VoicemailController extends Controller
         $filePath = "{$domain}/{$voicemail_id}/{$file}";
 
         if (!Storage::disk('voicemail')->exists($filePath)) {
-            abort(404); // File not found
+            // File not found
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => 'File not found']
+            ], 500);  // 500 Internal Server Error for any other errors
         }
 
         // Serve the file using Laravel's response helper
         return response()->file(Storage::disk('voicemail')->path($filePath));
+    }
+
+    public function applyVoicemailFile($domain, Voicemails $voicemail, $file)
+    {
+        try {
+            $filePath = "{$domain}/{$voicemail->voicemail_id}/{$file}";
+
+            if (!Storage::disk('voicemail')->exists($filePath)) {
+                abort(404); // File not found
+            }
+
+            if (!Storage::disk('voicemail')->exists($filePath)) {
+                // File not found
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['File not found']]
+                ], 500);  // 500 Internal Server Error for any other errors
+            }
+
+            // Step 3: Retrieve the highest greeting_id
+            $highestGreetingId = $voicemail->greetings()
+                ->max('greeting_id') ?? 0;
+
+            // Step 4: Generate new greeting_id and filename
+            $newGreetingId = $highestGreetingId + 1;
+            $newFileName = "greeting_{$newGreetingId}.wav";
+
+            // Step 5: Construct the new file path
+            $newFilePath = "{$domain}/{$voicemail->voicemail_id}/{$newFileName}";
+
+            // Step 6: Store the file with the new name (you might want to copy instead of move)
+            if (!Storage::disk('voicemail')->move($filePath, $newFilePath)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['Failed to save the file']]
+                ], 500);
+            }
+
+            // Step 7: Save greeting info to the database
+            $voicemail->greetings()->create([
+                'domain_uuid' => $voicemail->domain_uuid,
+                'voicemail_id' => $voicemail->voicemail_id,
+                'greeting_id' => $newGreetingId,
+                'greeting_name' => "AI Greeting {$newGreetingId}",
+                'greeting_filename' => $newFileName,
+                'greeting_description' => "Generated greeting {$newGreetingId}",
+
+            ]);
+
+            // Step 8: Update the voicemail table with the new greeting_id
+            $voicemail->update([
+                'greeting_id' => $newGreetingId
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'greeting_id' => $newGreetingId,
+                'greeting_name' => "AI Greeting {$newGreetingId}",
+                'message' => ['success' => 'Greeting file has been saved successfully.']
+            ], 200);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function deleteTempFiles($folderPath)
+    {
+        $files = Storage::disk('voicemail')->files($folderPath);
+        foreach ($files as $file) {
+            if (Str::startsWith(basename($file), 'temp')) {
+                Storage::disk('voicemail')->delete($file);
+            }
+        }
     }
 }

@@ -131,7 +131,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('voicemails', VoicemailController::class);
     Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
     Route::post('/voicemails/{voicemail}/text-to-speech',[VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
-    Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file');
+    Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file.serve');
+    Route::post('/voicemail/{domain}/{voicemail}/{file}', [VoicemailController::class, 'applyVoicemailFile'])->name('voicemail.file.apply');
+
 
 
     // Voicemail Messages

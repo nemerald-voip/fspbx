@@ -2,7 +2,7 @@
     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
         <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
-                <a v-for="item in options.navigation" :key="item.name" href="#"
+                <a v-for="item in localOptions.navigation" :key="item.name" href="#"
                     :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
                     @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
@@ -77,7 +77,7 @@
 
                             <div class="divide-y divide-gray-200 col-span-6">
 
-                                <Toggle v-if="options.permissions.manage_voicemail_transcription"
+                                <Toggle v-if="localOptions.permissions.manage_voicemail_transcription"
                                     label="Voicemail Transcription"
                                     description="Convert voicemail messages to text using AI-powered transcription."
                                     v-model="form.voicemail_transcription_enabled" customClass="py-4" />
@@ -86,20 +86,20 @@
                                     description="Attach voicemail recording file to the email notification."
                                     v-model="form.voicemail_email_attachment" customClass="py-4" />
 
-                                <Toggle v-if="options.permissions.manage_voicemail_auto_delete"
+                                <Toggle v-if="localOptions.permissions.manage_voicemail_auto_delete"
                                     label="Automatically Delete Voicemail After Email"
                                     description="Remove voicemail from the cloud once the email is sent."
                                     v-model="form.voicemail_delete" customClass="py-4" />
 
                             </div>
 
-                            <div v-if="options.permissions.manage_voicemail_copies"
+                            <div v-if="localOptions.permissions.manage_voicemail_copies"
                                 class="col-span-4 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputOptional label="Copy Voicemail to
                                     Other Extensions" class="truncate mb-1" />
 
-                                <ComboBox :options="options.all_voicemails" :search="true" multiple
-                                    :placeholder="'Enter name or extension'" :selectedItem="options.voicemail_copies"
+                                <ComboBox :options="localOptions.all_voicemails" :search="true" multiple
+                                    :placeholder="'Enter name or extension'" :selectedItem="localOptions.voicemail_copies"
                                     @update:model-value="handleUpdateCopyToField" />
                                 <div class="mt-1 text-sm text-gray-500">
                                     Automatically send a copy of the voicemail to selected additional extensions.
@@ -139,10 +139,16 @@
                                 <LabelInputOptional label="Select greeting" class="truncate mb-1" />
 
                                 <div class="flex items-center whitespace-nowrap gap-2">
-                                    <ComboBox :options="options.greetings" :search="false" :placeholder="'Select greeting'"
-                                        :selectedItem="form.greeting_id" @update:model-value="handleUpdateGreetingField" />
+                                    <ComboBox :options="localOptions.greetings" :search="false"
+                                        :placeholder="'Select greeting'" :selectedItem="form.greeting_id"
+                                        @update:model-value="handleUpdateGreetingField" />
+
+                                    <PlayCircleIcon @click="playGreeting"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
                                     <PlusIcon @click="toggleGreetingForm"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
 
                                 </div>
                                 <!-- <div class="mt-1 text-sm text-gray-500">
@@ -160,7 +166,8 @@
                 </div>
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :voices="options.voices" :speeds="options.speeds" :route="options.text_to_speech_route"/>
+                <NewGreetingForm v-if="showGreetingForm" :voices="localOptions.voices" :speeds="localOptions.speeds"
+                    :route="localOptions.text_to_speech_route" @greeting-saved="handleGreetingSaved" />
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
@@ -178,7 +185,7 @@
                                 description="Provide user with a guided tutorial when accessing voicemail for the first time."
                                 v-model="form.voicemail_tutorial" customClass="py-4" />
 
-                            <Toggle v-if="options.permissions.manage_voicemail_recording_instructions"
+                            <Toggle v-if="localOptions.permissions.manage_voicemail_recording_instructions"
                                 label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
                                         speaking to end the recording."'
                                 v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
@@ -230,7 +237,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 import ComboBox from "../general/ComboBox.vue";
@@ -248,6 +255,7 @@ import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon } from '@heroicons/vue/20/solid'
+import { PlayCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
@@ -295,6 +303,14 @@ const iconComponents = {
 
 const page = usePage();
 
+// Make a local reactive copy of options to manipulate in this component
+const localOptions = reactive({ ...props.options });
+
+// Watch for changes in props.options and update localOptions accordingly
+watch(() => props.options, (newOptions) => {
+    Object.assign(localOptions, newOptions);
+});
+
 const form = reactive({
     voicemail_enabled: props.options.voicemail.voicemail_enabled,
     voicemail_id: props.options.voicemail.voicemail_id,
@@ -326,6 +342,97 @@ const handleUpdateCopyToField = (voicemails) => {
 
 const handleUpdateGreetingField = (greeting) => {
     form.greeting_id = greeting.value;
+}
+
+// Handler for the greeting-saved event
+const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
+    // Add the new greeting to the localOptions.greetings array
+    localOptions.greetings.push({ value: String(greeting_id), name: greeting_name });
+
+    // Update the selected greeting ID
+    form.greeting_id = String(greeting_id);
+};
+
+const currentAudio = ref(null);
+const isAudioPlaying = ref(false);
+
+const playGreeting = () => {
+    audioUrl.value = null; // Reset audio URL
+
+    axios.post(props.route)
+        .then((response) => {
+            // Stop the currently playing audio (if any)
+            if (currentAudio.value) {
+                currentAudio.value.pause();
+                currentAudio.value.currentTime = 0; // Reset the playback position
+            }
+            if (response.data.success) {
+                audioUrl.value = response.data.file_url; // Set the audio URL
+            }
+
+            isAudioPlaying.value = true;
+
+            currentAudio.value = new Audio(audioUrl.value);
+            currentAudio.value.play();
+
+            // Add an event listener for when the audio ends
+            currentAudio.value.addEventListener("ended", () => {
+                isAudioPlaying.value = false;
+                currentAudioUuid.value = null;
+            });
+        }).catch((error) => {
+            handleErrorResponse(error);
+        });
+};
+
+
+const fetchAndPlayAudio = (uuid) => {
+    router.visit("/call-detail-records", {
+        data: {
+            callUuid: uuid,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: ["recordingUrl"],
+        onSuccess: (page) => {
+            // Stop the currently playing audio (if any)
+            if (currentAudio.value) {
+                currentAudio.value.pause();
+                currentAudio.value.currentTime = 0; // Reset the playback position
+            }
+
+            currentAudioUuid.value = uuid;
+            isAudioPlaying.value = true;
+
+            currentAudio.value = new Audio(props.recordingUrl);
+            currentAudio.value.play();
+
+            // Add an event listener for when the audio ends
+            currentAudio.value.addEventListener("ended", () => {
+                isAudioPlaying.value = false;
+                currentAudioUuid.value = null;
+            });
+        },
+    });
+};
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
 }
 
 

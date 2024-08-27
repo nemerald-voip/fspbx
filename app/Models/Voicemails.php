@@ -115,7 +115,7 @@ class Voicemails extends Model
     }
 
     /**
-     * Get the voicemail destinations belongs to.
+     * Get the voicemail greetings.
      */
     public function greetings($domain_uuid = null)
     {
