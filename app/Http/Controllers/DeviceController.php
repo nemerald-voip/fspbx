@@ -563,12 +563,19 @@ class DeviceController extends Controller
                     $inputs['device_vendor'] = 'polycom';
                 }
             }
-
+            
             if (isset($inputs['extension'])) {
                 $extension = $inputs['extension'];
                 unset($inputs['extension']);
             } else {
                 $extension = null;
+            }
+
+            
+            // Check if device_profile_uuid is intended to be NULL and adjust accordingly
+            // This will convert string "NULL" to literal null values
+            if (array_key_exists('device_profile_uuid', $inputs) && $inputs['device_profile_uuid'] === 'NULL') {
+                $inputs['device_profile_uuid'] = null;  // This explicitly sets it to NULL
             }
 
             if (sizeof($inputs) > 0) {
@@ -580,15 +587,17 @@ class DeviceController extends Controller
                 // First, we are deleting all existing device lines
                 $this->deleteDeviceLines(request('items'));
 
-                // Create new lines
-                $this->createDeviceLines(request('items'), $extension);
+                if ($extension != 'NULL') {
+                    // Create new lines
+                    $this->createDeviceLines(request('items'), $extension);
+                }
             }
 
             return response()->json([
                 'messages' => ['success' => ['Selected items updated']],
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
