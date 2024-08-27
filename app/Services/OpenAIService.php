@@ -21,8 +21,6 @@ class OpenAIService
         
         $url = 'https://api.openai.com/v1/audio/speech';
 
-        logger('here');
-
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
@@ -41,7 +39,7 @@ class OpenAIService
     private function handleResponse($response)
     {
         if ($response->successful()) {
-            return $response->json();
+            return $response->body();
         }
 
         if ($response->clientError()) {

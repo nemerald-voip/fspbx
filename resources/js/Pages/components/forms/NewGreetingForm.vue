@@ -72,10 +72,14 @@
                     <button @click.prevent="generateGreeting"
                         :class="{'mb-6': errors?.voice || errors?.speed}"
                         class="inline-flex justify-center rounded-md bg-white px-5 py-2 gap-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
+                        Generate
                         <Spinner class="ml-1" :color="'text-gray-700'" :show="isFormSubmiting" />
-                        Play
-                        <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" />
+                        <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
                     </button>
+                </div>
+
+                <div v-if="audioUrl" class="col-span-6 mt-4">
+                    <audio controls :src="audioUrl"></audio>
                 </div>
 
                 <div v-if="errors?.server" class="col-span-6 mt-2 text-xs text-red-600">
@@ -101,6 +105,7 @@ import Spinner from "@generalComponents/Spinner.vue";
 const props = defineProps({
     voices: Object,
     speeds: Object,
+    route: String,
 });
 
 const page = usePage();
@@ -108,6 +113,7 @@ const page = usePage();
 const selectedGreetingMethod = ref('text-to-speech');
 const isFormSubmiting = ref(null);
 const errors = ref(null);
+const audioUrl = ref(null);
 
 const greetingForm = reactive({
     input: null,
@@ -130,11 +136,15 @@ const generateGreeting = () => {
 
     isFormSubmiting.value = true;
     errors.value = null;
+    audioUrl.value = null; // Reset audio URL
 
-    axios.post('/text-to-speech', greetingForm)
+    axios.post(props.route, greetingForm)
         .then((response) => {
             isFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
+            // console.log(response.data);
+            if (response.data.success) {
+                audioUrl.value = response.data.file_url; // Set the audio URL
+            }
         }).catch((error) => {
             isFormSubmiting.value = false;
             handleFormErrorResponse(error);
@@ -143,7 +153,7 @@ const generateGreeting = () => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        errors.value = { request: ["Session expired. Reload the page"] };
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

@@ -160,7 +160,7 @@
                 </div>
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :voices="options.voices" :speeds="options.speeds"/>
+                <NewGreetingForm v-if="showGreetingForm" :voices="options.voices" :speeds="options.speeds" :route="options.text_to_speech_route"/>
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">

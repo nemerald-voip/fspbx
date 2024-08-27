@@ -130,6 +130,9 @@ Route::group(['middleware' => 'auth'], function () {
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
     Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
+    Route::post('/voicemails/{voicemail}/text-to-speech',[VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
+    Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file');
+
 
     // Voicemail Messages
     Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index'])->name('voicemails.messages.index');
@@ -137,6 +140,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('getVoicemailMessage');
     Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
     Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
+
 
 
     // SIP Credentials
@@ -273,7 +277,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
 
     // OpenAI Api
-    Route::post('/text-to-speech', [OpenAIController::class, 'textToSpeech']);
+    // Route::post('/text-to-speech', [OpenAIController::class, 'textToSpeech']);
 
 
 });

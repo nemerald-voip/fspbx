@@ -7,12 +7,14 @@ use App\Models\Domain;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use Illuminate\Http\Request;
+use App\Services\OpenAIService;
 use Illuminate\Validation\Rule;
 use App\Models\VoicemailGreetings;
 use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\TextToSpeechRequest;
 use App\Http\Requests\StoreVoicemailRequest;
 use App\Http\Requests\UpdateVoicemailRequest;
 
@@ -649,7 +651,6 @@ class VoicemailController extends Controller
                 }
                 $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
             }
-            
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -661,6 +662,7 @@ class VoicemailController extends Controller
                 'greetings' => $greetingsArray,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
+                'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
                 // Define options for other fields as needed
             ];
 
@@ -697,5 +699,61 @@ class VoicemailController extends Controller
         // $permissions['manage_voicemail_recording_instructions'] = false;
 
         return $permissions;
+    }
+
+    public function textToSpeech(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
+    {
+        $input = $request->input('input');
+        $model = $request->input('model');
+        $voice = $request->input('voice');
+        $responseFormat = $request->input('response_format');
+        $speed = $request->input('speed');
+
+        try {
+            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
+
+            $domainName = session('domain_name');
+            $fileName = 'Generated_' . now()->format('Ymd_His') . '.' . $responseFormat; // Generates filename like Generated_20240826_153045.wav
+            $filePath = $domainName . '/' . $voicemail->voicemail_id . '/' . $fileName;
+
+            // Save file to the voicemail disk with domain folder
+            Storage::disk('voicemail')->put($filePath, $response);
+
+            // Generate the file URL using the defined route
+            $fileUrl = route('voicemail.file', [
+                'domain' => $domainName,
+                'voicemail_id' => $voicemail->voicemail_id,
+                'file' => $fileName,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_url' => $fileUrl,
+            ]);
+
+            return response()->json($response);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function serveVoicemailFile($domain, $voicemail_id, $file)
+    {
+        $filePath = "{$domain}/{$voicemail_id}/{$file}";
+
+        if (!Storage::disk('voicemail')->exists($filePath)) {
+            abort(404); // File not found
+        }
+
+        // Serve the file using Laravel's response helper
+        return response()->file(Storage::disk('voicemail')->path($filePath));
     }
 }
