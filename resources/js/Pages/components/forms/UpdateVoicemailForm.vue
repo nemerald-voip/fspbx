@@ -125,11 +125,12 @@
 
 
             <div v-if="activeTab === 'greetings'">
-                <div class="shadow sm:overflow-hidden sm:rounded-md">
+                <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Greetings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Create custom greetings or upload a file</p>
+                            <p class="mt-1 text-sm text-gray-500">Customize the message that callers hear when they reach
+                                your voicemail.</p>
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
@@ -139,55 +140,17 @@
 
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <ComboBox :options="options.greetings" :search="false" :placeholder="'Select greeting'"
-                                        :selectedItem="options.voicemail.greeting_id"
-                                        @update:model-value="handleUpdateGreetingField" />
-                                    <PlusIcon
+                                        :selectedItem="form.greeting_id" @update:model-value="handleUpdateGreetingField" />
+                                    <PlusIcon @click="toggleGreetingForm"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                 </div>
-                                <div class="mt-1 text-sm text-gray-500">
+                                <!-- <div class="mt-1 text-sm text-gray-500">
                                     Customize the message that callers hear when they reach your voicemail.
-                                </div>
+                                </div> -->
 
                             </div>
 
-
-                            
-
-                            <div class="col-span-6 ">
-
-                                <fieldset>
-                                    <legend class="text-sm font-semibold leading-6 text-gray-900">Add new greeting</legend>
-                                    <p class="mt-1 text-sm leading-6 text-gray-600">Select a method for creating a new greeting.</p>
-                                    <div class="mt-3 space-y-6 sm:flex sm:items-center sm:space-x-10 sm:space-y-0">
-                                        <div 
-                                            class="flex items-center">
-                                            <input id="greeting-ai" name="greeting-ai" type="radio"
-                                                :checked="false"
-                                                class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                                            <label for="greeting-ai"
-                                                class="ml-3 block text-sm font-medium leading-6 text-gray-900">Text-to-speech</label>
-                                        </div>
-                                        <div 
-                                            class="flex items-center">
-                                            <input id="greeting-upload" name="greeting-upload" type="radio"
-                                                :checked="false"
-                                                class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                                            <label for="greeting-upload"
-                                                class="ml-3 block text-sm font-medium leading-6 text-gray-900">Upload</label>
-                                        </div>
-                                        <div 
-                                            class="flex items-center">
-                                            <input id="greeting-call" name="greeting-call" type="radio"
-                                                :checked="false"
-                                                class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                                            <label for="greeting-call"
-                                                class="ml-3 block text-sm font-medium leading-6 text-gray-900">Phone call</label>
-                                        </div>
-                                    </div>
-                                </fieldset>
-
-                            </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
@@ -195,6 +158,9 @@
                             class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
                     </div>
                 </div>
+
+                <!-- New Greeting Form -->
+                <NewGreetingForm v-if="showGreetingForm" :voices="options.voices" :speeds="options.speeds"/>
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
@@ -267,7 +233,6 @@
 import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
-
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
@@ -283,12 +248,7 @@ import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon } from '@heroicons/vue/20/solid'
-
-
-
-
-
-//Delete next line
+import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
 
@@ -301,12 +261,19 @@ const props = defineProps({
 
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
+const showGreetingForm = ref(false);
+const selectedGreetingMethod = ref('text-to-speech');
+
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
 const showPassword = ref(false);
+
+const toggleGreetingForm = () => {
+    showGreetingForm.value = !showGreetingForm.value;
+};
 
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
@@ -361,6 +328,7 @@ const handleUpdateGreetingField = (greeting) => {
     form.greeting_id = greeting.value;
 }
 
+
 </script>
 
 <style scoped>
@@ -370,4 +338,5 @@ const handleUpdateGreetingField = (greeting) => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>

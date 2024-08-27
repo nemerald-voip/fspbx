@@ -628,6 +628,29 @@ class VoicemailController extends Controller
                 })->toArray();
             }
 
+            $openAiVoices = [
+                ['value' => 'alloy', 'name' => 'Alloy'],
+                ['value' => 'echo', 'name' => 'Echo'],
+                ['value' => 'fable', 'name' => 'Fable'],
+                ['value' => 'onyx', 'name' => 'Onyx'],
+                ['value' => 'nova', 'name' => 'Nova'],
+                ['value' => 'shimmer', 'name' => 'Shimmer'],
+            ];
+
+            $openAiSpeeds = [];
+
+            for ($i = 0.25; $i <= 4.0; $i += 0.25) {
+                if (floor($i) == $i) {
+                    // Whole number, format with one decimal place
+                    $formattedValue = sprintf('%.1f', $i);
+                } else {
+                    // Fractional number, format with two decimal places
+                    $formattedValue = sprintf('%.2f', $i);
+                }
+                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
+            }
+            
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -635,7 +658,9 @@ class VoicemailController extends Controller
                 'voicemail' => $voicemail,
                 'permissions' => $permissions,
                 'voicemail_copies' => $voicemailCopies,
-                'greetings' => $greetingsArray
+                'greetings' => $greetingsArray,
+                'voices' => $openAiVoices,
+                'speeds' => $openAiSpeeds,
                 // Define options for other fields as needed
             ];
 

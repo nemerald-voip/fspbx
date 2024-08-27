@@ -9,6 +9,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\OpenAIController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
@@ -270,6 +271,10 @@ Route::group(['middleware' => 'auth'], function () {
     // Reports
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
+
+    // OpenAI Api
+    Route::post('/text-to-speech', [OpenAIController::class, 'textToSpeech']);
+
 
 });
 

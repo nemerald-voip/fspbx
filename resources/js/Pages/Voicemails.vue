@@ -94,7 +94,7 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_mail_to" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500":text="row.voicemail_enabled" >
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_enabled" >
                         <Badge v-if="row.voicemail_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
                             textColor="text-green-700"
                             ringColor="ring-green-600/20" />
@@ -161,13 +161,6 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-
-
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
@@ -211,7 +204,6 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
@@ -236,8 +228,6 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
