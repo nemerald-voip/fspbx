@@ -236,39 +236,20 @@ class SetUpUserSession
                     ])
                     ->get();
 
-                // $domains = DB::table('v_domains')
-                //     ->join('user_domain_permission', 'user_domain_permission.domain_uuid', '=', 'v_domains.domain_uuid')
-                //     ->where('v_domains.domain_enabled', '=', 't')
-                //     ->where('user_uuid', '=', $event->user->user_uuid)
-                //     ->get([
-                //         'v_domains.domain_uuid',
-                //         'v_domains.domain_parent_uuid',
-                //         'v_domains.domain_name',
-                //         'v_domains.domain_enabled',
-                //         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
-                //     ]);
-
-                $domains_from_groups = DB::table('v_domains')
-                    ->join('domain_group_relations', 'v_domains.domain_uuid', '=', 'domain_group_relations.domain_uuid')
+                $domains_from_groups = Domain::join('domain_group_relations', 'v_domains.domain_uuid', '=', 'domain_group_relations.domain_uuid')
                     ->join('domain_groups', 'domain_group_relations.domain_group_uuid', '=', 'domain_groups.domain_group_uuid')
                     ->join('user_domain_group_permissions', 'user_domain_group_permissions.domain_group_uuid', '=', 'domain_groups.domain_group_uuid')
                     ->where('v_domains.domain_enabled', '=', 't')
                     ->where('user_uuid', '=', $event->user->user_uuid)
-                    ->get([
+                    ->select([
                         'v_domains.domain_uuid',
                         'v_domains.domain_parent_uuid',
                         'v_domains.domain_name',
                         'v_domains.domain_enabled',
                         DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
-                    ]);
-                
-
-                // foreach ($domains_from_groups as $domain_from_group) {
-                //     if (!$domains->contains($domain_from_group)) {
-                //         $domains->push($domain_from_group);
-                //     }
-                // }
-
+                    ])
+                    ->get();
+                        
                 // Merge the two collections together
                 $combinedDomains = $domains->merge($domains_from_groups);
 
