@@ -143,7 +143,7 @@
                                         :placeholder="'Select greeting'" :selectedItem="form.greeting_id"
                                         @update:model-value="handleUpdateGreetingField" />
 
-                                    <PlayCircleIcon @click="playGreeting"
+                                    <PlayCircleIcon v-if="form.greeting_id > 0" @click="playGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <PlusIcon @click="toggleGreetingForm"
@@ -330,7 +330,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const emits = defineEmits(['submit', 'cancel', 'error']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -357,9 +357,7 @@ const currentAudio = ref(null);
 const isAudioPlaying = ref(false);
 
 const playGreeting = () => {
-    audioUrl.value = null; // Reset audio URL
-
-    axios.post(props.route)
+    axios.post(props.options.greeting_route, { greeting_id: form.greeting_id })
         .then((response) => {
             // Stop the currently playing audio (if any)
             if (currentAudio.value) {
@@ -367,74 +365,21 @@ const playGreeting = () => {
                 currentAudio.value.currentTime = 0; // Reset the playback position
             }
             if (response.data.success) {
-                audioUrl.value = response.data.file_url; // Set the audio URL
+                isAudioPlaying.value = true;
+
+                currentAudio.value = new Audio(response.data.file_url);
+                currentAudio.value.play();
+
+                // Add an event listener for when the audio ends
+                currentAudio.value.addEventListener("ended", () => {
+                    isAudioPlaying.value = false;
+                });
             }
 
-            isAudioPlaying.value = true;
-
-            currentAudio.value = new Audio(audioUrl.value);
-            currentAudio.value.play();
-
-            // Add an event listener for when the audio ends
-            currentAudio.value.addEventListener("ended", () => {
-                isAudioPlaying.value = false;
-                currentAudioUuid.value = null;
-            });
         }).catch((error) => {
-            handleErrorResponse(error);
+            emits('error', error);
         });
 };
-
-
-const fetchAndPlayAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            // Stop the currently playing audio (if any)
-            if (currentAudio.value) {
-                currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
-            }
-
-            currentAudioUuid.value = uuid;
-            isAudioPlaying.value = true;
-
-            currentAudio.value = new Audio(props.recordingUrl);
-            currentAudio.value.play();
-
-            // Add an event listener for when the audio ends
-            currentAudio.value.addEventListener("ended", () => {
-                isAudioPlaying.value = false;
-                currentAudioUuid.value = null;
-            });
-        },
-    });
-};
-
-const handleErrorResponse = (error) => {
-    if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
-    }
-}
-
 
 </script>
 

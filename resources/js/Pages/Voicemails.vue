@@ -171,7 +171,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateVoicemailForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleErrorResponse"/>
         </template>
     </AddEditItemModal>
 

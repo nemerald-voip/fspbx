@@ -397,19 +397,19 @@ class VoicemailController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getVoicemailGreeting(Voicemails $voicemail, string $filename)
-    {
-        $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
+    // public function getVoicemailGreeting(Voicemails $voicemail, string $filename)
+    // {
+    //     $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
 
-        if (!Storage::disk('voicemail')->exists($path)) abort(404);
+    //     if (!Storage::disk('voicemail')->exists($path)) abort(404);
 
-        $file = Storage::disk('voicemail')->path($path);
-        $type = Storage::disk('voicemail')->mimeType($path);
+    //     $file = Storage::disk('voicemail')->path($path);
+    //     $type = Storage::disk('voicemail')->mimeType($path);
 
-        $response = Response::make(file_get_contents($file), 200);
-        $response->header("Content-Type", $type);
-        return $response;
-    }
+    //     $response = Response::make(file_get_contents($file), 200);
+    //     $response->header("Content-Type", $type);
+    //     return $response;
+    // }
 
     /**
      * Get voicemail greeting.
@@ -664,6 +664,7 @@ class VoicemailController extends Controller
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
                 'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
+                'greeting_route' => route('voicemail.greeting', $voicemail),
                 // Define options for other fields as needed
             ];
 
@@ -744,7 +745,6 @@ class VoicemailController extends Controller
                 'apply_url' => $applyUrl,
             ]);
 
-            return response()->json($response);
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -835,7 +835,6 @@ class VoicemailController extends Controller
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // report($e);
 
             // Handle any other exception that may occur
             return response()->json([
@@ -852,6 +851,47 @@ class VoicemailController extends Controller
             if (Str::startsWith(basename($file), 'temp')) {
                 Storage::disk('voicemail')->delete($file);
             }
+        }
+    }
+
+    public function getVoicemailGreeting(Voicemails $voicemail)
+    {
+
+        try {
+            // Step 1: Get the greeting_id from the request
+            $greetingId = request('greeting_id');
+
+            // Step 2: Fetch the greeting info from the database using the greeting_id and voicemail_id
+            $greeting = $voicemail->greetings()
+                ->where('greeting_id', $greetingId)
+                ->first();
+
+            // Check if the greeting exists
+            if (!$greeting) {
+                throw new \Exception('File not found');
+            }
+
+            // Generate the file URL using the defined route
+            $fileUrl = route('voicemail.file.serve', [
+                'domain' => session('domain_name'),
+                'voicemail_id' => $voicemail->voicemail_id,
+                'file' => $greeting->greeting_filename,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_url' => $fileUrl,
+            ]);
+
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 }
