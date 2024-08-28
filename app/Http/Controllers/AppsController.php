@@ -777,7 +777,7 @@ class AppsController extends Controller
         }
 
         // If success and user is activated send user email with credentials
-        if ($response['result']['status'] == 1 && isset($extension->voicemail->voicemail_mail_to)){
+        if ($response['result']['status'] == 1) {
             if($hidePassInEmail == 'true' && $request->activate == 'on') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
@@ -791,7 +791,9 @@ class AppsController extends Controller
                 $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
                 $response['result']['password_url'] = $includePasswordUrl;
             }
-            SendAppCredentials::dispatch($response['result'])->onQueue('emails');
+            if(isset($extension->voicemail->voicemail_mail_to)) {
+                SendAppCredentials::dispatch($response['result'])->onQueue('emails');
+            }
         }
 
         // Delete any prior info from database
@@ -907,21 +909,20 @@ class AppsController extends Controller
             ])->getData(true);
         }
 
-        $includePasswordUrl = null;
         // If success and user is activated send user email with credentials
-        if (isset($extension->voicemail->voicemail_mail_to)){
-            if($hidePassInEmail == 'true') {
-                // Include get-password link and remove password value
-                $passwordToken = Str::random(40);
-                MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
-                $appCredentials = new MobileAppPasswordResetLinks();
-                $appCredentials->token = $passwordToken;
-                $appCredentials->extension_uuid = $extension->extension_uuid;
-                $appCredentials->save();
-                $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
-                $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
-                $response['result']['password_url'] = $includePasswordUrl;
-            }
+        if($hidePassInEmail == 'true') {
+            // Include get-password link and remove password value
+            $passwordToken = Str::random(40);
+            MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+            $appCredentials = new MobileAppPasswordResetLinks();
+            $appCredentials->token = $passwordToken;
+            $appCredentials->extension_uuid = $extension->extension_uuid;
+            $appCredentials->save();
+            $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+            $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+            $response['result']['password_url'] = $includePasswordUrl;
+        }
+        if (isset($extension->voicemail->voicemail_mail_to)) {
             SendAppCredentials::dispatch($response['result'])->onQueue('emails');
         }
 
