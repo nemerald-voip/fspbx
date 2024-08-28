@@ -178,13 +178,14 @@ const saveGreeting = () => {
     axios.post(applyUrl.value)
         .then((response) => {
             isSaving.value = false;
-            console.log(response.data);
+            // console.log(response.data);
             if (response.data.success) {
                 // Emit the event with the greeting_id and greeting_name
                 emits('greeting-saved', {
                     greeting_id: response.data.greeting_id,
                     greeting_name: response.data.greeting_name
                 });
+                audioUrl.value = false;
             }
 
         }).catch((error) => {

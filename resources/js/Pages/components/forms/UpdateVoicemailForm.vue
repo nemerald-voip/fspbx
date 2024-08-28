@@ -138,22 +138,37 @@
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputOptional label="Select greeting" class="truncate mb-1" />
 
-                                <div class="flex items-center whitespace-nowrap gap-2">
-                                    <ComboBox :options="localOptions.greetings" :search="false"
-                                        :placeholder="'Select greeting'" :selectedItem="form.greeting_id"
-                                        @update:model-value="handleUpdateGreetingField" />
 
-                                    <PlayCircleIcon v-if="form.greeting_id > 0" @click="playGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <PlusIcon @click="toggleGreetingForm"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select greeting'"
+                                    :selectedItem="form.greeting_id" @update:model-value="handleUpdateGreetingField" />
 
 
-                                </div>
+
                                 <!-- <div class="mt-1 text-sm text-gray-500">
                                     Customize the message that callers hear when they reach your voicemail.
                                 </div> -->
+
+                            </div>
+
+                            <div class="content-end col-span-2 pb-1 text-sm font-medium leading-6 text-gray-900">
+                                <div class="flex items-center whitespace-nowrap gap-2">
+                                    <!-- Play Button -->
+                                    <PlayCircleIcon v-if="form.greeting_id > 0 && !isAudioPlaying" @click="playGreeting"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                    <!-- Pause Button -->
+                                    <PauseCircleIcon v-if="form.greeting_id > 0 && isAudioPlaying" @click="pauseGreeting"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                    <CloudArrowDownIcon v-if="form.greeting_id > 0 && !isDownloading" @click="downloadGreeting"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                    <Spinner v-if="form.greeting_id > 0 && isDownloading" />
+                                        <!-- class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" /> -->
+
+                                    <PlusIcon @click="toggleGreetingForm"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                </div>
 
                             </div>
 
@@ -255,7 +270,7 @@ import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon } from '@heroicons/vue/20/solid'
-import { PlayCircleIcon } from '@heroicons/vue/24/solid';
+import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
@@ -271,6 +286,7 @@ const props = defineProps({
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showGreetingForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
+const isDownloading = ref(false);
 
 
 const setActiveTab = (tabSlug) => {
@@ -342,6 +358,7 @@ const handleUpdateCopyToField = (voicemails) => {
 
 const handleUpdateGreetingField = (greeting) => {
     form.greeting_id = greeting.value;
+    currentAudio.value = false;
 }
 
 // Handler for the greeting-saved event
@@ -357,6 +374,13 @@ const currentAudio = ref(null);
 const isAudioPlaying = ref(false);
 
 const playGreeting = () => {
+    // Check if there's already an audio object and it is paused
+    if (currentAudio.value && currentAudio.value.paused) {
+        currentAudio.value.play();
+        isAudioPlaying.value = true;
+        return;
+    }
+
     axios.post(props.options.greeting_route, { greeting_id: form.greeting_id })
         .then((response) => {
             // Stop the currently playing audio (if any)
@@ -379,6 +403,49 @@ const playGreeting = () => {
         }).catch((error) => {
             emits('error', error);
         });
+};
+
+const downloadGreeting = () => {
+    isDownloading.value = true; // Start the spinner
+
+    axios.post(props.options.greeting_route, { greeting_id: form.greeting_id })
+        .then((response) => {
+            if (response.data.success) {
+                // Create a URL with the download parameter set to true
+                const downloadUrl = `${response.data.file_url}?download=true`;
+
+                // Create an invisible link element
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+
+                // Use the filename or a default name
+                const fileName = response.data.file_name || 'greeting.wav';
+                link.download = fileName;
+
+                // Append the link to the body
+                document.body.appendChild(link);
+
+                // Trigger the download by programmatically clicking the link
+                link.click();
+
+                // Remove the link after the download starts
+                document.body.removeChild(link);
+            }
+        })
+        .catch((error) => {
+            emits('error', error);
+        })
+        .finally(() => {
+            // isDownloading.value = false; // Stop the spinner after download completes
+        });
+};
+
+
+const pauseGreeting = () => {
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+        isAudioPlaying.value = false;
+    }
 };
 
 </script>

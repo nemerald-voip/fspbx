@@ -744,7 +744,6 @@ class VoicemailController extends Controller
                 'file_url' => $fileUrl,
                 'apply_url' => $applyUrl,
             ]);
-
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -770,7 +769,15 @@ class VoicemailController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
 
-        // Serve the file using Laravel's response helper
+        // Check if the 'download' parameter is present and set to true
+        $download = request()->query('download', false);
+
+        if ($download) {
+            // Serve the file as a download
+            return response()->download(Storage::disk('voicemail')->path($filePath));
+        }
+
+        // Serve the file inline
         return response()->file(Storage::disk('voicemail')->path($filePath));
     }
 
@@ -882,7 +889,6 @@ class VoicemailController extends Controller
                 'success' => true,
                 'file_url' => $fileUrl,
             ]);
-
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
