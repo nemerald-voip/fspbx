@@ -170,8 +170,9 @@
 
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateVoicemailForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleErrorResponse"/>
+            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleErrorResponse"
+                @success="showNotification('success', { request: [$event] })"/>
         </template>
     </AddEditItemModal>
 
@@ -469,7 +470,6 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;

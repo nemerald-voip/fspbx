@@ -588,12 +588,14 @@ class VoicemailController extends Controller
                 }
 
                 // Transform greetings into the desired array format
-                $greetingsArray = $voicemail->greetings->map(function ($greeting) {
-                    return [
-                        'value' => $greeting->greeting_id,
-                        'name' => $greeting->greeting_name,
-                    ];
-                })->toArray();
+                $greetingsArray = $voicemail->greetings
+                    ->sortBy('greeting_id')
+                    ->map(function ($greeting) {
+                        return [
+                            'value' => $greeting->greeting_id,
+                            'name' => $greeting->greeting_name,
+                        ];
+                    })->toArray();
 
                 // Add the default options at the beginning of the array
                 array_unshift(
@@ -653,6 +655,13 @@ class VoicemailController extends Controller
                 $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
             }
 
+            $routes = [
+                'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
+                'greeting_route' => route('voicemail.greeting', $voicemail),
+                'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
+                'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
+            ];
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -663,8 +672,7 @@ class VoicemailController extends Controller
                 'greetings' => $greetingsArray,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
-                'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
-                'greeting_route' => route('voicemail.greeting', $voicemail),
+                'routes' => $routes,
                 // Define options for other fields as needed
             ];
 
@@ -798,12 +806,24 @@ class VoicemailController extends Controller
                 ], 500);  // 500 Internal Server Error for any other errors
             }
 
-            // Step 3: Retrieve the highest greeting_id
-            $highestGreetingId = $voicemail->greetings()
-                ->max('greeting_id') ?? 0;
+            // Step 3: Find the next greeting_id to use
+            $existingIds = $voicemail->greetings()
+                ->pluck('greeting_id')
+                ->sort()
+                ->toArray();
+
+            $nextId = 1; // Start from 0 or your desired starting ID
+
+            foreach ($existingIds as $id) {
+                if ($id == $nextId) {
+                    $nextId++;
+                } else {
+                    break; // Found a gap
+                }
+            }
 
             // Step 4: Generate new greeting_id and filename
-            $newGreetingId = $highestGreetingId + 1;
+            $newGreetingId = $nextId;
             $newFileName = "greeting_{$newGreetingId}.wav";
 
             // Step 5: Construct the new file path
@@ -822,7 +842,7 @@ class VoicemailController extends Controller
                 'domain_uuid' => $voicemail->domain_uuid,
                 'voicemail_id' => $voicemail->voicemail_id,
                 'greeting_id' => $newGreetingId,
-                'greeting_name' => "AI Greeting {$newGreetingId}",
+                'greeting_name' => "AI Greeting " . date('Ymd_His'),
                 'greeting_filename' => $newFileName,
                 'greeting_description' => "Generated greeting {$newGreetingId}",
 
@@ -836,7 +856,7 @@ class VoicemailController extends Controller
             return response()->json([
                 'success' => true,
                 'greeting_id' => $newGreetingId,
-                'greeting_name' => "AI Greeting {$newGreetingId}",
+                'greeting_name' => "AI Greeting " . date('Ymd_His'),
                 'message' => ['success' => 'Greeting file has been saved successfully.']
             ], 200);
         } catch (\Exception $e) {
@@ -898,6 +918,108 @@ class VoicemailController extends Controller
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    public function deleteGreeting(Voicemails $voicemail, Request $request)
+    {
+        try {
+            $greetingId = $request->input('greeting_id');
+
+            // Fetch the greeting to delete
+            $greeting = $voicemail->greetings()->where('greeting_id', $greetingId)->first();
+
+            if (!$greeting) {
+                throw new \Exception('Greeting not found');
+            }
+
+            // Delete the greeting file from storage
+            Storage::disk('voicemail')->delete($greeting->greeting_filename);
+
+            // Delete the greeting record from the database
+            $greeting->delete();
+
+            // Set voicemail greeting to System Default
+            $voicemail->greeting_id = '-1';
+            $voicemail->save();
+
+            // Return a successful JSON response
+            return response()->json([
+                'success' => true,
+                'message' => ['success' => 'Greeting has been removed.']
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
+        }
+    }
+
+    public function uploadGreeting(Voicemails $voicemail, Request $request)
+    {
+        // Validate the file input
+        $request->validate([
+            'file' => 'required|mimes:wav,mp3|max:10240', // Limit to WAV or MP3 files, max size 10MB
+        ]);
+
+        $file = $request->file('file');
+        $domainName = session('domain_name');
+
+        try {
+            // Generate a unique filename based on the current time
+            $fileName = 'upload_' . now()->format('Ymd_His') . '.' . $file->getClientOriginalExtension(); // Example: upload_20240826_153045.wav
+
+            // Save file to the voicemail disk with domain folder
+            Storage::disk('voicemail')->putFileAs($domainName . '/' . $voicemail->voicemail_id, $file, $fileName);
+
+
+            // Find the next available greeting_id
+            $existingIds = $voicemail->greetings()
+                ->pluck('greeting_id')
+                ->sort()
+                ->toArray();
+
+            $nextId = 1; // Start from 1 or your desired starting ID
+            foreach ($existingIds as $id) {
+                if ($id == $nextId) {
+                    $nextId++;
+                } else {
+                    break; // Found a gap
+                }
+            }
+
+            // Save greeting info to the database
+            $voicemail->greetings()->create([
+                'domain_uuid' => $voicemail->domain_uuid,
+                'voicemail_id' => $voicemail->voicemail_id,
+                'greeting_id' => $nextId,
+                'greeting_name' => "Uploaded File " . date('Ymd_His'),
+                'greeting_filename' => $fileName,
+                'greeting_description' => "Uploaded greeting {$nextId}",
+            ]);
+
+            // Update the voicemail table with the new greeting_id
+            $voicemail->update([
+                'greeting_id' => $nextId
+            ]);
+
+
+
+            // Return a successful JSON response
+            return response()->json([
+                'success' => true,
+                'greeting_id' => $nextId,
+                'greeting_name' => "Uploaded File " . date('Ymd_His'),
+                'message' => ['success' => 'Greeting has been uploaded.']
+            ], 200);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
         }
     }
 }

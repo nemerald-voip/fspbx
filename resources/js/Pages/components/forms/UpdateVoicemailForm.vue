@@ -160,14 +160,20 @@
                                     <PauseCircleIcon v-if="form.greeting_id > 0 && isAudioPlaying" @click="pauseGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
-                                    <CloudArrowDownIcon v-if="form.greeting_id > 0 && !isDownloading" @click="downloadGreeting"
+                                    <CloudArrowDownIcon v-if="form.greeting_id > 0 && !isDownloading"
+                                        @click="downloadGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
-                                    <Spinner v-if="form.greeting_id > 0 && isDownloading" />
-                                        <!-- class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" /> -->
+                                    <Spinner :show="isDownloading"
+                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                    <!-- Delete Button -->
+                                    <TrashIcon v-if="form.greeting_id > 0" @click="deleteGreeting"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <PlusIcon @click="toggleGreetingForm"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
                                 </div>
 
                             </div>
@@ -182,7 +188,7 @@
 
                 <!-- New Greeting Form -->
                 <NewGreetingForm v-if="showGreetingForm" :voices="localOptions.voices" :speeds="localOptions.speeds"
-                    :route="localOptions.text_to_speech_route" @greeting-saved="handleGreetingSaved" />
+                    :routes="localOptions.routes" @greeting-saved="handleGreetingSaved" />
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
@@ -249,6 +255,9 @@
             </div>
         </form>
     </div>
+
+    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+        @confirm="confirmDeleteAction" />
 </template>
 
 <script setup>
@@ -262,6 +271,7 @@ import Popover from "@generalComponents/Popover.vue";
 import Textarea from "@generalComponents/Textarea.vue";
 import VisibilityIcon from "@icons/VisibilityIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
+import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
@@ -269,7 +279,7 @@ import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { PlusIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
@@ -287,6 +297,8 @@ const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || 
 const showGreetingForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
+const confirmationModalTrigger = ref(false);
+
 
 
 const setActiveTab = (tabSlug) => {
@@ -346,7 +358,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -366,6 +378,9 @@ const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
     // Add the new greeting to the localOptions.greetings array
     localOptions.greetings.push({ value: String(greeting_id), name: greeting_name });
 
+    // Sort the greetings array by greeting_id
+    localOptions.greetings.sort((a, b) => Number(a.value) - Number(b.value));
+
     // Update the selected greeting ID
     form.greeting_id = String(greeting_id);
 };
@@ -381,7 +396,7 @@ const playGreeting = () => {
         return;
     }
 
-    axios.post(props.options.greeting_route, { greeting_id: form.greeting_id })
+    axios.post(props.options.routes.greeting_route, { greeting_id: form.greeting_id })
         .then((response) => {
             // Stop the currently playing audio (if any)
             if (currentAudio.value) {
@@ -408,7 +423,7 @@ const playGreeting = () => {
 const downloadGreeting = () => {
     isDownloading.value = true; // Start the spinner
 
-    axios.post(props.options.greeting_route, { greeting_id: form.greeting_id })
+    axios.post(props.options.routes.greeting_route, { greeting_id: form.greeting_id })
         .then((response) => {
             if (response.data.success) {
                 // Create a URL with the download parameter set to true
@@ -436,7 +451,7 @@ const downloadGreeting = () => {
             emits('error', error);
         })
         .finally(() => {
-            // isDownloading.value = false; // Stop the spinner after download completes
+            isDownloading.value = false; // Stop the spinner after download completes
         });
 };
 
@@ -447,6 +462,43 @@ const pauseGreeting = () => {
         isAudioPlaying.value = false;
     }
 };
+
+
+const deleteGreeting = () => {
+    // Ensure a greeting is selected before attempting to delete
+    if (form.greeting_id <= 0) {
+        return; // Exit if no valid greeting is selected
+    }
+
+    // Show the confirmation modal
+    confirmationModalTrigger.value = true;
+};
+
+const confirmDeleteAction = () => {
+    axios
+        .post(props.options.routes.delete_greeting_route, { greeting_id: form.greeting_id })
+        .then((response) => {
+            if (response.data.success) {
+                // Remove the deleted greeting from the localOptions.greetings array
+                localOptions.greetings = localOptions.greetings.filter(
+                    (greeting) => greeting.value !== String(form.greeting_id)
+                );
+
+                // Reset the selected greeting ID
+                form.greeting_id = '-1'; // Or set it to another default if needed
+
+                // Notify the parent component or show a local success message
+                emits('success', response.data.message.success); // Or handle locally
+            }
+        })
+        .catch((error) => {
+            emits('error', error); // Emit an error event if needed
+        })
+        .finally(() => {
+            confirmationModalTrigger.value = false; // Close the confirmation modal
+        });
+};
+
 
 </script>
 

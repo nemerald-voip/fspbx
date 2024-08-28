@@ -37,7 +37,10 @@
                         </div>
                     </fieldset>
                 </div>
+            </div>
 
+            <!-- Text-to-Speech Fields -->
+            <div v-if="selectedGreetingMethod === 'text-to-speech'" class="grid grid-cols-6 gap-6">
                 <div class="col-span-6">
                     <LabelInputOptional target="custom_greeting_message" label="Custom greeting message" class="truncate" />
                     <div class="mt-2">
@@ -89,20 +92,57 @@
                         <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
                     </button>
                 </div>
+            </div>
 
-                <div v-if="errors?.server" class="col-span-6 rounded-md bg-red-50 p-4">
+            <!-- Upload Fields -->
+            <div v-if="selectedGreetingMethod === 'upload'" class="grid grid-cols-6 gap-6">
+                <div class="col-span-6 sm:col-span-4">
+                    <div>
+                        <LabelInputOptional target="upload_file" label="Upload file" class="truncate" />
+                        <div class="mt-2 flex rounded-md shadow-sm">
+                            <button type="button" @click="browseFile"
+                                class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-l-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Browse
+                            </button>
+                            <div class="relative flex flex-grow items-stretch focus-within:z-10">
+                                <input type="text" name="upload_file" id="upload_file" :value="selectedFileName" disabled
+                                    class="block w-full rounded-none rounded-r-md border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="No file selected" />
+                            </div>
+                        </div>
+                        <input ref="fileInput" type="file" name="file" id="file" class="hidden" @change="handleFileUpload"
+                            accept=".wav, .mp3" />
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">Supported formats: WAV
+                            or MP3</p>
+                    </div>
+                </div>
+
+                <div v-if="fileToUpload" class="content-center col-span-2 text-sm font-medium leading-6 text-gray-900">
+                    <button @click.prevent="uploadFile"
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500">
+                        Upload
+                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isSaving" />
+                        <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="errors?.server" class="grid grid-cols-6 gap-6">
+                <div class="col-span-6 rounded-md bg-red-50 p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
                         </div>
                         <div class="ml-3">
                             <h3 class="text-sm font-medium text-red-800">{{ errors.server[0] }}</h3>
-                            
+
                         </div>
                     </div>
                 </div>
-
             </div>
+
+
+
         </div>
     </div>
 </template>
@@ -121,7 +161,7 @@ import { XCircleIcon } from '@heroicons/vue/20/solid'
 const props = defineProps({
     voices: Object,
     speeds: Object,
-    route: String,
+    routes: Object,
 });
 
 const emits = defineEmits(['greeting-saved']);
@@ -134,6 +174,8 @@ const isSaving = ref(null);
 const errors = ref(null);
 const audioUrl = ref(null);
 const applyUrl = ref(null);
+const selectedFileName = ref('');
+const fileToUpload = ref(null);
 
 const greetingForm = reactive({
     input: null,
@@ -150,13 +192,56 @@ const handleUpdateSpeed = (speed) => {
     greetingForm.speed = speed.value;
 };
 
+const browseFile = () => {
+    document.getElementById('file').click();
+};
+
+const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        selectedFileName.value = file.name;
+        fileToUpload.value = file;
+    }
+};
+
+const uploadFile = () => {
+    isFormSubmiting.value = true;
+    errors.value = {};
+
+    const formData = new FormData();
+    formData.append('file', fileToUpload.value);
+    formData.append('_token', page.props.csrf_token);
+
+    axios.post(props.routes.upload_greeting_route, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+        .then(response => {
+            isFormSubmiting.value = false;
+            if (response.data.success) {
+                emits('greeting-saved', {
+                    greeting_id: response.data.greeting_id,
+                    greeting_name: response.data.greeting_name
+                });
+                selectedFileName.value = '';
+                fileToUpload.value = null;
+            }
+        })
+        .catch(error => {
+            isFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
+};
+
+
 const generateGreeting = () => {
     // Functionality to generate greeting
     isFormSubmiting.value = true;
     errors.value = null;
     audioUrl.value = null; // Reset audio URL
 
-    axios.post(props.route, greetingForm)
+    axios.post(props.routes.text_to_speech_route, greetingForm)
         .then((response) => {
             isFormSubmiting.value = false;
             // console.log(response.data);
@@ -194,15 +279,21 @@ const saveGreeting = () => {
         });
 };
 
+
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
         errors.value = { request: ["Session expired. Reload the page"] };
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        errors.value = error.response.data.errors;
-        console.log(error.response.data.errors);
+        console.log(error.response.data);
+        if (error.response.data && error.response.data.errors) {
+            errors.value = error.response.data.errors;
+        }
+
+        if (error.response.data && error.response.data.message) {
+            errors.value = { server: [error.response.data.message] }; 
+        }
     } else if (error.request) {
         // The request was made but no response was received
         console.log(error.request);
