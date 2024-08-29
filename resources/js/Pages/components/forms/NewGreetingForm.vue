@@ -118,10 +118,10 @@
                 </div>
 
                 <div v-if="fileToUpload" class="content-center col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.prevent="uploadFile"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500">
+                    <button @click.prevent="uploadFile" :disabled="isFormSubmiting"
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500 disabled:bg-indigo-500">
                         Upload
-                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isSaving" />
+                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isFormSubmiting" />
                         <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
                     </button>
                 </div>
@@ -135,6 +135,21 @@
                         </div>
                         <div class="ml-3">
                             <h3 class="text-sm font-medium text-red-800">{{ errors.server[0] }}</h3>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="successMessage" class="grid grid-cols-6 gap-6">
+                <div class="col-span-6 rounded-md bg-green-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">{{ successMessage }}</h3>
+
 
                         </div>
                     </div>
@@ -155,7 +170,7 @@ import ComboBox from '../general/ComboBox.vue';
 import Textarea from '@generalComponents/Textarea.vue';
 import LabelInputOptional from '../general/LabelInputOptional.vue';
 import Spinner from "@generalComponents/Spinner.vue";
-import { XCircleIcon } from '@heroicons/vue/20/solid'
+import { XCircleIcon, CheckCircleIcon } from '@heroicons/vue/20/solid'
 
 
 const props = defineProps({
@@ -172,6 +187,7 @@ const selectedGreetingMethod = ref('text-to-speech');
 const isFormSubmiting = ref(null);
 const isSaving = ref(null);
 const errors = ref(null);
+const successMessage = ref(null);
 const audioUrl = ref(null);
 const applyUrl = ref(null);
 const selectedFileName = ref('');
@@ -202,10 +218,12 @@ const handleFileUpload = (event) => {
         selectedFileName.value = file.name;
         fileToUpload.value = file;
     }
+    event.target.value = null;
 };
 
 const uploadFile = () => {
     isFormSubmiting.value = true;
+    successMessage.value = null;
     errors.value = {};
 
     const formData = new FormData();
@@ -226,6 +244,12 @@ const uploadFile = () => {
                 });
                 selectedFileName.value = '';
                 fileToUpload.value = null;
+                successMessage.value = response.data.message.success;
+
+                // Dismiss success message after 5 seconds
+                setTimeout(() => {
+                    successMessage.value = null;
+                }, 5000);
             }
         })
         .catch(error => {
@@ -256,7 +280,7 @@ const generateGreeting = () => {
 };
 
 const saveGreeting = () => {
-    // Functionality to generate greeting
+    // Functionality to save generated greeting
     isSaving.value = true;
     errors.value = null;
 
@@ -271,6 +295,11 @@ const saveGreeting = () => {
                     greeting_name: response.data.greeting_name
                 });
                 audioUrl.value = false;
+                successMessage.value = response.data.message.success;
+                // Dismiss success message after 5 seconds
+                setTimeout(() => {
+                    successMessage.value = null;
+                }, 5000);
             }
 
         }).catch((error) => {
@@ -286,13 +315,12 @@ const handleFormErrorResponse = (error) => {
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
         if (error.response.data && error.response.data.errors) {
             errors.value = error.response.data.errors;
         }
 
         if (error.response.data && error.response.data.message) {
-            errors.value = { server: [error.response.data.message] }; 
+            errors.value = { server: [error.response.data.message] };
         }
     } else if (error.request) {
         // The request was made but no response was received

@@ -934,8 +934,10 @@ class VoicemailController extends Controller
                 throw new \Exception('Greeting not found');
             }
 
+            $filePath = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $greeting->greeting_filename;
+
             // Delete the greeting file from storage
-            Storage::disk('voicemail')->delete($greeting->greeting_filename);
+            Storage::disk('voicemail')->delete($filePath);
 
             // Delete the greeting record from the database
             $greeting->delete();
@@ -966,13 +968,6 @@ class VoicemailController extends Controller
         $domainName = session('domain_name');
 
         try {
-            // Generate a unique filename based on the current time
-            $fileName = 'upload_' . now()->format('Ymd_His') . '.' . $file->getClientOriginalExtension(); // Example: upload_20240826_153045.wav
-
-            // Save file to the voicemail disk with domain folder
-            Storage::disk('voicemail')->putFileAs($domainName . '/' . $voicemail->voicemail_id, $file, $fileName);
-
-
             // Find the next available greeting_id
             $existingIds = $voicemail->greetings()
                 ->pluck('greeting_id')
@@ -987,6 +982,13 @@ class VoicemailController extends Controller
                     break; // Found a gap
                 }
             }
+
+            // Generate a unique filename based on the current time
+            $fileName = 'greeting_' . $nextId . '.' . $file->getClientOriginalExtension();
+
+            // Save file to the voicemail disk with domain folder
+            Storage::disk('voicemail')->putFileAs($domainName . '/' . $voicemail->voicemail_id, $file, $fileName);
+
 
             // Save greeting info to the database
             $voicemail->greetings()->create([
