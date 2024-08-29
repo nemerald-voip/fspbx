@@ -187,7 +187,7 @@
                 </div>
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :voices="localOptions.voices" :speeds="localOptions.speeds"
+                <NewGreetingForm v-if="showGreetingForm" :voices="localOptions.voices" :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
                     :routes="localOptions.routes" @greeting-saved="handleGreetingSaved" />
             </div>
 

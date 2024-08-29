@@ -112,7 +112,7 @@
                         </div>
                         <input ref="fileInput" type="file" name="file" id="file" class="hidden" @change="handleFileUpload"
                             accept=".wav, .mp3" />
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">Supported formats: WAV
+                        <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV
                             or MP3</p>
                     </div>
                 </div>
@@ -125,6 +125,16 @@
                         <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
                     </button>
                 </div>
+            </div>
+
+            <!-- Phone Call Instructions -->
+            <div v-if="selectedGreetingMethod === 'phone-call'" class="mt-3">
+              <p class="text-sm text-gray-500">
+                To record a new  greeting using your phone, follow these steps:
+              </p>
+              <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
+                <li v-for="(instruction, index) in phone_call_instructions" :key="index" v-html="instruction"></li>
+              </ul>
             </div>
 
             <div v-if="errors?.server" class="grid grid-cols-6 gap-6">
@@ -177,6 +187,7 @@ const props = defineProps({
     voices: Object,
     speeds: Object,
     routes: Object,
+    phone_call_instructions: Object,
 });
 
 const emits = defineEmits(['greeting-saved']);

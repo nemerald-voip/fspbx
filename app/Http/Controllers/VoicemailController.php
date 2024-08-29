@@ -662,6 +662,16 @@ class VoicemailController extends Controller
                 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
             ];
 
+            // Define the instructions for recording a voicemail greeting using a phone call
+            $phoneCallInstructions = [
+                'Dial <strong>*98</strong> from your phone.',
+                'Enter the mailbox number and press <strong>#</strong>.',
+                'Enter the voicemail password and press <strong>#</strong>.',
+                'Press <strong>5</strong> for mailbox options.',
+                'Press <strong>1</strong> to record an unavailable message.',
+                'Choose a greeting number (1-9) to record, then follow the prompts.',
+            ];
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -673,6 +683,7 @@ class VoicemailController extends Controller
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
                 'routes' => $routes,
+                'phone_call_instructions' => $phoneCallInstructions,
                 // Define options for other fields as needed
             ];
 
