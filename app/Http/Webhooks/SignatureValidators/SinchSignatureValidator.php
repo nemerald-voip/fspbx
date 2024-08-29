@@ -16,6 +16,7 @@ class SinchSignatureValidator implements SignatureValidator
         $verificationToken = $request->header('verificationToken');  // Assuming the token is in the header
         $computedHash = hash('sha256', $apiKey . $messageId);  // Compute the SHA256 hash
 
+        // logger('messageId: '. $messageId);
         // logger('apiKey: '. $apiKey);
         // logger('verificationToken: '. $verificationToken);
         // logger('computedHash: '. $computedHash);
