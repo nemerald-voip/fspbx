@@ -513,9 +513,10 @@ class VoicemailMessagesController extends Controller
             // Begin Transaction
             DB::beginTransaction();
 
-            // Retrieve all items at once with their lines
+            // Retrieve all items at once 
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
-                ->get([$this->model->getKeyName()]);
+                ->with('voicemail') // Ensure to load the related voicemail data
+                ->get([$this->model->getKeyName(), 'voicemail_uuid']);
 
             $voicemailId = $items->first()->voicemail->voicemail_id;
 
