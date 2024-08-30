@@ -601,7 +601,7 @@ class VoicemailController extends Controller
                 array_unshift(
                     $greetingsArray,
                     ['value' => '0', 'name' => 'None'],
-                    ['value' => '-1', 'name' => 'Default']
+                    ['value' => '-1', 'name' => 'System Default']
                 );
 
                 // Define the update route
@@ -657,9 +657,13 @@ class VoicemailController extends Controller
 
             $routes = [
                 'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
+                'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $voicemail),
                 'greeting_route' => route('voicemail.greeting', $voicemail),
                 'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
                 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
+                'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
+                'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
+                'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
             ];
 
             // Define the instructions for recording a voicemail greeting using a phone call
@@ -670,6 +674,15 @@ class VoicemailController extends Controller
                 'Press <strong>5</strong> for mailbox options.',
                 'Press <strong>1</strong> to record an unavailable message.',
                 'Choose a greeting number (1-9) to record, then follow the prompts.',
+            ];
+
+            // Define the instructions for recording a name using a phone call
+            $phoneCallInstructionsForName = [
+                'Dial <strong>*98</strong> from your phone.',
+                'Enter the mailbox number and press <strong>#</strong>.',
+                'Enter the voicemail password and press <strong>#</strong>.',
+                'Press <strong>5</strong> for mailbox options.',
+                'Press <strong>3</strong> to record your name, then follow the prompts.',
             ];
 
             // Construct the itemOptions object
@@ -684,6 +697,8 @@ class VoicemailController extends Controller
                 'speeds' => $openAiSpeeds,
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,
+                'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
+                'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
                 // Define options for other fields as needed
             ];
 
@@ -753,6 +768,60 @@ class VoicemailController extends Controller
 
             // Generate the file URL using the defined route
             $applyUrl = route('voicemail.file.apply', [
+                'domain' => $domainName,
+                'voicemail' => $voicemail,
+                'file' => $fileName,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_url' => $fileUrl,
+                'apply_url' => $applyUrl,
+            ]);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function textToSpeechForName(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
+    {
+        $input = $request->input('input');
+        $model = $request->input('model');
+        $voice = $request->input('voice');
+        $responseFormat = $request->input('response_format');
+        $speed = $request->input('speed');
+
+        try {
+            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
+
+            $domainName = session('domain_name');
+
+            // Delete all temp files
+            $this->deleteTempFiles($domainName . '/' . $voicemail->voicemail_id);
+
+            $fileName = 'temp_' . now()->format('Ymd_His') . '.' . $responseFormat; // Generates filename like temp_20240826_153045.wav
+            $filePath = $domainName . '/' . $voicemail->voicemail_id . '/' . $fileName;
+
+            // Save file to the voicemail disk with domain folder
+            Storage::disk('voicemail')->put($filePath, $response);
+
+            // Generate the file URL using the defined route
+            $fileUrl = route('voicemail.file.serve', [
+                'domain' => $domainName,
+                'voicemail_id' => $voicemail->voicemail_id,
+                'file' => $fileName,
+            ]);
+
+            // Generate the file URL using the defined route
+            $applyUrl = route('voicemail.file.name.apply', [
                 'domain' => $domainName,
                 'voicemail' => $voicemail,
                 'file' => $fileName,
@@ -868,7 +937,7 @@ class VoicemailController extends Controller
                 'success' => true,
                 'greeting_id' => $newGreetingId,
                 'greeting_name' => "AI Greeting " . date('Ymd_His'),
-                'message' => ['success' => 'Greeting file has been saved successfully.']
+                'message' => ['success' => 'Your AI-generated greeting has been saved and successfully activated.']
             ], 200);
         } catch (\Exception $e) {
             // Log the error message
@@ -881,6 +950,55 @@ class VoicemailController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
+
+    public function applyVoicemailFileForName($domain, Voicemails $voicemail, $file)
+    {
+        try {
+            $filePath = "{$domain}/{$voicemail->voicemail_id}/{$file}";
+
+            if (!Storage::disk('voicemail')->exists($filePath)) {
+                abort(404); // File not found
+            }
+
+            if (!Storage::disk('voicemail')->exists($filePath)) {
+                // File not found
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['File not found']]
+                ], 500);  // 500 Internal Server Error for any other errors
+            }
+
+
+            // Step 4: Generate new filename
+            $newFileName = "recorded_name.wav";
+
+            // Step 5: Construct the new file path
+            $newFilePath = "{$domain}/{$voicemail->voicemail_id}/{$newFileName}";
+
+            // Step 6: Store the file with the new name (you might want to copy instead of move)
+            if (!Storage::disk('voicemail')->move($filePath, $newFilePath)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['Failed to save the file']]
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => ['success' => 'Your AI-generated recorded name has been saved and successfully activated.']
+            ], 200);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
 
     public function deleteTempFiles($folderPath)
     {
@@ -1023,7 +1141,7 @@ class VoicemailController extends Controller
                 'success' => true,
                 'greeting_id' => $nextId,
                 'greeting_name' => "Uploaded File " . date('Ymd_His'),
-                'message' => ['success' => 'Greeting has been uploaded.']
+                'message' => ['success' => 'Greeting has been successfully uploaded and activated.']
             ], 200);
         } catch (\Exception $e) {
             // Log the error message
@@ -1033,6 +1151,52 @@ class VoicemailController extends Controller
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500);
+        }
+    }
+
+    public function getRecordedName(Voicemails $voicemail)
+    {
+        try {
+            $filePath = session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav';
+
+            if (!Storage::disk('voicemail')->exists($filePath)) {
+                throw new \Exception('File not found');
+            }
+
+            $fileUrl = route('voicemail.file.serve', [
+                'domain' => session('domain_name'),
+                'voicemail_id' => $voicemail->voicemail_id,
+                'file' => 'recorded_name.wav',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_url' => $fileUrl,
+            ]);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
+        }
+    }
+
+    public function deleteRecordedName(Voicemails $voicemail)
+    {
+        try {
+            $filePath = session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav';
+
+            if (!Storage::disk('voicemail')->exists($filePath)) {
+                throw new \Exception('File not found');
+            }
+
+            Storage::disk('voicemail')->delete($filePath);
+
+            return response()->json([
+                'success' => true,
+                'message' => ['success' => 'Recorded name has been deleted.']
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
         }
     }
 }

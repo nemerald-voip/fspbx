@@ -2,7 +2,7 @@
     <div class="mt-8 shadow sm:rounded-md">
         <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
             <div>
-                <h3 class="text-base font-semibold leading-6 text-gray-900">New greeting</h3>
+                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ title }}</h3>
                 <p class="mt-1 text-sm text-gray-500">Select a method for creating a new greeting.</p>
             </div>
 
@@ -184,6 +184,7 @@ import { XCircleIcon, CheckCircleIcon } from '@heroicons/vue/20/solid'
 
 
 const props = defineProps({
+    title: String,
     voices: Object,
     speeds: Object,
     routes: Object,
