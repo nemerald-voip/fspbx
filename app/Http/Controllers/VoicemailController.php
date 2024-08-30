@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\OpenAIService;
 use App\Models\VoicemailGreetings;
+use Illuminate\Support\Facades\DB;
 use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +27,7 @@ class VoicemailController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Voicemails';
-    protected $searchable = ['source', 'destination', 'message'];
+    protected $searchable = ['voicemail_id', 'voicemail_mail_to', 'extension.effective_caller_id_name'];
 
     public function __construct()
     {
@@ -163,13 +164,25 @@ class VoicemailController extends Controller
     protected function filterSearch($query, $value)
     {
         $searchable = $this->searchable;
+
         // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
             }
         });
     }
+
 
 
     /**
@@ -480,8 +493,48 @@ class VoicemailController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Voicemails $voicemail)
     {
+
+        try {
+            // throw new \Exception;
+
+            // Start a database transaction to ensure atomic operations
+            DB::beginTransaction();
+
+            // Delete related voicemail destinations
+            $voicemail->voicemail_destinations()->delete();
+
+            // Delete related voicemail messages
+            $voicemail->messages()->delete();
+
+            // Delete related voicemail greetings
+            $voicemail->greetings()->delete();
+
+            // Define the path to the voicemail folder
+            $path = session('domain_name') . '/' . $voicemail->voicemail_id;
+
+            // Check if the directory exists and delete it
+            if (Storage::disk('voicemail')->exists($path)) {
+                Storage::disk('voicemail')->deleteDirectory($path);
+            }
+
+            // Finally, delete the voicemail itself
+            $voicemail->delete();
+
+            // Commit the transaction
+            DB::commit();
+
+            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+        } catch (\Exception $e) {
+            // Rollback the transaction if an error occurs
+            DB::rollBack();
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+        }
+
         $voicemail = Voicemails::findOrFail($id);
 
         if (isset($voicemail)) {

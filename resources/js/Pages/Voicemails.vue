@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -108,7 +108,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
@@ -117,15 +117,15 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Restart device'" position='TopCenter'
+                                <ejs-tooltip :content="'Check messages'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRestart(row.voicemail_uuid)"
+                                        <EnvelopeIcon @click="handleRestart(row.voicemail_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
@@ -188,10 +188,6 @@
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
 
-    <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
-        @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
-        :confirm-button-label="'Restart'" cancel-button-label="Cancel" />
-
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
@@ -215,12 +211,12 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue";
 import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
 import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { UserGroupIcon, UserIcon } from "@heroicons/vue/24/outline";
+import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
+
 
 
 const page = usePage()
@@ -233,12 +229,10 @@ const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationRestartTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmRestartAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -263,16 +257,11 @@ const itemOptions = ref({})
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_update',
-            label: 'Edit',
-            icon: 'PencilSquareIcon'
-        }
+        // {
+        //     id: 'bulk_update',
+        //     label: 'Edit',
+        //     icon: 'PencilSquareIcon'
+        // }
     ];
 
     // Conditionally add the delete action if permission is granted
@@ -375,26 +364,10 @@ const handleBulkActionRequest = (action) => {
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
-    if (action === 'bulk_restart') {
-        confirmationRestartTrigger.value = true;
-        confirmRestartAction.value = () => executeBulkRestart();
-    }
+
 }
 
-const executeBulkRestart = () => {
-    axios.post(props.routes.restart,
-        { 'devices': selectedItems.value },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleFormErrorResponse(error);
-        });
-}
+
 
 const executeBulkDelete = () => {
     axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
@@ -578,7 +551,6 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 

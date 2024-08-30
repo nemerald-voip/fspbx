@@ -81,13 +81,13 @@ class Voicemails extends Model
             if (!$model->domain_uuid) {
                 $model->domain_uuid = session('domain_uuid');
             }
+            unset($model->destroy_route);
         });
 
-        // static::retrieved(function ($model) {
-        //     if ($model->greeting_id==null) {
-        //         $model->greeting_id = -1;
-        //     }
-        // });
+        static::retrieved(function ($model) {
+            $model->destroy_route = route('voicemails.destroy', $model);
+
+        });
     }
 
     // Accessor for greeting_id
