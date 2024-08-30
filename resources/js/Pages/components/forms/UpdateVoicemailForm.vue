@@ -451,11 +451,14 @@ const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
 
     // Update the selected greeting ID
     form.greeting_id = String(greeting_id);
+
+    currentAudio.value = null;
 };
 
 // Handler for the greeting-saved event
 const handleNameSaved = ({ greeting_id, greeting_name }) => {
     localOptions.recorded_name = 'Custom recording';
+    currentNameAudio.value = null;
 };
 
 const currentAudio = ref(null);
@@ -595,7 +598,10 @@ const playRecordedName = () => {
             if (response.data.success) {
                 isNameAudioPlaying.value = true;
 
-                currentNameAudio.value = new Audio(response.data.file_url);
+                // Add a cache-busting query parameter to the file URL
+                const fileUrlWithCacheBuster = `${response.data.file_url}?t=${new Date().getTime()}`;
+
+                currentNameAudio.value = new Audio(fileUrlWithCacheBuster);
                 currentNameAudio.value.play();
 
                 currentNameAudio.value.addEventListener("ended", () => {
@@ -677,7 +683,7 @@ const getRoutesForNameForm = computed(() => {
     return {
         ...localOptions.routes,
         text_to_speech_route: localOptions.routes.text_to_speech_route_for_name,
-        upload_greeting_route: localOptions.routes.upload_name_route 
+        upload_greeting_route: localOptions.routes.upload_greeting_route_for_name, 
     };
 });
 

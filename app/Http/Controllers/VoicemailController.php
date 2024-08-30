@@ -9,9 +9,9 @@ use App\Models\Voicemails;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\OpenAIService;
-use Illuminate\Validation\Rule;
 use App\Models\VoicemailGreetings;
 use App\Models\VoicemailDestinations;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
@@ -1114,11 +1114,11 @@ class VoicemailController extends Controller
             }
 
             // Generate a unique filename based on the current time
-            $fileName = 'greeting_' . $nextId . '.' . $file->getClientOriginalExtension();
+            $originalFileName = 'greeting_' . $nextId . '.' . $file->getClientOriginalExtension();
+            $convertedFileName = 'greeting_' . $nextId . '.wav'; // Ensure final file is in WAV format
 
-            // Save file to the voicemail disk with domain folder
-            Storage::disk('voicemail')->putFileAs($domainName . '/' . $voicemail->voicemail_id, $file, $fileName);
-
+            // Save the original file to the voicemail directory
+            Storage::disk('voicemail')->putFileAs($domainName . '/' . $voicemail->voicemail_id, $file, $originalFileName);
 
             // Save greeting info to the database
             $voicemail->greetings()->create([
@@ -1126,7 +1126,7 @@ class VoicemailController extends Controller
                 'voicemail_id' => $voicemail->voicemail_id,
                 'greeting_id' => $nextId,
                 'greeting_name' => "Uploaded File " . date('Ymd_His'),
-                'greeting_filename' => $fileName,
+                'greeting_filename' => $originalFileName, // Use original file name for the initial entry
                 'greeting_description' => "Uploaded greeting {$nextId}",
             ]);
 
@@ -1135,15 +1135,55 @@ class VoicemailController extends Controller
                 'greeting_id' => $nextId
             ]);
 
+            // Define paths
+            $originalFilePath = Storage::disk('voicemail')->path($domainName . '/' . $voicemail->voicemail_id . '/' . $originalFileName);
+            $convertedFilePath = Storage::disk('voicemail')->path($domainName . '/' . $voicemail->voicemail_id . '/temp_' . $convertedFileName);
 
+            // Convert the file to the recommended format using ffmpeg
+            $process = Process::run([
+                'ffmpeg',
+                '-i',
+                $originalFilePath,
+                '-ac',
+                '1',
+                '-ar',
+                '16000',
+                '-ab',
+                '256k',
+                $convertedFilePath
+            ]);
 
-            // Return a successful JSON response
-            return response()->json([
-                'success' => true,
-                'greeting_id' => $nextId,
-                'greeting_name' => "Uploaded File " . date('Ymd_His'),
-                'message' => ['success' => 'Greeting has been successfully uploaded and activated.']
-            ], 200);
+            if ($process->successful()) {
+                Storage::disk('voicemail')->delete($domainName . '/' . $voicemail->voicemail_id . '/' . $originalFileName);
+                Storage::disk('voicemail')->move($domainName . '/' . $voicemail->voicemail_id . '/temp_' . $convertedFileName, $domainName . '/' . $voicemail->voicemail_id . '/' . $convertedFileName);
+
+                // Update the database with the converted file name
+                $voicemail->greetings()
+                    ->where('voicemail_id', $voicemail->voicemail_id)
+                    ->where('greeting_id', $nextId)
+                    ->update([
+                        'greeting_filename' => $convertedFileName
+                    ]);
+
+                // Return a successful JSON response
+                return response()->json([
+                    'success' => true,
+                    'greeting_id' => $nextId,
+                    'greeting_name' => "Uploaded File " . date('Ymd_His'),
+                    'message' => ['success' => 'Your greeting has been uploaded and successfully activated.']
+                ], 200);
+            } else {
+                // Log the error message if conversion failed
+                logger('File conversion failed: ' . $process->errorOutput());
+
+                // Return a JSON response indicating conversion failure
+                return response()->json([
+                    'success' => false,
+                    'greeting_id' => $nextId,
+                    'greeting_name' => "Uploaded File " . date('Ymd_His'),
+                    'message' => ['success' => 'File uploaded, but conversion failed. Original file has been retained.']
+                ], 200); // Return 200 to indicate partial success
+            }
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -1154,6 +1194,7 @@ class VoicemailController extends Controller
             ], 500);
         }
     }
+
 
     public function getRecordedName(Voicemails $voicemail)
     {
@@ -1198,6 +1239,77 @@ class VoicemailController extends Controller
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
+        }
+    }
+
+    public function uploadRecordedName(Request $request, Voicemails $voicemail)
+    {
+        // Validate the file input
+        $request->validate([
+            'file' => 'required|mimes:wav,mp3|max:10240', // Limit to WAV or MP3 files, max size 10MB
+        ]);
+
+        $file = $request->file('file');
+        $domainName = session('domain_name');
+        $originalFileName = 'recorded_name.' . $file->getClientOriginalExtension();
+        $convertedFileName = 'recorded_name.wav'; // Ensure the final file is in WAV format
+
+        try {
+            // Check if the file already exists and delete it if so
+            if (Storage::disk('voicemail')->exists($domainName . '/' . $voicemail->voicemail_id . '/' . $originalFileName)) {
+                Storage::disk('voicemail')->delete($domainName . '/' . $voicemail->voicemail_id . '/' . $originalFileName);
+            }
+
+            // Save the original file to the voicemail directory
+            Storage::disk('voicemail')->putFileAs($domainName . '/' . $voicemail->voicemail_id, $file, $originalFileName);
+
+            // Define paths
+            $originalFilePath = Storage::disk('voicemail')->path($domainName . '/' . $voicemail->voicemail_id . '/' . $originalFileName);
+            $tempConvertedFilePath = Storage::disk('voicemail')->path($domainName . '/' . $voicemail->voicemail_id . '/temp_' . $convertedFileName);
+
+            // Convert the file to the recommended format using ffmpeg
+            $process = Process::run([
+                'ffmpeg',
+                '-y',
+                '-i',
+                $originalFilePath,
+                '-ac',
+                '1',
+                '-ar',
+                '16000',
+                '-ab',
+                '256k',
+                $tempConvertedFilePath
+            ]);
+
+            if ($process->successful()) {
+                // Rename tne file
+                Storage::disk('voicemail')->exists($domainName . '/' . $voicemail->voicemail_id . '/' . $originalFileName);
+                Storage::disk('voicemail')->move($domainName . '/' . $voicemail->voicemail_id . '/temp_' . $convertedFileName, $domainName . '/' . $voicemail->voicemail_id . '/' . $convertedFileName);
+
+                // Return a successful JSON response
+                return response()->json([
+                    'success' => true,
+                    'message' => ['success' => 'Recorded name has been uploaded and successfully activated.']
+                ], 200);
+            } else {
+                // Log the error message if conversion failed
+                logger('File conversion failed: ' . $process->errorOutput());
+
+                // Return a JSON response indicating conversion failure
+                return response()->json([
+                    'success' => true,
+                    'message' => ['success' => 'File uploaded, but conversion failed. Original file has been retained.']
+                ], 200); // Return 200 to indicate partial success
+            }
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
         }
     }
 }
