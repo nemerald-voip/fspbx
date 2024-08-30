@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use Inertia\Inertia;
 use App\Models\Settings;
-use App\Models\Voicemails;
 use Illuminate\Http\Request;
 use App\Models\VoicemailMessages;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -15,17 +16,46 @@ use libphonenumber\NumberParseException;
 
 class VoicemailMessagesController extends Controller
 {
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'VoicemailMessages';
+    protected $searchable = ['voicemail_id', 'voicemail_mail_to', 'extension.effective_caller_id_name'];
+
+    public function __construct()
+    {
+        $this->model = new VoicemailMessages();
+    }
+
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Voicemails $voicemail)
+    public function index()
     {
         // Check permissions
         if (!userCheckPermission("voicemail_message_view")) {
             return redirect('/');
         }
+
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
+
+                'routes' => [
+                    'current_page' => route('voicemails.messages.index', request()->route('voicemail')),
+                    'get_message_url' => route('voicemail.message.url'),
+                    'select_all' => route('voicemails.messages.select.all'),
+                    'bulk_delete' => route('voicemails.messages.bulk.delete'),
+                ]
+            ]
+        );
 
         $data = array();
         $data['voicemail'] = $voicemail;
@@ -78,6 +108,106 @@ class VoicemailMessagesController extends Controller
 
 
     /**
+     *  Get data
+     */
+    public function getData($paginate = 50)
+    {
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'created_epoch'); // Default to 'created_epoch'
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+
+        $data = $this->builder($this->filters);
+
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array  $filters
+     * @return Builder
+     */
+    public function builder(array $filters = [])
+    {
+        $voicemail_uuid = request()->route('voicemail');
+
+        $data =  $this->model::query();
+        $domainUuid = session('domain_uuid');
+        $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid)
+            ->where('voicemail_uuid', $voicemail_uuid);
+
+        // $data->with(['voicemail' => function ($query) {
+        //     $query->select('voicemail_uuid', 'voicemail_id');
+        // }]);
+
+
+        $data->select(
+            'voicemail_message_uuid',
+            'voicemail_uuid',
+            'created_epoch',
+            'read_epoch',
+            'caller_id_name',
+            'caller_id_number',
+            'message_length',
+            'message_status',
+            'message_priority',
+            'message_transcription',
+
+        );
+
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
+                }
+            }
+        }
+
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
+
+        return $data;
+    }
+
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value)
+    {
+        $searchable = $this->searchable;
+
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
+            }
+        });
+    }
+
+    /**
      * Get voicemail message.
      *
      * @return \Illuminate\Http\Response
@@ -127,6 +257,61 @@ class VoicemailMessagesController extends Controller
         $response = Response::download($file, basename($file), $headers);
 
         return $response;
+    }
+
+
+    public function getVoicemailMessageUrl()
+    {
+        try {
+            // Step 1: Get the voicemail_message_uuid from the request
+            $message = VoicemailMessages::with(['voicemail' => function ($query) {
+                $query->select('voicemail_uuid', 'voicemail_id');
+            }])
+                ->find(request('voicemail_message_uuid'));
+
+            // Check if the greeting exists
+            if (!$message) {
+                throw new \Exception('File not found');
+            }
+
+
+            // Step 2: Check for the existence of .wav and .mp3 files
+            $domainName = session('domain_name');
+            $voicemailId = $message->voicemail->voicemail_id;
+            $messageUuid = $message->voicemail_message_uuid;
+
+            $wavPath = $domainName . '/' . $voicemailId . '/msg_' . $messageUuid . '.wav';
+            $mp3Path = $domainName . '/' . $voicemailId . '/msg_' . $messageUuid . '.mp3';
+
+            if (Storage::disk('voicemail')->exists($wavPath)) {
+                $fileName = 'msg_' . $messageUuid . '.wav';
+            } elseif (Storage::disk('voicemail')->exists($mp3Path)) {
+                $fileName = 'msg_' . $messageUuid . '.mp3';
+            } else {
+                throw new \Exception('No file found');
+            }
+
+            // Generate the file URL using the defined route
+            $fileUrl = route('voicemail.file.serve', [
+                'domain' => session('domain_name'),
+                'voicemail_id' => $message->voicemail->voicemail_id,
+                'file' => $fileName,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_url' => $fileUrl,
+            ]);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
     }
 
 
@@ -185,15 +370,65 @@ class VoicemailMessagesController extends Controller
         //
     }
 
+    public function destroy(VoicemailMessages $message)
+    {
+
+        try {
+            // throw new \Exception;
+
+            // Start a database transaction to ensure atomic operations
+            DB::beginTransaction();
+
+            $voicemail = $message->voicemail;
+
+            // Define the path to the voicemail file
+            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.wav';
+            // Check if the file exists and delete it
+            if (Storage::disk('voicemail')->exists($path)) {
+                Storage::disk('voicemail')->delete($path);
+            }
+
+            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid . '.mp3';
+            // Check if the file exists and delete it
+            if (Storage::disk('voicemail')->exists($path)) {
+                Storage::disk('voicemail')->delete($path);
+            }
+            // Finally, delete the voicemail itself
+            $message->delete();
+
+            // Commit the transaction
+            DB::commit();
+
+            // Update WMI subscription
+            $freeSwitchService = new FreeswitchEslService();
+            $command = sprintf(
+                "bgapi luarun app.lua voicemail mwi '%s'@'%s'",
+                $message->voicemail->voicemail_id,
+                session('domain_name')
+            );
+            $result = $freeSwitchService->executeCommand($command);
+
+
+            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+        } catch (\Exception $e) {
+            // Rollback the transaction if an error occurs
+            DB::rollBack();
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+        }
+    }
+
+
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy_old($id)
     {
-
         $message = VoicemailMessages::findOrFail($id);
 
         if (isset($message)) {
@@ -232,6 +467,104 @@ class VoicemailMessagesController extends Controller
                     ]
                 ]);
             }
+        }
+    }
+
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+
+        return response()->json([
+            'success' => false,
+            'errors' => ['server' => ['Failed to select all items']]
+        ], 500); // 500 Internal Server Error for any other errors
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  Devices  $device
+     * 
+     */
+    public function bulkDelete()
+    {
+        try {
+            // Begin Transaction
+            DB::beginTransaction();
+
+            // Retrieve all items at once with their lines
+            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
+                ->get([$this->model->getKeyName()]);
+
+            $voicemailId = $items->first()->voicemail->voicemail_id;
+
+            foreach ($items as $item) {
+                $voicemail = $item->voicemail;
+
+                // Define the paths to the voicemail files
+                $wavPath = session('domain_name') . '/' . $voicemail->voicemail_id . '/msg_' . $item->voicemail_message_uuid . '.wav';
+                $mp3Path = session('domain_name') . '/' . $voicemail->voicemail_id . '/msg_' . $item->voicemail_message_uuid . '.mp3';
+        
+                // Check if the .wav file exists and delete it
+                if (Storage::disk('voicemail')->exists($wavPath)) {
+                    Storage::disk('voicemail')->delete($wavPath);
+                }
+        
+                // Check if the .mp3 file exists and delete it
+                if (Storage::disk('voicemail')->exists($mp3Path)) {
+                    Storage::disk('voicemail')->delete($mp3Path);
+                }
+                // Delete the item 
+                $item->delete();
+            }
+
+            // Commit Transaction
+            DB::commit();
+
+            // Update WMI subscription
+            $freeSwitchService = new FreeswitchEslService();
+            $command = sprintf(
+                "bgapi luarun app.lua voicemail mwi '%s'@'%s'",
+                $voicemailId,
+                session('domain_name')
+            );
+            $result = $freeSwitchService->executeCommand($command);
+
+
+            return response()->json([
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+            ], 200);
+        } catch (\Exception $e) {
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 }

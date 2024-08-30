@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Voicemails</template>
+            <template #title>Voicemail messages</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -22,10 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
-                </button>
+
 
 
             </template>
@@ -37,19 +34,17 @@
             </template>
             <template #table-header>
 
-                <TableColumnHeader 
+                <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Voicemail ID</span>
+                    <span class="pl-4">Caller ID</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Email address" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="Transcription" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -71,59 +66,55 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.voicemail_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
-                        :text="row.voicemail_id">
+                <tr v-for="row in data.data" :key="row.voicemail_message_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.voicemail_id">
                         <div class="flex items-center">
-                            <input v-if="row.voicemail_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.voicemail_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row.voicemail_message_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9 text-sm font-semibold text-gray-700"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                @click="page.props.auth.can.voicemail_update && handleEditRequest(row.voicemail_uuid)">
-                                <span v-if="row.extension" class="flex items-center">
-                                    <UserIcon class="mr-2 h-5 w-5 text-indigo-500" />
-                                    {{ row.extension.name_formatted }}
-                                </span>
-                                <span v-else class="flex items-center">
-                                    <UserGroupIcon class="mr-2 h-5 w-5 text-green-500" />
-                                    {{ row.voicemail_id }} - Team Voicemail
-                                </span>
+                                @click="page.props.auth.can.voicemail_update && handleEditRequest(row.voicemail_message_uuid)">
+                                <div class="flex flex-col">
+                                    <span>
+                                        {{ row.caller_id_name }}
+                                    </span>
+                                    <span>
+                                        {{ row.caller_id_number }}
+                                    </span>
+
+                                </div>
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_mail_to" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_enabled" >
-                        <Badge v-if="row.voicemail_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
-                            textColor="text-green-700"
-                            ringColor="ring-green-600/20" />
-                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50"
-                            textColor="text-rose-700"
-                            ringColor="ring-rose-600/20" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.created_epoch_formatted" />
 
-                        </TableField>
+
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" 
+                        :text="row.transcription"/> -->
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                    </div>
-                                </ejs-tooltip>
+                                <PlayCircleIcon v-if="currentAudioUuid !== row.voicemail_message_uuid || !isAudioPlaying
+                                    " @click="fetchAndPlayAudio(row.voicemail_message_uuid)"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-500 hover:bg-blue-200 hover:text-blue-700 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                <PauseCircleIcon v-if="currentAudioUuid === row.voicemail_message_uuid && isAudioPlaying"
+                                    @click="pauseAudio"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
-                                <ejs-tooltip :content="'Check messages'" position='TopCenter'
-                                    target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <EnvelopeIcon @click="navigateToMessages(row.messages_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
+                                <CloudArrowDownIcon v-if="!isDownloading"
+                                    @click="downloadVoicemailMessage(row.voicemail_message_uuid)"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                <!-- Spinner -->
+                                <Spinner :show="isDownloading"
+                                    class="ml-0 mr-0 h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
 
                                 <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
@@ -132,6 +123,8 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+
+
                             </div>
                         </template>
                     </TableField>
@@ -161,35 +154,13 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleErrorResponse"
-                @success="showNotification('success', { request: [$event] })"/>
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm deleting selected messages. This action can not be undone.'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
@@ -201,21 +172,24 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
-import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
-import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import { registerLicense } from '@syncfusion/ej2-base';
 import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
+import Spinner from "@generalComponents/Spinner.vue";
+import {
+    PlayCircleIcon,
+    PauseCircleIcon,
+    CloudArrowDownIcon,
+    MagnifyingGlassIcon,
+} from "@heroicons/vue/24/solid";
+import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 
 
 
@@ -225,20 +199,13 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
-const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
+const isDownloading = ref(false);
 
 const props = defineProps({
     data: Object,
@@ -252,7 +219,89 @@ const filterData = ref({
     showGlobal: props.showGlobal,
 });
 
+const currentAudio = ref(null);
+const currentAudioUuid = ref(null);
+const isAudioPlaying = ref(false);
 const itemOptions = ref({})
+
+const fetchAndPlayAudio = (uuid) => {
+    // Check if there's already an audio object and it is paused
+    if (currentAudio.value && currentAudio.value.paused) {
+        currentAudio.value.play();
+        isAudioPlaying.value = true;
+        return;
+    }
+
+    axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
+        .then((response) => {
+            // Stop the currently playing audio (if any)
+            if (currentAudio.value) {
+                currentAudio.value.pause();
+                currentAudio.value.currentTime = 0; // Reset the playback position
+            }
+            if (response.data.success) {
+                isAudioPlaying.value = true;
+                currentAudioUuid.value = uuid;
+
+                console.log(response.data.file_url);
+                currentAudio.value = new Audio(response.data.file_url);
+                currentAudio.value.play();
+
+                // Add an event listener for when the audio ends
+                currentAudio.value.addEventListener("ended", () => {
+                    isAudioPlaying.value = false;
+                });
+            }
+
+        }).catch((error) => {
+            handleErrorResponse(error);
+        });
+}
+
+
+const pauseAudio = () => {
+    // Check if currentAudio has an Audio object before calling pause
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+        isAudioPlaying.value = false;
+    }
+};
+
+const downloadVoicemailMessage = (uuid) => {
+    isDownloading.value = true; // Start the spinner
+
+    axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
+        .then((response) => {
+            if (response.data.success) {
+                // Create a URL with the download parameter set to true
+                const downloadUrl = `${response.data.file_url}?download=true`;
+
+                // Create an invisible link element
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+
+                // Use the filename or a default name
+                const fileName = response.data.file_name || 'greeting.wav';
+                link.download = fileName;
+
+                // Append the link to the body
+                document.body.appendChild(link);
+
+                // Trigger the download by programmatically clicking the link
+                link.click();
+
+                // Remove the link after the download starts
+                document.body.removeChild(link);
+            }
+        })
+        .catch((error) => {
+            emits('error', error);
+        })
+        .finally(() => {
+            isDownloading.value = false; // Stop the spinner after download completes
+        });
+};
+
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -279,50 +328,7 @@ const bulkActions = computed(() => {
 onMounted(() => {
 });
 
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions(itemUuid);
-}
 
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.put(form.update_route, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
 
 const handleSingleItemDeleteRequest = (url) => {
     confirmationModalTrigger.value = true;
@@ -358,19 +364,14 @@ const handleBulkActionRequest = (action) => {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
+
 
 }
 
 
 
 const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+    axios.post(props.routes.bulk_delete, { items: selectedItems.value })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -383,27 +384,6 @@ const executeBulkDelete = () => {
         });
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
-
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
-}
 
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
@@ -418,7 +398,6 @@ const handleSelectAll = () => {
         });
 
 };
-
 
 
 const handleSearchButtonClick = () => {
@@ -477,29 +456,6 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
-const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
-    } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
-    }
-
-}
-
 const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
@@ -521,7 +477,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
+        selectedItems.value = props.data.data.map(item => item.voicemail_message_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -533,13 +489,6 @@ const handleClearSelection = () => {
     selectedItems.value = [],
         selectPageItems.value = false;
     selectAll.value = false;
-}
-
-const handleModalClose = () => {
-    createModalTrigger.value = false;
-    editModalTrigger.value = false;
-    confirmationModalTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
 }
 
 const hideNotification = () => {
@@ -554,14 +503,15 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const navigateToMessages = (messagesRoute) => {
-    // Use Inertia's router to visit the messages page
-    router.visit(messagesRoute);
-};
+const handleModalClose = () => {
+    confirmationModalTrigger.value = false;
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
 
-<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

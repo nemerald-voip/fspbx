@@ -82,11 +82,12 @@ class Voicemails extends Model
                 $model->domain_uuid = session('domain_uuid');
             }
             unset($model->destroy_route);
+            unset($model->messages_route);
         });
 
         static::retrieved(function ($model) {
             $model->destroy_route = route('voicemails.destroy', $model);
-
+            $model->messages_route = route('voicemails.messages.index', $model);
         });
     }
 
