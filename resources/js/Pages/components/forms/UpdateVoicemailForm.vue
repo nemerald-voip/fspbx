@@ -243,7 +243,7 @@
 
                 <!-- Recorded Name Form -->
                 <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name"
                     :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
             </div>
 
@@ -667,7 +667,8 @@ const getRoutesForGreetingForm = computed(() => {
     // Return routes specifically for the greeting form
     return {
         ...localOptions.routes,
-        text_to_speech_route: localOptions.routes.text_to_speech_route
+        text_to_speech_route: localOptions.routes.text_to_speech_route,
+        upload_greeting_route: localOptions.routes.upload_greeting_route 
     };
 });
 
@@ -675,7 +676,8 @@ const getRoutesForNameForm = computed(() => {
     // Return routes specifically for the name form
     return {
         ...localOptions.routes,
-        text_to_speech_route: localOptions.routes.text_to_speech_route_for_name
+        text_to_speech_route: localOptions.routes.text_to_speech_route_for_name,
+        upload_greeting_route: localOptions.routes.upload_name_route 
     };
 });
 

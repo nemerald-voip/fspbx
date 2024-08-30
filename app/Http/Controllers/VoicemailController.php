@@ -661,6 +661,7 @@ class VoicemailController extends Controller
                 'greeting_route' => route('voicemail.greeting', $voicemail),
                 'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
                 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
+                'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $voicemail),
                 'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
                 'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
                 'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
