@@ -9,6 +9,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\OpenAIController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
@@ -128,13 +129,30 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
+    Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
+    Route::post('/voicemails/{voicemail}/text-to-speech',[VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
+    Route::post('/voicemails/{voicemail}/text-to-speech-for-name',[VoicemailController::class, 'textToSpeechForName'])->name('voicemails.textToSpeechForName');
+    Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file.serve');
+    Route::post('/voicemail/{domain}/{voicemail}/{file}', [VoicemailController::class, 'applyVoicemailFile'])->name('voicemail.file.apply');
+    Route::post('/voicemail/{domain}/{voicemail}/{file}/name', [VoicemailController::class, 'applyVoicemailFileForName'])->name('voicemail.file.name.apply');
+    Route::post('/voicemail/{voicemail}/greeting', [VoicemailController::class, 'getVoicemailGreeting'])->name('voicemail.greeting');
+    Route::post('voicemails/{voicemail}/delete-greeting', [VoicemailController::class, 'deleteGreeting'])->name('voicemails.deleteGreeting');
+    Route::post('voicemails/{voicemail}/upload-greeting', [VoicemailController::class, 'uploadGreeting'])->name('voicemails.uploadGreeting');
+    Route::post('/voicemail/{voicemail}/recorde-name', [VoicemailController::class, 'getRecordedName'])->name('voicemail.recorded_name');
+    Route::post('voicemails/{voicemail}/delete-recorded-name', [VoicemailController::class, 'deleteRecordedName'])->name('voicemails.deleteRecordedName');
+    Route::post('voicemails/{voicemail}/upload-recorded-name', [VoicemailController::class, 'uploadRecordedName'])->name('voicemails.uploadRecordedName');
 
     // Voicemail Messages
     Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index'])->name('voicemails.messages.index');
     Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy'])->name('voicemails.messages.destroy');
-    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('getVoicemailMessage');
+    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('voicemail.message');
+    Route::post('/voicemails/messages/get-url', [VoicemailMessagesController::class, 'getVoicemailMessageUrl'])->name('voicemail.message.url');
     Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
     Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
+    Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
+    Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
+
+
 
 
     // SIP Credentials
@@ -269,6 +287,10 @@ Route::group(['middleware' => 'auth'], function () {
     // Reports
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
+
+    // OpenAI Api
+    // Route::post('/text-to-speech', [OpenAIController::class, 'textToSpeech']);
+
 
 });
 
