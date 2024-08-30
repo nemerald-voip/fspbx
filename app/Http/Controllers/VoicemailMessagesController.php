@@ -21,7 +21,7 @@ class VoicemailMessagesController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'VoicemailMessages';
-    protected $searchable = ['voicemail_id', 'voicemail_mail_to', 'extension.effective_caller_id_name'];
+    protected $searchable = ['caller_id_name', 'caller_id_number'];
 
     public function __construct()
     {

@@ -224,26 +224,63 @@ const currentAudioUuid = ref(null);
 const isAudioPlaying = ref(false);
 const itemOptions = ref({})
 
+// const fetchAndPlayAudio = (uuid) => {
+//     // Check if there's already an audio object and it is paused
+//     if (currentAudio.value && currentAudio.value.paused) {
+//         currentAudio.value.play();
+//         isAudioPlaying.value = true;
+//         return;
+//     }
+
+//     axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
+//         .then((response) => {
+//             // Stop the currently playing audio (if any)
+//             if (currentAudio.value) {
+//                 currentAudio.value.pause();
+//                 currentAudio.value.currentTime = 0; // Reset the playback position
+//             }
+//             if (response.data.success) {
+//                 isAudioPlaying.value = true;
+//                 currentAudioUuid.value = uuid;
+
+//                 console.log(response.data.file_url);
+//                 currentAudio.value = new Audio(response.data.file_url);
+//                 currentAudio.value.play();
+
+//                 // Add an event listener for when the audio ends
+//                 currentAudio.value.addEventListener("ended", () => {
+//                     isAudioPlaying.value = false;
+//                 });
+//             }
+
+//         }).catch((error) => {
+//             handleErrorResponse(error);
+//         });
+// }
+
 const fetchAndPlayAudio = (uuid) => {
-    // Check if there's already an audio object and it is paused
-    if (currentAudio.value && currentAudio.value.paused) {
-        currentAudio.value.play();
-        isAudioPlaying.value = true;
-        return;
+    // Check if there's already an audio object
+    if (currentAudio.value) {
+        // If the current audio is paused and corresponds to the clicked voicemail, play it
+        if (currentAudio.value.paused && currentAudioUuid.value === uuid) {
+            currentAudio.value.play();
+            isAudioPlaying.value = true;
+            return;
+        }
+
+        // If the current audio does not match the clicked voicemail or it's playing, stop it
+        currentAudio.value.pause();
+        currentAudio.value.currentTime = 0; // Reset the playback position
+        isAudioPlaying.value = false;
     }
 
+    // Fetch the new audio file
     axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
         .then((response) => {
-            // Stop the currently playing audio (if any)
-            if (currentAudio.value) {
-                currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
-            }
             if (response.data.success) {
                 isAudioPlaying.value = true;
                 currentAudioUuid.value = uuid;
-
-                console.log(response.data.file_url);
+                
                 currentAudio.value = new Audio(response.data.file_url);
                 currentAudio.value.play();
 
@@ -252,11 +289,11 @@ const fetchAndPlayAudio = (uuid) => {
                     isAudioPlaying.value = false;
                 });
             }
-
         }).catch((error) => {
             handleErrorResponse(error);
         });
 }
+
 
 
 const pauseAudio = () => {
