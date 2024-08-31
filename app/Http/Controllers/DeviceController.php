@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Services\LineKeyTypesService;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
@@ -497,61 +498,86 @@ class DeviceController extends Controller
 
     public function getItemOptions()
     {
-        $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+        try {
 
-        // Define the options for the 'extensions' field
-        $extensions = Extensions::where('domain_uuid', $domain_uuid)
-            ->orderBy('extension')  // Sorts by the 'extension' field in ascending order
-            ->get([
-                'extension_uuid',
-                'extension',
-                'effective_caller_id_name',
-            ]);
+            $device = $this->model::find(request('itemUuid'));
 
-        $extensionOptions = [];
-        // Loop through each extension and create an option
-        foreach ($extensions as $extension) {
-            $extensionOptions[] = [
-                'value' => $extension->extension,
-                'name' => $extension->name_formatted,
-            ];
-        }
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
 
-        $domainOptions = [];
-        // Loop through each domain and create an option
-        if (session('domains')) {
-            foreach (session('domains') as $domain) {
-                $domainOptions[] = [
-                    'value' => $domain->domain_uuid,
-                    'name' => $domain->domain_description,
+            // Define the options for the 'extensions' field
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->orderBy('extension')  // Sorts by the 'extension' field in ascending order
+                ->get([
+                    'extension_uuid',
+                    'extension',
+                    'effective_caller_id_name',
+                ]);
+
+            $extensionOptions = [];
+            // Loop through each extension and create an option
+            foreach ($extensions as $extension) {
+                $extensionOptions[] = [
+                    'value' => $extension->extension,
+                    'name' => $extension->name_formatted,
                 ];
             }
+
+            $domainOptions = [];
+            // Loop through each domain and create an option
+            if (session('domains')) {
+                foreach (session('domains') as $domain) {
+                    $domainOptions[] = [
+                        'value' => $domain->domain_uuid,
+                        'name' => $domain->domain_description,
+                    ];
+                }
+            }
+
+            $lines = DeviceLines::where('device_uuid', request('itemUuid'))
+                ->get([
+                    'device_line_uuid',
+                    'line_number',
+                    'user_id'
+                ]);
+
+            $navigation = [
+                [
+                    'name' => 'Settings',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'settings',
+                ],
+                [
+                    'name' => 'Lines',
+                    'icon' => 'AdjustmentsHorizontalIcon',
+                    'slug' => 'lines',
+                ],
+            ];
+
+            if ($device->device_vendor == 'yealink') {
+                $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
+            }
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'templates' => getVendorTemplateCollection(),
+                'profiles' => getProfileCollection($domain_uuid),
+                'extensions' => $extensionOptions,
+                'domains' => $domainOptions,
+                'navigation' => $navigation,
+                'lines' => $lines,
+                'line_key_types' => $lineKeyTypes,
+                // Define options for other fields as needed
+            ];
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update this item']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
-
-        $navigation = [
-            [
-                'name' => 'Settings',
-                'icon' => 'Cog6ToothIcon',
-                'slug' => 'settings',
-            ],
-            [
-                'name' => 'Lines',
-                'icon' => 'AdjustmentsHorizontalIcon',
-                'slug' => 'lines',
-            ],
-        ];
-
-        // Construct the itemOptions object
-        $itemOptions = [
-            'templates' => getVendorTemplateCollection(),
-            'profiles' => getProfileCollection($domain_uuid),
-            'extensions' => $extensionOptions,
-            'domains' => $domainOptions,
-            'navigation' => $navigation,
-            // Define options for other fields as needed
-        ];
-
-        return $itemOptions;
     }
 
     /**
