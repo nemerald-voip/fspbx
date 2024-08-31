@@ -56,11 +56,11 @@ class DeviceController extends Controller
                     return request('filterData.showGlobal') === 'true';
                 },
                 'itemData' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getItemData()
                 ),
                 'itemOptions' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getItemOptions()
                 ),
                 'routes' => [
@@ -501,6 +501,7 @@ class DeviceController extends Controller
 
         // Define the options for the 'extensions' field
         $extensions = Extensions::where('domain_uuid', $domain_uuid)
+            ->orderBy('extension')  // Sorts by the 'extension' field in ascending order
             ->get([
                 'extension_uuid',
                 'extension',
@@ -563,7 +564,7 @@ class DeviceController extends Controller
                     $inputs['device_vendor'] = 'polycom';
                 }
             }
-            
+
             if (isset($inputs['extension'])) {
                 $extension = $inputs['extension'];
                 unset($inputs['extension']);
@@ -571,7 +572,7 @@ class DeviceController extends Controller
                 $extension = null;
             }
 
-            
+
             // Check if device_profile_uuid is intended to be NULL and adjust accordingly
             // This will convert string "NULL" to literal null values
             if (array_key_exists('device_profile_uuid', $inputs) && $inputs['device_profile_uuid'] === 'NULL') {
