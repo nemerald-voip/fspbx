@@ -528,12 +528,26 @@ class DeviceController extends Controller
             }
         }
 
+        $navigation = [
+            [
+                'name' => 'Settings',
+                'icon' => 'Cog6ToothIcon',
+                'slug' => 'settings',
+            ],
+            [
+                'name' => 'Lines',
+                'icon' => 'AdjustmentsHorizontalIcon',
+                'slug' => 'lines',
+            ],
+        ];
+
         // Construct the itemOptions object
         $itemOptions = [
             'templates' => getVendorTemplateCollection(),
             'profiles' => getProfileCollection($domain_uuid),
             'extensions' => $extensionOptions,
             'domains' => $domainOptions,
+            'navigation' => $navigation,
             // Define options for other fields as needed
         ];
 
