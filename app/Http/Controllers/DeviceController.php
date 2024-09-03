@@ -398,13 +398,48 @@ class DeviceController extends Controller
             }
             $inputs['device_address'] = $inputs['device_address_modified'];
 
-            if ($inputs['extension']) {
-                $extension = Extensions::where('extension', $inputs['extension'])
-                    ->where('domain_uuid', $inputs['domain_uuid'])
-                    ->first();
+            // Check if lines are passed
+            if (!empty($inputs['lines']) && is_array($inputs['lines'])) {
+                // Remove existing device lines
+                $device->lines()->delete();
 
-                if ($extension) {
-                    $device->device_label = $extension->extension;
+                foreach ($inputs['lines'] as $index => $line) {
+                    $extension = Extensions::where('extension', $line['user_id'])
+                        ->where('domain_uuid', $inputs['domain_uuid'])
+                        ->first();
+
+                    if ($extension) {
+                        $sharedLine = $line['shared_line'] === "true" ? "1" : null;
+                        logger($sharedLine);
+                        // Create new device line
+                        $deviceLines = new DeviceLines();
+                        $deviceLines->fill([
+                            'device_uuid' => $device->device_uuid,
+                            'line_number' => $line['line_number'],
+                            'server_address' => Session::get('domain_name'),
+                            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                            'server_address_primary' => get_domain_setting('server_address_primary'),
+                            'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                            'display_name' => $extension->extension,
+                            'user_id' => $extension->extension,
+                            'auth_id' => $extension->extension,
+                            'label' => $extension->extension,
+                            'password' => $extension->password,
+                            'sip_port' => get_domain_setting('line_sip_port'),
+                            'sip_transport' => get_domain_setting('line_sip_transport'),
+                            'register_expires' => get_domain_setting('line_register_expires'),
+                            'shared_line' => $sharedLine,
+                            'enabled' => 'true',
+                            'domain_uuid' => $device->domain_uuid
+                        ]);
+                        $deviceLines->save();
+
+                        // Set device label based on the first extension
+                        if ($index === 0) {
+                            $device->device_label = $extension->extension;
+                        }
+                    }
                 }
             } else {
                 $device->device_label = null;
@@ -414,39 +449,6 @@ class DeviceController extends Controller
 
             // logger($inputs);
             $device->update($inputs);
-
-            if (isset($extension) && $extension) {
-                // Remove existing device lines
-                if ($device->lines()->exists()) {
-                    $device->lines()->delete();
-                }
-
-                // Create device lines
-                $deviceLines = new DeviceLines();
-                $deviceLines->fill([
-                    'device_uuid' => $device->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                    'domain_uuid' => $device->domain_uuid
-                ]);
-                $deviceLines->save();
-
-                $device->device_label = $extension->extension;
-                $device->save();
-            }
 
 
             // Return a JSON response indicating success
@@ -537,8 +539,13 @@ class DeviceController extends Controller
                 ->get([
                     'device_line_uuid',
                     'line_number',
-                    'user_id'
-                ]);
+                    'user_id',
+                    'shared_line',
+                ])
+                ->map(function ($line) {
+                    $line->line_type_id = "15";
+                    return $line;
+                });
 
             $navigation = [
                 [

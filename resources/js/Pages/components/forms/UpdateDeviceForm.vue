@@ -93,20 +93,21 @@
 
                         <div class="grid grid-cols-12 gap-6">
 
-                            <template v-for="(row, index) in options.lines" :key="row.device_line_uuid">
+                            <template v-for="(row, index) in form.lines" :key="row.device_line_uuid">
                                 <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
                                     {{ index + 1 }}
                                 </div>
 
                                 <div class="col-span-5 text-sm font-medium leading-6 text-gray-900">
-                                    <ComboBox :options="options.line_key_types" :selectedItem="form.extension"
+                                    <ComboBox :options="options.line_key_types" :selectedItem="row.line_type_id"
                                         :search="true" :placeholder="'Choose key type'"
-                                        @update:model-value="handleExtensionUpdate" />
+                                        @update:model-value="(value) => handleKeyTypeUpdate(value, index)" />
                                 </div>
 
                                 <div class="col-span-5 text-sm font-medium leading-6 text-gray-900">
-                                    <ComboBox :options="options.extensions" :selectedItem="form.extension" :search="true"
-                                        :placeholder="'Choose extension'" @update:model-value="handleExtensionUpdate" />
+                                    <ComboBox :options="options.extensions" :selectedItem="row.user_id" :search="true"
+                                        :placeholder="'Choose extension'" 
+                                        @update:model-value="(value) => handleExtensionUpdate(value, index)" />
                                 </div>
 
                                 <div class="text-sm font-medium leading-6 text-gray-900">
@@ -170,7 +171,8 @@ const form = reactive({
     device_address: props.item.device_address,
     device_template: props.item.device_template,
     device_profile_uuid: props.item.device_profile_uuid,
-    extension: props.item.device_label,
+    // extension: props.item.device_label,
+    lines: props.options.lines,
     domain_uuid: props.item.domain_uuid,
     _token: page.props.csrf_token,
 })
@@ -193,9 +195,17 @@ const handleProfileUpdate = (newSelectedItem) => {
     form.device_profile_uuid = newSelectedItem.value
 }
 
-const handleExtensionUpdate = (newSelectedItem) => {
-    form.extension = newSelectedItem.value
-}
+const handleExtensionUpdate = (newSelectedItem, index) => {
+    console.log(form.lines);
+    form.lines[index].user_id = newSelectedItem.value;
+};
+
+const handleKeyTypeUpdate = (newSelectedItem, index) => {
+    form.lines[index].shared_line = 'true';
+    console.log(form.lines);
+};
+
+
 
 const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
