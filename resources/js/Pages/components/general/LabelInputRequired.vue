@@ -1,5 +1,5 @@
 <template>
-    <label :for="target" :class="style">{{ label }}<span class="ml-1 text-base/loose text-red-600">*</span></label>
+    <label :for="target" :class="style">{{ label }}<span class="ml-1 ordinal text-red-600">*</span></label>
 </template>
 <script setup>
 const props = defineProps({

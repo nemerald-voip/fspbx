@@ -94,6 +94,7 @@ class Extensions extends Model
      */
     protected $hidden = [
         'password',
+        'advSettings'
     ];
 
     public function __construct(array $attributes = [])

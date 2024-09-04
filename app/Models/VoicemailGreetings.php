@@ -18,4 +18,22 @@ class VoicemailGreetings extends Model
     protected $keyType = 'string';
 
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'domain_uuid',
+        'voicemail_id',
+        'greeting_id',
+        'greeting_name',
+        'greeting_filename',
+        'greeting_description',
+        'greeting_base64',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user'
+    ];
 }

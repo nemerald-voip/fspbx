@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class VoicemailDestinations extends Model
 {
@@ -17,6 +18,30 @@ class VoicemailDestinations extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+
+    /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $model->insert_date = now();
+            $model->insert_user = session('user_uuid');
+        });
+
+        static::saving(function ($model) {
+            if (!$model->domain_uuid) {
+                $model->domain_uuid = session('domain_uuid');
+            }
+            if (!$model->voicemail_destination_uuid) {
+                $model->voicemail_destination_uuid = Str::uuid();
+            }
+
+        });
+    }
 
     /**
      * Get the voicmeial this destination belongs to.
