@@ -50,8 +50,9 @@ class UpdateDeviceRequest extends FormRequest
                 'string',
                 Rule::notIn(['NULL']),
             ],
-            'extension' => [
+            'lines' => [
                 'nullable',
+                'array'
             ],
             'domain_uuid' => [
                 'required',
