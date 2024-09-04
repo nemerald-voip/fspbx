@@ -17,9 +17,9 @@
             </nav>
         </aside>
 
-        <form @submit.prevent="submitForm" class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+        <form @submit.prevent="submitForm" class="sm:px-6 lg:col-span-9 lg:px-0">
             <div v-if="activeTab === 'settings'">
-                <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                <div class="bg-gray-100  px-4 py-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div class="sm:col-span-12">
                         <LabelInputRequired :target="'device_address'" :label="'MAC Address'" />
                         <div class="mt-2">
@@ -53,20 +53,16 @@
                             <ComboBox :options="options.profiles" :selectedItem="form.device_profile_uuid" :search="true"
                                 :placeholder="'Choose profile'" @update:model-value="handleProfileUpdate" />
                         </div>
-                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p> -->
                     </div>
 
-
+                    <!-- 
                     <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
                         <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                         <div class="mt-2">
                             <ComboBox :options="options.extensions" :selectedItem="form.extension" :search="true"
                                 :placeholder="'Choose extension'" @update:model-value="handleExtensionUpdate" />
                         </div>
-                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p> -->
-                    </div>
+                    </div> -->
 
                     <div v-if="page.props.auth.can.domain_select && page.props.auth.can.device_edit_domain"
                         class="sm:col-span-12">
@@ -85,7 +81,7 @@
 
             <div v-if="activeTab === 'lines'">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Line Keys</h3>
                             <p class="mt-1 text-sm text-gray-500">Assign functions to the line keys for this device.</p>
@@ -98,16 +94,22 @@
                                     {{ index + 1 }}
                                 </div>
 
-                                <div class="col-span-5 text-sm font-medium leading-6 text-gray-900">
+                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
                                     <ComboBox :options="options.line_key_types" :selectedItem="row.line_type_id"
                                         :search="true" :placeholder="'Choose key type'"
                                         @update:model-value="(value) => handleKeyTypeUpdate(value, index)" />
                                 </div>
 
-                                <div class="col-span-5 text-sm font-medium leading-6 text-gray-900">
+                                <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
                                     <ComboBox :options="options.extensions" :selectedItem="row.user_id" :search="true"
-                                        :placeholder="'Choose extension'" 
+                                        :placeholder="'Choose extension'"
                                         @update:model-value="(value) => handleExtensionUpdate(value, index)" />
+                                </div>
+
+                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                    <InputField v-model="row.display_name" type="text" name="ip_address"
+                                        placeholder="Enter display name"
+                                        :error="errors?.display_name && errors.display_name.length > 0" />
                                 </div>
 
                                 <div class="text-sm font-medium leading-6 text-gray-900">
@@ -120,22 +122,21 @@
                         </div>
                     </div>
 
-                    <div class="border-t mt-4 sm:mt-4 ">
-                        <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                            <button type="submit"
-                                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                                ref="saveButtonRef" :disabled="isSubmitting">
-                                <Spinner :show="isSubmitting" />
-                                Save
-                            </button>
-                            <button type="button"
-                                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                                @click="emits('cancel')" ref="cancelButtonRef">Cancel
-                            </button>
-                        </div>
-                    </div>
+
                 </div>
             </div>
+
+            <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+
+                <button type="submit"
+                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    ref="saveButtonRef" :disabled="isSubmitting">
+                    <Spinner :show="isSubmitting" />
+                    Save
+                </button>
+
+            </div>
+
         </form>
     </div>
 </template>
@@ -183,7 +184,6 @@ const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 
 const submitForm = () => {
-    // console.log(form);
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -201,8 +201,12 @@ const handleExtensionUpdate = (newSelectedItem, index) => {
 };
 
 const handleKeyTypeUpdate = (newSelectedItem, index) => {
-    form.lines[index].shared_line = 'true';
-    console.log(form.lines);
+    const newValue = newSelectedItem.value === 'sharedline' ? 'true' : null;
+
+    // Only update if the value is different
+    if (form.lines[index].shared_line !== newValue) {
+        form.lines[index].shared_line = newValue;
+    }
 };
 
 

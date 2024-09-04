@@ -410,7 +410,6 @@ class DeviceController extends Controller
 
                     if ($extension) {
                         $sharedLine = $line['shared_line'] === "true" ? "1" : null;
-                        logger($sharedLine);
                         // Create new device line
                         $deviceLines = new DeviceLines();
                         $deviceLines->fill([
@@ -421,7 +420,7 @@ class DeviceController extends Controller
                             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
                             'server_address_primary' => get_domain_setting('server_address_primary'),
                             'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                            'display_name' => $extension->extension,
+                            'display_name' => $line['display_name'],
                             'user_id' => $extension->extension,
                             'auth_id' => $extension->extension,
                             'label' => $extension->extension,
@@ -540,12 +539,20 @@ class DeviceController extends Controller
                     'device_line_uuid',
                     'line_number',
                     'user_id',
+                    'display_name',
                     'shared_line',
                 ])
-                ->map(function ($line) {
-                    $line->line_type_id = "15";
+                ->map(function ($line) use ($device) {
+                    if ($line->shared_line) {
+                        $line->line_type_id = 'sharedline';
+                    } else {
+                        if ($device->device_vendor == 'yealink') $line->line_type_id = "15";
+                        if ($device->device_vendor == 'polycom') $line->line_type_id = "line";
+                    }
                     return $line;
                 });
+
+                // logger($lines);
 
             $navigation = [
                 [
@@ -560,8 +567,11 @@ class DeviceController extends Controller
                 ],
             ];
 
+            $lineKeyTypes= [];
             if ($device->device_vendor == 'yealink') {
                 $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
+            } else if ($device->device_vendor == 'polycom') {
+                $lineKeyTypes = LineKeyTypesService::getPolycomKeyTypes();
             }
 
             // Construct the itemOptions object
@@ -582,7 +592,7 @@ class DeviceController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this item']]
+                'errors' => ['server' => ['Failed to get item details']]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

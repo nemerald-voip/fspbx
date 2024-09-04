@@ -45,8 +45,20 @@ class LineKeyTypesService
             ['value' => '61', 'name' => 'Directory'],
             ['value' => '66', 'name' => 'Paging List'],
             ['value' => '73', 'name' => 'Custom Key'],
-            ['value' => '9999', 'name' => 'Shared Line'],
+            ['value' => 'sharedline', 'name' => 'Shared Line'],
         ];
         
+    }
+
+    public static function getPolycomKeyTypes()
+    {
+        return [
+            ['value' => 'line', 'name' => 'Line'],
+            ['value' => 'blf', 'name' => 'BLF'],
+            ['value' => 'speeddial', 'name' => 'SpeedDial'],
+            ['value' => 'efk', 'name' => 'EFK'],
+            ['value' => 'presence', 'name' => 'Presence'],
+            ['value' => 'sharedline', 'name' => 'Shared Line'],
+        ];
     }
 }
