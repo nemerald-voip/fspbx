@@ -244,27 +244,22 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        if ($inputs['extension']) {
-            $extension = Extensions::where('extension', $inputs['extension'])
-                ->where('domain_uuid', session('domain_uuid'))
-                ->first();
-        } else {
-            $extension = null;
-        }
-
+        logger($inputs);
+    
         try {
-            // Validate the request data and create a new instance
+            // Create a new instance of the device model
             $instance = $this->model;
-
+    
+            // Determine the vendor
             $vendor = explode("/", $inputs['device_template'])[0];
             if ($vendor === 'poly') {
                 $vendor = 'polycom';
             }
-
+    
+            // Fill the instance with input data
             $instance->fill([
                 'device_address' => $inputs['device_address_modified'],
                 'domain_uuid' => $inputs['domain_uuid'],
-                'device_label' => $extension->extension ?? null,
                 'device_vendor' => $vendor,
                 'device_enabled' => 'true',
                 'device_enabled_date' => date('Y-m-d H:i:s'),
@@ -272,32 +267,54 @@ class DeviceController extends Controller
                 'device_profile_uuid' => $inputs['device_profile_uuid'],
                 'device_description' => '',
             ]);
-            $instance->save();  // Save the new model instance to the database
-
-            if ($extension) {
-                // Create device lines
-                $instance->lines = new DeviceLines();
-                $instance->lines->fill([
-                    'device_uuid' => $instance->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                ]);
-                $instance->lines->save();
+    
+            // Save the new model instance to the database
+            $instance->save();
+    
+            // Check if lines are passed and is an array
+            if (!empty($inputs['lines']) && is_array($inputs['lines'])) {
+                foreach ($inputs['lines'] as $index => $line) {
+                    $extension = Extensions::where('extension', $line['user_id'])
+                        ->where('domain_uuid', $inputs['domain_uuid'])
+                        ->first();
+    
+                    if ($extension) {
+                        $sharedLine = $line['shared_line'] !== null ? "1" : null;
+                        // Create a new DeviceLines instance and fill it
+                        $deviceLines = new DeviceLines();
+                        $deviceLines->fill([
+                            'device_uuid' => $instance->device_uuid,
+                            'line_number' => $line['line_number'],
+                            'server_address' => Session::get('domain_name'),
+                            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                            'server_address_primary' => get_domain_setting('server_address_primary'),
+                            'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                            'display_name' => $line['display_name'],
+                            'user_id' => $extension->extension,
+                            'auth_id' => $extension->extension,
+                            'label' => $extension->extension,
+                            'password' => $extension->password,
+                            'sip_port' => get_domain_setting('line_sip_port'),
+                            'sip_transport' => get_domain_setting('line_sip_transport'),
+                            'register_expires' => get_domain_setting('line_register_expires'),
+                            'shared_line' => $sharedLine,
+                            'enabled' => 'true',
+                            'domain_uuid' => $instance->domain_uuid
+                        ]);
+                        $deviceLines->save();
+    
+                        // Set device label based on the first extension
+                        if ($index === 0) {
+                            $instance->device_label = $extension->extension;
+                        }
+                    }
+                }
             }
-
+    
+            // Update the instance with the label
+            $instance->save();
+    
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['New item created']]
@@ -305,23 +322,15 @@ class DeviceController extends Controller
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage());
-
+    
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to create new item']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
-
-
-
-        // return response()->json([
-        //     'status' => 'success',
-        //     'device' => $device,
-        //     'message' => 'Device has been created and assigned.'
-        // ]);
     }
+    
 
     /**
      * Display the specified resource.
@@ -409,7 +418,7 @@ class DeviceController extends Controller
                         ->first();
 
                     if ($extension) {
-                        $sharedLine = $line['shared_line'] === "true" ? "1" : null;
+                        $sharedLine = $line['shared_line'] !== null ? "1" : null;
                         // Create new device line
                         $deviceLines = new DeviceLines();
                         $deviceLines->fill([
@@ -534,7 +543,9 @@ class DeviceController extends Controller
                 }
             }
 
-            $lines = DeviceLines::where('device_uuid', request('itemUuid'))
+            $lines = [];
+            if(request('itemUuid')) {
+                $lines = DeviceLines::where('device_uuid', request('itemUuid'))
                 ->get([
                     'device_line_uuid',
                     'line_number',
@@ -553,6 +564,7 @@ class DeviceController extends Controller
                 });
 
                 // logger($lines);
+            }
 
             $navigation = [
                 [
@@ -568,11 +580,19 @@ class DeviceController extends Controller
             ];
 
             $lineKeyTypes= [];
-            if ($device->device_vendor == 'yealink') {
-                $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
-            } else if ($device->device_vendor == 'polycom') {
-                $lineKeyTypes = LineKeyTypesService::getPolycomKeyTypes();
+            if ($device) {
+                if ($device->device_vendor == 'yealink') {
+                    $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
+                } else if ($device->device_vendor == 'polycom') {
+                    $lineKeyTypes = LineKeyTypesService::getPolycomKeyTypes();
+                }
+            } else {
+                $lineKeyTypes = [
+                    ['value' => 'line', 'name' => 'Line'],
+                    ['value' => 'sharedline', 'name' => 'Shared Line'],
+                ];
             }
+
 
             // Construct the itemOptions object
             $itemOptions = [

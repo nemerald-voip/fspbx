@@ -1,83 +1,152 @@
 <template>
-    <form @submit.prevent="submitForm">
-        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div class="sm:col-span-12">
-                <LabelInputRequired :target="'device_address'" :label="'MAC Address'" />
-                <div class="mt-2">
-                    <InputField v-model="form.device_address" type="text" name="device_address"
-                        placeholder="Enter MAC Address"
-                        :error="errors?.device_address && errors.device_address.length > 0" />
-                </div>
-                <div v-if="errors?.device_address" class="mt-2 text-sm text-red-600">
-                    {{ errors.device_address[0] }}
-                </div>
-            </div>
+    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+        <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+            <nav class="space-y-1">
+                <a v-for="item in options.navigation" :key="item.name" href="#"
+                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
+                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
+                    <component :is="iconComponents[item.icon]"
+                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
+                        aria-hidden="true" />
+                    <span class="truncate">{{ item.name }}</span>
+                    <ExclamationCircleIcon v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings') "
+                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+
+                </a>
+            </nav>
+        </aside>
+
+        <form @submit.prevent="submitForm" class="sm:px-6 lg:col-span-9 lg:px-0">
+            <div v-if="activeTab === 'settings'">
+                <div class="bg-gray-100  px-4 py-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                    <div class="sm:col-span-12">
+                        <LabelInputRequired :target="'device_address'" :label="'MAC Address'" />
+                        <div class="mt-2">
+                            <InputField v-model="form.device_address" type="text" name="device_address"
+                                placeholder="Enter MAC Address"
+                                :error="errors?.device_address && errors.device_address.length > 0" />
+                        </div>
+                        <div v-if="errors?.device_address" class="mt-2 text-sm text-red-600">
+                            {{ errors.device_address[0] }}
+                        </div>
+                    </div>
 
 
-            <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
-                <LabelInputRequired :target="'template'" :label="'Device Template'" />
-                <div class="mt-2">
-                    <ComboBox :options="options.templates" :selectedItem="null" :search="true"
-                        :placeholder="'Choose template'" @update:model-value="handleTemplateUpdate" 
-                        :error="errors?.device_template && errors.device_template.length > 0"/>
-                </div>
-                <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
+                    <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
+                        <LabelInputRequired :target="'template'" :label="'Device Template'" />
+                        <div class="mt-2">
+                            <ComboBox :options="options.templates" :selectedItem="null" :search="true"
+                                :placeholder="'Choose template'" @update:model-value="handleTemplateUpdate"
+                                :error="errors?.device_template && errors.device_template.length > 0" />
+                        </div>
+                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p> -->
-                <div v-if="errors?.device_template" class="mt-2 text-sm text-red-600">
-                    {{ errors.device_template[0] }}
-                </div>
-            </div>
+                        <div v-if="errors?.device_template" class="mt-2 text-sm text-red-600">
+                            {{ errors.device_template[0] }}
+                        </div>
+                    </div>
 
-            <div class="sm:col-span-12">
-                <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
-                <div class="mt-2">
-                    <ComboBox :options="options.profiles" :selectedItem="null" :search="true"
-                        :placeholder="'Choose profile'" @update:model-value="handleProfileUpdate" />
-                </div>
-                <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
+                    <div class="sm:col-span-12">
+                        <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
+                        <div class="mt-2">
+                            <ComboBox :options="options.profiles" :selectedItem="null" :search="true"
+                                :placeholder="'Choose profile'" @update:model-value="handleProfileUpdate" />
+                        </div>
+                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
                     forwarded.</p> -->
-            </div>
+                    </div>
 
-
-            <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
-                <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
-                <div class="mt-2">
-                    <ComboBox :options="options.extensions" :selectedItem="null" :search="true"
-                        :placeholder="'Choose extension'" @update:model-value="handleExtensionUpdate" />
                 </div>
-                <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p> -->
             </div>
-        </div>
 
-        <div class="border-t mt-4 sm:mt-4 ">
-            <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                <button type="submit"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    ref="saveButtonRef" :disabled="isSubmitting">
-                    <Spinner :show="isSubmitting" />
-                    Save
-                </button>
-                <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="emits('cancel')" ref="cancelButtonRef">Cancel
-                </button>
+            <div v-if="activeTab === 'lines'">
+                <div class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Line Keys</h3>
+                            <p class="mt-1 text-sm text-gray-500">Assign functions to the line keys for this device.</p>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-6">
+
+                            <template v-for="(row, index) in form.lines" :key="row.device_line_uuid">
+                                <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
+                                    {{ index + 1 }}
+                                </div>
+
+                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                    <ComboBox :options="options.line_key_types" :selectedItem="row.line_type_id"
+                                        :search="true" :placeholder="'Choose key type'"
+                                        @update:model-value="(value) => handleKeyTypeUpdate(value, index)" />
+                                </div>
+
+                                <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
+                                    <ComboBox :options="options.extensions" :selectedItem="row.user_id" :search="true"
+                                        :placeholder="'Choose extension'"
+                                        @update:model-value="(value) => handleExtensionUpdate(value, index)" />
+                                </div>
+
+                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                    <InputField v-model="row.display_name" type="text" name="ip_address"
+                                        placeholder="Enter display name"
+                                        :error="errors?.display_name && errors.display_name.length > 0" />
+                                </div>
+
+                                <div class="text-sm font-medium leading-6 text-gray-900">
+                                    <EllipsisVerticalIcon @click="handleEditRequest(row.device_uuid)"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                </div>
+                            </template>
+
+                        </div>
+
+                        <div>
+                            <a href="#" @click.prevent="addNewLineKey"
+                                class="block bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+                                <div class="flex items-center justify-center gap-2">
+                                    <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
+                                    <span>
+                                        Add new line key
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+
+                </div>
             </div>
-        </div>
-    </form>
+
+            <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+
+            <button type="submit"
+                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                ref="saveButtonRef" :disabled="isSubmitting">
+                <Spinner :show="isSubmitting" />
+                Save
+            </button>
+
+            </div>
+        </form>
+    </div>
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
-import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
+import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon } from "@heroicons/vue/24/solid";
+
+
 
 const props = defineProps({
     options: Object,
@@ -91,11 +160,15 @@ const form = reactive({
     device_address: null,
     device_template: null,
     device_profile_uuid: null,
-    extension: null,
+    lines: [],
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel']);
+
+// Initialize activeTab with the currently active tab from props
+const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
+
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -109,8 +182,42 @@ const handleProfileUpdate = (newSelectedItem) => {
     form.device_profile_uuid = newSelectedItem.value
 }
 
-const handleExtensionUpdate = (newSelectedItem) => {
-    form.extension = newSelectedItem.value
+const handleExtensionUpdate = (newSelectedItem, index) => {
+    form.lines[index].user_id = newSelectedItem.value;
 }
+
+const addNewLineKey = () => {
+    console.log(props.options);
+    // Define the new line key object with default values
+    const newLineKey = {
+        line_number: form.lines.length + 1, // Increment line number based on the array length
+        user_id: null,                      // Set initial user_id to null or any default value
+        display_name: '',                   // Set initial display_name to an empty string
+        shared_line: null,                  // Set initial shared_line to null or any default value
+        device_line_uuid: null
+    };
+
+    // Push the new line key to the form.lines array
+    form.lines.push(newLineKey);
+};
+
+const handleKeyTypeUpdate = (newSelectedItem, index) => {
+    const newValue = newSelectedItem.value === 'sharedline' ? 'true' : null;
+
+    // Only update if the value is different
+    if (form.lines[index].shared_line !== newValue) {
+        form.lines[index].shared_line = newValue;
+    }
+};
+
+
+const iconComponents = {
+    'Cog6ToothIcon': Cog6ToothIcon,
+    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+};
+
+const setActiveTab = (tabSlug) => {
+    activeTab.value = tabSlug;
+};
 
 </script>
