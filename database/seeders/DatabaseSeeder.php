@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
 
         $this->createGroupPermissions();
 
+        $this->createDefaultSettings();
+
         Model::reguard();
 
     }
@@ -245,6 +247,138 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Display 'Get Password' link on the success notification pop-up",
             ],*/
+
+        ];
+
+        // Log::alert(Category::where('name', trans('custom-fields::general.categories.cost_recovery'))->where('company_id', $company_id)->value('id'));
+        foreach ($settings as $setting) {
+            $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
+                ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
+                ->first();
+
+            if (empty($existing_item)) {
+                // Add new group
+                DefaultSettings::create([
+                    'default_setting_category'      => $setting['default_setting_category'],
+                    'default_setting_subcategory'   => $setting['default_setting_subcategory'],
+                    'default_setting_name'          => $setting['default_setting_name'],
+                    'default_setting_value'         => $setting['default_setting_value'],
+                    'default_setting_enabled'       => $setting['default_setting_enabled'],
+                    'default_setting_description'   => $setting['default_setting_description'],
+                ]);
+            }
+        }
+    }
+
+    private function createDefaultSettings()
+    {
+        $settings = [
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e350_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e300_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e220_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e500_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e350_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e350_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46s_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46s_wallpaper_filename',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46u_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46u_wallpaper_filename',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+
+            
 
         ];
 

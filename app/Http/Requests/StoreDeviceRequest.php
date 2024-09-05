@@ -42,8 +42,9 @@ class StoreDeviceRequest extends FormRequest
                 'required',
                 'string',
             ],
-            'extension' => [
+            'lines' => [
                 'nullable',
+                'array'
             ],
             'domain_uuid' => [
                 'nullable',

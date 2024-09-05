@@ -9,8 +9,7 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.voicemail_id || errors?.voicemail_password) && item.slug === 'settings') ||
-                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
+                    <ExclamationCircleIcon v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings') "
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -120,6 +119,19 @@
                             </template>
 
                         </div>
+
+                        <div>
+                            <a href="#" @click.prevent="addNewLineKey"
+                                class="block bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+                                <div class="flex items-center justify-center gap-2">
+                                    <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
+                                    <span>
+                                        Add new line key
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+
                     </div>
 
 
@@ -146,15 +158,14 @@ import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
-import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
-import DataTable from "@generalComponents/DataTable.vue";
-import TableColumnHeader from "@generalComponents/TableColumnHeader.vue";
-import TableField from "@generalComponents/TableField.vue";
+import { PlusIcon } from "@heroicons/vue/24/solid";
+
+
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
 
@@ -196,7 +207,6 @@ const handleProfileUpdate = (newSelectedItem) => {
 }
 
 const handleExtensionUpdate = (newSelectedItem, index) => {
-    console.log(form.lines);
     form.lines[index].user_id = newSelectedItem.value;
 };
 
@@ -209,7 +219,20 @@ const handleKeyTypeUpdate = (newSelectedItem, index) => {
     }
 };
 
+const addNewLineKey = () => {
+    // console.log(form.lines);
+    // Define the new line key object with default values
+    const newLineKey = {
+        line_number: form.lines.length + 1, // Increment line number based on the array length
+        user_id: null,                      // Set initial user_id to null or any default value
+        display_name: '',                   // Set initial display_name to an empty string
+        shared_line: null,                  // Set initial shared_line to null or any default value
+        device_line_uuid: null
+    };
 
+    // Push the new line key to the form.lines array
+    form.lines.push(newLineKey);
+};
 
 const handleDomainUpdate = (newSelectedItem) => {
     form.domain_uuid = newSelectedItem.value;
