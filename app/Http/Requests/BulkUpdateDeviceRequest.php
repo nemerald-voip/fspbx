@@ -38,8 +38,9 @@ class BulkUpdateDeviceRequest extends FormRequest
                 'nullable',
                 'string',
             ],
-            'extension' => [
+            'lines' => [
                 'nullable',
+                'array'
             ],
             'domain_uuid' => [
                 'nullable',

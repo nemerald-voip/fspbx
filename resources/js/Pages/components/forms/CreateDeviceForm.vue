@@ -9,7 +9,8 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings') "
+                    <ExclamationCircleIcon
+                        v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -119,15 +120,14 @@
             </div>
 
             <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
-
-            <button type="submit"
-                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                ref="saveButtonRef" :disabled="isSubmitting">
-                <Spinner :show="isSubmitting" />
-                Save
-            </button>
-
+                <button type="submit"
+                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    ref="saveButtonRef" :disabled="isSubmitting">
+                    <Spinner :show="isSubmitting" />
+                    Save
+                </button>
             </div>
+
         </form>
     </div>
 </template>
@@ -187,7 +187,6 @@ const handleExtensionUpdate = (newSelectedItem, index) => {
 }
 
 const addNewLineKey = () => {
-    console.log(props.options);
     // Define the new line key object with default values
     const newLineKey = {
         line_number: form.lines.length + 1, // Increment line number based on the array length
