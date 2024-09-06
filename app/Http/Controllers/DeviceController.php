@@ -244,8 +244,6 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        logger($inputs);
-
         try {
             // Create a new instance of the device model
             $instance = $this->model;
