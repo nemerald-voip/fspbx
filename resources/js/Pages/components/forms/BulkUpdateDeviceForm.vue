@@ -219,8 +219,8 @@ const handleProfileUpdate = (newSelectedItem) => {
     form.device_profile_uuid = newSelectedItem.value
 }
 
-const handleExtensionUpdate = (newSelectedItem) => {
-    form.extension = newSelectedItem.value
+const handleExtensionUpdate = (newSelectedItem, index) => {
+    form.lines[index].user_id = newSelectedItem.value;
 }
 
 const handleDomainUpdate = (newSelectedItem) => {
@@ -243,6 +243,15 @@ function placeholderText(fieldName) {
         return fieldValue; // Use the actual value as the placeholder
     }
 }
+
+const handleKeyTypeUpdate = (newSelectedItem, index) => {
+    const newValue = newSelectedItem.value === 'sharedline' ? 'true' : null;
+
+    // Only update if the value is different
+    if (form.lines[index].shared_line !== newValue) {
+        form.lines[index].shared_line = newValue;
+    }
+};
 
 
 const addNewLineKey = () => {
