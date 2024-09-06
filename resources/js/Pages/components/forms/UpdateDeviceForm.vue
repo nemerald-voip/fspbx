@@ -236,6 +236,7 @@ const handleProfileUpdate = (newSelectedItem) => {
 
 const handleExtensionUpdate = (newSelectedItem, index) => {
     form.lines[index].user_id = newSelectedItem.value;
+    form.lines[index].display_name = newSelectedItem.value;
 };
 
 const handleKeyTypeUpdate = (newSelectedItem, index) => {
