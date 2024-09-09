@@ -176,7 +176,7 @@
                 :is-submitting="createFormSubmitting" @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-    <AddEditItemModal :show="editModalTrigger" :header="'Update Number'" :loading="loadingModal"
+    <AddEditItemModal :show="editModalTrigger" :header="'Update Phone Number Settings'" :loading="loadingModal"
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
         <template #modal-body>
             <UpdatePhoneNumberForm :item="itemData" :options="itemOptions" :errors="formErrors"

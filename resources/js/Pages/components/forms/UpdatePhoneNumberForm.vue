@@ -47,7 +47,7 @@
                         </div>
                     </div>
                     <div class="sm:col-span-full">
-                        <LabelInputOptional :target="'destination_actions'" :label="'Routing'"/>
+                        <LabelInputOptional :target="'destination_actions'" :label="'Call Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
                             <MainDestinations
                                 :options="options.actions"
