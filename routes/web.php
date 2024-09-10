@@ -29,6 +29,7 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
+use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 
 /*
@@ -163,6 +164,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
+    Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -269,6 +272,10 @@ Route::group(['middleware' => 'auth'], function () {
     // Reports
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
+
+    // Call Routing options
+    Route::get('/call-routing-options/categories', [CallRoutingOptionsController::class, 'getRoutingOptions']);
+
 
 });
 

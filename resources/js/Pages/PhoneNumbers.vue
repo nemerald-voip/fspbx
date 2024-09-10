@@ -172,14 +172,14 @@
     <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
         @close="handleModalClose">
         <template #modal-body>
-            <CreatePhoneNumberForm :item="itemData" :options="itemOptions" :errors="formErrors"
+            <CreatePhoneNumberForm :options="itemOptions" :errors="formErrors"
                 :is-submitting="createFormSubmitting" @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
     <AddEditItemModal :show="editModalTrigger" :header="'Update Phone Number Settings'" :loading="loadingModal"
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
         <template #modal-body>
-            <UpdatePhoneNumberForm :item="itemData" :options="itemOptions" :errors="formErrors"
+            <UpdatePhoneNumberForm :options="itemOptions" :errors="formErrors"
                 :is-submitting="updateFormSubmitting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
@@ -248,7 +248,6 @@ const props = defineProps({
     showGlobal: Boolean,
     routes: Object,
     itemData: Object,
-    itemOptions: Object,
     conditions: Object
 });
 
@@ -256,6 +255,8 @@ const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
 });
+
+const itemOptions = ref({})
 
 const showGlobal = ref(props.showGlobal);
 
@@ -287,30 +288,8 @@ onMounted(() => {
 const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
     formErrors.value = null;
-    loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
+    loadingModal.value = true;
+    getItemOptions(itemUuid);
 }
 
 const handleCreateRequest = (form) => {
@@ -508,30 +487,45 @@ const renderRequestedPage = (url) => {
     });
 };
 
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            console.log(itemOptions.value);
 
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
         });
 }
+
+
+// const getItemOptions = (domain_uuid) => {
+//     router.get(props.routes.current_page,
+//         {
+//             'domain_uuid': domain_uuid,
+//         },
+//         {
+//             preserveScroll: true,
+//             preserveState: true,
+//             only: [
+//                 'itemOptions',
+//             ],
+//             onSuccess: (page) => {
+//                 loadingModal.value = false;
+//             },
+//             onFinish: () => {
+//                 loadingModal.value = false;
+//             },
+//             onError: (errors) => {
+//                 console.log(errors);
+//             },
+
+//         });
+// }
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {

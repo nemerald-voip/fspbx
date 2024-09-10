@@ -49,8 +49,8 @@
                     <div class="sm:col-span-full">
                         <LabelInputOptional :target="'destination_actions'" :label="'Call Routing'"/>
                         <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
-                            <MainDestinations
-                                :options="options.actions"
+                            <CallRouting
+                                :routingTypes="options.routing_types"
                                 :selectedItems="form.destination_actions"
                                 :customClass="'grid-cols-5'"
                                 :maxLimit="6"
@@ -240,7 +240,7 @@ import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import ComboBoxGroup from "../general/ComboBoxGroup.vue";
-import MainDestinations from "../general/ActionSelect.vue";
+import CallRouting from "../general/ActionSelect.vue";
 import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
@@ -253,7 +253,6 @@ import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
-    item: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
@@ -270,70 +269,68 @@ const conditionsMaxLimit = 6;
 const selectedTab = ref(0)
 
 const form = reactive({
-    destination_uuid: props.item.destination_uuid,
-    domain_uuid: props.item.domain_uuid,
-    fax_uuid: props.item.fax_uuid,
-    destination_prefix: props.item.destination_prefix,
-    destination_number: props.item.destination_number,
-    destination_actions: props.item.destination_actions,
-    destination_hold_music: props.item.destination_hold_music,
-    destination_description: props.item.destination_description,
-    destination_enabled: props.item.destination_enabled,
-    destination_record: props.item.destination_record,
-    destination_cid_name_prefix: props.item.destination_cid_name_prefix,
-    destination_accountcode: props.item.destination_accountcode,
-    destination_distinctive_ring: props.item.destination_distinctive_ring,
-    destination_conditions: props.item.destination_conditions,
-    destination_context: props.item.destination_context,
+    fax_uuid: props.options.phone_number.fax_uuid,
+    destination_prefix: props.options.phone_number.destination_prefix,
+    destination_number: props.options.phone_number.destination_number,
+    destination_actions: props.options.phone_number.destination_actions,
+    destination_hold_music: props.options.phone_number.destination_hold_music,
+    destination_description: props.options.phone_number.destination_description,
+    destination_enabled: props.options.phone_number.destination_enabled,
+    destination_record: props.options.phone_number.destination_record,
+    destination_cid_name_prefix: props.options.phone_number.destination_cid_name_prefix,
+    destination_accountcode: props.options.phone_number.destination_accountcode,
+    destination_distinctive_ring: props.options.phone_number.destination_distinctive_ring,
+    destination_conditions: props.options.phone_number.destination_conditions,
+    destination_context: props.options.phone_number.destination_context,
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
-onBeforeMount(() => {
-    if (form.destination_actions) {
-        form.destination_actions = form.destination_actions.map(action => {
-            const targetValue = action.targetValue.toLowerCase();
-            let matchedAction = action;
-            for (const [key, actionGroup] of Object.entries(props.options.actions)) {
-                const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
-                if (option) {
-                    matchedAction = {
-                        name: actionGroup.name,
-                        value: key,
-                        targetName: option.name,
-                        targetValue: option.value,
-                    };
-                    break;
-                }
-            }
-            return matchedAction;
-        });
-    }
-    if (form.destination_conditions) {
-        conditions.value = form.destination_conditions.map(condition => {
-            const targetValue = condition.condition_target.targetValue.toLowerCase();
-            let targetMatched = null;
-            for (const [key, actionGroup] of Object.entries(props.options.actions)) {
-                const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
-                if (option) {
-                    targetMatched = {
-                        name: actionGroup.name,
-                        value: key,
-                        targetName: option.name,
-                        targetValue: option.value,
-                    };
-                    break;
-                }
-            }
-            return {
-                ...condition,
-                id: Math.random().toString(36).slice(2, 7),  // Assuming `generateUniqueId()` is a function to generate unique IDs
-                condition_target: targetMatched ? [targetMatched] : condition.condition_target,
-            };
-        });
-    }
-});
+// onBeforeMount(() => {
+//     if (form.destination_actions) {
+//         form.destination_actions = form.destination_actions.map(action => {
+//             const targetValue = action.targetValue.toLowerCase();
+//             let matchedAction = action;
+//             for (const [key, actionGroup] of Object.entries(props.options.actions)) {
+//                 const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
+//                 if (option) {
+//                     matchedAction = {
+//                         name: actionGroup.name,
+//                         value: key,
+//                         targetName: option.name,
+//                         targetValue: option.value,
+//                     };
+//                     break;
+//                 }
+//             }
+//             return matchedAction;
+//         });
+//     }
+//     if (form.destination_conditions) {
+//         conditions.value = form.destination_conditions.map(condition => {
+//             const targetValue = condition.condition_target.targetValue.toLowerCase();
+//             let targetMatched = null;
+//             for (const [key, actionGroup] of Object.entries(props.options.actions)) {
+//                 const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
+//                 if (option) {
+//                     targetMatched = {
+//                         name: actionGroup.name,
+//                         value: key,
+//                         targetName: option.name,
+//                         targetValue: option.value,
+//                     };
+//                     break;
+//                 }
+//             }
+//             return {
+//                 ...condition,
+//                 id: Math.random().toString(36).slice(2, 7),  // Assuming `generateUniqueId()` is a function to generate unique IDs
+//                 condition_target: targetMatched ? [targetMatched] : condition.condition_target,
+//             };
+//         });
+//     }
+// });
 
 const submitForm = () => {
     // Transform conditions before submit

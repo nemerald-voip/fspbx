@@ -2,26 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BulkUpdatePhoneNumberRequest;
-use App\Http\Requests\StorePhoneNumberRequest;
-use App\Http\Requests\UpdatePhoneNumberRequest;
-use App\Models\Destinations;
-use App\Models\DialplanDetails;
-use App\Models\Dialplans;
+use Inertia\Inertia;
 use App\Models\Faxes;
+use Inertia\Response;
+use App\Models\Dialplans;
 use App\Models\FusionCache;
-use App\Services\ActionsService;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Destinations;
 use Illuminate\Http\Request;
+use App\Models\DialplanDetails;
+use App\Services\ActionsService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Database\Eloquent\Builder;
+use App\Services\CallRoutingOptionsService;
+use App\Http\Requests\StorePhoneNumberRequest;
+use App\Http\Requests\UpdatePhoneNumberRequest;
+use Illuminate\Contracts\Foundation\Application;
+use App\Http\Requests\BulkUpdatePhoneNumberRequest;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class PhoneNumbersController extends Controller
 {
@@ -63,16 +64,17 @@ class PhoneNumbersController extends Controller
                     fn () =>
                     $this->getItemData()
                 ),
-                'itemOptions' => Inertia::lazy(
-                    fn () =>
-                    $this->getItemOptions()
-                ),
+                // 'itemOptions' => Inertia::lazy(
+                //     fn () =>
+                //     $this->getItemOptions()
+                // ),
                 'routes' => [
                     'current_page' => route('phone-numbers.index'),
                     'store' => route('phone-numbers.store'),
                     'select_all' => route('phone-numbers.select.all'),
                     'bulk_update' => route('phone-numbers.bulk.update'),
                     'bulk_delete' => route('phone-numbers.bulk.delete'),
+                    'item_options' => route('phone-numbers.item.options'),
                     // 'select_all' => route('messages.settings.select.all'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
@@ -142,8 +144,8 @@ class PhoneNumbersController extends Controller
             ];
         }
 
-        $actionsService = ActionsService::getInstance();
-        $actions = $actionsService->getData();
+        // $actionsService = ActionsService::getInstance();
+        // $actions = $actionsService->getData();
 
         unset($faxesCollection, $domainsCollection, $fax, $domain, $actionsService);
 
@@ -166,6 +168,11 @@ class PhoneNumbersController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
+                    'name' => 'Call Routing',
+                    'icon' => 'PhoneIncomingIcon',
+                    'slug' => 'call_routing',
+                ],
+                [
                     'name' => 'Settings',
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'settings',
@@ -177,79 +184,67 @@ class PhoneNumbersController extends Controller
                 ],
             ];
 
-            // Only add the Greetings tab if item_uuid exists and insert it in the second position
-            if ($item_uuid) {
-                $greetingsTab = [
-                    'name' => 'Greetings',
-                    'icon' => 'MusicalNoteIcon',
-                    'slug' => 'greetings',
-                ];
+            $routingOptionsService = new CallRoutingOptionsService;
+            $routingTypes = $routingOptionsService->routingTypes;
 
-                // Insert Greetings tab at the second position (index 1)
-                array_splice($navigation, 1, 0, [$greetingsTab]);
-            }
+            logger($routingTypes);
 
-            $voicemails =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
-                ->with(['extension' => function ($query) use ($domain_uuid) {
-                    $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                        ->where('domain_uuid', $domain_uuid);
-                }])
-                ->select(
-                    'voicemail_uuid',
-                    'voicemail_id',
-                    'voicemail_description',
 
-                )
-                ->orderBy('voicemail_id', 'asc')
-                ->get();
+            // $voicemails =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
+            //     ->with(['extension' => function ($query) use ($domain_uuid) {
+            //         $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+            //             ->where('domain_uuid', $domain_uuid);
+            //     }])
+            //     ->select(
+            //         'voicemail_uuid',
+            //         'voicemail_id',
+            //         'voicemail_description',
 
-            // Transform the collection into the desired array format
-            $voicemailOptions = $voicemails->map(function ($voicemail) {
-                return [
-                    'value' => $voicemail->voicemail_uuid,
-                    'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
-                ];
-            })->toArray();
+            //     )
+            //     ->orderBy('voicemail_id', 'asc')
+            //     ->get();
+
+            // // Transform the collection into the desired array format
+            // $voicemailOptions = $voicemails->map(function ($voicemail) {
+            //     return [
+            //         'value' => $voicemail->voicemail_uuid,
+            //         'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+            //     ];
+            // })->toArray();
 
 
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
-                // Find existing voicemail by item_uuid
-                $voicemail = Voicemails::with([
-                    'voicemail_destinations' => function ($query) {
-                        $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
-                    },
-                    'greetings' => function ($query) use ($domain_uuid) {
-                        $query->select('voicemail_id', 'greeting_id', 'greeting_name')
-                            ->where('domain_uuid', $domain_uuid);
-                    }
-                ])->where('voicemail_uuid', $item_uuid)->first();
+                // Find existing item by item_uuid
+                $phoneNumber = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
 
+                // logger($phoneNumber);
 
                 // If a voicemail exists, use it; otherwise, create a new one
-                if (!$voicemail) {
+                if (!$phoneNumber) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
-                // Transform greetings into the desired array format
-                $greetingsArray = $voicemail->greetings
-                    ->sortBy('greeting_id')
-                    ->map(function ($greeting) {
-                        return [
-                            'value' => $greeting->greeting_id,
-                            'name' => $greeting->greeting_name,
-                        ];
-                    })->toArray();
+                // // Transform greetings into the desired array format
+                // $greetingsArray = $voicemail->greetings
+                //     ->sortBy('greeting_id')
+                //     ->map(function ($greeting) {
+                //         return [
+                //             'value' => $greeting->greeting_id,
+                //             'name' => $greeting->greeting_name,
+                //         ];
+                //     })->toArray();
 
-                // Add the default options at the beginning of the array
-                array_unshift(
-                    $greetingsArray,
-                    ['value' => '0', 'name' => 'None'],
-                    ['value' => '-1', 'name' => 'System Default']
-                );
+                // // Add the default options at the beginning of the array
+                // array_unshift(
+                //     $greetingsArray,
+                //     ['value' => '0', 'name' => 'None'],
+                //     ['value' => '-1', 'name' => 'System Default']
+                // );
 
                 // Define the update route
-                $updateRoute = route('voicemails.update', ['voicemail' => $item_uuid]);
+                $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
+
             } else {
                 // Create a new voicemail if item_uuid is not provided
                 $voicemail = $this->model;
@@ -266,91 +261,50 @@ class PhoneNumbersController extends Controller
             $permissions = $this->getUserPermissions();
             // logger($permissions);
 
-            // Extract voicemail_destinations and format it for frontend
-            $voicemailCopies = [];
-            if ($voicemail->voicemail_destinations) {
-                $voicemailCopies = $voicemail->voicemail_destinations->map(function ($destination) {
-                    return [
-                        'value' => $destination->voicemail_uuid_copy, // Set the value to voicemail_uuid_copy
-                        'name' => ''
-                    ];
-                })->toArray();
-            }
+            // // Extract voicemail_destinations and format it for frontend
+            // $voicemailCopies = [];
+            // if ($voicemail->voicemail_destinations) {
+            //     $voicemailCopies = $voicemail->voicemail_destinations->map(function ($destination) {
+            //         return [
+            //             'value' => $destination->voicemail_uuid_copy, // Set the value to voicemail_uuid_copy
+            //             'name' => ''
+            //         ];
+            //     })->toArray();
+            // }
 
-            $openAiVoices = [
-                ['value' => 'alloy', 'name' => 'Alloy'],
-                ['value' => 'echo', 'name' => 'Echo'],
-                ['value' => 'fable', 'name' => 'Fable'],
-                ['value' => 'onyx', 'name' => 'Onyx'],
-                ['value' => 'nova', 'name' => 'Nova'],
-                ['value' => 'shimmer', 'name' => 'Shimmer'],
-            ];
+            // $openAiVoices = [
+            //     ['value' => 'alloy', 'name' => 'Alloy'],
+            //     ['value' => 'echo', 'name' => 'Echo'],
+            //     ['value' => 'fable', 'name' => 'Fable'],
+            //     ['value' => 'onyx', 'name' => 'Onyx'],
+            //     ['value' => 'nova', 'name' => 'Nova'],
+            //     ['value' => 'shimmer', 'name' => 'Shimmer'],
+            // ];
 
-            $openAiSpeeds = [];
-
-            for ($i = 0.25; $i <= 4.0; $i += 0.25) {
-                if (floor($i) == $i) {
-                    // Whole number, format with one decimal place
-                    $formattedValue = sprintf('%.1f', $i);
-                } else {
-                    // Fractional number, format with two decimal places
-                    $formattedValue = sprintf('%.2f', $i);
-                }
-                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
-            }
 
             $routes = [
-                'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
-                'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $voicemail),
-                'greeting_route' => route('voicemail.greeting', $voicemail),
-                'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
-                'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
-                'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $voicemail),
-                'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
-                'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
-                'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
+                'update' => $updateRoute ?? null,
+
             ];
 
-            // Define the instructions for recording a voicemail greeting using a phone call
-            $phoneCallInstructions = [
-                'Dial <strong>*98</strong> from your phone.',
-                'Enter the mailbox number and press <strong>#</strong>.',
-                'Enter the voicemail password and press <strong>#</strong>.',
-                'Press <strong>5</strong> for mailbox options.',
-                'Press <strong>1</strong> to record an unavailable message.',
-                'Choose a greeting number (1-9) to record, then follow the prompts.',
-            ];
-
-            // Define the instructions for recording a name using a phone call
-            $phoneCallInstructionsForName = [
-                'Dial <strong>*98</strong> from your phone.',
-                'Enter the mailbox number and press <strong>#</strong>.',
-                'Enter the voicemail password and press <strong>#</strong>.',
-                'Press <strong>5</strong> for mailbox options.',
-                'Press <strong>3</strong> to record your name, then follow the prompts.',
-            ];
 
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
-                'all_voicemails' => $voicemailOptions,
-                'voicemail' => $voicemail,
+                'phone_number' => $phoneNumber,
                 'permissions' => $permissions,
-                'voicemail_copies' => $voicemailCopies,
-                'greetings' => $greetingsArray,
-                'voices' => $openAiVoices,
-                'speeds' => $openAiSpeeds,
                 'routes' => $routes,
-                'phone_call_instructions' => $phoneCallInstructions,
-                'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
-                'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
+                'routing_types' => $routingTypes,
+                // 'voicemail_copies' => $voicemailCopies,
+                // 'greetings' => $greetingsArray,
+                // 'voices' => $openAiVoices,
+                // 'speeds' => $openAiSpeeds,
+                // 'phone_call_instructions' => $phoneCallInstructions,
+                // 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
+                // 'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
                 // Define options for other fields as needed
             ];
-
-            // Include the update route if item_uuid exists
-            if ($item_uuid) {
-                $itemOptions['update_route'] = $updateRoute;
-            }
+            // logger($itemOptions);
 
             return $itemOptions;
         } catch (\Exception $e) {
@@ -1199,5 +1153,21 @@ class PhoneNumbersController extends Controller
                 $detailOrder += 10;
             }
         }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
+        $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
+        $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
+        $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
+
+        // $permissions['manage_voicemail_copies'] = false;
+        // $permissions['manage_voicemail_transcription'] = false;
+        // $permissions['manage_voicemail_auto_delete'] = false;
+        // $permissions['manage_voicemail_recording_instructions'] = false;
+
+        return $permissions;
     }
 }
