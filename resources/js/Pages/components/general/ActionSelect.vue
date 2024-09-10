@@ -1,9 +1,7 @@
 <template>
     <div v-for="(action, index) in actions" :key="index"
          :class="['mt-2 mb-2 grid gap-x-2', customClass]">
-        <ComboBox :options="Object.entries(props.options).map(([key, value]) => {
-                        return { name: value.name, value: key }
-                    })"
+        <ComboBox :options="routing_types"
                   :placeholder="'Choose category'"
                   :class="'col-span-2'"
                   :selectedItem="action.value"
@@ -50,7 +48,7 @@ import ComboBox from "../general/ComboBox.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 const props = defineProps({
-    options: [Object, null],
+    routingTypes: [Object, null],
     selectedItems: [Array, Object, null],
     maxLimit: { type: Number, default: 1 },
     initWith: { type: Number, default: 0 },
@@ -63,36 +61,36 @@ const props = defineProps({
 const emit = defineEmits(['update:model-value'])
 
 onMounted(() => {
-    if (props.selectedItems && props.selectedItems.length > 0) {
-        actions.value = props.selectedItems.map(item => {
-            let selectedItem = '';
-            let selectedItemTarget = {};
+    // if (props.selectedItems && props.selectedItems.length > 0) {
+    //     actions.value = props.selectedItems.map(item => {
+    //         let selectedItem = '';
+    //         let selectedItemTarget = {};
 
-            // look in each category to find the target value
-            if(props.options.hasOwnProperty(item.value)){
-                const categoryEntry = props.options[item.value];
-                const foundInCategory = categoryEntry.options.find(target => target.value === item.targetValue);
-                if (foundInCategory) {
-                    selectedItem = categoryEntry;
-                    selectedItemTarget = foundInCategory;
-                }
-            }
+    //         // look in each category to find the target value
+    //         if(props.options.hasOwnProperty(item.value)){
+    //             const categoryEntry = props.options[item.value];
+    //             const foundInCategory = categoryEntry.options.find(target => target.value === item.targetValue);
+    //             if (foundInCategory) {
+    //                 selectedItem = categoryEntry;
+    //                 selectedItemTarget = foundInCategory;
+    //             }
+    //         }
 
-            // return a new action object
-            return {
-                ...item,
-                value: item.value,
-                targetOptions: selectedItem.options,
-                targetValue: selectedItemTarget.value,
-            }
-        })
-    } else {
-        if(props.initWith > 0) {
-            for(let i=0; i<props.initWith; i++){
-                addAction();
-            }
-        }
-    }
+    //         // return a new action object
+    //         return {
+    //             ...item,
+    //             value: item.value,
+    //             targetOptions: selectedItem.options,
+    //             targetValue: selectedItemTarget.value,
+    //         }
+    //     })
+    // } else {
+    //     if(props.initWith > 0) {
+    //         for(let i=0; i<props.initWith; i++){
+    //             addAction();
+    //         }
+    //     }
+    // }
 })
 
 const actions = ref([]);
