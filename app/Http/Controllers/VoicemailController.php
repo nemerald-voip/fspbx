@@ -90,7 +90,7 @@ class VoicemailController extends Controller
         } else {
             $data = $data->get(); // This will return a collection
         }
-        
+
         return $data;
     }
 
@@ -597,6 +597,8 @@ class VoicemailController extends Controller
             })->toArray();
 
 
+            $routes = [];
+
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
                 // Find existing voicemail by item_uuid
@@ -633,8 +635,19 @@ class VoicemailController extends Controller
                     ['value' => '-1', 'name' => 'System Default']
                 );
 
-                // Define the update route
-                $updateRoute = route('voicemails.update', ['voicemail' => $item_uuid]);
+                $routes = array_merge($routes, [
+                    'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
+                    'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $voicemail),
+                    'greeting_route' => route('voicemail.greeting', $voicemail),
+                    'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
+                    'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
+                    'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $voicemail),
+                    'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
+                    'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
+                    'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
+                    'update_route' => route('voicemails.update', $voicemail),
+                ]);
+
             } else {
                 // Create a new voicemail if item_uuid is not provided
                 $voicemail = $this->model;
@@ -684,17 +697,7 @@ class VoicemailController extends Controller
                 $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
             }
 
-            $routes = [
-                'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
-                'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $voicemail),
-                'greeting_route' => route('voicemail.greeting', $voicemail),
-                'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
-                'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
-                'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $voicemail),
-                'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
-                'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
-                'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
-            ];
+
 
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
@@ -722,7 +725,7 @@ class VoicemailController extends Controller
                 'voicemail' => $voicemail,
                 'permissions' => $permissions,
                 'voicemail_copies' => $voicemailCopies,
-                'greetings' => $greetingsArray,
+                'greetings' => $greetingsArray ?? null,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
                 'routes' => $routes,
@@ -731,11 +734,6 @@ class VoicemailController extends Controller
                 'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
                 // Define options for other fields as needed
             ];
-
-            // Include the update route if item_uuid exists
-            if ($item_uuid) {
-                $itemOptions['update_route'] = $updateRoute;
-            }
 
             return $itemOptions;
         } catch (\Exception $e) {

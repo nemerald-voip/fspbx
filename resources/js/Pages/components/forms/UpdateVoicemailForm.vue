@@ -421,7 +421,7 @@ const form = reactive({
     voicemail_copies: props.options.voicemail_copies,
     voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
     voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
-    update_route: props.options.update_route,
+    update_route: props.options.routes.update_route,
     greeting_id: props.options.voicemail.greeting_id,
     _token: page.props.csrf_token,
 })
