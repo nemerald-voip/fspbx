@@ -377,6 +377,56 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
             ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'upload_call_recordings_to_aws',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'clear_export_directory',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'horizon_snapshot',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'horizon_check_status',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'cache_prune_stale_tags',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'prune_old_webhook_requests',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+
+
 
             
 
