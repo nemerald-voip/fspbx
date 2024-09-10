@@ -41,6 +41,9 @@ class UpdateApp extends Command
         //Seed the db
         $this->runArtisanCommand('db:seed', ['--force' => true]);
 
+        // Create storage link
+        $this->runArtisanCommand('storage:link');
+
         // Update Vue files
         $this->executeCommand('npm install');
         $this->executeCommand('npm run build', 300);
