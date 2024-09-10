@@ -1,7 +1,7 @@
 <template>
     <div v-for="(action, index) in actions" :key="index"
          :class="['mt-2 mb-2 grid gap-x-2', customClass]">
-        <ComboBox :options="routing_types"
+        <ComboBox :options="routingTypes"
                   :placeholder="'Choose category'"
                   :class="'col-span-2'"
                   :selectedItem="action.value"
