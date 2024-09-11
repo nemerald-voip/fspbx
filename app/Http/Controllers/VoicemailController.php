@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Domain;
-use App\Models\Extensions;
 use App\Models\Voicemails;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -15,7 +14,6 @@ use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\TextToSpeechRequest;
 use App\Http\Requests\StoreVoicemailRequest;
 use App\Http\Requests\UpdateVoicemailRequest;
@@ -58,9 +56,6 @@ class VoicemailController extends Controller
                 'routes' => [
                     'current_page' => route('voicemails.index'),
                     'store' => route('voicemails.store'),
-                    // 'select_all' => route('messages.select.all'),
-                    // 'bulk_delete' => route('messages.bulk.delete'),
-                    // 'bulk_update' => route('messages.bulk.update'),
                     'item_options' => route('voicemails.item.options'),
                 ]
             ]
@@ -159,68 +154,6 @@ class VoicemailController extends Controller
         });
     }
 
-
-
-    /**
-     * Show the create voicemail form.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-
-    // public function create()
-    // {
-    //     if (!userCheckPermission('voicemail_add') || !userCheckPermission('voicemail_edit')) {
-    //         return redirect('/');
-    //     }
-
-    //     $voicemail = new Voicemails();
-    //     $voicemail->voicemail_enabled = "true";
-    //     $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
-
-    //     $vm_unavailable_file_exists = Storage::disk('voicemail')
-    //         ->exists(Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/greeting_1.wav');
-
-    //     $vm_name_file_exists = Storage::disk('voicemail')
-    //         ->exists(Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav');
-
-
-    //     $data = [];
-    //     $data['voicemail'] = $voicemail;
-    //     $data['vm_unavailable_file_exists'] = $vm_unavailable_file_exists;
-    //     $data['vm_name_file_exists'] = $vm_name_file_exists;
-
-
-    //     return view('layouts.voicemails.createOrUpdate')->with($data);
-    // }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  guid  $user
-     * @return \Illuminate\Http\Response
-     */
-    // public function edit(Voicemails $voicemail)
-    // {
-    //     //check permissions
-    //     if (!userCheckPermission('voicemail_edit')) {
-    //         return redirect('/');
-    //     }
-
-    //     $vm_unavailable_file_exists = Storage::disk('voicemail')
-    //         ->exists(Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/greeting_1.wav');
-
-    //     $vm_name_file_exists = Storage::disk('voicemail')
-    //         ->exists(Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav');
-
-    //     $data = array();
-    //     $data['voicemail'] = $voicemail;
-    //     $data['vm_unavailable_file_exists'] = $vm_unavailable_file_exists;
-    //     $data['vm_name_file_exists'] = $vm_name_file_exists;
-    //     $data['domain_voicemails'] = $voicemail->domain->voicemails;
-    //     $data['voicemail_destinations'] = $voicemail->voicemail_destinations;
-
-    //     return view('layouts.voicemails.createOrUpdate')->with($data);
-    // }
 
     public function store(StoreVoicemailRequest $request)
     {
