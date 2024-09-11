@@ -168,14 +168,14 @@ class PhoneNumbersController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
-                    'name' => 'Call Routing',
-                    'icon' => 'PhoneIncomingIcon',
-                    'slug' => 'call_routing',
-                ],
-                [
                     'name' => 'Settings',
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'settings',
+                ],
+                [
+                    'name' => 'Call Routing',
+                    'icon' => 'PhoneIcon',
+                    'slug' => 'call_routing',
                 ],
                 [
                     'name' => 'Advanced',

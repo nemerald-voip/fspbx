@@ -176,13 +176,15 @@
                 :is-submitting="createFormSubmitting" @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-    <AddEditItemModal :show="editModalTrigger" :header="'Update Phone Number Settings'" :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+
+    <AddEditItemModal :show="editModalTrigger" :header="'Update Phone Number Settings - ' + itemOptions?.phone_number?.destination_number_formatted" :loading="loadingModal"
+        :customClass="'sm:max-w-6xl'" @close="handleModalClose">
         <template #modal-body>
             <UpdatePhoneNumberForm :options="itemOptions" :errors="formErrors"
                 :is-submitting="updateFormSubmitting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
+    
     <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
                       @close="handleModalClose">
         <template #modal-body>
