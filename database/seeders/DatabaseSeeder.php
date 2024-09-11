@@ -8,6 +8,7 @@ use App\Models\DefaultSettings;
 use Illuminate\Database\Seeder;
 use App\Models\GroupPermissions;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Process;
 
 class DatabaseSeeder extends Seeder
 {
@@ -31,7 +32,6 @@ class DatabaseSeeder extends Seeder
         $this->createDefaultSettings();
 
         Model::reguard();
-
     }
 
     private function createGroups()
@@ -65,7 +65,8 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    private function createPermissions() {
+    private function createPermissions()
+    {
         $permissions = [
             [
                 'application_name'       => 'Message Settings',
@@ -92,8 +93,8 @@ class DatabaseSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $existingPermission = Permissions::where('application_name', $permission['application_name'])
-                                             ->where('permission_name', $permission['permission_name'])
-                                             ->first();
+                ->where('permission_name', $permission['permission_name'])
+                ->first();
 
             if (is_null($existingPermission)) {
                 Permissions::create([
@@ -167,7 +168,6 @@ class DatabaseSeeder extends Seeder
                     'group_uuid'            => $permission['group_uuid'],
                     'insert_date'       => $permission['insert_date'],
                 ]);
-
             }
         }
     }
@@ -379,11 +379,11 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
-                'default_setting_subcategory'   => 'upload_call_recordings_to_aws',
+                'default_setting_subcategory'   => 'aws_upload_calls_' . $this->getMacAddress(),
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
                 'default_setting_enabled'       => false,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Executes upload job only on the server with MAC address " . $this->getMacAddress(),
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -428,7 +428,7 @@ class DatabaseSeeder extends Seeder
 
 
 
-            
+
 
         ];
 
@@ -450,5 +450,17 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+
+    public function getMacAddress()
+    {
+        // Run the shell command using Process
+        $process = Process::run("ip link show | grep 'link/ether' | awk '{print $2}'");
+
+        // Get the output from the process
+        $macAddress = trim($process->output());
+
+        return $macAddress ?: null;
     }
 }

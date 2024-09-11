@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Scheduling\Schedule;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -29,11 +30,11 @@ class Kernel extends ConsoleKernel
         // Schedule jobs based on the retrieved settings
 
         // Upload call recordings to AWS
-        if (isset($jobSettings['upload_call_recordings_to_aws']) && $jobSettings['upload_call_recordings_to_aws'] === "true") {
+        if (isset($jobSettings['aws_upload_calls_' . $this->getMacAddress()]) && $jobSettings['aws_upload_calls_' . $this->getMacAddress()] === "true") {
             $schedule->command('UploadArchiveFiles')
                 ->dailyAt('01:00')
                 ->timezone('America/Los_Angeles');
-        }
+        } 
 
         // Clear the export directory
         if (isset($jobSettings['clear_export_directory']) && $jobSettings['clear_export_directory'] === "true") {
@@ -81,5 +82,16 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
+    }
+
+    public function getMacAddress()
+    {
+        // Run the shell command using Process
+        $process = Process::run("ip link show | grep 'link/ether' | awk '{print $2}'");
+
+        // Get the output from the process
+        $macAddress = trim($process->output());
+
+        return $macAddress ?: null;
     }
 }
