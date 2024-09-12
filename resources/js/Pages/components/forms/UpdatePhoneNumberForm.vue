@@ -46,7 +46,7 @@
                             <div class="sm:col-span-full space-y-3">
                                 <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" />
                                 <CallRouting :routingTypes="options.routing_types" :selectedItems="form.destination_actions" 
-                                        :maxRouteLimit="6"
+                                        :maxRouteLimit="6" :optionsUrl="options.routes.get_routing_options"
                                         @update:model-value="handleDestinationActionsUpdate" />
                             </div>
 

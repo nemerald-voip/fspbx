@@ -14,8 +14,8 @@
                         @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
                 </div>
 
-                <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
-                    <ComboBox :options="routingTypeOptions" :selectedItem="null" :search="true" :placeholder="'Choose option'"
+                <div v-if="routingOptions[index].typeOptions" class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
+                    <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="null" :search="true" :placeholder="'Choose option'"
                         @update:model-value="(value) => handleOptionUpdate(value, index)" />
                 </div>
 
@@ -80,7 +80,7 @@ const props = defineProps({
     routingTypes: [Object, null],
     selectedItems: [Array, Object, null],
     maxRouteLimit: { type: Number, default: 1 },
-
+    optionsUrl: String,
 });
 
 const emit = defineEmits(['update:model-value'])
@@ -97,14 +97,24 @@ function handleCategoryUpdate(newValue, index) {
 // Fetch new options for the selected type using Axios
 function fetchRoutingTypeOptions(newValue, index) {
 
-    // console.log(index);
-    // console.log(routingOptions);
+    routingOptions.value[index].type = newValue.value;
+    
+    axios.post(props.optionsUrl, {'category' : newValue.value})
+        .then((response) => {
+            console.log(response.data);
+            routingOptions.value[index].typeOptions = response.data.options;
+            // createFormSubmiting.value = false;
+            // showNotification('success', response.data.messages);
+            // handleSearchButtonClick();
+            // handleModalClose();
+            // handleClearSelection();
+        }).catch((error) => {
+            // createFormSubmiting.value = false;
+            // handleClearSelection();
+            // handleFormErrorResponse(error);
+            routingOptions.value[index].typeOptions = null;
+        });
 
-    routingOptions[index].type = newValue.value;
-    console.log(routingOptions.value);
-    // axios.get(`/api/routing-options/${type.value}`).then((response) => {
-    //     routingOptions.value[index].typeOptions = response.data;
-    // });
 }
 
 function handleOptionUpdate(newValue, index) {

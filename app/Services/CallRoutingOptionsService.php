@@ -70,9 +70,9 @@ class CallRoutingOptionsService
     //     return $output;
     // }
 
-    protected function getOptions(string $category): array
+    public function getOptions(): array
     {
-        switch ($category) {
+        switch (request('category')) {
             case 'call_centers':
                 return $this->buildOptions(CallCenterQueues::class, 'queue_extension', 'queue_name');
             case 'call_flows':
@@ -98,6 +98,9 @@ class CallRoutingOptionsService
             default:
                 return [];
         }
+
+        throw new \Exception('Failed to fetch routing options.');
+
     }
 
     protected function buildOptions($model, string $extensionField, string $nameField = '', bool $enabled = false, string $prefix = 'transfer', string $appUuid = null): array
@@ -123,6 +126,7 @@ class CallRoutingOptionsService
                 'name' => $row->$extensionField . ($nameField ? " - ".$row->$nameField : '')
             ];
         }
+        logger($options);
         return $options;
     }
 

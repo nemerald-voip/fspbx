@@ -187,7 +187,7 @@ class PhoneNumbersController extends Controller
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
 
-            logger($routingTypes);
+            // logger($routingTypes);
 
 
             // $voicemails =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
@@ -284,6 +284,7 @@ class PhoneNumbersController extends Controller
 
             $routes = [
                 'update' => $updateRoute ?? null,
+                'get_routing_options' => route('routing.options'),
 
             ];
 

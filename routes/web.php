@@ -274,7 +274,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
 
     // Call Routing options
-    Route::get('/call-routing-options/categories', [CallRoutingOptionsController::class, 'getRoutingOptions']);
+    Route::post('/call-routing-options', [CallRoutingOptionsController::class, 'getRoutingOptions'])->name('routing.options');
 
 
 });
