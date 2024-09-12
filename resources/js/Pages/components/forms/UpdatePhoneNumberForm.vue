@@ -20,7 +20,42 @@
         <form @submit.prevent="submitForm" class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
 
             <div v-if="activeTab === 'settings'">
+
                 <div class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Call routing</h3>
+                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time. Select a routing option below to fit your business needs.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                            <!-- <div class="sm:col-span-1">
+                                <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'" />
+                                <div class="mt-2">
+                                    <InputField v-model="form.destination_prefix" type="text" id="destination_prefix"
+                                        name="destination_prefix" placeholder="Enter country code" disabled="disabled" />
+                                </div>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <LabelInputRequired :target="'destination_number'" :label="'Phone Number'" />
+                                <div class="mt-2">
+                                    <InputField v-model="form.destination_number" type="text" id="destination_number"
+                                        name="destination_number" placeholder="Enter phone number" disabled="disabled" />
+                                </div>
+                            </div> -->
+                            <div class="sm:col-span-full space-y-3">
+                                <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" />
+                                <CallRouting :routingTypes="options.routing_types" :selectedItems="form.destination_actions" 
+                                        :maxRouteLimit="6"
+                                        @update:model-value="handleDestinationActionsUpdate" />
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div class="flex justify-between items-center">
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
@@ -64,7 +99,7 @@
                                     {{ errors.voicemail_mail_to[0] }}
                                 </div>
                             </div> -->
-
+<!-- 
                             <div class="col-span-3 sm:col-span-2">
                                 <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'" />
                                 <div class="mt-2">
@@ -72,7 +107,7 @@
                                         :selectedItem="form.destination_hold_music" :placeholder="'Choose music on hold'"
                                         @update:model-value="handleMusicOnHoldUpdate" />
                                 </div>
-                            </div>
+                            </div> -->
 
                             <div class="col-span-6">
                                 <LabelInputOptional target="destination_description" label="Description" class="truncate" />
@@ -119,6 +154,8 @@
                         </button>
                     </div>
                 </div>
+
+
             </div>
 
             <div v-if="activeTab === 'call_routing'">
@@ -153,16 +190,7 @@
                                 </div>
                             </div>
 
-                            <div class="sm:col-span-full">
-                                <LabelInputOptional :target="'destination_description'" :label="'Description'" />
-                                <div class="mt-2">
-                                    <Textarea v-model="form.destination_description" name="destination_description" rows="2" />
-                                </div>
-                            </div>
-                            <div class="sm:col-span-full">
-                                <Toggle :target="'destination_enabled'" :label="'Enable'" :enabled="form.destination_enabled"
-                                    @update:status="handleDestinationEnabled" />
-                            </div>
+
                         </div>
                     </div>
                 </div>

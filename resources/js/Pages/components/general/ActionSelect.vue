@@ -1,153 +1,140 @@
 <template>
-    <div v-for="(action, index) in actions" :key="index"
-         :class="['mt-2 mb-2 grid gap-x-2', customClass]">
-        <ComboBox :options="routingTypes"
-                  :placeholder="'Choose category'"
-                  :class="'col-span-2'"
-                  :selectedItem="action.value"
-                  @update:model-value="value => handleCategoryUpdate(value, index)"
-        />
-        <ComboBox v-if="action.targetOptions"
-                  :options="action.targetOptions"
-                  :class="'col-span-2'"
-                  :placeholder="'Choose target action'"
-                  :selectedItem="action.targetValue"
-                  @update:model-value="value => handleTargetUpdate(value, index)"
-        />
-        <template v-else>
-            <div></div>
-            <div></div>
-        </template>
-        <div v-if="maxLimit > 1" class="relative">
-            <div class="absolute right-0">
-                <ejs-tooltip :content="'Remove action'"
-                             position='RightTop' :target="'#delete_action_tooltip'+index">
-                    <div :id="'delete_action_tooltip'+index">
-                        <MinusIcon @click="() => removeAction(index)"
-                                   class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
+    <div class="grid grid-cols-12 gap-6">
+        <template v-for="(option, index) in routingOptions" :key="index">
+            <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
+                {{ index + 1 }}
+            </div>
+
+            <div class="col-span-10 flex flex-col sm:flex-row gap-x-2 gap-y-1 justify-between flex-auto">
+                <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
+                    <ComboBox
+                        :options="routingTypes"
+                        :search="true"
+                        :placeholder="'Choose type'"
+                        @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
+                </div>
+
+                <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
+                    <ComboBox :options="routingTypeOptions" :selectedItem="null" :search="true" :placeholder="'Choose option'"
+                        @update:model-value="(value) => handleOptionUpdate(value, index)" />
+                </div>
+
+            </div>
+
+
+            <div class="text-sm font-medium leading-6 text-gray-900">
+                <Menu as="div" class="relative inline-block text-left">
+                    <div>
+                        <MenuButton
+                            class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+                            <span class="sr-only">Open options</span>
+                            <EllipsisVerticalIcon
+                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                aria-hidden="true" />
+                        </MenuButton>
                     </div>
-                </ejs-tooltip>
+
+                    <transition enter-active-class="transition ease-out duration-100"
+                        enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
+                        leave-active-class="transition ease-in duration-75"
+                        leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                        <MenuItems
+                            class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div class="py-1">
+                                <MenuItem v-slot="{ active }">
+                                <a href="#" @click.prevent="removeRoutingOption(index)"
+                                    :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
+                                </MenuItem>
+
+                            </div>
+                        </MenuItems>
+                    </transition>
+                </Menu>
+
             </div>
-        </div>
+
+        </template>
     </div>
-    <div v-if="maxLimit > 1" class="w-fit">
-        <ejs-tooltip v-if="actions.length < maxLimit" :content="'Add action'"
-                     position='RightTop' target="#add_action_tooltip">
-            <div id="add_action_tooltip">
-                <PlusIcon @click="addAction"
-                          class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer"/>
-            </div>
-        </ejs-tooltip>
+
+    <div v-if="routingOptions.length < maxRouteLimit"
+        class="flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+        <button href="#" @click.prevent="addRoutingOption" class="flex items-center gap-2">
+            <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
+            <span>
+                Add new routing option
+            </span>
+        </button>
     </div>
 </template>
 
 <script setup>
-import {ref,onMounted} from 'vue'
-import {PlusIcon, MinusIcon} from "@heroicons/vue/24/solid";
+import { ref } from 'vue'
+import { PlusIcon } from "@heroicons/vue/24/solid";
 import ComboBox from "../general/ComboBox.vue";
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
+
+
 
 const props = defineProps({
     routingTypes: [Object, null],
     selectedItems: [Array, Object, null],
-    maxLimit: { type: Number, default: 1 },
-    initWith: { type: Number, default: 0 },
-    customClass: {
-        type: String,
-        default: 'grid-cols-5'
-    },
+    maxRouteLimit: { type: Number, default: 1 },
+
 });
 
 const emit = defineEmits(['update:model-value'])
 
-onMounted(() => {
-    // if (props.selectedItems && props.selectedItems.length > 0) {
-    //     actions.value = props.selectedItems.map(item => {
-    //         let selectedItem = '';
-    //         let selectedItemTarget = {};
 
-    //         // look in each category to find the target value
-    //         if(props.options.hasOwnProperty(item.value)){
-    //             const categoryEntry = props.options[item.value];
-    //             const foundInCategory = categoryEntry.options.find(target => target.value === item.targetValue);
-    //             if (foundInCategory) {
-    //                 selectedItem = categoryEntry;
-    //                 selectedItemTarget = foundInCategory;
-    //             }
-    //         }
+const routingOptions = ref([]);
 
-    //         // return a new action object
-    //         return {
-    //             ...item,
-    //             value: item.value,
-    //             targetOptions: selectedItem.options,
-    //             targetValue: selectedItemTarget.value,
-    //         }
-    //     })
-    // } else {
-    //     if(props.initWith > 0) {
-    //         for(let i=0; i<props.initWith; i++){
-    //             addAction();
-    //         }
-    //     }
-    // }
-})
-
-const actions = ref([]);
+const routingTypeOptions = ref([]);
 
 function handleCategoryUpdate(newValue, index) {
-    if (newValue !== null && newValue !== undefined && newValue.value !== 'NULL') {
-        actions.value[index].name = newValue.name;
-        actions.value[index].value = newValue.value;
-        actions.value[index].targetOptions = props.options[newValue.value]?.options || [];
-        actions.value[index].targetName = '';
-        actions.value[index].targetValue = '';
-    }else{
-        actions.value[index].name = '';
-        actions.value[index].value = '';
-        actions.value[index].targetOptions = [];
-        actions.value[index].targetName = '';
-        actions.value[index].targetValue = '';
-    }
+    console.log(newValue);
 }
 
-function handleTargetUpdate(newValue, index) {
+// Fetch new options for the selected type using Axios
+function fetchRoutingTypeOptions(newValue, index) {
+
+    // console.log(index);
+    // console.log(routingOptions);
+
+    routingOptions[index].type = newValue.value;
+    console.log(routingOptions.value);
+    // axios.get(`/api/routing-options/${type.value}`).then((response) => {
+    //     routingOptions.value[index].typeOptions = response.data;
+    // });
+}
+
+function handleOptionUpdate(newValue, index) {
     if (newValue !== null && newValue !== undefined) {
-        actions.value[index].targetName = newValue.name;
-        actions.value[index].targetValue = newValue.value;
+        routingOptions.value[index].targetName = newValue.name;
+        routingOptions.value[index].targetValue = newValue.value;
     }
 
-    const actionsMapped = actions.value.map(({name, value, targetName, targetValue}) => {
+    const routingOptionsMapped = routingOptions.value.map(({ name, value, targetName, targetValue }) => {
         return { name, value, targetName, targetValue };
     });
 
-    emit('update:model-value', actionsMapped);
+    emit('update:model-value', routingOptionsMapped);
 }
 
-const addAction = () => {
-    if (actions.value.length < props.maxLimit) {
-        actions.value.push({
-            name: '',
-            value: '',
-            targetOptions: [],
-            targetName: '',
-            targetValue: '',
+// Add a new routing option
+const addRoutingOption = () => {
+    if (routingOptions.value.length < props.maxRouteLimit) {
+        routingOptions.value.push({
+            type: null,
+            typeOptions: [],
+            option: null,
         });
     }
 };
 
-const removeAction = (index) => {
-    actions.value.splice(index, 1);
-    /*const actionsMapped = actions.value.map(action => {
-        return {
-            name:
-                Object.entries(options).find(([key, val]) =>
-                    val.label === action.selectedItem.label
-                )?.[0],
-            value: action.value,
-        };
-    });*/
-    emit('update:model-value', actions);
+const removeRoutingOption = (index) => {
+    console.log(index);
+    routingOptions.value.splice(index, 1);
+    emit('update:model-value', routingOptions);
 }
 
 </script>
