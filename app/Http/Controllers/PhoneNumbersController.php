@@ -60,10 +60,10 @@ class PhoneNumbersController extends Controller
                 'showGlobal' => function () {
                     return request('filterData.showGlobal') === 'true';
                 },
-                'itemData' => Inertia::lazy(
-                    fn () =>
-                    $this->getItemData()
-                ),
+                // 'itemData' => Inertia::lazy(
+                //     fn () =>
+                //     $this->getItemData()
+                // ),
                 // 'itemOptions' => Inertia::lazy(
                 //     fn () =>
                 //     $this->getItemOptions()
@@ -90,33 +90,33 @@ class PhoneNumbersController extends Controller
         );
     }
 
-    public function getItemData()
-    {
-        // Get item data
-        $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
-            ->select([
-                'destination_uuid',
-                'domain_uuid',
-                'fax_uuid',
-                'destination_prefix',
-                'destination_number',
-                'destination_actions',
-                'destination_conditions',
-                'destination_hold_music',
-                'destination_description',
-                'destination_enabled',
-                'destination_record',
-                'destination_cid_name_prefix',
-                'destination_accountcode',
-                'destination_distinctive_ring',
-                'destination_context',
-            ])
-            ->first();
+    // public function getItemData()
+    // {
+    //     // Get item data
+    //     $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
+    //         ->select([
+    //             'destination_uuid',
+    //             'domain_uuid',
+    //             'fax_uuid',
+    //             'destination_prefix',
+    //             'destination_number',
+    //             'destination_actions',
+    //             'destination_conditions',
+    //             'destination_hold_music',
+    //             'destination_description',
+    //             'destination_enabled',
+    //             'destination_record',
+    //             'destination_cid_name_prefix',
+    //             'destination_accountcode',
+    //             'destination_distinctive_ring',
+    //             'destination_context',
+    //         ])
+    //         ->first();
 
-        // Add update url route info
-        $itemData->update_url = route('phone-numbers.update', $itemData);
-        return $itemData;
-    }
+    //     // Add update url route info
+    //     $itemData->update_url = route('phone-numbers.update', $itemData);
+    //     return $itemData;
+    // }
 
     public function getItemOptionsOld()
     {
@@ -173,11 +173,6 @@ class PhoneNumbersController extends Controller
                     'slug' => 'settings',
                 ],
                 [
-                    'name' => 'Call Routing',
-                    'icon' => 'PhoneIcon',
-                    'slug' => 'call_routing',
-                ],
-                [
                     'name' => 'Advanced',
                     'icon' => 'AdjustmentsHorizontalIcon',
                     'slug' => 'advanced',
@@ -211,6 +206,30 @@ class PhoneNumbersController extends Controller
             //         'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
             //     ];
             // })->toArray();
+
+            $faxes = [];
+            $faxesCollection = Faxes::query();
+            $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
+            $faxesCollection = $faxesCollection->orderBy('fax_name')->get([
+                'fax_extension',
+                'fax_name',
+                'fax_uuid'
+            ]);
+            foreach ($faxesCollection as $fax) {
+                $faxes[] = [
+                    'name' => $fax->fax_extension . ' ' . $fax->fax_name,
+                    'value' => $fax->fax_uuid
+                ];
+            }
+    
+            $domains = [];
+            $domainsCollection = Session::get("domains");
+            foreach ($domainsCollection as $domain) {
+                $domains[] = [
+                    'value' => $domain->domain_uuid,
+                    'name' => $domain->domain_description
+                ];
+            }
 
 
             // Check if item_uuid exists to find an existing voicemail
@@ -283,7 +302,7 @@ class PhoneNumbersController extends Controller
 
 
             $routes = [
-                'update' => $updateRoute ?? null,
+                'update_route' => $updateRoute ?? null,
                 'get_routing_options' => route('routing.options'),
 
             ];
@@ -296,6 +315,8 @@ class PhoneNumbersController extends Controller
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
+                'faxes' => $faxes,
+                'domains' => $domains,
                 // 'voicemail_copies' => $voicemailCopies,
                 // 'greetings' => $greetingsArray,
                 // 'voices' => $openAiVoices,
@@ -622,6 +643,8 @@ class PhoneNumbersController extends Controller
             $inputs = array_map(function ($value) {
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
+
+            // logger($inputs);
 
             $inputs = $this->processActionConditionInputs($inputs);
 

@@ -7,16 +7,15 @@
 
             <div class="col-span-10 flex flex-col sm:flex-row gap-x-2 gap-y-1 justify-between flex-auto">
                 <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
-                    <ComboBox
-                        :options="routingTypes"
-                        :search="true"
-                        :placeholder="'Choose type'"
+                    <ComboBox :options="routingTypes" :search="true" :placeholder="'Choose type'" 
                         @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
                 </div>
 
-                <div v-if="routingOptions[index].typeOptions" class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
-                    <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="null" :search="true" :placeholder="'Choose option'"
-                        @update:model-value="(value) => handleOptionUpdate(value, index)" />
+                <div v-if="routingOptions[index].typeOptions" 
+                    class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
+                    <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="null" :search="true"
+                        :placeholder="'Choose option'"
+                        @update:model-value="(value) => updateRoutingOptions(value, index)" />
                 </div>
 
             </div>
@@ -54,16 +53,16 @@
             </div>
 
         </template>
-    </div>
 
-    <div v-if="routingOptions.length < maxRouteLimit"
-        class="flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
-        <button href="#" @click.prevent="addRoutingOption" class="flex items-center gap-2">
-            <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-            <span>
-                Add new routing option
-            </span>
-        </button>
+        <div v-if="routingOptions.length < maxRouteLimit"
+            class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+            <button href="#" @click.prevent="addRoutingOption" class="flex items-center gap-2">
+                <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
+                <span>
+                    Add new routing option
+                </span>
+            </button>
+        </div>
     </div>
 </template>
 
@@ -88,20 +87,15 @@ const emit = defineEmits(['update:model-value'])
 
 const routingOptions = ref([]);
 
-const routingTypeOptions = ref([]);
-
-function handleCategoryUpdate(newValue, index) {
-    console.log(newValue);
-}
 
 // Fetch new options for the selected type using Axios
 function fetchRoutingTypeOptions(newValue, index) {
 
     routingOptions.value[index].type = newValue.value;
-    
-    axios.post(props.optionsUrl, {'category' : newValue.value})
+
+    axios.post(props.optionsUrl, { 'category': newValue.value })
         .then((response) => {
-            console.log(response.data);
+            // console.log(response.data);
             routingOptions.value[index].typeOptions = response.data.options;
             // createFormSubmiting.value = false;
             // showNotification('success', response.data.messages);
@@ -117,18 +111,16 @@ function fetchRoutingTypeOptions(newValue, index) {
 
 }
 
-function handleOptionUpdate(newValue, index) {
-    if (newValue !== null && newValue !== undefined) {
-        routingOptions.value[index].targetName = newValue.name;
-        routingOptions.value[index].targetValue = newValue.value;
-    }
-
-    const routingOptionsMapped = routingOptions.value.map(({ name, value, targetName, targetValue }) => {
-        return { name, value, targetName, targetValue };
+// Update routingOptions and emit updated model value
+function updateRoutingOptions(newValue, index) {
+    routingOptions.value[index].option = newValue.value;
+    const updatedOptions = routingOptions.value.map(({ type, option }) => {
+        return { type, option };
     });
-
-    emit('update:model-value', routingOptionsMapped);
+    console.log(routingOptions.value);
+    emit('update:model-value', updatedOptions);
 }
+
 
 // Add a new routing option
 const addRoutingOption = () => {
@@ -142,9 +134,20 @@ const addRoutingOption = () => {
 };
 
 const removeRoutingOption = (index) => {
+    // console.log(routingOptions.value);
     console.log(index);
     routingOptions.value.splice(index, 1);
-    emit('update:model-value', routingOptions);
+
+        // Reassign the array to force Vue to track reactivity properly
+        routingOptions.value = [...routingOptions.value];
+
+    console.log(routingOptions.value);
+
+    const updatedOptions = routingOptions.value.map(({ type, option }) => {
+        return { type, option };
+    });
+    // console.log(updatedOptions);
+    emit('update:model-value', updatedOptions);
 }
 
 </script>

@@ -25,25 +25,17 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'destination_number' => [
-                'required',
-                Rule::unique('App\Models\Destinations', 'destination_number')
-                    ->ignore($this->get('destination_uuid'), 'destination_uuid')
-            ],
-            'destination_prefix' => [
-                'nullable'
-            ],
+            // 'destination_number' => [
+            //     'required',
+            //     Rule::unique('App\Models\Destinations', 'destination_number')
+            //         ->ignore($this->get('destination_uuid'), 'destination_uuid')
+            // ],
+            // 'destination_prefix' => [
+            //     'nullable'
+            // ],
             'destination_accountcode' => [
                 'nullable',
                 'string',
-            ],
-            'destination_actions' => [
-                'nullable',
-                'array',
-            ],
-            'destination_actions.*.targetValue' => [
-                'nullable',
-                'string'
             ],
             'destination_conditions' => [
                 'nullable',
@@ -98,6 +90,10 @@ class UpdatePhoneNumberRequest extends FormRequest
             'destination_context' => [
                 'nullable',
                 'string',
+            ],
+            'routing_options' => [
+                'nullable',
+                'array',
             ],
         ];
     }

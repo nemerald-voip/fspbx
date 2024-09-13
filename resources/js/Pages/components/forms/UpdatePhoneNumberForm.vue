@@ -45,7 +45,7 @@
                             </div> -->
                             <div class="sm:col-span-full space-y-3">
                                 <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" />
-                                <CallRouting :routingTypes="options.routing_types" :selectedItems="form.destination_actions" 
+                                <CallRouting v-model="form.routing_options" :routingTypes="options.routing_types" :selectedItems="form.destination_actions" 
                                         :maxRouteLimit="6" :optionsUrl="options.routes.get_routing_options"
                                         @update:model-value="handleDestinationActionsUpdate" />
                             </div>
@@ -158,43 +158,6 @@
 
             </div>
 
-            <div v-if="activeTab === 'call_routing'">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                        <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Call routing</h3>
-                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time. Select a routing fucntin below to fit your business needs.</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                            <!-- <div class="sm:col-span-1">
-                                <LabelInputRequired :target="'destination_prefix'" :label="'Country Code'" />
-                                <div class="mt-2">
-                                    <InputField v-model="form.destination_prefix" type="text" id="destination_prefix"
-                                        name="destination_prefix" placeholder="Enter country code" disabled="disabled" />
-                                </div>
-                            </div>
-                            <div class="sm:col-span-2">
-                                <LabelInputRequired :target="'destination_number'" :label="'Phone Number'" />
-                                <div class="mt-2">
-                                    <InputField v-model="form.destination_number" type="text" id="destination_number"
-                                        name="destination_number" placeholder="Enter phone number" disabled="disabled" />
-                                </div>
-                            </div> -->
-                            <div class="sm:col-span-full">
-                                <LabelInputOptional :target="'destination_actions'" :label="'Call Routing'" />
-                                <div class="border rounded-md pl-4 pr-4 pt-2 pb-2">
-                                    <CallRouting :routingTypes="options.routing_types" :selectedItems="form.destination_actions"
-                                        :customClass="'grid-cols-5'" :maxLimit="6"
-                                        @update:model-value="handleDestinationActionsUpdate" />
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div v-if="activeTab === 'advanced'">
                 <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -310,14 +273,12 @@ import { defineProps, reactive, ref, onBeforeMount } from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
-import ComboBoxGroup from "../general/ComboBoxGroup.vue";
 import CallRouting from "../general/ActionSelect.vue";
 import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
 import { usePage } from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
-import SelectBox from "../general/SelectBox.vue";
 import ComboBox from "../general/ComboBox.vue";
 import { MinusIcon, PlusIcon } from "@heroicons/vue/24/solid/index.js";
 import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
@@ -343,17 +304,13 @@ const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || 
 
 const conditions = ref([])
 
-const actions = ref([]);
-
 const conditionsMaxLimit = 6;
-
-const selectedTab = ref(0)
 
 const form = reactive({
     fax_uuid: props.options.phone_number.fax_uuid,
-    destination_prefix: props.options.phone_number.destination_prefix,
-    destination_number: props.options.phone_number.destination_number,
-    destination_actions: props.options.phone_number.destination_actions,
+    // destination_prefix: props.options.phone_number.destination_prefix,
+    // destination_number: props.options.phone_number.destination_number,
+    // destination_actions: props.options.phone_number.destination_actions,
     destination_hold_music: props.options.phone_number.destination_hold_music,
     destination_description: props.options.phone_number.destination_description,
     destination_enabled: props.options.phone_number.destination_enabled,
@@ -363,6 +320,9 @@ const form = reactive({
     destination_distinctive_ring: props.options.phone_number.destination_distinctive_ring,
     destination_conditions: props.options.phone_number.destination_conditions,
     destination_context: props.options.phone_number.destination_context,
+    domain_uuid : props.options.phone_number.domain_uuid,
+    routing_options: props.options.phone_number.routing_options,
+    update_route: props.options.routes.update_route,
     _token: page.props.csrf_token,
 })
 
@@ -432,6 +392,7 @@ const submitForm = () => {
             }
         }
     })
+    console.log (form);
     emits('submit', form); // Emit the event with the form data
 }
 

@@ -14,7 +14,7 @@ class CallRoutingOptionsController extends Controller
             $options = $service->getOptions();
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => ['Successfully fetched routing options']],
                 'options' => $options,
             ], 200);
         } catch (\Exception $e) {
