@@ -22,6 +22,7 @@ use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
+use App\Services\DestinationDataService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class PhoneNumbersController extends Controller
@@ -60,14 +61,7 @@ class PhoneNumbersController extends Controller
                 'showGlobal' => function () {
                     return request('filterData.showGlobal') === 'true';
                 },
-                // 'itemData' => Inertia::lazy(
-                //     fn () =>
-                //     $this->getItemData()
-                // ),
-                // 'itemOptions' => Inertia::lazy(
-                //     fn () =>
-                //     $this->getItemOptions()
-                // ),
+
                 'routes' => [
                     'current_page' => route('phone-numbers.index'),
                     'store' => route('phone-numbers.store'),
@@ -88,73 +82,6 @@ class PhoneNumbersController extends Controller
                 'domain' => Session::get('domain_uuid')
             ]
         );
-    }
-
-    // public function getItemData()
-    // {
-    //     // Get item data
-    //     $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
-    //         ->select([
-    //             'destination_uuid',
-    //             'domain_uuid',
-    //             'fax_uuid',
-    //             'destination_prefix',
-    //             'destination_number',
-    //             'destination_actions',
-    //             'destination_conditions',
-    //             'destination_hold_music',
-    //             'destination_description',
-    //             'destination_enabled',
-    //             'destination_record',
-    //             'destination_cid_name_prefix',
-    //             'destination_accountcode',
-    //             'destination_distinctive_ring',
-    //             'destination_context',
-    //         ])
-    //         ->first();
-
-    //     // Add update url route info
-    //     $itemData->update_url = route('phone-numbers.update', $itemData);
-    //     return $itemData;
-    // }
-
-    public function getItemOptionsOld()
-    {
-        $faxes = [];
-        $faxesCollection = Faxes::query();
-        $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
-        $faxesCollection = $faxesCollection->orderBy('fax_name')->get([
-            'fax_extension',
-            'fax_name',
-            'fax_uuid'
-        ]);
-        foreach ($faxesCollection as $fax) {
-            $faxes[] = [
-                'name' => $fax->fax_extension . ' ' . $fax->fax_name,
-                'value' => $fax->fax_uuid
-            ];
-        }
-
-        $domains = [];
-        $domainsCollection = Session::get("domains");
-        foreach ($domainsCollection as $domain) {
-            $domains[] = [
-                'value' => $domain->domain_uuid,
-                'name' => $domain->domain_description
-            ];
-        }
-
-        // $actionsService = ActionsService::getInstance();
-        // $actions = $actionsService->getData();
-
-        unset($faxesCollection, $domainsCollection, $fax, $domain, $actionsService);
-
-        return [
-            'music_on_hold' => getMusicOnHoldCollection(),
-            'faxes' => $faxes,
-            'domains' => $domains,
-            'actions' => $actions
-        ];
     }
 
 
@@ -221,7 +148,7 @@ class PhoneNumbersController extends Controller
                     'value' => $fax->fax_uuid
                 ];
             }
-    
+
             $domains = [];
             $domainsCollection = Session::get("domains");
             foreach ($domainsCollection as $domain) {
@@ -263,7 +190,6 @@ class PhoneNumbersController extends Controller
 
                 // Define the update route
                 $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
-
             } else {
                 // Create a new voicemail if item_uuid is not provided
                 $voicemail = $this->model;
@@ -371,38 +297,20 @@ class PhoneNumbersController extends Controller
         } else {
             $data = $data->get(); // This will return a collection
         }
+
+        // $destinationDataService = new DestinationDataService();
+        // // Map destination actions for each record
+        // $data->transform(function ($item) use ($destinationDataService) {
+        //     logger('hey');
+        //     logger($item->destination_actions);
+        //     $item->routing_options = $destinationDataService->reverseEngineerDestinationActions($item->destination_actions);
+        //     logger($item->routing_options);
+        //     return $item;
+        // });
+
         return $data;
     }
 
-    /**
-     * @return JsonResponse
-     * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
-     */
-    public function selectAll(): JsonResponse
-    {
-        try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            }
-
-            // Return a JSON response indicating success
-            return response()->json([
-                'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
-    }
 
     /**
      * @param  array  $filters
@@ -434,7 +342,6 @@ class PhoneNumbersController extends Controller
             'destination_actions',
             'destination_enabled',
             'destination_description',
-            'destination_data',
             'domain_uuid',
         );
 
@@ -646,7 +553,17 @@ class PhoneNumbersController extends Controller
 
             // logger($inputs);
 
-            $inputs = $this->processActionConditionInputs($inputs);
+            // Process routing_options to form destination_actions
+            $destination_actions = [];
+            if (!empty($inputs['routing_options'])) {
+                foreach ($inputs['routing_options'] as $option) {
+                    $destination_actions[] = $this->buildDestinationAction($option);
+                }
+            }
+
+            // Assign the formatted actions to the destination_actions field
+            $inputs['destination_actions'] = json_encode($destination_actions);
+
 
             $phone_number->update($inputs);
 
@@ -660,6 +577,44 @@ class PhoneNumbersController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
+
+    /**
+     * Helper function to build destination action based on routing option type.
+     */
+    protected function buildDestinationAction($option)
+    {
+        switch ($option['type']) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => $option['extension'] . ' XML api.us.nemerald.net',
+                ];
+
+            case 'voicemails':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*99' . $option['extension'] . ' XML api.us.nemerald.net',
+                ];
+
+            case 'recordings':
+                // Handle recordings with 'lua' destination app
+                return [
+                    'destination_app' => 'lua',
+                    'destination_data' => 'streamfile.lua ' . $option['extension'],
+                ];
+
+                // Add other cases as necessary for different types
+            default:
+                return null;
+        }
+    }
+
 
     /**
      * Remove the specified resource from storage.
@@ -829,10 +784,11 @@ class PhoneNumbersController extends Controller
         return $inputs;
     }
 
-    private function findActionConditionApp($action, $prefix = 'destination') {
+    private function findActionConditionApp($action, $prefix = 'destination')
+    {
         $pattern = '/^(transfer|lua|playback):(.*)$/';
         if (preg_match($pattern, $action, $matches)) {
-            return [$prefix.'_app' => $matches[1], $prefix.'_data' => trim($matches[2])];
+            return [$prefix . '_app' => $matches[1], $prefix . '_data' => trim($matches[2])];
         } else {
             throw new \Exception('Unknown action: ' . $action);
         }
@@ -844,21 +800,21 @@ class PhoneNumbersController extends Controller
         //logger($phoneNumber);
         //logger('--------------');
         if (isset($phoneNumber->destination_prefix) && is_numeric($phoneNumber->destination_prefix) && isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
-          //  logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+            //  logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
             //logger("dialplan:". $phoneNumber->destination_context.":+".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":+".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
         }
         if (isset($phoneNumber->destination_number) && str_starts_with($phoneNumber->destination_number, '+') && is_numeric(str_replace('+', '', $phoneNumber->destination_number))) {
             //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
         }
         if (isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
             //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
+            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
         }
 
-       /*
+        /*
         if (isset($phoneNumber->destination_number)) {
             FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
 
@@ -1193,5 +1149,35 @@ class PhoneNumbersController extends Controller
         // $permissions['manage_voicemail_recording_instructions'] = false;
 
         return $permissions;
+    }
+
+    /**
+     * @return JsonResponse
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     */
+    public function selectAll(): JsonResponse
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 }

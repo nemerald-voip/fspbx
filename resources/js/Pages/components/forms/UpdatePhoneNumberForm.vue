@@ -45,7 +45,7 @@
                             </div> -->
                             <div class="sm:col-span-full space-y-3">
                                 <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" />
-                                <CallRouting v-model="form.routing_options" :routingTypes="options.routing_types" :selectedItems="form.destination_actions" 
+                                <CallRouting v-model="form.routing_options" :routingTypes="options.routing_types" :selectedItems="form.routing_options" 
                                         :maxRouteLimit="6" :optionsUrl="options.routes.get_routing_options"
                                         @update:model-value="handleDestinationActionsUpdate" />
                             </div>
@@ -392,7 +392,7 @@ const submitForm = () => {
             }
         }
     })
-    console.log (form);
+    // console.log (form);
     emits('submit', form); // Emit the event with the form data
 }
 

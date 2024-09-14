@@ -40,19 +40,19 @@ class CallRoutingOptionsService
         $this->domainName = session('domain_name');
     }
 
-    public function getData(): array
-    {
-        $output = [];
-        foreach ($this->categories as $key => $label) {
-            $output[$key] = [
-                'name' => $label,
-                'options' => $this->getOptions($key)
-            ];
-        }
+    // public function getData(): array
+    // {
+    //     $output = [];
+    //     foreach ($this->categories as $key => $label) {
+    //         $output[$key] = [
+    //             'name' => $label,
+    //             'options' => $this->getOptions($key)
+    //         ];
+    //     }
 
-        
-        return $output;
-    }
+
+    //     return $output;
+    // }
 
     // public function findLabel(array $actions): array
     // {
@@ -73,12 +73,12 @@ class CallRoutingOptionsService
     public function getOptions(): array
     {
         switch (request('category')) {
-            case 'call_centers':
+            case 'contact_centers':
                 return $this->buildOptions(CallCenterQueues::class, 'queue_extension', 'queue_name');
             case 'call_flows':
                 return $this->buildOptions(CallFlows::class, 'call_flow_extension', 'call_flow_name');
-            // case 'dial_plans':
-            //     return $this->buildOptions(Dialplans::class, 'dialplan_name', '', true);
+                // case 'dial_plans':
+                //     return $this->buildOptions(Dialplans::class, 'dialplan_name', '', true);
             case 'extensions':
                 return $this->buildOptions(Extensions::class, 'extension', 'effective_caller_id_name');
             case 'faxes':
@@ -86,13 +86,13 @@ class CallRoutingOptionsService
             case 'ivr_menus':
                 return $this->buildOptions(IvrMenus::class, 'ivr_menu_extension', 'ivr_menu_name');
             case 'recordings':
-                return $this->buildOptions(Recordings::class, 'recording_filename', 'recording_name', false, 'lua:streamfile.lua');
+                return $this->buildOptions(Recordings::class, 'recording_filename', 'recording_name');
             case 'ring_groups':
                 return $this->buildOptions(RingGroups::class, 'ring_group_extension', 'ring_group_name');
             case 'time_conditions':
-                return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name', true, '', '4b821450-926b-175a-af93-a03c441818b1');
+                return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
             case 'voicemails':
-                return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description', false, '*99');
+                return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
                 return $this->otherOptions();
             default:
@@ -100,33 +100,62 @@ class CallRoutingOptionsService
         }
 
         throw new \Exception('Failed to fetch routing options.');
-
     }
 
-    protected function buildOptions($model, string $extensionField, string $nameField = '', bool $enabled = false, string $prefix = 'transfer', string $appUuid = null): array
+    protected function buildOptions($model, string $extensionField, string $nameField = ''): array
     {
-        $query = $model::select($extensionField, $nameField)->where('domain_uuid', $this->domainUuid);
+        // Create an instance of the model
+        $modelInstance = new $model;
 
-        if ($enabled) {
+        $query = $model::query(); // Start with a base query
+
+        // Apply specific conditions only for Dialplans
+        if ($model === Dialplans::class) {
             $query->where('dialplan_enabled', 'true')
-                ->where('dialplan_destination', 'true')
-                ->where('dialplan_number', '<>', '');
+                ->where('dialplan_number', '<>', '')
+                ->where('dialplan_xml', '~*', '(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=[^>]*');
         }
 
-        if ($appUuid) {
-            $query->where('app_uuid', $appUuid);
+        // Check if the model is Voicemails and eager load extensions
+        if ($model === Voicemails::class) {
+            $domainUuid = $this->domainUuid;
+            $query->with(['extension' => function ($query) use ($domainUuid) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->where('domain_uuid', $domainUuid);
+            }]);
         }
+
+        $query->select($modelInstance->getKeyName(), $extensionField, $nameField)->where('domain_uuid', $this->domainUuid);
 
         $rows = $query->orderBy($extensionField)->get();
 
+        // logger($rows);
+
         $options = [];
         foreach ($rows as $row) {
+
+            $name = $row->$extensionField . ($nameField ? " - " . $row->$nameField : '');
+            if ($model === Voicemails::class) {
+                if ($row->extension) {
+                    // Use extension's name_formatted if extension exists
+                    $name = $row->extension->name_formatted ;
+                } else {
+                    // Fallback to voicemail_id - "Team voicemail" if extension does not exist
+                    $name =  $row->voicemail_id . " - Team voicemail";
+                }
+            }
+
+            if ($model === Recordings::class) {
+                    $name = $row->$nameField ;
+            }
+
             $options[] = [
-                'value' => sprintf(self::TRANSFER_FORMAT, $prefix, $row->$extensionField, $this->domainName),
-                'name' => $row->$extensionField . ($nameField ? " - ".$row->$nameField : '')
+                'value' => $row->{$modelInstance->getKeyName()},
+                'extension' => $row->$extensionField, 
+                'name' => $name,
             ];
         }
-        logger($options);
+        // logger($options);
         return $options;
     }
 

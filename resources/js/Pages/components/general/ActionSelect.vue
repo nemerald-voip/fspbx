@@ -7,14 +7,15 @@
 
             <div class="col-span-10 flex flex-col sm:flex-row gap-x-2 gap-y-1 justify-between flex-auto">
                 <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
-                    <ComboBox :options="routingTypes" :search="true" :placeholder="'Choose type'" 
+                    <ComboBox :options="routingTypes" :search="true" :placeholder="'Choose type'"
+                        :selectedItem="routingOptions[index].type"
                         @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
                 </div>
 
                 <div v-if="routingOptions[index].typeOptions" 
                     class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
-                    <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="null" :search="true"
-                        :placeholder="'Choose option'"
+                    <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="routingOptions[index].option"
+                        :search="true" :placeholder="'Choose option'"   :key="routingOptions[index].typeOptions.length + routingOptions[index].option" 
                         @update:model-value="(value) => updateRoutingOptions(value, index)" />
                 </div>
 
@@ -87,11 +88,31 @@ const emit = defineEmits(['update:model-value'])
 
 const routingOptions = ref([]);
 
+// Initialize routingOptions and fetch typeOptions
+if (props.selectedItems) {
+    props.selectedItems.forEach((item, index) => {
+        routingOptions.value.push({
+            type: item.type || null,
+            typeOptions: [],  // Initially empty
+            option: item.option || null,
+            extension: item.extension || null,
+        });
+
+        // If type is available, fetch the options for that type
+        if (item.type) {
+            fetchTypeOptionsForItem(item.type, index);
+        }
+    });
+}
+
 
 // Fetch new options for the selected type using Axios
 function fetchRoutingTypeOptions(newValue, index) {
 
     routingOptions.value[index].type = newValue.value;
+
+    // Reset the selected option when type changes
+    routingOptions.value[index].option = null;
 
     axios.post(props.optionsUrl, { 'category': newValue.value })
         .then((response) => {
@@ -108,15 +129,39 @@ function fetchRoutingTypeOptions(newValue, index) {
             // handleFormErrorResponse(error);
             routingOptions.value[index].typeOptions = null;
         });
+}
 
+function fetchTypeOptionsForItem(type, index) {
+    axios.post(props.optionsUrl, { 'category': type })
+        .then((response) => {
+            routingOptions.value[index].typeOptions = response.data.options;
+
+            // Automatically set the selected option if the option exists in the fetched options
+            const selectedOption = routingOptions.value[index].option;
+            if (selectedOption) {
+                const match = response.data.options.find(option => option.value === selectedOption);
+                if (match) {
+                    routingOptions.value[index].option = match.value;
+                } else {
+                    routingOptions.value[index].option = null; // Reset if no match found
+                }
+            }
+        }).catch(() => {
+            routingOptions.value[index].typeOptions = null;
+            routingOptions.value[index].option = null;  // Reset option in case of an error
+        });
 }
 
 // Update routingOptions and emit updated model value
 function updateRoutingOptions(newValue, index) {
     routingOptions.value[index].option = newValue.value;
-    const updatedOptions = routingOptions.value.map(({ type, option }) => {
-        return { type, option };
+    routingOptions.value[index].extension = newValue.extension;
+
+    // Prepare the updated options
+    const updatedOptions = routingOptions.value.map(({ type, option, extension }) => {
+        return { type, option, extension };
     });
+
     console.log(routingOptions.value);
     emit('update:model-value', updatedOptions);
 }
@@ -124,6 +169,7 @@ function updateRoutingOptions(newValue, index) {
 
 // Add a new routing option
 const addRoutingOption = () => {
+    console.log(routingOptions.value);
     if (routingOptions.value.length < props.maxRouteLimit) {
         routingOptions.value.push({
             type: null,
@@ -138,8 +184,8 @@ const removeRoutingOption = (index) => {
     console.log(index);
     routingOptions.value.splice(index, 1);
 
-        // Reassign the array to force Vue to track reactivity properly
-        routingOptions.value = [...routingOptions.value];
+    // Reassign the array to force Vue to track reactivity properly
+    routingOptions.value = [...routingOptions.value];
 
     console.log(routingOptions.value);
 

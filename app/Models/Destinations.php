@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Services\ActionsService;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use libphonenumber\PhoneNumberUtil;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use App\Services\DestinationDataService;
 use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
-use libphonenumber\PhoneNumberUtil;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destinations extends Model
 {
@@ -86,6 +87,7 @@ class Destinations extends Model
             unset($model->destination_number_formatted);
             unset($model->destroy_route);
             unset($model->destination_actions_formatted);
+            unset($model->routing_options);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
         });
@@ -107,20 +109,12 @@ class Destinations extends Model
             }
 
             if (!empty($model->destination_actions)) {
-                $model->destination_actions = json_decode($model->destination_actions, true);
-                if(is_array($model->destination_actions)) {
-                    // $actionsService = ActionsService::getInstance();
-                    // $model->destination_actions_formatted = $actionsService->findLabel($model->destination_actions);
-                    $actions = null;
-                    foreach ($model->destination_actions as $action) {
-                        if (!empty($action['destination_data'])) {
-                            $actions[] = [
-                                'targetValue' => $action['destination_data'],
-                            ];
-                        }
-                    }
-                    $model->destination_actions = $actions;
-                }
+
+                $destinationDataService = new DestinationDataService();
+
+                $model->routing_options = $destinationDataService->reverseEngineerDestinationActions($model->destination_actions);
+
+                logger($model->routing_options);
             }
 
             if (!empty($model->destination_conditions)) {
