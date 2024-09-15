@@ -148,6 +148,7 @@ const searchKeyword = ref('');
 
 const clearValue = () => {
     currentSelection.value = props.multiple ? [] : null;
+    searchKeyword.value = '';
     emit('update:model-value', props.multiple ? [] : { value: "NULL" });
 }
 

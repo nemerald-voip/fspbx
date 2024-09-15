@@ -85,6 +85,11 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
 
+        $permissions['voicemail_create'] = userCheckPermission('voicemail_add');
+        $permissions['voicemail_update'] = userCheckPermission('voicemail_edit');
+        $permissions['voicemail_destroy'] = userCheckPermission('voicemail_delete');
+        $permissions['voicemail_message_index'] = userCheckPermission('voicemail_message_view');
+
         // logger($permissions);
         return $permissions;
     }

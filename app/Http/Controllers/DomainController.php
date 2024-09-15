@@ -109,7 +109,6 @@ class DomainController extends Controller
      */
     public function filterDomainsFusionPBX(Request $request)
     {
-        logger('here');
         // Retrieve domains from session
         $domains = Session::get('domains');
 
@@ -122,15 +121,17 @@ class DomainController extends Controller
         if ($request->filled('search')) {
             $searchTerm = strtolower($request->search);
             // Filter domains based on search term in both domain_name and domain_description
-            $domains = $domains->filter(function ($domain) use ($searchTerm) {
+            $domains = collect($domains)->filter(function ($domain) use ($searchTerm) {
                 return strpos(strtolower($domain->domain_name), $searchTerm) !== false || strpos(strtolower($domain->domain_description), $searchTerm) !== false;
             });
+        } else {
+            // Convert the domains to a collection if no search term is provided
+            $domains = collect($domains);
         }
-        
-        // logger($domains);
 
+        // Convert each domain object to an array
         $domains = $domains->map(function ($domain) {
-            return $domain->toArray();
+            return (array) $domain;  // Cast object to array
         })->values()->all();
 
         echo json_encode($domains, true);

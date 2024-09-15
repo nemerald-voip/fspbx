@@ -8,6 +8,7 @@ use App\Models\DefaultSettings;
 use Illuminate\Database\Seeder;
 use App\Models\GroupPermissions;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Process;
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,8 +29,9 @@ class DatabaseSeeder extends Seeder
 
         $this->createGroupPermissions();
 
-        Model::reguard();
+        $this->createDefaultSettings();
 
+        Model::reguard();
     }
 
     private function createGroups()
@@ -63,7 +65,8 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    private function createPermissions() {
+    private function createPermissions()
+    {
         $permissions = [
             [
                 'application_name'       => 'Message Settings',
@@ -90,8 +93,8 @@ class DatabaseSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $existingPermission = Permissions::where('application_name', $permission['application_name'])
-                                             ->where('permission_name', $permission['permission_name'])
-                                             ->first();
+                ->where('permission_name', $permission['permission_name'])
+                ->first();
 
             if (is_null($existingPermission)) {
                 Permissions::create([
@@ -165,7 +168,6 @@ class DatabaseSeeder extends Seeder
                     'group_uuid'            => $permission['group_uuid'],
                     'insert_date'       => $permission['insert_date'],
                 ]);
-
             }
         }
     }
@@ -266,5 +268,199 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    private function createDefaultSettings()
+    {
+        $settings = [
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e350_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e300_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e220_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e500_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_firmware',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e350_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e350_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46s_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46s_wallpaper_filename',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46u_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_t46u_wallpaper_filename',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'aws_upload_calls_' . $this->getMacAddress(),
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Executes upload job only on the server with MAC address " . $this->getMacAddress(),
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'clear_export_directory',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'horizon_snapshot',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'horizon_check_status',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'cache_prune_stale_tags',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'prune_old_webhook_requests',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+
+
+
+
+
+        ];
+
+        // Log::alert(Category::where('name', trans('custom-fields::general.categories.cost_recovery'))->where('company_id', $company_id)->value('id'));
+        foreach ($settings as $setting) {
+            $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
+                ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
+                ->first();
+
+            if (empty($existing_item)) {
+                // Add new group
+                DefaultSettings::create([
+                    'default_setting_category'      => $setting['default_setting_category'],
+                    'default_setting_subcategory'   => $setting['default_setting_subcategory'],
+                    'default_setting_name'          => $setting['default_setting_name'],
+                    'default_setting_value'         => $setting['default_setting_value'],
+                    'default_setting_enabled'       => $setting['default_setting_enabled'],
+                    'default_setting_description'   => $setting['default_setting_description'],
+                ]);
+            }
+        }
+    }
+
+
+    public function getMacAddress()
+    {
+        // Run the shell command using Process
+        $process = Process::run("ip link show | grep 'link/ether' | awk '{print $2}'");
+
+        // Get the output from the process
+        $macAddress = trim($process->output());
+
+        return $macAddress ?: null;
     }
 }

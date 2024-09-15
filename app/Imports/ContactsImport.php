@@ -72,15 +72,23 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
 
     public function prepareForValidation($data, $index)
     {
-        $data['contact_organization'] = trim($data['contact_organization']);
-        $data['phone_number'] = trim($data['phone_number']);
-        $data['phone_speed_dial'] = trim($data['phone_speed_dial']);
-        $data['phone_type_voice'] = trim($data['phone_type_voice']);
-        foreach ($data['username'] as $username) {
-            $username = trim($username);
+        $fieldsToTrim = ['contact_organization', 'phone_number', 'phone_speed_dial', 'phone_type_voice'];
+    
+        foreach ($fieldsToTrim as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = trim($data[$field]);
+            }
         }
+    
+        if (isset($data['username'])) {
+            foreach ($data['username'] as &$username) {
+                $username = trim($username);
+            }
+        }
+    
         return $data;
     }
+    
 
 
     /**
@@ -125,22 +133,24 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             // logger($contact->contactPhone);
 
             //Create contact users
-            foreach ($row['username'] as $username) {
-                $user = User::where('domain_uuid', Session::get('domain_uuid'))
-                    ->where('username', $username)
-                    ->first();
-
-                if ($user) {
-                    $contact->contactUser = new ContactUsers();
-
-                    $contact->contactUser->fill([
-                        'contact_uuid' => $contact->contact_uuid,
-                        'domain_uuid' => Session::get('domain_uuid'),
-                        'user_uuid' => $user->user_uuid,
-                        'insert_date' => date('Y-m-d H:i:s'),
-                        'insert_user' => Session::get('user_uuid'),
-                    ]);
-                    $contact->contactUser->save();
+            if (isset($row['username']) && is_array($row['username'])) {
+                foreach ($row['username'] as $username) {
+                    $user = User::where('domain_uuid', Session::get('domain_uuid'))
+                        ->where('username', $username)
+                        ->first();
+            
+                    if ($user) {
+                        $contact->contactUser = new ContactUsers();
+            
+                        $contact->contactUser->fill([
+                            'contact_uuid' => $contact->contact_uuid,
+                            'domain_uuid' => Session::get('domain_uuid'),
+                            'user_uuid' => $user->user_uuid,
+                            'insert_date' => date('Y-m-d H:i:s'),
+                            'insert_user' => Session::get('user_uuid'),
+                        ]);
+                        $contact->contactUser->save();
+                    }
                 }
             }
         }

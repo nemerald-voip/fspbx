@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Services\LineKeyTypesService;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,11 +57,11 @@ class DeviceController extends Controller
                     return request('filterData.showGlobal') === 'true';
                 },
                 'itemData' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getItemData()
                 ),
                 'itemOptions' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getItemOptions()
                 ),
                 'routes' => [
@@ -243,27 +244,20 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        if ($inputs['extension']) {
-            $extension = Extensions::where('extension', $inputs['extension'])
-                ->where('domain_uuid', session('domain_uuid'))
-                ->first();
-        } else {
-            $extension = null;
-        }
-
         try {
-            // Validate the request data and create a new instance
+            // Create a new instance of the device model
             $instance = $this->model;
 
+            // Determine the vendor
             $vendor = explode("/", $inputs['device_template'])[0];
             if ($vendor === 'poly') {
                 $vendor = 'polycom';
             }
 
+            // Fill the instance with input data
             $instance->fill([
                 'device_address' => $inputs['device_address_modified'],
                 'domain_uuid' => $inputs['domain_uuid'],
-                'device_label' => $extension->extension ?? null,
                 'device_vendor' => $vendor,
                 'device_enabled' => 'true',
                 'device_enabled_date' => date('Y-m-d H:i:s'),
@@ -271,31 +265,53 @@ class DeviceController extends Controller
                 'device_profile_uuid' => $inputs['device_profile_uuid'],
                 'device_description' => '',
             ]);
-            $instance->save();  // Save the new model instance to the database
 
-            if ($extension) {
-                // Create device lines
-                $instance->lines = new DeviceLines();
-                $instance->lines->fill([
-                    'device_uuid' => $instance->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                ]);
-                $instance->lines->save();
+            // Save the new model instance to the database
+            $instance->save();
+
+            // Check if lines are passed and is an array
+            if (!empty($inputs['lines']) && is_array($inputs['lines'])) {
+                foreach ($inputs['lines'] as $index => $line) {
+                    $extension = Extensions::where('extension', $line['user_id'])
+                        ->where('domain_uuid', $inputs['domain_uuid'])
+                        ->first();
+
+                    if ($extension) {
+                        $sharedLine = $line['shared_line'] !== null ? "1" : null;
+                        // Create a new DeviceLines instance and fill it
+                        $deviceLines = new DeviceLines();
+                        $deviceLines->fill([
+                            'device_uuid' => $instance->device_uuid,
+                            'line_number' => $line['line_number'],
+                            'server_address' => Session::get('domain_name'),
+                            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                            'server_address_primary' => get_domain_setting('server_address_primary'),
+                            'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                            'display_name' => $line['display_name'],
+                            'user_id' => $extension->extension,
+                            'auth_id' => $extension->extension,
+                            'label' => $extension->extension,
+                            'password' => $extension->password,
+                            'sip_port' => get_domain_setting('line_sip_port'),
+                            'sip_transport' => get_domain_setting('line_sip_transport'),
+                            'register_expires' => get_domain_setting('line_register_expires'),
+                            'shared_line' => $sharedLine,
+                            'enabled' => 'true',
+                            'domain_uuid' => $instance->domain_uuid
+                        ]);
+                        $deviceLines->save();
+
+                        // Set device label based on the first extension
+                        if ($index === 0) {
+                            $instance->device_label = $extension->extension;
+                        }
+                    }
+                }
             }
+
+            // Update the instance with the label
+            $instance->save();
 
             // Return a JSON response indicating success
             return response()->json([
@@ -311,16 +327,8 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Failed to create new item']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
-
-
-
-        // return response()->json([
-        //     'status' => 'success',
-        //     'device' => $device,
-        //     'message' => 'Device has been created and assigned.'
-        // ]);
     }
+
 
     /**
      * Display the specified resource.
@@ -332,40 +340,6 @@ class DeviceController extends Controller
     {
         //
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  Request  $request
-     * @param  Devices  $device
-     * @return JsonResponse
-     */
-    // public function edit(Request $request, Devices $device): JsonResponse
-    // {
-    //     logger('here');
-    //     if (!$request->ajax()) {
-    //         return response()->json([
-    //             'message' => 'XHR request expected'
-    //         ], 405);
-    //     }
-
-    //     if ($device->extension()) {
-    //         $device->extension_uuid = $device->extension()->extension_uuid;
-    //     }
-
-    //     $device->device_address = formatMacAddress($device->device_address);
-    //     $device->update_path = route('devices.update', $device);
-    //     $device->options = [
-    //         'templates' => getVendorTemplateCollection(),
-    //         'profiles' => getProfileCollection($device->domain_uuid),
-    //         'extensions' => getExtensionCollection($device->domain_uuid)
-    //     ];
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'device' => $device
-    //     ]);
-    // }
 
     /**
      * Update the specified resource in storage.
@@ -397,13 +371,47 @@ class DeviceController extends Controller
             }
             $inputs['device_address'] = $inputs['device_address_modified'];
 
-            if ($inputs['extension']) {
-                $extension = Extensions::where('extension', $inputs['extension'])
-                    ->where('domain_uuid', $inputs['domain_uuid'])
-                    ->first();
+            // Check if lines are passed
+            if (!empty($inputs['lines']) && is_array($inputs['lines'])) {
+                // Remove existing device lines
+                $device->lines()->delete();
 
-                if ($extension) {
-                    $device->device_label = $extension->extension;
+                foreach ($inputs['lines'] as $index => $line) {
+                    $extension = Extensions::where('extension', $line['user_id'])
+                        ->where('domain_uuid', $inputs['domain_uuid'])
+                        ->first();
+
+                    if ($extension) {
+                        $sharedLine = $line['shared_line'] !== null ? "1" : null;
+                        // Create new device line
+                        $deviceLines = new DeviceLines();
+                        $deviceLines->fill([
+                            'device_uuid' => $device->device_uuid,
+                            'line_number' => $line['line_number'],
+                            'server_address' => $line['server_address'] ?? session('domain_name'),
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
+                            'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
+                            'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
+                            'display_name' => $line['display_name'],
+                            'user_id' => $extension->extension,
+                            'auth_id' => $extension->extension,
+                            'label' => $extension->extension,
+                            'password' => $extension->password,
+                            'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port'),
+                            'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport'),
+                            'register_expires' => $line['register_expires'] ?? get_domain_setting('line_register_expires'),
+                            'shared_line' => $sharedLine,
+                            'enabled' => 'true',
+                            'domain_uuid' => $device->domain_uuid
+                        ]);
+                        $deviceLines->save();
+
+                        // Set device label based on the first extension
+                        if ($index === 0) {
+                            $device->device_label = $extension->extension;
+                        }
+                    }
                 }
             } else {
                 $device->device_label = null;
@@ -413,39 +421,6 @@ class DeviceController extends Controller
 
             // logger($inputs);
             $device->update($inputs);
-
-            if (isset($extension) && $extension) {
-                // Remove existing device lines
-                if ($device->lines()->exists()) {
-                    $device->lines()->delete();
-                }
-
-                // Create device lines
-                $deviceLines = new DeviceLines();
-                $deviceLines->fill([
-                    'device_uuid' => $device->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                    'domain_uuid' => $device->domain_uuid
-                ]);
-                $deviceLines->save();
-
-                $device->device_label = $extension->extension;
-                $device->save();
-            }
 
 
             // Return a JSON response indicating success
@@ -497,46 +472,127 @@ class DeviceController extends Controller
 
     public function getItemOptions()
     {
-        $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+        try {
 
-        // Define the options for the 'extensions' field
-        $extensions = Extensions::where('domain_uuid', $domain_uuid)
-            ->get([
-                'extension_uuid',
-                'extension',
-                'effective_caller_id_name',
-            ]);
+            $device = $this->model::find(request('itemUuid'));
 
-        $extensionOptions = [];
-        // Loop through each extension and create an option
-        foreach ($extensions as $extension) {
-            $extensionOptions[] = [
-                'value' => $extension->extension,
-                'name' => $extension->name_formatted,
-            ];
-        }
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
 
-        $domainOptions = [];
-        // Loop through each domain and create an option
-        if (session('domains')) {
-            foreach (session('domains') as $domain) {
-                $domainOptions[] = [
-                    'value' => $domain->domain_uuid,
-                    'name' => $domain->domain_description,
+            // Define the options for the 'extensions' field
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->orderBy('extension')  // Sorts by the 'extension' field in ascending order
+                ->get([
+                    'extension_uuid',
+                    'extension',
+                    'effective_caller_id_name',
+                ]);
+
+            $extensionOptions = [];
+            // Loop through each extension and create an option
+            foreach ($extensions as $extension) {
+                $extensionOptions[] = [
+                    'value' => $extension->extension,
+                    'name' => $extension->name_formatted,
                 ];
             }
+
+            $domainOptions = [];
+            // Loop through each domain and create an option
+            if (session('domains')) {
+                foreach (session('domains') as $domain) {
+                    $domainOptions[] = [
+                        'value' => $domain->domain_uuid,
+                        'name' => $domain->domain_description,
+                    ];
+                }
+            }
+
+            $lines = [];
+            if (request('itemUuid')) {
+                $lines = DeviceLines::where('device_uuid', request('itemUuid'))
+                    ->get([
+                        'device_line_uuid',
+                        'line_number',
+                        'user_id',
+                        'display_name',
+                        'shared_line',
+                        'server_address',
+                        'server_address_primary',
+                        'server_address_secondary',
+                        'sip_port',
+                        'sip_transport',
+                        'register_expires'
+                    ])
+                    ->map(function ($line) use ($device) {
+                        if ($line->shared_line) {
+                            $line->line_type_id = 'sharedline';
+                        } else {
+                            if ($device->device_vendor == 'yealink') $line->line_type_id = "15";
+                            if ($device->device_vendor == 'polycom') $line->line_type_id = "line";
+                        }
+                        return $line;
+                    });
+
+                // logger($lines);
+            }
+
+            $navigation = [
+                [
+                    'name' => 'Settings',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'settings',
+                ],
+                [
+                    'name' => 'Lines',
+                    'icon' => 'AdjustmentsHorizontalIcon',
+                    'slug' => 'lines',
+                ],
+            ];
+
+            $lineKeyTypes = [];
+            if ($device) {
+                if ($device->device_vendor == 'yealink') {
+                    $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
+                } else if ($device->device_vendor == 'polycom') {
+                    $lineKeyTypes = LineKeyTypesService::getPolycomKeyTypes();
+                }
+            } else {
+                $lineKeyTypes = [
+                    ['value' => 'line', 'name' => 'Line'],
+                    ['value' => 'sharedline', 'name' => 'Shared Line'],
+                ];
+            }
+
+            $sipTransportTypes = [
+                ['value' => 'udp', 'name' => 'UDP'],
+                ['value' => 'tcp', 'name' => 'TCP'],
+                ['value' => 'tls', 'name' => 'TLS'],
+                ['value' => 'dns srv', 'name' => 'DNS SRV'],
+            ];
+
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'templates' => getVendorTemplateCollection(),
+                'profiles' => getProfileCollection($domain_uuid),
+                'extensions' => $extensionOptions,
+                'domains' => $domainOptions,
+                'navigation' => $navigation,
+                'lines' => $lines,
+                'line_key_types' => $lineKeyTypes,
+                'sip_transport_types' => $sipTransportTypes,
+                // Define options for other fields as needed
+            ];
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to get item details']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
-
-        // Construct the itemOptions object
-        $itemOptions = [
-            'templates' => getVendorTemplateCollection(),
-            'profiles' => getProfileCollection($domain_uuid),
-            'extensions' => $extensionOptions,
-            'domains' => $domainOptions,
-            // Define options for other fields as needed
-        ];
-
-        return $itemOptions;
     }
 
     /**
@@ -564,31 +620,35 @@ class DeviceController extends Controller
                 }
             }
 
-            if (isset($inputs['extension'])) {
-                $extension = $inputs['extension'];
-                unset($inputs['extension']);
-            } else {
-                $extension = null;
+            // Check if device_profile_uuid is intended to be NULL and adjust accordingly
+            // This will convert string "NULL" to literal null values
+            if (array_key_exists('device_profile_uuid', $inputs) && $inputs['device_profile_uuid'] === 'NULL') {
+                $inputs['device_profile_uuid'] = null;  // This explicitly sets it to NULL
             }
+
+            // Remove 'lines' from $inputs if it's present, as we don't want to update it directly in v_devices table
+            $lines = $inputs['lines'] ?? null;
+            unset($inputs['lines']);
 
             if (sizeof($inputs) > 0) {
                 $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
                     ->update($inputs);
             }
 
-            if ($extension) {
-                // First, we are deleting all existing device lines
-                $this->deleteDeviceLines(request('items'));
+            // Handle device lines
+            if ($lines && is_array($lines)) {
+                // Delete all existing device lines
+                $this->deleteDeviceLines($request->items);
 
-                // Create new lines
-                $this->createDeviceLines(request('items'), $extension);
+                // Create new device lines based on the array of lines
+                $this->createDeviceLines($request->items, $lines);
             }
 
             return response()->json([
                 'messages' => ['success' => ['Selected items updated']],
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
@@ -731,52 +791,103 @@ class DeviceController extends Controller
         $this->model::whereIn('device_uuid', $deviceUuids)->update(['device_label' => null]);
     }
 
-
-    public function createDeviceLines($deviceUuids, $extension_number)
+    public function createDeviceLines($deviceUuids, $lines)
     {
         // Retrieve all devices at once with their lines
         $devices = $this->model::whereIn('device_uuid', $deviceUuids)
             ->get(['device_uuid', 'domain_uuid']);
 
-        $domain_uuid = $devices->first()->domain_uuid;
-        $domain_name = Domain::find($domain_uuid)->domain_name;
-
-        $extension = Extensions::where('domain_uuid', $domain_uuid)
-            ->where('extension', $extension_number)
-            ->select([
-                'extension_uuid',
-                'extension',
-                'password'
-            ])
-            ->first();
-
         foreach ($devices as $device) {
-            $deviceLines = new DeviceLines();
-            $deviceLines->fill([
-                'device_uuid' => $device->device_uuid,
-                'line_number' => '1',
-                'server_address' => $domain_name,
-                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                'server_address_primary' => get_domain_setting('server_address_primary'),
-                'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                'display_name' => $extension->extension,
-                'user_id' => $extension->extension,
-                'auth_id' => $extension->extension,
-                'label' => $extension->extension,
-                'password' => $extension->password,
-                'sip_port' => get_domain_setting('line_sip_port'),
-                'sip_transport' => get_domain_setting('line_sip_transport'),
-                'register_expires' => get_domain_setting('line_register_expires'),
-                'enabled' => 'true',
-                'domain_uuid' => $domain_uuid
-            ]);
-            $deviceLines->save();
-        }
+            $domain_name = Domain::find($device->domain_uuid)->domain_name;
 
-        // // Bulk update all devices to set label to extension number
-        $this->model::whereIn('device_uuid', $deviceUuids)->update(['device_label' => $extension_number]);
+            foreach ($lines as $index => $line) {
+                $extension = Extensions::where('domain_uuid', $device->domain_uuid)
+                    ->where('extension', $line['user_id'])
+                    ->select(['extension_uuid', 'extension', 'password'])
+                    ->first();
+
+                if ($extension) {
+                    $sharedLine = $line['shared_line'] !== null ? "1" : null;
+
+                    // Create new device lines for each line provided
+                    $deviceLines = new DeviceLines();
+                    $deviceLines->fill([
+                        'device_uuid' => $device->device_uuid,
+                        'line_number' => $line['line_number'],
+                        'server_address' => $domain_name,
+                        'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                        'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+                        'server_address_primary' => get_domain_setting('server_address_primary'),
+                        'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                        'display_name' => $line['display_name'],
+                        'user_id' => $extension->extension,
+                        'auth_id' => $extension->extension,
+                        'label' => $extension->extension,
+                        'password' => $extension->password,
+                        'sip_port' => get_domain_setting('line_sip_port'),
+                        'sip_transport' => get_domain_setting('line_sip_transport'),
+                        'register_expires' => get_domain_setting('line_register_expires'),
+                        'shared_line' => $sharedLine,
+                        'enabled' => 'true',
+                        'domain_uuid' => $device->domain_uuid
+                    ]);
+                    $deviceLines->save();
+
+                    // Set device label based on the first extension
+                    if ($index === 0) {
+                        $device->update(['device_label' => $extension->extension]);
+                    }
+                }
+            }
+        }
     }
+
+
+    // public function createDeviceLines($deviceUuids, $lines)
+    // {
+    //     // Retrieve all devices at once with their lines
+    //     $devices = $this->model::whereIn('device_uuid', $deviceUuids)
+    //         ->get(['device_uuid', 'domain_uuid']);
+
+    //     $domain_uuid = $devices->first()->domain_uuid;
+    //     $domain_name = Domain::find($domain_uuid)->domain_name;
+
+    //     $extension = Extensions::where('domain_uuid', $domain_uuid)
+    //         ->where('extension', $extension_number)
+    //         ->select([
+    //             'extension_uuid',
+    //             'extension',
+    //             'password'
+    //         ])
+    //         ->first();
+
+    //     foreach ($devices as $device) {
+    //         $deviceLines = new DeviceLines();
+    //         $deviceLines->fill([
+    //             'device_uuid' => $device->device_uuid,
+    //             'line_number' => '1',
+    //             'server_address' => $domain_name,
+    //             'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+    //             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
+    //             'server_address_primary' => get_domain_setting('server_address_primary'),
+    //             'server_address_secondary' => get_domain_setting('server_address_secondary'),
+    //             'display_name' => $extension->extension,
+    //             'user_id' => $extension->extension,
+    //             'auth_id' => $extension->extension,
+    //             'label' => $extension->extension,
+    //             'password' => $extension->password,
+    //             'sip_port' => get_domain_setting('line_sip_port'),
+    //             'sip_transport' => get_domain_setting('line_sip_transport'),
+    //             'register_expires' => get_domain_setting('line_register_expires'),
+    //             'enabled' => 'true',
+    //             'domain_uuid' => $domain_uuid
+    //         ]);
+    //         $deviceLines->save();
+    //     }
+
+    //     // // Bulk update all devices to set label to extension number
+    //     $this->model::whereIn('device_uuid', $deviceUuids)->update(['device_label' => $extension_number]);
+    // }
 
 
     /**

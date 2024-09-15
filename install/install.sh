@@ -706,6 +706,15 @@ else
     exit 1
 fi
 
+# Restart Supervisor
+sudo systemctl restart supervisor
+if [ $? -eq 0 ]; then
+    print_success "Supervisor restarted successfully."
+else
+    print_error "Error occurred while restarting Supervisor."
+    exit 1
+fi
+
 # Restart Horizon processes under Supervisor
 sudo supervisorctl restart horizon:*
 if [ $? -eq 0 ]; then
