@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use libphonenumber\PhoneNumberUtil;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
-use libphonenumber\PhoneNumberUtil;
+use App\Services\CallRoutingOptionsService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destinations extends Model
 {
@@ -85,6 +86,7 @@ class Destinations extends Model
             unset($model->destination_number_formatted);
             unset($model->destroy_route);
             unset($model->destination_actions_formatted);
+            unset($model->routing_options);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
         });
@@ -106,19 +108,10 @@ class Destinations extends Model
             }
 
             if (!empty($model->destination_actions)) {
-                $model->destination_actions = json_decode($model->destination_actions, true);
-                if(is_array($model->destination_actions)) {
-                    $model->destination_actions_formatted = getTimeoutDestinationsLabels($model->destination_actions);
-                    $actions = null;
-                    foreach ($model->destination_actions as $action) {
-                        if (!empty($action['destination_data'])) {
-                            $actions[] = [
-                                'value' => ['value' => $action['destination_data']],
-                            ];
-                        }
-                    }
-                    $model->destination_actions = $actions;
-                }
+
+                $callRoutingOptionsService = new CallRoutingOptionsService();
+
+                $model->routing_options = $callRoutingOptionsService->reverseEngineerDestinationActions($model->destination_actions);
             }
 
             if (!empty($model->destination_conditions)) {
@@ -130,7 +123,9 @@ class Destinations extends Model
                             $conditions[] = [
                                 'condition_field' => $condition['condition_field'],
                                 'condition_expression' => $condition['condition_expression'],
-                                'value' => ['value' => $condition['condition_data']],
+                                'condition_target' => [
+                                    'targetValue' => $condition['condition_data']
+                                ],
                             ];
                         }
                     }

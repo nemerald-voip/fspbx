@@ -25,25 +25,17 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'destination_number' => [
-                'required',
-                Rule::unique('App\Models\Destinations', 'destination_number')
-                    ->ignore($this->get('destination_uuid'), 'destination_uuid')
-            ],
-            'destination_prefix' => [
-                'nullable'
-            ],
+            // 'destination_number' => [
+            //     'required',
+            //     Rule::unique('App\Models\Destinations', 'destination_number')
+            //         ->ignore($this->get('destination_uuid'), 'destination_uuid')
+            // ],
+            // 'destination_prefix' => [
+            //     'nullable'
+            // ],
             'destination_accountcode' => [
                 'nullable',
                 'string',
-            ],
-            'destination_actions' => [
-                'nullable',
-                'array',
-            ],
-            'destination_actions.*.value.value' => [
-                'nullable',
-                'string'
             ],
             'destination_conditions' => [
                 'nullable',
@@ -56,7 +48,7 @@ class UpdatePhoneNumberRequest extends FormRequest
             'destination_conditions.*.condition_expression' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
             ],
-            'destination_conditions.*.value.value' => [
+            'destination_conditions.*.condition_target.targetValue' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
                 'string',
             ],
@@ -99,6 +91,10 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'routing_options' => [
+                'nullable',
+                'array',
+            ],
         ];
     }
 
@@ -118,7 +114,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
                 $customMessages[$field][] = "Please use valid US phone number on condition " . ($index + 1);
             }
-            if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
+            if (preg_match('/destination_conditions\.(\d+)\.condition_target.targetValue/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
                 $customMessages[$field][] = "Please select action on condition " . ($index + 1);
             }
@@ -135,7 +131,7 @@ class UpdatePhoneNumberRequest extends FormRequest
     {
         return [
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
-            'destination_conditions.*.value.value' => 'Please select action on condition',
+            'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
