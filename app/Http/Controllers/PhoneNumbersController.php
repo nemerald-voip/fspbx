@@ -10,7 +10,6 @@ use App\Models\FusionCache;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DialplanDetails;
-use App\Services\ActionsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +21,6 @@ use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
-use App\Services\DestinationDataService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class PhoneNumbersController extends Controller
@@ -69,7 +67,6 @@ class PhoneNumbersController extends Controller
                     'bulk_update' => route('phone-numbers.bulk.update'),
                     'bulk_delete' => route('phone-numbers.bulk.delete'),
                     'item_options' => route('phone-numbers.item.options'),
-                    // 'select_all' => route('messages.settings.select.all'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
@@ -109,31 +106,6 @@ class PhoneNumbersController extends Controller
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
 
-            // logger($routingTypes);
-
-
-            // $voicemails =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
-            //     ->with(['extension' => function ($query) use ($domain_uuid) {
-            //         $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-            //             ->where('domain_uuid', $domain_uuid);
-            //     }])
-            //     ->select(
-            //         'voicemail_uuid',
-            //         'voicemail_id',
-            //         'voicemail_description',
-
-            //     )
-            //     ->orderBy('voicemail_id', 'asc')
-            //     ->get();
-
-            // // Transform the collection into the desired array format
-            // $voicemailOptions = $voicemails->map(function ($voicemail) {
-            //     return [
-            //         'value' => $voicemail->voicemail_uuid,
-            //         'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
-            //     ];
-            // })->toArray();
-
             $faxes = [];
             $faxesCollection = Faxes::query();
             $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
@@ -171,61 +143,14 @@ class PhoneNumbersController extends Controller
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
-                // // Transform greetings into the desired array format
-                // $greetingsArray = $voicemail->greetings
-                //     ->sortBy('greeting_id')
-                //     ->map(function ($greeting) {
-                //         return [
-                //             'value' => $greeting->greeting_id,
-                //             'name' => $greeting->greeting_name,
-                //         ];
-                //     })->toArray();
-
-                // // Add the default options at the beginning of the array
-                // array_unshift(
-                //     $greetingsArray,
-                //     ['value' => '0', 'name' => 'None'],
-                //     ['value' => '-1', 'name' => 'System Default']
-                // );
-
                 // Define the update route
                 $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
             } else {
                 // Create a new voicemail if item_uuid is not provided
-                $voicemail = $this->model;
-                $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
-                $voicemail->voicemail_password = $voicemail->voicemail_id;
-                $voicemail->voicemail_file = get_domain_setting('voicemail_file');
-                $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
-                $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
-                $voicemail->voicemail_tutorial = 'false';
-                $voicemail->voicemail_enabled = 'true';
-                $voicemail->voicemail_recording_instructions = 'true';
+                $phoneNumber = $this->model;
             }
 
             $permissions = $this->getUserPermissions();
-            // logger($permissions);
-
-            // // Extract voicemail_destinations and format it for frontend
-            // $voicemailCopies = [];
-            // if ($voicemail->voicemail_destinations) {
-            //     $voicemailCopies = $voicemail->voicemail_destinations->map(function ($destination) {
-            //         return [
-            //             'value' => $destination->voicemail_uuid_copy, // Set the value to voicemail_uuid_copy
-            //             'name' => ''
-            //         ];
-            //     })->toArray();
-            // }
-
-            // $openAiVoices = [
-            //     ['value' => 'alloy', 'name' => 'Alloy'],
-            //     ['value' => 'echo', 'name' => 'Echo'],
-            //     ['value' => 'fable', 'name' => 'Fable'],
-            //     ['value' => 'onyx', 'name' => 'Onyx'],
-            //     ['value' => 'nova', 'name' => 'Nova'],
-            //     ['value' => 'shimmer', 'name' => 'Shimmer'],
-            // ];
-
 
             $routes = [
                 'update_route' => $updateRoute ?? null,
@@ -297,16 +222,6 @@ class PhoneNumbersController extends Controller
         } else {
             $data = $data->get(); // This will return a collection
         }
-
-        // $destinationDataService = new DestinationDataService();
-        // // Map destination actions for each record
-        // $data->transform(function ($item) use ($destinationDataService) {
-        //     logger('hey');
-        //     logger($item->destination_actions);
-        //     $item->routing_options = $destinationDataService->reverseEngineerDestinationActions($item->destination_actions);
-        //     logger($item->routing_options);
-        //     return $item;
-        // });
 
         return $data;
     }
@@ -398,7 +313,16 @@ class PhoneNumbersController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-            $inputs = $this->processActionConditionInputs($inputs);
+            // Process routing_options to form destination_actions
+            $destination_actions = [];
+            if (!empty($inputs['routing_options'])) {
+                foreach ($inputs['routing_options'] as $option) {
+                    $destination_actions[] = $this->buildDestinationAction($option);
+                }
+            }
+
+            // Assign the formatted actions to the destination_actions field
+            $inputs['destination_actions'] = json_encode($destination_actions);
 
             $instance = $this->model;
             $instance->fill([
@@ -408,7 +332,7 @@ class PhoneNumbersController extends Controller
                 'destination_prefix' => $inputs['destination_prefix'],
                 'destination_number' => $inputs['destination_number'],
                 'destination_actions' => $inputs['destination_actions'],
-                'destination_conditions' => $inputs['destination_conditions'],
+                // 'destination_conditions' => $inputs['destination_conditions'],
                 'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,
@@ -611,7 +535,7 @@ class PhoneNumbersController extends Controller
 
                 // Add other cases as necessary for different types
             default:
-                return null;
+                return [];
         }
     }
 

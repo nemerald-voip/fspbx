@@ -162,14 +162,12 @@ function updateRoutingOptions(newValue, index) {
         return { type, option, extension };
     });
 
-    console.log(routingOptions.value);
     emit('update:model-value', updatedOptions);
 }
 
 
 // Add a new routing option
 const addRoutingOption = () => {
-    console.log(routingOptions.value);
     if (routingOptions.value.length < props.maxRouteLimit) {
         routingOptions.value.push({
             type: null,
@@ -181,14 +179,11 @@ const addRoutingOption = () => {
 
 const removeRoutingOption = (index) => {
     // console.log(routingOptions.value);
-    console.log(index);
     routingOptions.value.splice(index, 1);
 
     // Reassign the array to force Vue to track reactivity properly
     routingOptions.value = [...routingOptions.value];
-
-    console.log(routingOptions.value);
-
+    
     const updatedOptions = routingOptions.value.map(({ type, option }) => {
         return { type, option };
     });

@@ -37,14 +37,6 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
-            'destination_actions' => [
-                'nullable',
-                'array',
-            ],
-            'destination_actions.*.targetValue' => [
-                'nullable',
-                'string'
-            ],
             'destination_conditions' => [
                 'nullable',
                 'array',
@@ -99,6 +91,10 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_context' => [
                 'nullable',
                 'string',
+            ],
+            'routing_options' => [
+                'nullable',
+                'array',
             ],
         ];
     }

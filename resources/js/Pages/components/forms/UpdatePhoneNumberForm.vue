@@ -285,7 +285,6 @@ import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { PhoneIcon } from "@heroicons/vue/24/outline";
 
 
 
@@ -333,53 +332,8 @@ const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
     'MusicalNoteIcon': MusicalNoteIcon,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
-    'PhoneIcon': PhoneIcon
 };
 
-// onBeforeMount(() => {
-//     if (form.destination_actions) {
-//         form.destination_actions = form.destination_actions.map(action => {
-//             const targetValue = action.targetValue.toLowerCase();
-//             let matchedAction = action;
-//             for (const [key, actionGroup] of Object.entries(props.options.actions)) {
-//                 const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
-//                 if (option) {
-//                     matchedAction = {
-//                         name: actionGroup.name,
-//                         value: key,
-//                         targetName: option.name,
-//                         targetValue: option.value,
-//                     };
-//                     break;
-//                 }
-//             }
-//             return matchedAction;
-//         });
-//     }
-//     if (form.destination_conditions) {
-//         conditions.value = form.destination_conditions.map(condition => {
-//             const targetValue = condition.condition_target.targetValue.toLowerCase();
-//             let targetMatched = null;
-//             for (const [key, actionGroup] of Object.entries(props.options.actions)) {
-//                 const option = actionGroup.options.find(opt => opt.value.toLowerCase().includes(targetValue));
-//                 if (option) {
-//                     targetMatched = {
-//                         name: actionGroup.name,
-//                         value: key,
-//                         targetName: option.name,
-//                         targetValue: option.value,
-//                     };
-//                     break;
-//                 }
-//             }
-//             return {
-//                 ...condition,
-//                 id: Math.random().toString(36).slice(2, 7),  // Assuming `generateUniqueId()` is a function to generate unique IDs
-//                 condition_target: targetMatched ? [targetMatched] : condition.condition_target,
-//             };
-//         });
-//     }
-// });
 
 const submitForm = () => {
     // Transform conditions before submit

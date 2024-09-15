@@ -23,13 +23,13 @@ class CallRoutingOptionsService
         ['value' => 'extensions', 'name' => 'Extension'],
         ['value' => 'voicemails', 'name' => 'Voicemail'],
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
-        ['value' => 'ivr_menus', 'name' => 'Auto Receptionist'],
+        ['value' => 'ivrs', 'name' => 'Auto Receptionist'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
-        ['value' => 'other', 'name' => 'Other']
+        // ['value' => 'other', 'name' => 'Other']
     ];
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
@@ -83,7 +83,7 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Extensions::class, 'extension', 'effective_caller_id_name');
             case 'faxes':
                 return $this->buildOptions(Faxes::class, 'fax_extension', 'fax_name');
-            case 'ivr_menus':
+            case 'ivrs':
                 return $this->buildOptions(IvrMenus::class, 'ivr_menu_extension', 'ivr_menu_name');
             case 'recordings':
                 return $this->buildOptions(Recordings::class, 'recording_filename', 'recording_name');
@@ -138,7 +138,7 @@ class CallRoutingOptionsService
             if ($model === Voicemails::class) {
                 if ($row->extension) {
                     // Use extension's name_formatted if extension exists
-                    $name = $row->extension->name_formatted ;
+                    $name = $row->extension->name_formatted;
                 } else {
                     // Fallback to voicemail_id - "Team voicemail" if extension does not exist
                     $name =  $row->voicemail_id . " - Team voicemail";
@@ -146,12 +146,12 @@ class CallRoutingOptionsService
             }
 
             if ($model === Recordings::class) {
-                    $name = $row->$nameField ;
+                $name = $row->$nameField;
             }
 
             $options[] = [
                 'value' => $row->{$modelInstance->getKeyName()},
-                'extension' => $row->$extensionField, 
+                'extension' => $row->$extensionField,
                 'name' => $name,
             ];
         }
@@ -179,5 +179,158 @@ class CallRoutingOptionsService
                 'name' => 'Record'
             ]
         ];
+    }
+
+
+    /**
+     * Reverse engineer the destination actions.
+     *
+     * @param string $destinationActions JSON encoded destination actions.
+     * @return array Reverse-engineered routing options.
+     */
+    public function reverseEngineerDestinationActions($destinationActions)
+    {
+        // Decode the JSON into an array
+        $actions = json_decode($destinationActions, true);
+
+        $routing_options = [];
+
+        foreach ($actions as $action) {
+            switch ($action['destination_app']) {
+                case 'transfer':
+                    // Use regex and the Dialplan database to determine the type and details
+                    $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
+                    break;
+
+                case 'lua':
+                    // Handle recordings
+                    $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
+                    break;
+
+                    // Add more cases as necessary
+            }
+        }
+
+        return $routing_options;
+    }
+
+    /**
+     * Reverse engineer a 'transfer' action based on destination_data.
+     */
+    protected function reverseEngineerTransferAction($destinationData)
+    {
+        // Extract the extension/identifier from destination_data
+        $extension = explode(' ', $destinationData)[0]; // Extracts '0600' from '0600 XML tenant.domain.net'
+
+        // Use regex and check in the Dialplan database to determine what this extension belongs to
+        $dialplan = Dialplans::where(function ($query) use ($extension) {
+            $query->where('dialplan_number', $extension)
+                ->orWhere('dialplan_number', '=', '1' . $extension);
+        })
+            ->where('dialplan_enabled', 'true')
+            ->where('domain_uuid', session('domain_uuid'))
+            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml')
+            ->first();
+
+        // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
+        if ($dialplan) {
+            return $this->mapDialplanToRoutingOption($dialplan, $extension);
+        }
+
+        // Check if destination is voicemail
+        if ((substr($extension, 0, 3) == '*99') !== false) {
+            $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
+                ->where('voicemail_id', substr($extension, 3))
+                ->first();
+
+            if (!$voicemail) return null;
+            return [
+                'type' => 'voicemails',
+                'extension' => $voicemail->voicemail_id,
+                'option' => $voicemail->voicemail_uuid,
+            ];
+        }
+
+        // Fallback: assume it's an extension if no Dialplan match
+        $ext = Extensions::where('domain_uuid', session('domain_uuid'))
+            ->where('extension', $extension)
+            ->first();
+        if (!$ext) {
+            return null;
+        } else {
+            return [
+                'type' => 'extensions',
+                'extension' => $ext->extension,
+                'option' => $ext->extension_uuid,
+            ];
+        }
+    }
+
+    /**
+     * Map Dialplan data back to a routing option.
+     */
+    protected function mapDialplanToRoutingOption($dialplan, $extension)
+    {
+        // Define regex patterns to determine what the dialplan matches
+        $patterns = [
+            'ring_groups' => '/ring_group_uuid=([0-9a-fA-F-]+)/',
+            'ivrs' => '/ivr_menu_uuid=([0-9a-fA-F-]+)/',
+            'contact_centers' => '/call_center_queue_uuid=([0-9a-fA-F-]+)/',
+            'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
+            'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
+            'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
+        ];
+
+        foreach ($patterns as $type => $pattern) {
+            if (preg_match($pattern, $dialplan->dialplan_xml, $matches)) {
+                if ($type === 'time_conditions') {
+                    // For time conditions, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $dialplan->dialplan_uuid,
+                    ];
+                }
+
+                // For non-time condition types
+                return [
+                    'type' => $type,
+                    'extension' => $extension,
+                    'option' => $matches[1],
+                ];
+            }
+        }
+
+        // If no specific type was matched, return empty array
+        return [];
+    }
+
+    /**
+     * Extract recording UUID from lua destination data.
+     */
+    protected function extractRecordingUuidFromData($destinationData)
+    {
+
+        // Split the string by spaces
+        $parts = explode(' ', $destinationData);
+
+        // Get the second part, which is the file name
+        if (isset($parts[1])) {
+            $fileName = $parts[1]; // This will return the file name (e.g., recorded_0bbac5f48265cd0392946a0f2f79423c.wav)
+        }
+
+        $recording = Recordings::where('domain_uuid', session('domain_uuid'))
+            ->where('recording_filename', $fileName)
+            ->first();
+
+        if ($recording) {
+            return [
+                'type' => 'recordings',
+                'extension' => $fileName,
+                'option' => $recording->recording_uuid,
+            ];
+        } else {
+            return [];
+        }
     }
 }

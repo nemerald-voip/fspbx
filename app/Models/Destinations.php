@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use App\Services\ActionsService;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
-use App\Services\DestinationDataService;
 use libphonenumber\NumberParseException;
+use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destinations extends Model
@@ -110,11 +109,9 @@ class Destinations extends Model
 
             if (!empty($model->destination_actions)) {
 
-                $destinationDataService = new DestinationDataService();
+                $callRoutingOptionsService = new CallRoutingOptionsService();
 
-                $model->routing_options = $destinationDataService->reverseEngineerDestinationActions($model->destination_actions);
-
-                logger($model->routing_options);
+                $model->routing_options = $callRoutingOptionsService->reverseEngineerDestinationActions($model->destination_actions);
             }
 
             if (!empty($model->destination_conditions)) {

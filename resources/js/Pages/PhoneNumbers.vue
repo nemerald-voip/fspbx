@@ -54,8 +54,7 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Call Routing"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
@@ -111,14 +110,20 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ul v-if="row.destination_actions_formatted">
-                            <li v-for="(action, index) in row.destination_actions_formatted" :key="index">
-                                {{action}}
+                        <ul v-if="row.routing_options">
+                            <li v-for="(action, index) in row.routing_options" :key="index">
+                                <span v-if="action && action.type && action.extension">
+                                    Type: {{ action.type }}, Extension: {{ action.extension }}
+                                </span>
+                                <span v-else>
+                                    Invalid action data
+                                </span>
                             </li>
                         </ul>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.destination_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.destination_description" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <StatusBadge :enabled="row.destination_enabled" />
@@ -169,28 +174,29 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-6xl'"
         @close="handleModalClose">
         <template #modal-body>
-            <CreatePhoneNumberForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="createFormSubmitting" @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <CreatePhoneNumberForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmitting"
+                @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Update Phone Number Settings - ' + itemOptions?.phone_number?.destination_number_formatted" :loading="loadingModal"
-        :customClass="'sm:max-w-6xl'" @close="handleModalClose">
+    <AddEditItemModal :show="editModalTrigger"
+        :header="'Update Phone Number Settings - ' + itemOptions?.phone_number?.destination_number_formatted"
+        :loading="loadingModal" :customClass="'sm:max-w-6xl'" @close="handleModalClose">
         <template #modal-body>
-            <UpdatePhoneNumberForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmitting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
+            <UpdatePhoneNumberForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-    
+
     <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-                      @close="handleModalClose">
+        @close="handleModalClose">
         <template #modal-body>
             <BulkUpdatePhoneNumberForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                                  :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                                  @domain-selected="getItemOptions" />
+                :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
+                @domain-selected="getItemOptions" />
         </template>
     </AddEditItemModal>
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
@@ -316,7 +322,7 @@ const handleCreateRequest = (form) => {
 const handleUpdateRequest = (form) => {
     updateFormSubmitting.value = true;
     formErrors.value = null;
-    
+
     axios.put(form.update_route, form)
         .then((response) => {
             updateFormSubmitting.value = false;
@@ -504,30 +510,6 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
-
-// const getItemOptions = (domain_uuid) => {
-//     router.get(props.routes.current_page,
-//         {
-//             'domain_uuid': domain_uuid,
-//         },
-//         {
-//             preserveScroll: true,
-//             preserveState: true,
-//             only: [
-//                 'itemOptions',
-//             ],
-//             onSuccess: (page) => {
-//                 loadingModal.value = false;
-//             },
-//             onFinish: () => {
-//                 loadingModal.value = false;
-//             },
-//             onError: (errors) => {
-//                 console.log(errors);
-//             },
-
-//         });
-// }
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {
