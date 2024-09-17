@@ -31,7 +31,7 @@ class AppsCredentialsController extends Controller
         return Inertia::render('Auth/MobileAppGetPassword',
             [
                 'display_name' => $extension->effective_caller_id_name,
-                'domain' => ($extensionDomain->domain_description) ?: $extensionDomain->domain_name,
+                'domain' => $extensionDomain->domain_name,
                 'username' => $extension->extension,
                 'extension' => $extension->extension,
                 'routes' => [

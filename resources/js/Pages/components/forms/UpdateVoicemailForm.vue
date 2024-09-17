@@ -225,7 +225,7 @@
 
                             </div>
 
-            
+
 
 
                         </div>
@@ -314,10 +314,9 @@
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
-    
+
     <DeleteConfirmationModal :show="confirmationModalTriggerForName" @close="confirmationModalTriggerforName = false"
         @confirm="confirmDeleteNameAction" />
-
 </template>
 
 <script setup>
@@ -421,7 +420,7 @@ const form = reactive({
     voicemail_copies: props.options.voicemail_copies,
     voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
     voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
-    update_route: props.options.update_route,
+    update_route: props.options.routes.update_route,
     greeting_id: props.options.voicemail.greeting_id,
     _token: page.props.csrf_token,
 })
@@ -429,6 +428,12 @@ const form = reactive({
 const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
 const submitForm = () => {
+    // Normalize voicemail_copies to an array of values
+    form.voicemail_copies = form.voicemail_copies.map(item => {
+        // If it's an object, return the 'value', otherwise, return the item itself
+        return typeof item === 'object' ? item.value : item;
+    });
+
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -674,7 +679,7 @@ const getRoutesForGreetingForm = computed(() => {
     return {
         ...localOptions.routes,
         text_to_speech_route: localOptions.routes.text_to_speech_route,
-        upload_greeting_route: localOptions.routes.upload_greeting_route 
+        upload_greeting_route: localOptions.routes.upload_greeting_route
     };
 });
 
@@ -683,17 +688,19 @@ const getRoutesForNameForm = computed(() => {
     return {
         ...localOptions.routes,
         text_to_speech_route: localOptions.routes.text_to_speech_route_for_name,
-        upload_greeting_route: localOptions.routes.upload_greeting_route_for_name, 
+        upload_greeting_route: localOptions.routes.upload_greeting_route_for_name,
     };
 });
 
 
 </script>
 
-<style scoped>/* This will mask the text input to behave like a password field */
+<style scoped>
+/* This will mask the text input to behave like a password field */
 .password-field {
     -webkit-text-security: disc;
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>

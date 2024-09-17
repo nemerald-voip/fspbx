@@ -65,6 +65,14 @@ else
     exit 1
 fi
 
+sudo sed 's#memory_limit = .*#memory_limit = 512M#g' -i /etc/php/8.1/fpm/php.ini
+if [ $? -eq 0 ]; then
+    print_success "memory_limit updated to 512M in php.ini."
+else
+    print_error "Error occurred while updating memory_limit in php.ini."
+    exit 1
+fi
+
 sudo sed 's#;max_input_vars = .*#max_input_vars = 8000#g' -i /etc/php/8.1/fpm/php.ini
 if [ $? -eq 0 ]; then
     print_success "max_input_vars updated to 8000 in php.ini."
@@ -703,6 +711,15 @@ if [ $? -eq 0 ]; then
     print_success "Supervisor updated with new configuration successfully."
 else
     print_error "Error occurred while updating Supervisor with new configuration."
+    exit 1
+fi
+
+# Restart Supervisor
+sudo systemctl restart supervisor
+if [ $? -eq 0 ]; then
+    print_success "Supervisor restarted successfully."
+else
+    print_error "Error occurred while restarting Supervisor."
     exit 1
 fi
 

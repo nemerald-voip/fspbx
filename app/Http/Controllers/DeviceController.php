@@ -244,8 +244,6 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        logger($inputs);
-
         try {
             // Create a new instance of the device model
             $instance = $this->model;
@@ -390,19 +388,19 @@ class DeviceController extends Controller
                         $deviceLines->fill([
                             'device_uuid' => $device->device_uuid,
                             'line_number' => $line['line_number'],
-                            'server_address' => Session::get('domain_name'),
-                            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                            'server_address_primary' => get_domain_setting('server_address_primary'),
-                            'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                            'server_address' => $line['server_address'] ?? session('domain_name'),
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
+                            'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
+                            'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
                             'display_name' => $line['display_name'],
                             'user_id' => $extension->extension,
                             'auth_id' => $extension->extension,
                             'label' => $extension->extension,
                             'password' => $extension->password,
-                            'sip_port' => get_domain_setting('line_sip_port'),
-                            'sip_transport' => get_domain_setting('line_sip_transport'),
-                            'register_expires' => get_domain_setting('line_register_expires'),
+                            'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port'),
+                            'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport'),
+                            'register_expires' => $line['register_expires'] ?? get_domain_setting('line_register_expires'),
                             'shared_line' => $sharedLine,
                             'enabled' => 'true',
                             'domain_uuid' => $device->domain_uuid
@@ -518,6 +516,12 @@ class DeviceController extends Controller
                         'user_id',
                         'display_name',
                         'shared_line',
+                        'server_address',
+                        'server_address_primary',
+                        'server_address_secondary',
+                        'sip_port',
+                        'sip_transport',
+                        'register_expires'
                     ])
                     ->map(function ($line) use ($device) {
                         if ($line->shared_line) {
@@ -559,6 +563,13 @@ class DeviceController extends Controller
                 ];
             }
 
+            $sipTransportTypes = [
+                ['value' => 'udp', 'name' => 'UDP'],
+                ['value' => 'tcp', 'name' => 'TCP'],
+                ['value' => 'tls', 'name' => 'TLS'],
+                ['value' => 'dns srv', 'name' => 'DNS SRV'],
+            ];
+
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -569,6 +580,7 @@ class DeviceController extends Controller
                 'navigation' => $navigation,
                 'lines' => $lines,
                 'line_key_types' => $lineKeyTypes,
+                'sip_transport_types' => $sipTransportTypes,
                 // Define options for other fields as needed
             ];
 

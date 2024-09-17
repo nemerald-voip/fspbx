@@ -6,7 +6,6 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use libphonenumber\NumberParseException;
 use Propaganistas\LaravelPhone\PhoneNumber;
@@ -38,14 +37,6 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
-            'destination_actions' => [
-                'nullable',
-                'array',
-            ],
-            'destination_actions.*.value.value' => [
-                'nullable',
-                'string'
-            ],
             'destination_conditions' => [
                 'nullable',
                 'array',
@@ -58,7 +49,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'required_if:destination_conditions.*.condition_field,!=,""',
                 'phone:US'
             ],
-            'destination_conditions.*.value.value' => [
+            'destination_conditions.*.condition_target.targetValue' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
                 'string',
             ],
@@ -101,6 +92,10 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'routing_options' => [
+                'nullable',
+                'array',
+            ],
         ];
     }
 
@@ -120,7 +115,7 @@ class StorePhoneNumberRequest extends FormRequest
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
                 $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
             }
-            if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
+            if (preg_match('/destination_conditions\.(\d+)\.condition_target.targetValue/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
                 $customMessages[$field][] = "Please select action on condition ".($index + 1);
             }
@@ -139,7 +134,7 @@ class StorePhoneNumberRequest extends FormRequest
             'destination_number.required' => 'Phone number is required',
             'destination_number.unique' => 'This phone number is already used',
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
-            'destination_conditions.*.value.value' => 'Please select action on condition',
+            'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
             'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
@@ -173,13 +168,24 @@ class StorePhoneNumberRequest extends FormRequest
         //     'destination_caller_id_number' => $destinationCallerIdNumber
         // ]);
 
+        try {
+            $this->merge([
+                'destination_number' => str_replace('+1', '', (new PhoneNumber($phone, "US"))->formatE164()),
+            ]);
+        } catch (NumberParseException $e) {
+            $this->merge([
+                'destination_number' => null
+            ]);
+        }
+
         if ($this->has('destination_conditions')) {
             $destinationConditions = [];
             foreach ($this->get('destination_conditions') as $condition) {
                 try {
-                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
+                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'],
+                        "US"))->formatE164();
                 } catch (NumberParseException $e) {
-                    //
+                    $condition['condition_expression'] = null;
                 }
                 $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
                 $destinationConditions[] = $condition;

@@ -9,7 +9,8 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings') "
+                    <ExclamationCircleIcon
+                        v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -112,24 +113,57 @@
                                 </div>
 
                                 <div class="text-sm font-medium leading-6 text-gray-900">
-                                    <EllipsisVerticalIcon @click="handleEditRequest(row.device_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    <!-- <EllipsisVerticalIcon @click="handleEditRequest(row.device_uuid)"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+
+                                    <Menu as="div" class="relative inline-block text-left">
+                                        <div>
+                                            <MenuButton
+                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+                                                <span class="sr-only">Open options</span>
+                                                <EllipsisVerticalIcon
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                                    aria-hidden="true" />
+                                            </MenuButton>
+                                        </div>
+
+                                        <transition enter-active-class="transition ease-out duration-100"
+                                            enter-from-class="transform opacity-0 scale-95"
+                                            enter-to-class="transform opacity-100 scale-100"
+                                            leave-active-class="transition ease-in duration-75"
+                                            leave-from-class="transform opacity-100 scale-100"
+                                            leave-to-class="transform opacity-0 scale-95">
+                                            <MenuItems
+                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                <div class="py-1">
+                                                    <MenuItem v-slot="{ active }">
+                                                    <a href="#" @click.prevent="showLineAdvSettings(index)"
+                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Advanced</a>
+                                                    </MenuItem>
+                                                    <MenuItem v-slot="{ active }">
+                                                    <a href="#" @click.prevent="deleteLineKey(index)"
+                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
+                                                    </MenuItem>
+
+                                                </div>
+                                            </MenuItems>
+                                        </transition>
+                                    </Menu>
 
                                 </div>
+
                             </template>
 
                         </div>
 
-                        <div>
-                            <a href="#" @click.prevent="addNewLineKey"
-                                class="block bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
-                                <div class="flex items-center justify-center gap-2">
-                                    <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-                                    <span>
-                                        Add new line key
-                                    </span>
-                                </div>
-                            </a>
+                        <div
+                            class="flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+                            <button href="#" @click.prevent="addNewLineKey" class="flex items-center gap-2">
+                                <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
+                                <span>
+                                    Add new line key
+                                </span>
+                            </button>
                         </div>
 
                     </div>
@@ -151,6 +185,72 @@
 
         </form>
     </div>
+
+    <AddEditItemModal :show="isLineAdvSettingsModalShown" :header="'Edit SIP Settings'" @close="handleModalClose">
+        <template #modal-body>
+            <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 gap-6 ">
+                    <div>
+                        <LabelInputOptional :target="'server_address'" :label="'Domain'" />
+                        <div class="mt-2">
+                            <InputField v-model="form.lines[activeLineIndex].server_address" type="text"
+                                name="server_address" placeholder="Enter domain" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <LabelInputOptional :target="'server_address_primary'" :label="'Primary Server Address'" />
+                        <div class="mt-2">
+                            <InputField v-model="form.lines[activeLineIndex].server_address_primary" type="text"
+                                name="server_address_primary" placeholder="Enter primary server address" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <LabelInputOptional :target="'server_address_secondary'" :label="'Secondary Server Address'" />
+                        <div class="mt-2">
+                            <InputField v-model="form.lines[activeLineIndex].server_address_secondary" type="text"
+                                name="server_address_secondary" placeholder="Enter secondary server address" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <LabelInputOptional :target="'sip_port'" :label="'SIP Port'" />
+                        <div class="mt-2">
+                            <InputField v-model="form.lines[activeLineIndex].sip_port" type="number" name="sip_port"
+                                placeholder="Enter SIP port" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <LabelInputOptional :target="'sip_transport'" :label="'SIP Transport'" />
+                        <div class="mt-2">
+                            <ComboBox :options="options.sip_transport_types"
+                                :selectedItem="form.lines[activeLineIndex].sip_transport" :search="true"
+                                placeholder="Choose SIP transport"
+                                @update:model-value="(value) => handleSipTransportUpdate(value, activeLineIndex)" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <LabelInputOptional :target="'register_expires'" :label="'Register Expires (Seconds)'" />
+                        <div class="mt-2">
+                            <InputField v-model="form.lines[activeLineIndex].register_expires" type="number"
+                                name="register_expires" placeholder="Enter expiry time (seconds)" />
+                        </div>
+                    </div>
+
+                    <button @click.prevent="handleModalClose"
+                        class="flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+
+        </template>
+
+    </AddEditItemModal>
 </template>
 
 <script setup>
@@ -164,8 +264,8 @@ import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
 import { PlusIcon } from "@heroicons/vue/24/solid";
-
-
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
 
@@ -191,6 +291,8 @@ const form = reactive({
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
+const isLineAdvSettingsModalShown = ref(false);
+
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 
@@ -208,6 +310,7 @@ const handleProfileUpdate = (newSelectedItem) => {
 
 const handleExtensionUpdate = (newSelectedItem, index) => {
     form.lines[index].user_id = newSelectedItem.value;
+    form.lines[index].display_name = newSelectedItem.value;
 };
 
 const handleKeyTypeUpdate = (newSelectedItem, index) => {
@@ -252,5 +355,25 @@ const iconComponents = {
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
+
+const deleteLineKey = (index) => {
+    form.lines.splice(index, 1);  // Remove the line key at the specified index
+};
+
+const activeLineIndex = ref(null);
+
+const showLineAdvSettings = (index) => {
+    activeLineIndex.value = index;
+    isLineAdvSettingsModalShown.value = true;
+};
+
+const handleModalClose = () => {
+    isLineAdvSettingsModalShown.value = false;
+};
+
+const handleSipTransportUpdate = (newSelectedItem, index) => {
+    form.lines[index].sip_transport = newSelectedItem.value;
+};
+
 
 </script>
