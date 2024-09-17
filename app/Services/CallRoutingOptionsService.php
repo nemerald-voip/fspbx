@@ -195,19 +195,21 @@ class CallRoutingOptionsService
 
         $routing_options = [];
 
-        foreach ($actions as $action) {
-            switch ($action['destination_app']) {
-                case 'transfer':
-                    // Use regex and the Dialplan database to determine the type and details
-                    $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
-                    break;
-
-                case 'lua':
-                    // Handle recordings
-                    $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
-                    break;
-
-                    // Add more cases as necessary
+        if ($actions) {
+            foreach ($actions as $action) {
+                switch ($action['destination_app']) {
+                    case 'transfer':
+                        // Use regex and the Dialplan database to determine the type and details
+                        $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
+                        break;
+    
+                    case 'lua':
+                        // Handle recordings
+                        $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
+                        break;
+    
+                        // Add more cases as necessary
+                }
             }
         }
 
