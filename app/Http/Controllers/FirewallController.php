@@ -64,7 +64,7 @@ class FirewallController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 10)
+    public function getData($paginate = 50)
     {
 
         // Check if search parameter is present and not empty

@@ -32,6 +32,7 @@ use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\RegistrationsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -131,8 +132,8 @@ Route::group(['middleware' => 'auth'], function () {
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
     Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
-    Route::post('/voicemails/{voicemail}/text-to-speech',[VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
-    Route::post('/voicemails/{voicemail}/text-to-speech-for-name',[VoicemailController::class, 'textToSpeechForName'])->name('voicemails.textToSpeechForName');
+    Route::post('/voicemails/{voicemail}/text-to-speech', [VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
+    Route::post('/voicemails/{voicemail}/text-to-speech-for-name', [VoicemailController::class, 'textToSpeechForName'])->name('voicemails.textToSpeechForName');
     Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file.serve');
     Route::post('/voicemail/{domain}/{voicemail}/{file}', [VoicemailController::class, 'applyVoicemailFile'])->name('voicemail.file.apply');
     Route::post('/voicemail/{domain}/{voicemail}/{file}/name', [VoicemailController::class, 'applyVoicemailFileForName'])->name('voicemail.file.name.apply');
@@ -294,6 +295,9 @@ Route::group(['middleware' => 'auth'], function () {
     // Call Routing options
     Route::post('/call-routing-options', [CallRoutingOptionsController::class, 'getRoutingOptions'])->name('routing.options');
 
+    // Registrations
+    Route::resource('registrations', RegistrationsController::class);
+    Route::post('/registrations/select-all', [DeviceController::class, 'selectAll'])->name('registrations.select.all');
 
 });
 
