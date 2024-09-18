@@ -87,7 +87,7 @@ class Kernel extends ConsoleKernel
     public function getMacAddress()
     {
         // Run the shell command using Process
-        $process = Process::run("ip link show | grep 'link/ether' | awk '{print $2}'");
+        $process = Process::run("ip link show | grep 'link/ether' | awk '{print $2}' | head -n 1");
 
         // Get the output from the process
         $macAddress = trim($process->output());
