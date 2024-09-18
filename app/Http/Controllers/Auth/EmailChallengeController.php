@@ -169,7 +169,7 @@ class EmailChallengeController extends Controller
             $userAdvFields->two_factor_cookies = json_encode($two_factor_cookies);
             $userAdvFields->save(); // Save the changes to the database
 
-            $lifetime = 60 * 24 * 7; //7 days
+            $lifetime = 60 * 24 * 90; //90 days
             Cookie::queue('__TWO_FACTOR_EMAIL', $two_factor_cookie, $lifetime);
             // Cookie::queue('__TWO_FACTOR_EMAIL',$two_factor_cookie,5); // For testing. 5 minutes lifetime only
         }

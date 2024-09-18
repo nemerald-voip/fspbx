@@ -43,7 +43,7 @@
                             <input v-model="form.remember" id="remember" name="remember" type="checkbox"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
                             <label for="remember" class="ml-3 block text-sm leading-6 text-gray-900">Remember this device
-                                for 7 days</label>
+                                for 30 days</label>
                         </div>
 
                     </div>
