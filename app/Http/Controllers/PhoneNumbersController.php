@@ -517,13 +517,13 @@ class PhoneNumbersController extends Controller
             case 'call_flows':
                 return [
                     'destination_app' => 'transfer',
-                    'destination_data' => $option['extension'] . ' XML api.us.nemerald.net',
+                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
                 ];
 
             case 'voicemails':
                 return [
                     'destination_app' => 'transfer',
-                    'destination_data' => '*99' . $option['extension'] . ' XML api.us.nemerald.net',
+                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
                 ];
 
             case 'recordings':
