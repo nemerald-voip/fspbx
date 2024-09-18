@@ -128,6 +128,9 @@ class FreeswitchEslService
                         'transport' => $contactData['transport'] ?? '',
                         'wan_ip' => $contactData['wan_ip'] ?? '',
                         'sip_profile_name' => $sip_profile['sip_profile_name'],
+                        'sip_auth_user' => (string)$registration->{'sip-auth-user'}, // Add this line
+                        'sip_auth_realm' => (string)$registration->{'sip-auth-realm'}, 
+                        'ping_time' => (string)$registration->{'ping-time'}, 
                     ];
                 }
                 // logger($registrations);

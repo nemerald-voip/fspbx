@@ -46,25 +46,27 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header="Date"
+                <TableColumnHeader header="User"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Date</span>
+                    <span class="pl-4">User</span>
                 </TableColumnHeader>
 
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                <TableColumnHeader header="In/Out" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Source" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Message" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <TableColumnHeader header="LAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="WAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Ping" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Sip Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -87,14 +89,14 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.message_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.created_at_formatted">
+                <tr v-for="row in data.data" :key="row.contact">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
                         <div class="flex items-center">
-                            <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox"
+                            <input v-if="row.user" v-model="selectedItems" type="checkbox"
                                 name="action_box[]" :value="row.message_uuid"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
-                                {{ row.created_at_formatted }}
+                                {{ row.user }}
                             </div>
 
                         </div>
@@ -109,21 +111,23 @@
                         </ejs-tooltip>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" /> -->
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.destination_formatted" />
+                        :text="row.lan_ip" />
 
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.message" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
+                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.wan_ip" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.port" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
                         <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
                             :textColor="determineColor(row.status).textColor"
                             :ringColor="determineColor(row.status).ringColor" />
 
                     </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ping_time" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.sip_profile_name" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -308,7 +312,7 @@ const bulkActions = computed(() => {
 });
 
 onMounted(() => {
-    // console.log(props.data);
+    console.log(props.data);
 });
 
 const handleEditRequest = (itemUuid) => {
