@@ -65,6 +65,7 @@
                 <TableColumnHeader header="WAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Exp Sec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Ping" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Sip Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -126,6 +127,7 @@
                             :ringColor="determineColor(row.status).ringColor" />
 
                     </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expsecs" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ping_time" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.sip_profile_name" />
 
@@ -662,25 +664,11 @@ const showNotification = (type, messages = null) => {
 
 const determineColor = (status) => {
   switch (status) {
-    case 'success':
-    case 'emailed':
-    case 'delivered':
-      return {
-        backgroundColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        ringColor: 'ring-green-600/20'
-      };
-    case 'queued':
+    default:
       return {
         backgroundColor: 'bg-blue-50',
         textColor: 'text-blue-700',
         ringColor: 'ring-blue-600/20'
-      };
-    default:
-      return {
-        backgroundColor: 'bg-yellow-50',
-        textColor: 'text-yellow-700',
-        ringColor: 'ring-yellow-600/20'
       };
   }
 };

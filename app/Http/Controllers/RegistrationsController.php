@@ -14,7 +14,6 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Services\FreeswitchEslService;
-use Illuminate\Support\Facades\Session;
 use App\Jobs\SendSmsNotificationToSlack;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -26,7 +25,7 @@ class RegistrationsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Registrations';
-    protected $searchable = ['source', 'destination', 'message'];
+    protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
 
     public function __construct(FreeswitchEslService $eslService)
     {
@@ -39,7 +38,7 @@ class RegistrationsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
 
         return Inertia::render(
@@ -88,12 +87,12 @@ class RegistrationsController extends Controller
             $data = $this->paginateCollection($data, $paginate);
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
 
-        /**
+    /**
      * @param  array  $filters
      * @return Builder
      */
@@ -110,6 +109,16 @@ class RegistrationsController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
+        // Check if showGlobal is set to true, otherwise filter by sip_auth_realm
+        if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
+            $domainName = session('domain_name');
+
+            $data = $data->filter(function ($item) use ($domainName) {
+                return $item['sip_auth_realm'] === $domainName;
+            });
+        }
+
+        // Apply additional filters, if any
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
@@ -124,7 +133,7 @@ class RegistrationsController extends Controller
         return $data->values(); // Ensure re-indexing of the collection
     }
 
-        /**
+    /**
      * Paginate a given collection.
      *
      * @param \Illuminate\Support\Collection $items

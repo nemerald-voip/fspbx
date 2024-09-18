@@ -118,9 +118,28 @@ class FreeswitchEslService
                         }
                     }
 
+                    // Remove expiration date from status
+                    $status = (string)$registration->status;
+                    // Extract expsecs value if present
+                    $expsecs = null;
+                    if (preg_match('/expsecs\((\d+)\)/', $status, $expsecsMatches)) {
+                        $expsecs = (int)$expsecsMatches[1]; // Capture expsecs value
+                    }
+                    // Remove expsecs(), exp() part and (unknown) from the status
+                    $status = preg_replace([
+                        '/expsecs\(\d+\)/', // Remove expsecs()
+                        '/exp\(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)/', // Remove expiration date
+                        '/\(unknown\)/' // Remove (unknown)
+                    ], '', $status);
+
+
+
+                    // Trim any extra spaces and parentheses that may remain
+                    $status = trim($status);
+
                     $registrations[] = [
                         'user' => (string)$registration->user,
-                        'status' => (string)$registration->status,
+                        'status' => (string)$status,
                         'lan_ip' => $contactData['ip'] ?? '',
                         'port' => $contactData['port'] ?? '',
                         'contact' => $contact,
@@ -129,8 +148,9 @@ class FreeswitchEslService
                         'wan_ip' => $contactData['wan_ip'] ?? '',
                         'sip_profile_name' => $sip_profile['sip_profile_name'],
                         'sip_auth_user' => (string)$registration->{'sip-auth-user'}, // Add this line
-                        'sip_auth_realm' => (string)$registration->{'sip-auth-realm'}, 
-                        'ping_time' => (string)$registration->{'ping-time'}, 
+                        'sip_auth_realm' => (string)$registration->{'sip-auth-realm'},
+                        'ping_time' => (string)$registration->{'ping-time'},
+                        'expsecs' => (string)$expsecs,
                     ];
                 }
                 // logger($registrations);
