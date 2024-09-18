@@ -17,6 +17,7 @@ use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
+use App\Services\FreeswitchEslService;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -663,12 +664,12 @@ class DeviceController extends Controller
     }
 
 
-    public function restart()
+    public function restart(FreeswitchEslService $eslService)
     {
         try {
 
             // Get a collection of SIP registrations 
-            $regs = sipRegistrations();
+            $regs = $eslService->getAllSipRegistrations();
 
             //Get device info as a collection
             $devices = $this->model::whereIn('device_uuid', request('devices'))
