@@ -22,18 +22,18 @@
             </template>
 
             <template #action>
-                <!-- <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button type="button" @click.prevent="handleRefreshButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
-                </button> -->
+                    Refresh
+                </button>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="!showGlobal && page.props.auth.can.registrations_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="showGlobal && page.props.auth.can.registrations_view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -128,15 +128,6 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
-                                    </div>
-                                </ejs-tooltip> -->
-
                                 <ejs-tooltip :content="'Restart'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <RestartIcon @click="handleAction(row,'reboot')"
@@ -165,13 +156,6 @@
                                 </div> -->
                                     
 
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
-                                    target="#delete_tooltip_target">
-                                    <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip> -->
                             </div>
                         </template>
                     </TableField>
@@ -200,13 +184,6 @@
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
-
-
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-
 
     <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false"
         @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
@@ -303,36 +280,6 @@ onMounted(() => {
 });
 
 
-
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
-
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
-
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_restart') {
         confirmationActionTrigger.value = true;
@@ -399,6 +346,10 @@ const handleAction = (reg, action) => {
             handleClearSelection();
             handleErrorResponse(error);
         });
+}
+
+const handleRefreshButtonClick = () => {
+    handleSearchButtonClick();
 }
 
 
