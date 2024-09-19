@@ -36,7 +36,7 @@ class FreeswitchEslService
         }
     }
 
-    public function executeCommand($cmd)
+    public function executeCommand($cmd, $disconnect = true)
     {
         try {
             // Send the command and get the response in ESLevent Format
@@ -51,9 +51,13 @@ class FreeswitchEslService
 
             // Convert response to XML
             return $this->convertEslResponse($eslEvent);
+        } catch (Throwable $e) {
+            logger('error executing ESL command');
         } finally {
-            // Ensure the connection is always disconnected
-            $this->disconnect();
+            // Disconnect only if the flag is set to true
+            if ($disconnect) {
+                $this->disconnect();
+            }
         }
     }
 
@@ -68,20 +72,26 @@ class FreeswitchEslService
     {
         // Check if the 'esl' extension is loaded
         if (!extension_loaded('esl')) {
-            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact adminstrator");
+            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact administrator");
         }
 
         // Get all system sip profiles
         $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')
-            ->get();
+            ->get(
+                [
+                    'sip_profile_uuid',
+                    'sip_profile_name',
+                ]
+            );
 
         $registrations = [];
 
         foreach ($sip_profiles as $sip_profile) {
             $cmd = "sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
-            $xml = $this->executeCommand($cmd);
+            $xml = $this->executeCommand($cmd, $disconnect = false); // Do not disconnect after each command
 
             if ($xml) {
+                logger($sip_profile);
                 foreach ($xml->registrations->registration as $registration) {
                     $contact = (string)$registration->contact;
                     $contactData = [];
