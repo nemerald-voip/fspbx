@@ -71,26 +71,15 @@ class FreeswitchEslService
             throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact adminstrator");
         }
 
-        // Get event socket credentials
-        $settings = Settings::first();
-
-        // //create the event socket connection
-        // $conn = new \ESLconnection(
-        //     $settings->event_socket_ip_address,
-        //     $settings->event_socket_port,
-        //     $settings->event_socket_password,
-        // );
-
         // Get all system sip profiles
         $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')
             ->get();
 
+        $registrations = [];
+
         foreach ($sip_profiles as $sip_profile) {
             $cmd = "sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
             $xml = $this->executeCommand($cmd);
-
-
-            // $xml = convertEslResponseToXml($response);
 
             if ($xml) {
                 foreach ($xml->registrations->registration as $registration) {
@@ -158,12 +147,8 @@ class FreeswitchEslService
             }
         }
 
-        if (sizeof($registrations) > 0) {
-            // Return collection of all regisrations
-            return collect($registrations);
-        } else {
-            return null;
-        }
+        return collect($registrations);
+
     }
 
 
