@@ -21,14 +21,6 @@
         @if(!empty($destination_hold_music))
             <action application="export" data="hold_music={{ $phone_number->destination_hold_music }}" inline="true"/>
         @endif
-        @if(!empty($phone_number->destination_actions))
-            @php
-                $destination_actions = json_decode($phone_number->destination_actions, true)
-            @endphp
-            @foreach($destination_actions as $row)
-                <action application="{{$row['destination_app']}}" data="{{$row['destination_data']}}"/>
-            @endforeach
-        @endif
         @if($phone_number->destination_record)
             <action application="set" data="record_path=${recordings_dir}/${domain_name}/archive/${strftime(%Y)}/${strftime(%b)}/${strftime(%d)}" inline="true"/>
             <action application="set" data="record_name=${uuid}.${record_ext}" inline="true"/>
@@ -37,7 +29,7 @@
             <action application="set" data="recording_follow_transfer=true" inline="true"/>
             <action application="record_session" data="${record_path}/${record_name}" inline="false"/>
         @endif
-        @if($phone_number->destination_cid_name_prefix && !empty($phone_number->destination_cid_name_prefix)) {
+        @if($phone_number->destination_cid_name_prefix && !empty($phone_number->destination_cid_name_prefix))
             <action application="set" data="effective_caller_id_name={{$phone_number->destination_cid_name_prefix}}#${caller_id_name}" inline="false"/>;
         @endif
         @if($phone_number->destination_distinctive_ring && !empty($phone_number->destination_distinctive_ring))
@@ -50,6 +42,14 @@
             <action application="set" data="tone_detect_hits=1" inline="true"/>
             <action application="set" data="execute_on_tone_detect=transfer {{$fax_data->fax_extension}} XML ${domain_name}" inline="true"/>
             <action application="tone_detect" data="fax 1100 r +3000"/>
+        @endif
+        @if(!empty($phone_number->destination_actions))
+            @php
+                $destination_actions = json_decode($phone_number->destination_actions, true)
+            @endphp
+            @foreach($destination_actions as $row)
+                <action application="{{$row['destination_app']}}" data="{{$row['destination_data']}}"/>
+            @endforeach
         @endif
     </condition>
 </extension>

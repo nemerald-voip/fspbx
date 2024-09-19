@@ -42,6 +42,8 @@ import ArrowDropDown from "../icons/ArrowDropDown.vue"
 
 
 const RestartIcon = defineAsyncComponent(() => import('../icons/RestartIcon.vue'));
+const LinkOffIcon = defineAsyncComponent(() => import('../icons/LinkOffIcon.vue'));
+const SyncIcon = defineAsyncComponent(() => import('../icons/SyncIcon.vue'));
 const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PencilSquareIcon'));
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
 
@@ -55,7 +57,9 @@ const props = defineProps({
 const iconMap = {
   RestartIcon,
   PencilSquareIcon,
-  TrashIcon
+  TrashIcon,
+  LinkOffIcon,
+  SyncIcon
 };
 
 const getIconComponent = (iconKey) => {

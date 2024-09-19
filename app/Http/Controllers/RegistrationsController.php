@@ -13,8 +13,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use App\Services\DeviceActionService;
 use App\Services\FreeswitchEslService;
-use Illuminate\Support\Facades\Session;
 use App\Jobs\SendSmsNotificationToSlack;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -26,7 +26,7 @@ class RegistrationsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Registrations';
-    protected $searchable = ['source', 'destination', 'message'];
+    protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
 
     public function __construct(FreeswitchEslService $eslService)
     {
@@ -39,7 +39,7 @@ class RegistrationsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
 
         return Inertia::render(
@@ -57,7 +57,7 @@ class RegistrationsController extends Controller
                     'select_all' => route('registrations.select.all'),
                     // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
-                    // 'retry' => route('messages.retry'),
+                    'action' => route('registrations.action'),
                 ]
             ]
         );
@@ -88,12 +88,12 @@ class RegistrationsController extends Controller
             $data = $this->paginateCollection($data, $paginate);
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
 
-        /**
+    /**
      * @param  array  $filters
      * @return Builder
      */
@@ -110,6 +110,16 @@ class RegistrationsController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
+        // Check if showGlobal is set to true, otherwise filter by sip_auth_realm
+        if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
+            $domainName = session('domain_name');
+
+            $data = $data->filter(function ($item) use ($domainName) {
+                return $item['sip_auth_realm'] === $domainName;
+            });
+        }
+
+        // Apply additional filters, if any
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
@@ -124,7 +134,7 @@ class RegistrationsController extends Controller
         return $data->values(); // Ensure re-indexing of the collection
     }
 
-        /**
+    /**
      * Paginate a given collection.
      *
      * @param \Illuminate\Support\Collection $items
@@ -175,106 +185,19 @@ class RegistrationsController extends Controller
     }
 
 
-    public function retry()
+    public function handleAction(DeviceActionService $deviceActionService)
     {
         try {
-            //Get items info as a collection
-            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
-                ->get();
-
-            foreach ($items as $item) {
-                // get originating extension
-                $extension = Extensions::find($item->extension_uuid);
-
-                // check if there is an email destination
-                $messageSettings = MessageSetting::where('domain_uuid', $item->domain_uuid)
-                    ->where('destination', $item->destination)
-                    ->first();
-
-                if (!$extension && !$messageSettings && !$messageSettings->email) {
-                    throw new Exception('No assigned destination found.');
-                }
-
-
-                if ($item->direction == "out") {
-
-                    //Get message config
-                    $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($extension->extension, $item->domain_uuid);
-                    $carrier =  $phoneNumberSmsConfig->carrier;
-                    // logger($carrier);
-
-                    //Determine message provider
-                    $messageProvider = $this->getMessageProvider($carrier);
-
-                    //Store message in the log database
-                    $item->status = "Queued";
-                    $item->save();
-
-                    // Send message
-                    $messageProvider->send($item->message_uuid);
-                }
-
-                if ($item->direction == "in") {
-                    $org_id = DomainSettings::where('domain_uuid', $item->domain_uuid)
-                        ->where('domain_setting_category', 'app shell')
-                        ->where('domain_setting_subcategory', 'org_id')
-                        ->value('domain_setting_value');
-
-                    if (is_null($org_id)) {
-                        throw new \Exception("From: " . $item->source . " To: " . $item->destination . " \n Org ID not found");
-                    }
-
-                    if ($extension) {
-                        // Logic to deliver the SMS message using a third-party Ringotel API,
-                        try {
-                            $response = Http::ringotel_api()
-                                ->withBody(json_encode([
-                                    'method' => 'message',
-                                    'params' => [
-                                        'orgid' => $org_id,
-                                        'from' => $item->source,
-                                        'to' => $extension->extension,
-                                        'content' => $item->message
-                                    ]
-                                ]), 'application/json')
-                                ->post('/')
-                                ->throw()
-                                ->json();
-
-                            $this->updateMessageStatus($item, $response);
-                        } catch (\Throwable $e) {
-                            logger("Error delivering SMS to Ringotel: {$e->getMessage()}");
-                            SendSmsNotificationToSlack::dispatch("*Inbound SMS Failed*. From: " . $item->source . " To: " . $item->extension . "\nError delivering SMS to Ringotel")->onQueue('messages');
-                            return false;
-                        }
-                    }
-
-                    if ($messageSettings && $messageSettings->email) {
-                        $attributes['orgid'] = $org_id;
-                        $attributes['from'] = $item->source;
-                        $attributes['email_to'] = $messageSettings->email;
-                        $attributes['message'] = $item->message;
-                        $attributes['email_subject'] = 'SMS Notification: New Message from ' . $item->source;
-                        // $attributes['smtp_from'] = config('mail.from.address');
-
-                        // Logic to deliver the SMS message using email
-                        // This method should return a boolean indicating whether the message was sent successfully.
-                        Mail::to($messageSettings->email)->send(new SmsToEmail($attributes));
-
-                        if ($item->status = "queued") {
-                            $item->status = 'emailed';
-                        }
-                        $item->save();
-                    }
-                }
+            foreach (request('regs') as $reg) {
+                $deviceActionService->handleDeviceAction($reg, request('action'));
             }
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Selected message(s) scheduled for sending']]
+                'messages' => ['success' => ['Request has been succesfully processed']]
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage() . PHP_EOL);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]

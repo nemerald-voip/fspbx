@@ -90,6 +90,8 @@ class HandleInertiaRequests extends Middleware
         $permissions['voicemail_destroy'] = userCheckPermission('voicemail_delete');
         $permissions['voicemail_message_index'] = userCheckPermission('voicemail_message_view');
 
+        $permissions['registrations_view_global'] = userCheckPermission('registration_all');
+
         // logger($permissions);
         return $permissions;
     }
