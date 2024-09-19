@@ -36,7 +36,7 @@ class FreeswitchEslService
         }
     }
 
-    public function executeCommand($cmd)
+    public function executeCommand($cmd, $disconnect = true)
     {
         try {
             // Send the command and get the response in ESLevent Format
@@ -51,9 +51,13 @@ class FreeswitchEslService
 
             // Convert response to XML
             return $this->convertEslResponse($eslEvent);
+        } catch (Throwable $e) {
+            logger('error executing ESL command');
         } finally {
-            // Ensure the connection is always disconnected
-            $this->disconnect();
+            // Disconnect only if the flag is set to true
+            if ($disconnect) {
+                $this->disconnect();
+            }
         }
     }
 
@@ -68,31 +72,26 @@ class FreeswitchEslService
     {
         // Check if the 'esl' extension is loaded
         if (!extension_loaded('esl')) {
-            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact adminstrator");
+            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact administrator");
         }
-
-        // Get event socket credentials
-        $settings = Settings::first();
-
-        // //create the event socket connection
-        // $conn = new \ESLconnection(
-        //     $settings->event_socket_ip_address,
-        //     $settings->event_socket_port,
-        //     $settings->event_socket_password,
-        // );
 
         // Get all system sip profiles
         $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')
-            ->get();
+            ->get(
+                [
+                    'sip_profile_uuid',
+                    'sip_profile_name',
+                ]
+            );
+
+        $registrations = [];
 
         foreach ($sip_profiles as $sip_profile) {
             $cmd = "sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
-            $xml = $this->executeCommand($cmd);
-
-
-            // $xml = convertEslResponseToXml($response);
+            $xml = $this->executeCommand($cmd, $disconnect = false); // Do not disconnect after each command
 
             if ($xml) {
+                logger($sip_profile);
                 foreach ($xml->registrations->registration as $registration) {
                     $contact = (string)$registration->contact;
                     $contactData = [];
@@ -118,9 +117,29 @@ class FreeswitchEslService
                         }
                     }
 
+                    // Remove expiration date from status
+                    $status = (string)$registration->status;
+                    // Extract expsecs value if present
+                    $expsecs = null;
+                    if (preg_match('/expsecs\((\d+)\)/', $status, $expsecsMatches)) {
+                        $expsecs = (int)$expsecsMatches[1]; // Capture expsecs value
+                    }
+                    // Remove expsecs(), exp() part and (unknown) from the status
+                    $status = preg_replace([
+                        '/expsecs\(\d+\)/', // Remove expsecs()
+                        '/exp\(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)/', // Remove expiration date
+                        '/\(unknown\)/' // Remove (unknown)
+                    ], '', $status);
+
+
+
+                    // Trim any extra spaces and parentheses that may remain
+                    $status = trim($status);
+
                     $registrations[] = [
+                        'call_id' => (string)$registration->{'call-id'},
                         'user' => (string)$registration->user,
-                        'status' => (string)$registration->status,
+                        'status' => (string)$status,
                         'lan_ip' => $contactData['ip'] ?? '',
                         'port' => $contactData['port'] ?? '',
                         'contact' => $contact,
@@ -129,20 +148,17 @@ class FreeswitchEslService
                         'wan_ip' => $contactData['wan_ip'] ?? '',
                         'sip_profile_name' => $sip_profile['sip_profile_name'],
                         'sip_auth_user' => (string)$registration->{'sip-auth-user'}, // Add this line
-                        'sip_auth_realm' => (string)$registration->{'sip-auth-realm'}, 
-                        'ping_time' => (string)$registration->{'ping-time'}, 
+                        'sip_auth_realm' => (string)$registration->{'sip-auth-realm'},
+                        'ping_time' => (string)$registration->{'ping-time'},
+                        'expsecs' => (string)$expsecs,
                     ];
                 }
                 // logger($registrations);
             }
         }
 
-        if (sizeof($registrations) > 0) {
-            // Return collection of all regisrations
-            return collect($registrations);
-        } else {
-            return null;
-        }
+        return collect($registrations);
+
     }
 
 

@@ -297,7 +297,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Registrations
     Route::resource('registrations', RegistrationsController::class);
-    Route::post('/registrations/select-all', [DeviceController::class, 'selectAll'])->name('registrations.select.all');
+    Route::post('/registrations/select-all', [RegistrationsController::class, 'selectAll'])->name('registrations.select.all');
+    Route::post('/registrations/action', [RegistrationsController::class, 'handleAction'])->name('registrations.action');
 
 });
 
