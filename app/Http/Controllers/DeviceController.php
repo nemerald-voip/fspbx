@@ -7,8 +7,6 @@ use App\Models\Domain;
 use App\Models\Devices;
 use App\Models\Extensions;
 use App\Models\DeviceLines;
-use Illuminate\Http\Request;
-use App\Jobs\SendEventNotify;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Services\LineKeyTypesService;
@@ -17,6 +15,7 @@ use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
+use App\Services\DeviceActionService;
 use App\Services\FreeswitchEslService;
 
 /**
@@ -664,7 +663,7 @@ class DeviceController extends Controller
     }
 
 
-    public function restart(FreeswitchEslService $eslService)
+    public function restart(FreeswitchEslService $eslService, DeviceActionService $deviceActionService)
     {
         try {
 
@@ -696,25 +695,8 @@ class DeviceController extends Controller
                 return $linesCollection->contains(function ($line) use ($authId, $domain) {
                     return $line['auth_id'] === $authId && $line['server_address'] === $domain;
                 });
-            })->each(function ($reg) {
-                // Determine the agent type based on 'agent' string
-                $agent = "";
-                if (preg_match('/Bria|Push|Ringotel/i', $reg['agent'])) {
-                    $agent = "";
-                } elseif (preg_match('/polycom|polyedge/i', $reg['agent'])) {
-                    $agent = "polycom";
-                } elseif (preg_match("/yealink/i", $reg['agent'])) {
-                    $agent = "yealink";
-                } elseif (preg_match("/grandstream/i", $reg['agent'])) {
-                    $agent = "grandstream";
-                }
-
-                // Execute commands if agent is specified
-                if (!empty($agent)) {
-                    $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
-                    logger($command);
-                    SendEventNotify::dispatch($command)->onQueue('default');
-                }
+            })->each(function ($reg) use ($deviceActionService) {
+                $deviceActionService->handleDeviceAction($reg, 'reboot');
             });
 
             // Return a JSON response indicating success

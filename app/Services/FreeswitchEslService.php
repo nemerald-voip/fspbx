@@ -138,6 +138,7 @@ class FreeswitchEslService
                     $status = trim($status);
 
                     $registrations[] = [
+                        'call_id' => (string)$registration->{'call-id'},
                         'user' => (string)$registration->user,
                         'status' => (string)$status,
                         'lan_ip' => $contactData['ip'] ?? '',
