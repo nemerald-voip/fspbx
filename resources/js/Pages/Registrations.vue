@@ -22,10 +22,10 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <!-- <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
-                </button>
+                </button> -->
 
                 <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
@@ -104,13 +104,7 @@
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description">
-                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
-                            <div id="domain_tooltip_target">
-                                {{ row.domain?.domain_description }}
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
+                        :text="row.sip_auth_realm" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
 
@@ -143,12 +137,33 @@
                                     </div>
                                 </ejs-tooltip> -->
 
-                                <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
+                                <ejs-tooltip :content="'Restart'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <RestartIcon @click="handleRetry(row.message_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+
+                                <ejs-tooltip :content="'Sync'" position='TopCenter' target="#sync_tooltip_target">
+                                    <div id="sync_tooltip_target">
+                                        <SyncIcon @click="handleRetry(row.message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
+                                <ejs-tooltip :content="'Unregister'" position='TopCenter' target="#unregister_tooltip_target">
+                                    <div id="unregister_tooltip_target">
+                                        <LinkOffIcon @click="handleRetry(row.message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
+                                
+                                <!-- <div id="tooltip-no-arrow-sync" role="tooltip" 
+                                    class="inline-block absolute invisible text-xs z-10 py-1 px-2 font-medium text-white rounded-sm shadow-sm opacity-0 tooltip dark:bg-gray-600 delay-150" >
+                                tooltip
+                                </div> -->
+                                    
 
                                 <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
                                     target="#delete_tooltip_target">
@@ -193,33 +208,6 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
-
     <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
         @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
         :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
@@ -246,12 +234,11 @@ import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
-import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
-import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
+import SyncIcon from "./components/icons/SyncIcon.vue";
+import LinkOffIcon from "./components/icons/LinkOffIcon.vue";
 import Notification from "./components/notifications/Notification.vue";
 
 const page = usePage()
@@ -260,24 +247,20 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRetryTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
 const confirmRetryAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
+const restartRequestNotificationSuccessTrigger = ref(false);
+const restartRequestNotificationErrorTrigger = ref(false);
 
 const props = defineProps({
     data: Object,
@@ -299,9 +282,14 @@ const showGlobal = ref(props.showGlobal);
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_retry',
-            label: 'Retry',
+            id: 'bulk_restart',
+            label: 'Restart',
             icon: 'RestartIcon'
+        },
+        {
+            id: 'bulk_sync',
+            label: 'Sync',
+            icon: 'SyncIcon'
         },
         {
             id: 'bulk_delete',
