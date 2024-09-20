@@ -21,7 +21,7 @@
         @if(!empty($destination_hold_music))
             <action application="export" data="hold_music={{ $phone_number->destination_hold_music }}" inline="true"/>
         @endif
-        @if($phone_number->destination_record)
+        @if($phone_number->destination_record == 'true')
             <action application="set" data="record_path=${recordings_dir}/${domain_name}/archive/${strftime(%Y)}/${strftime(%b)}/${strftime(%d)}" inline="true"/>
             <action application="set" data="record_name=${uuid}.${record_ext}" inline="true"/>
             <action application="set" data="record_append=true" inline="true"/>

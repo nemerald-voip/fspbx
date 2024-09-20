@@ -7,6 +7,7 @@ use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Dialplans;
 use App\Models\FusionCache;
+use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DialplanDetails;
@@ -327,6 +328,7 @@ class PhoneNumbersController extends Controller
             $instance = $this->model;
             $instance->fill([
                 'domain_uuid' => $inputs['domain_uuid'],
+                'dialplan_uuid' => Str::uuid(),
                 'fax_uuid' => $inputs['fax_uuid'] ?? null,
                 'destination_type' => 'inbound',
                 'destination_prefix' => $inputs['destination_prefix'],
@@ -337,11 +339,12 @@ class PhoneNumbersController extends Controller
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,
                 'destination_record' => $inputs['destination_record'] ?? false,
+                'destination_type_fax' => $inputs['destination_type_fax'] ?? false,
                 'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
                 'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
                 'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
                 'destination_context' => $inputs['destination_context'] ?? 'public',
-            ]);;
+            ]);
             $instance->save();
 
             $this->generateDialPlanXML($instance);
@@ -487,7 +490,6 @@ class PhoneNumbersController extends Controller
 
             // Assign the formatted actions to the destination_actions field
             $inputs['destination_actions'] = json_encode($destination_actions);
-
 
             $phone_number->update($inputs);
 
@@ -662,9 +664,6 @@ class PhoneNumbersController extends Controller
         }
 
         $dialPlan->save();
-
-        $phoneNumber->dialplan_uuid = $dialPlan->dialplan_uuid;
-        $phoneNumber->save();
 
         $this->generateDialplanDetails($phoneNumber, $dialPlan);
 
@@ -959,7 +958,7 @@ class PhoneNumbersController extends Controller
             $detailOrder += 10;
         }
 
-        if ($phoneNumber->destination_record) {
+        if ($phoneNumber->destination_record == 'true') {
             //add a variable
             $dialPlanDetails = new DialplanDetails();
             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;

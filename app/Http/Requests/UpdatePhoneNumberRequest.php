@@ -77,10 +77,12 @@ class UpdatePhoneNumberRequest extends FormRequest
                 Rule::exists('v_fax', 'fax_uuid')
             ],
             'destination_enabled' => [
-                Rule::in([true, false]),
+                'nullable',
+                'string',
             ],
             'destination_record' => [
-                Rule::in([true, false]),
+                'nullable',
+                'string',
             ],
             'domain_uuid' => [
                 'required',
@@ -95,6 +97,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
+            'destination_type_fax' => 'present',
         ];
     }
 
@@ -152,8 +155,55 @@ class UpdatePhoneNumberRequest extends FormRequest
             $this->merge(['destination_conditions' => $destinationConditions]);
         }
 
+        if ($this->has('destination_enabled')) {
+            $this->merge([
+                'destination_enabled' => $this->destination_enabled ? 'true' : 'false',
+            ]);
+        }
+
+        if ($this->has('destination_record')) {
+            $this->merge([
+                'destination_record' => $this->destination_record ? 'true' : 'false',
+            ]);
+        }
+
+        if ($this->has('destination_type_fax')) {
+            $this->merge([
+                'destination_type_fax' => $this->destination_type_fax ? 1 : null,
+            ]);
+        }
+
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
+
+        // Sanitize description
+        if ($this->has('destination_description') && $this->destination_description) {
+            $sanitizedDescription = $this->sanitizeInput($this->destination_description);
+            $this->merge(['destination_description' => $sanitizedDescription]);
+        }
+    }
+
+    /**
+     * Sanitize the input field to prevent XSS and remove unwanted characters.
+     *
+     * @param string $input
+     * @return string
+     */
+    protected function sanitizeInput(string $input): string
+    {
+        // Trim whitespace
+        $input = trim($input);
+
+        // Strip HTML tags
+        $input = strip_tags($input);
+
+        // Escape special characters
+        $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+
+        // Remove any non-ASCII characters if necessary (optional)
+        $input = preg_replace('/[^\x20-\x7E]/', '', $input);
+
+        return $input;
     }
 }
