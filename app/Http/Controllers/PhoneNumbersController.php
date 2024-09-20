@@ -7,6 +7,7 @@ use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Dialplans;
 use App\Models\FusionCache;
+use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DialplanDetails;
@@ -327,6 +328,7 @@ class PhoneNumbersController extends Controller
             $instance = $this->model;
             $instance->fill([
                 'domain_uuid' => $inputs['domain_uuid'],
+                'dialplan_uuid' => Str::uuid(),
                 'fax_uuid' => $inputs['fax_uuid'] ?? null,
                 'destination_type' => 'inbound',
                 'destination_prefix' => $inputs['destination_prefix'],
@@ -337,11 +339,12 @@ class PhoneNumbersController extends Controller
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,
                 'destination_record' => $inputs['destination_record'] ?? false,
+                'destination_type_fax' => $inputs['destination_type_fax'] ?? false,
                 'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
                 'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
                 'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
                 'destination_context' => $inputs['destination_context'] ?? 'public',
-            ]);;
+            ]);
             $instance->save();
 
             $this->generateDialPlanXML($instance);
@@ -488,7 +491,6 @@ class PhoneNumbersController extends Controller
             // Assign the formatted actions to the destination_actions field
             $inputs['destination_actions'] = json_encode($destination_actions);
 
-
             $phone_number->update($inputs);
 
             $this->generateDialPlanXML($phone_number);
@@ -619,10 +621,18 @@ class PhoneNumbersController extends Controller
             'domain_name' => Session::get('domain_name'),
             'fax_data' => $phoneNumber->fax()->first() ?? null,
             'dialplan_continue' => 'false',
+            'destination_condition_field' => get_domain_setting('destination'),
         ];
 
         // Render the Blade template and get the XML content as a string
-        $xml = view('layouts.xml.phone-number-dial-plan-template', $data)->render();
+        $xml = trim(view('layouts.xml.phone-number-dial-plan-template', $data)->render());
+
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;  // Removes extra spaces
+        $dom->loadXML($xml);
+        $dom->formatOutput = true;         // Formats XML properly
+        $xml = $dom->saveXML($dom->documentElement);
+
 
         $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
 
@@ -654,9 +664,6 @@ class PhoneNumbersController extends Controller
         }
 
         $dialPlan->save();
-
-        $phoneNumber->dialplan_uuid = $dialPlan->dialplan_uuid;
-        $phoneNumber->save();
 
         $this->generateDialplanDetails($phoneNumber, $dialPlan);
 
@@ -763,6 +770,8 @@ class PhoneNumbersController extends Controller
         $detailOrder = 20;
         $detailGroup = 0;
 
+        $destination_condition_field = get_domain_setting('destination');
+
         if ($phoneNumber->destination_conditions) {
             $conditions = json_decode($phoneNumber->destination_conditions);
             foreach ($conditions as $condition) {
@@ -789,7 +798,7 @@ class PhoneNumbersController extends Controller
                 } else {
                     $dialPlanDetails->dialplan_detail_type = "regex";
                 }*/
-                $dialPlanDetails->dialplan_detail_type = '${sip_req_user}';
+                $dialPlanDetails->dialplan_detail_type = $destination_condition_field;
                 $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
                 $dialPlanDetails->dialplan_detail_group = $detailGroup;
                 $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -831,7 +840,7 @@ class PhoneNumbersController extends Controller
         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
         $dialPlanDetails->dialplan_detail_tag = "condition";
-        $dialPlanDetails->dialplan_detail_type = '${sip_req_user}';
+        $dialPlanDetails->dialplan_detail_type = $destination_condition_field;
         //$dialPlanDetails->dialplan_detail_type = 'destination_number';
         $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
         $dialPlanDetails->dialplan_detail_group = $detailGroup;
@@ -949,7 +958,7 @@ class PhoneNumbersController extends Controller
             $detailOrder += 10;
         }
 
-        if ($phoneNumber->destination_record) {
+        if ($phoneNumber->destination_record == 'true') {
             //add a variable
             $dialPlanDetails = new DialplanDetails();
             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;

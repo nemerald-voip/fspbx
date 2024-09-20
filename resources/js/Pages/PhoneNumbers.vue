@@ -126,7 +126,7 @@
                         :text="row.destination_description" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <StatusBadge :enabled="row.destination_enabled" />
+                        <StatusBadge :enabled="row.destination_enabled == 'true'" />
                     </TableField>
                     <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>

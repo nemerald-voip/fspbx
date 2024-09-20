@@ -89,6 +89,17 @@ class Destinations extends Model
             unset($model->routing_options);
             $model->update_date = date('Y-m-d H:i:s');
             $model->update_user = Session::get('user_uuid');
+
+            // Prepare destination numbers for regex conversion
+            $destination_numbers = array_filter([
+                'destination_prefix' => $model->destination_prefix,
+                'destination_trunk_prefix' => $model->destination_trunk_prefix,
+                'destination_area_code' => $model->destination_area_code,
+                'destination_number' => $model->destination_number,
+            ]);
+
+            // Convert to regex
+            $model->destination_number_regex = $model->to_regex($destination_numbers);
         });
 
         static::retrieved(function ($model) {
@@ -116,7 +127,7 @@ class Destinations extends Model
 
             if (!empty($model->destination_conditions)) {
                 $model->destination_conditions = json_decode($model->destination_conditions, true);
-                if(is_array($model->destination_conditions)) {
+                if (is_array($model->destination_conditions)) {
                     $conditions = null;
                     foreach ($model->destination_conditions as $condition) {
                         if (!empty($condition['condition_data'])) {
@@ -152,47 +163,115 @@ class Destinations extends Model
         return $this->belongsTo(Faxes::class, 'fax_uuid', 'fax_uuid');
     }
 
-    /**
-     * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
-     *
-     * @param  string|null  $value
-     * @return bool
-     */
-    public function getDestinationEnabledAttribute(?string $value): bool
-    {
-        return $value === 'true';
-    }
 
     /**
-     * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
+     * Convert destination number to a regular expression
      *
-     * @param  string|null  $value
-     * @return bool
+     * @param array $array
+     * @return string
      */
-    public function getDestinationRecordAttribute(?string $value): bool
+    public function to_regex($array)
     {
-        return $value === 'true';
+        $regex_parts = [];
+    
+        // If all elements are present
+        if (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
+            $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
+            $regex_parts[] = "{$array['destination_trunk_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
+            $regex_parts[] = "({$array['destination_area_code']}{$array['destination_number']})";
+        }
+        // Handle cases with missing elements
+        elseif (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_number'])) {
+            $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_number']})";
+            $regex_parts[] = "{$array['destination_trunk_prefix']}?({$array['destination_number']})";
+        }
+        elseif (!empty($array['destination_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
+            $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
+        }
+        elseif (!empty($array['destination_number'])) {
+            $destination_prefix = $array['destination_prefix'] ?? '';
+            $destination_number = $array['destination_number'];
+    
+            // Add capturing group for the destination number
+            $destination_regex = "($destination_number)";
+    
+            // Escape "+" in the number if present
+            if (strpos($destination_number, '+') === 0) {
+                $destination_regex = "\\+?" . substr($destination_number, 1);
+            }
+    
+            // Add prefix handling
+            if (!empty($destination_prefix)) {
+                $destination_prefix = str_replace("+", "", $destination_prefix);
+                $plus = '\+?';
+                if (strlen($destination_prefix) == 1) {
+                    $destination_prefix = $plus . $destination_prefix . '?';
+                } else {
+                    $destination_prefix = $plus . '(?:' . $destination_prefix . ')?';
+                }
+            }
+    
+            // Convert N, X, Z patterns to regex
+            $destination_regex = str_ireplace(["N", "X", "Z"], ["[2-9]", "[0-9]", "[1-9]"], $destination_regex);
+    
+            // Ensure regex starts with "^" and ends with "$"
+            $destination_regex = "^" . $destination_prefix . $destination_regex . "$";
+            
+            return $destination_regex;
+        }
+    
+        // Combine regex parts into one pattern with capturing group
+        if (!empty($regex_parts)) {
+            return "^(" . implode('|', $regex_parts) . ")$";
+        }
+    
+        return ''; // Return empty string if no valid regex is generated
     }
+    
+    
 
-    /**
-     * Set the destination_enabled attribute.
-     *
-     * @param  bool $value
-     * @return void
-     */
-    public function setDestinationEnabledAttribute($value): void
-    {
-        $this->attributes['destination_enabled'] = $value ? 'true' : 'false';
-    }
 
-    /**
-     * Set the destination_record attribute.
-     *
-     * @param  bool $value
-     * @return void
-     */
-    public function setDestinationRecordAttribute($value): void
-    {
-        $this->attributes['destination_record'] = $value ? 'true' : 'false';
-    }
+    // /**
+    //  * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
+    //  *
+    //  * @param  string|null  $value
+    //  * @return bool
+    //  */
+    // public function getDestinationEnabledAttribute(?string $value): bool
+    // {
+    //     return $value === 'true';
+    // }
+
+    // /**
+    //  * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
+    //  *
+    //  * @param  string|null  $value
+    //  * @return bool
+    //  */
+    // public function getDestinationRecordAttribute(?string $value): bool
+    // {
+    //     return $value === 'true';
+    // }
+
+    // /**
+    //  * Set the destination_enabled attribute.
+    //  *
+    //  * @param  bool $value
+    //  * @return void
+    //  */
+    // public function setDestinationEnabledAttribute($value): void
+    // {
+    //     $this->attributes['destination_enabled'] = $value ? 'true' : 'false';
+    // }
+
+    // /**
+    //  * Set the destination_record attribute.
+    //  *
+    //  * @param  bool $value
+    //  * @return void
+    //  */
+    // public function setDestinationRecordAttribute($value): void
+    // {
+    //     $this->attributes['destination_record'] = $value ? 'true' : 'false';
+    // }
 }

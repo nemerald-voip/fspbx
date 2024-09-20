@@ -78,10 +78,12 @@ class StorePhoneNumberRequest extends FormRequest
                 Rule::exists('v_fax', 'fax_uuid')
             ],
             'destination_enabled' => [
-                Rule::in([true, false]),
+                'nullable',
+                'string',
             ],
             'destination_record' => [
-                Rule::in([true, false]),
+                'nullable',
+                'string',
             ],
             'domain_uuid' => [
                 'required',
@@ -96,6 +98,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
+            'destination_type_fax' => 'present',
         ];
     }
 
@@ -113,11 +116,11 @@ class StorePhoneNumberRequest extends FormRequest
         foreach ($errors as $field => $message) {
             if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
-                $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
+                $customMessages[$field][] = "Please use valid US phone number on condition " . ($index + 1);
             }
             if (preg_match('/destination_conditions\.(\d+)\.condition_target.targetValue/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
-                $customMessages[$field][] = "Please select action on condition ".($index + 1);
+                $customMessages[$field][] = "Please select action on condition " . ($index + 1);
             }
         }
 
@@ -143,30 +146,6 @@ class StorePhoneNumberRequest extends FormRequest
     {
         $phone = $this->get('destination_number');
         $prefix = $this->get('destination_prefix');
-        // $phone = preg_replace("/[^0-9]/", "", $prefix.$phone);
-        // try {
-        //     $destinationNumberRegex = (new PhoneNumber(
-        //         $phone,
-        //         "US"
-        //     ))->formatE164();
-        // } catch (NumberParseException $e) {
-        //     $destinationNumberRegex = '';
-        // }
-        // $destinationNumberRegex = str_replace('+1', '', $destinationNumberRegex);
-        // try {
-        //     $destinationCallerIdNumber = (new PhoneNumber(
-        //         $phone,
-        //         "US"
-        //     ))->formatE164();
-        // } catch (NumberParseException $e) {
-        //     $destinationCallerIdNumber = '';
-        // }
-
-        // $this->merge([
-        //     'destination_number' => $destinationNumberRegex,
-        //     'destination_number_regex' => '^\+?'.$this->get('destination_prefix').'?('.$destinationNumberRegex.')$',
-        //     'destination_caller_id_number' => $destinationCallerIdNumber
-        // ]);
 
         try {
             $this->merge([
@@ -182,8 +161,10 @@ class StorePhoneNumberRequest extends FormRequest
             $destinationConditions = [];
             foreach ($this->get('destination_conditions') as $condition) {
                 try {
-                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'],
-                        "US"))->formatE164();
+                    $condition['condition_expression'] = (new PhoneNumber(
+                        $condition['condition_expression'],
+                        "US"
+                    ))->formatE164();
                 } catch (NumberParseException $e) {
                     $condition['condition_expression'] = null;
                 }
@@ -193,8 +174,55 @@ class StorePhoneNumberRequest extends FormRequest
             $this->merge(['destination_conditions' => $destinationConditions]);
         }
 
+        if ($this->has('destination_enabled')) {
+            $this->merge([
+                'destination_enabled' => $this->destination_enabled ? 'true' : 'false',
+            ]);
+        }
+
+        if ($this->has('destination_record')) {
+            $this->merge([
+                'destination_record' => $this->destination_record ? 'true' : 'false',
+            ]);
+        }
+
+        if ($this->has('destination_type_fax')) {
+            $this->merge([
+                'destination_type_fax' => $this->destination_type_fax ? 1 : null,
+            ]);
+        }
+
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
+
+        // Sanitize description
+        if ($this->has('destination_description') && $this->destination_description) {
+            $sanitizedDescription = $this->sanitizeInput($this->destination_description);
+            $this->merge(['destination_description' => $sanitizedDescription]);
+        }
+    }
+
+    /**
+     * Sanitize the input field to prevent XSS and remove unwanted characters.
+     *
+     * @param string $input
+     * @return string
+     */
+    protected function sanitizeInput(string $input): string
+    {
+        // Trim whitespace
+        $input = trim($input);
+
+        // Strip HTML tags
+        $input = strip_tags($input);
+
+        // Escape special characters
+        $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+
+        // Remove any non-ASCII characters if necessary (optional)
+        $input = preg_replace('/[^\x20-\x7E]/', '', $input);
+
+        return $input;
     }
 }
