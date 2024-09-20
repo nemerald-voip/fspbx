@@ -640,6 +640,24 @@ else
     exit 1
 fi
 
+# Install ghostscript and libtiff-tools
+sudo apt-get install -y ghostscript libtiff-tools
+if [ $? -eq 0 ]; then
+    print_success "Ghostscript and libtiff-tools installed successfully."
+else
+    print_error "Error occurred during Ghostscript and libtiff-tools installation."
+    exit 1
+fi
+
+# Install LibreOffice and related packages
+sudo apt-get install -y libreoffice libreoffice-base libreoffice-common libreoffice-java-common
+if [ $? -eq 0 ]; then
+    print_success "LibreOffice and related packages installed successfully."
+else
+    print_error "Error occurred during LibreOffice installation."
+    exit 1
+fi
+
 # Install Supervisor
 sudo apt-get -y install supervisor
 if [ $? -eq 0 ]; then
