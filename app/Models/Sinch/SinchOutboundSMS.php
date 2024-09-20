@@ -47,10 +47,18 @@ class SinchOutboundSMS extends Model
             ->asJson()
             ->post(config('sinch.message_broker_url') . "/publishMessages", $data);
 
+        // For debugging puporses only
+        // Log::info('Request URL:', [config('sinch.message_broker_url') . "/publishMessages"]);
+        // Log::info('Request Headers:', [
+        //     'Authorization' => 'Bearer ' . config('sinch.api_key'),
+        //     'Content-Type' => 'application/json'
+        // ]);
+        // Log::info('Request Data:', $data);
+
         // Get result
         if (isset($response)) {
             $result = json_decode($response->body());
-            // logger($response->body());
+            logger($response->body());
 
             // Determine if the operation was successful
             if ($response->successful() && isset($result->success) && $result->success) {
