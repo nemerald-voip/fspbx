@@ -856,7 +856,7 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_detail_tag = "action";
             $dialPlanDetails->dialplan_detail_type = "set";
             $dialPlanDetails->dialplan_detail_data = "effective_caller_id_name=" . $phoneNumber->destination_cid_name_prefix . "#\${caller_id_name}";
-            $dialPlanDetails->dialplan_detail_inline = "false";
+            $dialPlanDetails->dialplan_detail_inline = "true";
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
             $dialPlanDetails->save();
