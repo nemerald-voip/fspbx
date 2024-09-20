@@ -619,10 +619,18 @@ class PhoneNumbersController extends Controller
             'domain_name' => Session::get('domain_name'),
             'fax_data' => $phoneNumber->fax()->first() ?? null,
             'dialplan_continue' => 'false',
+            'destination_condition_field' => get_domain_setting('destination'),
         ];
 
         // Render the Blade template and get the XML content as a string
-        $xml = view('layouts.xml.phone-number-dial-plan-template', $data)->render();
+        $xml = trim(view('layouts.xml.phone-number-dial-plan-template', $data)->render());
+
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;  // Removes extra spaces
+        $dom->loadXML($xml);
+        $dom->formatOutput = true;         // Formats XML properly
+        $xml = $dom->saveXML($dom->documentElement);
+
 
         $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
 
@@ -763,6 +771,8 @@ class PhoneNumbersController extends Controller
         $detailOrder = 20;
         $detailGroup = 0;
 
+        $destination_condition_field = get_domain_setting('destination');
+
         if ($phoneNumber->destination_conditions) {
             $conditions = json_decode($phoneNumber->destination_conditions);
             foreach ($conditions as $condition) {
@@ -789,7 +799,7 @@ class PhoneNumbersController extends Controller
                 } else {
                     $dialPlanDetails->dialplan_detail_type = "regex";
                 }*/
-                $dialPlanDetails->dialplan_detail_type = '${sip_req_user}';
+                $dialPlanDetails->dialplan_detail_type = $destination_condition_field;
                 $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
                 $dialPlanDetails->dialplan_detail_group = $detailGroup;
                 $dialPlanDetails->dialplan_detail_order = $detailOrder;
@@ -831,7 +841,7 @@ class PhoneNumbersController extends Controller
         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
         $dialPlanDetails->dialplan_detail_tag = "condition";
-        $dialPlanDetails->dialplan_detail_type = '${sip_req_user}';
+        $dialPlanDetails->dialplan_detail_type = $destination_condition_field;
         //$dialPlanDetails->dialplan_detail_type = 'destination_number';
         $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
         $dialPlanDetails->dialplan_detail_group = $detailGroup;

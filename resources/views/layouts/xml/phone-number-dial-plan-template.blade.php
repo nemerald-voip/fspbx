@@ -5,7 +5,7 @@
         @endphp
         @foreach($destination_conditions as $row)
             <condition regex="all" break="never">
-                <regex field="${sip_req_user}" expression="{{ $phone_number->destination_number_regex }}"/>
+                <regex field="{{ $destination_condition_field }}" expression="{{ $phone_number->destination_number_regex }}"/>
                 <regex field="{{ $row['condition_field'] }}" expression="^\+?1?{{ $row['condition_expression'] }}"/>
                 <action application="export" data="call_direction=inbound" inline="true"/>
                 <action application="set" data="domain_uuid={{ $phone_number->domain_uuid }}" inline="true"/>
@@ -14,7 +14,7 @@
             </condition>
         @endforeach
     @endif
-    <condition field="${sip_req_user}" expression="{{ $phone_number->destination_number_regex }}">
+    <condition field="{{ $destination_condition_field }}" expression="{{ $phone_number->destination_number_regex }}">
         <action application="export" data="call_direction=inbound" inline="true"/>
         <action application="set" data="domain_uuid={{ $phone_number->domain_uuid }}" inline="true"/>
         <action application="set" data="domain_name={{ $domain_name }}" inline="true"/>
@@ -30,7 +30,7 @@
             <action application="record_session" data="${record_path}/${record_name}" inline="false"/>
         @endif
         @if($phone_number->destination_cid_name_prefix && !empty($phone_number->destination_cid_name_prefix))
-            <action application="set" data="effective_caller_id_name={{$phone_number->destination_cid_name_prefix}}#${caller_id_name}" inline="false"/>;
+            <action application="set" data="effective_caller_id_name={{$phone_number->destination_cid_name_prefix}}#${caller_id_name}" inline="false"/>
         @endif
         @if($phone_number->destination_distinctive_ring && !empty($phone_number->destination_distinctive_ring))
             <action application="export" data="sip_h_Alert-Info={{$phone_number->destination_distinctive_ring}}" inline="true"/>
