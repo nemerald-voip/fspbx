@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Throwable;
 use ESLconnection;
 use App\Models\Settings;
 use App\Models\SipProfiles;
@@ -91,7 +92,6 @@ class FreeswitchEslService
             $xml = $this->executeCommand($cmd, $disconnect = false); // Do not disconnect after each command
 
             if ($xml) {
-                logger($sip_profile);
                 foreach ($xml->registrations->registration as $registration) {
                     $contact = (string)$registration->contact;
                     $contactData = [];
@@ -190,16 +190,20 @@ class FreeswitchEslService
 
     private function convertEslResponseToXml($responseBody)
     {
-        $xml = simplexml_load_string($responseBody);
+        try {
+            $xml = simplexml_load_string($responseBody);
 
-        if ($xml === false) {
-            logger('false');
+            if ($xml === false) {
+                return null;
+            }
+
+            return $xml;
+
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
         }
 
-        if ($xml === false) {
-            throw new \Exception("Failed to parse ESL response as XML.");
-        }
-        return $xml;
     }
 
     private function convertEslResponseToArray($responseBody)
