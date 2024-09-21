@@ -3,26 +3,26 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use App\Services\SansayApiService;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
 use App\Services\DeviceActionService;
-use App\Services\FreeswitchEslService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class RegistrationsController extends Controller
+class SansayRegistrationsController extends Controller
 {
 
-    public $eslService;
+    public $sansayApiService;
     public $filters = [];
     public $sortField;
     public $sortOrder;
-    protected $viewName = 'Registrations';
-    protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
+    protected $viewName = 'SansayRegistrations';
+    protected $searchable = ['agent','userDomain', 'states', 'trunkId', 'userPort', 'protocol', 'userIp', 'id', 'username'];
 
-    public function __construct(FreeswitchEslService $eslService)
+    public function __construct(SansayApiService $sansayApiService)
     {
         // $this->model = new Messages();
-        $this->eslService = $eslService;
+        $this->sansayApiService = $sansayApiService;
     }
 
     /**
@@ -36,19 +36,25 @@ class RegistrationsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'showGlobal' => function () {
-                    return request('filterData.showGlobal') === 'true';
-                },
+                'data' => [
+                    'data' => [], // Empty dataset
+                    'prev_page_url' => null,
+                    'next_page_url' => null,
+                    'from' => 0,
+                    'to' => 0,
+                    'total' => 0,
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'links' => [], // Pagination links, can be empty for now
+                ],
 
                 'routes' => [
-                    'current_page' => route('registrations.index'),
-                    'select_all' => route('registrations.select.all'),
+                    'current_page' => route('sansay.registrations.index'),
+                    'data' => route('sansay.registrations.data'),
+                    // 'select_all' => route('registrations.select.all'),
                     // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
-                    'action' => route('registrations.action'),
+                    // 'action' => route('registrations.action'),
                 ]
             ]
         );
@@ -92,7 +98,7 @@ class RegistrationsController extends Controller
     {
 
         // get a list of current registrations
-        $data = $this->eslService->getAllSipRegistrations();
+        $data = $this->sansayApiService->fetchDataFromServer(request('server'));
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
         if ($this->sortOrder === 'asc') {

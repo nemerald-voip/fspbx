@@ -27,12 +27,13 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\RegistrationsController;
+use App\Http\Controllers\SansayRegistrationsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -299,6 +300,20 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('registrations', RegistrationsController::class);
     Route::post('/registrations/select-all', [RegistrationsController::class, 'selectAll'])->name('registrations.select.all');
     Route::post('/registrations/action', [RegistrationsController::class, 'handleAction'])->name('registrations.action');
+
+    // Sansay Registrations
+    Route::resource('sansay/registrations', SansayRegistrationsController::class)->names([
+        'index' => 'sansay.registrations.index',
+        'create' => 'sansay.registrations.create',
+        'store' => 'sansay.registrations.store',
+        'show' => 'sansay.registrations.show',
+        'edit' => 'sansay.registrations.edit',
+        'update' => 'sansay.registrations.update',
+        'destroy' => 'sansay.registrations.destroy',
+    ]);
+    Route::post('sansay/registrations/data', [SansayRegistrationsController::class, 'getData'])->name('sansay.registrations.data');
+    Route::post('sansay/registrations/select-all', [SansayRegistrationsController::class, 'selectAll'])->name('sansay.registrations.select.all');
+    Route::post('sansay/registrations/action', [SansayRegistrationsController::class, 'handleAction'])->name('sansay.registrations.action');
 
 });
 
