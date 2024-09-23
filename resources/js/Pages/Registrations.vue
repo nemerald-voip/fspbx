@@ -72,7 +72,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="10">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -93,8 +93,8 @@
                 <tr v-for="row in data.data" :key="row.contact">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
                         <div class="flex items-center">
-                            <input v-if="row.user" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row.message_uuid"
+                            <input v-if="row.call_id" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.user }}
@@ -429,6 +429,7 @@ const handleErrorResponse = (error) => {
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
         selectedItems.value = props.data.data.map(item => item);
+        console.log(selectedItems.value);
     } else {
         selectedItems.value = [];
     }

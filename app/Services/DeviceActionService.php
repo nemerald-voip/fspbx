@@ -9,6 +9,9 @@ class DeviceActionService
     public function handleDeviceAction($reg, $action)
     {
         $agent = $this->determineAgent($reg['agent']);
+
+        if (!$agent) return;
+        
         $command = $this->generateCommand($reg, $action, $agent);
 
         // Execute command if it is generated
@@ -21,7 +24,7 @@ class DeviceActionService
     protected function determineAgent($agentString)
     {
         if (preg_match('/Bria|Push|Ringotel/i', $agentString)) {
-            return "";
+            return null;
         } elseif (preg_match('/polycom|polyedge/i', $agentString)) {
             return "polycom";
         } elseif (preg_match("/yealink/i", $agentString)) {
