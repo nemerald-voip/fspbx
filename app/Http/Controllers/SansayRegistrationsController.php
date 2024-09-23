@@ -98,7 +98,9 @@ class SansayRegistrationsController extends Controller
     {
 
         // get a list of current registrations
-        $data = $this->sansayApiService->fetchDataFromServer(request('server'));
+        $data = $this->sansayApiService->fetchStats(request('server'));
+
+        // logger($data);
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
         if ($this->sortOrder === 'asc') {
@@ -107,14 +109,16 @@ class SansayRegistrationsController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
-        // Check if showGlobal is set to true, otherwise filter by sip_auth_realm
-        if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
-            $domainName = session('domain_name');
+        // logger($filters);
 
-            $data = $data->filter(function ($item) use ($domainName) {
-                return $item['sip_auth_realm'] === $domainName;
-            });
-        }
+        // Check if showGlobal is set to true, otherwise filter by sip_auth_realm
+        // if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
+        //     $domainName = session('domain_name');
+
+        //     $data = $data->filter(function ($item) use ($domainName) {
+        //         return $item['sip_auth_realm'] === $domainName;
+        //     });
+        // }
 
         // Apply additional filters, if any
         if (is_array($filters)) {

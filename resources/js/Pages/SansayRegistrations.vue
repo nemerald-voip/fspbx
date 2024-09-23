@@ -36,9 +36,9 @@
             </template>
 
             <template #navigation>
-                <Paginator v-if="data" :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from"
-                    :to="data.to" :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
-                    :links="data.links" @pagination-change-page="renderRequestedPage" />
+                <Paginator v-if="localData" :previous="localData.prev_page_url" :next="localData.next_page_url" :from="localData.from"
+                    :to="localData.to" :total="localData.total" :currentPage="localData.current_page" :lastPage="localData.last_page"
+                    :links="localData.links" @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
                 <TableColumnHeader header="User"
@@ -50,19 +50,22 @@
                     <span class="pl-4">User</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Domain"
+                <TableColumnHeader header="Host"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                <TableColumnHeader header="Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="LAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="WAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Exp Sec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Ping" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Sip Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Source Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Auth TID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="SPID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Protocol" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Expiration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="User-Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Created" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -70,10 +73,10 @@
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != data.total"
+                        <button v-if="!selectAll && selectedItems.length != localData.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            Select all {{ localData.total }} items
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
@@ -85,38 +88,32 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.contact">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
+                <tr v-for="row in localData.data" :key="row.contact">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " >
                         <div class="flex items-center">
-                            <input v-if="row.user" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.message_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.id" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
-                                {{ row.user }}
+                                {{ row.username }}
                             </div>
 
                         </div>
                     </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.sip_auth_realm" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.userDomain" />
 
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.id" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.states" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userIp" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userPort" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.nat" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.trunkId" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.spid" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.protocol" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expiration" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
-
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" /> -->
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.lan_ip" />
-
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.wan_ip" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.port" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
-                            :textColor="determineColor(row.status).textColor"
-                            :ringColor="determineColor(row.status).ringColor" />
-
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expsecs" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ping_time" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.sip_profile_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.createTime" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -157,7 +154,7 @@
             </template>
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
+                <div v-if="localData.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                     <p class="mt-1 text-sm text-gray-500">
@@ -171,8 +168,8 @@
             </template>
 
             <template #footer>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                <Paginator :previous="localData.prev_page_url" :next="localData.next_page_url" :from="localData.from" :to="localData.to"
+                    :total="localData.total" :currentPage="localData.current_page" :lastPage="localData.last_page" :links="localData.links"
                     @pagination-change-page="renderRequestedPage" />
             </template>
         </DataTable>
@@ -235,6 +232,8 @@ const props = defineProps({
     data: Object,
     routes: Object,
 });
+
+const localData = ref(props.data);
 
 
 const filterData = ref({
@@ -355,9 +354,9 @@ const handleSearchButtonClick = () => {
     loading.value = true;
     axios.post(props.routes.data, filterData._rawValue)
         .then((response) => {
-            loadingModal.value = false;
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            loading.value = false;
+            localData.value = response.data;
+            console.log(localData.value);
 
         }).catch((error) => {
             loading.value = false;
