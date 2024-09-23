@@ -8,7 +8,7 @@
 
                 <template #action>
 
-                    <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="exportCsv"
+                    <button v-if="page.props.auth.can.cdrs_export" type="button" @click.prevent="exportCsv"
                         :disabled="isExporting"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />

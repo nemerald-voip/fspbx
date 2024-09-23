@@ -2,20 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Inertia\Inertia;
-use App\Mail\SmsToEmail;
-use App\Models\Extensions;
-use Illuminate\Http\Request;
-use App\Models\DomainSettings;
-use App\Models\MessageSetting;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use App\Services\DeviceActionService;
 use App\Services\FreeswitchEslService;
-use App\Jobs\SendSmsNotificationToSlack;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class RegistrationsController extends Controller
@@ -204,4 +195,30 @@ class RegistrationsController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
+
+    /**
+     * Get all items
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function selectAll()
+    {
+        try {
+            // Fetch all registrations without pagination
+            $allRegistrations = $this->builder($this->filters);
+    
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $allRegistrations,  // Returning full row instead of just call_id
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+    
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
 }
