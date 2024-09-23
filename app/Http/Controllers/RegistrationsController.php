@@ -2,20 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Inertia\Inertia;
-use App\Mail\SmsToEmail;
-use App\Models\Extensions;
-use Illuminate\Http\Request;
-use App\Models\DomainSettings;
-use App\Models\MessageSetting;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use App\Services\DeviceActionService;
 use App\Services\FreeswitchEslService;
-use App\Jobs\SendSmsNotificationToSlack;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class RegistrationsController extends Controller
@@ -67,7 +58,7 @@ class RegistrationsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 1)
+    public function getData($paginate = 50)
     {
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
