@@ -67,7 +67,7 @@ class RegistrationsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData($paginate = 1)
     {
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
@@ -212,9 +212,22 @@ class RegistrationsController extends Controller
      */
     public function selectAll()
     {
+        try {
+            // Fetch all registrations without pagination
+            $allRegistrations = $this->builder($this->filters);
     
-        //needs further work
-
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $allRegistrations,  // Returning full row instead of just call_id
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+    
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 
 }
