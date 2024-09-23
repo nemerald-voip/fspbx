@@ -195,4 +195,17 @@ class RegistrationsController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
+
+    /**
+     * Get all items
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function selectAll()
+    {
+    
+        //needs further work
+
+    }
+
 }
