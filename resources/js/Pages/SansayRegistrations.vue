@@ -71,7 +71,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="14">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -162,14 +162,9 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
-        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
-        :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
-
-    <ConfirmationModal :show="isSingleDeleteConfirmationModalVisible"
-        @close="isSingleDeleteConfirmationModalVisible = false" @confirm="confirmDeleteAction" :header="'Are you sure?'"
-        :text="'Confirm deleting selected item.'" :confirm-button-label="'Delete'" cancel-button-label="Cancel"
-        :loading="singleDeleteLoading" />
+    <ConfirmationModal :show="isDeleteConfirmationModalVisible" @close="isDeleteConfirmationModalVisible = false"
+        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm deleting selected item(s).'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" :loading="isDeleteRequestProcessing" />
 
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -236,8 +231,8 @@ const servers = [
     { value: 'server2', name: 'SBC2' },
 ]
 
-const isSingleDeleteConfirmationModalVisible = ref(false);
-const singleDeleteLoading = ref(false);
+const isDeleteConfirmationModalVisible = ref(false);
+const isDeleteRequestProcessing = ref(false);
 const confirmDeleteAction = ref(null);
 
 
@@ -264,45 +259,6 @@ onMounted(() => {
 });
 
 
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_restart') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Restart';
-        confirmAction.value = () => executeBulkAction('reboot');
-    }
-
-    if (action === 'bulk_sync') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Sync';
-        confirmAction.value = () => executeBulkAction('provision');
-    }
-
-    if (action === 'bulk_unregister') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Unregister';
-        confirmAction.value = () => executeBulkAction('unregister');
-    }
-
-}
-
-const executeBulkAction = (action) => {
-    axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action': action },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleFormErrorResponse(error);
-        });
-}
-
-
-
-
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
@@ -319,12 +275,12 @@ const handleSelectAll = () => {
 
 
 const handleSingleItemDeleteRequest = (id) => {
-    isSingleDeleteConfirmationModalVisible.value = true;
+    isDeleteConfirmationModalVisible.value = true;
     confirmDeleteAction.value = () => executeSingleDelete(id);
 }
 
 const executeSingleDelete = (id) => {
-    singleDeleteLoading.value = true;
+    isDeleteRequestProcessing.value = true;
 
     const statsData = [
         {
@@ -338,65 +294,65 @@ const executeSingleDelete = (id) => {
 
     axios.post(props.routes.delete,
         {
-            'statsData': statsData,  
+            'statsData': statsData,
             'filterData': filterData._rawValue
         },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
-            singleDeleteLoading.value = false;
+            isDeleteRequestProcessing.value = false;
             handleSearchButtonClick();
         }).catch((error) => {
             handleModalClose();
             handleErrorResponse(error);
-            singleDeleteLoading.value = false;
+            isDeleteRequestProcessing.value = false;
         });
 
 
 }
 
 
-const handleAction = (reg, action) => {
-    axios.post(props.routes.action,
-        { 'regs': [reg], 'action': action },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        isDeleteConfirmationModalVisible.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+}
 
+
+const executeBulkDelete = () => {
+    isDeleteRequestProcessing.value = true;
+    const statsData = selectedItems.value.map(item => ({
+        id: item
+    }));
+
+    axios.post(props.routes.delete,
+        {
+            'statsData': statsData,
+            'filterData': filterData._rawValue
+
+        })
+        .then((response) => {
+            handleModalClose();
+            isDeleteRequestProcessing.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
             handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
+            handleModalClose();
+            isDeleteRequestProcessing.value = false;
             handleErrorResponse(error);
         });
 }
+
 
 const handleRefreshButtonClick = () => {
     handleSearchButtonClick();
 }
 
 
-// const handleSearchButtonClick = () => {
-//     loading.value = true;
-//     router.visit(props.routes.current_page, {
-//         data: {
-//             filterData: filterData._rawValue,
-//         },
-//         preserveScroll: true,
-//         preserveState: true,
-//         only: [
-//             "data",
-//         ],
-//         onSuccess: (page) => {
-//             loading.value = false;
-//             handleClearSelection();
-//         },
-//         onError: (error) => {
-//             loading.value = false;
-//             handleErrorResponse(error);
-//         }
-//     });
-// };
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -468,7 +424,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item);
+        selectedItems.value = props.data.data.map(item => item.id);
     } else {
         selectedItems.value = [];
     }
@@ -478,12 +434,12 @@ const handleSelectPageItems = () => {
 
 const handleClearSelection = () => {
     selectedItems.value = [],
-        selectPageItems.value = false;
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 
 const handleModalClose = () => {
-    isSingleDeleteConfirmationModalVisible.value = false;
+    isDeleteConfirmationModalVisible.value = false;
 }
 
 const hideNotification = () => {

@@ -36,17 +36,7 @@ class SansayRegistrationsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                // 'data' => [
-                //     'data' => [], // Empty dataset
-                //     'prev_page_url' => null,
-                //     'next_page_url' => null,
-                //     'from' => 0,
-                //     'to' => 0,
-                //     'total' => 0,
-                //     'current_page' => 1,
-                //     'last_page' => 1,
-                //     'links' => [], // Pagination links, can be empty for now
-                // ],
+
                 'data' => function () {
                     return $this->getData();
                 },
@@ -55,7 +45,7 @@ class SansayRegistrationsController extends Controller
                     'current_page' => route('sansay.registrations.index'),
                     'delete' => route('sansay.registrations.delete'),
                     // 'select_all' => route('registrations.select.all'),
-                    // 'bulk_delete' => route('messages.bulk.delete'),
+                    // 'bulk_delete' => route('sansay.registrations.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
                     // 'action' => route('registrations.action'),
                 ]

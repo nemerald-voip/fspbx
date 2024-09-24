@@ -62,8 +62,6 @@ class SansayApiService
             // Construct the XML body
             $xml = $this->generateDeleteXml($statsData);
 
-            logger($xml);
-
             $response = Http::withHeaders([
                 'Authorization' => $authorization,
                 'Content-Type' => 'application/xml',
