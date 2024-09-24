@@ -17,7 +17,7 @@ class SansayRegistrationsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'SansayRegistrations';
-    protected $searchable = ['agent','userDomain', 'states', 'trunkId', 'userPort', 'protocol', 'userIp', 'id', 'username'];
+    protected $searchable = ['agent', 'userDomain', 'states', 'trunkId', 'userPort', 'protocol', 'userIp', 'id', 'username'];
 
     public function __construct(SansayApiService $sansayApiService)
     {
@@ -36,17 +36,20 @@ class SansayRegistrationsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => [
-                    'data' => [], // Empty dataset
-                    'prev_page_url' => null,
-                    'next_page_url' => null,
-                    'from' => 0,
-                    'to' => 0,
-                    'total' => 0,
-                    'current_page' => 1,
-                    'last_page' => 1,
-                    'links' => [], // Pagination links, can be empty for now
-                ],
+                // 'data' => [
+                //     'data' => [], // Empty dataset
+                //     'prev_page_url' => null,
+                //     'next_page_url' => null,
+                //     'from' => 0,
+                //     'to' => 0,
+                //     'total' => 0,
+                //     'current_page' => 1,
+                //     'last_page' => 1,
+                //     'links' => [], // Pagination links, can be empty for now
+                // ],
+                'data' => function () {
+                    return $this->getData();
+                },
 
                 'routes' => [
                     'current_page' => route('sansay.registrations.index'),
@@ -78,6 +81,10 @@ class SansayRegistrationsController extends Controller
             $this->filters['showGlobal'] = null;
         }
 
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'id'); // Default to 'created_at'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
+
         $data = $this->builder($this->filters);
 
         // Apply pagination manually
@@ -96,9 +103,10 @@ class SansayRegistrationsController extends Controller
      */
     public function builder(array $filters = [])
     {
+        if (empty(request('filterData.server'))) return [];
 
         // get a list of current registrations
-        $data = $this->sansayApiService->fetchStats(request('server'));
+        $data = $this->sansayApiService->fetchStats(request('filterData.server'));
 
         // logger($data);
 

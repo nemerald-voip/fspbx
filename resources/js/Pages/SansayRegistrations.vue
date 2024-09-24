@@ -36,9 +36,9 @@
             </template>
 
             <template #navigation>
-                <Paginator v-if="localData" :previous="localData.prev_page_url" :next="localData.next_page_url" :from="localData.from"
-                    :to="localData.to" :total="localData.total" :currentPage="localData.current_page" :lastPage="localData.last_page"
-                    :links="localData.links" @pagination-change-page="renderRequestedPage" />
+                <Paginator v-if="data" :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from"
+                    :to="data.to" :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
+                    :links="data.links" @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
                 <TableColumnHeader header="User"
@@ -73,10 +73,10 @@
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != localData.total"
+                        <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ localData.total }} items
+                            Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
@@ -88,7 +88,7 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in localData.data" :key="row.contact">
+                <tr v-for="row in data.data" :key="row.contact">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " >
                         <div class="flex items-center">
                             <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]"
@@ -118,24 +118,10 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'Restart'" position='TopCenter' target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleAction(row, 'reboot')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-
-                                <ejs-tooltip :content="'Sync'" position='TopCenter' target="#sync_tooltip_target">
-                                    <div id="sync_tooltip_target">
-                                        <SyncIcon @click="handleAction(row, 'provision')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-
-                                <ejs-tooltip :content="'Unregister'" position='TopCenter'
-                                    target="#unregister_tooltip_target">
-                                    <div id="unregister_tooltip_target">
-                                        <LinkOffIcon @click="handleAction(row, 'unregister')"
+                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                    position='TopCenter' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -154,7 +140,7 @@
             </template>
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
-                <div v-if="localData.data.length === 0" class="text-center my-5 ">
+                <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                     <p class="mt-1 text-sm text-gray-500">
@@ -168,8 +154,8 @@
             </template>
 
             <template #footer>
-                <Paginator :previous="localData.prev_page_url" :next="localData.next_page_url" :from="localData.from" :to="localData.to"
-                    :total="localData.total" :currentPage="localData.current_page" :lastPage="localData.last_page" :links="localData.links"
+                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
+                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
                     @pagination-change-page="renderRequestedPage" />
             </template>
         </DataTable>
@@ -200,7 +186,7 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -233,8 +219,6 @@ const props = defineProps({
     routes: Object,
 });
 
-const localData = ref(props.data);
-
 
 const filterData = ref({
     search: null,
@@ -251,20 +235,10 @@ const servers = [
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_sync',
-            label: 'Sync',
-            icon: 'SyncIcon'
-        },
-        {
-            id: 'bulk_unregister',
-            label: 'Unregister',
-            icon: 'LinkOffIcon'
-        },
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
+        }
 
     ];
 
@@ -273,7 +247,10 @@ const bulkActions = computed(() => {
 
 onMounted(() => {
     // console.log(props.data);
-    handleSearchButtonClick();
+    if (props.data.data.length === 0) {
+        handleSearchButtonClick();
+    }
+    
 });
 
 
@@ -350,19 +327,48 @@ const handleRefreshButtonClick = () => {
 }
 
 
+// const handleSearchButtonClick = () => {
+//     loading.value = true;
+//     router.visit(props.routes.current_page, {
+//         data: {
+//             filterData: filterData._rawValue,
+//         },
+//         preserveScroll: true,
+//         preserveState: true,
+//         only: [
+//             "data",
+//         ],
+//         onSuccess: (page) => {
+//             loading.value = false;
+//             handleClearSelection();
+//         },
+//         onError: (error) => {
+//             loading.value = false;
+//             handleErrorResponse(error);
+//         }
+//     });
+// };
+
 const handleSearchButtonClick = () => {
     loading.value = true;
-    axios.post(props.routes.data, filterData._rawValue)
-        .then((response) => {
+    router.visit(props.routes.current_page, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: [
+            "data",
+        ],
+        onSuccess: (page) => {
             loading.value = false;
-            localData.value = response.data;
-            console.log(localData.value);
-
-        }).catch((error) => {
+            handleClearSelection();
+        },
+        onError: (error) => {
             loading.value = false;
-            handleModalClose();
             handleErrorResponse(error);
-        });
+        }
+    });
 };
 
 const handleFiltersReset = () => {
