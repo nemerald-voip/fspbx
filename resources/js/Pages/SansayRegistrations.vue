@@ -22,8 +22,8 @@
 
                 </div>
                 <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                    <ComboBox :options="servers" :selectedItem="filterData.server" 
-                        :placeholder="'Select SBC'" @update:model-value="handleUpdateServerFilter" />
+                    <ComboBox :options="servers" :selectedItem="filterData.server" :placeholder="'Select SBC'"
+                        @update:model-value="handleUpdateServerFilter" />
                 </div>
             </template>
 
@@ -50,17 +50,18 @@
                     <span class="pl-4">User</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Host"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Host" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
                 <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Source Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Source Port"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Auth TID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Auth TID"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="SPID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Protocol" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Expiration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -89,10 +90,10 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.contact">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " >
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                         <div class="flex items-center">
-                            <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.id" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]" :value="row.id"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.username }}
                             </div>
@@ -100,8 +101,7 @@
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.userDomain" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userDomain" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.id" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.states" />
@@ -121,7 +121,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.id)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -165,6 +165,12 @@
     <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
         :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
         :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
+
+    <ConfirmationModal :show="isSingleDeleteConfirmationModalVisible"
+        @close="isSingleDeleteConfirmationModalVisible = false" @confirm="confirmDeleteAction" :header="'Are you sure?'"
+        :text="'Confirm deleting selected item.'" :confirm-button-label="'Delete'" cancel-button-label="Cancel"
+        :loading="singleDeleteLoading" />
+
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -230,6 +236,10 @@ const servers = [
     { value: 'server2', name: 'SBC2' },
 ]
 
+const isSingleDeleteConfirmationModalVisible = ref(false);
+const singleDeleteLoading = ref(false);
+const confirmDeleteAction = ref(null);
+
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -250,7 +260,7 @@ onMounted(() => {
     if (props.data.data.length === 0) {
         handleSearchButtonClick();
     }
-    
+
 });
 
 
@@ -306,6 +316,45 @@ const handleSelectAll = () => {
         });
 
 };
+
+
+const handleSingleItemDeleteRequest = (id) => {
+    isSingleDeleteConfirmationModalVisible.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(id);
+}
+
+const executeSingleDelete = (id) => {
+    singleDeleteLoading.value = true;
+
+    const statsData = [
+        {
+            // 'username': username,
+            // 'userDomain': userDomain,
+            'id': id,
+            // 'userIp': userIp,
+            // 'trunkId': trunkId,
+        }
+    ];
+
+    axios.post(props.routes.delete,
+        {
+            'statsData': statsData,  
+            'filterData': filterData._rawValue
+        },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            singleDeleteLoading.value = false;
+            handleSearchButtonClick();
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+            singleDeleteLoading.value = false;
+        });
+
+
+}
 
 
 const handleAction = (reg, action) => {
@@ -434,7 +483,7 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    confirmationActionTrigger.value = false;
+    isSingleDeleteConfirmationModalVisible.value = false;
 }
 
 const hideNotification = () => {

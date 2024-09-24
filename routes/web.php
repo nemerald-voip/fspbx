@@ -311,9 +311,10 @@ Route::group(['middleware' => 'auth'], function () {
         'update' => 'sansay.registrations.update',
         'destroy' => 'sansay.registrations.destroy',
     ]);
-    Route::post('sansay/registrations', [SansayRegistrationsController::class, 'getData'])->name('sansay.registrations.data');
+
     Route::post('sansay/registrations/select-all', [SansayRegistrationsController::class, 'selectAll'])->name('sansay.registrations.select.all');
-    Route::post('sansay/registrations/action', [SansayRegistrationsController::class, 'handleAction'])->name('sansay.registrations.action');
+    Route::post('sansay/registrations/delete', [SansayRegistrationsController::class, 'destroy'])->name('sansay.registrations.delete');
+
 
 });
 

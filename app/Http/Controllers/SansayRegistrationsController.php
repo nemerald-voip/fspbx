@@ -53,7 +53,7 @@ class SansayRegistrationsController extends Controller
 
                 'routes' => [
                     'current_page' => route('sansay.registrations.index'),
-                    'data' => route('sansay.registrations.data'),
+                    'delete' => route('sansay.registrations.delete'),
                     // 'select_all' => route('registrations.select.all'),
                     // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
@@ -117,16 +117,6 @@ class SansayRegistrationsController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
-        // logger($filters);
-
-        // Check if showGlobal is set to true, otherwise filter by sip_auth_realm
-        // if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
-        //     $domainName = session('domain_name');
-
-        //     $data = $data->filter(function ($item) use ($domainName) {
-        //         return $item['sip_auth_realm'] === $domainName;
-        //     });
-        // }
 
         // Apply additional filters, if any
         if (is_array($filters)) {
@@ -194,17 +184,16 @@ class SansayRegistrationsController extends Controller
     }
 
 
-    public function handleAction(DeviceActionService $deviceActionService)
+    public function destroy()
     {
         try {
-            foreach (request('regs') as $reg) {
-                $deviceActionService->handleDeviceAction($reg, request('action'));
-            }
+            // submit API request to delete selected records
+            $data = $this->sansayApiService->deleteStats(request('filterData.server'), request('statsData'));
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Request has been succesfully processed']]
-            ], 201);
+                'messages' => ['success' => ['Request to delete was successfully sent']]
+            ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
