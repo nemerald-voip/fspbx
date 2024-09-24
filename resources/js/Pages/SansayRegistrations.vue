@@ -53,20 +53,19 @@
                 <TableColumnHeader header="Host" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="External IP" class=" whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Source Port"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Auth TID"
-                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="SPID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <!-- <TableColumnHeader header="Auth TID" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <!-- <TableColumnHeader header="SPID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <TableColumnHeader header="Protocol" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Created" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Expiration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="User-Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Created" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -103,17 +102,17 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userDomain" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.id" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.id" /> -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.states" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userIp" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userPort" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.nat" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.trunkId" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.spid" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.nat" /> -->
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.trunkId" /> -->
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.spid" /> -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.protocol" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.createTime" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expiration" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.createTime" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>

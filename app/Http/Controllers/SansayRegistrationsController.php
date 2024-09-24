@@ -17,7 +17,7 @@ class SansayRegistrationsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'SansayRegistrations';
-    protected $searchable = ['agent', 'userDomain', 'states', 'trunkId', 'userPort', 'protocol', 'userIp', 'id', 'username'];
+    protected $searchable = ['userDomain', 'states', 'userIp', 'username'];
 
     public function __construct(SansayApiService $sansayApiService)
     {
@@ -72,8 +72,8 @@ class SansayRegistrationsController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'id'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
+        $this->sortField = request()->get('sortField', 'states'); // Default to 'created_at'
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
