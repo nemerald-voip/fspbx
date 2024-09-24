@@ -258,7 +258,11 @@ class CallRoutingOptionsService
             ->where('extension', $extension)
             ->first();
         if (!$ext) {
-            return null;
+            return [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+            ];
         } else {
             return [
                 'type' => 'extensions',
