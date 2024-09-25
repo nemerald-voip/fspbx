@@ -56,7 +56,8 @@
                 <!-- <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="External IP" class=" whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="External IP"
+                    class=" whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Source Port"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
@@ -259,7 +260,11 @@ onMounted(() => {
 
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all,
+        {
+            'filterData': filterData._rawValue
+        },
+    )
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
@@ -433,7 +438,7 @@ const handleSelectPageItems = () => {
 
 const handleClearSelection = () => {
     selectedItems.value = [],
-    selectPageItems.value = false;
+        selectPageItems.value = false;
     selectAll.value = false;
 }
 
