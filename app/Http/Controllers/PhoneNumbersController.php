@@ -124,13 +124,14 @@ class PhoneNumbersController extends Controller
 
             $domains = [];
             $domainsCollection = Session::get("domains");
-            foreach ($domainsCollection as $domain) {
-                $domains[] = [
-                    'value' => $domain->domain_uuid,
-                    'name' => $domain->domain_description
-                ];
+            if ($domainsCollection) {
+                foreach ($domainsCollection as $domain) {
+                    $domains[] = [
+                        'value' => $domain->domain_uuid,
+                        'name' => $domain->domain_description
+                    ];
+                }
             }
-
 
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
