@@ -447,7 +447,7 @@ class DeviceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Devices  $device
-     * 
+     *
      */
     public function destroy(Devices $device)
     {
@@ -546,6 +546,11 @@ class DeviceController extends Controller
                     'name' => 'Lines',
                     'icon' => 'AdjustmentsHorizontalIcon',
                     'slug' => 'lines',
+                ],
+                [
+                    'name' => 'Cloud Provisioning',
+                    'icon' => 'CloudIcon',
+                    'slug' => 'provisioning',
                 ],
             ];
 
@@ -667,7 +672,7 @@ class DeviceController extends Controller
     {
         try {
 
-            // Get a collection of SIP registrations 
+            // Get a collection of SIP registrations
             $regs = $eslService->getAllSipRegistrations();
 
             //Get device info as a collection
@@ -877,7 +882,7 @@ class DeviceController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  Devices  $device
-     * 
+     *
      */
     public function BulkDelete(Devices $device)
     {

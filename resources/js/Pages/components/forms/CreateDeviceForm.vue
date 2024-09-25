@@ -119,7 +119,7 @@
                                                     <a href="#" @click.prevent="deleteLineKey(index)"
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
                                                     </MenuItem>
-                                                   
+
                                                 </div>
                                             </MenuItems>
                                         </transition>
@@ -143,6 +143,10 @@
 
 
                 </div>
+            </div>
+
+            <div v-if="activeTab === 'provisioning'">
+
             </div>
 
             <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
@@ -172,6 +176,7 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
 import { PlusIcon } from "@heroicons/vue/24/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import {CloudIcon} from "@heroicons/vue/24/outline/index.js";
 
 
 const props = defineProps({
@@ -240,6 +245,7 @@ const handleKeyTypeUpdate = (newSelectedItem, index) => {
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+    'CloudIcon': CloudIcon,
 };
 
 const setActiveTab = (tabSlug) => {

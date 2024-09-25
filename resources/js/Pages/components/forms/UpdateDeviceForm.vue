@@ -55,7 +55,7 @@
                         </div>
                     </div>
 
-                    <!-- 
+                    <!--
                     <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
                         <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
                         <div class="mt-2">
@@ -172,6 +172,10 @@
                 </div>
             </div>
 
+            <div v-if="activeTab === 'provisioning'">
+
+            </div>
+
             <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
 
                 <button type="submit"
@@ -267,7 +271,7 @@ import { PlusIcon } from "@heroicons/vue/24/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
 
 
 const props = defineProps({
@@ -349,6 +353,7 @@ const handleDomainUpdate = (newSelectedItem) => {
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+    'CloudIcon': CloudIcon,
 };
 
 
