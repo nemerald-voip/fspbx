@@ -44,7 +44,7 @@ class SansayRegistrationsController extends Controller
                 'routes' => [
                     'current_page' => route('sansay.registrations.index'),
                     'delete' => route('sansay.registrations.delete'),
-                    // 'select_all' => route('registrations.select.all'),
+                    'select_all' => route('sansay.registrations.select.all'),
                     // 'bulk_delete' => route('sansay.registrations.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
                     // 'action' => route('registrations.action'),
@@ -93,7 +93,8 @@ class SansayRegistrationsController extends Controller
      */
     public function builder(array $filters = [])
     {
-        if (empty(request('filterData.server'))) return [];
+        // Return an empty Collection if the request variable is empty
+        if (empty(request('filterData.server'))) return collect();
 
         // get a list of current registrations
         $data = $this->sansayApiService->fetchStats(request('filterData.server'));
@@ -189,6 +190,35 @@ class SansayRegistrationsController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    /**
+     * Get all item IDs without pagination
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function selectAll()
+    {
+        try {
+            // Fetch all Sansay registrations without pagination
+            $allRegistrations = $this->builder($this->filters);
+
+            // Extract only the IDs from the collection
+            $ids = $allRegistrations->pluck('id');
+
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $ids,  // Returning only the IDs
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
