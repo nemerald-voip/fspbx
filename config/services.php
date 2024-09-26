@@ -34,4 +34,9 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
     ],
 
+    'ztp' => [
+        'api_base_url' => env('ZTP_API_BASE_URL'),
+        'api_key' => env('ZTP_API_KEY'),
+    ],
+
 ];

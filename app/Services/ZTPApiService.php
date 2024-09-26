@@ -14,10 +14,10 @@ class ZTPApiService
      * ZTPApiService constructor.
      * Retrieves the API key from the configuration and sets the base URL.
      */
-    public function __construct($apiKey)
+    public function __construct()
     {
-        $this->apiKey = $apiKey;
-        $this->baseUrl = 'https://api.ztp.poly.com/preview';
+        $this->apiKey = config('services.ztp.api_key');
+        $this->baseUrl = config('services.ztp.api_base_url');
     }
 
     /**
