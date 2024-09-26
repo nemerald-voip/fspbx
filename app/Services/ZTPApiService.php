@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Devices;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
@@ -84,14 +85,15 @@ class ZTPApiService
     /**
      * Retrieve details of a specific device by its ID.
      *
-     * @param  string  $deviceId
+     * @param  Devices $device
      * @return string
      * @throws \Exception
      */
-    public function getDevice(string $deviceId): string
+    public function getDevice(Devices $device): string
     {
-        $url = "$this->baseUrl/devices/$deviceId";
+        $url = "$this->baseUrl/devices/$device->device_address";
 
+        logger($url);
         $response = Http::withHeaders([
             'API-KEY' => $this->apiKey,
         ])->get($url);
@@ -216,7 +218,7 @@ class ZTPApiService
         if ($response->clientError()) {
             // Log client errors
             logger('ZTP API Client Error: '.$response->body());
-            throw new \Exception('There was an error with your request: '.$response->json('error.message'));
+            throw new \Exception('ZTP API Response: '.$response->json('message'));
         }
 
         if ($response->serverError()) {
@@ -226,6 +228,7 @@ class ZTPApiService
         }
 
         // Handle unexpected errors
+        logger($response);
         throw new \Exception('An unexpected error occurred. Please try again.');
     }
 }

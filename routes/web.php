@@ -178,6 +178,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('devices', DeviceController::class);
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
     Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
+    Route::get('/devices/cloud-provisioning/ztp/{device}/status', [DeviceController::class, 'cloudProvisioningZtpStatus'])->name('devices.cloudProvisioningZtp.status');
+    Route::post('/devices/cloud-provisioning/ztp/{device}/register', [DeviceController::class, 'cloudProvisioningZtpRegister'])->name('devices.cloudProvisioningZtp.register');
+    Route::post('/devices/cloud-provisioning/ztp/{device}/deregister', [DeviceController::class, 'cloudProvisioningZtpDeregister'])->name('devices.cloudProvisioningZtp.deregister');
+    //Route::get('/devices/cloud-provisioning/profiles', [DeviceController::class, 'cloudProvisioningProfiles'])->name('devices.cloudProvisioning.profiles');
 
     Route::resource('phone-numbers', PhoneNumbersController::class);
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');

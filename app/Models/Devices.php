@@ -68,9 +68,14 @@ class Devices extends Model
     {
         static::saving(function ($model) {
             // Remove attributes before saving to database
-            unset($model->device_address_formatted);
-            unset($model->destroy_route);
-            unset($model->send_notify_path);
+            unset(
+                $model->device_address_formatted,
+                $model->destroy_route,
+                $model->send_notify_path,
+                $model->cloud_provision_status,
+                $model->cloud_provision_register,
+                $model->cloud_provision_deregister
+            );
         });
 
         static::retrieved(function ($model) {
@@ -78,6 +83,9 @@ class Devices extends Model
                 $model->device_address_formatted = $model->formatMacAddress($model->device_address);
             }
             $model->destroy_route = route('devices.destroy', $model);
+            $model->cloud_provision_status = route('devices.cloudProvisioningZtp.status', $model);
+            $model->cloud_provision_register = route('devices.cloudProvisioningZtp.register', $model);
+            $model->cloud_provision_deregister = route('devices.cloudProvisioningZtp.deregister', $model);
 
             return $model;
         });
@@ -117,7 +125,7 @@ class Devices extends Model
     }
 
     /**
-     * Get domain that this message settings belongs to 
+     * Get domain that this message settings belongs to
      */
     public function domain()
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ZTPApiService;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Devices;
@@ -70,7 +71,7 @@ class DeviceController extends Controller
                     'select_all' => route('devices.select.all'),
                     'bulk_delete' => route('devices.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
-                    'restart' => route('devices.restart'),
+                    'restart' => route('devices.restart')
                 ]
             ]
         );
@@ -924,6 +925,66 @@ class DeviceController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function cloudProvisioningZtpStatus(Devices $device): JsonResponse
+    {
+        try {
+            $ztpService = new ZTPApiService();
+            $deviceData = $ztpService->getDevice($device);
+            // Return a JSON response indicating success
+            return response()->json([
+                'status' => true,
+                'error' => null,
+                'deviceData' => $deviceData,
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'status' => false,
+                'error' => $e->getMessage(),
+                'deviceData' => null
+            ], 201);
+        }
+    }
+
+    public function cloudProvisioningZtpRegister(Devices $device): JsonResponse
+    {
+        try {
+            //ztp_profile_id
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Device provisioned']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to provision device']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function cloudProvisioningZtpDeregister(Devices $device): JsonResponse
+    {
+        try {
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Device unprovisioned']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to provision device']]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

@@ -78,7 +78,6 @@
                     </div>
                 </div>
             </div>
-
             <div v-if="activeTab === 'lines'">
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
@@ -173,7 +172,34 @@
             </div>
 
             <div v-if="activeTab === 'provisioning'">
-
+                <div class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
+                            <p class="mt-1 text-sm text-gray-500">Check current provisioning status within our cloud provider.</p>
+                        </div>
+                        <div v-if="!isCloudProvisioned.isLoading">
+                            <div>Status:
+                                <span class="text-rose-600" v-if="!isCloudProvisioned.status">Device is not provisioned</span>
+                                <span class="text-emerald-600" v-if="isCloudProvisioned.status">Device is provisioned</span>
+                            </div>
+                            <div v-if="isCloudProvisioned.error">Error: {{isCloudProvisioned.error}}</div>
+                            <div class="flex justify-center pt-4">
+                                <button v-if="!isCloudProvisioned.status" type="button" @click.prevent="handleRegister()"
+                                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
+                                    <Spinner :show="isCloudProvisioned.isUpdating" />
+                                    Provision Device
+                                </button>
+                                <button v-if="isCloudProvisioned.status" type="button" @click.prevent="handleDeregister()"
+                                        class="rounded-md bg-rose-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
+                                    <Spinner :show="isCloudProvisioned.isUpdating" />
+                                    Cancel Provisioning
+                                </button>
+                            </div>
+                        </div>
+                        <Loading :show="isCloudProvisioned.isLoading" :absolute="false" />
+                    </div>
+                </div>
             </div>
 
             <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
@@ -258,7 +284,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -272,6 +298,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
+import Loading from "../general/Loading.vue";
 
 
 const props = defineProps({
@@ -294,6 +321,14 @@ const form = reactive({
 })
 
 const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
+
+const isCloudProvisioned = ref({
+    isLoading: false,
+    isUpdating: false,
+    status: false,
+    error: null,
+    message: null
+});
 
 const isLineAdvSettingsModalShown = ref(false);
 
@@ -380,5 +415,49 @@ const handleSipTransportUpdate = (newSelectedItem, index) => {
     form.lines[index].sip_transport = newSelectedItem.value;
 };
 
+const handleRegister = () => {
+    axios.post(props.item.cloud_provision_register)
+        .then(response => {
+            // Handle the successful response
+            console.log(response.data);
+        })
+        .catch(error => {
+            // Handle any errors
+            console.error(error);
+        });
+}
 
+const handleDeregister = () => {
+    axios.post(props.item.cloud_provision_deregister)
+        .then(response => {
+            // Handle the successful response
+            console.log(response.data);
+        })
+        .catch(error => {
+            // Handle any errors
+            console.error(error);
+        });
+}
+
+watch(activeTab, (newTab) => {
+    if (newTab === 'provisioning') {
+        isCloudProvisioned.value.isLoading = true
+        // Make the AJAX request
+        axios.get(props.item.cloud_provision_status)
+            .then(response => {
+                // Handle the successful response
+                console.log(response.data);
+                isCloudProvisioned.value.status = response.data.status
+                isCloudProvisioned.value.error = response.data.error
+            })
+            .catch(error => {
+                // Handle any errors
+                isCloudProvisioned.value.status = false
+                isCloudProvisioned.value.error = error
+            })
+            .finally(() => {
+                isCloudProvisioned.value.isLoading = false
+            });
+    }
+});
 </script>
