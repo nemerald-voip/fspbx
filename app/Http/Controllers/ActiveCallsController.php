@@ -3,25 +3,26 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Services\SansayApiService;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
+use App\Services\DeviceActionService;
+use App\Services\FreeswitchEslService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class SansayRegistrationsController extends Controller
+class ActiveCallsController extends Controller
 {
 
-    public $sansayApiService;
+    public $eslService;
     public $filters = [];
     public $sortField;
     public $sortOrder;
-    protected $viewName = 'SansayRegistrations';
-    protected $searchable = ['userDomain', 'states', 'userIp', 'username'];
+    protected $viewName = 'ActiveCalls';
+    protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
 
-    public function __construct(SansayApiService $sansayApiService)
+    public function __construct(FreeswitchEslService $eslService)
     {
         // $this->model = new Messages();
-        $this->sansayApiService = $sansayApiService;
+        $this->eslService = $eslService;
     }
 
     /**
@@ -35,18 +36,19 @@ class SansayRegistrationsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-
                 'data' => function () {
                     return $this->getData();
                 },
+                'showGlobal' => function () {
+                    return request('filterData.showGlobal') === 'true';
+                },
 
                 'routes' => [
-                    'current_page' => route('sansay.registrations.index'),
-                    'delete' => route('sansay.registrations.delete'),
-                    'select_all' => route('sansay.registrations.select.all'),
-                    // 'bulk_delete' => route('sansay.registrations.bulk.delete'),
+                    'current_page' => route('active-calls.index'),
+                    'select_all' => route('active-calls.select.all'),
+                    // 'bulk_delete' => route('messages.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
-                    // 'action' => route('registrations.action'),
+                    'action' => route('active-calls.action'),
                 ]
             ]
         );
@@ -70,10 +72,6 @@ class SansayRegistrationsController extends Controller
             $this->filters['showGlobal'] = null;
         }
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'states'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
-
         $data = $this->builder($this->filters);
 
         // Apply pagination manually
@@ -92,13 +90,11 @@ class SansayRegistrationsController extends Controller
      */
     public function builder(array $filters = [])
     {
-        // Return an empty Collection if the request variable is empty
-        if (empty(request('filterData.server'))) return collect();
 
         // get a list of current registrations
-        $data = $this->sansayApiService->fetchStats(request('filterData.server'));
+        $data = $this->eslService->getAllChannels();
 
-        // logger($data);
+        logger($data);
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
         if ($this->sortOrder === 'asc') {
@@ -107,6 +103,14 @@ class SansayRegistrationsController extends Controller
             $data = $data->sortByDesc($this->sortField);
         }
 
+        // Check if showGlobal is set to true, otherwise filter by context
+        if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
+            $domainName = session('domain_name');
+
+            $data = $data->filter(function ($item) use ($domainName) {
+                return $item['context'] === $domainName;
+            });
+        }
 
         // Apply additional filters, if any
         if (is_array($filters)) {
@@ -174,16 +178,17 @@ class SansayRegistrationsController extends Controller
     }
 
 
-    public function destroy()
+    public function handleAction(DeviceActionService $deviceActionService)
     {
         try {
-            // submit API request to delete selected records
-            $data = $this->sansayApiService->deleteStats(request('filterData.server'), request('statsData'));
+            foreach (request('regs') as $reg) {
+                $deviceActionService->handleDeviceAction($reg, request('action'));
+            }
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Request to delete was successfully sent']]
-            ], 200);
+                'messages' => ['success' => ['Request has been succesfully processed']]
+            ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
@@ -193,32 +198,16 @@ class SansayRegistrationsController extends Controller
         }
     }
 
-
     /**
-     * Get all item IDs without pagination
+     * Get all items
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function selectAll()
     {
-        try {
-            // Fetch all Sansay registrations without pagination
-            $allRegistrations = $this->builder($this->filters);
+    
+        //needs further work
 
-            // Extract only the IDs from the collection
-            $ids = $allRegistrations->pluck('id');
-
-            return response()->json([
-                'messages' => ['success' => ['All items selected']],
-                'items' => $ids,  // Returning only the IDs
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
     }
+
 }
