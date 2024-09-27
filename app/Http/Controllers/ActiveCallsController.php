@@ -16,7 +16,7 @@ class ActiveCallsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'ActiveCalls';
-    protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
+    protected $searchable = ['cid_name','cid_num', 'dest', 'application_data', 'application', 'read_codec', 'write_codec', 'secure'];
 
     public function __construct(FreeswitchEslService $eslService)
     {
