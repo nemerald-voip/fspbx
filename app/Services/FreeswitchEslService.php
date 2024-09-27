@@ -227,6 +227,19 @@ class FreeswitchEslService
         return collect($channels);
     }
 
+    function killChannel($uuid)
+    {
+        // Check if the 'esl' extension is loaded
+        if (!extension_loaded('esl')) {
+            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact administrator");
+        }
+
+        $cmd = "uuid_kill " . $uuid;
+        $result = $this->executeCommand($cmd);
+
+        return $result;
+    }
+
 
     function convertEslResponse($eslEvent)
     {

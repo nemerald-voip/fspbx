@@ -22,8 +22,16 @@
             </template>
 
             <template #action>
+                <button :class="[
+                    isRefreshing
+                        ? 'rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                        : 'rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+                ]" @click="toggleRefreshing">
+                    <Refresh :class="{ 'animate-spin': isRefreshing }" />
+                </button>
+
                 <button type="button" @click.prevent="handleRefreshButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Refresh
                 </button>
 
@@ -62,7 +70,8 @@
                 <TableColumnHeader header="Timestamp" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <TableColumnHeader header="Caller Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Caller Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Caller Number"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="App" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Codec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -90,20 +99,21 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " >
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                         <div class="flex items-center">
-                            <input v-if="row.uuid" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row.uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
-                                target="#destination_tooltip_target">
-                                <div id="destination_tooltip_target">
-                                    <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                                    <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
-                                    <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
-                                </div>
-                            </ejs-tooltip>
+                                    target="#destination_tooltip_target">
+                                    <div id="destination_tooltip_target">
+                                        <PhoneOutgoingIcon class="w-5 h-5 text-blue-600"
+                                            v-if="row.direction === 'outbound'" />
+                                        <PhoneIncomingIcon class="w-5 h-5 text-green-600"
+                                            v-if="row.direction === 'inbound'" />
+                                        <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
+                                    </div>
+                                </ejs-tooltip>
                             </div>
 
                         </div>
@@ -117,28 +127,30 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.cid_num" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.dest" />
-                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.application + (row.application_data ? ': ' + row.application_data : '')" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="`${row.read_codec}:${row.read_rate} / ${row.write_codec}:${row.write_rate}`" />
+                    <TableField class="px-2 py-2 text-sm text-gray-500"
+                        :text="row.application + (row.application_data ? ': ' + row.application_data : '')" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="`${row.read_codec}:${row.read_rate} / ${row.write_codec}:${row.write_rate}`" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.secure" />
-                   
+
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
                                 <ejs-tooltip :content="'End Call'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <CallEndIcon @click="handleAction(row.uuid,'end')"
+                                        <CallEndIcon @click="handleAction(row.uuid, 'end')"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
 
-                                
+
                                 <!-- <div id="tooltip-no-arrow-sync" role="tooltip" 
                                     class="inline-block absolute invisible text-xs z-10 py-1 px-2 font-medium text-white rounded-sm shadow-sm opacity-0 tooltip dark:bg-gray-600 delay-150" >
                                 tooltip
                                 </div> -->
-                                    
+
 
                             </div>
                         </template>
@@ -169,8 +181,8 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false"
-        @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
+    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
+        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
         :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -178,7 +190,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, onUnmounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -202,16 +214,15 @@ import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import CallEndIcon from "./components/icons/CallEndIcon.vue"
+import Refresh from "./components/icons/Refresh.vue"
 
 const page = usePage()
 const loading = ref(false)
-const loadingModal = ref(false)
+const isRefreshing = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const confirmationModalDestroyPath = ref(null);
 const confirmAction = ref(null);
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -219,6 +230,7 @@ const confirmationActionTrigger = ref(false);
 const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const bulkActionLabel = ref('');
+const intervalId = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -288,7 +300,7 @@ const handleBulkActionRequest = (action) => {
 
 const executeBulkAction = (action) => {
     axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action' : action },
+        { 'regs': selectedItems.value, 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -321,11 +333,14 @@ const handleSelectAll = () => {
 
 const handleAction = (id, action) => {
     axios.post(props.routes.action,
-        { 'ids': [id], 'action' : action },
+        { 'ids': [id], 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
-
+            // Delay the search button click by 2 seconds (2000 milliseconds)
+            setTimeout(() => {
+                handleSearchButtonClick();
+            }, 2000);
             handleClearSelection();
         }).catch((error) => {
             handleClearSelection();
@@ -364,6 +379,23 @@ const handleSearchButtonClick = () => {
         ],
         onSuccess: (page) => {
             loading.value = false;
+            handleClearSelection();
+        }
+    });
+};
+
+const handleRefresh = () => {
+    router.visit(props.routes.current_page, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: [
+            "data",
+            'showGlobal',
+        ],
+        onSuccess: (page) => {
             handleClearSelection();
         }
     });
@@ -422,10 +454,31 @@ const handleSelectPageItems = () => {
 
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
+    selectedItems.value = [];
     selectPageItems.value = false;
     selectAll.value = false;
 }
+
+const toggleRefreshing = () => {
+    isRefreshing.value = !isRefreshing.value;
+
+    if (isRefreshing.value) {
+        // Start calling handleSearchButtonClick every few seconds
+        intervalId.value = setInterval(() => {
+            handleRefresh();
+        }, 5000); // Run every 5 seconds
+    } else {
+        // Stop the interval when refreshing is disabled
+        clearInterval(intervalId.value);
+        intervalId.value = null;
+    }
+};
+
+// Make sure to clear the interval when the component is destroyed
+onUnmounted(() => {
+    if (intervalId.value) {
+        clearInterval(intervalId.value);
+    }});
 
 const handleModalClose = () => {
     confirmationActionTrigger.value = false;
@@ -443,16 +496,6 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-  switch (status) {
-    default:
-      return {
-        backgroundColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        ringColor: 'ring-blue-600/20'
-      };
-  }
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

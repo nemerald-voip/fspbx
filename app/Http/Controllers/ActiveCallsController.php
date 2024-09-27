@@ -94,7 +94,7 @@ class ActiveCallsController extends Controller
         // get a list of current registrations
         $data = $this->eslService->getAllChannels();
 
-        logger($data);
+        // logger($data);
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
         if ($this->sortOrder === 'asc') {
@@ -178,11 +178,11 @@ class ActiveCallsController extends Controller
     }
 
 
-    public function handleAction(DeviceActionService $deviceActionService)
+    public function handleAction()
     {
         try {
-            foreach (request('regs') as $reg) {
-                $deviceActionService->handleDeviceAction($reg, request('action'));
+            foreach (request('ids') as $uuid) {
+                $result = $this->eslService->killChannel($uuid);
             }
 
             // Return a JSON response indicating success
