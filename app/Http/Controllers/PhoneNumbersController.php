@@ -124,13 +124,14 @@ class PhoneNumbersController extends Controller
 
             $domains = [];
             $domainsCollection = Session::get("domains");
-            foreach ($domainsCollection as $domain) {
-                $domains[] = [
-                    'value' => $domain->domain_uuid,
-                    'name' => $domain->domain_description
-                ];
+            if ($domainsCollection) {
+                foreach ($domainsCollection as $domain) {
+                    $domains[] = [
+                        'value' => $domain->domain_uuid,
+                        'name' => $domain->domain_description
+                    ];
+                }
             }
-
 
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
@@ -727,9 +728,10 @@ class PhoneNumbersController extends Controller
 
     private function clearCache($phoneNumber): void
     {
-        //logger('--------------');
-        //logger($phoneNumber);
-        //logger('--------------');
+        // Handling for multiple dialplan mode
+        FusionCache::clear("dialplan:public");
+
+        // Handling for single dialplan mode
         if (isset($phoneNumber->destination_prefix) && is_numeric($phoneNumber->destination_prefix) && isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
             //  logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
             FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
