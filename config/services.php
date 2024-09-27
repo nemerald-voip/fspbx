@@ -35,8 +35,9 @@ return [
     ],
 
     'ztp' => [
-        'api_base_url' => env('ZTP_API_BASE_URL'),
-        'api_key' => env('ZTP_API_KEY'),
+        'polycom' => [
+            'api_key' => env('POLYCOM_ZTP_API_KEY'),
+        ]
     ],
 
 ];

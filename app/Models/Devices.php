@@ -83,9 +83,18 @@ class Devices extends Model
                 $model->device_address_formatted = $model->formatMacAddress($model->device_address);
             }
             $model->destroy_route = route('devices.destroy', $model);
-            $model->cloud_provision_status = route('devices.cloudProvisioningZtp.status', $model);
-            $model->cloud_provision_register = route('devices.cloudProvisioningZtp.register', $model);
-            $model->cloud_provision_deregister = route('devices.cloudProvisioningZtp.deregister', $model);
+            $model->cloud_provision_status = route('devices.cloudProvisioning.status', [
+                'device' => $model,
+                'provider' => 'polycom'
+            ]);
+            $model->cloud_provision_register = route('devices.cloudProvisioning.register', [
+                'device' => $model,
+                'provider' => 'polycom'
+            ]);
+            $model->cloud_provision_deregister = route('devices.cloudProvisioning.deregister', [
+                'device' => $model,
+                'provider' => 'polycom'
+            ]);
 
             return $model;
         });

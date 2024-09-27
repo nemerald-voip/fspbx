@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ZTPApiService;
+use App\Services\PolycomZTPApiService;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Devices;
@@ -929,10 +929,10 @@ class DeviceController extends Controller
         }
     }
 
-    public function cloudProvisioningZtpStatus(Devices $device): JsonResponse
+    public function cloudProvisioningStatus(Devices $device): JsonResponse
     {
         try {
-            $ztpService = new ZTPApiService();
+            $ztpService = new PolycomZTPApiService();
             $deviceData = $ztpService->getDevice($device);
             // Return a JSON response indicating success
             return response()->json([
@@ -951,7 +951,7 @@ class DeviceController extends Controller
         }
     }
 
-    public function cloudProvisioningZtpRegister(Devices $device): JsonResponse
+    public function cloudProvisioningRegister(Devices $device): JsonResponse
     {
         try {
             //ztp_profile_id
@@ -970,7 +970,7 @@ class DeviceController extends Controller
         }
     }
 
-    public function cloudProvisioningZtpDeregister(Devices $device): JsonResponse
+    public function cloudProvisioningDeregister(Devices $device): JsonResponse
     {
         try {
 
