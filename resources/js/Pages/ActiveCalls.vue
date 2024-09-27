@@ -139,7 +139,7 @@
                             <div class="flex items-center whitespace-nowrap">
                                 <ejs-tooltip :content="'End Call'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <CallEndIcon @click="handleAction(row.uuid, 'end')"
+                                        <CallEndIcon @click="handleSingleItemActionRequest(row.uuid, 'end_call')"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -181,9 +181,9 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
-        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
-        :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="isActionConfirmationModalVisible" @close="isActionConfirmationModalVisible = false"
+        @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this action?'"
+        :confirm-button-label="actionLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -226,10 +226,8 @@ const confirmAction = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-const confirmationActionTrigger = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
-const bulkActionLabel = ref('');
+const isActionConfirmationModalVisible = ref(false);
+const actionLabel = ref('');
 const intervalId = ref(null);
 
 const props = defineProps({
@@ -252,19 +250,9 @@ const showGlobal = ref(props.showGlobal);
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_sync',
-            label: 'Sync',
-            icon: 'SyncIcon'
-        },
-        {
-            id: 'bulk_unregister',
-            label: 'Unregister',
-            icon: 'LinkOffIcon'
+            id: 'bulk_end_call',
+            label: 'End Calls',
+            icon: 'CallEndIcon'
         },
 
     ];
@@ -276,40 +264,57 @@ onMounted(() => {
     // console.log(props.data);
 });
 
+const handleSingleItemActionRequest = (uuid, action) => {
+    isActionConfirmationModalVisible.value = true;
+    actionLabel.value = 'End Call';
+    confirmAction.value = () => executeSingleAction(uuid, action);
+}
+
+const executeSingleAction = (uuid, action) => {
+    axios.post(props.routes.action,
+        { 'ids': [uuid], 'action': action },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            // Delay the search button click by 2 seconds (2000 milliseconds)
+            setTimeout(() => {
+                handleRefresh();
+            }, 2000);
+            handleClearSelection();
+        }).catch((error) => {
+            handleModalClose();
+            handleClearSelection();
+            handleErrorResponse(error);
+        });
+}
+
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_restart') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Restart';
-        confirmAction.value = () => executeBulkAction('reboot');
-    }
-
-    if (action === 'bulk_sync') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Sync';
-        confirmAction.value = () => executeBulkAction('provision');
-    }
-
-    if (action === 'bulk_unregister') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Unregister';
-        confirmAction.value = () => executeBulkAction('unregister');
+    if (action === 'bulk_end_call') {
+        isActionConfirmationModalVisible.value = true;
+        actionLabel.value = 'End Calls';
+        confirmAction.value = () => executeBulkAction('end_call');
     }
 
 }
 
 const executeBulkAction = (action) => {
     axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action': action },
+        { 'ids': selectedItems.value, 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
+            // Delay the search button click by 2 seconds (2000 milliseconds)
+            setTimeout(() => {
+                handleRefresh();
+            }, 2000);
             handleClearSelection();
         }).catch((error) => {
             handleClearSelection();
             handleModalClose();
-            handleFormErrorResponse(error);
+            handleErrorResponse(error);
         });
 }
 
@@ -478,10 +483,11 @@ const toggleRefreshing = () => {
 onUnmounted(() => {
     if (intervalId.value) {
         clearInterval(intervalId.value);
-    }});
+    }
+});
 
 const handleModalClose = () => {
-    confirmationActionTrigger.value = false;
+    isActionConfirmationModalVisible.value = false;
 }
 
 const hideNotification = () => {

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
-use App\Services\DeviceActionService;
 use App\Services\FreeswitchEslService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -182,7 +181,9 @@ class ActiveCallsController extends Controller
     {
         try {
             foreach (request('ids') as $uuid) {
-                $result = $this->eslService->killChannel($uuid);
+                if (request('action') == 'end_call') {
+                    $result = $this->eslService->killChannel($uuid);
+                }
             }
 
             // Return a JSON response indicating success
