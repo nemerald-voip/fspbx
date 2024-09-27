@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use App\Models\Gateways;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
 use App\Services\FreeswitchEslService;
@@ -16,7 +17,7 @@ class ActiveCallsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'ActiveCalls';
-    protected $searchable = ['cid_name','cid_num', 'dest', 'application_data', 'application', 'read_codec', 'write_codec', 'secure'];
+    protected $searchable = ['cid_name', 'cid_num', 'dest', 'application_data', 'application', 'read_codec', 'write_codec', 'secure'];
 
     public function __construct(FreeswitchEslService $eslService)
     {
@@ -73,12 +74,36 @@ class ActiveCallsController extends Controller
 
         $data = $this->builder($this->filters);
 
+        // Use map to replace the gateway UUID with the gateway name
+        $data = $data->map(function ($call) {
+            // Ensure 'application_data' exists and contains 'sofia/gateway'
+            if (isset($call['application_data']) && strpos($call['application_data'], 'sofia/gateway') !== false) {
+                // Extract the gateway UUID from 'application_data'
+                preg_match('/sofia\/gateway\/([a-z0-9\-]+)\//', $call['application_data'], $matches);
+
+                if (isset($matches[1])) {
+                    $gatewayUuid = $matches[1];
+
+                    // Find the gateway name by UUID
+                    $gateway = Gateways::where('gateway_uuid', $gatewayUuid)->first();
+
+                    if ($gateway) {
+                        // Replace the UUID with the gateway name
+                        $call['application_data'] = str_replace($gatewayUuid, $gateway->gateway, $call['application_data']);
+                    }
+                }
+            }
+            return $call; // Return the modified call data
+        });
+
         // Apply pagination manually
         if ($paginate) {
             $data = $this->paginateCollection($data, $paginate);
         }
 
         // logger($data);
+
+
 
         return $data;
     }
@@ -206,9 +231,8 @@ class ActiveCallsController extends Controller
      */
     public function selectAll()
     {
-    
+
         //needs further work
 
     }
-
 }
