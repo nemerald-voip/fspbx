@@ -16,7 +16,7 @@ class SansayActiveCallsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'SansayActiveCalls';
-    protected $searchable = ['userDomain', 'states', 'userIp', 'username'];
+    protected $searchable = ['orig_ip', 'dnis', 'ani', 'term_ip'];
 
     public function __construct(SansayApiService $sansayApiService)
     {
