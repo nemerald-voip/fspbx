@@ -30,6 +30,7 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -320,6 +321,21 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
 });
+
+    // Sansay Active Calls
+    Route::resource('sansay/active-calls', SansayActiveCallsController::class)->names([
+        'index' => 'sansay.active-calls.index',
+        'create' => 'sansay.active-calls.create',
+        'store' => 'sansay.active-calls.store',
+        'show' => 'sansay.active-calls.show',
+        'edit' => 'sansay.active-calls.edit',
+        'update' => 'sansay.active-calls.update',
+        'destroy' => 'sansay.active-calls.destroy',
+    ]);
+
+    Route::post('sansay/active-calls/select-all', [SansayActiveCallsController::class, 'selectAll'])->name('sansay.active-calls.select.all');
+    Route::post('sansay/active-calls/delete', [SansayActiveCallsController::class, 'destroy'])->name('sansay.active-calls.delete');
+
 
 // Route::group(['prefix' => '/'], function () {
 //     Route::get('', [RoutingController::class, 'index'])->name('root');
