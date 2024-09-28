@@ -68,8 +68,8 @@ class SansayActiveCallsController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'states'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+        $this->sortField = request()->get('sortField', 'duration'); // Default to 'created_at'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
@@ -202,18 +202,18 @@ class SansayActiveCallsController extends Controller
 
 
     /**
-     * Get all item IDs without pagination
+     * Get all active call IDs without pagination
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function selectAll()
     {
         try {
-            // Fetch all Sansay registrations without pagination
-            $allRegistrations = $this->builder($this->filters);
+            // Fetch all active calls without pagination
+            $allActiveCalls = $this->builder($this->filters);
 
             // Extract only the IDs from the collection
-            $ids = $allRegistrations->pluck('id');
+            $ids = $allActiveCalls->pluck('callID');
 
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
