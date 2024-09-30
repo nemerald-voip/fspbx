@@ -41,7 +41,8 @@
                     :links="data.links" @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header="User"
+                <TableColumnHeader header="User" field="username" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -50,24 +51,42 @@
                     <span class="pl-4">User</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Host" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Host" field="userDomain" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
                 <!-- <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="External IP"
+                <TableColumnHeader header="State" field="states" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="External IP" field="userIp" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
                     class=" whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Source Port"
+
+                <TableColumnHeader header="Source Port" field="userPort" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="Auth TID" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="SPID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="Protocol" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Created" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Expiration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="User-Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Protocol" field="protocol" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Created" field="createTime" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Expiration" field="expiration" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="User-Agent" field="agent" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Action" :sortable="false"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -224,6 +243,8 @@ const props = defineProps({
 const filterData = ref({
     search: null,
     server: 'server1',
+    sortedField: null,
+    sortOrder: null,
 });
 
 const servers = [
@@ -382,6 +403,9 @@ const handleSearchButtonClick = () => {
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
+    filterData.value.server = 'server1';
+    filterData.value.sortedField = null;
+    filterData.value.sortOrder = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
@@ -458,15 +482,12 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-    switch (status) {
-        default:
-            return {
-                backgroundColor: 'bg-blue-50',
-                textColor: 'text-blue-700',
-                ringColor: 'ring-blue-600/20'
-            };
-    }
+
+const handleSort = ({ field, order }) => {
+    filterData.value.sortedField = field;
+    filterData.value.sortOrder = order;
+    // Fetch the data with the updated sort field and order
+    handleSearchButtonClick();
 };
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

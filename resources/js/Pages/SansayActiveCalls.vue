@@ -28,8 +28,16 @@
             </template>
 
             <template #action>
+                <button :class="[
+                    isRefreshing
+                        ? 'rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                        : 'rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+                ]" @click="toggleRefreshing">
+                    <Refresh :class="{ 'animate-spin': isRefreshing }" />
+                </button>
+
                 <button type="button" @click.prevent="handleRefreshButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-indigo-600 ml-2 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Refresh
                 </button>
 
@@ -50,14 +58,19 @@
                     <span class="pl-4 whitespace-nowrap">Orig TID</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Term TID" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Term TID"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="DNIS" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="ANI" class=" px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Orig IP" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Orig IP"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Term IP" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Inv Time" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Ans Time" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Term IP"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Inv Time"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Ans Time"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
@@ -84,8 +97,8 @@
                 <tr v-for="row in data.data" :key="row.callID">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                         <div class="flex items-center">
-                            <input v-if="row.callID" v-model="selectedItems" type="checkbox" name="action_box[]" :value="row.callID"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.callID" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.callID" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.orig_tid }}
                             </div>
@@ -159,7 +172,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, onUnmounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -168,11 +181,8 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
-import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
@@ -183,6 +193,7 @@ import SyncIcon from "./components/icons/SyncIcon.vue";
 import LinkOffIcon from "./components/icons/LinkOffIcon.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ComboBox from "./components/general/ComboBox.vue"
+import Refresh from "./components/icons/Refresh.vue"
 
 
 const page = usePage()
@@ -201,6 +212,9 @@ const confirmationActionTrigger = ref(false);
 const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const bulkActionLabel = ref('');
+const isRefreshing = ref(false)
+const intervalId = ref(null);
+
 
 const props = defineProps({
     data: Object,
@@ -363,6 +377,25 @@ const handleSearchButtonClick = () => {
     });
 };
 
+const handleRefresh = () => {
+    router.visit(props.routes.current_page, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: [
+            "data",
+        ],
+        onSuccess: (page) => {
+            handleClearSelection();
+        },
+        onError: (error) => {
+            handleErrorResponse(error);
+        }
+    });
+};
+
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
@@ -388,6 +421,28 @@ const renderRequestedPage = (url) => {
         }
     });
 };
+
+const toggleRefreshing = () => {
+    isRefreshing.value = !isRefreshing.value;
+
+    if (isRefreshing.value) {
+        // Start calling handleSearchButtonClick every few seconds
+        intervalId.value = setInterval(() => {
+            handleRefresh();
+        }, 7000); // Run every 5 seconds
+    } else {
+        // Stop the interval when refreshing is disabled
+        clearInterval(intervalId.value);
+        intervalId.value = null;
+    }
+};
+
+// Make sure to clear the interval when the component is destroyed
+onUnmounted(() => {
+    if (intervalId.value) {
+        clearInterval(intervalId.value);
+    }
+});
 
 
 const handleErrorResponse = (error) => {
@@ -456,7 +511,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 </script>
 
-<style>
-@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
+<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
