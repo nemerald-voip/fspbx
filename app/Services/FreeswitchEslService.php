@@ -274,7 +274,7 @@ class FreeswitchEslService
 
     private function convertEslResponseToXml($responseBody)
     {
-        logger($responseBody);
+        // logger($responseBody);
         try {
             $xml = simplexml_load_string($responseBody);
 
