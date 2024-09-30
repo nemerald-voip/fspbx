@@ -93,9 +93,8 @@
                 <tr v-for="row in data.data" :key="row.contact">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
                         <div class="flex items-center">
-                            <input v-if="row.call_id" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.call_id" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.user }}
                             </div>
@@ -110,8 +109,7 @@
 
                     <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" /> -->
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.lan_ip" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.lan_ip" />
 
                     <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.wan_ip" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.port" />
@@ -130,7 +128,7 @@
                             <div class="flex items-center whitespace-nowrap">
                                 <ejs-tooltip :content="'Restart'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleAction(row,'reboot')"
+                                        <RestartIcon @click="handleAction(row, 'reboot')"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -142,19 +140,20 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Unregister'" position='TopCenter' target="#unregister_tooltip_target">
+                                <ejs-tooltip :content="'Unregister'" position='TopCenter'
+                                    target="#unregister_tooltip_target">
                                     <div id="unregister_tooltip_target">
-                                        <LinkOffIcon @click="handleAction(row,'unregister')"
+                                        <LinkOffIcon @click="handleAction(row, 'unregister')"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                
+
                                 <!-- <div id="tooltip-no-arrow-sync" role="tooltip" 
                                     class="inline-block absolute invisible text-xs z-10 py-1 px-2 font-medium text-white rounded-sm shadow-sm opacity-0 tooltip dark:bg-gray-600 delay-150" >
                                 tooltip
                                 </div> -->
-                                    
+
 
                             </div>
                         </template>
@@ -185,8 +184,8 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false"
-        @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
+    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
+        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
         :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -303,7 +302,7 @@ const handleBulkActionRequest = (action) => {
 
 const executeBulkAction = (action) => {
     axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action' : action },
+        { 'regs': selectedItems.value, 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -322,7 +321,19 @@ const executeBulkAction = (action) => {
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
-            selectedItems.value = response.data.items;
+            // selectedItems.value = response.data.items;
+
+            // Convert props.data.data to an array using Object.values()
+            const currentPageItems = Object.values(props.data.data);
+
+            // Set selected items to all the full row data returned by the server
+            selectedItems.value = response.data.items.map(item => {
+                // Find the row in the current data that matches the call_id
+                const matchedRow = currentPageItems.find(row => row.call_id === item.call_id);
+                // If found, return the row already present on the page; otherwise, return the received item
+                return matchedRow || item;
+            });
+
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
@@ -336,7 +347,7 @@ const handleSelectAll = () => {
 
 const handleAction = (reg, action) => {
     axios.post(props.routes.action,
-        { 'regs': [reg], 'action' : action },
+        { 'regs': [reg], 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -411,7 +422,6 @@ const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        // console.log(error.response.data);
         showNotification('error', error.response.data.errors || { request: [error.message] });
     } else if (error.request) {
         // The request was made but no response was received
@@ -428,7 +438,9 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item);
+        const currentPageItems = Object.values(props.data.data);
+        selectedItems.value = currentPageItems.map(item => item);
+
     } else {
         selectedItems.value = [];
     }
@@ -459,14 +471,14 @@ const showNotification = (type, messages = null) => {
 }
 
 const determineColor = (status) => {
-  switch (status) {
-    default:
-      return {
-        backgroundColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        ringColor: 'ring-blue-600/20'
-      };
-  }
+    switch (status) {
+        default:
+            return {
+                backgroundColor: 'bg-blue-50',
+                textColor: 'text-blue-700',
+                ringColor: 'ring-blue-600/20'
+            };
+    }
 };
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
