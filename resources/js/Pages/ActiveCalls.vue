@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Registrations</template>
+            <template #title>Active Calls</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -22,8 +22,16 @@
             </template>
 
             <template #action>
+                <button :class="[
+                    isRefreshing
+                        ? 'rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                        : 'rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+                ]" @click="toggleRefreshing">
+                    <Refresh :class="{ 'animate-spin': isRefreshing }" />
+                </button>
+
                 <button type="button" @click.prevent="handleRefreshButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Refresh
                 </button>
 
@@ -52,22 +60,22 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">User</span>
+                    <span class="pl-4"></span>
                 </TableColumnHeader>
 
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                <TableColumnHeader header="Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Timestamp" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="LAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="WAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Exp Sec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Ping" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Sip Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Caller Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Caller Number"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="App" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Codec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="SRTP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -90,63 +98,52 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.contact">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
+                <tr v-for="row in data.data" :key="row.uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                         <div class="flex items-center">
-                            <input v-if="row.call_id" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
-                                {{ row.user }}
+                                <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
+                                    target="#destination_tooltip_target">
+                                    <div id="destination_tooltip_target">
+                                        <PhoneOutgoingIcon class="w-5 h-5 text-blue-600"
+                                            v-if="row.direction === 'outbound'" />
+                                        <PhoneIncomingIcon class="w-5 h-5 text-green-600"
+                                            v-if="row.direction === 'inbound'" />
+                                        <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
+                                    </div>
+                                </ejs-tooltip>
                             </div>
 
                         </div>
                     </TableField>
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.sip_auth_realm" />
+                        :text="row.context" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
+                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.created" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.cid_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.cid_num" />
 
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" /> -->
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.dest" />
+                    <TableField class="px-2 py-2 text-sm text-gray-500"
+                        :text="row.application + (row.application_data ? ': ' + row.application_data : '')" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="`${row.read_codec}:${row.read_rate} / ${row.write_codec}:${row.write_rate}`" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.secure" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.lan_ip" />
-
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.wan_ip" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.port" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
-                            :textColor="determineColor(row.status).textColor"
-                            :ringColor="determineColor(row.status).ringColor" />
-
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expsecs" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ping_time" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.sip_profile_name" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'Restart'" position='TopCenter' target="#restart_tooltip_target">
+                                <ejs-tooltip :content="'End Call'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleAction(row, 'reboot')"
+                                        <CallEndIcon @click="handleSingleItemActionRequest(row.uuid, 'end_call')"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Sync'" position='TopCenter' target="#sync_tooltip_target">
-                                    <div id="sync_tooltip_target">
-                                        <SyncIcon @click="handleAction(row, 'provision')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-
-                                <ejs-tooltip :content="'Unregister'" position='TopCenter'
-                                    target="#unregister_tooltip_target">
-                                    <div id="unregister_tooltip_target">
-                                        <LinkOffIcon @click="handleAction(row, 'unregister')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
 
 
                                 <!-- <div id="tooltip-no-arrow-sync" role="tooltip" 
@@ -184,16 +181,16 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
-        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
-        :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="isActionConfirmationModalVisible" @close="isActionConfirmationModalVisible = false"
+        @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this action?'"
+        :confirm-button-label="actionLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, onUnmounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -212,27 +209,26 @@ import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue";
-import SyncIcon from "./components/icons/SyncIcon.vue";
-import LinkOffIcon from "./components/icons/LinkOffIcon.vue";
 import Notification from "./components/notifications/Notification.vue";
+import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
+import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
+import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
+import CallEndIcon from "./components/icons/CallEndIcon.vue"
+import Refresh from "./components/icons/Refresh.vue"
 
 const page = usePage()
 const loading = ref(false)
-const loadingModal = ref(false)
+const isRefreshing = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const confirmationModalDestroyPath = ref(null);
 const confirmAction = ref(null);
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-const confirmationActionTrigger = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
-const bulkActionLabel = ref('');
+const isActionConfirmationModalVisible = ref(false);
+const actionLabel = ref('');
+const intervalId = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -254,19 +250,9 @@ const showGlobal = ref(props.showGlobal);
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_sync',
-            label: 'Sync',
-            icon: 'SyncIcon'
-        },
-        {
-            id: 'bulk_unregister',
-            label: 'Unregister',
-            icon: 'LinkOffIcon'
+            id: 'bulk_end_call',
+            label: 'End Calls',
+            icon: 'CallEndIcon'
         },
 
     ];
@@ -278,40 +264,57 @@ onMounted(() => {
     // console.log(props.data);
 });
 
+const handleSingleItemActionRequest = (uuid, action) => {
+    isActionConfirmationModalVisible.value = true;
+    actionLabel.value = 'End Call';
+    confirmAction.value = () => executeSingleAction(uuid, action);
+}
+
+const executeSingleAction = (uuid, action) => {
+    axios.post(props.routes.action,
+        { 'ids': [uuid], 'action': action },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            // Delay the search button click by 2 seconds (2000 milliseconds)
+            setTimeout(() => {
+                handleRefresh();
+            }, 2000);
+            handleClearSelection();
+        }).catch((error) => {
+            handleModalClose();
+            handleClearSelection();
+            handleErrorResponse(error);
+        });
+}
+
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_restart') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Restart';
-        confirmAction.value = () => executeBulkAction('reboot');
-    }
-
-    if (action === 'bulk_sync') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Sync';
-        confirmAction.value = () => executeBulkAction('provision');
-    }
-
-    if (action === 'bulk_unregister') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Unregister';
-        confirmAction.value = () => executeBulkAction('unregister');
+    if (action === 'bulk_end_call') {
+        isActionConfirmationModalVisible.value = true;
+        actionLabel.value = 'End Calls';
+        confirmAction.value = () => executeBulkAction('end_call');
     }
 
 }
 
 const executeBulkAction = (action) => {
     axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action': action },
+        { 'ids': selectedItems.value, 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
+            // Delay the search button click by 2 seconds (2000 milliseconds)
+            setTimeout(() => {
+                handleRefresh();
+            }, 2000);
             handleClearSelection();
         }).catch((error) => {
             handleClearSelection();
             handleModalClose();
-            handleFormErrorResponse(error);
+            handleErrorResponse(error);
         });
 }
 
@@ -321,19 +324,7 @@ const executeBulkAction = (action) => {
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
-            // selectedItems.value = response.data.items;
-
-            // Convert props.data.data to an array using Object.values()
-            const currentPageItems = Object.values(props.data.data);
-
-            // Set selected items to all the full row data returned by the server
-            selectedItems.value = response.data.items.map(item => {
-                // Find the row in the current data that matches the call_id
-                const matchedRow = currentPageItems.find(row => row.call_id === item.call_id);
-                // If found, return the row already present on the page; otherwise, return the received item
-                return matchedRow || item;
-            });
-
+            selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
@@ -345,13 +336,16 @@ const handleSelectAll = () => {
 };
 
 
-const handleAction = (reg, action) => {
+const handleAction = (id, action) => {
     axios.post(props.routes.action,
-        { 'regs': [reg], 'action': action },
+        { 'ids': [id], 'action': action },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
-
+            // Delay the search button click by 2 seconds (2000 milliseconds)
+            setTimeout(() => {
+                handleSearchButtonClick();
+            }, 2000);
             handleClearSelection();
         }).catch((error) => {
             handleClearSelection();
@@ -395,6 +389,23 @@ const handleSearchButtonClick = () => {
     });
 };
 
+const handleRefresh = () => {
+    router.visit(props.routes.current_page, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: [
+            "data",
+            'showGlobal',
+        ],
+        onSuccess: (page) => {
+            handleClearSelection();
+        }
+    });
+};
+
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
@@ -422,6 +433,7 @@ const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
+        // console.log(error.response.data);
         showNotification('error', error.response.data.errors || { request: [error.message] });
     } else if (error.request) {
         // The request was made but no response was received
@@ -438,9 +450,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        const currentPageItems = Object.values(props.data.data);
-        selectedItems.value = currentPageItems.map(item => item);
-
+        selectedItems.value = props.data.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }
@@ -449,13 +459,35 @@ const handleSelectPageItems = () => {
 
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
+    selectedItems.value = [];
     selectPageItems.value = false;
     selectAll.value = false;
 }
 
+const toggleRefreshing = () => {
+    isRefreshing.value = !isRefreshing.value;
+
+    if (isRefreshing.value) {
+        // Start calling handleSearchButtonClick every few seconds
+        intervalId.value = setInterval(() => {
+            handleRefresh();
+        }, 5000); // Run every 5 seconds
+    } else {
+        // Stop the interval when refreshing is disabled
+        clearInterval(intervalId.value);
+        intervalId.value = null;
+    }
+};
+
+// Make sure to clear the interval when the component is destroyed
+onUnmounted(() => {
+    if (intervalId.value) {
+        clearInterval(intervalId.value);
+    }
+});
+
 const handleModalClose = () => {
-    confirmationActionTrigger.value = false;
+    isActionConfirmationModalVisible.value = false;
 }
 
 const hideNotification = () => {
@@ -470,16 +502,6 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-    switch (status) {
-        default:
-            return {
-                backgroundColor: 'bg-blue-50',
-                textColor: 'text-blue-700',
-                ringColor: 'ring-blue-600/20'
-            };
-    }
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
