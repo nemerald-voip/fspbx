@@ -71,8 +71,8 @@ class SansayRegistrationsController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'states'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+        $this->sortField = request('filterData.sortedField', 'states'); // Default to 'created_at'
+        $this->sortOrder = request('filterData.sortOrder', 'desc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
