@@ -27,6 +27,11 @@
                     Create
                 </button>
 
+                <a v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" href="app/devices/device_profiles.php"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cloud
+                </a>
+
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Profiles
