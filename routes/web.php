@@ -320,12 +320,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('sansay/registrations/select-all', [SansayRegistrationsController::class, 'selectAll'])->name('sansay.registrations.select.all');
     Route::post('sansay/registrations/delete', [SansayRegistrationsController::class, 'destroy'])->name('sansay.registrations.delete');
 
-    // Active Calls
-    Route::resource('active-calls', ActiveCallsController::class);
-    Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
-    Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
-});
-
     // Sansay Active Calls
     Route::resource('sansay/active-calls', SansayActiveCallsController::class)->names([
         'index' => 'sansay.active-calls.index',
@@ -339,6 +333,12 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::post('sansay/active-calls/select-all', [SansayActiveCallsController::class, 'selectAll'])->name('sansay.active-calls.select.all');
     Route::post('sansay/active-calls/delete', [SansayActiveCallsController::class, 'destroy'])->name('sansay.active-calls.delete');
+
+    // Active Calls
+    Route::resource('active-calls', ActiveCallsController::class);
+    Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
+    Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+});
 
 
 // Route::group(['prefix' => '/'], function () {
