@@ -90,7 +90,6 @@ const routingOptions = ref([]);
 
 // Initialize routingOptions and fetch typeOptions
 if (props.selectedItems) {
-    console.log(props.selectedItems)
     props.selectedItems.forEach((item, index) => {
         routingOptions.value.push({
             type: item.type || null,

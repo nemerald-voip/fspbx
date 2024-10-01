@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Registrations</template>
+            <template #title>Sansay Registrations</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -18,6 +18,12 @@
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" />
+
+
+                </div>
+                <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+                    <ComboBox :options="servers" :selectedItem="filterData.server" :placeholder="'Select SBC'"
+                        @update:model-value="handleUpdateServerFilter" />
                 </div>
             </template>
 
@@ -27,26 +33,16 @@
                     Refresh
                 </button>
 
-                <button v-if="!showGlobal && page.props.auth.can.registrations_view_global" type="button"
-                    @click.prevent="handleShowGlobal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
-                </button>
-
-                <button v-if="showGlobal && page.props.auth.can.registrations_view_global" type="button"
-                    @click.prevent="handleShowLocal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
-                </button>
             </template>
 
             <template #navigation>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                <Paginator v-if="data" :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from"
+                    :to="data.to" :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
+                    :links="data.links" @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header="User"
+                <TableColumnHeader header="User" field="username" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -55,24 +51,46 @@
                     <span class="pl-4">User</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="showGlobal" header="Domain"
+                <TableColumnHeader header="Host" field="userDomain" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                <TableColumnHeader header="Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="LAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="WAN IP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Port" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Exp Sec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Ping" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Sip Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="State" field="states" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="External IP" field="userIp" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class=" whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Source Port" field="userPort" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="NAT" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <!-- <TableColumnHeader header="Auth TID" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <!-- <TableColumnHeader header="SPID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <TableColumnHeader header="Protocol" field="protocol" :sortable="true" :sortedField="filterData.sortedField"
+                    :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="Created" field="createTime" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Expiration" field="expiration" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="User-Agent" field="agent" :sortable="true"
+                    :sortedField="filterData.sortedField" :sortOrder="filterData.sortOrder" @sort="handleSort"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Action" :sortable="false"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="10">
+                <td colspan="14">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -91,59 +109,38 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.contact">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                         <div class="flex items-center">
-                            <input v-if="row.call_id" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]" :value="row.id"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
-                                {{ row.user }}
+                                {{ row.username }}
                             </div>
 
                         </div>
                     </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.sip_auth_realm" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userDomain" />
 
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.id" /> -->
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.states" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userIp" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.userPort" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.nat" /> -->
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.trunkId" /> -->
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.spid" /> -->
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.protocol" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.createTime" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expiration" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
-
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" /> -->
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.lan_ip" />
-
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.wan_ip" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.port" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
-                            :textColor="determineColor(row.status).textColor"
-                            :ringColor="determineColor(row.status).ringColor" />
-
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.expsecs" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ping_time" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.sip_profile_name" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'Restart'" position='TopCenter' target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleAction(row, 'reboot')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-
-                                <ejs-tooltip :content="'Sync'" position='TopCenter' target="#sync_tooltip_target">
-                                    <div id="sync_tooltip_target">
-                                        <SyncIcon @click="handleAction(row, 'provision')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-
-                                <ejs-tooltip :content="'Unregister'" position='TopCenter'
-                                    target="#unregister_tooltip_target">
-                                    <div id="unregister_tooltip_target">
-                                        <LinkOffIcon @click="handleAction(row, 'unregister')"
+                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                    position='TopCenter' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.id)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -184,9 +181,10 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
-        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
-        :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="isDeleteConfirmationModalVisible" @close="isDeleteConfirmationModalVisible = false"
+        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm deleting selected item(s).'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" :loading="isDeleteRequestProcessing" />
+
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -208,7 +206,7 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -216,6 +214,8 @@ import RestartIcon from "./components/icons/RestartIcon.vue";
 import SyncIcon from "./components/icons/SyncIcon.vue";
 import LinkOffIcon from "./components/icons/LinkOffIcon.vue";
 import Notification from "./components/notifications/Notification.vue";
+import ComboBox from "./components/general/ComboBox.vue"
+
 
 const page = usePage()
 const loading = ref(false)
@@ -236,38 +236,35 @@ const bulkActionLabel = ref('');
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
-    // itemData: Object,
-    // itemOptions: Object,
 });
 
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
+    server: 'server1',
+    sortedField: null,
+    sortOrder: null,
 });
 
-const showGlobal = ref(props.showGlobal);
+const servers = [
+    { value: 'server1', name: 'SBC1' },
+    { value: 'server2', name: 'SBC2' },
+]
+
+const isDeleteConfirmationModalVisible = ref(false);
+const isDeleteRequestProcessing = ref(false);
+const confirmDeleteAction = ref(null);
+
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_sync',
-            label: 'Sync',
-            icon: 'SyncIcon'
-        },
-        {
-            id: 'bulk_unregister',
-            label: 'Unregister',
-            icon: 'LinkOffIcon'
-        },
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
+        }
 
     ];
 
@@ -276,64 +273,21 @@ const bulkActions = computed(() => {
 
 onMounted(() => {
     // console.log(props.data);
+    if (props.data.data.length === 0) {
+        handleSearchButtonClick();
+    }
+
 });
 
 
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_restart') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Restart';
-        confirmAction.value = () => executeBulkAction('reboot');
-    }
-
-    if (action === 'bulk_sync') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Sync';
-        confirmAction.value = () => executeBulkAction('provision');
-    }
-
-    if (action === 'bulk_unregister') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Unregister';
-        confirmAction.value = () => executeBulkAction('unregister');
-    }
-
-}
-
-const executeBulkAction = (action) => {
-    axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action': action },
+const handleSelectAll = () => {
+    axios.post(props.routes.select_all,
+        {
+            'filterData': filterData._rawValue
+        },
     )
         .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleFormErrorResponse(error);
-        });
-}
-
-
-
-
-const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
-        .then((response) => {
-            // selectedItems.value = response.data.items;
-
-            // Convert props.data.data to an array using Object.values()
-            const currentPageItems = Object.values(props.data.data);
-
-            // Set selected items to all the full row data returned by the server
-            selectedItems.value = response.data.items.map(item => {
-                // Find the row in the current data that matches the call_id
-                const matchedRow = currentPageItems.find(row => row.call_id === item.call_id);
-                // If found, return the row already present on the page; otherwise, return the received item
-                return matchedRow || item;
-            });
-
+            selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
@@ -345,36 +299,85 @@ const handleSelectAll = () => {
 };
 
 
-const handleAction = (reg, action) => {
-    axios.post(props.routes.action,
-        { 'regs': [reg], 'action': action },
+const handleSingleItemDeleteRequest = (id) => {
+    isDeleteConfirmationModalVisible.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(id);
+}
+
+const executeSingleDelete = (id) => {
+    isDeleteRequestProcessing.value = true;
+
+    const statsData = [
+        {
+            // 'username': username,
+            // 'userDomain': userDomain,
+            'id': id,
+            // 'userIp': userIp,
+            // 'trunkId': trunkId,
+        }
+    ];
+
+    axios.post(props.routes.delete,
+        {
+            'statsData': statsData,
+            'filterData': filterData._rawValue
+        },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
-
-            handleClearSelection();
+            handleModalClose();
+            isDeleteRequestProcessing.value = false;
+            handleSearchButtonClick();
         }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+            isDeleteRequestProcessing.value = false;
+        });
+
+
+}
+
+
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        isDeleteConfirmationModalVisible.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+}
+
+
+const executeBulkDelete = () => {
+    isDeleteRequestProcessing.value = true;
+    const statsData = selectedItems.value.map(item => ({
+        id: item
+    }));
+
+    axios.post(props.routes.delete,
+        {
+            'statsData': statsData,
+            'filterData': filterData._rawValue
+
+        })
+        .then((response) => {
+            handleModalClose();
+            isDeleteRequestProcessing.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
             handleClearSelection();
+            handleModalClose();
+            isDeleteRequestProcessing.value = false;
             handleErrorResponse(error);
         });
 }
+
 
 const handleRefreshButtonClick = () => {
     handleSearchButtonClick();
 }
 
 
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -386,19 +389,29 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;
             handleClearSelection();
+        },
+        onError: (error) => {
+            loading.value = false;
+            handleErrorResponse(error);
         }
     });
 };
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
+    filterData.value.server = 'server1';
+    filterData.value.sortedField = null;
+    filterData.value.sortOrder = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
+}
+
+const handleUpdateServerFilter = (newSelectedItem) => {
+    filterData.value.server = newSelectedItem.value;
 }
 
 
@@ -422,6 +435,7 @@ const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
+        // console.log(error.response.data);
         showNotification('error', error.response.data.errors || { request: [error.message] });
     } else if (error.request) {
         // The request was made but no response was received
@@ -438,9 +452,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        const currentPageItems = Object.values(props.data.data);
-        selectedItems.value = currentPageItems.map(item => item);
-
+        selectedItems.value = props.data.data.map(item => item.id);
     } else {
         selectedItems.value = [];
     }
@@ -450,12 +462,12 @@ const handleSelectPageItems = () => {
 
 const handleClearSelection = () => {
     selectedItems.value = [],
-    selectPageItems.value = false;
+        selectPageItems.value = false;
     selectAll.value = false;
 }
 
 const handleModalClose = () => {
-    confirmationActionTrigger.value = false;
+    isDeleteConfirmationModalVisible.value = false;
 }
 
 const hideNotification = () => {
@@ -470,15 +482,12 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-    switch (status) {
-        default:
-            return {
-                backgroundColor: 'bg-blue-50',
-                textColor: 'text-blue-700',
-                ringColor: 'ring-blue-600/20'
-            };
-    }
+
+const handleSort = ({ field, order }) => {
+    filterData.value.sortedField = field;
+    filterData.value.sortOrder = order;
+    // Fetch the data with the updated sort field and order
+    handleSearchButtonClick();
 };
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

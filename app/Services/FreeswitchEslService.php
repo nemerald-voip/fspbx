@@ -158,7 +158,86 @@ class FreeswitchEslService
         }
 
         return collect($registrations);
+    }
 
+    function getAllChannels()
+    {
+        // Check if the 'esl' extension is loaded
+        if (!extension_loaded('esl')) {
+            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact administrator");
+        }
+
+
+        $cmd = "show channels as json";
+        $result = $this->executeCommand($cmd);
+
+        // logger($result);
+
+        // Initialize an array to hold channel information
+        $channels = [];
+
+        // If we received a valid response, convert the result to an array of channels
+        if ($result && !empty($result['rows'])) {
+            foreach ($result['rows'] as $channel) {
+                // Collect channel data for each active channel 
+                $channels[] = [
+                    'uuid'               => $channel['uuid'] ?? '',
+                    'direction'          => $channel['direction'] ?? '',
+                    'created'            => $channel['created'] ?? '',
+                    'created_epoch'      => $channel['created_epoch'] ?? '',
+                    'name'               => $channel['name'] ?? '',
+                    'state'              => $channel['state'] ?? '',
+                    'cid_name'           => $channel['cid_name'] ?? '',
+                    'cid_num'            => $channel['cid_num'] ?? '',
+                    'ip_addr'            => $channel['ip_addr'] ?? '',
+                    'dest'               => $channel['dest'] ?? '',
+                    'application'        => $channel['application'] ?? '',
+                    'application_data'   => $channel['application_data'] ?? '',
+                    'dialplan'           => $channel['dialplan'] ?? '',
+                    'context'            => $channel['context'] ?? '',
+                    'read_codec'         => $channel['read_codec'] ?? '',
+                    'read_rate'          => $channel['read_rate'] ?? '',
+                    'read_bit_rate'      => $channel['read_bit_rate'] ?? '',
+                    'write_codec'        => $channel['write_codec'] ?? '',
+                    'write_rate'         => $channel['write_rate'] ?? '',
+                    'write_bit_rate'     => $channel['write_bit_rate'] ?? '',
+                    'secure'             => $channel['secure'] ?? '',
+                    'hostname'           => $channel['hostname'] ?? '',
+                    'presence_id'        => $channel['presence_id'] ?? '',
+                    'presence_data'      => $channel['presence_data'] ?? '',
+                    'accountcode'        => $channel['accountcode'] ?? '',
+                    'callstate'          => $channel['callstate'] ?? '',
+                    'callee_name'        => $channel['callee_name'] ?? '',
+                    'callee_num'         => $channel['callee_num'] ?? '',
+                    'callee_direction'   => $channel['callee_direction'] ?? '',
+                    'call_uuid'          => $channel['call_uuid'] ?? '',
+                    'sent_callee_name'   => $channel['sent_callee_name'] ?? '',
+                    'sent_callee_num'    => $channel['sent_callee_num'] ?? '',
+                    'initial_cid_name'   => $channel['initial_cid_name'] ?? '',
+                    'initial_cid_num'    => $channel['initial_cid_num'] ?? '',
+                    'initial_ip_addr'    => $channel['initial_ip_addr'] ?? '',
+                    'initial_dest'       => $channel['initial_dest'] ?? '',
+                    'initial_dialplan'   => $channel['initial_dialplan'] ?? '',
+                    'initial_context'    => $channel['initial_context'] ?? '',
+                ];
+            }
+        }
+
+
+        return collect($channels);
+    }
+
+    function killChannel($uuid)
+    {
+        // Check if the 'esl' extension is loaded
+        if (!extension_loaded('esl')) {
+            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact administrator");
+        }
+
+        $cmd = "uuid_kill " . $uuid;
+        $result = $this->executeCommand($cmd);
+
+        return $result;
     }
 
 
@@ -179,10 +258,15 @@ class FreeswitchEslService
             // Check if the response contains CSV-like data
             if (strpos($response, '|') !== false) {
                 return $this->convertEslResponseToArray($response);
-            } else {
-                // Attempt to parse as XML
-                return $this->convertEslResponseToXml($response);
             }
+
+            // Check if the response is a valid JSON string
+            if ($this->isValidJson($response)) {
+                return json_decode($response, true); // Decode JSON response as an associative array
+            }
+
+            // Assume XML otherwise
+            return $this->convertEslResponseToXml($response);
         }
 
         throw new \Exception("Invalid response format.");
@@ -190,6 +274,7 @@ class FreeswitchEslService
 
     private function convertEslResponseToXml($responseBody)
     {
+        // logger($responseBody);
         try {
             $xml = simplexml_load_string($responseBody);
 
@@ -198,12 +283,10 @@ class FreeswitchEslService
             }
 
             return $xml;
-
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
         }
-
     }
 
     private function convertEslResponseToArray($responseBody)
@@ -229,5 +312,12 @@ class FreeswitchEslService
         if (strpos($eslEvent->getBody(), '-ERR') !== false) {
             throw new \Exception("ESL API Error: " . $eslEvent->getBody());
         }
+    }
+
+    // Helper function to check if a string is a valid JSON
+    function isValidJson($string)
+    {
+        json_decode($string);
+        return (json_last_error() === JSON_ERROR_NONE);
     }
 }
