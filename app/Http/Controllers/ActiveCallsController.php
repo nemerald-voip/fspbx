@@ -19,12 +19,6 @@ class ActiveCallsController extends Controller
     protected $viewName = 'ActiveCalls';
     protected $searchable = ['cid_name', 'cid_num', 'dest', 'application_data', 'application', 'read_codec', 'write_codec', 'secure'];
 
-    public function __construct(FreeswitchEslService $eslService)
-    {
-        // $this->model = new Messages();
-        $this->eslService = $eslService;
-    }
-
     /**
      * Display a listing of the resource.
      *
@@ -58,7 +52,7 @@ class ActiveCallsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 1)
+    public function getData(FreeswitchEslService $eslService, $paginate = 50)
     {
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
@@ -72,7 +66,7 @@ class ActiveCallsController extends Controller
             $this->filters['showGlobal'] = null;
         }
 
-        $data = $this->builder($this->filters);
+        $data = $this->builder($this->filters, $eslService);
 
         // Use map to replace the gateway UUID with the gateway name
         $data = $data->map(function ($call) {
@@ -112,11 +106,11 @@ class ActiveCallsController extends Controller
      * @param  array  $filters
      * @return Builder
      */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [],FreeswitchEslService $eslService)
     {
 
         // get a list of current registrations
-        $data = $this->eslService->getAllChannels();
+        $data = $eslService->getAllChannels();
 
         // logger($data);
 

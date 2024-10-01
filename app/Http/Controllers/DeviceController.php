@@ -71,7 +71,8 @@ class DeviceController extends Controller
                     'select_all' => route('devices.select.all'),
                     'bulk_delete' => route('devices.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
-                    'restart' => route('devices.restart')
+                    'restart' => route('devices.restart'),
+                    'cloud_provisioning' => route('cloud-provisioning.index'),
                 ]
             ]
         );

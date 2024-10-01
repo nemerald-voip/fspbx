@@ -338,6 +338,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('active-calls', ActiveCallsController::class);
     Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+
+
+    // Cloud Provisioning
+    Route::resource('cloud-provisioning', ActiveCallsController::class);
+    // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
+    // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
 });
 
 
