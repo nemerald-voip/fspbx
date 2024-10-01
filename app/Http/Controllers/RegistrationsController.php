@@ -23,14 +23,14 @@ class RegistrationsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(FreeswitchEslService $eslService)
     {
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
+                'data' => function () use ($eslService) {
+                    return $this->getData($eslService);
                 },
                 'showGlobal' => function () {
                     return request('filterData.showGlobal') === 'true';
