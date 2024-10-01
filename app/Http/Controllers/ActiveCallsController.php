@@ -12,7 +12,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class ActiveCallsController extends Controller
 {
 
-    public $eslService;
     public $filters = [];
     public $sortField;
     public $sortOrder;
@@ -24,14 +23,14 @@ class ActiveCallsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(FreeswitchEslService $eslService)
     {
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
+                'data' => function () use ($eslService) {
+                    return $this->getData($eslService);
                 },
                 'showGlobal' => function () {
                     return request('filterData.showGlobal') === 'true';
