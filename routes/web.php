@@ -30,6 +30,7 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\CloudProvisioningController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -341,7 +342,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 
     // Cloud Provisioning
-    Route::resource('cloud-provisioning', ActiveCallsController::class);
+    Route::resource('cloud-provisioning', CloudProvisioningController::class);
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
 });

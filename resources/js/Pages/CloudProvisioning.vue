@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Devices</template>
+            <template #title>Cloud Provisioning</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -27,16 +27,6 @@
                     Create
                 </button>
 
-                <a v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" :href="routes.cloud_provisioning"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Cloud
-                </a>
-
-                <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Profiles
-                </a>
-
                 <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -56,22 +46,25 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-
-                <TableColumnHeader header="MAC Address"
+                <TableColumnHeader header="Date"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">MAC Address</span>
+                    <span class="pl-4">Date</span>
                 </TableColumnHeader>
+
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Assigned extension"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <TableColumnHeader header="In/Out" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Source" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Message" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -94,24 +87,16 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.device_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
-                        :text="row.device_address_formatted">
+                <tr v-for="row in data.data" :key="row.message_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.created_at_formatted">
                         <div class="flex items-center">
-                            <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
-                                {{ row.device_address_formatted }}
+                            <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row.message_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9">
+                                {{ row.created_at_formatted }}
                             </div>
-                            <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
-                                @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
-                                <div id="copy_tooltip_target">
-                                    <ClipboardDocumentIcon
-                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
-                                </div>
-                            </ejs-tooltip>
+
                         </div>
                     </TableField>
 
@@ -123,39 +108,49 @@
                             </div>
                         </ejs-tooltip>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" />
+
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.profile?.device_profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.lines[0]?.extension?.name_formatted" />
+                        :text="row.destination_formatted" />
+
+                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.message" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
+                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
+                            :textColor="determineColor(row.status).textColor"
+                            :ringColor="determineColor(row.status).ringColor" />
+
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
+                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
-                                </ejs-tooltip>
+                                </ejs-tooltip> -->
 
-                                <ejs-tooltip :content="'Restart device'" position='TopCenter'
-                                    target="#restart_tooltip_target">
+                                <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRestart(row.device_uuid)"
+                                        <RestartIcon @click="handleRetry(row.message_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
-                                    position='TopCenter' target="#delete_tooltip_target">
+                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
+                                    target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
-                                </ejs-tooltip>
+                                </ejs-tooltip> -->
                             </div>
                         </template>
                     </TableField>
@@ -192,14 +187,14 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
@@ -207,7 +202,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
@@ -219,9 +214,9 @@
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
 
-    <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
-        @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
-        :confirm-button-label="'Restart'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
+        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
+        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -241,9 +236,9 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
+import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
-import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
@@ -265,12 +260,12 @@ const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationRestartTrigger = ref(false);
+const confirmationRetryTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmRestartAction = ref(null);
+const confirmRetryAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -282,8 +277,8 @@ const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
-    itemData: Object,
-    itemOptions: Object,
+    // itemData: Object,
+    // itemOptions: Object,
 });
 
 
@@ -298,30 +293,22 @@ const showGlobal = ref(props.showGlobal);
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_restart',
-            label: 'Restart',
+            id: 'bulk_retry',
+            label: 'Retry',
             icon: 'RestartIcon'
         },
         {
-            id: 'bulk_update',
-            label: 'Edit',
-            icon: 'PencilSquareIcon'
-        }
-    ];
-
-    // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
-        actions.push({
             id: 'bulk_delete',
             label: 'Delete',
             icon: 'TrashIcon'
-        });
-    }
+        }
+    ];
 
     return actions;
 });
 
 onMounted(() => {
+    // console.log(props.data);
 });
 
 const handleEditRequest = (itemUuid) => {
@@ -425,21 +412,16 @@ const handleBulkActionRequest = (action) => {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
-    if (action === 'bulk_restart') {
-        confirmationRestartTrigger.value = true;
-        confirmRestartAction.value = () => executeBulkRestart();
+
+    if (action === 'bulk_retry') {
+        confirmationRetryTrigger.value = true;
+        confirmRetryAction.value = () => executeBulkRetry();
     }
 }
 
-const executeBulkRestart = () => {
-    axios.post(props.routes.restart,
-        { 'devices': selectedItems.value },
+const executeBulkRetry = () => {
+    axios.post(props.routes.retry,
+        { 'items': selectedItems.value },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -503,22 +485,9 @@ const handleSelectAll = () => {
 };
 
 
-const handleCopyToClipboard = (macAddress) => {
-    navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
-        setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
-        }, 500);
-    }).catch((error) => {
-        // Handle the error case
-        console.error('Failed to copy to clipboard:', error);
-    });
-}
-
-
-const handleRestart = (device_uuid) => {
-    axios.post(props.routes.restart,
-        { 'devices': [device_uuid] },
+const handleRetry = (message_uuid) => {
+    axios.post(props.routes.retry,
+        { 'items': [message_uuid] },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
@@ -671,7 +640,7 @@ const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
-    confirmationRestartTrigger.value = false;
+    confirmationRetryTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 
@@ -687,9 +656,36 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
+const determineColor = (status) => {
+  switch (status) {
+    case 'success':
+    case 'emailed':
+    case 'delivered':
+      return {
+        backgroundColor: 'bg-green-50',
+        textColor: 'text-green-700',
+        ringColor: 'ring-green-600/20'
+      };
+    case 'queued':
+      return {
+        backgroundColor: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        ringColor: 'ring-blue-600/20'
+      };
+    default:
+      return {
+        backgroundColor: 'bg-yellow-50',
+        textColor: 'text-yellow-700',
+        ringColor: 'ring-yellow-600/20'
+      };
+  }
+};
+
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
 
-<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>
