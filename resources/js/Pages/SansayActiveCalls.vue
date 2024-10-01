@@ -72,7 +72,7 @@
                 <TableColumnHeader header="Ans Time"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -115,7 +115,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ans_time" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.duration_formatted" />
 
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <!-- <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
                                 <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
@@ -127,15 +127,9 @@
                                 </ejs-tooltip>
 
 
-                                <!-- <div id="tooltip-no-arrow-sync" role="tooltip" 
-                                    class="inline-block absolute invisible text-xs z-10 py-1 px-2 font-medium text-white rounded-sm shadow-sm opacity-0 tooltip dark:bg-gray-600 delay-150" >
-                                tooltip
-                                </div> -->
-
-
                             </div>
                         </template>
-                    </TableField>
+                    </TableField> -->
                 </tr>
             </template>
             <template #empty>
@@ -240,11 +234,11 @@ const confirmDeleteAction = ref(null);
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
-            id: 'bulk_delete',
-            label: 'Delete',
-            icon: 'TrashIcon'
-        }
+        // {
+        //     id: 'bulk_delete',
+        //     label: 'Delete',
+        //     icon: 'TrashIcon'
+        // }
 
     ];
 
