@@ -62,6 +62,13 @@ class Kernel extends ConsoleKernel
                 '--model' => [WebhookCall::class],
             ])->daily();
         }
+
+        if (isset($jobSettings['backup']) && $jobSettings['backup'] === "true") {
+                // Schedule the backup command to run at 2 AM daily
+                $schedule->command('app:backup')
+                ->dailyAt('02:00')
+                ->timezone('America/Los_Angeles');
+        }
     }
 
     /**

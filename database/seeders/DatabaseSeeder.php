@@ -425,6 +425,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
             ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'backup',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'backup_path',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "/var/backups/fspbx",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
 
 
 
