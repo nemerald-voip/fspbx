@@ -7,7 +7,7 @@ use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-class PolycomZTPApiService implements ZtpProviderInterface
+class PolycomZTPApiProvider implements ZtpProviderInterface
 {
     protected string $apiKey;
     protected string $baseUrl;
@@ -26,10 +26,10 @@ class PolycomZTPApiService implements ZtpProviderInterface
      * Retrieve a list of devices with a configurable limit.
      *
      * @param  int  $limit
-     * @return string
+     * @return array
      * @throws \Exception
-     *
-    public function getDevices(int $limit = 50): string
+     */
+    public function listDevices(int $limit = 50): array
     {
         $url = "$this->baseUrl/devices?limit=$limit";
 
@@ -41,20 +41,38 @@ class PolycomZTPApiService implements ZtpProviderInterface
     }
 
     /**
-     * Create a new device with the given ID and profile.
+     * Get a device with the given ID..
      *
-     * @param  string  $id
-     * @param  string  $profile
-     * @return string
+     * @param  string  $deviceId
+     * @return array
      * @throws \Exception
+     */
+    public function getDevice(string $deviceId): array
+    {
+        $url = "$this->baseUrl/devices/$deviceId";
+
+        $response = Http::withHeaders([
+            'API-KEY' => $this->apiKey,
+        ])->get($url);
+
+        return $this->handleResponse($response);
+    }
+
+    /**
+     * Create a new device with the given ID and organisation.
      *
-    public function createDevice(string $id, string $profile): string
+     * @param  string  $deviceId
+     * @param  string  $orgId
+     * @return array
+     * @throws \Exception
+     */
+    public function createDevice(string $deviceId, string $orgId): array
     {
         $url = "$this->baseUrl/devices";
 
         $payload = [
-            'id' => $id,
-            'profile' => $profile
+            'id' => $deviceId,
+            'profile' => $orgId
         ];
 
         $response = Http::withHeaders([
@@ -69,10 +87,10 @@ class PolycomZTPApiService implements ZtpProviderInterface
      * Delete a device by its ID.
      *
      * @param  string  $deviceId
-     * @return string
+     * @return array
      * @throws \Exception
-     *
-    public function deleteDevice(string $deviceId): string
+     */
+    public function deleteDevice(string $deviceId): array
     {
         $url = "$this->baseUrl/devices/$deviceId";
 
@@ -207,13 +225,13 @@ class PolycomZTPApiService implements ZtpProviderInterface
      * Handle the API response, checking for different types of errors and successes.
      *
      * @param  Response  $response
-     * @return string
+     * @return array
      * @throws \Exception
-     *
-    private function handleResponse(Response $response): string
+     */
+    private function handleResponse(Response $response): array
     {
         if ($response->successful()) {
-            return $response->body();
+            return json_decode($response->body(), true);
         }
 
         if ($response->clientError()) {
@@ -231,5 +249,5 @@ class PolycomZTPApiService implements ZtpProviderInterface
         // Handle unexpected errors
         logger($response);
         throw new \Exception('An unexpected error occurred. Please try again.');
-    }*/
+    }
 }

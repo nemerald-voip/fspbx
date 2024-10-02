@@ -181,10 +181,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('devices', DeviceController::class);
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
     Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
-    Route::get('/devices/cloud-provisioning/{device}/{provider}/status', [DeviceController::class, 'cloudProvisioningStatus'])->name('devices.cloudProvisioning.status');
-    Route::post('/devices/cloud-provisioning/{device}/{provider}/register', [DeviceController::class, 'cloudProvisioningRegister'])->name('devices.cloudProvisioning.register');
-    Route::post('/devices/cloud-provisioning/{device}/{provider}/deregister', [DeviceController::class, 'cloudProvisioningDeregister'])->name('devices.cloudProvisioning.deregister');
-    //Route::get('/devices/cloud-provisioning/profiles', [DeviceController::class, 'cloudProvisioningProfiles'])->name('devices.cloudProvisioning.profiles');
 
     Route::resource('phone-numbers', PhoneNumbersController::class);
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
@@ -340,11 +336,17 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
 
-
     // Cloud Provisioning
     Route::resource('cloud-provisioning', CloudProvisioningController::class);
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+    Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloudProvisioning.status');
+    Route::post('/cloud-provisioning/register', [CloudProvisioningController::class, 'register'])->name('cloudProvisioning.register');
+    Route::post('/cloud-provisioning/deregister', [CloudProvisioningController::class, 'deregister'])->name('cloudProvisioning.deregister');
+    //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
+    //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
+    //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
+
 });
 
 

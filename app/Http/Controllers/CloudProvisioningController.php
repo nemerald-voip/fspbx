@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Devices;
+use App\Services\Interfaces\ZtpProviderInterface;
+use App\Services\PolycomZTPApiProvider;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use App\Mail\SmsToEmail;
 use App\Models\Extensions;
@@ -29,14 +33,14 @@ class CloudProvisioningController extends Controller
 
     public function __construct()
     {
-        $this->model = new DomainSettings();
+        $this->model = new Devices();
     }
 
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
-     */
+     *
     public function index()
     {
 
@@ -65,7 +69,7 @@ class CloudProvisioningController extends Controller
 
     /**
      *  Get data
-     */
+     *
     public function getData($paginate = 50)
     {
 
@@ -113,7 +117,7 @@ class CloudProvisioningController extends Controller
     /**
      * @param  array  $filters
      * @return Builder
-     */
+     *
     public function builder(array $filters = [])
     {
         $data =  $this->model::query();
@@ -160,7 +164,7 @@ class CloudProvisioningController extends Controller
      * @param $query
      * @param $value
      * @return void
-     */
+     *
     protected function filterSearch($query, $value)
     {
         $searchable = $this->searchable;
@@ -191,8 +195,8 @@ class CloudProvisioningController extends Controller
 
                 if (!$extension && !$messageSettings && !$messageSettings->email) {
                     throw new Exception('No assigned destination found.');
-                } 
-                    
+                }
+
 
                 if ($item->direction == "out") {
 
@@ -254,17 +258,17 @@ class CloudProvisioningController extends Controller
                         $attributes['message'] = $item->message;
                         $attributes['email_subject'] = 'SMS Notification: New Message from ' . $item->source;
                         // $attributes['smtp_from'] = config('mail.from.address');
-                
+
                         // Logic to deliver the SMS message using email
                         // This method should return a boolean indicating whether the message was sent successfully.
                         Mail::to($messageSettings->email)->send(new SmsToEmail($attributes));
-                
+
                         if ($item->status = "queued") {
                             $item->status = 'emailed';
                         }
                         $item->save();
                     }
-                    
+
                 }
             }
 
@@ -280,7 +284,87 @@ class CloudProvisioningController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
+*/
+    public function status(): JsonResponse
+    {
+        try {
+            //Get items info as a collection
+            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
 
+            $devicesData = [];
+            foreach ($items as $item) {
+                $device = Devices::find($item->device_uuid);
+                $cloudProvider = $this->getCloudProvider($device->device_vendor);
+                try {
+                    $cloudDeviceData = $cloudProvider->getDevice($device->device_address);
+                    $provisioned = true;
+                    $error = null;
+                } catch(\Exception $e) {
+                    logger($e);
+                    $cloudDeviceData = null;
+                    $provisioned = false;
+                    $error = $e->getMessage();
+                }
+                $devicesData[] = [
+                    'device_uuid' => $item->device_uuid,
+                    'provisioned' => $provisioned,
+                    'error' => $error,
+                    'data' => $cloudDeviceData
+                ];
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'status' => true,
+                'devicesData' => $devicesData,
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'error' => $e->getMessage(),
+                'deviceData' => null
+            ], 500);
+        }
+    }
+
+    public function register(): JsonResponse
+    {
+        try {
+            //ztp_profile_id
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Device provisioned']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to provision device']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function deregister(): JsonResponse
+    {
+        try {
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Device unprovisioned']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to provision device']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
 
     private function getPhoneNumberSmsConfig($from, $domainUuid)
     {
@@ -295,17 +379,13 @@ class CloudProvisioningController extends Controller
         return $phoneNumberSmsConfig;
     }
 
-    private function getMessageProvider($carrier)
+    private function getCloudProvider(string $provider): ZtpProviderInterface
     {
-        switch ($carrier) {
-            case 'thinq':
-                return new CommioMessageProvider();
-            case 'sinch':
-                return new SinchMessageProvider();
-                // Add cases for other carriers
-            default:
-                throw new \Exception("Unsupported carrier");
-        }
+        return match ($provider) {
+            'polycom' => new PolycomZTPApiProvider(),
+            //'yealink' => new YealinkZTPApiProvider(),
+            default => throw new \Exception("Unsupported provider"),
+        };
     }
 
 

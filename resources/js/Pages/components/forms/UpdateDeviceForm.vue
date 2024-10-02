@@ -299,6 +299,7 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
 import Loading from "../general/Loading.vue";
+import axios from "axios";
 
 
 const props = defineProps({
@@ -416,7 +417,9 @@ const handleSipTransportUpdate = (newSelectedItem, index) => {
 };
 
 const handleRegister = () => {
-    axios.post(props.item.cloud_provision_register)
+    axios.post(page.props.routes.cloud_provisioning_register, {
+        'items': [props.item.device_uuid]
+    })
         .then(response => {
             // Handle the successful response
             console.log(response.data);
@@ -428,7 +431,9 @@ const handleRegister = () => {
 }
 
 const handleDeregister = () => {
-    axios.post(props.item.cloud_provision_deregister)
+    axios.post(page.props.routes.cloud_provisioning_deregister, {
+        'items': [props.item.device_uuid]
+    })
         .then(response => {
             // Handle the successful response
             console.log(response.data);
@@ -443,17 +448,29 @@ watch(activeTab, (newTab) => {
     if (newTab === 'provisioning') {
         isCloudProvisioned.value.isLoading = true
         // Make the AJAX request
-        axios.get(props.item.cloud_provision_status)
+        axios.post(page.props.routes.cloud_provisioning_status, {
+            'items': [props.item.device_uuid]
+        })
             .then(response => {
-                // Handle the successful response
-                console.log(response.data);
-                isCloudProvisioned.value.status = response.data.status
-                isCloudProvisioned.value.error = response.data.error
+                const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
+                if (device) {
+                    if(device.provisioned) {
+                        isCloudProvisioned.value.status = true;
+                        isCloudProvisioned.value.error = null;
+                    } else {
+                        isCloudProvisioned.value.status = false;
+                        isCloudProvisioned.value.error = device.error;
+                    }
+                } else {
+                    isCloudProvisioned.value.status = false;
+                    isCloudProvisioned.value.error = 'Not found';
+                }
             })
             .catch(error => {
+                console.error(error)
                 // Handle any errors
                 isCloudProvisioned.value.status = false
-                isCloudProvisioned.value.error = error
+                isCloudProvisioned.value.error = error.response.data.error
             })
             .finally(() => {
                 isCloudProvisioned.value.isLoading = false
