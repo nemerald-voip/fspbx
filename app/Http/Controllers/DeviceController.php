@@ -316,6 +316,11 @@ class DeviceController extends Controller
             // Update the instance with the label
             $instance->save();
 
+            // Provision device
+            if($inputs['device_provisioning']) {
+
+            }
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['New item created']]

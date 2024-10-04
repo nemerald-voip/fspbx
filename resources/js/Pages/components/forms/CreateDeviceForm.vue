@@ -146,7 +146,16 @@
             </div>
 
             <div v-if="activeTab === 'provisioning'">
-
+                <div class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
+                            <Toggle :target="'enable_provisioning'" :label="'Provision this device'"
+                                    description="Activate this setting if you want to provision this device with cloud provider immediately."
+                                    v-model="form.device_provisioning" customClass="py-4" />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
@@ -177,6 +186,7 @@ import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '
 import { PlusIcon } from "@heroicons/vue/24/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import {CloudIcon} from "@heroicons/vue/24/outline/index.js";
+import Toggle from "../general/Toggle.vue";
 
 
 const props = defineProps({
@@ -191,6 +201,7 @@ const form = reactive({
     device_address: null,
     device_template: null,
     device_profile_uuid: null,
+    device_provisioning: true,
     lines: [],
     _token: page.props.csrf_token,
 })

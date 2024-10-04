@@ -46,6 +46,9 @@ class StoreDeviceRequest extends FormRequest
                 'nullable',
                 'array'
             ],
+            'device_provisioning' => [
+                'boolean'
+            ],
             'domain_uuid' => [
                 'nullable',
             ],
@@ -75,7 +78,7 @@ class StoreDeviceRequest extends FormRequest
 
         $responseData = array('errors' => $errors);
 
-        throw new HttpResponseException(response()->json($responseData, 422)); 
+        throw new HttpResponseException(response()->json($responseData, 422));
     }
 
     public function messages(): array
