@@ -7,7 +7,7 @@ use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-class PolycomZTPApiProvider implements ZtpProviderInterface
+class PolycomZtpProvider implements ZtpProviderInterface
 {
     protected string $apiKey;
     protected string $baseUrl;
@@ -231,7 +231,7 @@ class PolycomZTPApiProvider implements ZtpProviderInterface
     private function handleResponse(Response $response): array
     {
         if ($response->successful()) {
-            return json_decode($response->body(), true);
+            return (!empty($response->body())) ? json_decode($response->body(), true) : [];
         }
 
         if ($response->clientError()) {

@@ -421,8 +421,19 @@ const handleRegister = () => {
         'items': [props.item.device_uuid]
     })
         .then(response => {
-            // Handle the successful response
-            console.log(response.data);
+            const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
+            if (device) {
+                if(device.provisioned) {
+                    isCloudProvisioned.value.status = true;
+                    isCloudProvisioned.value.error = null;
+                } else {
+                    isCloudProvisioned.value.status = false;
+                    isCloudProvisioned.value.error = device.error;
+                }
+            } else {
+                isCloudProvisioned.value.status = false;
+                isCloudProvisioned.value.error = 'Not found';
+            }
         })
         .catch(error => {
             // Handle any errors
@@ -435,8 +446,16 @@ const handleDeregister = () => {
         'items': [props.item.device_uuid]
     })
         .then(response => {
-            // Handle the successful response
-            console.log(response.data);
+            const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
+            if (device) {
+                if(device.error) {
+                    isCloudProvisioned.value.error = device.error;
+                }
+                isCloudProvisioned.value.status = false;
+            } else {
+                isCloudProvisioned.value.status = false;
+                isCloudProvisioned.value.error = 'Not found';
+            }
         })
         .catch(error => {
             // Handle any errors
