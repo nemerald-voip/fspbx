@@ -176,7 +176,7 @@
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
-                            <p class="mt-1 text-sm text-gray-500">Check current provisioning status within our cloud provider.</p>
+                            <p class="mt-1 text-sm text-gray-500">Check current provisioning status with cloud provider.</p>
                         </div>
                         <div v-if="!isCloudProvisioned.isLoading">
                             <div>Status:

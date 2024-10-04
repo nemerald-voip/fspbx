@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CloudProvisioningService;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Devices;
@@ -318,7 +319,18 @@ class DeviceController extends Controller
 
             // Provision device
             if($inputs['device_provisioning']) {
-
+                try {
+                    $cloudProvisioningService = new CloudProvisioningService();
+                    if($cloudProvisioningService->isSupportedProvider($instance->device_vendor)) {
+                        $cloudProvider = $cloudProvisioningService->getCloudProvider($instance->device_vendor);
+                        $cloudProvider->createDevice(
+                            $instance->device_address,
+                            $cloudProvisioningService->getCloudProviderOrganisationId($instance->device_vendor)
+                        );
+                    }
+                } catch (\Exception $e) {
+                    logger($e);
+                }
             }
 
             // Return a JSON response indicating success
@@ -327,7 +339,7 @@ class DeviceController extends Controller
             ], 201);
         } catch (\Exception $e) {
             // Log the error message
-            logger($e->getMessage());
+            logger($e);
 
             // Handle any other exception that may occur
             return response()->json([
@@ -443,11 +455,6 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Failed to update this item']]
             ], 500); // 500 Internal Server Error for any other errors
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to update this item']]
-        ], 500); // 500 Internal Server Error for any other errors
 
     }
 
@@ -612,7 +619,7 @@ class DeviceController extends Controller
      * Bulk update requested items
      *
      * @param  \Illuminate\Http\BulkUpdateDeviceRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
     public function bulkUpdate(BulkUpdateDeviceRequest  $request)
     {
@@ -668,11 +675,6 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Failed to update selected items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to update selected items']]
-        ], 500); // 500 Internal Server Error for any other errors
     }
 
 
@@ -728,7 +730,7 @@ class DeviceController extends Controller
     /**
      * Get all items
      *
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
     public function selectAll()
     {
@@ -753,11 +755,6 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to select all items']]
-        ], 500); // 500 Internal Server Error for any other errors
     }
 
     public function deleteDeviceLines($deviceUuids)
