@@ -201,7 +201,7 @@ class CloudProvisioningController extends Controller
         $domainSettings = match ($provider) {
             'polycom' => $domainSettings->where('domain_setting_subcategory', 'polycom_ztp_profile_id'),
             //'yealink' => $domainSettings->where('domain_setting_subcategory', 'yealink_ztp_profile_id'),
-            default => throw new \Exception("Organisation ID not found"),
+            default => throw new \Exception("Organisation not supported"),
         };
 
         if($domainSettings->count() == 0) {
