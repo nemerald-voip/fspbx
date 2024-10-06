@@ -110,6 +110,15 @@ If you find any updates pending, run this command to install them.
    php artisan migrate
    ```
 
+### Premium Modules
+Unlock the full potential of your PBX with our two exciting premium modules designed to take your system to the next level:
+
+**Contact Center Module**: Elevate your call management with an elegant live dashboard and a powerful management portal, ensuring every queue is optimized and easy to control.
+
+**STIR/SHAKEN Module**: Ensure call authenticity with the STIR/SHAKEN module, giving you the power to sign all your calls with Attestation A using your very own certificate.
+
+Experience enhanced functionality and seamless control like never before!
+
 ### Contact
 For any questions or feedback, please contact us for support.
 

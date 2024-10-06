@@ -12,32 +12,25 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class RegistrationsController extends Controller
 {
 
-    public $eslService;
     public $filters = [];
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Registrations';
     protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
 
-    public function __construct(FreeswitchEslService $eslService)
-    {
-        // $this->model = new Messages();
-        $this->eslService = $eslService;
-    }
-
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(FreeswitchEslService $eslService)
     {
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
+                'data' => function () use ($eslService) {
+                    return $this->getData($eslService);
                 },
                 'showGlobal' => function () {
                     return request('filterData.showGlobal') === 'true';
@@ -58,7 +51,7 @@ class RegistrationsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData(FreeswitchEslService $eslService, $paginate = 50)
     {
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
@@ -72,7 +65,7 @@ class RegistrationsController extends Controller
             $this->filters['showGlobal'] = null;
         }
 
-        $data = $this->builder($this->filters);
+        $data = $this->builder($this->filters, $eslService);
 
         // Apply pagination manually
         if ($paginate) {
@@ -88,11 +81,11 @@ class RegistrationsController extends Controller
      * @param  array  $filters
      * @return Builder
      */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], FreeswitchEslService $eslService)
     {
 
         // get a list of current registrations
-        $data = $this->eslService->getAllSipRegistrations();
+        $data = $eslService->getAllSipRegistrations();
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
         if ($this->sortOrder === 'asc') {
