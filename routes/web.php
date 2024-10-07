@@ -24,6 +24,7 @@ use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\ProFeaturesController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
@@ -334,6 +335,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('active-calls', ActiveCallsController::class);
     Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+
+    // Pro Features
+    Route::resource('pro-features', ProFeaturesController::class);
+    Route::post('/pro-features/action', [ProFeaturesController::class, 'handleAction'])->name('pro-features.action');
+
 });
 
 
