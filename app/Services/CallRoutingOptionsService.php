@@ -231,7 +231,7 @@ class CallRoutingOptionsService
         })
             ->where('dialplan_enabled', 'true')
             ->where('domain_uuid', session('domain_uuid'))
-            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml')
+            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
             ->first();
 
         // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -307,7 +307,16 @@ class CallRoutingOptionsService
             }
         }
 
-        // If no specific type was matched, return empty array
+        // Check if dialplan_order is 300 and assume it's time conditions
+        if ($dialplan->dialplan_order == 300) {
+            return [
+                'type' => 'time_conditions',
+                'extension' => $extension,
+                'option' => $dialplan->dialplan_uuid,
+            ];
+        }
+
+        // If no specific type was matched and no dialplan_order of 300, return empty array
         return [];
     }
 
