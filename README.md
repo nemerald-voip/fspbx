@@ -76,6 +76,7 @@ Before you begin, ensure you have met the following requirements:
 4. **Run database migration script**
 
    ```bash
+   cd /var/www/fspbx
    php artisan migrate
    ```
 
