@@ -252,6 +252,11 @@ class ProFeaturesController extends Controller
                         $filePath = base_path("Modules/{$artifactName}");
                         $extractPath = base_path("Modules/ContactCenter");
 
+                        // Check if the path exists, create it if not
+                        if (!file_exists($filePath)) {
+                            mkdir($filePath, 0755, true);  // Create directory with necessary permissions
+                        }
+
                         // Save the downloaded file
                         file_put_contents($filePath, $artifactContent);
 
