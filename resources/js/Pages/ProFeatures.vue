@@ -47,9 +47,9 @@
                     <span class="pl-4">Feature</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="License" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="License Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Module Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
@@ -73,12 +73,14 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.name">
+                <tr v-for="row in data.data" :key="row.uuid">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                         <div class="flex items-center">
-                            <input v-if="row.name" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.name" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9">
+                            <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+
+                            <div class="ml-9 cursor-pointer hover:text-gray-900 "
+                                @click="handleEditRequest(row.uuid)">
                                 {{ row.name }}
                             </div>
 
@@ -86,17 +88,19 @@
                     </TableField>
 
 
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.license" />
+                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.license_valid" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'End Call'" position='TopCenter' target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <CallEndIcon @click="handleSingleItemActionRequest(row.uuid, 'end_call')"
+                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
+                                    target="#destination_tooltip_target">
+                                    <div id="destination_tooltip_target">
+                                        <PencilSquareIcon @click="handleEditRequest(row.uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
                                     </div>
                                 </ejs-tooltip>
 
@@ -137,12 +141,19 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="isActionConfirmationModalVisible" @close="isActionConfirmationModalVisible = false"
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
         @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this action?'"
         :confirm-button-label="actionLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Pro Feature Settings'" :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateProFeatureForm :options="itemOptions" :errors="formErrors"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" @deactivate="handleDeactivateRequest"/>
+        </template>
+    </AddEditItemModal>
 </template>
 
 <script setup>
@@ -166,11 +177,8 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
-import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
-import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
-import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
-import CallEndIcon from "./components/icons/CallEndIcon.vue"
-import Refresh from "./components/icons/Refresh.vue"
+import { PencilSquareIcon } from "@heroicons/vue/24/solid";
+import UpdateProFeatureForm from "./components/forms/UpdateProFeatureForm.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -182,9 +190,14 @@ const confirmAction = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-const isActionConfirmationModalVisible = ref(false);
+const showEditModal = ref(false);
+const showConfirmationModal = ref(false);
 const actionLabel = ref('');
-const intervalId = ref(null);
+const formErrors = ref(null);
+const loadingModal = ref(false)
+const itemOptions = ref({})
+const updateFormSubmiting = ref(null);
+
 
 const props = defineProps({
     data: Object,
@@ -205,11 +218,11 @@ const showGlobal = ref(props.showGlobal);
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
-            id: 'bulk_end_call',
-            label: 'End Calls',
-            icon: 'CallEndIcon'
-        },
+        // {
+        //     id: 'bulk_end_call',
+        //     label: 'End Calls',
+        //     icon: 'CallEndIcon'
+        // },
 
     ];
 
@@ -220,8 +233,94 @@ onMounted(() => {
     // console.log(props.data);
 });
 
+const handleEditRequest = (itemUuid) => {
+    showEditModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions(itemUuid);
+}
+
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+
+
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    loadingModal.value = true
+    formErrors.value = null;
+
+    axios.put(form.update_route, form)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            // handleModalClose();
+            getItemOptions(itemOptions.value.item.uuid);
+            handleClearSelection();
+        }).catch((error) => {
+            updateFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
+const handleDeactivateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    loadingModal.value = true
+    formErrors.value = null;
+
+    axios.delete(form.deactivate_route)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            // handleModalClose();
+            getItemOptions(itemOptions.value.item.uuid);
+            handleClearSelection();
+        })
+        .catch((error) => {
+            updateFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+};
+
+const handleActivateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.delete(form.activate_route)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            // handleModalClose();
+            getItemOptions(itemOptions.value.item.uuid);
+            handleClearSelection();
+        })
+        .catch((error) => {
+            updateFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+};
+
+
 const handleSingleItemActionRequest = (uuid, action) => {
-    isActionConfirmationModalVisible.value = true;
+    showEditModal.value = true;
     actionLabel.value = 'End Call';
     confirmAction.value = () => executeSingleAction(uuid, action);
 }
@@ -248,7 +347,7 @@ const executeSingleAction = (uuid, action) => {
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_end_call') {
-        isActionConfirmationModalVisible.value = true;
+        showEditModal.value = true;
         actionLabel.value = 'End Calls';
         confirmAction.value = () => executeBulkAction('end_call');
     }
@@ -313,18 +412,6 @@ const handleRefreshButtonClick = () => {
     handleSearchButtonClick();
 }
 
-
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -420,30 +507,10 @@ const handleClearSelection = () => {
     selectAll.value = false;
 }
 
-const toggleRefreshing = () => {
-    isRefreshing.value = !isRefreshing.value;
 
-    if (isRefreshing.value) {
-        // Start calling handleSearchButtonClick every few seconds
-        intervalId.value = setInterval(() => {
-            handleRefresh();
-        }, 5000); // Run every 5 seconds
-    } else {
-        // Stop the interval when refreshing is disabled
-        clearInterval(intervalId.value);
-        intervalId.value = null;
-    }
-};
-
-// Make sure to clear the interval when the component is destroyed
-onUnmounted(() => {
-    if (intervalId.value) {
-        clearInterval(intervalId.value);
-    }
-});
 
 const handleModalClose = () => {
-    isActionConfirmationModalVisible.value = false;
+    showEditModal.value = false;
 }
 
 const hideNotification = () => {
@@ -456,6 +523,29 @@ const showNotification = (type, messages = null) => {
     notificationType.value = type;
     notificationMessages.value = messages;
     notificationShow.value = true;
+}
+
+const handleFormErrorResponse = (error) => {
+    if (error.request?.status == 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+
 }
 
 

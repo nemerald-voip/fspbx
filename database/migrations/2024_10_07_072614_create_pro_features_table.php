@@ -17,7 +17,7 @@ class CreateProFeaturesTable extends Migration
         // Check if the pro_features table already exists
         if (!Schema::hasTable('pro_features')) {
             Schema::create('pro_features', function (Blueprint $table) {
-                $table->uuid('id')->primary()->default(DB::raw('uuid_generate_v4()'));
+                $table->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
                 $table->string('name');
                 $table->string('slug')->nullable();
                 $table->string('license')->nullable();

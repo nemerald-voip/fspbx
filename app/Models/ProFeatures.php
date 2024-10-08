@@ -13,7 +13,7 @@ class ProFeatures extends Model
 
     public $timestamps = true;
 
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -27,7 +27,6 @@ class ProFeatures extends Model
         'slug',
         'license',
     ];
-
 
 
 }
