@@ -5,8 +5,13 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\ProFeatures;
 use App\Services\KeygenAPIService;
+use Illuminate\Console\OutputStyle;
 use App\Services\FreeswitchEslService;
+use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Requests\UpdateProFeatureRequest;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 class ProFeaturesController extends Controller
 {
@@ -248,55 +253,28 @@ class ProFeaturesController extends Controller
                     $artifactContent = $keygenApiService->downloadArtifact($licenseKey, $releaseVersion, $artifactName);
 
                     if ($artifactContent) {
-                        // Save the artifact to Modules directory
-                        $filePath = base_path("Modules/{$artifactName}");
-                        $extractPath = base_path("Modules/ContactCenter");
+                        $this->saveAndExtract($artifactName, $artifactContent);
 
-                        // Check if the extract path exists, create it if not
-                        if (!file_exists($extractPath)) {
-                            mkdir($extractPath, 0755, true);  // Create directory with necessary permissions
-                        }
+                        // Run the Artisan command to enable the ContactCenter module
+                        Artisan::call('module:enable', ['module' => 'ContactCenter']);
 
-                        // Save the downloaded file
-                        file_put_contents($filePath, $artifactContent);
+                        // Run the module:seed command after extraction
+                        Artisan::call('module:seed', ['module' => 'ContactCenter']);
+                        
+                        // Run the 'app:update' command using Symfony Process
+                        // $process = new Process(['php', 'artisan', 'app:update']);
+                        // $process->setWorkingDirectory(base_path());  // Set the Laravel root directory
+                        // $process->run();
 
-                        // Remove existing .tar file if it exists
-                        $tarFile = str_replace('.gz', '', $filePath);
-                        if (file_exists($tarFile)) {
-                            unlink($tarFile);
-                        }
-                        // Extract the .tar.gz file
-                        $phar = new \PharData($filePath);
-                        $phar->decompress();  // Decompress the .gz file (removes .gz and creates .tar)
-
-                        // Now extract the .tar contents
-                        $phar = new \PharData($tarFile);
-                        $phar->extractTo($extractPath, null, true);  // Extract all files
-
-                        // Clean up by deleting the .tar and original .gz files
-                        unlink($filePath); // delete .tar.gz
-                        unlink($tarFile);  // delete .tar
-
-                        // Find the extracted directory dynamically
-                        $subDirs = glob($extractPath . '/*', GLOB_ONLYDIR);
-
-                        if (count($subDirs) > 0) {
-                            $extractedDir = $subDirs[0];  // The first (and likely only) subdirectory
-
-                            // Move each file from the extracted folder to the main ContactCenter directory
-                            $files = scandir($extractedDir);
-
-                            foreach ($files as $file) {
-                                if ($file !== '.' && $file !== '..') {
-                                    rename("{$extractedDir}/{$file}", "{$extractPath}/{$file}");
-                                }
-                            }
-
-                            // Delete the extracted directory
-                            rmdir($extractedDir);
-
-                            logger("Files moved to the main ContactCenter directory.");
-                        }
+                        // // Log the output of the command
+                        // if ($process->isSuccessful()) {
+                        //     logger('App update completed: ' . $process->getOutput());
+                        // } else {
+                        //     logger('App update failed. Error: ' . $process->getErrorOutput());
+                        //     logger('App update failed. Full output: ' . $process->getOutput());
+                        // }
+                    } else {
+                        throw new \Exception("Unable to download the file");
                     }
                 }
             }
@@ -496,5 +474,72 @@ class ProFeaturesController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function saveAndExtract($artifactName, $artifactContent)
+    {
+        // Save the artifact to Modules directory
+        $filePath = base_path("Modules/{$artifactName}");
+        $extractPath = base_path("Modules/ContactCenter");
+
+        // If the extract path exists, remove it and recreate it
+        if (file_exists($extractPath)) {
+            $this->deleteDirectory($extractPath);  // Delete existing directory
+        }
+        mkdir($extractPath, 0755, true);  // Recreate directory
+
+        // Save the downloaded file
+        file_put_contents($filePath, $artifactContent);
+
+        // Remove existing .tar file if it exists
+        $tarFile = str_replace('.gz', '', $filePath);
+        if (file_exists($tarFile)) {
+            unlink($tarFile);
+        }
+        // Extract the .tar.gz file
+        $phar = new \PharData($filePath);
+        $phar->decompress();  // Decompress the .gz file (removes .gz and creates .tar)
+
+        // Now extract the .tar contents
+        $phar = new \PharData($tarFile);
+        $phar->extractTo($extractPath, null, true);  // Extract all files
+
+        // Clean up by deleting the .tar and original .gz files
+        unlink($filePath); // delete .tar.gz
+        unlink($tarFile);  // delete .tar
+
+        // Find the extracted directory dynamically
+        $subDirs = glob($extractPath . '/*', GLOB_ONLYDIR);
+
+        if (count($subDirs) > 0) {
+            $extractedDir = $subDirs[0];  // The first (and likely only) subdirectory
+
+            // Move each file from the extracted folder to the main ContactCenter directory
+            $files = scandir($extractedDir);
+
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    rename("{$extractedDir}/{$file}", "{$extractPath}/{$file}");
+                }
+            }
+
+            // Delete the extracted directory
+            rmdir($extractedDir);
+        }
+    }
+
+    // Helper function to delete a directory and its contents
+    private function deleteDirectory($dirPath)
+    {
+        if (!is_dir($dirPath)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dirPath), ['.', '..']);
+        foreach ($files as $file) {
+            $filePath = "{$dirPath}/{$file}";
+            is_dir($filePath) ? $this->deleteDirectory($filePath) : unlink($filePath);
+        }
+        rmdir($dirPath);
     }
 }
