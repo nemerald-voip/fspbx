@@ -475,8 +475,8 @@ class DatabaseSeeder extends Seeder
     {
         $features = [
             [
-                'name' => 'Contact Center',
-                'slug' => 'contact-center',
+                'name' => 'FS PBX Pro Features',
+                'slug' => 'fspbx',
             ],
         ];
 

@@ -18,7 +18,7 @@
         </aside>
 
         <form @submit.prevent="submitForm" class="sm:px-6 lg:col-span-9 lg:px-0">
-            <div v-if="activeTab === 'settings'">
+            <div v-if="activeTab === 'license'">
                 <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                     <div>
                         <h3 class="text-base font-semibold leading-6 text-gray-900">License Status</h3>
@@ -62,7 +62,7 @@
                                     </span> -->
                                 </dd>
                             </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                            <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                                 <dt class="text-sm font-medium leading-6 text-gray-900">Expiration</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <div>
@@ -76,7 +76,7 @@
                                     </span> -->
                                 </dd>
                             </div>
-                            <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                            <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                                 <dt class="text-sm font-medium leading-6 text-gray-900">Activation Status</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <span v-if="props.options.item.license_details?.meta?.code == 'NO_MACHINE'" class="flex-grow text-rose-600">The license key has not been activated on this machine</span>
@@ -111,64 +111,48 @@
                                 </span>
                             </button>
 
-                            <!-- <button
-                                v-if="props.options.item.license && props.options.item.license_details && props.options.item.license_details.data"
-                                @click.prevent="handleDeactivateRequest"
-                                class="justify-center flex items-center gap-2 rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 sm:col-start-2"
-                                ref="saveButtonRef" :disabled="isSubmitting">
-                                <XMarkIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-                                <span>
-                                    Deactivate license
-                                </span>
-                            </button> -->
 
-                            <!-- <button
-                                v-if="!licenseSubmitted && props.options.item.license_details && props.options.item.license_details.meta && !props.options.item.license_details.meta.valid"
-                                @click.prevent="handleShowEditLicenseModal"
-                                class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                                ref="saveButtonRef" :disabled="isSubmitting">
-                                <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-                                <span>
-                                    Update license
-                                </span>
-                            </button> -->
-                            <!-- <button href="#" @click.prevent="handleShowEditLicenseModal" class="flex items-center gap-2">
-                                <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-                                <span>
-                                    Add license
-                                </span>
-                            </button> -->
                         </div>
                     </div>
 
-                    <!-- <div class="sm:col-span-12">
-                        <LabelInputRequired :target="'device_address'" :label="'MAC Address'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.device_address" type="text" name="device_address"
-                                placeholder="Enter MAC Address" :disabled="!page.props.auth.can.device_edit_address"
-                                :error="errors?.device_address && errors.device_address.length > 0" />
-                        </div>
-                        <div v-if="errors?.device_address" class="mt-2 text-sm text-red-600">
-                            {{ errors.device_address[0] }}
-                        </div>
-                    </div> -->
-
-
-
-
-                    <!-- 
-                    <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
-                        <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.extensions" :selectedItem="form.extension" :search="true"
-                                :placeholder="'Choose extension'" @update:model-value="handleExtensionUpdate" />
-                        </div>
-                    </div> -->
 
 
                 </div>
             </div>
 
+            <div v-if="activeTab === 'downloads'">
+                <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                    <div>
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">Downloads</h3>
+                        <!-- <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
+                            Select a routing option below to fit your business needs.</p> -->
+                    </div>
+
+
+         
+
+                    <div  class="bg-gray-100  px-4 py-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+
+                        <div
+                            class="col-span-full flex justify-center bg-gray-100 px-4  text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+                            <button 
+                                @click.prevent="handleInstall"
+                                class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                 :disabled="isInstalling">
+                                <span>
+                                    Install
+                                </span>
+                                <Spinner class="ml-1" :show="isInstalling" />
+                            </button>
+
+
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </div>
 
 
             <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
@@ -224,12 +208,14 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon,  } from '@heroicons/vue/24/outline';
+import {CloudArrowDownIcon} from "@heroicons/vue/24/solid";
 
 
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
+    isInstalling: Boolean,
     errors: Object,
 });
 
@@ -239,13 +225,13 @@ const form = reactive({
     license: props.options.item.license,
     update_route: props.options.routes.update_route,
     deactivate_route: props.options.routes.deactivate_route,
+    install_route: props.options.routes.install_route,
     _token: page.props.csrf_token,
 })
 
-const licenseStatus = ref('License not registered');
 const licenseSubmitted = ref(false);
 
-const emits = defineEmits(['submit', 'cancel', 'deactivate']);
+const emits = defineEmits(['submit', 'cancel', 'deactivate', 'install']);
 
 const showEditLicenseModal = ref(false);
 
@@ -261,16 +247,15 @@ const handleDeactivateRequest = () => {
     emits('deactivate', form);
 }
 
-// const handleActivateRequest = () => {
-//     emits('activate', form);
-// }
-
+const handleInstall = () => {
+    emits('install', form);
+} 
 
 
 
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
-    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+    'CloudArrowDownIcon': CloudArrowDownIcon,
 };
 
 
@@ -278,9 +263,6 @@ const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
-const deleteLineKey = (index) => {
-    form.lines.splice(index, 1);  // Remove the line key at the specified index
-};
 
 const handleShowEditLicenseModal = () => {
     showEditLicenseModal.value = true;
@@ -288,7 +270,6 @@ const handleShowEditLicenseModal = () => {
 
 const handleModalClose = () => {
     if (form.license) {
-        licenseStatus.value = 'License added. Click save to register it';
         licenseSubmitted.value = true;
     }
     showEditLicenseModal.value = false;

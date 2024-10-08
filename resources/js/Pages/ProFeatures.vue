@@ -47,9 +47,11 @@
                     <span class="pl-4">Feature</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="License Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="License Status"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="Module Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Module Status"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
@@ -79,8 +81,7 @@
                             <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
 
-                            <div class="ml-9 cursor-pointer hover:text-gray-900 "
-                                @click="handleEditRequest(row.uuid)">
+                            <div class="ml-9 cursor-pointer hover:text-gray-900 " @click="handleEditRequest(row.uuid)">
                                 {{ row.name }}
                             </div>
 
@@ -88,7 +89,16 @@
                     </TableField>
 
 
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.license_valid" />
+                    <TableField class=" px-2 py-2 text-sm text-gray-500">
+                        <Badge v-if="row.license && !row.license_details?.meta?.valid" :text="row.license_valid" backgroundColor="bg-rose-50"
+                            textColor="text-rose-700"
+                            ringColor="ring-rose-600/20" />
+
+                        <Badge v-if="row.license && row.license_details?.meta?.valid" :text="row.license_valid" backgroundColor="bg-blue-50"
+                            textColor="text-blue-700"
+                            ringColor="ring-blue-600/20" />
+
+                    </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
 
 
@@ -141,17 +151,18 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
-        @confirm="confirmAction" :header="'Are you sure?'" :text="'Are you sure you want to proceed with this action?'"
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmAction"
+        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this action?'"
         :confirm-button-label="actionLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Pro Feature Settings'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Pro Feature Settings'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateProFeatureForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" @deactivate="handleDeactivateRequest"/>
+            <UpdateProFeatureForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting" :is-installing="isInstalling"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @deactivate="handleDeactivateRequest" @install="handleInstallRequest"/>
         </template>
     </AddEditItemModal>
 </template>
@@ -197,11 +208,11 @@ const formErrors = ref(null);
 const loadingModal = ref(false)
 const itemOptions = ref({})
 const updateFormSubmiting = ref(null);
+const isInstalling = ref(null);
 
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
     // itemData: Object,
     // itemOptions: Object,
@@ -210,10 +221,8 @@ const props = defineProps({
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
 });
 
-const showGlobal = ref(props.showGlobal);
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -298,13 +307,13 @@ const handleDeactivateRequest = (form) => {
         });
 };
 
-const handleActivateRequest = (form) => {
-    updateFormSubmiting.value = true;
+const handleInstallRequest = (form) => {
+    isInstalling.value = true;
     formErrors.value = null;
 
-    axios.delete(form.activate_route)
+    axios.post(form.install_route, form)
         .then((response) => {
-            updateFormSubmiting.value = false;
+            isInstalling.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             // handleModalClose();
@@ -312,11 +321,13 @@ const handleActivateRequest = (form) => {
             handleClearSelection();
         })
         .catch((error) => {
-            updateFormSubmiting.value = false;
+            isInstalling.value = false;
             handleClearSelection();
             handleFormErrorResponse(error);
         });
 };
+
+
 
 
 const handleSingleItemActionRequest = (uuid, action) => {

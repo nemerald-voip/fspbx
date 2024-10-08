@@ -211,6 +211,111 @@ class ProFeaturesController extends Controller
 
 
 
+    public function install(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenApiService $keygenApiService)
+    {
+
+        if (!$pro_feature) {
+            // If the model is not found, return an error response
+            return response()->json([
+                'success' => false,
+                'errors' => ['model' => ['Model not found']]
+            ], 404); // 404 Not Found if the model does not exist
+        }
+
+        try {
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
+
+
+
+            // License validation
+            $licenseKey = $inputs['license'] ?? $pro_feature->license;
+            $licenseResponse = $keygenApiService->validateLicenseKey($licenseKey);
+
+            if ($licenseResponse && $licenseResponse['meta']['valid'] === true) {
+
+                $releases = $keygenApiService->getReleases($licenseKey);
+
+                if (!empty($releases)) {
+                    $firstRelease = $releases[0];
+                    $releaseVersion = $firstRelease['attributes']['version'];
+
+                    // Format the artifact name
+                    $artifactName = "fspbx-contact-module-{$releaseVersion}.tar.gz";
+
+                    // Download the artifact using the version
+                    $artifactContent = $keygenApiService->downloadArtifact($licenseKey, $releaseVersion, $artifactName);
+
+                    if ($artifactContent) {
+                        // Save the artifact to Modules directory
+                        $filePath = base_path("Modules/{$artifactName}");
+                        $extractPath = base_path("Modules/ContactCenter");
+
+                        // Save the downloaded file
+                        file_put_contents($filePath, $artifactContent);
+
+                        // Check if the extract path exists, create it if not
+                        if (!file_exists($extractPath)) {
+                            mkdir($extractPath, 0755, true);  // Create directory with necessary permissions
+                        }
+
+                        // Remove existing .tar file if it exists
+                        $tarFile = str_replace('.gz', '', $filePath);
+                        if (file_exists($tarFile)) {
+                            unlink($tarFile);
+                        }
+                        // Extract the .tar.gz file
+                        $phar = new \PharData($filePath);
+                        $phar->decompress();  // Decompress the .gz file (removes .gz and creates .tar)
+
+                        // Now extract the .tar contents
+                        $phar = new \PharData($tarFile);
+                        $phar->extractTo($extractPath, null, true);  // Extract all files
+
+                        // Clean up by deleting the .tar and original .gz files
+                        unlink($filePath); // delete .tar.gz
+                        unlink($tarFile);  // delete .tar
+
+                        // Find the extracted directory dynamically
+                        $subDirs = glob($extractPath . '/*', GLOB_ONLYDIR);
+
+                        if (count($subDirs) > 0) {
+                            $extractedDir = $subDirs[0];  // The first (and likely only) subdirectory
+
+                            // Move each file from the extracted folder to the main ContactCenter directory
+                            $files = scandir($extractedDir);
+
+                            foreach ($files as $file) {
+                                if ($file !== '.' && $file !== '..') {
+                                    rename("{$extractedDir}/{$file}", "{$extractPath}/{$file}");
+                                }
+                            }
+
+                            // Delete the extracted directory
+                            rmdir($extractedDir);
+
+                            logger("Files moved to the main ContactCenter directory.");
+                        }
+                    }
+                }
+            }
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Request has been succesfully processed']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to install this module']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
     public function handleAction()
     {
         try {
@@ -242,9 +347,14 @@ class ProFeaturesController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
-                    'name' => 'Settings',
+                    'name' => 'License',
                     'icon' => 'Cog6ToothIcon',
-                    'slug' => 'settings',
+                    'slug' => 'license',
+                ],
+                [
+                    'name' => 'Downloads',
+                    'icon' => 'CloudArrowDownIcon',
+                    'slug' => 'downloads',
                 ],
             ];
 
@@ -273,6 +383,9 @@ class ProFeaturesController extends Controller
                 } else {
                     $item->license_valid = false;
                 }
+
+                // Fetch releases from Keygen
+                // $releases = $keygenApiService->getReleases($item->license);
             }
 
             $routes = [];
@@ -280,12 +393,14 @@ class ProFeaturesController extends Controller
                 'update_route' => route('pro-features.update', $item),
                 'deactivate_route' => route('pro-features.destroy', $item),
                 'activate_route' => route('pro-features.activate', $item),
+                'install_route' => route('pro-features.install', $item),
             ]);
 
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
                 'item' => $item,
+                // 'releases' => $releases, 
                 // 'permissions' => $permissions,
                 'routes' => $routes,
 
@@ -348,9 +463,6 @@ class ProFeaturesController extends Controller
             } else {
                 return response()->json(['errors' => ['machine' => ['No matching machine found for this license']]], 400);
             }
-
-            
-
         } catch (\Exception $e) {
             // Log the error message
             logger($e);

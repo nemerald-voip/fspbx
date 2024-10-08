@@ -136,6 +136,38 @@ class KeygenApiService
     }
 
 
+    public function getReleases($licenseKey)
+    {
+        $url = "{$this->baseUrl}/v1/accounts/{$this->accountId}/releases?limit=15";
+
+        $response = Http::withHeaders([
+            'Accept' => 'application/vnd.api+json',
+            'Authorization' => 'License ' . $licenseKey
+        ])
+            ->get($url);
+
+        return $response->json()['data'] ?? [];
+    }
+
+    public function downloadArtifact($licenseKey, $releaseVersion, $artifactName)
+    {
+        $url = "{$this->baseUrl}/v1/accounts/{$this->accountId}/releases/{$releaseVersion}/artifacts/{$artifactName}";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'License ' . $licenseKey,
+            'Accept' => 'application/vnd.api+json',
+        ])->get($url);
+
+        // Check if the response contains file content
+        if ($response->ok()) {
+            return $response;
+        }
+
+        return null;
+    }
+
+
+
 
     /**
      * Generate a SHA256 hash of the machine's MAC address

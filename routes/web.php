@@ -341,6 +341,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::post('/pro-features/action', [ProFeaturesController::class, 'handleAction'])->name('pro-features.action');
     Route::post('pro-features/item-options', [ProFeaturesController::class, 'getItemOptions'])->name('pro-features.item.options');
     Route::post('pro-features/activate', [ProFeaturesController::class, 'activate'])->name('pro-features.activate');
+    Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
 
 });
 
