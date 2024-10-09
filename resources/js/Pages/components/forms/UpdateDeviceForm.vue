@@ -186,12 +186,12 @@
                             <div v-if="isCloudProvisioned.error">Error: {{isCloudProvisioned.error}}</div>
                             <div class="flex justify-center pt-4">
                                 <button v-if="!isCloudProvisioned.status" type="button" @click.prevent="handleRegister()"
-                                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
+                                        class="inline-flex justify-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
                                     <Spinner :show="isCloudProvisioned.isUpdating" />
                                     Provision Device
                                 </button>
                                 <button v-if="isCloudProvisioned.status" type="button" @click.prevent="handleDeregister()"
-                                        class="rounded-md bg-rose-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
+                                        class="inline-flex justify-center rounded-md bg-rose-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600" :disabled="isSubmitting">
                                     <Spinner :show="isCloudProvisioned.isUpdating" />
                                     Cancel Provisioning
                                 </button>
@@ -417,6 +417,7 @@ const handleSipTransportUpdate = (newSelectedItem, index) => {
 };
 
 const handleRegister = () => {
+    isCloudProvisioned.value.isUpdating = true;
     axios.post(page.props.routes.cloud_provisioning_register, {
         'items': [props.item.device_uuid]
     })
@@ -434,6 +435,7 @@ const handleRegister = () => {
                 isCloudProvisioned.value.status = false;
                 isCloudProvisioned.value.error = 'Not found';
             }
+            isCloudProvisioned.value.isUpdating = false;
         })
         .catch(error => {
             // Handle any errors
@@ -442,6 +444,7 @@ const handleRegister = () => {
 }
 
 const handleDeregister = () => {
+    isCloudProvisioned.value.isUpdating = true;
     axios.post(page.props.routes.cloud_provisioning_deregister, {
         'items': [props.item.device_uuid]
     })
@@ -456,6 +459,7 @@ const handleDeregister = () => {
                 isCloudProvisioned.value.status = false;
                 isCloudProvisioned.value.error = 'Not found';
             }
+            isCloudProvisioned.value.isUpdating = false;
         })
         .catch(error => {
             // Handle any errors
