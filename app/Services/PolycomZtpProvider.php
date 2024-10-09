@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendZtpRequest;
 use App\Models\Devices;
 use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
@@ -249,5 +250,28 @@ class PolycomZtpProvider implements ZtpProviderInterface
         // Handle unexpected errors
         logger($response);
         throw new \Exception('An unexpected error occurred. Please try again.');
+    }
+
+    public function createDeviceOnQueue(string $deviceId, string $orgId): void
+    {
+        logger('Sending polycom request');
+
+        // $data = array(
+        //     'from_did' => $this->formatNumber($message->source),
+        //     'to_did' => $this->formatNumber($message->destination),
+        //     "message" => $message->message,
+        //     "message_uuid" => $message->message_uuid
+        // );
+
+        // logger($data);
+
+        // Implementation for sending SMS via Thinq
+        //SendCommioSMS::dispatch($message_uuid)->onQueue('messages');
+        SendZtpRequest::dispatch('polycom', $deviceId, $orgId)->onQueue('ztp_requests');
+    }
+
+    public function deleteDeviceOnQueue(string $deviceId): void
+    {
+        // TODO: deleteDeviceOnQueue
     }
 }

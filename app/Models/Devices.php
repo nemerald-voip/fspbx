@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\DeviceLines;
+use App\Services\CloudProvisioningService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,11 +68,17 @@ class Devices extends Model
     protected static function booted()
     {
         static::saving(function ($model) {
+            /** @var Devices $model */
+            // If device is scheduled to provisioning
+            if($model->provision_on_ztp === true) {
+                $model->provisionOnZtp();
+            }
             // Remove attributes before saving to database
             unset(
                 $model->device_address_formatted,
                 $model->destroy_route,
-                $model->send_notify_path
+                $model->send_notify_path,
+                $model->provision_on_ztp
             );
         });
 
@@ -123,5 +130,21 @@ class Devices extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    private function provisionOnZtp(): void
+    {
+        try {
+            $cloudProvisioningService = new CloudProvisioningService();
+            if($cloudProvisioningService->isSupportedProvider($this->device_vendor)) {
+                $cloudProvider = $cloudProvisioningService->getCloudProvider($this->device_vendor);
+                $cloudProvider->createDeviceOnQueue(
+                    $this->device_address,
+                    $cloudProvisioningService->getCloudProviderOrganisationId($this->device_vendor)
+                );
+            }
+        } catch (\Exception $e) {
+            logger($e);
+        }
     }
 }
