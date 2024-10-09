@@ -2,7 +2,8 @@
     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
         <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
-                <a v-for="item in options.navigation" :key="item.name" href="#"
+                <template v-for="item in options.navigation" :key="item.name">
+                <a href="#" v-if="item?.slug !== 'downloads' || props.options.item?.license_details?.meta?.valid"
                     :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
                     @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
@@ -14,6 +15,7 @@
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
+            </template>
             </nav>
         </aside>
 
@@ -135,7 +137,7 @@
 
                         <div
                             class="col-span-full flex justify-center bg-gray-100 px-4  text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
-                            <button 
+                            <button  v-if="!props.options.item?.is_installed"
                                 @click.prevent="handleInstall"
                                 class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                  :disabled="isInstalling">
@@ -143,6 +145,16 @@
                                     Install
                                 </span>
                                 <Spinner class="ml-1" :show="isInstalling" />
+                            </button>
+
+                            <button  v-if="props.options.item?.is_installed"
+                                @click.prevent="handleUninstall"
+                                class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                 :disabled="isUninstalling">
+                                <span>
+                                    Uninstall
+                                </span>
+                                <Spinner class="ml-1" :show="isUninstalling" />
                             </button>
 
 
@@ -198,14 +210,10 @@ import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
-import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
 import { PlusIcon } from "@heroicons/vue/24/solid";
-import { XMarkIcon } from '@heroicons/vue/24/outline'
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon,  } from '@heroicons/vue/24/outline';
@@ -216,6 +224,7 @@ const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
     isInstalling: Boolean,
+    isUninstalling: Boolean,
     errors: Object,
 });
 
@@ -226,12 +235,13 @@ const form = reactive({
     update_route: props.options.routes.update_route,
     deactivate_route: props.options.routes.deactivate_route,
     install_route: props.options.routes.install_route,
+    uninstall_route: props.options.routes.uninstall_route,
     _token: page.props.csrf_token,
 })
 
 const licenseSubmitted = ref(false);
 
-const emits = defineEmits(['submit', 'cancel', 'deactivate', 'install']);
+const emits = defineEmits(['submit', 'cancel', 'deactivate', 'install', 'uninstall']);
 
 const showEditLicenseModal = ref(false);
 
@@ -251,6 +261,9 @@ const handleInstall = () => {
     emits('install', form);
 } 
 
+const handleUninstall = () => {
+    emits('uninstall', form);
+} 
 
 
 const iconComponents = {

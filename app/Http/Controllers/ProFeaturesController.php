@@ -5,13 +5,9 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\ProFeatures;
 use App\Services\KeygenAPIService;
-use Illuminate\Console\OutputStyle;
-use App\Services\FreeswitchEslService;
-use Symfony\Component\Process\Process;
+use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Requests\UpdateProFeatureRequest;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\BufferedOutput;
 
 class ProFeaturesController extends Controller
 {
@@ -294,27 +290,40 @@ class ProFeaturesController extends Controller
         }
     }
 
-    public function handleAction()
+    public function uninstall(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenApiService $keygenApiService)
     {
+
+        if (!$pro_feature) {
+            // If the model is not found, return an error response
+            return response()->json([
+                'success' => false,
+                'errors' => ['model' => ['Model not found']]
+            ], 404); // 404 Not Found if the model does not exist
+        }
+
         try {
-            foreach (request('ids') as $uuid) {
-                if (request('action') == 'end_call') {
-                    $result = $this->eslService->killChannel($uuid);
-                }
-            }
+            $inputs = array_map(function ($value) {
+                return $value === 'NULL' ? null : $value;
+            }, $request->validated());
+
+            logger($inputs);
+            Module::disable('ContactCenter');
+            Module::delete('ContactCenter');
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Request has been succesfully processed']]
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger($e);
+            // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => [$e->getMessage()]]
+                'errors' => ['server' => ['Failed to uninstall this module']]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
+
 
     public function getItemOptions(KeygenApiService $keygenApiService)
     {
@@ -362,8 +371,12 @@ class ProFeaturesController extends Controller
                     $item->license_valid = false;
                 }
 
-                // Fetch releases from Keygen
-                // $releases = $keygenApiService->getReleases($item->license);
+                // Check if the module is installed and enabled 
+                if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter')) {
+                    $item->is_installed = true;
+                } else {
+                    $item->is_installed = false;
+                }
             }
 
             $routes = [];
@@ -372,6 +385,7 @@ class ProFeaturesController extends Controller
                 'deactivate_route' => route('pro-features.destroy', $item),
                 'activate_route' => route('pro-features.activate', $item),
                 'install_route' => route('pro-features.install', $item),
+                'uninstall_route' => route('pro-features.uninstall', $item),
             ]);
 
             // Construct the itemOptions object

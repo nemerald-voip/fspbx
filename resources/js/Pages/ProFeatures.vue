@@ -50,8 +50,7 @@
                 <TableColumnHeader header="License Status"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="Module Status"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <!-- <TableColumnHeader header="Module Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
 
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
@@ -99,7 +98,7 @@
                             ringColor="ring-blue-600/20" />
 
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" /> -->
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -161,8 +160,8 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Pro Feature Settings'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateProFeatureForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting" :is-installing="isInstalling"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @deactivate="handleDeactivateRequest" @install="handleInstallRequest"/>
+            <UpdateProFeatureForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting" :is-installing="isInstalling" :is-uninstalling="isUninstalling"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @deactivate="handleDeactivateRequest" @install="handleInstallRequest" @uninstall="handleUninstallRequest" />
         </template>
     </AddEditItemModal>
 </template>
@@ -209,6 +208,7 @@ const loadingModal = ref(false)
 const itemOptions = ref({})
 const updateFormSubmiting = ref(null);
 const isInstalling = ref(null);
+const isUninstalling = ref(null);
 
 
 const props = defineProps({
@@ -322,6 +322,26 @@ const handleInstallRequest = (form) => {
         })
         .catch((error) => {
             isInstalling.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+};
+
+const handleUninstallRequest = (form) => {
+    isUninstalling.value = true;
+    formErrors.value = null;
+
+    axios.post(form.uninstall_route, form)
+        .then((response) => {
+            isUninstalling.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            // handleModalClose();
+            getItemOptions(itemOptions.value.item.uuid);
+            handleClearSelection();
+        })
+        .catch((error) => {
+            isUninstalling.value = false;
             handleClearSelection();
             handleFormErrorResponse(error);
         });
