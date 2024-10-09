@@ -82,7 +82,7 @@ class SendZtpRequest implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [/*(new RateLimitedWithRedis('ztp_requests'))*/];
+        return [(new RateLimitedWithRedis('ztp_requests'))];
     }
 
     /**
