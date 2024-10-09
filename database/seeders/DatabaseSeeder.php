@@ -473,24 +473,29 @@ class DatabaseSeeder extends Seeder
 
     private function createProFeatures()
     {
-        $features = [
-            [
-                'name' => 'FS PBX Pro Features',
-                'slug' => 'fspbx',
-            ],
-        ];
-
-        foreach ($features as $feature) {
-            $existingFeature = ProFeatures::where('name', $feature['name'])->first();
-
-            if (is_null($existingFeature)) {
-                ProFeatures::create([
-                    'name' => $feature['name'],
-                    'slug' => $feature['slug'],
-                    'license' => null, // or provide a default value for license if needed
-                ]);
+        try {
+            $features = [
+                [
+                    'name' => 'FS PBX Pro Features',
+                    'slug' => 'fspbx',
+                ],
+            ];
+    
+            foreach ($features as $feature) {
+                $existingFeature = ProFeatures::where('name', $feature['name'])->first();
+    
+                if (is_null($existingFeature)) {
+                    ProFeatures::create([
+                        'name' => $feature['name'],
+                        'slug' => $feature['slug'],
+                        'license' => null, // or provide a default value for license if needed
+                    ]);
+                }
             }
+        } catch (\Exception $e) {
+            logger("Error seeding ProFeatures");
         }
+       
     }
 
 
