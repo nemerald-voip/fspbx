@@ -270,6 +270,10 @@ class DeviceController extends Controller
                 'device_description' => '',
             ]);
 
+            if($inputs['device_provisioning']) {
+                $instance->provision_on_ztp = true;
+            }
+
             // Save the new model instance to the database
             $instance->save();
 
@@ -318,6 +322,7 @@ class DeviceController extends Controller
             $instance->save();
 
             // Provision device
+            /*
             if($inputs['device_provisioning']) {
                 try {
                     $cloudProvisioningService = new CloudProvisioningService();
@@ -331,7 +336,7 @@ class DeviceController extends Controller
                 } catch (\Exception $e) {
                     logger($e);
                 }
-            }
+            }*/
 
             // Return a JSON response indicating success
             return response()->json([
