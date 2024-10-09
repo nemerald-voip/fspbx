@@ -190,30 +190,36 @@ class CallRoutingOptionsService
      */
     public function reverseEngineerDestinationActions($destinationActions)
     {
-        // Decode the JSON into an array
-        $actions = json_decode($destinationActions, true);
+        try {
+            // Decode the JSON into an array
+            $actions = json_decode($destinationActions, true);
 
-        $routing_options = [];
+            $routing_options = [];
 
-        if ($actions) {
-            foreach ($actions as $action) {
-                switch ($action['destination_app']) {
-                    case 'transfer':
-                        // Use regex and the Dialplan database to determine the type and details
-                        $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
-                        break;
-    
-                    case 'lua':
-                        // Handle recordings
-                        $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
-                        break;
-    
-                        // Add more cases as necessary
+            if ($actions) {
+                foreach ($actions as $action) {
+                    switch ($action['destination_app']) {
+                        case 'transfer':
+                            // Use regex and the Dialplan database to determine the type and details
+                            $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
+                            break;
+        
+                        case 'lua':
+                            // Handle recordings
+                            $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
+                            break;
+        
+                            // Add more cases as necessary
+                    }
                 }
             }
+
+            return $routing_options;
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
         }
 
-        return $routing_options;
     }
 
     /**
