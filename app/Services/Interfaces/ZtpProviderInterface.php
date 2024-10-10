@@ -14,6 +14,6 @@ interface ZtpProviderInterface {
     //public function getOrganisation(string $id): string;
     //public function updateOrganisation(string $id, string $name): string;
     //public function deleteOrganisation(string $id): string;
-    public function createDeviceOnQueue(string $deviceId, string $orgId): void;
-    public function deleteDeviceOnQueue(string $deviceId): void;
+    //public function createDeviceOnQueue(string $deviceId, string $orgId): void;
+    //public function deleteDeviceOnQueue(string $deviceId): void;
 }

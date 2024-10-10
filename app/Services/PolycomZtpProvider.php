@@ -252,9 +252,9 @@ class PolycomZtpProvider implements ZtpProviderInterface
         throw new \Exception('An unexpected error occurred. Please try again.');
     }
 
-    public function createDeviceOnQueue(string $deviceId, string $orgId): void
-    {
-        logger('Sending polycom request');
+    //public function createDeviceOnQueue(string $deviceId, string $orgId): void
+    //{
+      //  logger('Sending polycom request');
 
         // $data = array(
         //     'from_did' => $this->formatNumber($message->source),
@@ -267,11 +267,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
 
         // Implementation for sending SMS via Thinq
         //SendCommioSMS::dispatch($message_uuid)->onQueue('messages');
-        SendZtpRequest::dispatch('polycom', $deviceId, $orgId)->onQueue('ztp_requests');
-    }
+       // SendZtpRequest::dispatch('polycom', $deviceId, $orgId)->onQueue('ztp');
+   // }
 
-    public function deleteDeviceOnQueue(string $deviceId): void
-    {
+    //public function deleteDeviceOnQueue(string $deviceId): void
+    //{
         // TODO: deleteDeviceOnQueue
-    }
+    //}
 }

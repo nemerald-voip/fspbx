@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Commio\CommioOutboundSMS;
+use App\Services\PolycomZtpProvider;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Redis\LimiterTimeoutException;
@@ -58,21 +58,44 @@ class SendZtpRequest implements ShouldQueue
      */
     public bool $deleteWhenMissingModels = true;
 
-    private string $deviceId;
-    private string $orgId;
+    /**
+     * The UUID of the device.
+     *
+     * @var string
+     */
+    private string $deviceMacAddress;
+
+    /**
+     * The action to be performed.
+     *
+     * @var string
+     */
+    private string $action;
+
     private string $provider;
+
+    private string $organisationId;
+
+    const ACTION_CREATE = 'createDevice';
+    const ACTION_DELETE = 'deleteDevice';
 
     /**
      * Create a new job instance.
      *
+     * @param  string  $deviceUuid
+     * @param  string  $action
      * @return void
      */
-    public function __construct($provider, $deviceId, $orgId)
-    {
+    public function __construct(
+        string $action,
+        string $provider,
+        string $deviceMacAddress,
+        string $organisationId = null
+    ) {
+        $this->action = $action;
         $this->provider = $provider;
-        $this->deviceId = $deviceId;
-        $this->orgId = $orgId;
-        logger('Init queue for ZTP request');
+        $this->deviceMacAddress = $deviceMacAddress;
+        $this->organisationId = $organisationId;
     }
 
     /**
@@ -82,7 +105,7 @@ class SendZtpRequest implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [(new RateLimitedWithRedis('ztp_requests'))];
+        return [(new RateLimitedWithRedis('ztp'))];
     }
 
     /**
@@ -93,20 +116,22 @@ class SendZtpRequest implements ShouldQueue
      */
     public function handle(): void
     {
-        logger('Handle method called');
-        try {
-            logger('Attempting to throttle ZTP requests');
-            Redis::throttle('ztp_requests')->allow(2)->every(1)->then(function () {
-                logger('Throttling successful, sending ZTP request');
-                // Your logic for sending the ZTP request
-            }, function () {
-                // Could not obtain lock; this job will be re-queued
-                logger('Throttling failed, releasing job back to queue');
-                $this->release(5);
-            });
-        } catch (\Exception $e) {
-            logger('Exception in handle method: ' . $e->getMessage());
-            throw $e; // Optionally rethrow the exception to mark the job as failed
-        }
+        Redis::throttle('ztp')->allow(2)->every(1)->then(function () {
+            $cloudProvider = match ($this->provider) {
+                'polycom' => new PolycomZtpProvider()
+            };
+            try {
+                $cloudProvider->{$this->action}(
+                    $this->deviceMacAddress,
+                    $this->organisationId
+                );
+            } catch (\Exception $e) {
+                logger($e);
+                $this->delete();
+            }
+        }, function () {
+            // Could not obtain lock; this job will be re-queued
+            $this->release(5);
+        });
     }
 }

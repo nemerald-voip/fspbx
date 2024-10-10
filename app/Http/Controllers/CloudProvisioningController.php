@@ -30,14 +30,15 @@ class CloudProvisioningController extends Controller
     public function status(): JsonResponse
     {
         try {
-            $cloudProvisioningService = new CloudProvisioningService();
+            //$cloudProvisioningService = new CloudProvisioningService();
             //Get items info as a collection
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
             $devicesData = [];
             foreach ($items as $item) {
-                if ($cloudProvisioningService->isSupportedProvider($item->device_vendor)) {
+                /** @var Devices $item */
+                if ($item->hasCloudProviderSupport()) {
                     try {
-                        $cloudProvider = $cloudProvisioningService->getCloudProvider($item->device_vendor);
+                        $cloudProvider = $item->getCloudProvider();
                         $cloudDeviceData = $cloudProvider->getDevice($item->device_address);
                         $provisioned = (bool) $cloudDeviceData['profileid'];
                         $error = null;
@@ -85,17 +86,18 @@ class CloudProvisioningController extends Controller
     public function register(): JsonResponse
     {
         try {
-            $cloudProvisioningService = new CloudProvisioningService();
+            //$cloudProvisioningService = new CloudProvisioningService();
             //Get items info as a collection
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
             $devicesData = [];
             foreach ($items as $item) {
-                if ($cloudProvisioningService->isSupportedProvider($item->device_vendor)) {
+                /** @var Devices $item */
+                if ($item->hasCloudProviderSupport()) {
                     try {
-                        $cloudProvider = $cloudProvisioningService->getCloudProvider($item->device_vendor);
+                        $cloudProvider = $item->getCloudProvider();
                         $cloudProvider->createDevice(
                             $item->device_address,
-                            $cloudProvisioningService->getCloudProviderOrganisationId($item->device_vendor)
+                            $item->getCloudProviderOrganisationId()
                         );
                         $provisioned = true;
                         $error = null;
@@ -140,14 +142,15 @@ class CloudProvisioningController extends Controller
     public function deregister(): JsonResponse
     {
         try {
-            $cloudProvisioningService = new CloudProvisioningService();
+            //$cloudProvisioningService = new CloudProvisioningService();
             //Get items info as a collection
             $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
             $devicesData = [];
             foreach ($items as $item) {
-                if ($cloudProvisioningService->isSupportedProvider($item->device_vendor)) {
+                /** @var Devices $item */
+                if ($item->hasCloudProviderSupport()) {
                     try {
-                        $cloudProvider = $cloudProvisioningService->getCloudProvider($item->device_vendor);
+                        $cloudProvider = $item->getCloudProvider();
                         $cloudProvider->deleteDevice($item->device_address);
                         $error = null;
                     } catch (\Exception $e) {
