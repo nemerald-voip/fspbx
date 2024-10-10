@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Groups;
 use App\Models\Permissions;
+use App\Models\ProFeatures;
 use App\Models\DefaultSettings;
 use Illuminate\Database\Seeder;
 use App\Models\GroupPermissions;
@@ -30,6 +31,8 @@ class DatabaseSeeder extends Seeder
         $this->createGroupPermissions();
 
         $this->createDefaultSettings();
+
+        $this->createProFeatures();
 
         Model::reguard();
     }
@@ -480,6 +483,34 @@ class DatabaseSeeder extends Seeder
             }
         }
     }
+
+    private function createProFeatures()
+    {
+        try {
+            $features = [
+                [
+                    'name' => 'FS PBX Pro Features',
+                    'slug' => 'fspbx',
+                ],
+            ];
+    
+            foreach ($features as $feature) {
+                $existingFeature = ProFeatures::where('name', $feature['name'])->first();
+    
+                if (is_null($existingFeature)) {
+                    ProFeatures::create([
+                        'name' => $feature['name'],
+                        'slug' => $feature['slug'],
+                        'license' => null, // or provide a default value for license if needed
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            logger("Error seeding ProFeatures");
+        }
+       
+    }
+
 
 
     public function getMacAddress()

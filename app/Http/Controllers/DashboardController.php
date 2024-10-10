@@ -154,7 +154,7 @@ class DashboardController extends Controller
                 ->count();
         }
 
-        if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
+        if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
             $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_id)->count();
         }
 
@@ -325,7 +325,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Messages', 'href' => '/messages', 'icon' => 'UsersIcon', 'slug' => 'messages'];
         }
 
-        if (Module::has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
+        if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
 
             $queue_count = CallCenterQueues::where('domain_uuid', Session::get('domain_uuid'))->count();
 

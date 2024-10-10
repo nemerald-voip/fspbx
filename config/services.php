@@ -34,6 +34,11 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
     ],
 
+    'keygen' => [
+        'api_url' => env('KEYGEN_API_URL', 'https://api.keygen.sh'),
+        'account_id' => env('KEYGEN_ACCOUNT_ID', 'f2ca6242-a55c-4949-9529-d7d591d3271a'),
+    ],
+
     'ztp' => [
         'polycom' => [
             'api_key' => env('POLYCOM_ZTP_API_KEY'),
