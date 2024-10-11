@@ -131,13 +131,18 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.lines[0]?.extension?.name_formatted" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <CloudIcon
-                            :class="[
-                                'h-9 w-9 py-2 rounded-full',
-                                deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'text-green-600' :
-                                deviceProvisionStatus[row.device_uuid] === 'error' ? 'text-red-600' : 'text-gray-400'
-                              ]"
-                        />
+                        <ejs-tooltip :content="deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'Provisioned' : 'Not provisioned'" position='BottomLeft'
+                                     target="#cloud_status_tooltip_target" >
+                            <div id="cloud_status_tooltip_target">
+                                <CloudIcon
+                                    :class="[
+                                    'h-9 w-9 py-2 rounded-full',
+                                    deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'text-green-600' : 'text-gray-300'
+                                    //deviceProvisionStatus[row.device_uuid] === 'error' ? 'text-red-600' : 'text-gray-400'
+                                  ]"
+                                />
+                            </div>
+                        </ejs-tooltip>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
