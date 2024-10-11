@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Devices;
-use App\Services\CloudProvisioningService;
+use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\JsonResponse;
 
 class CloudProvisioningController extends Controller
@@ -30,48 +30,64 @@ class CloudProvisioningController extends Controller
     public function status(): JsonResponse
     {
         try {
-            //$cloudProvisioningService = new CloudProvisioningService();
-            //Get items info as a collection
-            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
-            $devicesData = [];
+            $requestedItems = request('items');
+            $items = $this->model::whereIn($this->model->getKeyName(), $requestedItems)->get();
+            $supportedProviders = [];
+
+            // Group devices by their providers
             foreach ($items as $item) {
-                /** @var Devices $item */
                 if ($item->hasSupportedCloudProvider()) {
-                    try {
-                        $cloudProvider = $item->getCloudProvider();
-                        $cloudDeviceData = $cloudProvider->getDevice($item->device_address);
-                        $provisioned = (bool) $cloudDeviceData['profileid'];
-                        $error = null;
-                    } catch (\Exception $e) {
-                        logger($e);
-                        $cloudDeviceData = null;
-                        $provisioned = false;
-                        $error = $e->getMessage();
-                    }
-                } else {
-                    $provisioned = false;
-                    $cloudDeviceData = null;
-                    $error = 'Unsupported provider';
+                    $provider = get_class($item->getCloudProvider());
+                    $supportedProviders[$provider][] = $item->device_address; // Assuming device_address is the id
                 }
-                $devicesData[] = [
-                    'device_uuid' => $item->device_uuid,
-                    'provisioned' => $provisioned,
-                    'error' => $error,
-                    'data' => $cloudDeviceData
-                ];
             }
 
-            // Return a JSON response indicating success
+            $devicesData = [];
+
+            // Handle each provider
+            foreach ($supportedProviders as $providerClass => $ids) {
+                try {
+                    // Initializing provider instance
+                    /** @var ZtpProviderInterface $providerInstance */
+                    $providerInstance = new $providerClass();
+                    $cloudDevicesData = $providerInstance->listDevices($ids);
+
+                    foreach ($items as $item) {
+                        $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null; // Assuming device_address is the id
+                        $provisioned = $cloudDeviceData && !empty($cloudDeviceData['profileid']);
+                        $error = $cloudDeviceData ? null : 'Device not found';
+
+                        $devicesData[] = [
+                            'device_uuid' => $item->device_uuid,
+                            'provisioned' => $provisioned,
+                            'error' => $error,
+                            'data' => $cloudDeviceData
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    logger($e);
+
+                    foreach ($ids as $id) {
+                        $matchedItem = $items->firstWhere('device_address', $id);
+                        $devicesData[] = [
+                            'device_uuid' => $matchedItem ? $matchedItem->device_uuid : null,
+                            'provisioned' => false,
+                            'error' => $e->getMessage(),
+                            'data' => null,
+                        ];
+                    }
+                }
+            }
+
             return response()->json([
                 'status' => true,
                 'devicesData' => $devicesData,
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage());
-            // Handle any other exception that may occur
             return response()->json([
                 'error' => $e->getMessage(),
-                'deviceData' => null
+                'deviceData' => null,
             ], 500);
         }
     }

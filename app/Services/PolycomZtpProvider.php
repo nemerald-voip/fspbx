@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\SendZtpRequest;
 use App\Models\Devices;
 use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
@@ -26,11 +25,12 @@ class PolycomZtpProvider implements ZtpProviderInterface
     /**
      * Retrieve a list of devices with a configurable limit.
      *
+     * @param  array  $addresses
      * @param  int  $limit
      * @return array
      * @throws \Exception
      */
-    public function listDevices(int $limit = 50): array
+    public function listDevices(array $addresses = [], int $limit = 50): array
     {
         $url = "$this->baseUrl/devices?limit=$limit";
 
@@ -38,7 +38,24 @@ class PolycomZtpProvider implements ZtpProviderInterface
             'API-KEY' => $this->apiKey,
         ])->get($url);
 
-        return $this->handleResponse($response);
+        $allDevices = $this->handleResponse($response)['results'];
+
+        // Ensure ids and results are normalized and comparable
+        $indexedDevices = [];
+        foreach ($allDevices as $device) {
+            if (isset($device['id'])) {
+                $indexedDevices[strtolower($device['id'])] = $device;
+            }
+        }
+
+        if (empty($addresses)) {
+            return $indexedDevices;
+        }
+
+        // Filter devices based on provided ids
+        return array_filter($indexedDevices, function ($id) use ($addresses) {
+            return in_array($id, $addresses, true);
+        }, ARRAY_FILTER_USE_KEY);
     }
 
     /**

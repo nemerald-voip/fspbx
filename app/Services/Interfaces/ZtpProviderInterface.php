@@ -2,10 +2,8 @@
 
 namespace App\Services\Interfaces;
 
-use App\Models\Devices;
-
 interface ZtpProviderInterface {
-    public function listDevices(int $limit = 50): array;
+    public function listDevices(array $addresses = [], int $limit = 50): array;
     public function getDevice(string $deviceId): array;
     public function createDevice(string $deviceId, string $orgId): array;
     public function deleteDevice(string $deviceId): array;

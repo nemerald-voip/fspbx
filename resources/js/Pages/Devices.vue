@@ -71,7 +71,9 @@
                 <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Assigned extension"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Cloud Provisioning"
+                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -128,6 +130,15 @@
                         :text="row.profile?.device_profile_name" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.lines[0]?.extension?.name_formatted" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <CloudIcon
+                            :class="[
+                                'h-9 w-9 py-2 rounded-full',
+                                deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'text-green-600' :
+                                deviceProvisionStatus[row.device_uuid] === 'error' ? 'text-red-600' : 'text-gray-400'
+                              ]"
+                        />
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -242,7 +253,7 @@ import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
@@ -276,6 +287,7 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const deviceProvisionStatus = ref({});
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
@@ -322,7 +334,24 @@ const bulkActions = computed(() => {
 });
 
 onMounted(() => {
+    handleUpdateCloudProvisioningStatuses();
 });
+
+const handleUpdateCloudProvisioningStatuses = () => {
+    const deviceUuids = props.data.data.map(device => device.device_uuid);
+    axios.post(props.routes.cloud_provisioning_status, {items: deviceUuids})
+        .then(response => {
+            if (response.data.status) {
+                deviceProvisionStatus.value = response.data.devicesData.reduce((acc, device) => {
+                    acc[device.device_uuid] = device.provisioned ? 'provisioned' : device.error ? 'error' : 'not_provisioned';
+                    return acc;
+                }, {});
+            }
+        })
+        .catch(error => {
+            console.err('Failed to fetch cloud provisioning statuses:', error);
+        });
+}
 
 const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
@@ -673,6 +702,7 @@ const handleModalClose = () => {
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
+    handleUpdateCloudProvisioningStatuses();
 }
 
 const hideNotification = () => {
