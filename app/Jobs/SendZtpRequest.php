@@ -74,7 +74,7 @@ class SendZtpRequest implements ShouldQueue
 
     private string $provider;
 
-    private string $organisationId;
+    private ?string $organisationId;
 
     const ACTION_CREATE = 'createDevice';
     const ACTION_DELETE = 'deleteDevice';
@@ -82,8 +82,10 @@ class SendZtpRequest implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param  string  $deviceUuid
      * @param  string  $action
+     * @param  string  $provider
+     * @param  string  $deviceMacAddress
+     * @param  ?string $organisationId
      * @return void
      */
     public function __construct(
@@ -121,12 +123,13 @@ class SendZtpRequest implements ShouldQueue
                 'polycom' => new PolycomZtpProvider()
             };
             try {
-                $cloudProvider->{$this->action}(
-                    $this->deviceMacAddress,
-                    $this->organisationId
-                );
+                match ($this->action) {
+                    self::ACTION_CREATE => $cloudProvider->createDevice($this->deviceMacAddress, $this->organisationId),
+                    self::ACTION_DELETE => $cloudProvider->deleteDevice($this->deviceMacAddress)
+                };
             } catch (\Exception $e) {
                 logger($e);
+                // Delete job if we have issue in it
                 $this->delete();
             }
         }, function () {

@@ -77,15 +77,15 @@ class Devices extends Model
         static::saving(function ($model) {
             /** @var Devices $model */
             // If device is scheduled to provisioning
-            if($model->provision_on_ztp === true) {
-                $model->provisionOnZtp();
+            if($model->register_on_ztp === true) {
+                $model->registerOnZtp();
             }
             // Remove attributes before saving to database
             unset(
                 $model->device_address_formatted,
                 $model->destroy_route,
                 $model->send_notify_path,
-                $model->provision_on_ztp
+                $model->register_on_ztp,
             );
         });
 
@@ -95,6 +95,13 @@ class Devices extends Model
             }
             $model->destroy_route = route('devices.destroy', $model);
             return $model;
+        });
+
+        static::deleted(function ($model) {
+            /** @var Devices $model */
+            // If device is deleted
+            // TODO: better if we would know that the device was provisioned before sending deregister request
+            $model->deregisterOnZtp();
         });
     }
 
@@ -139,10 +146,10 @@ class Devices extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-    private function provisionOnZtp(): void
+    private function registerOnZtp(): void
     {
         try {
-            if ($this->hasCloudProviderSupport()) {
+            if ($this->hasSupportedCloudProvider()) {
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_CREATE,
                     $this->device_vendor,
@@ -150,15 +157,21 @@ class Devices extends Model
                     $this->getCloudProviderOrganisationId()
                 )->onQueue('ztp');
             }
+        } catch (\Exception $e) {
+            logger($e);
+        }
+    }
 
-            /*$cloudProvisioningService = new CloudProvisioningService();
-            if($cloudProvisioningService->isSupportedProvider($this->device_vendor)) {
-                $cloudProvider = $cloudProvisioningService->getCloudProvider($this->device_vendor);
-                $cloudProvider->createDeviceOnQueue(
+    private function deregisterOnZtp(): void
+    {
+        try {
+            if ($this->hasSupportedCloudProvider()) {
+                SendZtpRequest::dispatch(
+                    SendZtpRequest::ACTION_DELETE,
+                    $this->device_vendor,
                     $this->device_address,
-                    $cloudProvisioningService->getCloudProviderOrganisationId($this->device_vendor)
-                );
-            }*/
+                )->onQueue('ztp');
+            }
         } catch (\Exception $e) {
             logger($e);
         }
@@ -167,7 +180,7 @@ class Devices extends Model
     /**
      * @return bool
      */
-    public function hasCloudProviderSupport(): bool
+    public function hasSupportedCloudProvider(): bool
     {
         return in_array($this->device_vendor, $this->supportedCloudProviders);
     }
@@ -177,7 +190,7 @@ class Devices extends Model
      */
     public function getCloudProvider(): ZtpProviderInterface
     {
-        // TODO: probably here we should not throw Exception if provider isn't found
+        // TODO: probably here we should prevent throw ingException if the provider isn't found
         return match ($this->device_vendor) {
             'polycom' => new PolycomZtpProvider(),
             //'yealink' => new YealinkZTPApiProvider(),

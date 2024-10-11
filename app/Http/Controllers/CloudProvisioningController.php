@@ -36,7 +36,7 @@ class CloudProvisioningController extends Controller
             $devicesData = [];
             foreach ($items as $item) {
                 /** @var Devices $item */
-                if ($item->hasCloudProviderSupport()) {
+                if ($item->hasSupportedCloudProvider()) {
                     try {
                         $cloudProvider = $item->getCloudProvider();
                         $cloudDeviceData = $cloudProvider->getDevice($item->device_address);
@@ -92,7 +92,7 @@ class CloudProvisioningController extends Controller
             $devicesData = [];
             foreach ($items as $item) {
                 /** @var Devices $item */
-                if ($item->hasCloudProviderSupport()) {
+                if ($item->hasSupportedCloudProvider()) {
                     try {
                         $cloudProvider = $item->getCloudProvider();
                         $cloudProvider->createDevice(
@@ -148,7 +148,7 @@ class CloudProvisioningController extends Controller
             $devicesData = [];
             foreach ($items as $item) {
                 /** @var Devices $item */
-                if ($item->hasCloudProviderSupport()) {
+                if ($item->hasSupportedCloudProvider()) {
                     try {
                         $cloudProvider = $item->getCloudProvider();
                         $cloudProvider->deleteDevice($item->device_address);

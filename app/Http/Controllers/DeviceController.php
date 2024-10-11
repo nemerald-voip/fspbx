@@ -271,7 +271,7 @@ class DeviceController extends Controller
             ]);
 
             if($inputs['device_provisioning']) {
-                $instance->provision_on_ztp = true;
+                $instance->register_on_ztp = true;
             }
 
             // Save the new model instance to the database
@@ -320,23 +320,6 @@ class DeviceController extends Controller
 
             // Update the instance with the label
             $instance->save();
-
-            // Provision device
-            /*
-            if($inputs['device_provisioning']) {
-                try {
-                    $cloudProvisioningService = new CloudProvisioningService();
-                    if($cloudProvisioningService->isSupportedProvider($instance->device_vendor)) {
-                        $cloudProvider = $cloudProvisioningService->getCloudProvider($instance->device_vendor);
-                        $cloudProvider->createDevice(
-                            $instance->device_address,
-                            $cloudProvisioningService->getCloudProviderOrganisationId($instance->device_vendor)
-                        );
-                    }
-                } catch (\Exception $e) {
-                    logger($e);
-                }
-            }*/
 
             // Return a JSON response indicating success
             return response()->json([
