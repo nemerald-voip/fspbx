@@ -53,6 +53,19 @@ class KeygenApiService
         return false; // License is invalid or there was an error
     }
 
+    public function isLicenseValid($licenseKey)
+    {
+        logger('checking API');
+        // Validate the license key
+        $licenseData = $this->validateLicenseKey($licenseKey);
+
+        if ($licenseData && isset($licenseData['meta']['valid'])) {
+            return $licenseData['meta']['valid'];  // Return the value of 'valid' from the meta
+        }
+
+        return false; // License is invalid if 'valid' is not set or it's false
+    }
+
 
     /**
      * Activate the machine with the license ID and fingerprint.
