@@ -55,7 +55,6 @@ class KeygenApiService
 
     public function isLicenseValid($licenseKey)
     {
-        logger('checking API');
         // Validate the license key
         $licenseData = $this->validateLicenseKey($licenseKey);
 
