@@ -20,3 +20,4 @@ public/app/provision/upload*
 public/envinfo.ini
 .stfolder
 .stignore
+modules_statuses.json
