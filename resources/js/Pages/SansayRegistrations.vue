@@ -46,7 +46,7 @@
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest" @click.stop
                         :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">User</span>
                 </TableColumnHeader>
