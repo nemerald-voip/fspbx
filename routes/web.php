@@ -35,6 +35,7 @@ use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
 
 /*
@@ -101,6 +102,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.download');
     Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
     Route::post('/call-detail-records/export', [CdrsController::class, 'export'])->name('cdrs.export');
+
+    //Extension Statistics
+    Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
 
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);

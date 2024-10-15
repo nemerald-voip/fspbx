@@ -198,14 +198,20 @@ class CDR extends Model
     }
 
     /**
-     * Get domain that this message settings belongs to 
+     * Get domain that this model belongs to 
      */
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-
+    /**
+     * Get domain that this model belongs to 
+     */
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
 
     public function formatPhoneNumber($value)
     {
