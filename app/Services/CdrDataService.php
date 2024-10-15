@@ -253,9 +253,20 @@ class CdrDataService
     protected function filterSearch($query, $value)
     {
         $searchable = $this->searchable;
+        // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
             }
         });
     }

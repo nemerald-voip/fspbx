@@ -5,16 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\CDR;
 use Inertia\Inertia;
 use App\Jobs\ExportCdrs;
-use App\Models\Dialplans;
-use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Models\CallCenterQueues;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use App\Services\CdrDataService;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExtensionStatisticsController extends Controller
 {
@@ -24,7 +19,7 @@ class ExtensionStatisticsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'ExtensionStatistics';
-    protected $searchable = ['caller_id_name', 'caller_id_number', 'caller_destination', 'destination_number', 'sip_call_id', 'cc_member_session_uuid', 'status'];
+    protected $searchable = ['extension.extension', 'extension.effective_caller_id_name'];
     public $item_domain_uuid;
     protected $cdrDataService;
 
