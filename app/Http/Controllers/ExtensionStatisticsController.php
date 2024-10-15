@@ -79,13 +79,14 @@ class ExtensionStatisticsController extends Controller
     //Most of this function has been moved to CdrDataService service container
     public function getData()
     {
-        $params['paginate'] = 30;
+        $params['paginate'] = 50;
         $params['filterData'] = request()->filterData;
         $params['domain_uuid'] = session('domain_uuid');
         if (session('domains')) {
             $params['domains'] = session('domains')->pluck('domain_uuid');
         }
         $params['searchable'] = $this->searchable;
+        $params['page'] = request()->get('page', 1); // Get the current page, default to 1
 
         if (!empty(request('filterData.dateRange'))) {
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
