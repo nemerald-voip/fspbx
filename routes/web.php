@@ -31,6 +31,7 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -161,7 +162,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
     Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
 
-
+    // Auto Receptionist
+    Route::resource('virtual-receptionists', VirtualReceptionistController::class);
+    Route::post('virtual-receptionists/item-options', [VirtualReceptionistController::class, 'getItemOptions'])->name('virtual-receptionists.item.options');
 
 
     // SIP Credentials
