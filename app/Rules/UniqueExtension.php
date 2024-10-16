@@ -37,6 +37,12 @@ class UniqueExtension implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
+        // Add validation for 911 as a reserved value
+        if ($value == '911') {
+            $fail('911 can not be used as extension number. It is reserved for emergency calls only.');
+            return;
+        }
+
         $subqueries = [];
 
         // Check for Extensions only if we are not validating a Voicemail

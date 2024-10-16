@@ -9,7 +9,7 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.voicemail_id || errors?.voicemail_password) && item.slug === 'settings') ||
+                    <ExclamationCircleIcon v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension) && item.slug === 'settings') ||
                         (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
@@ -48,27 +48,18 @@
                                 </div>
                             </div>
 
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputOptional target="voicemail_mail_to" label="Email address" class="truncate" />
-                                <InputField v-model="form.voicemail_mail_to" type="text" name="voicemail_mail_to"
-                                    id="voicemail_mail_to" class="mt-2" :error="!!errors?.voicemail_mail_to" />
-                                <div v-if="errors?.voicemail_mail_to" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_mail_to[0] }}
-                                </div>
-                            </div>
-
                             <div class="col-span-6">
-                                <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
+                                <LabelInputOptional target="ivr_menu_description" label="Description" class="truncate" />
                                 <div class="mt-2">
-                                    <Textarea v-model="form.voicemail_description" id="voicemail_description"
-                                        name="voicemail_description" rows="2" :error="!!errors?.voicemail_description" />
+                                    <Textarea v-model="form.ivr_menu_description" id="ivr_menu_description"
+                                        name="ivr_menu_description" rows="2" :error="!!errors?.ivr_menu_description" />
                                 </div>
-                                <div v-if="errors?.voicemail_description" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_description[0] }}
+                                <div v-if="errors?.ivr_menu_description" class="mt-2 text-xs text-red-600">
+                                    {{ errors.ivr_menu_description[0] }}
                                 </div>
                             </div>
 
-                            <div class="divide-y divide-gray-200 col-span-6">
+                            <!-- <div class="divide-y divide-gray-200 col-span-6">
 
                                 <Toggle v-if="localOptions.permissions.manage_voicemail_transcription"
                                     label="Voicemail Transcription"
@@ -99,7 +90,7 @@
 
                                 </div>
 
-                            </div>
+                            </div> -->
 
                         </div>
 
@@ -114,16 +105,13 @@
                         </button>
                     </div>
                 </div>
-            </div>
 
-
-            <div v-if="activeTab === 'greetings'">
-                <div class="shadow sm:rounded-md">
+                <div class="mt-6 shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Greetings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Customize the message that callers hear when they reach
-                                your voicemail.</p>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Greeting Message</h3>
+                            <p class="mt-1 text-sm text-gray-500">Customize the greeting message that callers hear when they reach
+                                this virtual receptionist.</p>
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
@@ -131,30 +119,22 @@
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputOptional label="Select greeting" class="truncate mb-1" />
 
-
                                 <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select greeting'"
-                                    :selectedItem="form.greeting_id" @update:model-value="handleUpdateGreetingField" />
-
-
-
-                                <!-- <div class="mt-1 text-sm text-gray-500">
-                                    Customize the message that callers hear when they reach your voicemail.
-                                </div> -->
-
+                                    :selectedItem="form.ivr_menu_greet_long" @update:model-value="handleUpdateGreetingField" />
 
                             </div>
 
                             <div class="content-end col-span-2 pb-1 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
-                                    <PlayCircleIcon v-if="form.greeting_id > 0 && !isAudioPlaying" @click="playGreeting"
+                                    <PlayCircleIcon v-if="form.ivr_menu_greet_long && !isAudioPlaying" @click="playGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
-                                    <PauseCircleIcon v-if="form.greeting_id > 0 && isAudioPlaying" @click="pauseGreeting"
+                                    <PauseCircleIcon v-if="form.ivr_menu_greet_long && isAudioPlaying" @click="pauseGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
-                                    <CloudArrowDownIcon v-if="form.greeting_id > 0 && !isDownloading"
+                                    <CloudArrowDownIcon v-if="form.ivr_menu_greet_long && !isDownloading"
                                         @click="downloadGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
@@ -172,54 +152,6 @@
 
                             </div>
 
-                            <!-- Recorded Name -->
-                            <div class="mt-1 col-span-6 text-sm font-medium leading-6 text-gray-900">
-                                <div class="flex items-center  whitespace-nowrap space-x-2">
-                                    <p>Recorded Name:</p>
-                                    <Badge v-if="localOptions.recorded_name == 'Custom recording'"
-                                        :text="localOptions.recorded_name" backgroundColor="bg-green-50"
-                                        textColor="text-green-700" ringColor="ring-green-600/20" />
-
-                                    <Badge v-if="localOptions.recorded_name == 'System Default'"
-                                        :text="localOptions.recorded_name" backgroundColor="bg-blue-50"
-                                        textColor="text-blue-700" ringColor="ring-blue-600/20" />
-
-                                    <!-- Play Button -->
-                                    <PlayCircleIcon
-                                        v-if="!isNameAudioPlaying && localOptions.recorded_name === 'Custom recording'"
-                                        @click="playRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Pause Button -->
-                                    <PauseCircleIcon
-                                        v-if="isNameAudioPlaying && localOptions.recorded_name === 'Custom recording'"
-                                        @click="pauseRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Download Button -->
-                                    <CloudArrowDownIcon
-                                        v-if="localOptions.recorded_name === 'Custom recording' && !isNameDownloading"
-                                        @click="downloadRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Spinner -->
-                                    <Spinner :show="isNameDownloading"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Delete Button -->
-                                    <TrashIcon v-if="localOptions.recorded_name === 'Custom recording'"
-                                        @click="deleteRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                                    <PlusIcon @click="toggleNameForm"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                </div>
-
-                            </div>
-
-
-
 
                         </div>
                     </div>
@@ -234,11 +166,8 @@
                     :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
                     :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
 
-                <!-- Recorded Name Form -->
-                <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name"
-                    :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
             </div>
+
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
                 <div class="shadow sm:rounded-md">
@@ -420,10 +349,10 @@ const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
 const submitForm = () => {
     // Normalize voicemail_copies to an array of values
-    form.voicemail_copies = form.voicemail_copies.map(item => {
-        // If it's an object, return the 'value', otherwise, return the item itself
-        return typeof item === 'object' ? item.value : item;
-    });
+    // form.voicemail_copies = form.voicemail_copies.map(item => {
+    //     // If it's an object, return the 'value', otherwise, return the item itself
+    //     return typeof item === 'object' ? item.value : item;
+    // });
 
     emits('submit', form); // Emit the event with the form data
 }

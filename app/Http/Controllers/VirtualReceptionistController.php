@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\IvrMenus;
+use App\Models\Recordings;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\OpenAIService;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\TextToSpeechRequest;
 use App\Http\Requests\StoreVoicemailRequest;
-use App\Http\Requests\UpdateVoicemailRequest;
+use App\Http\Requests\UpdateVirtualReceptionistRequest;
 
 class VirtualReceptionistController extends Controller
 {
@@ -198,7 +199,7 @@ class VirtualReceptionistController extends Controller
         }
     }
 
-    function update(UpdateVoicemailRequest $request, $uuid)
+    function update(UpdateVirtualReceptionistRequest $request, $uuid)
     {
         $inputs = $request->validated();
 
@@ -538,21 +539,22 @@ class VirtualReceptionistController extends Controller
                 }
 
                 // Transform greetings into the desired array format
-                // $greetingsArray = $voicemail->greetings
-                //     ->sortBy('greeting_id')
-                //     ->map(function ($greeting) {
-                //         return [
-                //             'value' => $greeting->greeting_id,
-                //             'name' => $greeting->greeting_name,
-                //         ];
-                //     })->toArray();
+                $greetingsArray = Recordings::where('domain_uuid', session('domain_uuid'))
+                    ->orderBy('recording_name')
+                    ->get()
+                    ->map(function ($greeting) {
+                        return [
+                            'value' => $greeting->recording_uuid,
+                            'name' => $greeting->recording_name,
+                        ];
+                    })->toArray();
 
                 // Add the default options at the beginning of the array
-                // array_unshift(
-                //     $greetingsArray,
-                //     ['value' => '0', 'name' => 'None'],
-                //     ['value' => '-1', 'name' => 'System Default']
-                // );
+                array_unshift(
+                    $greetingsArray,
+                    ['value' => '', 'name' => 'None'],
+                );
+                logger($greetingsArray);
 
                 $routes = array_merge($routes, [
                     // 'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
@@ -564,7 +566,7 @@ class VirtualReceptionistController extends Controller
                     // 'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
                     // 'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
                     // 'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
-                    'update_route' => route('voicemails.update', $ivr),
+                    'update_route' => route('virtual-receptionists.update', $ivr),
                 ]);
             } else {
                 // Create a new voicemail if item_uuid is not provided
