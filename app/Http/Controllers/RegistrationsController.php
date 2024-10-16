@@ -194,11 +194,11 @@ class RegistrationsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function selectAll()
+    public function selectAll(FreeswitchEslService $eslService,)
     {
         try {
             // Fetch all registrations without pagination
-            $allRegistrations = $this->builder($this->filters);
+            $allRegistrations = $this->builder($this->filters, $eslService);
     
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
