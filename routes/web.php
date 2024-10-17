@@ -171,6 +171,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Greetings
     Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
     Route::get('/greetings/serve/{file_name}', [GreetingsController::class, 'serveGreetingFile'])->name('greeting.file.serve');
+    Route::post('/greetings/text-to-speech', [GreetingsController::class, 'textToSpeech'])->name('greetings.textToSpeech');
 
 
 

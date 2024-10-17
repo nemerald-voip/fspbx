@@ -162,8 +162,8 @@
                 </div>
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions" :sample_message="localOptions.sample_message"
                     :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
 
             </div>
@@ -392,7 +392,7 @@ const playGreeting = () => {
 const downloadGreeting = () => {
     isDownloading.value = true; // Start the spinner
 
-    axios.post(props.options.routes.greeting_route, { greeting_id: form.greeting_id })
+    axios.post(props.options.routes.greeting_route, { file_name: form.ivr_menu_greet_long })
         .then((response) => {
             if (response.data.success) {
                 // Create a URL with the download parameter set to true
@@ -403,7 +403,7 @@ const downloadGreeting = () => {
                 link.href = downloadUrl;
 
                 // Use the filename or a default name
-                const fileName = response.data.file_name || 'greeting.wav';
+                const fileName = response.data.file_name;
                 link.download = fileName;
 
                 // Append the link to the body

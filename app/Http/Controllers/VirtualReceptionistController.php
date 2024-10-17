@@ -556,8 +556,7 @@ class VirtualReceptionistController extends Controller
                 );
 
                 $routes = array_merge($routes, [
-                    // 'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
-                    // 'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $voicemail),
+                    'text_to_speech_route' => route('greetings.textToSpeech'),
                     'greeting_route' => route('greeting.url'),
                     // 'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
                     // 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
@@ -618,6 +617,8 @@ class VirtualReceptionistController extends Controller
                 'Choose a greeting number (1-9) to record, then follow the prompts.',
             ];
 
+            $sampleMessage = 'Thank you for calling. For Sales, press 1. For Support, press 2. To repeat this menu, press 9.';
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -629,6 +630,7 @@ class VirtualReceptionistController extends Controller
                 'speeds' => $openAiSpeeds,
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,
+                'sample_message' => $sampleMessage,
                 // Define options for other fields as needed
             ];
 
@@ -661,115 +663,6 @@ class VirtualReceptionistController extends Controller
 
         return $permissions;
     }
-
-    public function textToSpeech(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
-    {
-        $input = $request->input('input');
-        $model = $request->input('model');
-        $voice = $request->input('voice');
-        $responseFormat = $request->input('response_format');
-        $speed = $request->input('speed');
-
-        try {
-            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
-
-            $domainName = session('domain_name');
-
-            // Delete all temp files
-            $this->deleteTempFiles($domainName . '/' . $voicemail->voicemail_id);
-
-            $fileName = 'temp_' . now()->format('Ymd_His') . '.' . $responseFormat; // Generates filename like temp_20240826_153045.wav
-            $filePath = $domainName . '/' . $voicemail->voicemail_id . '/' . $fileName;
-
-            // Save file to the voicemail disk with domain folder
-            Storage::disk('voicemail')->put($filePath, $response);
-
-            // Generate the file URL using the defined route
-            $fileUrl = route('voicemail.file.serve', [
-                'domain' => $domainName,
-                'voicemail_id' => $voicemail->voicemail_id,
-                'file' => $fileName,
-            ]);
-
-            // Generate the file URL using the defined route
-            $applyUrl = route('voicemail.file.apply', [
-                'domain' => $domainName,
-                'voicemail' => $voicemail,
-                'file' => $fileName,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'file_url' => $fileUrl,
-                'apply_url' => $applyUrl,
-            ]);
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // report($e);
-
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [$e->getMessage()]]
-            ], 500);  // 500 Internal Server Error for any other errors
-        }
-    }
-
-    public function textToSpeechForName(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
-    {
-        $input = $request->input('input');
-        $model = $request->input('model');
-        $voice = $request->input('voice');
-        $responseFormat = $request->input('response_format');
-        $speed = $request->input('speed');
-
-        try {
-            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
-
-            $domainName = session('domain_name');
-
-            // Delete all temp files
-            $this->deleteTempFiles($domainName . '/' . $voicemail->voicemail_id);
-
-            $fileName = 'temp_' . now()->format('Ymd_His') . '.' . $responseFormat; // Generates filename like temp_20240826_153045.wav
-            $filePath = $domainName . '/' . $voicemail->voicemail_id . '/' . $fileName;
-
-            // Save file to the voicemail disk with domain folder
-            Storage::disk('voicemail')->put($filePath, $response);
-
-            // Generate the file URL using the defined route
-            $fileUrl = route('voicemail.file.serve', [
-                'domain' => $domainName,
-                'voicemail_id' => $voicemail->voicemail_id,
-                'file' => $fileName,
-            ]);
-
-            // Generate the file URL using the defined route
-            $applyUrl = route('voicemail.file.name.apply', [
-                'domain' => $domainName,
-                'voicemail' => $voicemail,
-                'file' => $fileName,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'file_url' => $fileUrl,
-                'apply_url' => $applyUrl,
-            ]);
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // report($e);
-
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [$e->getMessage()]]
-            ], 500);  // 500 Internal Server Error for any other errors
-        }
-    }
-
 
     public function applyVoicemailFile($domain, Voicemails $voicemail, $file)
     {
