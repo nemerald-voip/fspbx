@@ -17,14 +17,19 @@ class IvrMenus extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    /**
+    /*
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      *
+     */
     protected $fillable = [
-
-    ];*/
+        'ivr_menu_name',
+        'ivr_menu_extension',
+        'ivr_menu_description',
+        'ivr_menu_greet_long',
+        'ivr_menu_enabled'
+    ];
 
     /*
     public function __construct(array $attributes = [])

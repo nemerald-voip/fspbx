@@ -128,25 +128,25 @@
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
                                     <PlayCircleIcon v-if="form.ivr_menu_greet_long && !isAudioPlaying" @click="playGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
                                     <PauseCircleIcon v-if="form.ivr_menu_greet_long && isAudioPlaying" @click="pauseGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <CloudArrowDownIcon v-if="form.ivr_menu_greet_long && !isDownloading"
                                         @click="downloadGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <Spinner :show="isDownloading"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Delete Button -->
-                                    <TrashIcon v-if="form.greeting_id > 0" @click="deleteGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                    <TrashIcon v-if="form.ivr_menu_greet_long " @click="deleteGreeting"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <PlusIcon @click="toggleGreetingForm"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                 </div>
 
@@ -237,8 +237,6 @@
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
 
-    <DeleteConfirmationModal :show="confirmationModalTriggerForName" @close="confirmationModalTriggerforName = false"
-        @confirm="confirmDeleteNameAction" />
 </template>
 
 <script setup>
@@ -255,10 +253,7 @@ import Toggle from "@generalComponents/Toggle.vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
-import Badge from "@generalComponents/Badge.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import VoicemailIcon from "../icons/VoicemailIcon.vue"
-import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/20/solid'
@@ -281,7 +276,6 @@ const showNameForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationModalTriggerForName = ref(false);
 
 
 const setActiveTab = (tabSlug) => {
@@ -295,20 +289,6 @@ const toggleGreetingForm = () => {
     showNameForm.value = false;
 };
 
-const toggleNameForm = () => {
-    showGreetingForm.value = false;
-    showNameForm.value = !showNameForm.value;
-};
-
-const togglePasswordVisibility = () => {
-    showPassword.value = !showPassword.value;
-    const passwordInput = document.getElementById("voicemail_password");
-    if (showPassword.value) {
-        passwordInput.style.webkitTextSecurity = "none"; // Show text
-    } else {
-        passwordInput.style.webkitTextSecurity = "disc"; // Mask text
-    }
-};
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -332,14 +312,7 @@ const form = reactive({
     ivr_menu_name: props.options.ivr.ivr_menu_name,
     ivr_menu_extension: props.options.ivr.ivr_menu_extension,
     ivr_menu_description: props.options.ivr.ivr_menu_description,
-    // voicemail_description: props.options.voicemail.voicemail_description,
-    // voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
-    // voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
-    // voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
-    // voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
-    // voicemail_play_recording_instructions: props.options.voicemail.voicemail_recording_instructions === "true",
-    // voicemail_copies: props.options.voicemail_copies,
-    // voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
+    ivr_menu_greet_long: props.options.ivr.ivr_menu_greet_long,
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     update_route: props.options.routes.update_route,
     _token: page.props.csrf_token,
@@ -362,7 +335,7 @@ const handleUpdateCopyToField = (voicemails) => {
 }
 
 const handleUpdateGreetingField = (greeting) => {
-    form.greeting_id = greeting.value;
+    form.ivr_menu_greet_long = greeting.value;
     currentAudio.value = false;
 }
 
@@ -380,11 +353,6 @@ const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
     currentAudio.value = null;
 };
 
-// Handler for the greeting-saved event
-const handleNameSaved = ({ greeting_id, greeting_name }) => {
-    localOptions.recorded_name = 'Custom recording';
-    currentNameAudio.value = null;
-};
 
 const currentAudio = ref(null);
 const isAudioPlaying = ref(false);
@@ -397,7 +365,7 @@ const playGreeting = () => {
         return;
     }
 
-    axios.post(props.options.routes.greeting_route, { greeting_id: form.greeting_id })
+    axios.post(props.options.routes.greeting_route, { file_name: form.ivr_menu_greet_long })
         .then((response) => {
             // Stop the currently playing audio (if any)
             if (currentAudio.value) {
@@ -501,98 +469,6 @@ const confirmDeleteAction = () => {
 };
 
 
-// Add variables for recorded name functionality
-const isNameAudioPlaying = ref(false);
-const isNameDownloading = ref(false);
-const currentNameAudio = ref(null);
-
-// Methods for recorded name
-const playRecordedName = () => {
-    if (currentNameAudio.value && currentNameAudio.value.paused) {
-        currentNameAudio.value.play();
-        isNameAudioPlaying.value = true;
-        return;
-    }
-
-    axios.post(props.options.routes.recorded_name_route, { voicemail_id: form.voicemail_id })
-        .then((response) => {
-            if (currentNameAudio.value) {
-                currentNameAudio.value.pause();
-                currentNameAudio.value.currentTime = 0;
-            }
-            if (response.data.success) {
-                isNameAudioPlaying.value = true;
-
-                // Add a cache-busting query parameter to the file URL
-                const fileUrlWithCacheBuster = `${response.data.file_url}?t=${new Date().getTime()}`;
-
-                currentNameAudio.value = new Audio(fileUrlWithCacheBuster);
-                currentNameAudio.value.play();
-
-                currentNameAudio.value.addEventListener("ended", () => {
-                    isNameAudioPlaying.value = false;
-                });
-            }
-        }).catch((error) => {
-            emits('error', error);
-        });
-};
-
-const pauseRecordedName = () => {
-    if (currentNameAudio.value) {
-        currentNameAudio.value.pause();
-        isNameAudioPlaying.value = false;
-    }
-};
-
-const downloadRecordedName = () => {
-    isNameDownloading.value = true;
-
-    axios.post(props.options.routes.recorded_name_route, { voicemail_id: form.voicemail_id })
-        .then((response) => {
-            if (response.data.success) {
-                const downloadUrl = `${response.data.file_url}?download=true`;
-
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = response.data.file_name || 'recorded_name.wav';
-
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        })
-        .catch((error) => {
-            emits('error', error);
-        })
-        .finally(() => {
-            isNameDownloading.value = false;
-        });
-};
-
-const deleteRecordedName = () => {
-    confirmationModalTriggerForName.value = true; // Show confirmation modal
-};
-
-const confirmDeleteNameAction = () => {
-    axios
-        .post(props.options.routes.delete_recorded_name_route, { voicemail_id: form.voicemail_id })
-        .then((response) => {
-            if (response.data.success) {
-                localOptions.recorded_name = 'System Default';
-                emits('success', response.data.message.success);
-            }
-        })
-        .catch((error) => {
-            emits('error', error);
-        })
-        .finally(() => {
-            confirmationModalTriggerForName.value = false;
-        });
-};
-
-
-
 // Computed property or method to dynamically set routes based on the form type
 const getRoutesForGreetingForm = computed(() => {
     // Return routes specifically for the greeting form
@@ -600,15 +476,6 @@ const getRoutesForGreetingForm = computed(() => {
         ...localOptions.routes,
         text_to_speech_route: localOptions.routes.text_to_speech_route,
         upload_greeting_route: localOptions.routes.upload_greeting_route
-    };
-});
-
-const getRoutesForNameForm = computed(() => {
-    // Return routes specifically for the name form
-    return {
-        ...localOptions.routes,
-        text_to_speech_route: localOptions.routes.text_to_speech_route_for_name,
-        upload_greeting_route: localOptions.routes.upload_greeting_route_for_name,
     };
 });
 

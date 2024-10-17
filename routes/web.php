@@ -16,6 +16,7 @@ use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
@@ -31,13 +32,13 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
-use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
+use App\Http\Controllers\VirtualReceptionistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -165,6 +166,12 @@ Route::group(['middleware' => 'auth'], function () {
     // Auto Receptionist
     Route::resource('virtual-receptionists', VirtualReceptionistController::class);
     Route::post('virtual-receptionists/item-options', [VirtualReceptionistController::class, 'getItemOptions'])->name('virtual-receptionists.item.options');
+    Route::post('/virtual-receptionists/{virtual_receptionist}/greeting', [VirtualReceptionistController::class, 'getVirtualReceptionistGreeting'])->name('virtual-receptionist.greeting');
+
+    // Greetings
+    Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
+    Route::get('/greetings/serve/{file_name}', [GreetingsController::class, 'serveGreetingFile'])->name('greeting.file.serve');
+
 
 
     // SIP Credentials

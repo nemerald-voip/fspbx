@@ -35,7 +35,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
                 new UniqueExtension($currentUuid),
             ],
             // 'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
-            // 'voicemail_mail_to' => 'nullable|email:rfc',
+            'ivr_menu_greet_long' => 'present',
             // 'greeting_id' => 'required|string',
             'ivr_menu_enabled' => 'present',
             'ivr_menu_description' => 'nullable|string|max:100',

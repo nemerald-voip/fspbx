@@ -544,7 +544,7 @@ class VirtualReceptionistController extends Controller
                     ->get()
                     ->map(function ($greeting) {
                         return [
-                            'value' => $greeting->recording_uuid,
+                            'value' => $greeting->recording_filename,
                             'name' => $greeting->recording_name,
                         ];
                     })->toArray();
@@ -554,12 +554,11 @@ class VirtualReceptionistController extends Controller
                     $greetingsArray,
                     ['value' => '', 'name' => 'None'],
                 );
-                logger($greetingsArray);
 
                 $routes = array_merge($routes, [
                     // 'text_to_speech_route' => route('voicemails.textToSpeech', $voicemail),
                     // 'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $voicemail),
-                    // 'greeting_route' => route('voicemail.greeting', $voicemail),
+                    'greeting_route' => route('greeting.url'),
                     // 'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
                     // 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
                     // 'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $voicemail),
@@ -771,29 +770,6 @@ class VirtualReceptionistController extends Controller
         }
     }
 
-    public function serveVoicemailFile($domain, $voicemail_id, $file)
-    {
-        $filePath = "{$domain}/{$voicemail_id}/{$file}";
-
-        if (!Storage::disk('voicemail')->exists($filePath)) {
-            // File not found
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => 'File not found']
-            ], 500);  // 500 Internal Server Error for any other errors
-        }
-
-        // Check if the 'download' parameter is present and set to true
-        $download = request()->query('download', false);
-
-        if ($download) {
-            // Serve the file as a download
-            return response()->download(Storage::disk('voicemail')->path($filePath));
-        }
-
-        // Serve the file inline
-        return response()->file(Storage::disk('voicemail')->path($filePath));
-    }
 
     public function applyVoicemailFile($domain, Voicemails $voicemail, $file)
     {
@@ -933,46 +909,6 @@ class VirtualReceptionistController extends Controller
             if (Str::startsWith(basename($file), 'temp')) {
                 Storage::disk('voicemail')->delete($file);
             }
-        }
-    }
-
-    public function getVoicemailGreeting(Voicemails $voicemail)
-    {
-
-        try {
-            // Step 1: Get the greeting_id from the request
-            $greetingId = request('greeting_id');
-
-            // Step 2: Fetch the greeting info from the database using the greeting_id and voicemail_id
-            $greeting = $voicemail->greetings()
-                ->where('greeting_id', $greetingId)
-                ->first();
-
-            // Check if the greeting exists
-            if (!$greeting) {
-                throw new \Exception('File not found');
-            }
-
-            // Generate the file URL using the defined route
-            $fileUrl = route('voicemail.file.serve', [
-                'domain' => session('domain_name'),
-                'voicemail_id' => $voicemail->voicemail_id,
-                'file' => $greeting->greeting_filename,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'file_url' => $fileUrl,
-            ]);
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [$e->getMessage()]]
-            ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 

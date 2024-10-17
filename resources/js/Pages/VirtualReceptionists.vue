@@ -85,8 +85,8 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_extension" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_enabled" >
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_enabled" >
                         <Badge v-if="row.ivr_menu_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
                             textColor="text-green-700"
                             ringColor="ring-green-600/20" />
