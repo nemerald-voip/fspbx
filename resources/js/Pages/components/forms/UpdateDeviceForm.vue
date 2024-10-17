@@ -284,7 +284,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -337,6 +337,7 @@ const isLineAdvSettingsModalShown = ref(false);
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 
 const submitForm = () => {
+    form.device_provisioning = isCloudProvisioned.value.status;
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -467,37 +468,37 @@ const handleDeregister = () => {
         });
 }
 
-watch(activeTab, (newTab) => {
-    if (newTab === 'provisioning') {
-        isCloudProvisioned.value.isLoading = true
-        // Make the AJAX request
-        axios.post(page.props.routes.cloud_provisioning_status, {
-            'items': [props.item.device_uuid]
-        })
-            .then(response => {
-                const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
-                if (device) {
-                    if(device.provisioned) {
-                        isCloudProvisioned.value.status = true;
-                        isCloudProvisioned.value.error = null;
-                    } else {
-                        isCloudProvisioned.value.status = false;
-                        isCloudProvisioned.value.error = device.error;
-                    }
+onMounted(() => {
+    fetchProvisioningStatus();
+});
+
+const fetchProvisioningStatus = () => {
+    isCloudProvisioned.value.isLoading = true;
+    axios.post(page.props.routes.cloud_provisioning_status, {
+        'items': [props.item.device_uuid]
+    })
+        .then(response => {
+            const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
+            if (device) {
+                if (device.provisioned) {
+                    isCloudProvisioned.value.status = true;
+                    isCloudProvisioned.value.error = null;
                 } else {
                     isCloudProvisioned.value.status = false;
-                    isCloudProvisioned.value.error = 'Not found';
+                    isCloudProvisioned.value.error = device.error;
                 }
-            })
-            .catch(error => {
-                console.error(error)
-                // Handle any errors
-                isCloudProvisioned.value.status = false
-                isCloudProvisioned.value.error = error.response.data.error
-            })
-            .finally(() => {
-                isCloudProvisioned.value.isLoading = false
-            });
-    }
-});
+            } else {
+                isCloudProvisioned.value.status = false;
+                isCloudProvisioned.value.error = 'Not found';
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            isCloudProvisioned.value.status = false;
+            isCloudProvisioned.value.error = error.response?.data?.error;
+        })
+        .finally(() => {
+            isCloudProvisioned.value.isLoading = false;
+        });
+};
 </script>

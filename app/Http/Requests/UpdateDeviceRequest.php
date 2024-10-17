@@ -42,7 +42,7 @@ class UpdateDeviceRequest extends FormRequest
                         // Check if the value is not the literal string "NULL"
                         return $input['device_profile_uuid'] !== 'NULL';
                     },
-                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),                
+                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
                     )
             ],
             'device_template' => [
@@ -53,6 +53,9 @@ class UpdateDeviceRequest extends FormRequest
             'lines' => [
                 'nullable',
                 'array'
+            ],
+            'device_provisioning' => [
+                'boolean'
             ],
             'domain_uuid' => [
                 'required',
@@ -84,7 +87,7 @@ class UpdateDeviceRequest extends FormRequest
 
         $responseData = array('errors' => $errors);
 
-        throw new HttpResponseException(response()->json($responseData, 422)); 
+        throw new HttpResponseException(response()->json($responseData, 422));
     }
 
     public function messages(): array

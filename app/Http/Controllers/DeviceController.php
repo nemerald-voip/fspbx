@@ -427,6 +427,10 @@ class DeviceController extends Controller
                 $device->lines()->delete();
             }
 
+            if($inputs['device_provisioning']) {
+                $device->register_on_ztp = true;
+            }
+
             // logger($inputs);
             $device->update($inputs);
 

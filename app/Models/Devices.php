@@ -63,6 +63,7 @@ class Devices extends Model
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
+        $this->attributes['register_on_ztp'] = false;
         $this->fill($attributes);
     }
 
@@ -78,7 +79,14 @@ class Devices extends Model
             /** @var Devices $model */
             // If device is scheduled to provisioning
             if($model->register_on_ztp === true) {
-                $model->registerOnZtp();
+                // If MacAddress/Vendor changed we have to deregister and register
+                if ($model->isDirty('device_address') || $model->isDirty('device_vendor')) {
+                    logger("Device attributes changed, deregister and register");
+                    $model->deregisterOnZtp();
+                    $model->registerOnZtp();
+                } else {
+                    $model->registerOnZtp();
+                }
             }
             // Remove attributes before saving to database
             unset(
