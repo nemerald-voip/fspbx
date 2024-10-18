@@ -429,13 +429,16 @@ class DeviceController extends Controller
                 $device->lines()->delete();
             }
 
-            $device->update($inputs);
-
             if($inputs['device_provisioning']) {
+                if($inputs['device_address'] != $device->device_address) {
+                    $device->deregisterOnZtp();
+                }
                 $device->registerOnZtp();
             } else {
                 $device->deregisterOnZtp();
             }
+
+            $device->update($inputs);
 
             // Return a JSON response indicating success
             return response()->json([

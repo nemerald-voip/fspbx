@@ -148,7 +148,7 @@ class Devices extends Model
             if ($this->hasSupportedCloudProvider()) {
 
                 // Get the original 'device_address' value before it was updated
-                $originalDeviceAddress = $this->getOriginal('device_address');
+                /*$originalDeviceAddress = $this->getOriginal('device_address');
 
                 logger('Device address has changed:', [
                     'old' => $originalDeviceAddress,
@@ -169,7 +169,7 @@ class Devices extends Model
                         // Log any exception that occurs during the deletion process
                         logger($e);
                     }
-                }
+                }*/
 
                 // Send a request to create or update the new device address on ZTP
                 SendZtpRequest::dispatch(
