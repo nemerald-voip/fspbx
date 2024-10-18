@@ -48,11 +48,11 @@ class DashboardController extends Controller
                     return $this->getApps();
                 },
                 'data' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getData()
                 ),
                 'counts' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getCounts()
                 ),
             ]
@@ -202,19 +202,25 @@ class DashboardController extends Controller
 
         //if superuser get registration status
         if (isSuperAdmin()) {
-            //Get Disk Usage
-            $data['diskfree'] = disk_free_space(".") / 1073741824;
-            $data['disktotal'] = disk_total_space("/") / 1073741824;
-            $data['diskused'] = $data['disktotal'] - $data['diskfree'];
-            $diskusage = round($data['diskused'] / $data['disktotal'] * 100);
-            $data['diskusage'] = $diskusage;
+            // Get Disk Usage
+            $totalDiskSpace = disk_total_space("/");
+            if ($totalDiskSpace > 0) {
+                $data['diskfree'] = disk_free_space(".") / 1073741824;
+                $data['disktotal'] = $totalDiskSpace / 1073741824;
+                $data['diskused'] = $data['disktotal'] - $data['diskfree'];
+                $diskusage = round($data['diskused'] / $data['disktotal'] * 100);
+                $data['diskusage'] = $diskusage;
 
-            if ($diskusage <= 60) {
-                $data['diskusagecolor'] = "bg-success";
-            } elseif ($diskusage > 60 && $diskusage <= 75) {
-                $data['diskusagecolor'] = "bg-warning";
-            } elseif ($diskusage > 75) {
-                $data['diskusagecolor'] = "bg-danger";
+                if ($diskusage <= 60) {
+                    $data['diskusagecolor'] = "bg-success";
+                } elseif ($diskusage > 60 && $diskusage <= 75) {
+                    $data['diskusagecolor'] = "bg-warning";
+                } elseif ($diskusage > 75) {
+                    $data['diskusagecolor'] = "bg-danger";
+                }
+            } else {
+                $data['diskusage'] = 0;
+                $data['diskusagecolor'] = "bg-danger";  // Handle total space being zero
             }
 
             // Get RAM usage
@@ -222,27 +228,41 @@ class DashboardController extends Controller
             $parser = $linfo->getParser();
             $parser->determineCPUPercentage();
             $ram = $parser->getRam();
-            $data['ramfree'] = $ram['free'] / 1073741824;
-            $data['ramtotal'] = $ram['total'] / 1073741824;
-            $data['ramused'] = $data['ramtotal'] - $data['ramfree'];
-            $data['ramusage'] = round($data['ramused'] / $data['ramtotal'] * 100);
-            if ($data['ramusage'] <= 60) {
-                $data['ramusagecolor'] = "bg-success";
-            } elseif ($data['ramusage'] > 60 && $data['ramusage'] <= 75) {
-                $data['ramusagecolor'] = "bg-warning";
-            } elseif ($data['ramusage'] > 75) {
-                $data['ramusagecolor'] = "bg-danger";
+
+            if ($ram['total'] > 0) {
+                $data['ramfree'] = $ram['free'] / 1073741824;
+                $data['ramtotal'] = $ram['total'] / 1073741824;
+                $data['ramused'] = $data['ramtotal'] - $data['ramfree'];
+                $data['ramusage'] = round($data['ramused'] / $data['ramtotal'] * 100);
+
+                if ($data['ramusage'] <= 60) {
+                    $data['ramusagecolor'] = "bg-success";
+                } elseif ($data['ramusage'] > 60 && $data['ramusage'] <= 75) {
+                    $data['ramusagecolor'] = "bg-warning";
+                } elseif ($data['ramusage'] > 75) {
+                    $data['ramusagecolor'] = "bg-danger";
+                }
+            } else {
+                $data['ramusage'] = 0;
+                $data['ramusagecolor'] = "bg-danger";  // Handle total RAM being zero
             }
-            $data['swapfree'] = $ram['swapFree'] / 1073741824;
-            $data['swaptotal'] = $ram['swapTotal'] / 1073741824;
-            $data['swapused'] = $data['swaptotal'] - $data['swapfree'];
-            $data['swapusage'] = round($data['swapused'] / $data['swaptotal'] * 100);
-            if ($data['swapusage'] <= 60) {
-                $data['swapusagecolor'] = "bg-success";
-            } elseif ($data['swapusage'] > 60 && $data['swapusage'] <= 75) {
-                $data['swapusagecolor'] = "bg-warning";
-            } elseif ($data['swapusage'] > 75) {
-                $data['swapusagecolor'] = "bg-danger";
+
+            if ($ram['swapTotal'] > 0) {
+                $data['swapfree'] = $ram['swapFree'] / 1073741824;
+                $data['swaptotal'] = $ram['swapTotal'] / 1073741824;
+                $data['swapused'] = $data['swaptotal'] - $data['swapfree'];
+                $data['swapusage'] = round($data['swapused'] / $data['swaptotal'] * 100);
+
+                if ($data['swapusage'] <= 60) {
+                    $data['swapusagecolor'] = "bg-success";
+                } elseif ($data['swapusage'] > 60 && $data['swapusage'] <= 75) {
+                    $data['swapusagecolor'] = "bg-warning";
+                } elseif ($data['swapusage'] > 75) {
+                    $data['swapusagecolor'] = "bg-danger";
+                }
+            } else {
+                $data['swapusage'] = 0;
+                $data['swapusagecolor'] = "bg-danger";  // Handle swap total being zero
             }
 
             //Get CPU load
