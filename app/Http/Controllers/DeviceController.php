@@ -431,9 +431,7 @@ class DeviceController extends Controller
                 $device->register_on_ztp = true;
             }
 
-            // logger($inputs);
             $device->update($inputs);
-
 
             // Return a JSON response indicating success
             return response()->json([

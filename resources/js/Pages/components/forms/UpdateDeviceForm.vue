@@ -176,14 +176,23 @@
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
-                            <p class="mt-1 text-sm text-gray-500">Check current provisioning status with cloud provider.</p>
-                        </div>
-                        <div v-if="!isCloudProvisioned.isLoading">
+                            <Toggle :target="'enable_provisioning'" :label="'Provision this device'"
+                                    description="Activate this setting if you want to provision this device with cloud provider immediately."
+                                    v-model="form.device_provisioning" customClass="py-4" :disabled="isCloudProvisioned.isLoading" />
+
                             <div>Status:
                                 <span class="text-rose-600" v-if="!isCloudProvisioned.status">Device is not provisioned</span>
                                 <span class="text-emerald-600" v-if="isCloudProvisioned.status">Device is provisioned</span>
                             </div>
                             <div v-if="isCloudProvisioned.error">Error: {{isCloudProvisioned.error}}</div>
+                        </div>
+                        <!--
+                        <div v-if="!isCloudProvisioned.isLoading">
+                            <div>Status:
+                                <span class="text-rose-600" v-if="!isCloudProvisioned.status">Device is not provisioned</span>
+                                <span class="text-emerald-600" v-if="isCloudProvisioned.status">Device is provisioned</span>
+                            </div>
+
                             <div class="flex justify-center pt-4">
                                 <button v-if="!isCloudProvisioned.status" type="button" @click.prevent="handleRegister()"
                                         class="inline-flex justify-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
@@ -198,6 +207,7 @@
                             </div>
                         </div>
                         <Loading :show="isCloudProvisioned.isLoading" :absolute="false" />
+                        -->
                     </div>
                 </div>
             </div>
@@ -300,6 +310,7 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
 import Loading from "../general/Loading.vue";
 import axios from "axios";
+import Toggle from "../general/Toggle.vue";
 
 
 const props = defineProps({
@@ -315,6 +326,7 @@ const form = reactive({
     device_address: props.item.device_address,
     device_template: props.item.device_template,
     device_profile_uuid: props.item.device_profile_uuid,
+    device_provisioning: false,
     // extension: props.item.device_label,
     lines: props.options.lines,
     domain_uuid: props.item.domain_uuid,
@@ -325,7 +337,6 @@ const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const isCloudProvisioned = ref({
     isLoading: false,
-    isUpdating: false,
     status: false,
     error: null,
     message: null
@@ -337,7 +348,6 @@ const isLineAdvSettingsModalShown = ref(false);
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 
 const submitForm = () => {
-    form.device_provisioning = isCloudProvisioned.value.status;
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -416,7 +426,7 @@ const handleModalClose = () => {
 const handleSipTransportUpdate = (newSelectedItem, index) => {
     form.lines[index].sip_transport = newSelectedItem.value;
 };
-
+/*
 const handleRegister = () => {
     isCloudProvisioned.value.isUpdating = true;
     axios.post(page.props.routes.cloud_provisioning_register, {
@@ -467,7 +477,7 @@ const handleDeregister = () => {
             console.error(error);
         });
 }
-
+*/
 onMounted(() => {
     fetchProvisioningStatus();
 });
@@ -483,18 +493,22 @@ const fetchProvisioningStatus = () => {
                 if (device.provisioned) {
                     isCloudProvisioned.value.status = true;
                     isCloudProvisioned.value.error = null;
+                    form.device_provisioning = true;
                 } else {
                     isCloudProvisioned.value.status = false;
                     isCloudProvisioned.value.error = device.error;
+                    form.device_provisioning = false;
                 }
             } else {
                 isCloudProvisioned.value.status = false;
                 isCloudProvisioned.value.error = 'Not found';
+                form.device_provisioning = false;
             }
         })
         .catch(error => {
             console.error(error);
             isCloudProvisioned.value.status = false;
+            form.device_provisioning = false;
             isCloudProvisioned.value.error = error.response?.data?.error;
         })
         .finally(() => {

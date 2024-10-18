@@ -55,6 +55,7 @@ class Devices extends Model
         'device_template',
         'device_user_uuid',
         'device_username',
+        'register_on_ztp'
     ];
 
     public function __construct(array $attributes = [])
@@ -63,7 +64,7 @@ class Devices extends Model
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->attributes['register_on_ztp'] = false;
+        $this->attributes['register_on_ztp'] = $attributes['register_on_ztp'] ?? false;
         $this->fill($attributes);
     }
 
@@ -77,17 +78,12 @@ class Devices extends Model
     {
         static::saving(function ($model) {
             /** @var Devices $model */
-            // If device is scheduled to provisioning
             if($model->register_on_ztp === true) {
-                // If MacAddress/Vendor changed we have to deregister and register
-                if ($model->isDirty('device_address') || $model->isDirty('device_vendor')) {
-                    logger("Device attributes changed, deregister and register");
-                    $model->deregisterOnZtp();
-                    $model->registerOnZtp();
-                } else {
-                    $model->registerOnZtp();
-                }
+                $model->registerOnZtp();
+            } else {
+                $model->deregisterOnZtp();
             }
+
             // Remove attributes before saving to database
             unset(
                 $model->device_address_formatted,
@@ -154,10 +150,31 @@ class Devices extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-    private function registerOnZtp(): void
+    public function registerOnZtp(): void
     {
         try {
+            // Check if the device has a supported cloud provider
             if ($this->hasSupportedCloudProvider()) {
+
+                // Get the original 'device_address' value before it was updated
+                $originalDeviceAddress = $this->getOriginal('device_address');
+
+                // Check if the original device address is not empty and has changed
+                if (!empty($originalDeviceAddress) && ($originalDeviceAddress != $this->device_address)) {
+                    // Try to send a request to delete the old device address on ZTP
+                    try {
+                        SendZtpRequest::dispatch(
+                            SendZtpRequest::ACTION_DELETE,
+                            $this->device_vendor,
+                            $originalDeviceAddress,
+                        )->onQueue('ztp');
+                    } catch (\Exception $e) {
+                        // Log any exception that occurs during the deletion process
+                        logger($e);
+                    }
+                }
+
+                // Send a request to create or update the new device address on ZTP
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_CREATE,
                     $this->device_vendor,
@@ -166,14 +183,18 @@ class Devices extends Model
                 )->onQueue('ztp');
             }
         } catch (\Exception $e) {
+            // Log any exception that occurs during the creation process
             logger($e);
         }
     }
 
-    private function deregisterOnZtp(): void
+    public function deregisterOnZtp(): void
     {
         try {
+            // Check if the device has a supported cloud provider
             if ($this->hasSupportedCloudProvider()) {
+
+                // Send a request to delete the device from the ZTP system using the current device address
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_DELETE,
                     $this->device_vendor,
@@ -181,6 +202,7 @@ class Devices extends Model
                 )->onQueue('ztp');
             }
         } catch (\Exception $e) {
+            // Log any exception that occurs during the deregistration process
             logger($e);
         }
     }
