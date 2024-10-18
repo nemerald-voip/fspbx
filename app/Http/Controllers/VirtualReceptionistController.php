@@ -8,14 +8,12 @@ use App\Models\IvrMenus;
 use App\Models\Recordings;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Services\OpenAIService;
 use App\Models\VoicemailGreetings;
 use Illuminate\Support\Facades\DB;
 use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
-use App\Http\Requests\TextToSpeechRequest;
 use App\Http\Requests\StoreVoicemailRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 
@@ -558,13 +556,11 @@ class VirtualReceptionistController extends Controller
                 $routes = array_merge($routes, [
                     'text_to_speech_route' => route('greetings.textToSpeech'),
                     'greeting_route' => route('greeting.url'),
-                    // 'delete_greeting_route' => route('voicemails.deleteGreeting', $voicemail),
+                    'delete_greeting_route' => route('greetings.file.delete'),
                     // 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
-                    // 'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $voicemail),
-                    // 'recorded_name_route' => route('voicemail.recorded_name', $voicemail),
-                    // 'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $voicemail),
-                    // 'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
                     'update_route' => route('virtual-receptionists.update', $ivr),
+                    'apply_greeting_route' => route('virtual-receptionist.greeting.apply'),
+
                 ]);
             } else {
                 // Create a new voicemail if item_uuid is not provided
@@ -664,74 +660,20 @@ class VirtualReceptionistController extends Controller
         return $permissions;
     }
 
-    public function applyVoicemailFile($domain, Voicemails $voicemail, $file)
+    public function applyGreeting()
     {
         try {
-            $filePath = "{$domain}/{$voicemail->voicemail_id}/{$file}";
+            // Retrieve the IVR menu by the provided 'ivr' ID
+            $ivrMenu = IvrMenus::findOrFail(request('ivr'));
 
-            if (!Storage::disk('voicemail')->exists($filePath)) {
-                abort(404); // File not found
-            }
+            // Update the 'ivr_menu_greet_long' field with the 'file_name'
+            $ivrMenu->ivr_menu_greet_long = request('file_name');
 
-            if (!Storage::disk('voicemail')->exists($filePath)) {
-                // File not found
-                return response()->json([
-                    'success' => false,
-                    'errors' => ['server' => ['File not found']]
-                ], 500);  // 500 Internal Server Error for any other errors
-            }
-
-            // Step 3: Find the next greeting_id to use
-            $existingIds = $voicemail->greetings()
-                ->pluck('greeting_id')
-                ->sort()
-                ->toArray();
-
-            $nextId = 1; // Start from 0 or your desired starting ID
-
-            foreach ($existingIds as $id) {
-                if ($id == $nextId) {
-                    $nextId++;
-                } else {
-                    break; // Found a gap
-                }
-            }
-
-            // Step 4: Generate new greeting_id and filename
-            $newGreetingId = $nextId;
-            $newFileName = "greeting_{$newGreetingId}.wav";
-
-            // Step 5: Construct the new file path
-            $newFilePath = "{$domain}/{$voicemail->voicemail_id}/{$newFileName}";
-
-            // Step 6: Store the file with the new name (you might want to copy instead of move)
-            if (!Storage::disk('voicemail')->move($filePath, $newFilePath)) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => ['server' => ['Failed to save the file']]
-                ], 500);
-            }
-
-            // Step 7: Save greeting info to the database
-            $voicemail->greetings()->create([
-                'domain_uuid' => $voicemail->domain_uuid,
-                'voicemail_id' => $voicemail->voicemail_id,
-                'greeting_id' => $newGreetingId,
-                'greeting_name' => "AI Greeting " . date('Ymd_His'),
-                'greeting_filename' => $newFileName,
-                'greeting_description' => "Generated greeting {$newGreetingId}",
-
-            ]);
-
-            // Step 8: Update the voicemail table with the new greeting_id
-            $voicemail->update([
-                'greeting_id' => $newGreetingId
-            ]);
+            // Save the changes to the model
+            $ivrMenu->save();
 
             return response()->json([
                 'success' => true,
-                'greeting_id' => $newGreetingId,
-                'greeting_name' => "AI Greeting " . date('Ymd_His'),
                 'message' => ['success' => 'Your AI-generated greeting has been saved and successfully activated.']
             ], 200);
         } catch (\Exception $e) {

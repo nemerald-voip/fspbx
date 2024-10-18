@@ -25,14 +25,35 @@ class Recordings extends Model
         'recording_base64'
     ];
 
-    public function __construct(array $attributes = [])
+    // public function __construct(array $attributes = [])
+    // {
+    //     parent::__construct();
+    //     $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+    //     $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+    //     $this->attributes['insert_user'] = Session::get('user_uuid');
+    //     $this->attributes['update_date'] = date('Y-m-d H:i:s');
+    //     $this->attributes['update_user'] = Session::get('user_uuid');
+    //     $this->fill($attributes);
+    // }
+
+    protected static function booted()
     {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->attributes['update_date'] = date('Y-m-d H:i:s');
-        $this->attributes['update_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
+        static::creating(function ($model) {
+            $model->insert_date = date('Y-m-d H:i:s');
+            $model->insert_user = session('user_uuid');
+        });
+
+        static::saving(function ($model) {
+            if (!$model->domain_uuid) {
+                $model->domain_uuid = session('domain_uuid');
+            }
+            // unset($model->destroy_route);
+            // unset($model->messages_route);
+        });
+
+        static::retrieved(function ($model) {
+            // $model->destroy_route = route('voicemails.destroy', $model);
+            // $model->messages_route = route('voicemails.messages.index', $model);
+        });
     }
 }

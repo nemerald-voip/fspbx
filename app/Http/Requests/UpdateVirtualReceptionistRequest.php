@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
 use Illuminate\Support\Facades\Auth;
-use App\Rules\ValidVoicemailPassword;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateVirtualReceptionistRequest extends FormRequest
@@ -24,9 +23,6 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         //get current UUID from route model binding
         $currentUuid = $this->route('virtual_receptionist');
 
-        logger('rules');
-        logger($currentUuid);
-
         return [
             'ivr_menu_name' => 'string',
             'ivr_menu_extension' => [
@@ -34,7 +30,6 @@ class UpdateVirtualReceptionistRequest extends FormRequest
                 'numeric',
                 new UniqueExtension($currentUuid),
             ],
-            // 'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
             'ivr_menu_greet_long' => 'present',
             // 'greeting_id' => 'required|string',
             'ivr_menu_enabled' => 'present',
@@ -51,7 +46,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        logger($this);
+        // logger($this);
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Recordings;
 use Illuminate\Support\Str;
 use App\Services\OpenAIService;
 use Illuminate\Support\Facades\Storage;
@@ -95,16 +96,14 @@ class GreetingsController extends Controller
             // Save file to the voicemail disk with domain folder
             Storage::disk('recordings')->put($filePath, $response);
 
-            return;
-
             // Generate the file URL using the defined route
             $fileUrl = route('greeting.file.serve', [
-                'file' => $fileName,
+                'file_name' => $fileName,
             ]);
 
             // Generate the file URL using the defined route
             $applyUrl = route('greeting.file.apply', [
-                'file' => $fileName,
+                'file_name' => $fileName,
             ]);
 
             return response()->json([
@@ -132,6 +131,92 @@ class GreetingsController extends Controller
             if (Str::startsWith(basename($file), 'temp')) {
                 Storage::disk('recordings')->delete($file);
             }
+        }
+    }
+
+    public function applyGreetingFile($file_name)
+    {
+        try {
+
+            $domain_name = session('domain_name');
+
+            // Step 1: Make sure the file exists
+            $filePath = $domain_name . "/" . $file_name;
+
+            if (!Storage::disk('recordings')->exists($filePath)) {
+                throw new \Exception("File not found"); // File not found
+            }
+
+            // Step 2: Generate new greeting_id and filename
+            $newFileName = str_replace("temp", "ai_generated", $file_name);
+ 
+            // Step 3: Construct the new file path
+            $newFilePath = $domain_name . "/" . $newFileName;
+
+            // Step 4: Store the file with the new name 
+            if (!Storage::disk('recordings')->move($filePath, $newFilePath)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['Failed to save the file']]
+                ], 500);
+            }
+
+            // Step 5: Save greeting info to the database
+            Recordings::create([
+                'recording_filename' => $newFileName,
+                'recording_name' => "AI Greeting " . date('Ymd_His'),
+            ]);
+
+
+            return response()->json([
+                'success' => true,
+                'greeting_id' => $newFileName,
+                'greeting_name' => "AI Greeting " . date('Ymd_His'),
+                'message' => ['success' => 'Your AI-generated greeting has been saved.']
+            ], 200);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    public function deleteGreetingFile()
+    {
+        try {
+            $file_name = request('file_name');
+
+            // Fetch the greeting to delete
+            $greeting = Recordings::where('domain_uuid', session('domain_uuid'))
+                ->where('recording_filename', $file_name)
+                ->first();
+
+            if (!$greeting) {
+                throw new \Exception('Greeting not found');
+            }
+
+            $filePath = session('domain_name') . '/' . $file_name;
+
+            // Delete the greeting file from storage
+            Storage::disk('recordings')->delete($filePath);
+
+            // Delete the greeting record from the database
+            $greeting->delete();
+
+            // Return a successful JSON response
+            return response()->json([
+                'success' => true,
+                'message' => ['success' => 'Greeting has been removed.']
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
         }
     }
 }

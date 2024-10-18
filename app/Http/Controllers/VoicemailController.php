@@ -882,7 +882,7 @@ class VoicemailController extends Controller
             }
 
             // Step 7: Save greeting info to the database
-            $voicemail->greetings()->create([
+            $greeting = $voicemail->greetings()->create([
                 'domain_uuid' => $voicemail->domain_uuid,
                 'voicemail_id' => $voicemail->voicemail_id,
                 'greeting_id' => $newGreetingId,
@@ -891,6 +891,8 @@ class VoicemailController extends Controller
                 'greeting_description' => "Generated greeting {$newGreetingId}",
 
             ]);
+
+            logger($greeting);
 
             // Step 8: Update the voicemail table with the new greeting_id
             $voicemail->update([

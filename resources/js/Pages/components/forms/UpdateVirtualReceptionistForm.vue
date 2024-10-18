@@ -41,8 +41,8 @@
 
                             <div class="col-span-3 sm:col-span-2">
                                 <LabelInputRequired target="ivr_menu_extension" label="Extension" class="truncate" />
-                                <InputField v-model="form.ivr_menu_extension" type="text" name="ivr_menu_extension" id="ivr_menu_extension"
-                                    class="mt-2" :error="!!errors?.ivr_menu_extension" />
+                                <InputField v-model="form.ivr_menu_extension" type="text" name="ivr_menu_extension"
+                                    id="ivr_menu_extension" class="mt-2" :error="!!errors?.ivr_menu_extension" />
                                 <div v-if="errors?.ivr_menu_extension" class="mt-2 text-xs text-red-600">
                                     {{ errors.ivr_menu_extension[0] }}
                                 </div>
@@ -110,7 +110,8 @@
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Greeting Message</h3>
-                            <p class="mt-1 text-sm text-gray-500">Customize the greeting message that callers hear when they reach
+                            <p class="mt-1 text-sm text-gray-500">Customize the greeting message that callers hear when they
+                                reach
                                 this virtual receptionist.</p>
                         </div>
 
@@ -120,7 +121,8 @@
                                 <LabelInputOptional label="Select greeting" class="truncate mb-1" />
 
                                 <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select greeting'"
-                                    :selectedItem="form.ivr_menu_greet_long" @update:model-value="handleUpdateGreetingField" />
+                                    :selectedItem="form.ivr_menu_greet_long"
+                                    @update:model-value="handleUpdateGreetingField" />
 
                             </div>
 
@@ -131,7 +133,8 @@
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
-                                    <PauseCircleIcon v-if="form.ivr_menu_greet_long && isAudioPlaying" @click="pauseGreeting"
+                                    <PauseCircleIcon v-if="form.ivr_menu_greet_long && isAudioPlaying"
+                                        @click="pauseGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <CloudArrowDownIcon v-if="form.ivr_menu_greet_long && !isDownloading"
@@ -142,7 +145,7 @@
                                         class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Delete Button -->
-                                    <TrashIcon v-if="form.ivr_menu_greet_long " @click="deleteGreeting"
+                                    <TrashIcon v-if="form.ivr_menu_greet_long" @click="deleteGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <PlusIcon @click="toggleGreetingForm"
@@ -163,8 +166,9 @@
 
                 <!-- New Greeting Form -->
                 <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions" :sample_message="localOptions.sample_message"
-                    :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                    :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
+                    @greeting-saved="handleGreetingSaved" />
 
             </div>
 
@@ -234,9 +238,8 @@
         </form>
     </div>
 
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+    <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
-
 </template>
 
 <script setup>
@@ -275,7 +278,7 @@ const showGreetingForm = ref(false);
 const showNameForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
-const confirmationModalTrigger = ref(false);
+const showDeleteConfirmation = ref(false);
 
 
 const setActiveTab = (tabSlug) => {
@@ -315,6 +318,7 @@ const form = reactive({
     ivr_menu_greet_long: props.options.ivr.ivr_menu_greet_long,
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     update_route: props.options.routes.update_route,
+    apply_greeting_route: props.options.routes.apply_greeting_route,
     _token: page.props.csrf_token,
 })
 
@@ -347,10 +351,28 @@ const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
     // Sort the greetings array by greeting_id
     localOptions.greetings.sort((a, b) => Number(a.value) - Number(b.value));
 
-    // Update the selected greeting ID
-    form.greeting_id = String(greeting_id);
+    // Update the selected greeting
+    form.ivr_menu_greet_long = String(greeting_id);
 
     currentAudio.value = null;
+
+    // Apply greeting
+    axios.post(form.apply_greeting_route,
+        {
+            ivr: props.options.ivr.ivr_menu_uuid,
+            file_name: greeting_id,
+            greeting_name: greeting_name,
+        }
+    )
+        .then((response) => {
+            // console.log(response.data);
+            if (response.data.success) {
+                // Notify the parent component or show a local success message
+                emits('success', response.data.message.success); // Or handle locally
+            }
+        }).catch((error) => {
+            emits('error', error);
+        });
 };
 
 
@@ -434,27 +456,22 @@ const pauseGreeting = () => {
 
 
 const deleteGreeting = () => {
-    // Ensure a greeting is selected before attempting to delete
-    if (form.greeting_id <= 0) {
-        return; // Exit if no valid greeting is selected
-    }
-
     // Show the confirmation modal
-    confirmationModalTrigger.value = true;
+    showDeleteConfirmation.value = true;
 };
 
 const confirmDeleteAction = () => {
     axios
-        .post(props.options.routes.delete_greeting_route, { greeting_id: form.greeting_id })
+        .post(props.options.routes.delete_greeting_route, { file_name: form.ivr_menu_greet_long })
         .then((response) => {
             if (response.data.success) {
                 // Remove the deleted greeting from the localOptions.greetings array
                 localOptions.greetings = localOptions.greetings.filter(
-                    (greeting) => greeting.value !== String(form.greeting_id)
+                    (greeting) => greeting.value !== String(form.ivr_menu_greet_long)
                 );
 
                 // Reset the selected greeting ID
-                form.greeting_id = '-1'; // Or set it to another default if needed
+                form.ivr_menu_greet_long = null; // Or set it to another default if needed
 
                 // Notify the parent component or show a local success message
                 emits('success', response.data.message.success); // Or handle locally
@@ -464,7 +481,7 @@ const confirmDeleteAction = () => {
             emits('error', error); // Emit an error event if needed
         })
         .finally(() => {
-            confirmationModalTrigger.value = false; // Close the confirmation modal
+            showDeleteConfirmation.value = false; // Close the confirmation modal
         });
 };
 
@@ -489,5 +506,4 @@ const getRoutesForGreetingForm = computed(() => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}
-</style>
+}</style>
