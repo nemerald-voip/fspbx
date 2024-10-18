@@ -271,7 +271,9 @@ class DeviceController extends Controller
             ]);
 
             if($inputs['device_provisioning']) {
-                $instance->register_on_ztp = true;
+                $instance->registerOnZtp();
+            } else {
+                $instance->deregisterOnZtp();
             }
 
             // Save the new model instance to the database
@@ -427,11 +429,13 @@ class DeviceController extends Controller
                 $device->lines()->delete();
             }
 
-            if($inputs['device_provisioning']) {
-                $device->register_on_ztp = true;
-            }
-
             $device->update($inputs);
+
+            if($inputs['device_provisioning']) {
+                $device->registerOnZtp();
+            } else {
+                $device->deregisterOnZtp();
+            }
 
             // Return a JSON response indicating success
             return response()->json([

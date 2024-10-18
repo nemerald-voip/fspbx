@@ -54,8 +54,7 @@ class Devices extends Model
         'device_provisioned_agent',
         'device_template',
         'device_user_uuid',
-        'device_username',
-        'register_on_ztp'
+        'device_username'
     ];
 
     public function __construct(array $attributes = [])
@@ -64,7 +63,6 @@ class Devices extends Model
         $this->attributes['domain_uuid'] = Session::get('domain_uuid');
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->attributes['register_on_ztp'] = $attributes['register_on_ztp'] ?? false;
         $this->fill($attributes);
     }
 
@@ -78,18 +76,11 @@ class Devices extends Model
     {
         static::saving(function ($model) {
             /** @var Devices $model */
-            if($model->register_on_ztp === true) {
-                $model->registerOnZtp();
-            } else {
-                $model->deregisterOnZtp();
-            }
-
             // Remove attributes before saving to database
             unset(
                 $model->device_address_formatted,
                 $model->destroy_route,
-                $model->send_notify_path,
-                $model->register_on_ztp,
+                $model->send_notify_path
             );
         });
 
@@ -159,8 +150,14 @@ class Devices extends Model
                 // Get the original 'device_address' value before it was updated
                 $originalDeviceAddress = $this->getOriginal('device_address');
 
+                logger('Device address has changed:', [
+                    'old' => $originalDeviceAddress,
+                    'new' => $this->device_address
+                ]);
+
                 // Check if the original device address is not empty and has changed
                 if (!empty($originalDeviceAddress) && ($originalDeviceAddress != $this->device_address)) {
+
                     // Try to send a request to delete the old device address on ZTP
                     try {
                         SendZtpRequest::dispatch(
