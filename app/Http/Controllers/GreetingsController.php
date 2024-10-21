@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Recordings;
 use Illuminate\Support\Str;
+use App\Events\GreetingDeleted;
 use App\Services\OpenAIService;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\TextToSpeechRequest;
@@ -59,7 +60,7 @@ class GreetingsController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => 'File not found']
-            ], 500);  // 500 Internal Server Error for any other errors
+            ], 404);  // 404 Not Found status for file not found
         }
 
         // Check if the 'download' parameter is present and set to true
@@ -149,7 +150,7 @@ class GreetingsController extends Controller
 
             // Step 2: Generate new greeting_id and filename
             $newFileName = str_replace("temp", "ai_generated", $file_name);
- 
+
             // Step 3: Construct the new file path
             $newFilePath = $domain_name . "/" . $newFileName;
 
@@ -204,10 +205,23 @@ class GreetingsController extends Controller
             $filePath = session('domain_name') . '/' . $file_name;
 
             // Delete the greeting file from storage
-            Storage::disk('recordings')->delete($filePath);
+            if (Storage::disk('recordings')->exists($filePath)) {
+                $fileDeleted = Storage::disk('recordings')->delete($filePath);
+
+                if (!$fileDeleted) {
+                    throw new \Exception('Failed to delete greeting file from storage.');
+                }
+            } else {
+                throw new \Exception('Greeting file does not exist in storage.');
+            }
 
             // Delete the greeting record from the database
-            $greeting->delete();
+            if ($greeting->delete()) {
+                // Fire the event to notify other models only after successful deletion
+                // event(new GreetingDeleted($greeting));
+            } else {
+                throw new \Exception('Failed to delete greeting from the database.');
+            }
 
             // Return a successful JSON response
             return response()->json([

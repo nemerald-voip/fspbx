@@ -398,7 +398,10 @@ const playGreeting = () => {
                 isAudioPlaying.value = true;
 
                 currentAudio.value = new Audio(response.data.file_url);
-                currentAudio.value.play();
+                currentAudio.value.play().catch((error) => {
+                    isAudioPlaying.value = false;
+                    emits('error', {message: 'Audio playback failed',});
+                });
 
                 // Add an event listener for when the audio ends
                 currentAudio.value.addEventListener("ended", () => {
@@ -506,4 +509,5 @@ const getRoutesForGreetingForm = computed(() => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>

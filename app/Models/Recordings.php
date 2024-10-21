@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Events\GreetingDeleted;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Recordings extends Model
 {
@@ -54,6 +55,10 @@ class Recordings extends Model
         static::retrieved(function ($model) {
             // $model->destroy_route = route('voicemails.destroy', $model);
             // $model->messages_route = route('voicemails.messages.index', $model);
+        });
+
+        static::deleted(function ($model) {
+            event(new GreetingDeleted($model->recording_uuid, $model->domain_uuid, $model->recording_filename));
         });
     }
 }
