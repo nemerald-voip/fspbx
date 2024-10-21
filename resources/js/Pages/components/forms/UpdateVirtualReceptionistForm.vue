@@ -144,6 +144,10 @@
                                     <Spinner :show="isDownloading"
                                         class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
+                                    <!-- Edit Button -->
+                                    <PencilSquareIcon v-if="form.ivr_menu_greet_long" @click="showEditModal = true"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
                                     <!-- Delete Button -->
                                     <TrashIcon v-if="form.ivr_menu_greet_long" @click="deleteGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -240,6 +244,9 @@
 
     <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
+
+    <UpdateGreetingModal :name="form.ivr_menu_greet_long" :show="showEditModal" @close="showEditModal = false"/>
+    
 </template>
 
 <script setup>
@@ -254,12 +261,13 @@ import Textarea from "@generalComponents/Textarea.vue";
 import VisibilityIcon from "@icons/VisibilityIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
+import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { PlusIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
@@ -275,6 +283,7 @@ const props = defineProps({
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showGreetingForm = ref(false);
+const showEditModal = ref(false);
 const showNameForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
@@ -487,7 +496,6 @@ const confirmDeleteAction = () => {
             showDeleteConfirmation.value = false; // Close the confirmation modal
         });
 };
-
 
 // Computed property or method to dynamically set routes based on the form type
 const getRoutesForGreetingForm = computed(() => {

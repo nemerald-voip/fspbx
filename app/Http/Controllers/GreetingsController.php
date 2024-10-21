@@ -150,6 +150,9 @@ class GreetingsController extends Controller
 
             // Step 2: Generate new greeting_id and filename
             $newFileName = str_replace("temp", "ai_generated", $file_name);
+            $datePart = str_replace("temp", "", $file_name); // Remove temp
+            $datePart = str_replace(".wav", "", $file_name); // Remove .wav
+            $datePart = ltrim($datePart, "_"); // Remove leading underscore
 
             // Step 3: Construct the new file path
             $newFilePath = $domain_name . "/" . $newFileName;
@@ -165,14 +168,14 @@ class GreetingsController extends Controller
             // Step 5: Save greeting info to the database
             Recordings::create([
                 'recording_filename' => $newFileName,
-                'recording_name' => "AI Greeting " . date('Ymd_His'),
+                'recording_name' => "AI Greeting" . $datePart,
             ]);
 
 
             return response()->json([
                 'success' => true,
                 'greeting_id' => $newFileName,
-                'greeting_name' => "AI Greeting " . date('Ymd_His'),
+                'greeting_name' => "AI Greeting" . $datePart,
                 'message' => ['success' => 'Your AI-generated greeting has been saved.']
             ], 200);
         } catch (\Exception $e) {
