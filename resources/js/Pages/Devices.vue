@@ -354,7 +354,7 @@ const handleUpdateCloudProvisioningStatuses = () => {
             }
         })
         .catch(error => {
-            console.err('Failed to fetch cloud provisioning statuses:', error);
+            console.warn('Failed to fetch cloud provisioning statuses:', error);
         });
 }
 
