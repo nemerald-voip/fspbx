@@ -98,7 +98,6 @@ class NotifyModelsOnGreetingDeleted implements ShouldQueue
             foreach ($matchingIvrMenus as $ivrMenu) {
                 $ivrMenu->ivr_menu_greet_long = null;  // Erase the value
                 $ivrMenu->save();  // Save changes to the database
-                logger('Erased ivr_menu_greet_long for IVR Menu UUID: ' . $ivrMenu->ivr_menu_uuid);
             }
         }, function () {
             // Could not obtain lock; this job will be re-queued

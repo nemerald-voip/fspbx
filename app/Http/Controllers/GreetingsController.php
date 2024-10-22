@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Recordings;
 use Illuminate\Support\Str;
-use App\Events\GreetingDeleted;
 use App\Services\OpenAIService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\TextToSpeechRequest;
 
@@ -138,7 +139,6 @@ class GreetingsController extends Controller
     public function applyGreetingFile($file_name)
     {
         try {
-
             $domain_name = session('domain_name');
 
             // Step 1: Make sure the file exists
@@ -201,29 +201,22 @@ class GreetingsController extends Controller
                 ->where('recording_filename', $file_name)
                 ->first();
 
-            if (!$greeting) {
-                throw new \Exception('Greeting not found');
+            // If the greeting is found, proceed to delete from the database
+            if ($greeting) {
+                if (!$greeting->delete()) {
+                    throw new \Exception('Failed to delete greeting from the database.');
+                }
             }
 
             $filePath = session('domain_name') . '/' . $file_name;
 
-            // Delete the greeting file from storage
+            // Check if the file exists in storage and delete it if present
             if (Storage::disk('recordings')->exists($filePath)) {
-                $fileDeleted = Storage::disk('recordings')->delete($filePath);
-
-                if (!$fileDeleted) {
+                if (!Storage::disk('recordings')->delete($filePath)) {
                     throw new \Exception('Failed to delete greeting file from storage.');
                 }
             } else {
-                throw new \Exception('Greeting file does not exist in storage.');
-            }
-
-            // Delete the greeting record from the database
-            if ($greeting->delete()) {
-                // Fire the event to notify other models only after successful deletion
-                // event(new GreetingDeleted($greeting));
-            } else {
-                throw new \Exception('Failed to delete greeting from the database.');
+                logger('Greeting file does not exist in storage: ' . $filePath);
             }
 
             // Return a successful JSON response
@@ -262,6 +255,83 @@ class GreetingsController extends Controller
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
+        }
+    }
+
+    public function uploadGreeting(Request $request)
+    {
+        // Validate the file input
+        $request->validate([
+            'file' => 'required|mimes:wav,mp3|max:51200', // Allow only WAV and MP3 files, max size 50MB
+        ]);
+
+        $file = $request->file('file');
+        $domainName = session('domain_name');
+
+        try {
+            $datePart = now()->format('Ymd_His');
+
+            // Step 2: Generate a unique filename based on the ID and current time
+            $originalFileName = 'uploaded_greeting_' . $datePart . '.' . $file->getClientOriginalExtension();
+            $convertedFileName = 'uploaded_greeting_' . $datePart . '.wav'; // Convert to WAV format for consistency
+
+            // Step 3: Save the original file to the recordings disk
+            Storage::disk('recordings')->putFileAs($domainName, $file, $originalFileName);
+
+            // Step 4: Define file paths for conversion
+            $originalFilePath = Storage::disk('recordings')->path($domainName . '/' . $originalFileName);
+            $convertedFilePath = Storage::disk('recordings')->path($domainName . '/temp_' . $convertedFileName);
+
+            // Step 5: Convert the file to the required format using ffmpeg
+            $process = Process::run([
+                'ffmpeg',
+                '-i',
+                $originalFilePath,
+                '-ac',
+                '1', // Mono audio
+                '-ar',
+                '16000', // Audio rate 16 kHz
+                '-ab',
+                '256k', // Audio bitrate 256 kbps
+                $convertedFilePath
+            ]);
+
+            if ($process->successful()) {
+                // Step 6: Replace the original file with the converted one
+                Storage::disk('recordings')->delete($domainName . '/' . $originalFileName);
+                Storage::disk('recordings')->move($domainName . '/' . 'temp_' . $convertedFileName, $domainName . '/' . $convertedFileName);
+
+                // Step 7: Save the greeting information to the database
+                Recordings::create([
+                    'domain_uuid' => session('domain_uuid'),
+                    'recording_filename' => $convertedFileName,
+                    'recording_name' => "Uploaded File " . $datePart,
+                ]);
+
+                // Return a success response
+                return response()->json([
+                    'success' => true,
+                    'greeting_id' => $convertedFileName,
+                    'greeting_name' => "Uploaded File " . $datePart,
+                    'message' => ['success' => 'Your greeting has been uploaded and activated.']
+                ], 200);
+            } else {
+                // If conversion fails, retain the original file and notify the user
+                logger('File conversion failed: ' . $process->errorOutput());
+
+                return response()->json([
+                    'success' => false,
+                    'message' => ['warning' => 'File uploaded, but conversion failed. Original file retained.']
+                ], 200); // Indicate partial success
+            }
+        } catch (\Exception $e) {
+            // Log and handle the exception
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
         }
     }
 }

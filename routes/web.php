@@ -177,6 +177,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/greetings/apply/{file_name}', [GreetingsController::class, 'applyGreetingFile'])->name('greeting.file.apply');
     Route::post('greetings/delete-greeting', [GreetingsController::class, 'deleteGreetingFile'])->name('greetings.file.delete');
     Route::post('greetings/update-greeting', [GreetingsController::class, 'updateGreetingFile'])->name('greetings.file.update');
+    Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
 
 
     // SIP Credentials
