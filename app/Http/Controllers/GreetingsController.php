@@ -236,4 +236,32 @@ class GreetingsController extends Controller
             return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
         }
     }
+
+    public function updateGreetingFile()
+    {
+        try {
+            $file_name = request('file_name');
+
+            // Fetch the greeting to delete
+            $greeting = Recordings::where('domain_uuid', session('domain_uuid'))
+                ->where('recording_filename', $file_name)
+                ->first();
+
+            if (!$greeting) {
+                throw new \Exception('Greeting not found');
+            }
+
+            $greeting->recording_name = request('new_name');
+            $greeting->save();
+
+            // Return a successful JSON response
+            return response()->json([
+                'success' => true,
+                'message' => ['success' => 'Greeting has been updated.']
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
+        }
+    }
 }

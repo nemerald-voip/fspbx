@@ -145,7 +145,7 @@
                                         class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Edit Button -->
-                                    <PencilSquareIcon v-if="form.ivr_menu_greet_long" @click="showEditModal = true"
+                                    <PencilSquareIcon v-if="form.ivr_menu_greet_long" @click="editGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Delete Button -->
@@ -245,8 +245,8 @@
     <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
 
-    <UpdateGreetingModal :name="form.ivr_menu_greet_long" :show="showEditModal" @close="showEditModal = false"/>
-    
+    <UpdateGreetingModal :greeting="selectedGreeting" :show="showEditModal" :loading="isGreetingUpdating"
+        @confirm="handleGreetingUpdate" @close="showEditModal = false" />
 </template>
 
 <script setup>
@@ -273,6 +273,8 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
 
+
+
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
@@ -288,7 +290,8 @@ const showNameForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
 const showDeleteConfirmation = ref(false);
-
+const isGreetingUpdating = ref(false);
+const selectedGreeting = ref(null);
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
@@ -409,7 +412,7 @@ const playGreeting = () => {
                 currentAudio.value = new Audio(response.data.file_url);
                 currentAudio.value.play().catch((error) => {
                     isAudioPlaying.value = false;
-                    emits('error', {message: 'Audio playback failed',});
+                    emits('error', { message: 'Audio playback failed', });
                 });
 
                 // Add an event listener for when the audio ends
@@ -506,6 +509,54 @@ const getRoutesForGreetingForm = computed(() => {
         upload_greeting_route: localOptions.routes.upload_greeting_route
     };
 });
+
+const editGreeting = () => {
+    selectedGreeting.value = localOptions.greetings.find(
+        (greeting) => greeting.value === form.ivr_menu_greet_long
+    );
+
+    if (selectedGreeting.value) {
+        showEditModal.value = true;
+    }
+};
+
+const handleGreetingUpdate = (updatedGreeting) => {
+    isGreetingUpdating.value = true;
+
+    const index = localOptions.greetings.findIndex(g => g.value === updatedGreeting.value);
+    if (index !== -1) {
+        localOptions.greetings[index] = updatedGreeting;
+
+        // Reassign the selected value to force the ComboBox to refresh
+        if (form.ivr_menu_greet_long === updatedGreeting.value) {
+            form.ivr_menu_greet_long = '';
+            setTimeout(() => {
+                form.ivr_menu_greet_long = updatedGreeting.value;
+            }, 0);
+        }
+    }
+
+    axios
+        .post(props.options.routes.update_greeting_route,
+            {
+                file_name: updatedGreeting.value,
+                new_name: updatedGreeting.name
+            })
+        .then((response) => {
+            if (response.data.success) {
+                // Notify the parent component or show a local success message
+                emits('success', response.data.message.success); // Or handle locally
+            }
+        })
+        .catch((error) => {
+            emits('error', error); // Emit an error event if needed
+        })
+        .finally(() => {
+            isGreetingUpdating.value = false;
+        });
+
+};
+
 
 
 </script>

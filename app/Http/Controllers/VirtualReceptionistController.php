@@ -557,7 +557,7 @@ class VirtualReceptionistController extends Controller
                     'text_to_speech_route' => route('greetings.textToSpeech'),
                     'greeting_route' => route('greeting.url'),
                     'delete_greeting_route' => route('greetings.file.delete'),
-                    // 'upload_greeting_route' => route('voicemails.uploadGreeting', $voicemail),
+                    'update_greeting_route' => route('greetings.file.update'),
                     'update_route' => route('virtual-receptionists.update', $ivr),
                     'apply_greeting_route' => route('virtual-receptionist.greeting.apply'),
 

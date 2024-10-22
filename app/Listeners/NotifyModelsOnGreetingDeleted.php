@@ -82,7 +82,6 @@ class NotifyModelsOnGreetingDeleted implements ShouldQueue
      */
     public function handle(GreetingDeleted $event): void
     {
-        logger("entering job");
         // Allow only 2 tasks every 1 second
         Redis::throttle('system')->allow(2)->every(1)->then(function () use ($event) {
             // Notify other models or take actions here
