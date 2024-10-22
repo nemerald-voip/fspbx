@@ -607,11 +607,8 @@ class VirtualReceptionistController extends Controller
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
                 'Dial <strong>*732</strong> from your phone.',
-                'Enter the mailbox number and press <strong>#</strong>.',
-                'Enter the voicemail password and press <strong>#</strong>.',
-                'Press <strong>5</strong> for mailbox options.',
-                'Press <strong>1</strong> to record an unavailable message.',
-                'Choose a greeting number (1-9) to record, then follow the prompts.',
+                'Enter the virtual receptionist extension number when prompted and press <strong>#</strong>.',
+                'Follow the prompts to record your greeting.',
             ];
 
             $sampleMessage = 'Thank you for calling. For Sales, press 1. For Support, press 2. To repeat this menu, press 9.';
