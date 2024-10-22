@@ -569,12 +569,14 @@ const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
     showGlobal.value = true;
     handleSearchButtonClick();
+    handleUpdateCloudProvisioningStatuses();
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
     showGlobal.value = false;
     handleSearchButtonClick();
+    handleUpdateCloudProvisioningStatuses();
 }
 
 const handleSearchButtonClick = () => {
@@ -592,6 +594,7 @@ const handleSearchButtonClick = () => {
         onSuccess: (page) => {
             loading.value = false;
             handleClearSelection();
+            handleUpdateCloudProvisioningStatuses();
         }
     });
 };
@@ -600,6 +603,7 @@ const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
+    handleUpdateCloudProvisioningStatuses();
 }
 
 
