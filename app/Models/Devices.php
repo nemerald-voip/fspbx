@@ -70,7 +70,6 @@ class Devices extends Model
      * The booted method of the model
      *
      * Define all attributes here like normal code
-
      */
     protected static function booted()
     {
@@ -146,31 +145,6 @@ class Devices extends Model
         try {
             // Check if the device has a supported cloud provider
             if ($this->hasSupportedCloudProvider()) {
-
-                // Get the original 'device_address' value before it was updated
-                /*$originalDeviceAddress = $this->getOriginal('device_address');
-
-                logger('Device address has changed:', [
-                    'old' => $originalDeviceAddress,
-                    'new' => $this->device_address
-                ]);
-
-                // Check if the original device address is not empty and has changed
-                if (!empty($originalDeviceAddress) && ($originalDeviceAddress != $this->device_address)) {
-
-                    // Try to send a request to delete the old device address on ZTP
-                    try {
-                        SendZtpRequest::dispatch(
-                            SendZtpRequest::ACTION_DELETE,
-                            $this->device_vendor,
-                            $originalDeviceAddress,
-                        )->onQueue('ztp');
-                    } catch (\Exception $e) {
-                        // Log any exception that occurs during the deletion process
-                        logger($e);
-                    }
-                }*/
-
                 // Send a request to create or update the new device address on ZTP
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_CREATE,
@@ -181,35 +155,36 @@ class Devices extends Model
             }
         } catch (\Exception $e) {
             // Log any exception that occurs during the creation process
-            logger($e);
+            //logger($this);
+            //logger($e);
         }
     }
 
-    public function deregisterOnZtp(): void
+    public function deregisterOnZtp(string $deviceAddress = null, string $deviceVendor = null): void
     {
         try {
             // Check if the device has a supported cloud provider
-            if ($this->hasSupportedCloudProvider()) {
-
+            if ($this->hasSupportedCloudProvider($deviceVendor)) {
                 // Send a request to delete the device from the ZTP system using the current device address
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_DELETE,
-                    $this->device_vendor,
-                    $this->device_address,
+                    (empty($deviceVendor)) ? $this->device_vendor : $deviceVendor,
+                    (empty($deviceAddress)) ? $this->device_address : $deviceAddress,
                 )->onQueue('ztp');
             }
         } catch (\Exception $e) {
             // Log any exception that occurs during the deregistration process
-            logger($e);
+            //logger($this);
+            //logger($e);
         }
     }
 
     /**
      * @return bool
      */
-    public function hasSupportedCloudProvider(): bool
+    public function hasSupportedCloudProvider(string $deviceVendor = null): bool
     {
-        return in_array($this->device_vendor, $this->supportedCloudProviders);
+        return in_array((empty($deviceVendor) ? $this->device_vendor : $deviceVendor), $this->supportedCloudProviders);
     }
 
     /**
