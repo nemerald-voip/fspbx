@@ -285,6 +285,8 @@ class DashboardController extends Controller
 
             // Get the hostname of the server
             $data['hostname'] = gethostname();
+
+            $data['version'] = config('version.tag');
         }
         return $data;
     }
