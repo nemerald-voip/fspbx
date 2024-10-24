@@ -157,11 +157,19 @@ class CdrsController extends Controller
             if (!empty($item->call_center_queue_uuid)) {
                 // Fetch related queue calls and their call_flow if this is a queue call
                 $relatedCalls = $item->relatedQueueCalls;
-                logger('jere');
 
                 // Loop through each related queue call and merge its call_flow into the combined call flow data
                 foreach ($relatedCalls as $relatedCall) {
                     $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true));
+                    // Iterate through each flow step to insert the call_disposition
+                    $relatedCallFlow = $relatedCallFlow->map(function ($flow) use ($relatedCall) {
+                        // Ensure the 'times' array exists before adding call_disposition
+                        if (isset($flow['times'])) {
+                            $flow['times']['call_disposition'] = $relatedCall->call_disposition;
+                        }
+                        return $flow;
+                    });
+
                     // logger($relatedCallFlow->toArray());
                     $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
                 }
@@ -180,7 +188,7 @@ class CdrsController extends Controller
             // Sort the call flow summary by profile_created_time
             $callFlowSummary = $callFlowSummary->sortBy('profile_created_time')->values();
 
-            logger($callFlowSummary->toArray());
+            // logger($callFlowSummary->toArray());
 
             //calculate the time line and format it
             $startEpoch = $item->start_epoch;
@@ -489,6 +497,7 @@ class CdrsController extends Controller
             'hangup_time' => $row['times']['hangup_time'] == 0 ? 0 : $this->formatTime($row['times']['hangup_time']),
             'duration_seconds' => $durationInSeconds,
             'duration_formatted' => $durationFormatted,
+            'call_disposition' =>  isset($row['times']['call_disposition']) ? $row['times']['call_disposition'] : null,
         ];
     }
 
