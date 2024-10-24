@@ -203,7 +203,7 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
+    <CallDetailsModal :show="viewModalTrigger" :item="itemOptions?.item" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
         @close="handleModalClose">
     </CallDetailsModal>
 
@@ -271,7 +271,7 @@ const props = defineProps({
     selectedEntityType: String,
     csvUrl: Object,
     routes: Object,
-    itemData: Object,
+    // itemData: Object,
     statusOptions: Object,
 });
 
@@ -279,7 +279,6 @@ onMounted(() => {
     //request list of entities
     getEntities();
 })
-
 
 const filterData = ref({
     search: props.search,
@@ -293,6 +292,7 @@ const filterData = ref({
 });
 
 const showGlobal = ref(props.showGlobal);
+const itemOptions = ref({});
 
 const callDirections = [
     { value: 'outbound', name: 'Outbound' },
@@ -324,35 +324,51 @@ const getEntities = () => {
 const handleViewRequest = (itemUuid) => {
     viewModalTrigger.value = true
     loadingModal.value = true
+    getItemOptions(itemUuid);
 
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-            ],
-            onSuccess: (page) => {
-                // console.log(props.itemData);
-                if (!props.itemData) {
-                    viewModalTrigger.value = false;
-                    showNotification('error', { error: ['Unable to retrieve this item'] });
-                } else {
-                    loadingModal.value = false;
-                    viewModalTrigger.value = true;
-                }
+    // router.get(props.routes.current_page,
+    //     {
+    //         itemUuid: itemUuid,
+    //     },
+    //     {
+    //         preserveScroll: true,
+    //         preserveState: true,
+    //         only: [
+    //             'itemData',
+    //         ],
+    //         onSuccess: (page) => {
+    //             // console.log(props.itemData);
+    //             if (!props.itemData) {
+    //                 viewModalTrigger.value = false;
+    //                 showNotification('error', { error: ['Unable to retrieve this item'] });
+    //             } else {
+    //                 loadingModal.value = false;
+    //                 viewModalTrigger.value = true;
+    //             }
 
-            },
-            onFinish: () => {
-                // loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+    //         },
+    //         onFinish: () => {
+    //             // loadingModal.value = false;
+    //         },
+    //         onError: (errors) => {
+    //             console.log(errors);
+    //         },
 
+    //     });
+}
+
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
         });
 }
 

@@ -123,10 +123,11 @@ class CDR extends Model
                 }
 
                 // Abandon call
-                if (isset($model->cc_cancel_reason) && 
-                    isset($model->cc_cause) && 
-                    $model->status == "missed call" && 
-                    $model->cc_cancel_reason == "BREAK_OUT" && 
+                if (
+                    isset($model->cc_cancel_reason) &&
+                    isset($model->cc_cause) &&
+                    $model->status == "missed call" &&
+                    $model->cc_cancel_reason == "BREAK_OUT" &&
                     $model->cc_cause == "cancel"
                 ) {
                     $model->status = "abandoned";
@@ -233,5 +234,10 @@ class CDR extends Model
         }
 
         return $number_formatted;
+    }
+
+    public function relatedQueueCalls()
+    {
+        return $this->hasMany(CDR::class, 'cc_member_session_uuid', 'xml_cdr_uuid');
     }
 }

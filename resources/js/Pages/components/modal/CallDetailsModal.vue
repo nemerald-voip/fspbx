@@ -727,10 +727,6 @@ const props = defineProps({
         type: String,
         default: 'sm:max-w-lg'
     },
-    ManagementTabs: Array,
-    selectedTab: Number,
-    isCurrentTab: Function,
-    selectTab: Function,
 });
 
 function capitalizeFirstLetter(string) {
