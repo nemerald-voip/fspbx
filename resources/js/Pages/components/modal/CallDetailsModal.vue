@@ -355,7 +355,7 @@
                                                                                     </div>
                                                                                     <p v-if="flow.bridged_time != 0" class="mt-0.5 text-sm text-gray-500">
                                                                                         Result: Answered</p>
-                                                                                    <p v-else class="mt-0.5 text-sm text-gray-500">
+                                                                                    <p v-if="flow.call_disposition" class="mt-0.5 text-sm text-gray-500">
                                                                                         Result: {{ flow.call_disposition }}</p>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
