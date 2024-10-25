@@ -119,6 +119,11 @@ class CdrDataService
             $data->where('hangup_cause', '!=', 'LOSE_RACE');
         }
 
+        // Exclude all related queue calls (only keep the main queue calls)
+        // This ensures that calls with cc_member_session_uuid are excluded.
+        $data->whereNull('cc_member_session_uuid');
+
+
         foreach ($filters as $field => $value) {
             if (method_exists($this, $method = "filter" . ucfirst($field))) {
                 $this->$method($data, $value);
