@@ -105,6 +105,18 @@ class CDR extends Model
                 }
             }
 
+            // When `sip_hangup_disposition` is null and `hangup_cause` is "ORIGINATOR_CANCEL",
+            // but only if `call_disposition` hasn't been set yet
+            if (empty($model->call_disposition) && is_null($model->sip_hangup_disposition) && $model->hangup_cause == "ORIGINATOR_CANCEL") {
+                $model->call_disposition = 'The call was canceled before it was answered.';
+            }
+
+            // When `sip_hangup_disposition` is null and `hangup_cause` is "LOSE_RACE",
+            // but only if `call_disposition` hasn't been set yet
+            if (empty($model->call_disposition) && is_null($model->sip_hangup_disposition) && $model->hangup_cause == "LOSE_RACE") {
+                $model->call_disposition = 'The call was answered somewhere else.';
+            }
+
             // logger('here');
             // logger($model->waitsec);
             // logger($model->waitsec_formatted);
@@ -239,5 +251,10 @@ class CDR extends Model
     public function relatedQueueCalls()
     {
         return $this->hasMany(CDR::class, 'cc_member_session_uuid', 'xml_cdr_uuid');
+    }
+
+    public function relatedRingGroupCalls()
+    {
+        return $this->hasMany(CDR::class, 'originating_leg_uuid', 'xml_cdr_uuid');
     }
 }

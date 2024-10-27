@@ -175,6 +175,26 @@ class CdrsController extends Controller
                 }
             }
 
+            // Check if there are any other related calls 
+            // Fetch related calls and their call_flow
+            $relatedCalls = $item->relatedRingGroupCalls;
+
+            // Loop through each related call and merge its call_flow into the combined call flow data
+            foreach ($relatedCalls as $relatedCall) {
+                $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true));
+                // Iterate through each flow step to insert the call_disposition
+                $relatedCallFlow = $relatedCallFlow->map(function ($flow) use ($relatedCall) {
+                    // Ensure the 'times' array exists before adding call_disposition
+                    if (isset($flow['times'])) {
+                        $flow['times']['call_disposition'] = $relatedCall->call_disposition;
+                    }
+                    return $flow;
+                });
+
+                // logger($relatedCallFlow->toArray());
+                $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
+            }
+
             // logger($combinedCallFlowData->toArray());
 
             // Add new rows for transfers
@@ -214,6 +234,7 @@ class CdrsController extends Controller
                 return $row;
             });
 
+            logger($callFlowSummary->toArray());
 
             $item->call_flow = $callFlowSummary;
 
@@ -339,12 +360,15 @@ class CdrsController extends Controller
             $row['dialplan_app'] = "Extension";
             $row['dialplan_name'] = $extension->effective_caller_id_name;
             $row['dialplan_description'] = $extension->description;
+            return $row;
         }
 
-
-        // logger($dialplan);
-
+        $row['dialplan_app'] = "Misc. Destination";
+        $row['dialplan_name'] = $row['destination_number'];
+        $row['dialplan_description'] = null;
         return $row;
+
+
     }
 
     /**

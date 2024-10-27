@@ -115,13 +115,17 @@ class CdrDataService
         );
 
         //exclude legs that were not answered
-        if (!$this->permissions['xml_cdr_lose_race']) {
+        // if (!$this->permissions['xml_cdr_lose_race']) {
             $data->where('hangup_cause', '!=', 'LOSE_RACE');
-        }
+        // }
 
         // Exclude all related queue calls (only keep the main queue calls)
         // This ensures that calls with cc_member_session_uuid are excluded.
         $data->whereNull('cc_member_session_uuid');
+
+        // Exclude all related ring group calls (only keep the main calls)
+        // This ensures that calls with originating_leg_uuid are excluded.
+        $data->whereNull('originating_leg_uuid');
 
 
         foreach ($filters as $field => $value) {
