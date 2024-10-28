@@ -179,7 +179,10 @@ class ProFeaturesController extends Controller
 
             // logger($licenseResponse);
 
-            if ($licenseResponse && $licenseResponse['meta']['valid'] === false && ($licenseResponse['meta']['code'] === 'NO_MACHINE' || $licenseResponse['meta']['code'] === 'NO_MACHINES')) {
+            if (
+                $licenseResponse && $licenseResponse['meta']['valid'] === false &&
+                ($licenseResponse['meta']['code'] === 'NO_MACHINE' || $licenseResponse['meta']['code'] === 'NO_MACHINES') || $licenseResponse['meta']['code'] === 'FINGERPRINT_SCOPE_MISMATCH'
+            ) {
                 $machineCount = $licenseResponse['data']['attributes']['machines']['meta']['count'] ?? 0;
                 $maxMachines = $licenseResponse['data']['attributes']['maxMachines'] ?? 1;
 
@@ -258,7 +261,7 @@ class ProFeaturesController extends Controller
 
                         // Run the module:seed command after extraction
                         Artisan::call('module:seed', ['module' => 'ContactCenter']);
-                        
+
                         // Run the 'app:update' command using Symfony Process
                         // $process = new Process(['php', 'artisan', 'app:update']);
                         // $process->setWorkingDirectory(base_path());  // Set the Laravel root directory
