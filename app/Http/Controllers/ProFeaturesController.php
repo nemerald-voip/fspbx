@@ -177,7 +177,9 @@ class ProFeaturesController extends Controller
             $licenseKey = $inputs['license'] ?? $pro_feature->license;
             $licenseResponse = $keygenApiService->validateLicenseKey($licenseKey);
 
-            if ($licenseResponse && $licenseResponse['meta']['valid'] === false && $licenseResponse['meta']['code'] === 'NO_MACHINE') {
+            // logger($licenseResponse);
+
+            if ($licenseResponse && $licenseResponse['meta']['valid'] === false && ($licenseResponse['meta']['code'] === 'NO_MACHINE' || $licenseResponse['meta']['code'] === 'NO_MACHINES')) {
                 $machineCount = $licenseResponse['data']['attributes']['machines']['meta']['count'] ?? 0;
                 $maxMachines = $licenseResponse['data']['attributes']['maxMachines'] ?? 1;
 
@@ -306,7 +308,6 @@ class ProFeaturesController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-            logger($inputs);
             Module::disable('ContactCenter');
             Module::delete('ContactCenter');
 
@@ -415,7 +416,7 @@ class ProFeaturesController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  Destinations  $phone_number
+     * @param  ProFeatures  $pro_feature
      * @return RedirectResponse
      */
     public function destroy(ProFeatures $pro_feature, KeygenApiService $keygenApiService)
