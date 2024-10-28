@@ -77,35 +77,36 @@ class CdrsController extends Controller
                     return isset($this->filters['entityType']) ? $this->filters['entityType'] : null;
                 },
                 'recordingUrl' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getRecordingUrl($callUuid)
                 ),
                 'statusOptions' => function () {
                     return $this->getStatusOptions();
                 },
                 'entities' => Inertia::lazy(
-                    fn () =>
+                    fn() =>
                     $this->getEntities()
                 ),
-                'itemData' => Inertia::lazy(
-                    fn () =>
-                    $this->getItemData()
-                ),
+                // 'itemData' => Inertia::lazy(
+                //     fn () =>
+                //     $this->getItemData()
+                // ),
                 'routes' => [
                     'current_page' => route('cdrs.index'),
                     'export' => route('cdrs.export'),
+                    'item_options' => route('cdrs.item.options'),
                 ]
 
             ]
         );
     }
 
-    public function getItemData()
+    public function getItemOptions()
     {
         try {
 
             // Get item data
-            $itemData = $this->model::where($this->model->getKeyName(), request('itemUuid'))
+            $item = $this->model::where($this->model->getKeyName(), request('item_uuid'))
                 ->select([
                     'xml_cdr_uuid',
                     'domain_uuid',
@@ -126,6 +127,7 @@ class CdrsController extends Controller
                     'missed_call',
                     'hangup_cause',
                     'hangup_cause_q850',
+                    'call_center_queue_uuid',
                     'cc_cancel_reason',
                     'cc_cause',
                     'sip_hangup_disposition',
@@ -136,29 +138,81 @@ class CdrsController extends Controller
 
             // logger($itemData);
 
-            if (!$itemData) {
-                return null;
+            // If item doesn't exist throw and error 
+            if (!$item) {
+                throw new \Exception("Failed to fetch item details. Item not found");
             }
 
-            $this->item_domain_uuid = $itemData->domain_uuid;
+            $this->item_domain_uuid = $item->domain_uuid;
 
-            $callFlowData = collect(json_decode($itemData->call_flow, true));
+            // $callFlowData = collect(json_decode($item->call_flow, true));
 
-            // logger($callFlowData->toArray());
+            // Get the main call flow
+            $mainCallFlowData = collect(json_decode($item->call_flow, true));
+
+            // Initialize a collection to hold the combined call flow data
+            $combinedCallFlowData = $mainCallFlowData;
+
+            // Check if the call is a queue call (call_center_queue_uuid is not null)
+            if (!empty($item->call_center_queue_uuid)) {
+                // Fetch related queue calls and their call_flow if this is a queue call
+                $relatedCalls = $item->relatedQueueCalls;
+
+                // Loop through each related queue call and merge its call_flow into the combined call flow data
+                foreach ($relatedCalls as $relatedCall) {
+                    $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true));
+                    // Iterate through each flow step to insert the call_disposition
+                    $relatedCallFlow = $relatedCallFlow->map(function ($flow) use ($relatedCall) {
+                        // Ensure the 'times' array exists before adding call_disposition
+                        if (isset($flow['times'])) {
+                            $flow['times']['call_disposition'] = $relatedCall->call_disposition;
+                        }
+                        return $flow;
+                    });
+
+                    // logger($relatedCallFlow->toArray());
+                    $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
+                }
+            }
+
+            // Check if there are any other related calls 
+            // Fetch related calls and their call_flow
+            $relatedCalls = $item->relatedRingGroupCalls;
+
+            // Loop through each related call and merge its call_flow into the combined call flow data
+            foreach ($relatedCalls as $relatedCall) {
+                $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true));
+                // Iterate through each flow step to insert the call_disposition
+                $relatedCallFlow = $relatedCallFlow->map(function ($flow) use ($relatedCall) {
+                    // Ensure the 'times' array exists before adding call_disposition
+                    if (isset($flow['times'])) {
+                        $flow['times']['call_disposition'] = $relatedCall->call_disposition;
+                    }
+                    return $flow;
+                });
+
+                // logger($relatedCallFlow->toArray());
+                $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
+            }
+
+            // logger($combinedCallFlowData->toArray());
 
             // Add new rows for transfers
-            $callFlowData = $this->handleCallFlowSteps($callFlowData);
+            $combinedCallFlowData = $this->handleCallFlowSteps($combinedCallFlowData);
 
             // Build the call flow summary
-            $callFlowSummary = $callFlowData->map(function ($row) {
+            $callFlowSummary = $combinedCallFlowData->map(function ($row) {
                 return $this->buildSummaryItem($row);
             });
+
+            // Sort the call flow summary by profile_created_time
+            $callFlowSummary = $callFlowSummary->sortBy('profile_created_time')->values();
 
             // logger($callFlowSummary->toArray());
 
             //calculate the time line and format it
-            $startEpoch = $itemData->start_epoch;
-            $direction = $itemData->direction;
+            $startEpoch = $item->start_epoch;
+            $direction = $item->direction;
             $callFlowSummary = $callFlowSummary->map(function ($row) use ($startEpoch, $direction) {
                 $timeDifference = $row['profile_created_time'] - $startEpoch;
                 $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60); // Human-readable format
@@ -171,6 +225,8 @@ class CdrsController extends Controller
             // Format times
             $callFlowSummary = $this->formatTimes($callFlowSummary);
 
+            // logger($callFlowSummary->toArray());
+
             // Get Dialplan App details
             $callFlowSummary = $callFlowSummary->map(function ($row) {
                 $row = $this->getAppDetails($row);
@@ -178,15 +234,28 @@ class CdrsController extends Controller
                 return $row;
             });
 
+            logger($callFlowSummary->toArray());
 
-            $itemData->call_flow = $callFlowSummary;
+            $item->call_flow = $callFlowSummary;
 
             // logger($callFlowSummary->all());
-            return $itemData;
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'item' => $item,
+            ];
+
+            return $itemOptions;
         } catch (\Exception $e) {
-            // Handle the exception
-            logger($e->getMessage());
-            return null;
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 
@@ -291,12 +360,15 @@ class CdrsController extends Controller
             $row['dialplan_app'] = "Extension";
             $row['dialplan_name'] = $extension->effective_caller_id_name;
             $row['dialplan_description'] = $extension->description;
+            return $row;
         }
 
-
-        // logger($dialplan);
-
+        $row['dialplan_app'] = "Misc. Destination";
+        $row['dialplan_name'] = $row['destination_number'];
+        $row['dialplan_description'] = null;
         return $row;
+
+
     }
 
     /**
@@ -375,9 +447,15 @@ class CdrsController extends Controller
         return $callFlowSummary->map(function ($item) {
             // Define the keys that need to be formatted
             $timeKeys = [
-                'created_time', 'answered_time', 'progress_time', 'bridged_time',
-                'transfer_time', 'profile_created_time', 'profile_end_time',
-                'progress_media_time', 'hangup_time'
+                'created_time',
+                'answered_time',
+                'progress_time',
+                'bridged_time',
+                'transfer_time',
+                'profile_created_time',
+                'profile_end_time',
+                'progress_media_time',
+                'hangup_time'
             ];
 
             // Loop through each key and format the time
@@ -443,6 +521,7 @@ class CdrsController extends Controller
             'hangup_time' => $row['times']['hangup_time'] == 0 ? 0 : $this->formatTime($row['times']['hangup_time']),
             'duration_seconds' => $durationInSeconds,
             'duration_formatted' => $durationFormatted,
+            'call_disposition' =>  isset($row['times']['call_disposition']) ? $row['times']['call_disposition'] : null,
         ];
     }
 

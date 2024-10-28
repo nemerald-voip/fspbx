@@ -118,11 +118,11 @@ class BackupApp extends Command
     /**
      * Execute a shell command with optional timeout.
      */
-    protected function executeCommand($command, $timeout = 300)
+    protected function executeCommand($command, $timeout = 600)
     {
         $process = Process::fromShellCommandline($command);
         $process->setTimeout($timeout);
-        $process->setTty(true); // Preserve color output
+        // $process->setTty(true); // Preserve color output
         $process->run(function ($type, $buffer) {
             if (Process::ERR === $type) {
                 $this->error($buffer);

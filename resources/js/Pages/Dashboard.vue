@@ -124,7 +124,7 @@
                                 <div class="flex-auto pl-6 py-6 truncate border-b border-gray-900/5">
                                     <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">Global Info</div>
                                     <dt class="text-sm  leading-6 text-gray-600">(Superadmin Only)</dt>
-
+                                    <dt class="text-sm  leading-6 text-gray-600">Version: {{ props.data.version }}</dt>
                                 </div>
 
                                 <div class="mt-6 mb-4 flex w-full  gap-x-4 px-6">
@@ -316,7 +316,9 @@
                     <div>
 
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Global Info <span
-                                class="font-normal italic text-gray-600 text-sm">(Superadmin only)</span></h3>
+                                class="font-normal italic text-gray-600 text-sm">(Superadmin only)</span>
+                                <span v-if="props.data.version" class="text-sm font-normal  text-gray-600"> Version: {{ props.data.version }}</span>
+                        </h3>
                         <dl
                             class="mt-3 grid grid-cols-4 divide-x divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
 

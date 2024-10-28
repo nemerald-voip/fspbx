@@ -4,19 +4,19 @@
 
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>Call History</template>
+                <template #title>Statistics by Extension</template>
 
                 <template #action>
 
-                    <button v-if="page.props.auth.can.cdrs_export" type="button" @click.prevent="exportCsv"
+                    <!-- <button v-if="page.props.auth.can.cdrs_export" type="button" @click.prevent="exportCsv"
                         :disabled="isExporting"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                         Export CSV
                         <Spinner class="ml-1" :show="isExporting" />
-                    </button>
+                    </button> -->
 
-                    <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
+                    <!-- <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
                         @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Show global
@@ -26,7 +26,7 @@
                         @click.prevent="handleShowLocal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Show local
-                    </button>
+                    </button> -->
 
                 </template>
 
@@ -51,21 +51,10 @@
                             @update:date-range="handleUpdateDateRange" />
                     </div>
 
-                    <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+                    <!-- <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <SelectBox :options="callDirections" :selectedItem="filterData.direction"
                             :placeholder="'Call Direction'" @update:model-value="handleUpdateCallDirectionFilter" />
-                    </div>
-
-                    <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                        <ComboBox :options="entities" :selectedItem="filterData.entity" :search="true"
-                            :placeholder="'Users or Groups'" @update:model-value="handleUpdateUserOrGroupFilter" />
-                    </div>
-
-                    <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                        <ComboBox :options="statusOptions" :selectedItem="selectedStatuses" :multiple="true"
-                            :placeholder="'Status'" @apply-selection="handleSelectedStatusUpdate"
-                            @update:model-value="handleSelectedStatusUpdate" :error="null" />
-                    </div>
+                    </div> -->
 
 
                 </template>
@@ -76,112 +65,38 @@
                         @pagination-change-page="renderRequestedPage" />
                 </template>
                 <template #table-header>
-                    <TableColumnHeader header=" "
+                    <TableColumnHeader header="Extension"
                         class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
-                    <TableColumnHeader v-if="showGlobal" header="Domain"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Caller ID Name"
+
+                    <TableColumnHeader header="Total Calls"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                    <TableColumnHeader header="Caller ID Number"
+                    <TableColumnHeader header="Inbound"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                    <TableColumnHeader header="Dialed Number"
+                    <TableColumnHeader header="Outbound"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Total Talk" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Avg Call Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                    <TableColumnHeader header="Actions"
-                        class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+                    <!-- <TableColumnHeader header="Actions"
+                        class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" /> -->
 
                 </template>
 
                 <template #table-body>
-                    <tr v-for="row in data.data" :key="row.xml_cdr_uuid">
-                        <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
-                        :text="row.direction" /> -->
-                        <TableField :text="row.direction"
-                            class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                            <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
-                                target="#destination_tooltip_target">
-                                <div id="destination_tooltip_target">
-                                    <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                                    <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
-                                    <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
-                                </div>
-                            </ejs-tooltip>
+                    <tr v-for="row in data.data" :key="row.extension_uuid">
 
-                        </TableField>
-
-                        <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.domain?.domain_description">
-                            <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
-                                target="#domain_tooltip_target">
-                                <div id="domain_tooltip_target">
-                                    {{ row.domain?.domain_description }}
-                                </div>
-                            </ejs-tooltip>
-                        </TableField>
-
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
+                        <TableField class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm text-gray-500" :text="row.extension_label" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_id_number_formatted" />
+                            :text="row.call_count" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_destination_formatted" />
+                            :text="row.inbound" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.destination_number_formatted" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.duration_formatted" />
-
-                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" /> -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <Badge :text="row.status"
-                                :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-blue-50'"
-                                :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
-                                :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
-                        </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                            <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
-                                " #action-buttons>
-                                <div class="flex items-center space-x-2 whitespace-nowrap">
-                                    <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying
-                                        " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
-                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-                                    <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
-                                        @click="pauseAudio"
-                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-
-                                    <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
-                                        class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
-                                </div>
-                            </template>
-                        </TableField>
-
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                            <template #action-buttons>
-                                <div class="flex items-center whitespace-nowrap justify-center">
-                                    <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'"
-                                        position='TopCenter' target="#view_tooltip_target">
-                                        <div id="view_tooltip_target">
-                                            <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
-                                        </div>
-                                    </ejs-tooltip>
-
-                                </div>
-                            </template>
-                        </TableField>
+                            :text="row.outbound" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.total_talk_time_formatted" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.average_duration_formatted" />
                     </tr>
                 </template>
                 <template #empty>
@@ -211,8 +126,8 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemOptions?.item" :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
+        @close="handleModalClose">
     </CallDetailsModal>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -233,7 +148,6 @@ import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import SelectBox from "./components/general/SelectBox.vue"
 import ComboBox from "./components/general/ComboBox.vue"
-import Badge from "@generalComponents/Badge.vue";
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
@@ -280,14 +194,18 @@ const props = defineProps({
     selectedEntityType: String,
     csvUrl: Object,
     routes: Object,
-    // itemData: Object,
+    itemData: Object,
     statusOptions: Object,
 });
 
 onMounted(() => {
     //request list of entities
-    getEntities();
+    // getEntities();
+    if (props.data.data.length === 0) {
+        handleSearchButtonClick();
+    }
 })
+
 
 const filterData = ref({
     search: props.search,
@@ -301,7 +219,6 @@ const filterData = ref({
 });
 
 const showGlobal = ref(props.showGlobal);
-const itemOptions = ref({});
 
 const callDirections = [
     { value: 'outbound', name: 'Outbound' },
@@ -313,71 +230,39 @@ const handleSelectedStatusUpdate = (updatedStatuses) => {
     filterData.value.statuses = updatedStatuses;
 };
 
-const getEntities = () => {
-    filterData.value.entity = null;
-    router.visit("/call-detail-records", {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-            filterData: filterData._rawValue,
-        },
-        only: ["entities"],
-        onSuccess: (page) => {
-            filterData.value.entity = props.selectedEntity;
-        }
-
-    });
-
-}
 
 const handleViewRequest = (itemUuid) => {
     viewModalTrigger.value = true
     loadingModal.value = true
-    getItemOptions(itemUuid);
 
-    // router.get(props.routes.current_page,
-    //     {
-    //         itemUuid: itemUuid,
-    //     },
-    //     {
-    //         preserveScroll: true,
-    //         preserveState: true,
-    //         only: [
-    //             'itemData',
-    //         ],
-    //         onSuccess: (page) => {
-    //             // console.log(props.itemData);
-    //             if (!props.itemData) {
-    //                 viewModalTrigger.value = false;
-    //                 showNotification('error', { error: ['Unable to retrieve this item'] });
-    //             } else {
-    //                 loadingModal.value = false;
-    //                 viewModalTrigger.value = true;
-    //             }
+    router.get(props.routes.current_page,
+        {
+            itemUuid: itemUuid,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'itemData',
+            ],
+            onSuccess: (page) => {
+                // console.log(props.itemData);
+                if (!props.itemData) {
+                    viewModalTrigger.value = false;
+                    showNotification('error', { error: ['Unable to retrieve this item'] });
+                } else {
+                    loadingModal.value = false;
+                    viewModalTrigger.value = true;
+                }
 
-    //         },
-    //         onFinish: () => {
-    //             // loadingModal.value = false;
-    //         },
-    //         onError: (errors) => {
-    //             console.log(errors);
-    //         },
+            },
+            onFinish: () => {
+                // loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
 
-    //     });
-}
-
-const getItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-
-    axios.post(props.routes.item_options, payload)
-        .then((response) => {
-            loadingModal.value = false;
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-
-        }).catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
         });
 }
 
@@ -397,7 +282,7 @@ const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
 const handleSearchButtonClick = () => {
     loading.value = true;
 
-    router.visit("/call-detail-records", {
+    router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
         },
@@ -405,10 +290,13 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;
+        },
+        onError: (error) => {
+            loading.value = false;
+            handleErrorResponse(error);
         }
 
     });
@@ -622,39 +510,6 @@ const handleErrorResponse = (error) => {
         console.log(error.message);
     }
 }
-
-const statusBadgeConfig = {
-    answered: {
-        backgroundColor: "bg-green-50",
-        textColor: "text-green-700",
-        ringColor: "ring-green-600/20",
-    },
-    cancelled: {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
-    },
-    no_answer: {
-        backgroundColor: "bg-amber-50",
-        textColor: "text-amber-700",
-        ringColor: "ring-amber-600/20",
-    },
-    failed: {
-        backgroundColor: "bg-red-50",
-        textColor: "text-red-700",
-        ringColor: "ring-red-600/20",
-    },
-    "missed call": {
-        backgroundColor: "bg-orange-50",
-        textColor: "text-orange-700",
-        ringColor: "ring-orange-600/20",
-    },
-    abandoned: {
-        backgroundColor: "bg-purple-50",
-        textColor: "text-purple-700",
-        ringColor: "ring-purple-600/20",
-    }
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

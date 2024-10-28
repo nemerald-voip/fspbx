@@ -454,6 +454,15 @@ else
     exit 1
 fi
 
+# Download and replace the functions.php file
+sudo curl -o /var/www/fspbx/public/resources/functions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/functions.php
+if [ $? -eq 0 ]; then
+    print_success "functions.php file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing functions.php file."
+    exit 1
+fi
+
 # Download and replace the permissions.php file
 sudo curl -o /var/www/fspbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
 if [ $? -eq 0 ]; then

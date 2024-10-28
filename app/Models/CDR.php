@@ -105,6 +105,18 @@ class CDR extends Model
                 }
             }
 
+            // When `sip_hangup_disposition` is null and `hangup_cause` is "ORIGINATOR_CANCEL",
+            // but only if `call_disposition` hasn't been set yet
+            if (empty($model->call_disposition) && is_null($model->sip_hangup_disposition) && $model->hangup_cause == "ORIGINATOR_CANCEL") {
+                $model->call_disposition = 'The call was canceled before it was answered.';
+            }
+
+            // When `sip_hangup_disposition` is null and `hangup_cause` is "LOSE_RACE",
+            // but only if `call_disposition` hasn't been set yet
+            if (empty($model->call_disposition) && is_null($model->sip_hangup_disposition) && $model->hangup_cause == "LOSE_RACE") {
+                $model->call_disposition = 'The call was answered somewhere else.';
+            }
+
             // logger('here');
             // logger($model->waitsec);
             // logger($model->waitsec_formatted);
@@ -123,10 +135,11 @@ class CDR extends Model
                 }
 
                 // Abandon call
-                if (isset($model->cc_cancel_reason) && 
-                    isset($model->cc_cause) && 
-                    $model->status == "missed call" && 
-                    $model->cc_cancel_reason == "BREAK_OUT" && 
+                if (
+                    isset($model->cc_cancel_reason) &&
+                    isset($model->cc_cause) &&
+                    $model->status == "missed call" &&
+                    $model->cc_cancel_reason == "BREAK_OUT" &&
                     $model->cc_cause == "cancel"
                 ) {
                     $model->status = "abandoned";
@@ -198,14 +211,20 @@ class CDR extends Model
     }
 
     /**
-     * Get domain that this message settings belongs to 
+     * Get domain that this model belongs to 
      */
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-
+    /**
+     * Get domain that this model belongs to 
+     */
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
 
     public function formatPhoneNumber($value)
     {
@@ -227,5 +246,15 @@ class CDR extends Model
         }
 
         return $number_formatted;
+    }
+
+    public function relatedQueueCalls()
+    {
+        return $this->hasMany(CDR::class, 'cc_member_session_uuid', 'xml_cdr_uuid');
+    }
+
+    public function relatedRingGroupCalls()
+    {
+        return $this->hasMany(CDR::class, 'originating_leg_uuid', 'xml_cdr_uuid');
     }
 }

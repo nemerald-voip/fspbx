@@ -546,7 +546,7 @@ class VoicemailController extends Controller
                 ])->where('voicemail_uuid', $item_uuid)->first();
 
 
-                // If a voicemail exists, use it; otherwise, create a new one
+                // If voicemail doesn't exist throw an error
                 if (!$voicemail) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
