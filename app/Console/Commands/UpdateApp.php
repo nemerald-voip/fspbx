@@ -59,10 +59,12 @@ class UpdateApp extends Command
                     $this->error("Update to version $version failed. Stopping further updates.");
                     exit(1);
                 }
+
+                // If the update is successful, call the version:set command
+                $this->call('version:set', ['version' => $version]);
+                $this->info("Version successfully updated to $version.");
             }
         }
-
-        return;
 
         // Composer install
         $this->executeCommand('composer install --no-interaction --ignore-platform-reqs');
