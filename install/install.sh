@@ -780,7 +780,7 @@ echo ""
 # Congratulations message
 echo "=============================================================="
 echo "Congratulations! FS PBX has been installed successfully."
-echo "You can now access your PBX at http://your_server_ip or http://your_domain."
+echo "You can now access your PBX at https://your_server_ip or https://your_domain."
 echo "=============================================================="
 
 

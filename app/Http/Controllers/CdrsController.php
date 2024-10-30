@@ -177,7 +177,37 @@ class CdrsController extends Controller
 
             // Check if there are any other related calls 
             // Fetch related calls and their call_flow
-            $relatedCalls = $item->relatedRingGroupCalls;
+
+            $relatedCalls = $item->relatedRingGroupCalls()
+            ->where('domain_uuid', $item->domain_uuid) 
+            ->select([
+                'xml_cdr_uuid',
+                'domain_uuid',
+                'sip_call_id',
+                'extension_uuid',
+                'direction',
+                'caller_id_name',
+                'caller_id_number',
+                'caller_destination',
+                'start_epoch',
+                'answer_epoch',
+                'end_epoch',
+                'duration',
+                'billsec',
+                'waitsec',
+                'call_flow',
+                'voicemail_message',
+                'missed_call',
+                'hangup_cause',
+                'hangup_cause_q850',
+                'call_center_queue_uuid',
+                'cc_cancel_reason',
+                'cc_cause',
+                'sip_hangup_disposition',
+                'status',
+
+            ])
+            ->get();
 
             // Loop through each related call and merge its call_flow into the combined call flow data
             foreach ($relatedCalls as $relatedCall) {
@@ -234,7 +264,7 @@ class CdrsController extends Controller
                 return $row;
             });
 
-            logger($callFlowSummary->toArray());
+            // logger($callFlowSummary->toArray());
 
             $item->call_flow = $callFlowSummary;
 
