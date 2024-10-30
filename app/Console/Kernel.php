@@ -81,7 +81,7 @@ class Kernel extends ConsoleKernel
         Commands\MigrationShowLastBatch::class,
         Commands\MigrationDeleteLastBatch::class,
         Commands\ClearExportDirectory::class,
-
+        Commands\VersionSetCommand::class,
     ];
 
     protected function commands()

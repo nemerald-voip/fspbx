@@ -63,7 +63,8 @@
 
                     <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
                         <ComboBox :options="statusOptions" :selectedItem="selectedStatuses" :multiple="true"
-                            :placeholder="'Status'" @apply-selection="handleSelectedStatusUpdate" @update:model-value="handleSelectedStatusUpdate" :error="null" />
+                            :placeholder="'Status'" @apply-selection="handleSelectedStatusUpdate"
+                            @update:model-value="handleSelectedStatusUpdate" :error="null" />
                     </div>
 
 
@@ -141,7 +142,14 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.duration_formatted" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" />
+
+                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" /> -->
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                            <Badge :text="row.status"
+                                :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-blue-50'"
+                                :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
+                                :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
+                        </TableField>
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
                                 " #action-buttons>
@@ -203,8 +211,8 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
-        @close="handleModalClose">
+    <CallDetailsModal :show="viewModalTrigger" :item="itemOptions?.item" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
     </CallDetailsModal>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -225,6 +233,7 @@ import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import SelectBox from "./components/general/SelectBox.vue"
 import ComboBox from "./components/general/ComboBox.vue"
+import Badge from "@generalComponents/Badge.vue";
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
@@ -271,7 +280,7 @@ const props = defineProps({
     selectedEntityType: String,
     csvUrl: Object,
     routes: Object,
-    itemData: Object,
+    // itemData: Object,
     statusOptions: Object,
 });
 
@@ -279,7 +288,6 @@ onMounted(() => {
     //request list of entities
     getEntities();
 })
-
 
 const filterData = ref({
     search: props.search,
@@ -293,6 +301,7 @@ const filterData = ref({
 });
 
 const showGlobal = ref(props.showGlobal);
+const itemOptions = ref({});
 
 const callDirections = [
     { value: 'outbound', name: 'Outbound' },
@@ -324,35 +333,51 @@ const getEntities = () => {
 const handleViewRequest = (itemUuid) => {
     viewModalTrigger.value = true
     loadingModal.value = true
+    getItemOptions(itemUuid);
 
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-            ],
-            onSuccess: (page) => {
-                // console.log(props.itemData);
-                if (!props.itemData) {
-                    viewModalTrigger.value = false;
-                    showNotification('error', { error: ['Unable to retrieve this item'] });
-                } else {
-                    loadingModal.value = false;
-                    viewModalTrigger.value = true;
-                }
+    // router.get(props.routes.current_page,
+    //     {
+    //         itemUuid: itemUuid,
+    //     },
+    //     {
+    //         preserveScroll: true,
+    //         preserveState: true,
+    //         only: [
+    //             'itemData',
+    //         ],
+    //         onSuccess: (page) => {
+    //             // console.log(props.itemData);
+    //             if (!props.itemData) {
+    //                 viewModalTrigger.value = false;
+    //                 showNotification('error', { error: ['Unable to retrieve this item'] });
+    //             } else {
+    //                 loadingModal.value = false;
+    //                 viewModalTrigger.value = true;
+    //             }
 
-            },
-            onFinish: () => {
-                // loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+    //         },
+    //         onFinish: () => {
+    //             // loadingModal.value = false;
+    //         },
+    //         onError: (errors) => {
+    //             console.log(errors);
+    //         },
 
+    //     });
+}
+
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
         });
 }
 
@@ -597,6 +622,39 @@ const handleErrorResponse = (error) => {
         console.log(error.message);
     }
 }
+
+const statusBadgeConfig = {
+    answered: {
+        backgroundColor: "bg-green-50",
+        textColor: "text-green-700",
+        ringColor: "ring-green-600/20",
+    },
+    cancelled: {
+        backgroundColor: "bg-gray-50",
+        textColor: "text-gray-700",
+        ringColor: "ring-gray-600/20",
+    },
+    no_answer: {
+        backgroundColor: "bg-amber-50",
+        textColor: "text-amber-700",
+        ringColor: "ring-amber-600/20",
+    },
+    failed: {
+        backgroundColor: "bg-red-50",
+        textColor: "text-red-700",
+        ringColor: "ring-red-600/20",
+    },
+    "missed call": {
+        backgroundColor: "bg-orange-50",
+        textColor: "text-orange-700",
+        ringColor: "ring-orange-600/20",
+    },
+    abandoned: {
+        backgroundColor: "bg-purple-50",
+        textColor: "text-purple-700",
+        ringColor: "ring-purple-600/20",
+    }
+};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
