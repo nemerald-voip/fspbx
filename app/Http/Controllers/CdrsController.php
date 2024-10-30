@@ -156,7 +156,36 @@ class CdrsController extends Controller
             // Check if the call is a queue call (call_center_queue_uuid is not null)
             if (!empty($item->call_center_queue_uuid)) {
                 // Fetch related queue calls and their call_flow if this is a queue call
-                $relatedCalls = $item->relatedQueueCalls;
+                $relatedCalls = $item->relatedQueueCalls()
+                ->where('domain_uuid', $item->domain_uuid) 
+                ->select([
+                    'xml_cdr_uuid',
+                    'domain_uuid',
+                    'sip_call_id',
+                    'extension_uuid',
+                    'direction',
+                    'caller_id_name',
+                    'caller_id_number',
+                    'caller_destination',
+                    'start_epoch',
+                    'answer_epoch',
+                    'end_epoch',
+                    'duration',
+                    'billsec',
+                    'waitsec',
+                    'call_flow',
+                    'voicemail_message',
+                    'missed_call',
+                    'hangup_cause',
+                    'hangup_cause_q850',
+                    'call_center_queue_uuid',
+                    'cc_cancel_reason',
+                    'cc_cause',
+                    'sip_hangup_disposition',
+                    'status',
+
+                ])
+                ->get();
 
                 // Loop through each related queue call and merge its call_flow into the combined call flow data
                 foreach ($relatedCalls as $relatedCall) {
