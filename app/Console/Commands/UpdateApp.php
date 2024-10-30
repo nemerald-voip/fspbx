@@ -66,6 +66,12 @@ class UpdateApp extends Command
             }
         }
 
+        if (version_compare($currentVersion, $downloadedVersion, '<')) {
+            // Call version:set to update the version to the latest one, even if no steps were needed
+            $this->call('version:set', ['version' => $downloadedVersion]);
+            $this->info("Version successfully updated to $downloadedVersion.");
+        }
+
         // Composer install
         $this->executeCommand('composer install --no-interaction --ignore-platform-reqs');
         $this->executeCommand('composer dump-autoload --no-interaction --ignore-platform-reqs');
