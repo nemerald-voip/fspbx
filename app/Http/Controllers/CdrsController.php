@@ -431,7 +431,6 @@ class CdrsController extends Controller
                 }
                 $row['dialplan_description'] = '';
                 
-                logger($row);
                 return $row;
             }
         }
