@@ -22,6 +22,10 @@
                         <div v-if="errors.user_email" class="mt-2 text-sm text-red-600">
                             {{ errors.user_email }}
                         </div>
+                        <!-- Error message for email -->
+                        <div v-if="errors.email" class="mt-2 text-sm text-red-600">
+                            {{ errors.email }}
+                        </div>
                     </div>
 
                     <div>
@@ -38,10 +42,11 @@
                     </div>
 
                     <div>
-                        <label for="password_confirmation" class="block text-sm font-medium leading-6 text-gray-900">Confirm Password</label>
+                        <label for="password_confirmation" class="block text-sm font-medium leading-6 text-gray-900">Confirm
+                            Password</label>
                         <div class="mt-2">
-                            <input v-model="form.password_confirmation" id="password_confirmation" name="password_confirmation" type="password"
-                                autocomplete="current-password" required
+                            <input v-model="form.password_confirmation" id="password_confirmation"
+                                name="password_confirmation" type="password" autocomplete="current-password" required
                                 :class="['block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6', { 'ring-1 ring-inset ring-red-600': errors.password_confirmation, 'ring-1 ring-inset ring-gray-300': !errors.password_confirmation }]" />
                         </div>
                         <!-- Error message for password -->
@@ -56,8 +61,7 @@
                             class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                                 </circle>
                                 <path class="opacity-75" fill="currentColor"
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -70,8 +74,7 @@
 
                 <div class="mt-5 flex justify-center">
                     <div class="text-sm leading-6">
-                        <Link :href="links['login']"
-                            class=" font-semibold text-indigo-600 hover:text-indigo-500">
+                        <Link :href="links['login']" class=" font-semibold text-indigo-600 hover:text-indigo-500">
                         Back to Log In
                         </Link>
                     </div>
@@ -112,13 +115,15 @@ const submitForm = () => {
 
     isLoading.value = true;
 
-    form.post(props.links['password-update'],{
+    form.post(props.links['password-update'], {
         onFinish: () => {
             form.reset('password', 'password_confirmation');
             isLoading.value = false;
-        }
-    }
-    );
+        },
+        onError: (errors) => {
+            // console.log(errors);
+        },
+    });
 
 }
 
