@@ -37,7 +37,7 @@
             </template>
             <template #table-header>
 
-                <TableColumnHeader 
+                <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -46,8 +46,10 @@
                     <span class="pl-4">Voicemail ID</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Email address" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Email address"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Messages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -72,8 +74,7 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.voicemail_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
-                        :text="row.voicemail_id">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.voicemail_id">
                         <div class="flex items-center">
                             <input v-if="row.voicemail_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.voicemail_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -93,23 +94,29 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_mail_to" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_enabled" >
-                        <Badge v-if="row.voicemail_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
-                            textColor="text-green-700"
-                            ringColor="ring-green-600/20" />
-                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50"
-                            textColor="text-rose-700"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.voicemail_description" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <Badge :text="row.messages_count" @click="navigateToMessages(row.messages_route)"
+                            backgroundColor="bg-blue-50" textColor="text-blue-700" ringColor="ring-blue-600/20" class="cursor-pointer"/>
+
+                    </TableField>
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_enabled">
+                        <Badge v-if="row.voicemail_enabled == 'true'" text="Enabled" backgroundColor="bg-green-50"
+                            textColor="text-green-700" ringColor="ring-green-600/20" />
+                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50" textColor="text-rose-700"
                             ringColor="ring-rose-600/20" />
 
-                        </TableField>
+                    </TableField>
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'"
+                                    position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -161,18 +168,20 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleErrorResponse"
-                @success="showNotification('success', { request: [$event] })"/>
+            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
+                @success="showNotification('success', { request: [$event] })" />
         </template>
     </AddEditItemModal>
 
@@ -561,5 +570,7 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 </script>
 
-<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

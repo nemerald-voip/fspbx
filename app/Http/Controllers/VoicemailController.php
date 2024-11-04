@@ -103,7 +103,6 @@ class VoicemailController extends Controller
                 ->where('domain_uuid', $domainUuid);
         }]);
 
-
         $data->select(
             'voicemail_uuid',
             'voicemail_id',
@@ -112,6 +111,9 @@ class VoicemailController extends Controller
             'voicemail_description',
 
         );
+
+        // Add message count
+        $data->withCount(['messages']);
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
