@@ -62,8 +62,16 @@ class ExtensionAdvSettings extends Model
                 // Load the relationship
                 $model->load('extension');
                 event(new ExtensionSuspendedStatusChanged($model));
-                
-                
+
+                $originalSuspended = $model->getOriginal('suspended');
+                activity()
+                    ->performedOn($model->extension)
+                    ->withProperties([
+                        'attributes' => ['suspended' => $model->suspended],
+                        'old' => ['suspended' => $originalSuspended],
+                    ])
+                    ->useLog('extension')
+                    ->log('updated');
             }
         });
     }
@@ -73,6 +81,6 @@ class ExtensionAdvSettings extends Model
      */
     public function extension()
     {
-        return $this->hasOne(Extensions::class, 'extension_uuid', 'extension_uuid');    
+        return $this->hasOne(Extensions::class, 'extension_uuid', 'extension_uuid');
     }
 }

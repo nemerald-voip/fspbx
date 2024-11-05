@@ -138,7 +138,7 @@ class ActivityLogController extends Controller
         $data->with('subject');
         $data->with('causer')->with(['causer' => function ($query) {
             $modelClass = get_class($query->getModel());
-            logger($modelClass);
+            // logger($modelClass);
             
             if ($modelClass === 'App\Models\User') {
                 $query->with('user_adv_fields');
