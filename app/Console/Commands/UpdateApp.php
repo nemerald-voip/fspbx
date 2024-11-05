@@ -40,12 +40,14 @@ class UpdateApp extends Command
     {
         $this->info('Starting update...');
 
+        $this->runArtisanCommand('config:cache');
         $currentVersion = config('app.version');
         $downloadedVersion = config('version.release');
 
         // Define version-specific steps using an array
         $updateSteps = [
             '0.9.7' => Update097::class,
+            '0.9.11' => Update097::class,
             // Add more versions as needed
         ];
 

@@ -621,6 +621,37 @@
                                                                             </div>
                                                                         </template>
 
+                                                                        <template v-if="flow.dialplan_app && flow.dialplan_app.includes('Call Intercept')">
+                                                                            <div>
+                                                                                <div class="relative px-1">
+                                                                                    <div
+                                                                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
+                                                                                        <MergeIcon
+                                                                                            class="h-5 w-5 text-gray-500"
+                                                                                            aria-hidden="true" />
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="min-w-0 flex-1 py-0">
+                                                                                <div class="text-sm  text-gray-500">
+                                                                                    <div class="font-medium text-gray-900">
+                                                                                        <span
+                                                                                            class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                            {{ flow.time_line }}
+                                                                                        </span>
+                                                                                        {{ flow.dialplan_app }}
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="font-semibold text-gray-900">
+                                                                                        {{ flow.dialplan_name }}
+                                                                                       
+                                                                                    </div>
+                                                                                    <p class="mt-0.5 text-sm text-gray-500">
+                                                                                        {{ flow.duration_formatted }}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+
                                                                         <template v-if="flow.dialplan_app === 'Misc. Destination'">
                                                                             <div>
                                                                                 <div class="relative px-1">
@@ -754,7 +785,7 @@ import CallEndIcon from "../icons/CallEndIcon.vue"
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import FaxIcon from "../icons/FaxIcon.vue"
 import ParkIcon from "../icons/ParkIcon.vue"
-
+import MergeIcon from "../icons/MergeIcon.vue"
 
 const emit = defineEmits(['close'])
 

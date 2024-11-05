@@ -892,6 +892,8 @@ class ExtensionsController extends Controller
      */
     public function update(Request $request, Extensions $extension)
     {
+        logger($request->all());
+        // return;
         $attributes = [
             'directory_first_name' => 'first name',
             'directory_last_name' => 'last name',

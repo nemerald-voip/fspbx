@@ -156,7 +156,36 @@ class CdrsController extends Controller
             // Check if the call is a queue call (call_center_queue_uuid is not null)
             if (!empty($item->call_center_queue_uuid)) {
                 // Fetch related queue calls and their call_flow if this is a queue call
-                $relatedCalls = $item->relatedQueueCalls;
+                $relatedCalls = $item->relatedQueueCalls()
+                ->where('domain_uuid', $item->domain_uuid) 
+                ->select([
+                    'xml_cdr_uuid',
+                    'domain_uuid',
+                    'sip_call_id',
+                    'extension_uuid',
+                    'direction',
+                    'caller_id_name',
+                    'caller_id_number',
+                    'caller_destination',
+                    'start_epoch',
+                    'answer_epoch',
+                    'end_epoch',
+                    'duration',
+                    'billsec',
+                    'waitsec',
+                    'call_flow',
+                    'voicemail_message',
+                    'missed_call',
+                    'hangup_cause',
+                    'hangup_cause_q850',
+                    'call_center_queue_uuid',
+                    'cc_cancel_reason',
+                    'cc_cause',
+                    'sip_hangup_disposition',
+                    'status',
+
+                ])
+                ->get();
 
                 // Loop through each related queue call and merge its call_flow into the combined call flow data
                 foreach ($relatedCalls as $relatedCall) {
@@ -381,6 +410,31 @@ class CdrsController extends Controller
             return $row;
         }
 
+        // Check if destination is intercept
+        if ((substr($row['destination_number'], 0, 3) == '*97') !== false) {
+            // Use regex to capture the digits after *97 up to ^ and everything after ^
+            if (preg_match('/\*97(\d+)\^(.+)/', $row['destination_number'], $matches)) {
+                $interceptedExt = $matches[1]; 
+                $intereceptedByExt = $matches[2]; 
+
+                $row['dialplan_app'] = "Call Intercept " . $interceptedExt;
+
+                // Check if intereceptedByExt is extension
+                $extension = Extensions::where('domain_uuid', $this->item_domain_uuid)
+                    ->where('extension', $intereceptedByExt)
+                    ->first();
+
+                if ($extension) {
+                    $row['dialplan_name'] = $extension->effective_caller_id_name . ' (' . $intereceptedByExt .  ')';
+                } else {
+                    $row['dialplan_name'] = null;
+                }
+                $row['dialplan_description'] = '';
+                
+                return $row;
+            }
+        }
+
         // Check if destination is extension
         $extension = Extensions::where('domain_uuid', $this->item_domain_uuid)
             ->where('extension', $row['destination_number'])
@@ -522,7 +576,16 @@ class CdrsController extends Controller
             } else {
                 $destinationNumber = $row['caller_profile']['callee_id_number'];
             }
-        } else {
+        } 
+        //check if this is intercept
+        else if (isset($row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"]) && 
+        (substr($row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"], 0, 3) == '*97' && 
+        strlen($row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"]) > 3)) {
+            
+            $destinationNumber = $row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"] ."^".$row["caller_profile"]["originator"]["originator_caller_profile"]["caller_id_number"];
+        }
+        // all other cases
+        else {
             $destinationNumber = !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'];
         }
 
