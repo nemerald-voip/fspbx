@@ -14,7 +14,7 @@ class Activity extends SpatieActivity implements ActivityContract
     public $incrementing = false;
     protected $keyType = 'string';
 
-        /**
+    /**
      * The booted method of the model
      *
      * Define all attributes here like normal code

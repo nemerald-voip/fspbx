@@ -137,17 +137,10 @@ class ActivityLogController extends Controller
 
         $data->with('subject');
         $data->with('causer')->with(['causer' => function ($query) {
-            $modelClass = get_class($query->getModel());
-            // logger($modelClass);
-            
-            if ($modelClass === 'App\Models\User') {
-                $query->with('user_adv_fields');
-            } elseif ($modelClass === 'App\Models\Extensions') {
-                $query->addSelect('extension_uuid', 'extension', 'effective_caller_id_name');
-            }
+            $query->when('App\Models\User', function ($q) {
+                $q->with('user_adv_fields');
+            });
         }]);
-        
-
 
         $data->select(
             'id',
