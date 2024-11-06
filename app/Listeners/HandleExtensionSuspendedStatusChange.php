@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Events\ExtensionSuspendedStatusChanged;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use Spatie\Activitylog\Facades\CauserResolver;
 
 class HandleExtensionSuspendedStatusChange implements ShouldQueue
 {
@@ -81,28 +82,45 @@ class HandleExtensionSuspendedStatusChange implements ShouldQueue
     public function handle(ExtensionSuspendedStatusChanged $event): void
     {
         // Enable DND for this extension
-        if ($event->model->extension) {
+        // if ($event->model->extension) {
+        //     if ($event->model->suspended) {
+        //         $event->model->extension->do_not_disturb = 'true';
+        //         $event->model->extension->directory_visible = 'false';
+        //         $event->model->extension->directory_exten_visible = 'false';
+        //     } else {
+        //         $event->model->extension->do_not_disturb = 'false';
+        //         $event->model->extension->directory_visible = 'true';
+        //         $event->model->extension->directory_exten_visible = 'true';
+        //     }
+        //     logger($event->model);
+        //     $event->model->extension->save();
+        // } 
+
+        CauserResolver::setCauser($event->user);
+
+        if ($event->model) {
             if ($event->model->suspended) {
-                $event->model->extension->do_not_disturb = 'true';
-                $event->model->extension->directory_visible = 'false';
-                $event->model->extension->directory_exten_visible = 'false';
+                $event->model->do_not_disturb = 'true';
+                $event->model->directory_visible = 'false';
+                $event->model->directory_exten_visible = 'false';
             } else {
-                $event->model->extension->do_not_disturb = 'false';
-                $event->model->extension->directory_visible = 'true';
-                $event->model->extension->directory_exten_visible = 'true';
+                $event->model->do_not_disturb = 'false';
+                $event->model->directory_visible = 'true';
+                $event->model->directory_exten_visible = 'true';
             }
-            $event->model->extension->save();
+            logger($event->model);
+            $event->model->save();
         } 
 
         // Disable Vocemail if exists
-        if ($event->model->extension && $event->model->extension->voicemail) {
-            if ($event->model->suspended) {
-                $event->model->extension->voicemail->voicemail_enabled = 'false';
-            } else {
-                $event->model->extension->voicemail->voicemail_enabled = 'true';
-            }
-            $event->model->extension->voicemail->save();
-        } 
+        // if ($event->model->extension && $event->model->extension->voicemail) {
+        //     if ($event->model->suspended) {
+        //         $event->model->extension->voicemail->voicemail_enabled = 'false';
+        //     } else {
+        //         $event->model->extension->voicemail->voicemail_enabled = 'true';
+        //     }
+        //     $event->model->extension->voicemail->save();
+        // } 
 
 
     }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Events\ExtensionSuspendedStatusChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+
 class ExtensionAdvSettings extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
@@ -61,7 +62,9 @@ class ExtensionAdvSettings extends Model
             if ($model->isDirty('suspended')) {
                 // Load the relationship
                 $model->load('extension');
-                event(new ExtensionSuspendedStatusChanged($model));
+                if ($model->extension) {
+                    event(new ExtensionSuspendedStatusChanged($model->extension));
+                }
 
                 $originalSuspended = $model->getOriginal('suspended');
                 activity()

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Models\User;
 use Inertia\Inertia;
+use App\Models\Activity;
 use App\Models\Extensions;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
@@ -11,7 +13,6 @@ use Illuminate\Support\Facades\Http;
 use App\Services\SynchMessageProvider;
 use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
-use App\Models\Activity;
 use App\Jobs\SendSmsNotificationToSlack;
 
 
@@ -137,9 +138,10 @@ class ActivityLogController extends Controller
 
         $data->with('subject');
         $data->with('causer')->with(['causer' => function ($query) {
-            $query->when('App\Models\User', function ($q) {
-                $q->with('user_adv_fields');
-            });
+            // Check if the causer is an instance of App\Models\User, then load `user_adv_fields`
+            if ($query->getModel() instanceof User) {
+                $query->with('user_adv_fields');
+            }
         }]);
 
         $data->select(
