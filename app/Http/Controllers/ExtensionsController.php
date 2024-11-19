@@ -1279,7 +1279,7 @@ class ExtensionsController extends Controller
         $mobile_app = $extension->mobile_app;
         if (isset($mobile_app)) {
             $mobile_app->name = $attributes['effective_caller_id_name'];
-            $mobile_app->email = ($attributes['voicemail_mail_to']) ? $attributes['voicemail_mail_to'] : "";
+            $mobile_app->email = $attributes['voicemail_mail_to'] ?? "";
             $mobile_app->ext = $attributes['extension'];
             $mobile_app->password = $extension->password;
             UpdateAppSettings::dispatch($mobile_app->attributesToArray())->onQueue('default');
