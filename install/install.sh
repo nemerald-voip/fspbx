@@ -518,6 +518,14 @@ else
     exit 1
 fi
 
+# Set /var/www/fspbx as a safe directory for Git
+sudo -u www-data git config --global --add safe.directory /var/www/fspbx
+if [ $? -eq 0 ]; then
+    print_success "/var/www/fspbx added to Git's safe.directory list."
+else
+    print_error "Error occurred while adding /var/www/fspbx to Git's safe.directory list."
+    exit 1
+fi
 
 # Update settings for email_queue service
 sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service

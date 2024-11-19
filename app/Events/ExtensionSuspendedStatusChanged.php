@@ -11,6 +11,7 @@ class ExtensionSuspendedStatusChanged
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $model;
+    public $user; // User who dispatched the event
 
     /**
      * Create a new event instance.
@@ -18,6 +19,7 @@ class ExtensionSuspendedStatusChanged
     public function __construct($model)
     {
         $this->model = $model;
+        $this->user = auth()->user();
     }
 
 }

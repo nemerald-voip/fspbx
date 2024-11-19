@@ -58,7 +58,39 @@ class User extends Authenticatable
         'add_date',
         'add_user',
         'contact_uuid',
+        'user_totp_secret',
+        'user_type', 
+        'user_status',
     ];
+
+    /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            // Remove attributes before saving to database
+            unset($model->name_formatted);
+            if (!$model->domain_uuid) {
+                $model->domain_uuid = session('domain_uuid');
+            }
+
+        });
+
+        static::retrieved(function ($model) {
+            if ($model->user_adv_fields && ($model->user_adv_fields->first_name || $model->user_adv_fields->last_name)) {
+                $model->name_formatted = trim(($model->user_adv_fields->first_name ?? '') . ' ' . ($model->user_adv_fields->last_name ?? ''));
+            } else {
+                $model->name_formatted = $model->username;
+            }
+            // $model->destroy_route = route('devices.destroy', $model);
+
+            return $model;
+        });
+    }
 
     /**
      * The attributes that should be cast.

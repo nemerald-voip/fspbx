@@ -318,12 +318,16 @@
                                                         </div>
                                                         <div class="col-2">
                                                             <div class="mb-3 text-sm-end">
-                                                                <input type="hidden" name="suspended" value="{{ $extension->suspended ? 'on' : 'false' }}">
+                                                                <input type="hidden" name="suspended" value="false">
                                                                 <input type="checkbox" id="suspended-switch" name="suspended"
                                                                 @if ($extension->suspended) checked @endif
                                                                 @if (!userCheckPermission('extension_suspended')) disabled @endif
                                                                 data-switch="warning"/>
                                                                 <label for="suspended-switch" data-on-label="On" data-off-label="Off"></label>
+
+                                                                @if (!userCheckPermission('extension_suspended'))
+                                                                    <input type="hidden" name="suspended" value="{{ $extension->suspended ? 'on' : 'false' }}">
+                                                                @endif
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->
