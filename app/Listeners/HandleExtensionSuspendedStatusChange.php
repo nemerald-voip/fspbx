@@ -2,14 +2,15 @@
 
 namespace App\Listeners;
 
+use App\Models\Activity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Spatie\Activitylog\Facades\CauserResolver;
 use App\Events\ExtensionSuspendedStatusChanged;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
-use Spatie\Activitylog\Facades\CauserResolver;
 
 class HandleExtensionSuspendedStatusChange implements ShouldQueue
 {
@@ -98,6 +99,9 @@ class HandleExtensionSuspendedStatusChange implements ShouldQueue
 
         CauserResolver::setCauser($event->user);
 
+        // Set the runtime domain_uuid for the ActivityLog
+        Activity::setRuntimeDomainUuid($event->model->domain_uuid);
+
         if ($event->model) {
             if ($event->model->suspended) {
                 $event->model->do_not_disturb = 'true';
@@ -108,19 +112,22 @@ class HandleExtensionSuspendedStatusChange implements ShouldQueue
                 $event->model->directory_visible = 'true';
                 $event->model->directory_exten_visible = 'true';
             }
-            logger($event->model);
+            // logger($event->model);
             $event->model->save();
-        } 
+        }
+
+        // Clear the runtime domain_uuid to avoid conflicts
+        Activity::clearRuntimeDomainUuid();
 
         // Disable Vocemail if exists
-        // if ($event->model->extension && $event->model->extension->voicemail) {
-        //     if ($event->model->suspended) {
-        //         $event->model->extension->voicemail->voicemail_enabled = 'false';
-        //     } else {
-        //         $event->model->extension->voicemail->voicemail_enabled = 'true';
-        //     }
-        //     $event->model->extension->voicemail->save();
-        // } 
+        if ($event->model->voicemail) {
+            if ($event->model->suspended) {
+                $event->model->voicemail->voicemail_enabled = 'false';
+            } else {
+                $event->model->voicemail->voicemail_enabled = 'true';
+            }
+            $event->model->voicemail->save();
+        } 
 
 
     }
