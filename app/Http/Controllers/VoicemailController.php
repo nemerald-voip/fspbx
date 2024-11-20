@@ -461,7 +461,7 @@ class VoicemailController extends Controller
                 return response()->json([
                     'status' => 200,
                     'success' => [
-                        'message' => 'Selected vocemail extensions have been deleted'
+                        'message' => 'Selected voicemail extensions have been deleted'
                     ]
                 ]);
             } else {
