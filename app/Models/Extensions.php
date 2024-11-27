@@ -141,6 +141,7 @@ class Extensions extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
+            ->useLogName('extension')
             ->logFillable()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
@@ -183,7 +184,7 @@ class Extensions extends Model
     }
 
     /**
-     * Get the voicemail associated with this extension.
+     * Get the advanced settings with this extension.
      *  returns Eloqeunt Object
      */
     public function advSettings()

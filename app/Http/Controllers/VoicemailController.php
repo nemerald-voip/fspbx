@@ -103,7 +103,6 @@ class VoicemailController extends Controller
                 ->where('domain_uuid', $domainUuid);
         }]);
 
-
         $data->select(
             'voicemail_uuid',
             'voicemail_id',
@@ -112,6 +111,9 @@ class VoicemailController extends Controller
             'voicemail_description',
 
         );
+
+        // Add message count
+        $data->withCount(['messages']);
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
@@ -459,7 +461,7 @@ class VoicemailController extends Controller
                 return response()->json([
                     'status' => 200,
                     'success' => [
-                        'message' => 'Selected vocemail extensions have been deleted'
+                        'message' => 'Selected voicemail extensions have been deleted'
                     ]
                 ]);
             } else {
@@ -546,7 +548,7 @@ class VoicemailController extends Controller
                 ])->where('voicemail_uuid', $item_uuid)->first();
 
 
-                // If a voicemail exists, use it; otherwise, create a new one
+                // If voicemail doesn't exist throw an error
                 if (!$voicemail) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }

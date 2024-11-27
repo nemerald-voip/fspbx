@@ -9,12 +9,12 @@ use Spatie\Activitylog\Contracts\Activity as ActivityContract;
 
 class Activity extends SpatieActivity implements ActivityContract
 {
-    use HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, \App\Models\Traits\TraitUuid, \App\Models\Traits\ResolvesDomain;
 
     public $incrementing = false;
     protected $keyType = 'string';
 
-        /**
+    /**
      * The booted method of the model
      *
      * Define all attributes here like normal code
@@ -26,7 +26,7 @@ class Activity extends SpatieActivity implements ActivityContract
             // Remove attributes before saving to database
             unset($model->created_at_formatted);
             if (!$model->domain_uuid) {
-                $model->domain_uuid = session('domain_uuid');
+                $model->domain_uuid = self::getRuntimeDomainUuid() ?? session('domain_uuid');
             }
 
         });

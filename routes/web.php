@@ -1,6 +1,7 @@
 <?php
 
 use Aws\Sns\Message;
+use App\Models\WhitelistedNumbers;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\CloudProvisioningController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
+use App\Http\Controllers\WhitelistedNumbersController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
@@ -103,6 +105,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.download');
     Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
     Route::post('/call-detail-records/export', [CdrsController::class, 'export'])->name('cdrs.export');
+    Route::post('/call-detail-records/item-options', [CdrsController::class, 'getItemOptions'])->name('cdrs.item.options');
+
 
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
@@ -360,6 +364,15 @@ Route::group(['middleware' => 'auth'], function () {
     //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
     //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
     //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
+
+
+    // Whitelisted Numbers
+    Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
+    // Route::post('firewall/unblock', [FirewallController::class, 'destroy'])->name('firewall.unblock');
+    // Route::post('/firewall/block', [FirewallController::class, 'store'])->name('firewall.block');
+    // Route::post('/firewall/select-all', [FirewallController::class, 'selectAll'])->name('firewall.select.all');
+
+
 
 });
 

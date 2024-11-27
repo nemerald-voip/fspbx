@@ -2,11 +2,13 @@
 
 namespace App\Listeners;
 
+use App\Models\Activity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Spatie\Activitylog\Facades\CauserResolver;
 use App\Events\ExtensionSuspendedStatusChanged;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
@@ -81,27 +83,50 @@ class HandleExtensionSuspendedStatusChange implements ShouldQueue
     public function handle(ExtensionSuspendedStatusChanged $event): void
     {
         // Enable DND for this extension
-        if ($event->model->extension) {
+        // if ($event->model->extension) {
+        //     if ($event->model->suspended) {
+        //         $event->model->extension->do_not_disturb = 'true';
+        //         $event->model->extension->directory_visible = 'false';
+        //         $event->model->extension->directory_exten_visible = 'false';
+        //     } else {
+        //         $event->model->extension->do_not_disturb = 'false';
+        //         $event->model->extension->directory_visible = 'true';
+        //         $event->model->extension->directory_exten_visible = 'true';
+        //     }
+        //     logger($event->model);
+        //     $event->model->extension->save();
+        // } 
+
+        CauserResolver::setCauser($event->user);
+
+        // Set the runtime domain_uuid for the ActivityLog
+        Activity::setRuntimeDomainUuid($event->model->domain_uuid);
+
+        if ($event->model) {
             if ($event->model->suspended) {
-                $event->model->extension->do_not_disturb = 'true';
-                $event->model->extension->directory_visible = 'false';
-                $event->model->extension->directory_exten_visible = 'false';
+                $event->model->do_not_disturb = 'true';
+                $event->model->directory_visible = 'false';
+                $event->model->directory_exten_visible = 'false';
             } else {
-                $event->model->extension->do_not_disturb = 'false';
-                $event->model->extension->directory_visible = 'true';
-                $event->model->extension->directory_exten_visible = 'true';
+                $event->model->do_not_disturb = 'false';
+                $event->model->directory_visible = 'true';
+                $event->model->directory_exten_visible = 'true';
             }
-            $event->model->extension->save();
-        } 
+            // logger($event->model);
+            $event->model->save();
+        }
+
+        // Clear the runtime domain_uuid to avoid conflicts
+        Activity::clearRuntimeDomainUuid();
 
         // Disable Vocemail if exists
-        if ($event->model->extension && $event->model->extension->voicemail) {
+        if ($event->model->voicemail) {
             if ($event->model->suspended) {
-                $event->model->extension->voicemail->voicemail_enabled = 'false';
+                $event->model->voicemail->voicemail_enabled = 'false';
             } else {
-                $event->model->extension->voicemail->voicemail_enabled = 'true';
+                $event->model->voicemail->voicemail_enabled = 'true';
             }
-            $event->model->extension->voicemail->save();
+            $event->model->voicemail->save();
         } 
 
 

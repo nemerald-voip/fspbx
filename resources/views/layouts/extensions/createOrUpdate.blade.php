@@ -324,6 +324,10 @@
                                                                 @if (!userCheckPermission('extension_suspended')) disabled @endif
                                                                 data-switch="warning"/>
                                                                 <label for="suspended-switch" data-on-label="On" data-off-label="Off"></label>
+
+                                                                @if (!userCheckPermission('extension_suspended'))
+                                                                    <input type="hidden" name="suspended" value="{{ $extension->suspended ? 'on' : 'false' }}">
+                                                                @endif
                                                             </div>
                                                         </div>
                                                     </div> <!-- end row -->

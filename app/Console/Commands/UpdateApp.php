@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Services\GitHubApiService;
 use Symfony\Component\Process\Process;
+use App\Console\Commands\Updates\Update097;
 
 
 class UpdateApp extends Command
@@ -22,12 +24,55 @@ class UpdateApp extends Command
      */
     protected $description = 'Apply recent updates';
 
+    protected $githubApiService;
+
+
+    public function __construct(GitHubApiService $githubApiService)
+    {
+        parent::__construct();
+        $this->githubApiService = $githubApiService;
+    }
+
     /**
      * Execute the console command.
      */
     public function handle()
     {
         $this->info('Starting update...');
+
+        $this->runArtisanCommand('config:cache');
+        $currentVersion = config('app.version');
+        $downloadedVersion = config('version.release');
+
+        // Define version-specific steps using an array
+        $updateSteps = [
+            '0.9.7' => Update097::class,
+            '0.9.11' => Update097::class,
+            // Add more versions as needed
+        ];
+
+        foreach ($updateSteps as $version => $updateClass) {
+            if (version_compare($currentVersion, $version, '<')) {
+                $this->info("Applying update steps for version $version...");
+                // Create instance of the class and call the apply() method
+                $updateInstance = new $updateClass();
+                if (!$updateInstance->apply()) {
+                    // If the update fails, stop further updates and exit with failure
+                    $this->error("Update to version $version failed. Stopping further updates.");
+                    exit(1);
+                }
+
+                // If the update is successful, call the version:set command
+                $this->call('version:set', ['version' => $version]);
+                $this->info("Version successfully updated to $version.");
+            }
+        }
+
+        if (version_compare($currentVersion, $downloadedVersion, '<')) {
+            // Call version:set to update the version to the latest one, even if no steps were needed
+            $this->call('version:set', ['version' => $downloadedVersion]);
+            $this->info("Version successfully updated to $downloadedVersion.");
+        }
 
         // Composer install
         $this->executeCommand('composer install --no-interaction --ignore-platform-reqs');
@@ -56,7 +101,6 @@ class UpdateApp extends Command
         $this->changeDirectoryOwnership($currentDirectory);
 
         $this->info('Update completed successfully!');
-
     }
 
 
@@ -109,5 +153,4 @@ class UpdateApp extends Command
         // Execute the chown command
         $this->executeCommand("chown -R www-data:www-data $directory");
     }
-
 }

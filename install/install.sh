@@ -454,6 +454,15 @@ else
     exit 1
 fi
 
+# Download and replace the functions.php file
+sudo curl -o /var/www/fspbx/public/resources/functions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/functions.php
+if [ $? -eq 0 ]; then
+    print_success "functions.php file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing functions.php file."
+    exit 1
+fi
+
 # Download and replace the permissions.php file
 sudo curl -o /var/www/fspbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
 if [ $? -eq 0 ]; then
@@ -509,6 +518,14 @@ else
     exit 1
 fi
 
+# Set /var/www/fspbx as a safe directory for Git
+sudo -u www-data git config --global --add safe.directory /var/www/fspbx
+if [ $? -eq 0 ]; then
+    print_success "/var/www/fspbx added to Git's safe.directory list."
+else
+    print_error "Error occurred while adding /var/www/fspbx to Git's safe.directory list."
+    exit 1
+fi
 
 # Update settings for email_queue service
 sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service
@@ -771,7 +788,7 @@ echo ""
 # Congratulations message
 echo "=============================================================="
 echo "Congratulations! FS PBX has been installed successfully."
-echo "You can now access your PBX at http://your_server_ip or http://your_domain."
+echo "You can now access your PBX at https://your_server_ip or https://your_domain."
 echo "=============================================================="
 
 

@@ -237,4 +237,8 @@ return [
 
     ],
 
+    // Set deafault app version
+    'version' => env('VERSION', '0.9.0'),  
+
+
 ];

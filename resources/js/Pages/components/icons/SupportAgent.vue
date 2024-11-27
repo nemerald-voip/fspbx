@@ -6,7 +6,7 @@
 
 <script>
 export default {
-    name: 'FaxIcon',
+    name: 'SupportAgent',
 };
 </script>
   
