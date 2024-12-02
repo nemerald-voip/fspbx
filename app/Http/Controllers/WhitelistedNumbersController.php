@@ -14,7 +14,7 @@ class WhitelistedNumbersController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'WhitelistedNumbers';
-    protected $searchable = ['number'];
+    protected $searchable = ['number', 'description'];
 
     public function __construct()
     {
@@ -110,25 +110,19 @@ class WhitelistedNumbersController extends Controller
     }
 
     /**
-     * @param $collection
+     * @param $query
      * @param $value
      * @return void
      */
-    protected function filterSearch($collection, $value)
+    protected function filterSearch($query, $value)
     {
         $searchable = $this->searchable;
-
         // Case-insensitive partial string search in the specified fields
-        $collection = $collection->filter(function ($item) use ($value, $searchable) {
+        $query->where(function ($query) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                if (stripos($item[$field], $value) !== false) {
-                    return true;
-                }
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
             }
-            return false;
         });
-
-        return $collection;
     }
 
     public function destroy(WhitelistedNumbers $whitelisted_number)
