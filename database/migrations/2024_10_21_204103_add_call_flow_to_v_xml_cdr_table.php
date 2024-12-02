@@ -25,10 +25,10 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('v_xml_cdr', function (Blueprint $table) {
-            if (Schema::hasColumn('v_xml_cdr', 'call_flow')) {
-                $table->dropColumn('call_flow');
-            }
-        });
+        // Schema::table('v_xml_cdr', function (Blueprint $table) {
+        //     if (Schema::hasColumn('v_xml_cdr', 'call_flow')) {
+        //         $table->dropColumn('call_flow');
+        //     }
+        // });
     }
 };

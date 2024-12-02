@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Http\JsonResponse;
 use App\Models\WhitelistedNumbers;
-use Illuminate\Support\Facades\DB;
-use Symfony\Component\Process\Process;
 use App\Http\Requests\StoreWhitelistNumberRequest;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class WhitelistedNumbersController extends Controller
 {
@@ -42,8 +39,8 @@ class WhitelistedNumbersController extends Controller
                 'routes' => [
                     'current_page' => route('whitelisted-numbers.index'),
                     'store' => route('whitelisted-numbers.store'),
-                    'select_all' => route('firewall.select.all'),
-                    // 'bulk_delete' => route('messages.bulk.delete'),
+                    'select_all' => route('whitelisted-numbers.select.all'),
+                    'bulk_delete' => route('whitelisted-numbers.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
                     // 'retry' => route('messages.retry'),
                 ]
@@ -93,6 +90,7 @@ class WhitelistedNumbersController extends Controller
             'uuid',
             'domain_uuid',
             'number',
+            'description',
             'created_at'
 
         );
@@ -181,36 +179,6 @@ class WhitelistedNumbersController extends Controller
         }
     }
 
-    /**
-     * Ensure that the specified chain exists, and create it if it doesn't.
-     *
-     * @param string $chain
-     * @return void
-     */
-    protected function ensureChainExists($chain)
-    {
-        // Check if the chain already exists
-        $checkChainProcess = new Process(['sudo', 'iptables', '-L', $chain]);
-        $checkChainProcess->run();
-
-        // If the chain does not exist, create it
-        if (!$checkChainProcess->isSuccessful()) {
-            $createChainProcess = new Process(['sudo', 'iptables', '-N', $chain]);
-            $createChainProcess->run();
-
-            if (!$createChainProcess->isSuccessful()) {
-                throw new ProcessFailedException($createChainProcess);
-            }
-
-            // Insert the chain into the INPUT chain to ensure it's processed
-            $insertChainProcess = new Process(['sudo', 'iptables', '-I', 'INPUT', '-j', $chain]);
-            $insertChainProcess->run();
-
-            if (!$insertChainProcess->isSuccessful()) {
-                throw new ProcessFailedException($insertChainProcess);
-            }
-        }
-    }
 
     /**
      * Get all items
@@ -220,37 +188,14 @@ class WhitelistedNumbersController extends Controller
     public function selectAll()
     {
         try {
-            $ips = [];
 
-            // Get the full iptables output including all chains
-            $process = new Process(['sudo', 'iptables', '-L', '-n']);
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                throw new ProcessFailedException($process);
-            }
-
-            $output = $process->getOutput();
-            $lines = explode("\n", $output);
-
-            foreach ($lines as $line) {
-                // Check if the line contains a DROP or REJECT action
-                if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                    // Extract the source IP address (typically the 4th or 5th column)
-                    $parts = preg_split('/\s+/', $line);
-                    if (isset($parts[3]) && filter_var($parts[3], FILTER_VALIDATE_IP)) {
-                        $ips[] = $parts[3];
-                    }
-                }
-            }
-
-            // Ensure uniqueness in case an IP is blocked in multiple chains
-            $ips = array_unique($ips);
+            $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => $ips,
+                'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
@@ -265,5 +210,52 @@ class WhitelistedNumbersController extends Controller
             'success' => false,
             'errors' => ['server' => ['Failed to select all items']]
         ], 500); // 500 Internal Server Error for any other errors
+    }
+
+
+    /**
+     * Remove the specified resources from storage.
+     *
+     * 
+     */
+    public function BulkDelete()
+    {
+        try {
+            // Ensure 'items' parameter exists in the request
+            $items = request('items');
+
+            if (!is_array($items) || empty($items)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['No items provided for deletion.']]
+                ], 422); // 422 Unprocessable Entity
+            }
+
+            // Perform the bulk deletion
+            $deletedCount = $this->model::whereIn('uuid', $items)
+                ->where('domain_uuid', session('domain_uuid'))
+                ->delete();
+
+            if ($deletedCount === 0) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['No items were deleted.']]
+                ], 404); // 404 Not Found
+            }
+
+            return response()->json([
+                'success' => true,
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'deleted_count' => $deletedCount,
+            ], 200);
+        } catch (\Exception $e) {
+
+            // Log the error message
+            logger($e->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 }

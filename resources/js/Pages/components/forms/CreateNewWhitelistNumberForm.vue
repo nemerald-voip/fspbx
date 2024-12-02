@@ -13,6 +13,18 @@
                 </div>
             </div>
 
+            <div class="sm:col-span-12">
+                <LabelInputOptional :target="'description'" :label="'Description'" />
+                <div class="">
+                    <InputField v-model="form.description" type="text" name="description"
+                        placeholder="Enter description"
+                        :error="errors?.description && errors.description.length > 0" />
+                </div>
+                <div v-if="errors?.description" class="mt-2 text-sm text-red-600">
+                    {{ errors.description[0] }}
+                </div>
+            </div>
+
 
 
 
@@ -42,6 +54,7 @@ import { usePage } from '@inertiajs/vue3';
 
 import InputField from "../general/InputField.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
