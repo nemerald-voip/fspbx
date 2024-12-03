@@ -7,13 +7,13 @@
             <div class="mx-auto max-w-8xl px-4 py-10 sm:px-6 lg:px-8">
                 <div
                     class="mx-auto grid max-w-2xl grid-cols-1 grid-rows-1 items-start gap-x-8 gap-y-8 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:pb-36">
-                    <!-- Company summary -->
+                    <!-- Account summary -->
                     <div class="lg:col-start-3 lg:row-end-1">
                         <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-900/5">
 
                             <dl class="flex flex-wrap">
                                 <div class="flex-auto pl-6 py-6 truncate border-b border-gray-900/5">
-                                    <dt class="text-sm  leading-6 text-gray-600">Company name</dt>
+                                    <dt class="text-sm  leading-6 text-gray-600">Account name</dt>
                                     <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">{{
                                         company_data.company_name }}</div>
                                 </div>
