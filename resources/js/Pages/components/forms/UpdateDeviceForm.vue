@@ -174,7 +174,7 @@
             <div v-if="activeTab === 'provisioning'">
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div>
+                        <div v-if="isProvisioningAllowed">
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
                             <Toggle :target="'enable_provisioning'" :label="'Provision this device'"
                                     description="Activate this setting if you want to provision this device with cloud provider immediately."
@@ -185,6 +185,9 @@
                                 <span class="text-emerald-600" v-if="isCloudProvisioned.status">Device is provisioned</span>
                             </div>
                             <div v-if="isCloudProvisioned.error">Error: {{isCloudProvisioned.error}}</div>
+                        </div>
+                        <div v-else>
+                            <div class="text-center">Cloud provisioning is not supported for this device</div>
                         </div>
                     </div>
                 </div>
@@ -317,7 +320,7 @@ const isCloudProvisioned = ref({
     error: null,
     message: null
 });
-
+const isProvisioningAllowed = ref(false);
 const isLineAdvSettingsModalShown = ref(false);
 
 // Initialize activeTab with the currently active tab from props
@@ -328,6 +331,7 @@ const submitForm = () => {
 }
 
 const handleTemplateUpdate = (newSelectedItem) => {
+    isProvisioningAllowed.value = form.device_provisioning = newSelectedItem.value.toLowerCase().includes('poly') || newSelectedItem.value.toLowerCase().includes('polycom')
     form.device_template = newSelectedItem.value
 }
 
@@ -404,6 +408,7 @@ const handleSipTransportUpdate = (newSelectedItem, index) => {
 };
 
 onMounted(() => {
+    isProvisioningAllowed.value = form.device_template.toLowerCase().includes('poly') || form.device_template.toLowerCase().includes('polycom')
     fetchProvisioningStatus();
 });
 

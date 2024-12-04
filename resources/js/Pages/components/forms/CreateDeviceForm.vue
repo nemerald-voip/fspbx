@@ -36,7 +36,7 @@
                     <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
                         <LabelInputRequired :target="'template'" :label="'Device Template'" />
                         <div class="mt-2">
-                            <ComboBox :options="options.templates" :selectedItem="null" :search="true"
+                            <ComboBox :options="options.templates" :selectedItem="form.device_template" :search="true"
                                 :placeholder="'Choose template'" @update:model-value="handleTemplateUpdate"
                                 :error="errors?.device_template && errors.device_template.length > 0" />
                         </div>
@@ -148,11 +148,14 @@
             <div v-if="activeTab === 'provisioning'">
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div>
+                        <div v-if="isProvisioningAllowed">
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
                             <Toggle :target="'enable_provisioning'" :label="'Provision this device'"
                                     description="Activate this setting if you want to provision this device with cloud provider immediately."
                                     v-model="form.device_provisioning" customClass="py-4" />
+                        </div>
+                        <div v-else>
+                            <div class="text-center">Cloud provisioning is not supported for this device</div>
                         </div>
                     </div>
                 </div>
@@ -206,6 +209,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
+const isProvisioningAllowed = ref(false);
 const emits = defineEmits(['submit', 'cancel']);
 
 // Initialize activeTab with the currently active tab from props
@@ -217,6 +221,7 @@ const submitForm = () => {
 }
 
 const handleTemplateUpdate = (newSelectedItem) => {
+    isProvisioningAllowed.value = form.device_provisioning = newSelectedItem.value.toLowerCase().includes('poly') || newSelectedItem.value.toLowerCase().includes('polycom')
     form.device_template = newSelectedItem.value
 }
 
