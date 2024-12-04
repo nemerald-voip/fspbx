@@ -215,7 +215,6 @@
                 :options="itemOptions"
                 :errors="formErrors"
                 :is-submitting="createFormSubmiting"
-                @provision-option-changed="provisionOptionChanged"
                 @submit="handleCreateRequest"
                 @cancel="handleModalClose"
             />
@@ -229,7 +228,6 @@
                 :options="itemOptions"
                 :errors="formErrors"
                 :is-submitting="updateFormSubmiting"
-                @provision-option-changed="provisionOptionChanged"
                 @submit="handleUpdateRequest"
                 @cancel="handleModalClose"
                 @domain-selected="getItemOptions"
@@ -258,7 +256,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+import {computed, onMounted, onBeforeUnmount, ref, watch} from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -353,20 +351,26 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-function provisionOptionChanged(deviceUuid, status) {
-    deviceProvisionStatus.value[deviceUuid] = status;
-}
-
 onMounted(() => {
-    console.log('On mount')
+    //console.log('On mount')
     handleUpdateCloudProvisioningStatuses();
     //deviceProvisionStatusCheckInterval.value = setInterval(checkForProcessingStatus, 5000);
 });
 
-onBeforeUnmount(() => {
+/*
+watch(
+    () => , // The property to watch
+    (newValue, oldValue) => { // Callback when value changes
+        if (newValue !== oldValue) {
+            emits('provision-option-changed', props.item.device_uuid, 'processing')
+        }
+    }
+);*/
+
+//onBeforeUnmount(() => {
     // Clear the interval when the component is about to be unmounted to prevent memory leaks
     //clearInterval(deviceProvisionStatusCheckInterval.value);
-});
+//});
 
 const handleUpdateCloudProvisioningStatuses = () => {
     const deviceUuids = props.data.data.map(device => device.device_uuid);
@@ -638,7 +642,6 @@ const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
-    console.log('Filter reset clicked')
     handleUpdateCloudProvisioningStatuses();
 }
 
@@ -745,7 +748,7 @@ const handleModalClose = () => {
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
-    //handleUpdateCloudProvisioningStatuses();
+    handleUpdateCloudProvisioningStatuses();
     //setTimeout(() => handleUpdateCloudProvisioningStatuses(), 5000);
 }
 

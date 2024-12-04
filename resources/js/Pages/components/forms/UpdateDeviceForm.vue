@@ -272,9 +272,8 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, watch } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3';
-
 
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
@@ -286,7 +285,6 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
-//import Loading from "../general/Loading.vue";
 import axios from "axios";
 import Toggle from "../general/Toggle.vue";
 
@@ -311,7 +309,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'domain-selected', 'provision-option-changed']);
+const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
 
 const isCloudProvisioned = ref({
     isLoading: false,
@@ -319,15 +317,6 @@ const isCloudProvisioned = ref({
     error: null,
     message: null
 });
-
-watch(
-    () => form.device_provisioning, // The property to watch
-    (newValue, oldValue) => { // Callback when value changes
-        if (newValue !== oldValue) {
-            emits('provision-option-changed', props.item.device_uuid, 'processing')
-        }
-    }
-);
 
 const isLineAdvSettingsModalShown = ref(false);
 
@@ -413,58 +402,7 @@ const handleModalClose = () => {
 const handleSipTransportUpdate = (newSelectedItem, index) => {
     form.lines[index].sip_transport = newSelectedItem.value;
 };
-/*
-const handleRegister = () => {
-    isCloudProvisioned.value.isUpdating = true;
-    axios.post(page.props.routes.cloud_provisioning_register, {
-        'items': [props.item.device_uuid]
-    })
-        .then(response => {
-            const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
-            if (device) {
-                if(device.provisioned) {
-                    isCloudProvisioned.value.status = true;
-                    isCloudProvisioned.value.error = null;
-                } else {
-                    isCloudProvisioned.value.status = false;
-                    isCloudProvisioned.value.error = device.error;
-                }
-            } else {
-                isCloudProvisioned.value.status = false;
-                isCloudProvisioned.value.error = 'Not found';
-            }
-            isCloudProvisioned.value.isUpdating = false;
-        })
-        .catch(error => {
-            // Handle any errors
-            console.error(error);
-        });
-}
 
-const handleDeregister = () => {
-    isCloudProvisioned.value.isUpdating = true;
-    axios.post(page.props.routes.cloud_provisioning_deregister, {
-        'items': [props.item.device_uuid]
-    })
-        .then(response => {
-            const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
-            if (device) {
-                if(device.error) {
-                    isCloudProvisioned.value.error = device.error;
-                }
-                isCloudProvisioned.value.status = false;
-            } else {
-                isCloudProvisioned.value.status = false;
-                isCloudProvisioned.value.error = 'Not found';
-            }
-            isCloudProvisioned.value.isUpdating = false;
-        })
-        .catch(error => {
-            // Handle any errors
-            console.error(error);
-        });
-}
-*/
 onMounted(() => {
     fetchProvisioningStatus();
 });
