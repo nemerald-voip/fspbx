@@ -44,7 +44,8 @@ import { computed } from 'vue';
 import {
     UsersIcon,
     UserGroupIcon,
-    CalendarDaysIcon
+    CalendarDaysIcon,
+    HeartIcon
 } from "@heroicons/vue/24/solid";
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import FaxIcon from "../icons/FaxIcon.vue"
@@ -79,6 +80,7 @@ const iconMap = {
     AlternativeRouteIcon: AlternativeRouteIcon,
     IvrIcon: IvrIcon,
     SupportAgent: SupportAgent,
+    HeartIcon: HeartIcon,
 }
 
 const styleMap = {
@@ -93,7 +95,8 @@ const styleMap = {
     DialpadIcon: { bgColor: 'bg-green-50', textColor: 'text-green-700', hoverTextColor: 'group-hover:text-green-900' },
     AlternativeRouteIcon: { bgColor: 'bg-cyan-50', textColor: 'text-cyan-700', hoverTextColor: 'group-hover:text-cyan-900' },
     IvrIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700', hoverTextColor: 'group-hover:text-blue-900' },
-    SupportAgent: { bgColor: 'bg-orange-50', textColor: 'text-orange-700', hoverTextColor: 'group-hover:text-orange-900' }
+    SupportAgent: { bgColor: 'bg-orange-50', textColor: 'text-orange-700', hoverTextColor: 'group-hover:text-orange-900' },
+    HeartIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700', hoverTextColor: 'group-hover:text-rose-900' }
 };
 
 // Computed property to get the correct icon component

@@ -96,6 +96,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'cloud_provisioning_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Whitelisted Numbers',
+                'permission_name'        => 'whitelisted_numbers_list_view',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -493,10 +498,10 @@ class DatabaseSeeder extends Seeder
                     'slug' => 'fspbx',
                 ],
             ];
-    
+
             foreach ($features as $feature) {
                 $existingFeature = ProFeatures::where('name', $feature['name'])->first();
-    
+
                 if (is_null($existingFeature)) {
                     ProFeatures::create([
                         'name' => $feature['name'],
@@ -508,7 +513,7 @@ class DatabaseSeeder extends Seeder
         } catch (\Exception $e) {
             logger("Error seeding ProFeatures");
         }
-       
+
     }
 
 

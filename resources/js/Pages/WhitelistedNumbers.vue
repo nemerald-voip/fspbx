@@ -45,6 +45,7 @@
                     <span class="pl-4">Number</span>
                 </TableColumnHeader>
 
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Created" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -82,6 +83,8 @@
                         </div>
                     </TableField>
 
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.description" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.created_at_formatted" />
@@ -196,9 +199,9 @@ const filterData = ref({
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_unblock',
-            label: 'Unblock',
-            icon: ''
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
         },
 
     ];
@@ -259,7 +262,7 @@ const executeSingleDelete = (url) => {
 }
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_unblock') {
+    if (action === 'bulk_delete') {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
@@ -267,7 +270,7 @@ const handleBulkActionRequest = (action) => {
 
 
 const executeBulkDelete = () => {
-    axios.post(props.routes.unblock, { items: selectedItems.value })
+    axios.post(props.routes.bulk_delete, { items: selectedItems.value })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -287,6 +290,7 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
+    console.log('here');
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
             selectedItems.value = response.data.items;
@@ -299,23 +303,6 @@ const handleSelectAll = () => {
         });
 
 };
-
-
-const handleUnblock = (message_uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [message_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
-
-
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -426,7 +413,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.ip);
+        selectedItems.value = props.data.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }

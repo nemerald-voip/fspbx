@@ -368,9 +368,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Whitelisted Numbers
     Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
-    // Route::post('firewall/unblock', [FirewallController::class, 'destroy'])->name('firewall.unblock');
-    // Route::post('/firewall/block', [FirewallController::class, 'store'])->name('firewall.block');
-    // Route::post('/firewall/select-all', [FirewallController::class, 'selectAll'])->name('firewall.select.all');
+    Route::post('/whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
+    Route::post('/whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
 
 
 
