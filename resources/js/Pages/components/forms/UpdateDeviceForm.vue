@@ -186,28 +186,6 @@
                             </div>
                             <div v-if="isCloudProvisioned.error">Error: {{isCloudProvisioned.error}}</div>
                         </div>
-                        <!--
-                        <div v-if="!isCloudProvisioned.isLoading">
-                            <div>Status:
-                                <span class="text-rose-600" v-if="!isCloudProvisioned.status">Device is not provisioned</span>
-                                <span class="text-emerald-600" v-if="isCloudProvisioned.status">Device is provisioned</span>
-                            </div>
-
-                            <div class="flex justify-center pt-4">
-                                <button v-if="!isCloudProvisioned.status" type="button" @click.prevent="handleRegister()"
-                                        class="inline-flex justify-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :disabled="isSubmitting">
-                                    <Spinner :show="isCloudProvisioned.isUpdating" />
-                                    Provision Device
-                                </button>
-                                <button v-if="isCloudProvisioned.status" type="button" @click.prevent="handleDeregister()"
-                                        class="inline-flex justify-center rounded-md bg-rose-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600" :disabled="isSubmitting">
-                                    <Spinner :show="isCloudProvisioned.isUpdating" />
-                                    Cancel Provisioning
-                                </button>
-                            </div>
-                        </div>
-                        <Loading :show="isCloudProvisioned.isLoading" :absolute="false" />
-                        -->
                     </div>
                 </div>
             </div>
@@ -294,7 +272,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, watch } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -308,7 +286,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
-import Loading from "../general/Loading.vue";
+//import Loading from "../general/Loading.vue";
 import axios from "axios";
 import Toggle from "../general/Toggle.vue";
 
@@ -333,7 +311,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
+const emits = defineEmits(['submit', 'cancel', 'domain-selected', 'provision-option-changed']);
 
 const isCloudProvisioned = ref({
     isLoading: false,
@@ -341,6 +319,15 @@ const isCloudProvisioned = ref({
     error: null,
     message: null
 });
+
+watch(
+    () => form.device_provisioning, // The property to watch
+    (newValue, oldValue) => { // Callback when value changes
+        if (newValue !== oldValue) {
+            emits('provision-option-changed', props.item.device_uuid, 'processing')
+        }
+    }
+);
 
 const isLineAdvSettingsModalShown = ref(false);
 
@@ -490,7 +477,7 @@ const fetchProvisioningStatus = () => {
         .then(response => {
             const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
             if (device) {
-                if (device.provisioned) {
+                if (device.status === 'provisioned') {
                     isCloudProvisioned.value.status = true;
                     isCloudProvisioned.value.error = null;
                     form.device_provisioning = true;

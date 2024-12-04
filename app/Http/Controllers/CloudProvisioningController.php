@@ -33,12 +33,23 @@ class CloudProvisioningController extends Controller
             $requestedItems = request('items');
             $items = $this->model::whereIn($this->model->getKeyName(), $requestedItems)->get();
             $supportedProviders = [];
+            $localStatuses = [];
 
             // Group devices by their providers
             foreach ($items as $item) {
+                /** @var Devices $item */
                 if ($item->hasSupportedCloudProvider()) {
                     $provider = get_class($item->getCloudProvider());
-                    $supportedProviders[$provider][] = $item->device_address; // Assuming device_address is the id
+                    $supportedProviders[$provider][] = $item->device_address;
+                    $localStatus = $item->cloudProvisioningStatus()->first();
+                    if($localStatus) {
+                        $localStatuses[$provider][$item->device_address] = [
+                            'status' => $localStatus->status,
+                            'error' => $localStatus->error
+                        ];
+                    } else {
+                        $localStatuses[$provider][$item->device_address] = null;
+                    }
                 }
             }
 
@@ -53,16 +64,23 @@ class CloudProvisioningController extends Controller
                     $cloudDevicesData = $providerInstance->listDevices($ids);
 
                     foreach ($items as $item) {
-                        $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null; // Assuming device_address is the id
+                        $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
                         $provisioned = $cloudDeviceData && !empty($cloudDeviceData['profileid']);
-                        $error = $cloudDeviceData ? null : 'Device not found';
-
-                        $devicesData[] = [
-                            'device_uuid' => $item->device_uuid,
-                            'provisioned' => $provisioned,
-                            'error' => $error,
-                            'data' => $cloudDeviceData
-                        ];
+                        if($provisioned) {
+                            $devicesData[] = [
+                                'device_uuid' => $item->device_uuid,
+                                'status' => 'provisioned',
+                                'error' => null,
+                                'data' => $cloudDeviceData
+                            ];
+                        } else {
+                            $devicesData[] = [
+                                'device_uuid' => $item->device_uuid,
+                                'status' => $localStatuses[$providerClass][$item->device_address]['status'] ?? 'not_provisioned',
+                                'error' => $localStatuses[$providerClass][$item->device_address]['error'] ?? null,
+                                'data' => $cloudDeviceData
+                            ];
+                        }
                     }
                 } catch (\Exception $e) {
                     logger($e);
@@ -71,8 +89,8 @@ class CloudProvisioningController extends Controller
                         $matchedItem = $items->firstWhere('device_address', $id);
                         $devicesData[] = [
                             'device_uuid' => $matchedItem ? $matchedItem->device_uuid : null,
-                            'provisioned' => false,
-                            'error' => $e->getMessage(),
+                            'status' => false,
+                            'error' => null, //$e->getMessage(),
                             'data' => null,
                         ];
                     }

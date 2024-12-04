@@ -81,7 +81,7 @@
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != data.total"
+                        <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
@@ -131,15 +131,16 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.lines[0]?.extension?.name_formatted" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ejs-tooltip :content="deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'Provisioned' : 'Not provisioned'" position='BottomLeft'
+                        <ejs-tooltip :content="deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'Provisioned' : deviceProvisionStatus[row.device_uuid] === 'pending' ? 'Pending': deviceProvisionStatus[row.device_uuid] === 'error' ? 'Error' : 'Not provisioned'" position='BottomLeft'
                                      target="#cloud_status_tooltip_target" >
                             <div id="cloud_status_tooltip_target">
                                 <CloudIcon
                                     :class="[
-                                    'h-9 w-9 py-2 rounded-full',
-                                    deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'text-green-600' : 'text-gray-300'
-                                    //deviceProvisionStatus[row.device_uuid] === 'error' ? 'text-red-600' : 'text-gray-400'
-                                  ]"
+                                        'h-9 w-9 py-2 rounded-full',
+                                        deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'text-green-600' :
+                                        deviceProvisionStatus[row.device_uuid] === 'error' ? 'text-red-600' :
+                                        deviceProvisionStatus[row.device_uuid] === 'pending' ? 'text-yellow-600' : 'text-gray-300'
+                                    ]"
                                 />
                             </div>
                         </ejs-tooltip>
@@ -210,16 +211,29 @@
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <CreateDeviceForm
+                :options="itemOptions"
+                :errors="formErrors"
+                :is-submitting="createFormSubmiting"
+                @provision-option-changed="provisionOptionChanged"
+                @submit="handleCreateRequest"
+                @cancel="handleModalClose"
+            />
         </template>
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
+            <UpdateDeviceForm
+                :item="itemData"
+                :options="itemOptions"
+                :errors="formErrors"
+                :is-submitting="updateFormSubmiting"
+                @provision-option-changed="provisionOptionChanged"
+                @submit="handleUpdateRequest"
+                @cancel="handleModalClose"
+                @domain-selected="getItemOptions"
+            />
         </template>
     </AddEditItemModal>
 
@@ -244,7 +258,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -293,6 +307,7 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const deviceProvisionStatus = ref({});
+//const deviceProvisionStatusCheckInterval = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
@@ -338,8 +353,19 @@ const bulkActions = computed(() => {
     return actions;
 });
 
+function provisionOptionChanged(deviceUuid, status) {
+    deviceProvisionStatus.value[deviceUuid] = status;
+}
+
 onMounted(() => {
+    console.log('On mount')
     handleUpdateCloudProvisioningStatuses();
+    //deviceProvisionStatusCheckInterval.value = setInterval(checkForProcessingStatus, 5000);
+});
+
+onBeforeUnmount(() => {
+    // Clear the interval when the component is about to be unmounted to prevent memory leaks
+    //clearInterval(deviceProvisionStatusCheckInterval.value);
 });
 
 const handleUpdateCloudProvisioningStatuses = () => {
@@ -348,7 +374,7 @@ const handleUpdateCloudProvisioningStatuses = () => {
         .then(response => {
             if (response.data.status) {
                 deviceProvisionStatus.value = response.data.devicesData.reduce((acc, device) => {
-                    acc[device.device_uuid] = device.provisioned ? 'provisioned' : device.error ? 'error' : 'not_provisioned';
+                    acc[device.device_uuid] = device.status;// ? 'provisioned' : device.error ? 'error' : 'not_provisioned';
                     return acc;
                 }, {});
             }
@@ -357,7 +383,15 @@ const handleUpdateCloudProvisioningStatuses = () => {
             console.warn('Failed to fetch cloud provisioning statuses:', error);
         });
 }
-
+/*
+const checkForProcessingStatus = () => {
+    if (Object.values(deviceProvisionStatus.value).some(status => status === 'processing')) {
+        handleUpdateCloudProvisioningStatuses();
+    } else {
+        clearInterval(deviceProvisionStatusCheckInterval);
+    }
+};
+*/
 const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
     formErrors.value = null;
@@ -594,6 +628,7 @@ const handleSearchButtonClick = () => {
         onSuccess: (page) => {
             loading.value = false;
             handleClearSelection();
+            console.log('Search clicked')
             handleUpdateCloudProvisioningStatuses();
         }
     });
@@ -603,6 +638,7 @@ const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
+    console.log('Filter reset clicked')
     handleUpdateCloudProvisioningStatuses();
 }
 
@@ -697,8 +733,6 @@ const handleSelectPageItems = () => {
     }
 };
 
-
-
 const handleClearSelection = () => {
     selectedItems.value = [],
         selectPageItems.value = false;
@@ -711,7 +745,8 @@ const handleModalClose = () => {
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
-    handleUpdateCloudProvisioningStatuses();
+    //handleUpdateCloudProvisioningStatuses();
+    //setTimeout(() => handleUpdateCloudProvisioningStatuses(), 5000);
 }
 
 const hideNotification = () => {

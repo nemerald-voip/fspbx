@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\Devices;
+use App\Services\Exceptions\ZtpProviderException;
 use App\Services\PolycomZtpProvider;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -123,10 +125,39 @@ class SendZtpRequest implements ShouldQueue
                 'polycom' => new PolycomZtpProvider()
             };
             try {
-                match ($this->action) {
-                    self::ACTION_CREATE => $cloudProvider->createDevice($this->deviceMacAddress, $this->organisationId),
-                    self::ACTION_DELETE => $cloudProvider->deleteDevice($this->deviceMacAddress)
-                };
+                /** @var Devices $device */
+                $device = Devices::where(['device_address' => $this->deviceMacAddress])->firstOrFail();
+                try {
+                    match ($this->action) {
+                        self::ACTION_CREATE => $cloudProvider->createDevice(
+                            $this->deviceMacAddress,
+                            $this->organisationId
+                        ),
+                        self::ACTION_DELETE => $cloudProvider->deleteDevice(
+                            $this->deviceMacAddress
+                        )
+                    };
+
+                    $device->cloudProvisioningStatus()->updateOrInsert([
+                        'device_uuid' => $device->device_uuid,
+                    ], [
+                        'provider' => $this->provider,
+                        'status' => ($this->action == self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
+                        'error' => ''
+                    ]);
+                } catch (ZtpProviderException $e) {
+                    logger($e);
+                    $response = json_decode($e->getMessage());
+                    //$device = Devices::find(['']);
+                    $device->cloudProvisioningStatus()->updateOrInsert([
+                        'device_uuid' => $device->device_uuid,
+                    ], [
+                        'provider' => $this->provider,
+                        'status' => 'error',
+                        'error' => $response->message
+                    ]);
+                }
+
             } catch (\Exception $e) {
                 logger($e);
                 // Delete job if we have issue in it

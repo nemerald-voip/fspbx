@@ -3,6 +3,7 @@
 namespace App\Services\Interfaces;
 
 interface ZtpProviderInterface {
+    public function getProviderName(): string;
     public function listDevices(array $addresses = [], int $limit = 50): array;
     public function getDevice(string $deviceId): array;
     public function createDevice(string $deviceId, string $orgId): array;

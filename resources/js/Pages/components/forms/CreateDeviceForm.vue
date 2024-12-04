@@ -172,7 +172,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import {reactive, ref, watch} from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -206,7 +206,16 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const emits = defineEmits(['submit', 'cancel', 'provision-option-changed']);
+
+watch(
+    () => form.device_provisioning, // The property to watch
+    (newValue, oldValue) => { // Callback when value changes
+        if (newValue !== oldValue) {
+            emits('provision-option-changed', props.item.device_uuid, 'processing')
+        }
+    }
+);
 
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);

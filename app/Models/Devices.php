@@ -140,11 +140,22 @@ class Devices extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
+    private function setProvisioningPending(): void {
+        $this->cloudProvisioningStatus()->updateOrInsert([
+            'device_uuid' => $this->device_uuid,
+        ], [
+            'provider' => $this->getCloudProvider()->getProviderName(),
+            'status' => 'pending'
+        ]);
+    }
+
     public function registerOnZtp(): void
     {
         try {
             // Check if the device has a supported cloud provider
             if ($this->hasSupportedCloudProvider()) {
+                // Set pending status
+                $this->setProvisioningPending();
                 // Send a request to create or update the new device address on ZTP
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_CREATE,
@@ -165,6 +176,8 @@ class Devices extends Model
         try {
             // Check if the device has a supported cloud provider
             if ($this->hasSupportedCloudProvider($deviceVendor)) {
+                // Set pending status
+                $this->setProvisioningPending();
                 // Send a request to delete the device from the ZTP system using the current device address
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_DELETE,
@@ -225,5 +238,10 @@ class Devices extends Model
         }
 
         return $orgId;
+    }
+
+    public function cloudProvisioningStatus(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(CloudProvisioningStatus::class, 'device_uuid', 'device_uuid');
     }
 }

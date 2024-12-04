@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Devices;
+use App\Services\Exceptions\ZtpProviderException;
 use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -11,6 +12,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
 {
     protected string $apiKey;
     protected string $baseUrl;
+    protected string $providerName = 'polycom';
 
     /**
      * ZTPApiService constructor.
@@ -20,6 +22,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $this->apiKey = config('services.ztp.polycom.api_key');
         $this->baseUrl = 'https://api.ztp.poly.com/preview';
+    }
+
+    public function getProviderName(): string
+    {
+        return $this->providerName;
     }
 
     /**
@@ -244,7 +251,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      *
      * @param  Response  $response
      * @return array
-     * @throws \Exception
+     * @throws ZtpProviderException
      */
     private function handleResponse(Response $response): array
     {
@@ -252,20 +259,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
             return (!empty($response->body())) ? json_decode($response->body(), true) : [];
         }
 
-        if ($response->clientError()) {
-            // Log client errors
-            logger('ZTP API Client Error: '.$response->body());
-            throw new \Exception('ZTP API Response: '.$response->json('message'));
-        }
-
-        if ($response->serverError()) {
-            // Log server errors
-            logger('ZTP API Server Error: '.$response->body());
-            throw new \Exception('The ZTP API is currently unavailable. Please try again later.');
+        if ($response->clientError() or $response->serverError()) {
+            throw new ZtpProviderException($response->body());
         }
 
         // Handle unexpected errors
-        logger($response);
-        throw new \Exception('An unexpected error occurred. Please try again.');
+        throw new ZtpProviderException($response);
     }
 }
