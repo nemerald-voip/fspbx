@@ -270,12 +270,6 @@ class DeviceController extends Controller
                 'device_description' => '',
             ]);
 
-            if($inputs['device_provisioning']) {
-                $instance->registerOnZtp();
-            } else {
-                $instance->deregisterOnZtp();
-            }
-
             // Save the new model instance to the database
             $instance->save();
 
@@ -322,6 +316,10 @@ class DeviceController extends Controller
 
             // Update the instance with the label
             $instance->save();
+
+            if($inputs['device_provisioning']) {
+                $instance->registerOnZtp();
+            }
 
             // Return a JSON response indicating success
             return response()->json([

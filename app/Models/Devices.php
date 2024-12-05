@@ -171,7 +171,7 @@ class Devices extends Model
         }
     }
 
-    public function deregisterOnZtp(string $deviceAddress = null, string $deviceVendor = null, $forceRemove = false): void
+    public function deregisterOnZtp(string $deviceAddress = null, string $deviceVendor = null, bool $forceRemove = false): void
     {
         try {
             // Check if the device has a supported cloud provider
