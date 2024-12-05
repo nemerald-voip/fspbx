@@ -78,6 +78,8 @@ class SendZtpRequest implements ShouldQueue
 
     private ?string $organisationId;
 
+    private bool $forceRemove;
+
     const ACTION_CREATE = 'createDevice';
     const ACTION_DELETE = 'deleteDevice';
 
@@ -88,18 +90,21 @@ class SendZtpRequest implements ShouldQueue
      * @param  string  $provider
      * @param  string  $deviceMacAddress
      * @param  ?string $organisationId
+     * @param  bool    $forceRemove
      * @return void
      */
     public function __construct(
         string $action,
         string $provider,
         string $deviceMacAddress,
-        string $organisationId = null
+        string $organisationId = null,
+        bool $forceRemove = false
     ) {
         $this->action = $action;
         $this->provider = $provider;
         $this->deviceMacAddress = $deviceMacAddress;
         $this->organisationId = $organisationId;
+        $this->forceRemove = $forceRemove;
     }
 
     /**
@@ -125,37 +130,48 @@ class SendZtpRequest implements ShouldQueue
                 'polycom' => new PolycomZtpProvider()
             };
             try {
-                /** @var Devices $device */
-                $device = Devices::where(['device_address' => $this->deviceMacAddress])->firstOrFail();
                 try {
-                    match ($this->action) {
-                        self::ACTION_CREATE => $cloudProvider->createDevice(
-                            $this->deviceMacAddress,
-                            $this->organisationId
-                        ),
-                        self::ACTION_DELETE => $cloudProvider->deleteDevice(
+                    $device = null;
+                    // In case a MacAddress was changed we have to force remove old device from ZTP to prevent duplications on ZTP side
+                    if($this->forceRemove) {
+                        $cloudProvider->deleteDevice(
                             $this->deviceMacAddress
-                        )
-                    };
+                        );
+                    } else {
+                        // Regular create/update flow
+                        /** @var Devices $device */
+                        $device = Devices::where(['device_address' => $this->deviceMacAddress])->firstOrFail();
 
-                    $device->cloudProvisioningStatus()->updateOrInsert([
-                        'device_uuid' => $device->device_uuid,
-                    ], [
-                        'provider' => $this->provider,
-                        'status' => ($this->action == self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
-                        'error' => ''
-                    ]);
+                        match ($this->action) {
+                            self::ACTION_CREATE => $cloudProvider->createDevice(
+                                $this->deviceMacAddress,
+                                $this->organisationId
+                            ),
+                            self::ACTION_DELETE => $cloudProvider->deleteDevice(
+                                $this->deviceMacAddress
+                            )
+                        };
+
+                        $device->cloudProvisioningStatus()->updateOrInsert([
+                            'device_uuid' => $device->device_uuid,
+                        ], [
+                            'provider' => $this->provider,
+                            'status' => ($this->action == self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
+                            'error' => ''
+                        ]);
+                    }
                 } catch (ZtpProviderException $e) {
                     logger($e);
                     $response = json_decode($e->getMessage());
-                    //$device = Devices::find(['']);
-                    $device->cloudProvisioningStatus()->updateOrInsert([
-                        'device_uuid' => $device->device_uuid,
-                    ], [
-                        'provider' => $this->provider,
-                        'status' => 'error',
-                        'error' => $response->message
-                    ]);
+                    if($device) {
+                        $device->cloudProvisioningStatus()->updateOrInsert([
+                            'device_uuid' => $device->device_uuid,
+                        ], [
+                            'provider' => $this->provider,
+                            'status' => 'error',
+                            'error' => $response->message
+                        ]);
+                    }
                 }
 
             } catch (\Exception $e) {

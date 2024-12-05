@@ -431,19 +431,19 @@ class DeviceController extends Controller
 
             $deviceAddressBeforeChange = null;
             $deviceVendorBeforeChange = null;
-            if ($inputs['device_provisioning']) {
+            //if ($inputs['device_provisioning']) {
                 if ($inputs['device_address'] != $device->device_address) {
                     $deviceAddressBeforeChange = $device->device_address;
                 }
                 if ($inputs['device_vendor'] != $device->device_vendor) {
                     $deviceVendorBeforeChange = $device->device_vendor;
                 }
-            }
+            //}
 
             $device->update($inputs);
 
             if ($deviceAddressBeforeChange || $deviceVendorBeforeChange) {
-                $device->deregisterOnZtp($deviceAddressBeforeChange, $deviceVendorBeforeChange);
+                $device->deregisterOnZtp($deviceAddressBeforeChange, $deviceVendorBeforeChange, true);
             }
 
             if ($inputs['device_provisioning']) {
