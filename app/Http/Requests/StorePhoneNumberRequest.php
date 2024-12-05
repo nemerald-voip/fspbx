@@ -153,7 +153,7 @@ class StorePhoneNumberRequest extends FormRequest
             ]);
         } catch (NumberParseException $e) {
             $this->merge([
-                'destination_number' => null
+                'destination_number' => $phone
             ]);
         }
 
