@@ -519,7 +519,7 @@ else
 fi
 
 # Set /var/www/fspbx as a safe directory for Git
-sudo -u www-data git config --global --add safe.directory /var/www/fspbx
+sudo git config --global --add safe.directory /var/www/fspbx
 if [ $? -eq 0 ]; then
     print_success "/var/www/fspbx added to Git's safe.directory list."
 else
