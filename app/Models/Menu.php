@@ -25,4 +25,10 @@ class Menu extends Model
     {
         return $this->hasMany(MenuItem::class, 'menu_uuid', 'menu_uuid');
     }
+
+    // Define the relationship to MenuItems
+    public function languages()
+    {
+        return $this->hasMany(MenuLanguage::class, 'menu_uuid', 'menu_uuid');
+    }
 }
