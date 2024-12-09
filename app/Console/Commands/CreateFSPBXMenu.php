@@ -9,7 +9,7 @@ use App\Models\MenuItem;
 use App\Models\MenuItemGroup;
 use App\Models\Groups;
 use App\Models\DefaultSettings;
-
+use App\Models\MenuLanguage;
 
 class CreateFSPBXMenu extends Command
 {
@@ -78,7 +78,7 @@ class CreateFSPBXMenu extends Command
                 'subcategories' => [
                     ['title' => 'Devices', 'link' => '/devices','groups' => ['superadmin', 'admin']],
                     ['title' => 'Extensions', 'link' => '/extensions', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Gateways', 'link' => '/accounts/gateways', 'groups' => ['superadmin']],
+                    ['title' => 'Gateways', 'link' => '/app/gateways/gateways.php', 'groups' => ['superadmin']],
                     ['title' => 'Users', 'link' => '/users', 'groups' => ['superadmin', 'admin']],
                 ],
             ],
@@ -100,11 +100,11 @@ class CreateFSPBXMenu extends Command
                 'subcategories' => [
                     ['title' => 'Bridges', 'link' => '/app/bridges/bridges.php', 'groups' => ['superadmin']],
                     ['title' => 'Call Block', 'link' => '/app/call_block/call_block.php', 'groups' => ['superadmin', 'admin', 'user']],
-                    ['title' => 'Call History', 'link' => '/call-history', 'groups' => ['superadmin', 'admin', 'user']],
+                    ['title' => 'Call History', 'link' => '/call-detail-records', 'groups' => ['superadmin', 'admin', 'user']],
                     ['title' => 'Call Flows', 'link' => '/app/call_flows/call_flows.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Conference Centers', 'link' => '/app/conference_centers/conference_centers.php', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Conference Controls', 'link' => '/app/conference_centers/conference_controls.php', 'groups' => ['superadmin']],
-                    ['title' => 'Conference Profiles', 'link' => '/app/conference_centers/conference_profiles.php', 'groups' => ['superadmin']],
+                    ['title' => 'Conference Controls', 'link' => '/app/conference_controls/conference_controls.php', 'groups' => ['superadmin']],
+                    ['title' => 'Conference Profiles', 'link' => '/app/conference_profiles/conference_profiles.php', 'groups' => ['superadmin']],
                     ['title' => 'Conferences', 'link' => '/app/conferences/conferences.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Faxes', 'link' => '/faxes', 'groups' => ['superadmin', 'admin', 'fax', 'user']],
                     ['title' => 'Auto Receptionists', 'link' => '/app/ivr_menus/ivr_menus.php', 'groups' => ['superadmin', 'admin']],
@@ -124,7 +124,7 @@ class CreateFSPBXMenu extends Command
                 'subcategories' => [
                     ['title' => 'Active Calls', 'link' => '/active-calls', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Active Conferences', 'link' => '/app/conferences_active/conferences_active.php', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Active Queues', 'link' => '/app/email_queue/email_queue.php', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Active Queues', 'link' => '/app/fifo_list/fifo_list.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Email Queue', 'link' => '/emailqueue', 'groups' => ['superadmin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
@@ -145,8 +145,8 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Default Settings', 'link' => '/core/default_settings/default_settings.php', 'groups' => ['superadmin']],
                     ['title' => 'Domains', 'link' => '/core/domains/domains.php', 'groups' => ['superadmin']],
                     ['title' => 'Email templates', 'link' => '/app/email_templates/email_templates.php', 'groups' => ['superadmin']],
-                    ['title' => 'Group Manager', 'link' => '/group-manager', 'groups' => ['superadmin']],
-                    ['title' => 'Menu Manager', 'link' => '/menu-manager', 'groups' => ['superadmin']],
+                    ['title' => 'Group Manager', 'link' => '/groups', 'groups' => ['superadmin']],
+                    ['title' => 'Menu Manager', 'link' => '/core/menu/menu.php', 'groups' => ['superadmin']],
                     ['title' => 'Modules', 'link' => '/app/modules/modules.php', 'groups' => ['superadmin']],
                     ['title' => 'SIP Profiles', 'link' => '/app/sip_profiles/sip_profiles.php', 'groups' => ['superadmin']],
                     ['title' => 'Transactions', 'link' => '/app/database_transactions/database_transactions.php', 'groups' => ['superadmin']],
@@ -204,10 +204,15 @@ class CreateFSPBXMenu extends Command
                 'menu_item_link' => $itemData['link'],
                 'menu_item_order' => $order,
                 'menu_item_parent_uuid' => $parentUuid,
+                'menu_item_category' => $itemData['category'] ?? 'internal',
+                'menu_item_protected' => $itemData['protected'] ?? 'false',
             ]);
 
             $this->info(" - Added menu item: {$menuItem->menu_item_title} with UUID: {$menuItem->menu_item_uuid}");
             $menuItemUuid = $menuItem->menu_item_uuid;
+
+            // Add to v_menu_languages
+            $this->addMenuLanguage($menu, $menuItem);
         }
 
         // Add permission groups
@@ -285,5 +290,35 @@ class CreateFSPBXMenu extends Command
 
         $this->info("Updated default menu UUID from '$oldValue' to '$newMenuUuid'.");
     }
+
+    /**
+     * Add a menu item to v_menu_languages.
+     *
+     * @param Menu $menu
+     * @param MenuItem $menuItem
+     */
+    private function addMenuLanguage(Menu $menu, MenuItem $menuItem)
+    {
+        $existingLanguage = MenuLanguage::where('menu_uuid', $menu->menu_uuid)
+            ->where('menu_item_uuid', $menuItem->menu_item_uuid)
+            ->where('menu_language', 'en-us')
+            ->first();
+
+        if ($existingLanguage) {
+            $this->warn("   - Language entry for '{$menuItem->menu_item_title}' already exists. Skipping.");
+            return;
+        }
+
+        MenuLanguage::create([
+            'menu_language_uuid' => Str::uuid(),
+            'menu_uuid' => $menu->menu_uuid,
+            'menu_item_uuid' => $menuItem->menu_item_uuid,
+            'menu_language' => 'en-us',
+            'menu_item_title' => $menuItem->menu_item_title,
+        ]);
+
+        $this->info("   - Added language entry for '{$menuItem->menu_item_title}'.");
+    }
+
 
 }
