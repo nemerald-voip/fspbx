@@ -37,4 +37,10 @@ class MenuItem extends Model
     {
         return $this->hasMany(MenuItem::class, 'menu_item_parent_uuid', 'menu_item_uuid');
     }
+
+    // Define the relationship to menu item groups
+    public function groups()
+    {
+        return $this->hasMany(MenuItemGroup::class, 'menu_item_uuid', 'menu_item_uuid');
+    }
 }
