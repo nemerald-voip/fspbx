@@ -160,7 +160,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" 
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" 
         :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" 
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
@@ -463,7 +463,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

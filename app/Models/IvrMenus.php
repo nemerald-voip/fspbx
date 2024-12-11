@@ -41,6 +41,11 @@ class IvrMenus extends Model
         $this->fill($attributes);
     }*/
 
+    public function options()
+    {
+        return $this->hasMany(IvrMenuOptions::class, 'ivr_menu_uuid', 'ivr_menu_uuid');
+    }
+
     public function getId()
     {
         return $this->ivr_menu_extension;
@@ -48,6 +53,6 @@ class IvrMenus extends Model
 
     public function getName()
     {
-        return $this->ivr_menu_extension.' - '.$this->ivr_menu_name;
+        return $this->ivr_menu_extension . ' - ' . $this->ivr_menu_name;
     }
 }

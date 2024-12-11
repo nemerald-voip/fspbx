@@ -14,6 +14,7 @@ use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreVoicemailRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 
@@ -477,12 +478,15 @@ class VirtualReceptionistController extends Controller
                 ],
             ];
 
-            // Only add the Greetings tab if item_uuid exists and insert it in the second position
+            $routingOptionsService = new CallRoutingOptionsService;
+            $routingTypes = $routingOptionsService->routingTypes;
+
+            // Only add the Keys tab if item_uuid exists and insert it in the second position
             if ($item_uuid) {
                 $greetingsTab = [
-                    'name' => 'Greetings',
-                    'icon' => 'MusicalNoteIcon',
-                    'slug' => 'greetings',
+                    'name' => 'Keys',
+                    'icon' => 'DialpadIcon',
+                    'slug' => 'keys',
                 ];
 
                 // Insert Greetings tab at the second position (index 1)
@@ -516,20 +520,21 @@ class VirtualReceptionistController extends Controller
 
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
-                // // Find existing voicemail by item_uuid
-                // $voicemail = $this->model::
-                // with([
-                //     'voicemail_destinations' => function ($query) {
-                //         $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
-                //     },
-                //     'greetings' => function ($query) use ($domain_uuid) {
-                //         $query->select('voicemail_id', 'greeting_id', 'greeting_name')
-                //             ->where('domain_uuid', $domain_uuid);
-                //     }
-                // ])->where('ivr_menu_uuid', $item_uuid)->first();
-
-                // Find existing voicemail by item_uuid
-                $ivr = $this->model::where('ivr_menu_uuid', $item_uuid)->first();
+                // Find existing ivr by item_uuid
+                $ivr = $this->model::
+                with([
+                    'options' => function ($query) {
+                        $query->select(
+                            'ivr_menu_option_uuid', 
+                            'ivr_menu_uuid', 
+                            'ivr_menu_option_digits',
+                            'ivr_menu_option_action',
+                            'ivr_menu_option_param',
+                            'ivr_menu_option_order',
+                            'ivr_menu_option_description'
+                        );
+                    },
+                ])->where('ivr_menu_uuid', $item_uuid)->first();
 
                 // If a voicemail exists, use it; otherwise, create a new one
                 if (!$ivr) {
@@ -623,6 +628,7 @@ class VirtualReceptionistController extends Controller
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
                 'routes' => $routes,
+                'routing_types' => $routingTypes,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 // Define options for other fields as needed

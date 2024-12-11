@@ -176,6 +176,29 @@
 
             </div>
 
+            <div v-if="activeTab === 'keys'">
+                <div class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
+                            <!-- <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
+                                Select a routing option below to fit your business needs.</p> -->
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                            <div class="sm:col-span-full space-y-3">
+                                <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
+                                <IvrOptions v-model="form.routing_options" :routingTypes="options.routing_types"
+                                    :selectedItems="form.routing_options" :maxRouteLimit="6"
+                                    :optionsUrl="options.routes.get_routing_options"
+                                    @update:model-value="handleDestinationActionsUpdate" />
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
                 <div class="shadow sm:rounded-md">
@@ -270,7 +293,9 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
-import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import DialpadIcon from "@icons/DialpadIcon.vue"
+import IvrOptions from "../general/IvrOptions.vue";
 
 
 
@@ -308,7 +333,7 @@ const toggleGreetingForm = () => {
 // Map icon names to their respective components
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
-    'MusicalNoteIcon': MusicalNoteIcon,
+    'DialpadIcon': DialpadIcon,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
 };
 
@@ -331,23 +356,19 @@ const form = reactive({
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     update_route: props.options.routes.update_route,
     apply_greeting_route: props.options.routes.apply_greeting_route,
+    options: props.options.ivr.options,
     _token: page.props.csrf_token,
 })
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
 const submitForm = () => {
-    // Normalize voicemail_copies to an array of values
-    // form.voicemail_copies = form.voicemail_copies.map(item => {
-    //     // If it's an object, return the 'value', otherwise, return the item itself
-    //     return typeof item === 'object' ? item.value : item;
-    // });
-
     emits('submit', form); // Emit the event with the form data
 }
 
-const handleUpdateCopyToField = (voicemails) => {
-    form.voicemail_copies = voicemails.map(voicemail => voicemail.value);
+
+const handleDestinationActionsUpdate = (newSelectedItem) => {
+    form.destination_actions = newSelectedItem;
 }
 
 const handleUpdateGreetingField = (greeting) => {
