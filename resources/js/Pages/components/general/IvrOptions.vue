@@ -1,22 +1,25 @@
 <template>
     <div class="grid grid-cols-12 gap-6">
-        <template v-for="(option, index) in routingOptions" :key="index">
+        <template v-for="(option, index) in keys" :key="index">
             <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
-                {{ index + 1 }}
+                <!-- {{ index + 1 }} -->
+                <InputField v-model="form.ivr_menu_name" type="text" name="ivr_menu_name" id="ivr_menu_name" class="mt-2"
+                    :error="!!errors?.ivr_menu_name" />
             </div>
 
             <div class="col-span-10 flex flex-col sm:flex-row gap-x-2 gap-y-1 justify-between flex-auto">
                 <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
                     <ComboBox :options="routingTypes" :search="true" :placeholder="'Choose type'"
-                        :selectedItem="routingOptions[index].type"
+                        :selectedItem="keys[index].type"
                         @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
                 </div>
 
-                <div v-if="routingOptions[index].typeOptions" 
+                <div v-if="keys[index].typeOptions"
                     class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
-                    <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="routingOptions[index].option"
-                        :search="true" :placeholder="'Choose option'"   :key="routingOptions[index].typeOptions.length + routingOptions[index].option" 
-                        @update:model-value="(value) => updateRoutingOptions(value, index)" />
+                    <ComboBox :options="keys[index].typeOptions" :selectedItem="keys[index].option"
+                        :search="true" :placeholder="'Choose option'"
+                        :key="keys[index].typeOptions.length + keys[index].option"
+                        @update:model-value="(value) => updatekeys(value, index)" />
                 </div>
 
             </div>
@@ -55,12 +58,11 @@
 
         </template>
 
-        <div v-if="routingOptions.length < maxRouteLimit"
-            class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+        <div class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
             <button href="#" @click.prevent="addRoutingOption" class="flex items-center gap-2">
                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
                 <span>
-                    Add new routing option
+                    Add new key
                 </span>
             </button>
         </div>
@@ -68,30 +70,37 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { PlusIcon } from "@heroicons/vue/24/solid";
 import ComboBox from "../general/ComboBox.vue";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
-
+import InputField from "../general/InputField.vue";
 
 
 const props = defineProps({
+    modelValue: [Object, null],
     routingTypes: [Object, null],
-    selectedItems: [Array, Object, null],
-    maxRouteLimit: { type: Number, default: 1 },
+    // selectedItems: [Array, Object, null],
     optionsUrl: String,
 });
 
 const emit = defineEmits(['update:model-value'])
 
+// Create a local reactive copy of the modelValue
+const keys = ref([...props.modelValue]);
 
-const routingOptions = ref([]);
+console.log(keys.value);
 
-// Initialize routingOptions and fetch typeOptions
+// Watch for changes to the modelValue from the parent and update local state
+watch(() => props.modelValue, (newVal) => {
+    keys.value = [...newVal];
+});
+
+// Initialize keys and fetch typeOptions
 if (props.selectedItems) {
     props.selectedItems.forEach((item, index) => {
-        routingOptions.value.push({
+        keys.value.push({
             type: item.type || null,
             typeOptions: [],  // Initially empty
             option: item.option || null,
@@ -109,86 +118,98 @@ if (props.selectedItems) {
 // Fetch new options for the selected type using Axios
 function fetchRoutingTypeOptions(newValue, index) {
 
-    routingOptions.value[index].type = newValue.value;
+    keys.value[index].type = newValue.value;
 
     // Reset the selected option when type changes
-    routingOptions.value[index].option = null;
+    keys.value[index].option = null;
 
     axios.post(props.optionsUrl, { 'category': newValue.value })
         .then((response) => {
             // console.log(response.data);
-            routingOptions.value[index].typeOptions = response.data.options;
-            // createFormSubmiting.value = false;
-            // showNotification('success', response.data.messages);
-            // handleSearchButtonClick();
-            // handleModalClose();
-            // handleClearSelection();
+            keys.value[index].typeOptions = response.data.options;
         }).catch((error) => {
-            // createFormSubmiting.value = false;
-            // handleClearSelection();
-            // handleFormErrorResponse(error);
-            routingOptions.value[index].typeOptions = null;
+            keys.value[index].typeOptions = null;
         });
 }
 
 function fetchTypeOptionsForItem(type, index) {
     axios.post(props.optionsUrl, { 'category': type })
         .then((response) => {
-            routingOptions.value[index].typeOptions = response.data.options;
+            keys.value[index].typeOptions = response.data.options;
 
             // Automatically set the selected option if the option exists in the fetched options
-            const selectedOption = routingOptions.value[index].option;
+            const selectedOption = keys.value[index].option;
             if (selectedOption) {
                 const match = response.data.options.find(option => option.value === selectedOption);
                 if (match) {
-                    routingOptions.value[index].option = match.value;
+                    keys.value[index].option = match.value;
                 } else {
-                    routingOptions.value[index].option = null; // Reset if no match found
+                    keys.value[index].option = null; // Reset if no match found
                 }
             }
         }).catch(() => {
-            routingOptions.value[index].typeOptions = null;
-            routingOptions.value[index].option = null;  // Reset option in case of an error
+            keys.value[index].typeOptions = null;
+            keys.value[index].option = null;  // Reset option in case of an error
         });
 }
 
-// Update routingOptions and emit updated model value
-function updateRoutingOptions(newValue, index) {
-    routingOptions.value[index].option = newValue.value;
-    routingOptions.value[index].extension = newValue.extension;
+// Emit updates to the parent whenever routingOptions changes
+const updateParent = () => {
+    emit('update:modelValue', routingOptions.value);
+};
 
-    // Prepare the updated options
-    const updatedOptions = routingOptions.value.map(({ type, option, extension }) => {
-        return { type, option, extension };
-    });
-
-    emit('update:model-value', updatedOptions);
-}
-
-
-// Add a new routing option
+// Function to modify routing options
 const addRoutingOption = () => {
-    if (routingOptions.value.length < props.maxRouteLimit) {
-        routingOptions.value.push({
-            type: null,
-            typeOptions: [],
-            option: null,
-        });
-    }
+    routingOptions.value.push({ type: null, typeOptions: [], option: null });
+    updateParent(); // Notify the parent about the changes
 };
 
 const removeRoutingOption = (index) => {
-    // console.log(routingOptions.value);
     routingOptions.value.splice(index, 1);
+    updateParent();
+};
 
-    // Reassign the array to force Vue to track reactivity properly
-    routingOptions.value = [...routingOptions.value];
-    
-    const updatedOptions = routingOptions.value.map(({ type, option }) => {
-        return { type, option };
-    });
-    // console.log(updatedOptions);
-    emit('update:model-value', updatedOptions);
-}
+const updateRoutingOption = (value, index) => {
+    routingOptions.value[index] = value;
+    updateParent();
+};
+
+
+// // Update keys and emit updated model value
+// function updatekeys(newValue, index) {
+//     keys.value[index].option = newValue.value;
+//     keys.value[index].extension = newValue.extension;
+
+//     // Prepare the updated options
+//     const updatedOptions = keys.value.map(({ type, option, extension }) => {
+//         return { type, option, extension };
+//     });
+
+//     emit('update:model-value', updatedOptions);
+// }
+
+
+// // Add a new routing option
+// const addRoutingOption = () => {
+//     keys.value.push({
+//         type: null,
+//         typeOptions: [],
+//         option: null,
+//     });
+// };
+
+// const removeRoutingOption = (index) => {
+//     // console.log(keys.value);
+//     keys.value.splice(index, 1);
+
+//     // Reassign the array to force Vue to track reactivity properly
+//     keys.value = [...keys.value];
+
+//     const updatedOptions = keys.value.map(({ type, option }) => {
+//         return { type, option };
+//     });
+//     // console.log(updatedOptions);
+//     emit('update:model-value', updatedOptions);
+// }
 
 </script>

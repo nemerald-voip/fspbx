@@ -203,12 +203,12 @@ class CallRoutingOptionsService
                             // Use regex and the Dialplan database to determine the type and details
                             $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
                             break;
-        
+
                         case 'lua':
                             // Handle recordings
                             $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
                             break;
-        
+
                             // Add more cases as necessary
                     }
                 }
@@ -219,7 +219,44 @@ class CallRoutingOptionsService
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
         }
+    }
 
+    /**
+     * Reverse engineer IVR options based on the provided parameter.
+     *
+     * @param string $ivrAction A string containing the action details (e.g., "transfer 201 XML api.us.nemerald.net").
+     * @return array Reverse-engineered IVR option details.
+     */
+    public function reverseEngineerIVROption($ivrAction)
+    {
+        try {
+            // Split the string by spaces to extract details
+            $parts = explode(' ', $ivrAction);
+
+            if (count($parts) < 3) {
+                throw new \InvalidArgumentException("Invalid IVR action format");
+            }
+
+            // Extract relevant data
+            $actionType = $parts[0]; // e.g., "transfer"
+            $destination = $parts[1]; // e.g., "201"
+            $context = $parts[2]; // e.g., "XML"
+            $domain = $parts[3] ?? null; // e.g., "api.us.nemerald.net"
+
+            // Reverse engineer based on the action type
+            switch ($actionType) {
+                case 'transfer':
+                    return $this->reverseEngineerTransferAction("$destination $context $domain");
+
+                    // Add more cases for other IVR actions as needed
+
+                default:
+                    throw new \InvalidArgumentException("Unsupported IVR action type: $actionType");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
     }
 
     /**

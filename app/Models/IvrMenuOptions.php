@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\CallRoutingOptionsService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class IvrMenuOptions extends Model
 {
@@ -32,6 +33,29 @@ class IvrMenuOptions extends Model
         'ivr_menu_option_description',
         'ivr_menu_option_enabled'
     ];
+
+    /**
+     * The booted method of the model
+     *
+     * Define all attributes here like normal code
+
+     */
+    protected static function booted()
+    {
+        static::retrieved(function ($model) {
+            if (!empty($model->ivr_menu_option_param)) {
+
+                $callRoutingOptionsService = new CallRoutingOptionsService();
+
+                $model->key = $callRoutingOptionsService->reverseEngineerIVROption($model->ivr_menu_option_param);
+                logger('here');
+            }
+
+            logger($model->key);
+
+            return $model;
+        });
+    }
 
     // Define the relationship to the IvrMenus model
     public function ivrMenu()

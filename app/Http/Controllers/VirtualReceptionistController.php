@@ -86,7 +86,7 @@ class VirtualReceptionistController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
@@ -516,7 +516,9 @@ class VirtualReceptionistController extends Controller
             })->toArray();
 
 
-            $routes = [];
+            $routes = [
+                'get_routing_options' => route('routing.options'),
+            ];
 
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {

@@ -188,10 +188,8 @@
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <IvrOptions v-model="form.routing_options" :routingTypes="options.routing_types"
-                                    :selectedItems="form.routing_options" :maxRouteLimit="6"
-                                    :optionsUrl="options.routes.get_routing_options"
-                                    @update:model-value="handleDestinationActionsUpdate" />
+                                <IvrOptions v-model="form.options" :routingTypes="options.routing_types"
+                                    :optionsUrl="options.routes.get_routing_options"/>
                             </div>
 
 
