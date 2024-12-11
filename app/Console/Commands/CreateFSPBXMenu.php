@@ -141,6 +141,7 @@ class CreateFSPBXMenu extends Command
                 'link' => null,
                 'groups' => ['superadmin'],
                 'subcategories' => [
+                    ['title' => 'Mobile Apps', 'link' => '/apps', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Access Control', 'link' => '/app/access_controls/access_controls.php', 'groups' => ['superadmin']],
                     ['title' => 'Default Settings', 'link' => '/core/default_settings/default_settings.php', 'groups' => ['superadmin']],
                     ['title' => 'Domains', 'link' => '/core/domains/domains.php', 'groups' => ['superadmin']],
