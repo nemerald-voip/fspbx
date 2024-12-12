@@ -47,11 +47,14 @@ class IvrMenuOptions extends Model
 
                 $callRoutingOptionsService = new CallRoutingOptionsService();
 
-                $model->key = $callRoutingOptionsService->reverseEngineerIVROption($model->ivr_menu_option_param);
-                logger('here');
-            }
+                $optionDetails = $callRoutingOptionsService->reverseEngineerIVROption($model->ivr_menu_option_param);
 
-            logger($model->key);
+                $model->key_uuid = $optionDetails['option'] ?? null;
+                $model->key_type = $optionDetails['type'] ?? null;
+                $model->key_name = $optionDetails['name'] ?? null;
+
+
+            }
 
             return $model;
         });

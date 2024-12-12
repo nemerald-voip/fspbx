@@ -178,12 +178,12 @@
 
             <div v-if="activeTab === 'keys'">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div>
+                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                        <!-- <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
-                            <!-- <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
-                                Select a routing option below to fit your business needs.</p> -->
-                        </div>
+                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
+                                Select a routing option below to fit your business needs.</p>
+                        </div> -->
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">

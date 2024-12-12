@@ -286,6 +286,10 @@ class CallRoutingOptionsService
         if ((substr($extension, 0, 3) == '*99') !== false) {
             $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
                 ->where('voicemail_id', substr($extension, 3))
+                ->with(['extension' => function ($query) {
+                    $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                        ->where('domain_uuid', session('domain_uuid'));
+                }])
                 ->first();
 
             if (!$voicemail) return null;
@@ -293,6 +297,7 @@ class CallRoutingOptionsService
                 'type' => 'voicemails',
                 'extension' => $voicemail->voicemail_id,
                 'option' => $voicemail->voicemail_uuid,
+                'name' => $voicemail->extension->name_formatted,
             ];
         }
 
@@ -305,12 +310,14 @@ class CallRoutingOptionsService
                 'type' => null,
                 'extension' => null,
                 'option' => null,
+                'name' => null
             ];
         } else {
             return [
                 'type' => 'extensions',
                 'extension' => $ext->extension,
                 'option' => $ext->extension_uuid,
+                'name' => $ext->name_formatted,
             ];
         }
     }
@@ -338,6 +345,7 @@ class CallRoutingOptionsService
                         'type' => $type,
                         'extension' => $extension,
                         'option' => $dialplan->dialplan_uuid,
+                        'name' => $dialplan->dialplan_name,
                     ];
                 }
 
@@ -346,6 +354,7 @@ class CallRoutingOptionsService
                     'type' => $type,
                     'extension' => $extension,
                     'option' => $matches[1],
+                    'name' => $dialplan->dialplan_name,
                 ];
             }
         }
@@ -356,6 +365,7 @@ class CallRoutingOptionsService
                 'type' => 'time_conditions',
                 'extension' => $extension,
                 'option' => $dialplan->dialplan_uuid,
+                'name' => $dialplan->dialplan_name,
             ];
         }
 
