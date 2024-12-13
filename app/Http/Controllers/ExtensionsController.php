@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\OldStoreDeviceRequest;
-use App\Http\Requests\OldUpdateDeviceRequest;
-use App\Http\Requests\UpdateDeviceRequest;
-use Illuminate\Http\JsonResponse;
 use Throwable;
 use App\Models\Devices;
 use App\Models\FollowMe;
@@ -28,6 +24,7 @@ use App\Models\MobileAppUsers;
 use App\Jobs\UpdateAppSettings;
 use Illuminate\Validation\Rule;
 use App\Imports\ExtensionsImport;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
@@ -38,9 +35,13 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\AssignDeviceRequest;
+use App\Http\Requests\UpdateDeviceRequest;
+use Spatie\Activitylog\Contracts\Activity;
 use Propaganistas\LaravelPhone\PhoneNumber;
-use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
+use App\Http\Requests\OldStoreDeviceRequest;
+use App\Http\Requests\OldUpdateDeviceRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
+use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
 
 class ExtensionsController extends Controller
@@ -892,7 +893,6 @@ class ExtensionsController extends Controller
      */
     public function update(Request $request, Extensions $extension)
     {
-        // return;
         $attributes = [
             'directory_first_name' => 'first name',
             'directory_last_name' => 'last name',
@@ -1079,7 +1079,8 @@ class ExtensionsController extends Controller
         if (isset($attributes['directory_visible']) && $attributes['directory_visible'] == "on") $attributes['directory_visible'] = "true";
         if (isset($attributes['directory_exten_visible']) && $attributes['directory_exten_visible'] == "on") $attributes['directory_exten_visible'] = "true";
         if (isset($attributes['enabled']) && $attributes['enabled'] == "on") $attributes['enabled'] = "true";
-        if (isset($attributes['suspended']) && $attributes['suspended'] == "on") $attributes['suspended'] = true; else  $attributes['suspended'] = false;
+        if (isset($attributes['suspended']) && $attributes['suspended'] == "on") $attributes['suspended'] = true;
+        else  $attributes['suspended'] = false;
         if (isset($attributes['voicemail_enabled']) && $attributes['voicemail_enabled'] == "on") $attributes['voicemail_enabled'] = "true";
         if (isset($attributes['voicemail_transcription_enabled']) && $attributes['voicemail_transcription_enabled'] == "on") $attributes['voicemail_transcription_enabled'] = "true";
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "false") $attributes['voicemail_local_after_email'] = "true";
@@ -1222,7 +1223,7 @@ class ExtensionsController extends Controller
             foreach ($attributes['follow_me_destinations'] as $destination) {
                 if ($i > 9) break;
                 $followMeDest = new FollowMeDestinations();
-                if ($destination['target_external'] !='') {
+                if ($destination['target_external'] != '') {
                     $followMeDest->follow_me_destination = format_phone_or_extension($destination['target_external']);
                 } else {
                     $followMeDest->follow_me_destination = $destination['target_internal'];
@@ -1263,6 +1264,7 @@ class ExtensionsController extends Controller
         }
 
         if ($extension->advSettings) {
+            // Perform the update
             $extension->advSettings->update($attributes);
         } else {
             $extension->advSettings()->create($attributes);
@@ -1439,16 +1441,16 @@ class ExtensionsController extends Controller
     {
         $selectedExtensionIds = $request->get('extensionIds') ?? [];
         $selectedScope = $request->get('scope') ?? 'local';
-        if($selectedScope == 'global') {
+        if ($selectedScope == 'global') {
             $registrations = get_registrations('all');
         } else {
             $registrations = get_registrations();
         }
         $all_regs = [];
-        if(!empty($selectedExtensionIds)) {
-            foreach($selectedExtensionIds as $extensionId) {
+        if (!empty($selectedExtensionIds)) {
+            foreach ($selectedExtensionIds as $extensionId) {
                 $extension = Extensions::find($extensionId);
-                if($extension) {
+                if ($extension) {
                     foreach ($registrations as $registration) {
                         if ($registration['sip-auth-user'] == $extension['extension']) {
                             array_push($all_regs, $registration);
@@ -1631,7 +1633,7 @@ class ExtensionsController extends Controller
     {
         $inputs = $request->validated();
 
-        if($inputs['extension_uuid']) {
+        if ($inputs['extension_uuid']) {
             $extension = Extensions::find($inputs['extension_uuid']);
         } else {
             $extension = null;
@@ -1650,7 +1652,7 @@ class ExtensionsController extends Controller
         ]);
         $device->save();
 
-        if($extension) {
+        if ($extension) {
             // Create device lines
             $device->lines = new DeviceLines();
             $device->lines->fill([
@@ -1728,7 +1730,7 @@ class ExtensionsController extends Controller
         $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
         $device->update($inputs);
 
-        if($request['extension_uuid']) {
+        if ($request['extension_uuid']) {
             $extension = Extensions::find($request['extension_uuid']);
             if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
                 $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();

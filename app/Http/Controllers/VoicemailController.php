@@ -295,7 +295,7 @@ class VoicemailController extends Controller
         if ($request->greeting_type == "unavailable") {
             // Save new greeting in the database
             $greeting = new VoicemailGreetings();
-            $greeting->domain_uuid = Session::get('domain_uuid');
+            $greeting->domain_uuid = session('domain_uuid');
             $greeting->voicemail_id = $voicemail->voicemail_id;
             $greeting->greeting_id = 1;
             $greeting->greeting_name = "Greeting 1";
@@ -366,7 +366,7 @@ class VoicemailController extends Controller
     public function deleteVoicemailGreeting(Voicemails $voicemail, string $filename)
     {
 
-        $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
+        $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
 
         $file = Storage::disk('voicemail')->delete($path);
 
@@ -451,17 +451,17 @@ class VoicemailController extends Controller
         if (isset($voicemail)) {
             $deleted = $voicemail->delete();
             $filename = "recorded_name.wav";
-            $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
+            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
             $file = Storage::disk('voicemail')->delete($path);
             $filename = "greeting_1.wav";
-            $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
+            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
             $file = Storage::disk('voicemail')->delete($path);
 
             if ($deleted) {
                 return response()->json([
                     'status' => 200,
                     'success' => [
-                        'message' => 'Selected vocemail extensions have been deleted'
+                        'message' => 'Selected voicemail extensions have been deleted'
                     ]
                 ]);
             } else {

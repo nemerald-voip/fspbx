@@ -16,4 +16,12 @@ class SipProfiles extends Model
     protected $primaryKey = 'sip_profile_uuid';
 
     protected $keyType = 'string';
+
+    // Define the relationship with v_sip_profile_settings
+    public function settings()
+    {
+        return $this->hasMany(SipProfileSettings::class, 'sip_profile_uuid', 'sip_profile_uuid');
+    }
+
 }
+

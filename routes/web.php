@@ -1,6 +1,7 @@
 <?php
 
 use Aws\Sns\Message;
+use App\Models\WhitelistedNumbers;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
+use App\Http\Controllers\WhitelistedNumbersController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
@@ -349,6 +351,14 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('pro-features/activate', [ProFeaturesController::class, 'activate'])->name('pro-features.activate');
     Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
     Route::post('pro-features/uninstall', [ProFeaturesController::class, 'uninstall'])->name('pro-features.uninstall');
+
+
+    // Whitelisted Numbers
+    Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
+    Route::post('/whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
+    Route::post('/whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
+
+
 
 });
 
