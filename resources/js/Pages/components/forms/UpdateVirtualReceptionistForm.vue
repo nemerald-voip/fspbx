@@ -189,7 +189,7 @@
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
                                 <IvrOptions v-model="form.options" :routingTypes="options.routing_types"
-                                    :optionsUrl="options.routes.get_routing_options"/>
+                                    :optionsUrl="options.routes.get_routing_options" @add-key="handleAddKey"/>
                             </div>
 
 
@@ -268,6 +268,9 @@
 
     <UpdateGreetingModal :greeting="selectedGreeting" :show="showEditModal" :loading="isGreetingUpdating"
         @confirm="handleGreetingUpdate" @close="showEditModal = false" />
+
+    <UpdateGreetingModal :greeting="selectedGreeting" :show="showUpdateKeyModal" :loading="isGreetingUpdating"
+        @confirm="handleGreetingUpdate" @close="showUpdateKeyModal = false" />
 </template>
 
 <script setup>
@@ -283,6 +286,7 @@ import VisibilityIcon from "@icons/VisibilityIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
+import UpdateIvrKeyModal from "../modal/UpdateIvrKeyModal.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
@@ -309,6 +313,7 @@ const props = defineProps({
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showGreetingForm = ref(false);
 const showEditModal = ref(false);
+const showUpdateKeyModal = ref(false);
 const showNameForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
@@ -537,6 +542,16 @@ const editGreeting = () => {
     if (selectedGreeting.value) {
         showEditModal.value = true;
     }
+};
+
+const editIvrKey = () => {
+    showUpdateKeyModal.value = true;
+
+};
+
+const handleAddKey = () => {
+    showUpdateKeyModal.value = true;
+
 };
 
 const handleGreetingUpdate = (updatedGreeting) => {

@@ -401,4 +401,16 @@ class CallRoutingOptionsService
             return [];
         }
     }
+
+    public function getFriendlyTypeName(string $type): string
+    {
+        $typeMapping = [
+            'extensions' => 'Extension',
+            'voicemails' => 'Voicemail',
+            'ring_groups' => 'Ring Group',
+            'virtual_receptinists' => 'Virtual Receptionist',
+        ];
+
+        return $typeMapping[$type] ?? 'Unknown';
+    }
 }

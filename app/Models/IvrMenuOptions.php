@@ -51,6 +51,7 @@ class IvrMenuOptions extends Model
 
                 $model->key_uuid = $optionDetails['option'] ?? null;
                 $model->key_type = $optionDetails['type'] ?? null;
+                $model->key_type_display = $callRoutingOptionsService->getFriendlyTypeName($optionDetails['type']);
                 $model->key_name = $optionDetails['name'] ?? null;
 
 

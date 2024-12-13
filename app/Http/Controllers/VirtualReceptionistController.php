@@ -533,7 +533,8 @@ class VirtualReceptionistController extends Controller
                             'ivr_menu_option_action',
                             'ivr_menu_option_param',
                             'ivr_menu_option_order',
-                            'ivr_menu_option_description'
+                            'ivr_menu_option_description',
+                            'ivr_menu_option_enabled',
                         );
                     },
                 ])->where('ivr_menu_uuid', $item_uuid)->first();
