@@ -254,6 +254,102 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Set the hover logo title.",
             ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.csv',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],            
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.jpeg',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.jpg',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.docx',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.doc',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.rtf',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.txt',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.xls',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.xlsx',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'fax_slack_notification',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'errors',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "all - send all. errors - send errors only",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'variable',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => 'fax_enable_t38_request=true',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Send a T38 reinvite when a fax tone is detected.",
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'variable',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => 'rtp_secure_media_outbound=forbidden',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Send a T38 reinvite when a fax tone is detected.",
+            ],
             // Add more settings here...
         ];
 
@@ -261,6 +357,7 @@ class RecommendedSettingsSeeder extends Seeder
             // Check for existing setting
             $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
                 ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
+                ->where('default_setting_value', $setting['default_setting_value'])
                 ->first();
 
             if ($existing_item) {
