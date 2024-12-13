@@ -122,7 +122,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_category'      => 'mobile_apps',
                 'default_setting_subcategory'   => 'mobile_app_conn_protocol',
                 'default_setting_name'          => 'text',
-                'default_setting_value'         => 'sips',
+                'default_setting_value'         => 'sip',
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Options: sip or tcp or sips",
             ],
