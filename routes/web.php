@@ -216,7 +216,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/voicemails/{voicemail}/greetings/{filename}/delete', [VoicemailController::class, 'deleteVoicemailGreeting'])->name('deleteVoicemailGreeting');
 
     //Apps
-    Route::get('/apps', [AppsController::class, 'index'])->name('appsStatus');
+    Route::resource('apps', AppsController::class);
+    Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
     Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('appsCreateOrganization');
     Route::delete('/apps/organization/{domain}', [AppsController::class, 'destroyOrganization'])->name('appsDestroyOrganization');
     Route::get('/apps/organization/', [AppsController::class, 'getOrganizations'])->name('appsGetOrganizations');

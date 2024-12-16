@@ -1210,7 +1210,7 @@ if (!function_exists('get_domain_setting')) {
     function get_domain_setting($setting_name, $domain_uuid = null)
     {
         if (!$domain_uuid) {
-            $domain_uuid = Session::get('domain_uuid');
+            $domain_uuid = session('domain_uuid');
         }
 
         $setting = DomainSettings::where('domain_uuid', $domain_uuid)
