@@ -55,7 +55,6 @@ class AppsController extends Controller
                 ]
             ]
         );
-
     }
 
     /**
@@ -161,6 +160,122 @@ class AppsController extends Controller
                 }
             }
         });
+    }
+
+    public function getItemOptions()
+    {
+        try {
+
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+
+            // Base navigation array without Greetings
+            $navigation = [
+                [
+                    'name' => 'Organization',
+                    'icon' => 'BuildingOfficeIcon',
+                    'slug' => 'organization',
+                ],
+                [
+                    'name' => 'Connections',
+                    'icon' => 'SyncAltIcon',
+                    'slug' => 'connections',
+                ],
+            ];
+
+
+            $routes = [];
+
+            $regions = [
+                ['value' => '1', 'name' => 'US East'],
+                ['value' => '2', 'name' => 'US West'],
+                ['value' => '3', 'name' => 'Europe (Frankfurt)'],
+                ['value' => '4', 'name' => 'Asia Pacific (Singapore)'],
+                ['value' => '5', 'name' => 'Europe (London)'],
+                ['value' => '6', 'name' => 'India'],
+                ['value' => '7', 'name' => 'Australia'],
+                ['value' => '8', 'name' => 'Europe (Dublin)'],
+                ['value' => '9', 'name' => 'Canada (Central)'],
+                ['value' => '10', 'name' => 'South Africa'],
+            ];            
+
+            // Check if item_uuid exists to find an existing model
+            if ($item_uuid) {
+                // Find existing model by item_uuid
+                $model = $this->model
+                    ->select(
+                        'domain_uuid',
+                        'domain_name',
+                        'domain_description',
+                    )
+                    ->with(['settings' => function ($query) {
+                        $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value')
+                            ->where('domain_setting_category', 'app shell')
+                            ->where('domain_setting_subcategory', 'org_id')
+                            ->where('domain_setting_enabled', true);
+                    }])->where($this->model->getKeyName(), $item_uuid)->first();
+
+
+                $model->ringotel_status = $model->settings()
+                    ->where('domain_setting_category', 'app shell')
+                    ->where('domain_setting_subcategory', 'org_id')
+                    ->where('domain_setting_enabled', true)
+                    ->exists() ? 'true' : 'false';
+                // logger($model);
+
+                // If model doesn't exist throw an error
+                if (!$model) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+
+                $routes = array_merge($routes, [
+
+                ]);
+            } else {
+                // Create a new voicemail if item_uuid is not provided
+                $voicemail = $this->model;
+                $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
+                $voicemail->voicemail_password = $voicemail->voicemail_id;
+                $voicemail->voicemail_file = get_domain_setting('voicemail_file');
+                $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
+                $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
+                $voicemail->voicemail_tutorial = 'false';
+                $voicemail->voicemail_enabled = 'true';
+                $voicemail->voicemail_recording_instructions = 'true';
+            }
+
+            $permissions = $this->getUserPermissions();
+
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'navigation' => $navigation,
+                'model' => $model,
+                'regions' => $regions,
+                'permissions' => $permissions,
+                'routes' => $routes,
+                // Define options for other fields as needed
+            ];
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        return $permissions;
     }
 
     /**

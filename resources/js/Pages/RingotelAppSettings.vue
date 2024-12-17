@@ -72,13 +72,11 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.domain_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.voicemail_id">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
                         <div class="flex items-center">
                             <input v-if="row.domain_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.domain_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                @click="handleEditRequest(row.domain_uuid)">
+                            <div class="ml-9">
                                 <span v-if="row.domain_description" class="flex items-center">
                                     {{ row.domain_description }}
                                 </span>
@@ -93,9 +91,9 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ringotel_status">
-                        <Badge v-if="row.ringotel_status == 'true'" text="Enabled" backgroundColor="bg-green-50"
+                        <Badge v-if="row.ringotel_status == 'true'" text="Activated" backgroundColor="bg-green-50"
                             textColor="text-green-700" ringColor="ring-green-600/20" />
-                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50" textColor="text-rose-700"
+                        <Badge v-else text="Inactive" backgroundColor="bg-rose-50" textColor="text-rose-700"
                             ringColor="ring-rose-600/20" />
 
                     </TableField>
@@ -104,7 +102,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'"
+                                <ejs-tooltip v-if="row.ringotel_status == 'true'" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
@@ -113,18 +111,18 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Check messages'" position='TopCenter'
+                                <ejs-tooltip v-if="row.ringotel_status == 'false'" :content="'Activate'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <EnvelopeIcon @click="navigateToMessages(row.messages_route)"
+                                        <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="row.ringotel_status == 'true'"  :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <LinkOffIcon @click="handleDeactivateRequest(row.destroy_route)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -157,22 +155,22 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate Ringotel Organization'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'"
+    <!-- <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
                 @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
                 @success="showNotification('success', { request: [$event] })" />
         </template>
-    </AddEditItemModal>
+    </AddEditItemModal> -->
 
     <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
         @close="handleModalClose">
@@ -208,11 +206,12 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
+import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
 import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
+import LinkOffIcon from "@icons/LinkOffIcon.vue";
+import { PowerIcon } from "@heroicons/vue/24/outline";
 
 
 
@@ -223,7 +222,7 @@ const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const showActivateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
@@ -260,20 +259,18 @@ const bulkActions = computed(() => {
         // }
     ];
 
-    // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
-        actions.push({
-            id: 'bulk_delete',
-            label: 'Delete',
-            icon: 'TrashIcon'
-        });
-    }
-
     return actions;
 });
 
 onMounted(() => {
 });
+
+const handleActivateButtonClick = (itemUuid) => {
+    showActivateModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions(itemUuid);
+}
 
 const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
@@ -363,36 +360,6 @@ const handleBulkActionRequest = (action) => {
 
 }
 
-
-
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
-        .then((response) => {
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
-
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
 
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true
@@ -533,7 +500,7 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     createModalTrigger.value = false;
-    editModalTrigger.value = false;
+    showActivateModal.value = false;
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
@@ -550,10 +517,6 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const navigateToMessages = (messagesRoute) => {
-    // Use Inertia's router to visit the messages page
-    router.visit(messagesRoute);
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
