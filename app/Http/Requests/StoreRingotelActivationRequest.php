@@ -45,6 +45,12 @@ class StoreRingotelActivationRequest extends FormRequest
             $this->merge(['package' => null]);
         }
 
+        if ($this->has('dont_send_user_credentials')) {
+            $this->merge([
+                'dont_send_user_credentials' => $this->dont_send_user_credentials ? 'true' : 'false',
+            ]);
+        }
+
     }
 
     /**

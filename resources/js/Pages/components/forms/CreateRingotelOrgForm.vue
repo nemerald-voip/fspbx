@@ -17,153 +17,128 @@
             </nav>
         </aside>
 
-        <form @submit.prevent="submitForm" class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
-            <div v-if="activeTab === 'organization'">
+        <div class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+            <form @submit.prevent="submitForm">
+                <div v-if="activeTab === 'organization'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Organization Details</h3>
+
+                                <!-- <Toggle label="Status" v-model="" /> -->
+
+                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputRequired target="organization_name" label="Organization Name"
+                                        class="truncate" />
+                                    <InputField v-model="form.organization_name" type="text" name="organization_name"
+                                        id="organization_name" class="mt-2" :error="!!errors?.organization_name" />
+                                    <div v-if="errors?.organization_name" class="mt-2 text-xs text-red-600">
+                                        {{ errors.organization_name[0] }}
+                                    </div>
+                                </div>
+
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputRequired target="organization_domain" label="Unique Organization Domain"
+                                        class="truncate" />
+                                    <InputField v-model="form.organization_domain" type="text" name="organization_domain"
+                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain" />
+                                    <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
+                                        {{ errors.organization_domain[0] }}
+                                    </div>
+                                </div>
+
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputRequired label="Region" class="truncate mb-1" />
+
+                                    <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'"
+                                        :error="errors?.region && errors.region.length > 0" :selectedItem="form.region"
+                                        @update:model-value="handleUpdateRegionField" />
+                                    <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
+                                        {{ errors.region[0] }}
+                                    </div>
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
+                                        location. You won't be able to change it later.</p>
+
+                                </div>
+
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputRequired label="Package" class="truncate mb-1" />
+
+                                    <ComboBox :options="options.packages" :search="true" :placeholder="'Select package'"
+                                        :error="errors?.package && errors.package.length > 0" :selectedItem="form.package"
+                                        @update:model-value="handleUpdatePackageField" />
+                                    <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
+                                        {{ errors.package[0] }}
+                                    </div>
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">The selected package defines the
+                                        available features.</p>
+
+                                </div>
+
+                                <div class="divide-y divide-gray-200 col-span-6">
+
+                                    <Toggle label="Secure User Credentials"
+                                        description="When enabled, users will receive a one-time link to access their app password instead of plain text."
+                                        v-model="form.dont_send_user_credentials" customClass="py-4" />
+
+                                </div>
+
+
+
+                            </div>
+
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+
+                            <button type="submit"
+                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                ref="saveButtonRef" :disabled="isSubmitting">
+                                <Spinner :show="isSubmitting" />
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div v-if="activeTab === 'connections'" action="#" method="POST">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Organization Details</h3>
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <!-- <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
+                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
+                                Select a routing option below to fit your business needs.</p>
+                        </div> -->
 
-                            <!-- <Toggle label="Status" v-model="" /> -->
-
-                            <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
-                        </div>
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputRequired target="organization_name" label="Organization Name" class="truncate" />
-                                <InputField v-model="form.organization_name" type="text" name="organization_name"
-                                    id="organization_name" class="mt-2" :error="!!errors?.organization_name" />
-                                <div v-if="errors?.organization_name" class="mt-2 text-xs text-red-600">
-                                    {{ errors.organization_name[0] }}
-                                </div>
+                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                            <div class="sm:col-span-full space-y-3">
+                                <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
+                                <RingotelConnections v-model="props.options.connections"
+                                    :routingTypes="options.routing_types" :optionsUrl="options.routes.get_routing_options"
+                                    @add-connection="handleAddConnection" />
                             </div>
-
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputRequired target="organization_domain" label="Unique Organization Domain"
-                                    class="truncate" />
-                                <InputField v-model="form.organization_domain" type="text" name="organization_domain"
-                                    id="organization_domain" class="mt-2" :error="!!errors?.organization_domain" />
-                                <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
-                                    {{ errors.organization_domain[0] }}
-                                </div>
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputRequired label="Region" class="truncate mb-1" />
-
-                                <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'" :error="errors?.region && errors.region.length > 0"
-                                    :selectedItem="form.region" @update:model-value="handleUpdateRegionField" />
-                                <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
-                                    {{ errors.region[0] }}
-                                </div>
-                                <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
-                                    location. You won't be able to change it later.</p>
-
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputRequired label="Package" class="truncate mb-1" />
-
-                                <ComboBox :options="options.packages" :search="true" :placeholder="'Select package'" :error="errors?.package && errors.package.length > 0"
-                                    :selectedItem="form.package" @update:model-value="handleUpdatePackageField" />
-                                <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
-                                    {{ errors.package[0] }}
-                                </div>
-                                <p class="mt-3 text-sm leading-6 text-gray-600">The selected package defines the available features.</p>
-
-                            </div>
-
-                            <div class="divide-y divide-gray-200 col-span-6">
-
-                                <Toggle label="Secure User Credentials"
-                                    description="When enabled, users will receive a one-time link to access their app password instead of plain text."
-                                    v-model="form.dont_send_user_credentials" customClass="py-4" />
-
-                            </div>
-
 
 
                         </div>
-
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-
-                        <button type="submit"
-                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                            ref="saveButtonRef" :disabled="isSubmitting">
-                            <Spinner :show="isSubmitting" />
-                            Next
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
-
-        <div v-if="activeTab === 'advanced'" action="#" method="POST">
-            <div class="shadow sm:rounded-md">
-                <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                    <div>
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Advanced</h3>
-                        <p class="mt-1 text-sm text-gray-500">Set advanced settings for this voicemail
-                        </p>
-                    </div>
-
-                    <div class="divide-y divide-gray-200 col-span-6">
-
-                        <Toggle label="Play Voicemail Tutorial"
-                            description="Provide user with a guided tutorial when accessing voicemail for the first time."
-                            v-model="form.voicemail_tutorial" customClass="py-4" />
-
-                        <Toggle v-if="options.permissions.manage_voicemail_recording_instructions"
-                            label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
-                                        speaking to end the recording."'
-                            v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
-
-                    </div>
-
-                    <div class="grid grid-cols-6 gap-6">
-                        <div class="col-span-3 sm:col-span-2">
-                            <div class="flex items-center gap-1">
-                                <LabelInputOptional target="voicemail_alternate_greet_id" label="Announce Voicemail
-                                        Extension as" />
-
-                                <Popover>
-                                    <template v-slot:popover-button>
-                                        <InformationCircleIcon class="h-5 w-5 text-blue-500" />
-                                    </template>
-                                    <template v-slot:popover-panel>
-                                        <div>The parameter allows you to override the voicemail extension number
-                                            spoken
-                                            by the system in the voicemail greeting. This controls system greetings
-                                            that
-                                            read back an extension number, not user recorded greetings.</div>
-                                    </template>
-                                </Popover>
-                            </div>
-
-                            <InputField v-model="form.voicemail_alternate_greet_id" type="text"
-                                name="voicemail_alternate_greet_id" :error="!!errors?.voicemail_alternate_greet_id"
-                                id="voicemail_alternate_greet_id" class="mt-2" />
-
-                            <div v-if="errors?.voicemail_alternate_greet_id" class="mt-2 text-xs text-red-600">
-                                {{ errors.voicemail_alternate_greet_id[0] }}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-                <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                    <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
                 </div>
             </div>
         </div>
+
+
+
     </div>
+
+    <!-- <RingotelConnectionModal :greeting="selectedGreeting" :show="showConnectionModal" :loading="isGreetingUpdating"
+    @confirm="handleGreetingUpdate" @close="showConnectionModal = false" /> -->
+
+
 </template>
+
 
 <script setup>
 import { reactive, ref, watch } from "vue";
@@ -184,7 +159,8 @@ import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
-
+import RingotelConnections from "../general/RingotelConnections.vue";
+import RingotelConnectionModal from "../modal/RingotelConnectionModal.vue";
 
 const props = defineProps({
     options: Object,
@@ -209,17 +185,8 @@ const setActiveTab = (tabSlug) => {
     // activeTab.value = tabSlug;
 };
 
-const showPassword = ref(false);
+const showConnectionModal = ref(false);
 
-const togglePasswordVisibility = () => {
-    showPassword.value = !showPassword.value;
-    const passwordInput = document.getElementById("voicemail_password");
-    if (showPassword.value) {
-        passwordInput.style.webkitTextSecurity = "none"; // Show text
-    } else {
-        passwordInput.style.webkitTextSecurity = "disc"; // Mask text
-    }
-};
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -252,6 +219,11 @@ const handleUpdateRegionField = (selected) => {
 
 const handleUpdatePackageField = (selected) => {
     form.package = selected.value;
+}
+
+const handleAddConnection = (selected) => {
+    console.log('add connection');
+    showConnectionModal.value = true;
 }
 
 

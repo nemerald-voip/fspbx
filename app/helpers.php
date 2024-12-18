@@ -108,41 +108,41 @@ if (!function_exists('getFusionPBXPreviousURL')) {
     }
 }
 
-if (!function_exists('appsStoreOrganizationDetails')) {
-    function appsStoreOrganizationDetails(Request $request)
-    {
-        // Delete any existing records
-        DB::table('v_domain_settings')
-            ->where('domain_uuid', '=', $request->organization_uuid)
-            ->delete();
+// if (!function_exists('appsStoreOrganizationDetails')) {
+//     function appsStoreOrganizationDetails(Request $request)
+//     {
+//         // Delete any existing records
+//         DB::table('v_domain_settings')
+//             ->where('domain_uuid', '=', $request->organization_uuid)
+//             ->delete();
 
-        // Store new records
-        $domainSetting1 = DomainSettings::create([
-            'domain_uuid' => $request->organization_uuid,
-            'domain_setting_category' => 'app shell',
-            'domain_setting_subcategory' => 'org_id',
-            'domain_setting_name' => 'text',
-            'domain_setting_value' => $request->org_id,
-            'domain_setting_enabled' => true,
-        ]);
+//         // Store new records
+//         $domainSetting1 = DomainSettings::create([
+//             'domain_uuid' => $request->organization_uuid,
+//             'domain_setting_category' => 'app shell',
+//             'domain_setting_subcategory' => 'org_id',
+//             'domain_setting_name' => 'text',
+//             'domain_setting_value' => $request->org_id,
+//             'domain_setting_enabled' => true,
+//         ]);
 
-        $domainSetting2 = DomainSettings::create([
-            'domain_uuid' => $request->organization_uuid,
-            'domain_setting_category' => 'mobile_apps',
-            'domain_setting_subcategory' => 'dont_send_user_credentials',
-            'domain_setting_name' => 'boolean',
-            'domain_setting_value' => $request->dont_send_user_credentials,
-            'domain_setting_enabled' => true,
-            'domain_setting_description' => "Don't include user credentials in the welcome email"
-        ]);
+//         $domainSetting2 = DomainSettings::create([
+//             'domain_uuid' => $request->organization_uuid,
+//             'domain_setting_category' => 'mobile_apps',
+//             'domain_setting_subcategory' => 'dont_send_user_credentials',
+//             'domain_setting_name' => 'boolean',
+//             'domain_setting_value' => $request->dont_send_user_credentials,
+//             'domain_setting_enabled' => true,
+//             'domain_setting_description' => "Don't include user credentials in the welcome email"
+//         ]);
 
-        if ($domainSetting1->save() && $domainSetting2->save()/* && $domainSetting3->save()*/) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
+//         if ($domainSetting1->save() && $domainSetting2->save()/* && $domainSetting3->save()*/) {
+//             return true;
+//         } else {
+//             return false;
+//         }
+//     }
+// }
 
 if (!function_exists('appsGetOrganizationDetails')) {
     function appsGetOrganizationDetails($domain_uuid)

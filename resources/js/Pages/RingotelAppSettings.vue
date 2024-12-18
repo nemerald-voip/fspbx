@@ -186,6 +186,9 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+    
+        <!-- <RingotelConnectionModal :greeting="selectedGreeting" :show="true" :loading="isGreetingUpdating"
+    @confirm="handleGreetingUpdate" @close="showConnectionModal = false" /> -->
 </template>
 
 <script setup>
@@ -213,7 +216,7 @@ import Badge from "@generalComponents/Badge.vue";
 import LinkOffIcon from "@icons/LinkOffIcon.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
 
-
+import RingotelConnectionModal from "./components/modal/RingotelConnectionModal.vue";
 
 const page = usePage()
 const loading = ref(false)

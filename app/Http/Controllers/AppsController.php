@@ -235,10 +235,15 @@ class AppsController extends Controller
             $permissions = $this->getUserPermissions();
 
             $suggested_ringotel_domain = strtolower(str_replace(' ', '', $model->domain_description));
-            $region = get_domain_setting('organization_region');
-            $package = get_domain_setting('package');
+            $region = get_domain_setting('organization_region', $model->domain_uuid);
+            $package = get_domain_setting('package', $model->domain_uuid);
             $dont_send_user_credentials = get_domain_setting('dont_send_user_credentials', $model->domain_uuid);
+            $org_id = get_domain_setting('org_id', $model->domain_uuid);
 
+            logger($org_id);
+            if (!$org_id) {
+                $connections = [];
+            }
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -252,6 +257,7 @@ class AppsController extends Controller
                 'default_region' => $region,
                 'default_package' => $package,
                 'dont_send_user_credentials' => $dont_send_user_credentials,
+                'connections' => $connections,
                 // Define options for other fields as needed
             ];
 
@@ -285,7 +291,6 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
 
         $inputs = $request->validated();
-        logger($inputs);
 
         try {
             // Send API request to create organization 
@@ -305,8 +310,6 @@ class AppsController extends Controller
                 }
             }
 
-            logger($organization);
-
             // Save the new record
             $domainSetting = DomainSettings::create([
                 'domain_uuid' => $inputs['domain_uuid'],
@@ -317,11 +320,20 @@ class AppsController extends Controller
                 'domain_setting_enabled' => true,
             ]);
 
+            $domainSetting = DomainSettings::create([
+                'domain_uuid' => $inputs['domain_uuid'],
+                'domain_setting_category' => 'mobile_apps',
+                'domain_setting_subcategory' => 'dont_send_user_credentials',
+                'domain_setting_name' => 'boolean',
+                'domain_setting_value' => $inputs['dont_send_user_credentials'],
+                'domain_setting_enabled' => true,
+                'domain_setting_description' => "Don't include user credentials in the welcome email"
+            ]);
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Organization succesfully activated']]
             ], 201);
-
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
@@ -330,9 +342,6 @@ class AppsController extends Controller
                 'errors' => ['server' => ['Unable to activate organization. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
-        logger($organization);
-        return;
 
         //dd(isset($response['error']));
 
