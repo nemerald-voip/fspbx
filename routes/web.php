@@ -218,7 +218,7 @@ Route::group(['middleware' => 'auth'], function () {
     //Apps
     Route::resource('apps', AppsController::class);
     Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
-    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('appsCreateOrganization');
+    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('apps.organization.create');
     Route::delete('/apps/organization/{domain}', [AppsController::class, 'destroyOrganization'])->name('appsDestroyOrganization');
     Route::get('/apps/organization/', [AppsController::class, 'getOrganizations'])->name('appsGetOrganizations');
     Route::post('/apps/organization/sync', [AppsController::class, 'syncOrganizations'])->name('appsSyncOrganizations');

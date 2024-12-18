@@ -158,7 +158,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate Ringotel Organization'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
@@ -226,7 +226,8 @@ const showActivateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
+const activateFormSubmiting = ref(null);
+const activationActiveTab = ref('organization');
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
@@ -280,18 +281,19 @@ const handleEditRequest = (itemUuid) => {
 }
 
 const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
+    activateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.store, form)
+    axios.post(props.routes.create_organization, form)
         .then((response) => {
-            createFormSubmiting.value = false;
+            activateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
+            activationActiveTab.value = 'connections';
+            // handleSearchButtonClick();
+            // handleModalClose();
+            // handleClearSelection();
         }).catch((error) => {
-            createFormSubmiting.value = false;
+            activateFormSubmiting.value = false;
             handleClearSelection();
             handleFormErrorResponse(error);
         });
@@ -432,7 +434,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

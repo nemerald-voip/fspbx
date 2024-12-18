@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Http\Requests\StoreRingotelActivationRequest;
 
 class AppsController extends Controller
 {
@@ -50,7 +51,7 @@ class AppsController extends Controller
 
                 'routes' => [
                     'current_page' => route('apps.index'),
-                    'store' => route('apps.store'),
+                    'create_organization' => route('apps.organization.create'),
                     'item_options' => route('apps.item.options'),
                 ]
             ]
@@ -108,12 +109,6 @@ class AppsController extends Controller
                     ->where('domain_setting_subcategory', 'org_id')
                     ->where('domain_setting_enabled', true);
             }]);
-
-        // Add 'status' attribute based on the existence of settings
-        // foreach ($domains as $domain) {
-        //     $domain->status = $domain->settings->isNotEmpty() ? 'true' : 'false';
-        // }
-
 
         $data->select(
             'domain_uuid',
@@ -197,7 +192,12 @@ class AppsController extends Controller
                 ['value' => '8', 'name' => 'Europe (Dublin)'],
                 ['value' => '9', 'name' => 'Canada (Central)'],
                 ['value' => '10', 'name' => 'South Africa'],
-            ];            
+            ];
+
+            $packages = [
+                ['value' => '1', 'name' => 'Essentials Package'],
+                ['value' => '2', 'name' => 'Pro Package'],
+            ];
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
@@ -229,23 +229,15 @@ class AppsController extends Controller
                 }
 
 
-                $routes = array_merge($routes, [
-
-                ]);
-            } else {
-                // Create a new voicemail if item_uuid is not provided
-                $voicemail = $this->model;
-                $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
-                $voicemail->voicemail_password = $voicemail->voicemail_id;
-                $voicemail->voicemail_file = get_domain_setting('voicemail_file');
-                $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
-                $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
-                $voicemail->voicemail_tutorial = 'false';
-                $voicemail->voicemail_enabled = 'true';
-                $voicemail->voicemail_recording_instructions = 'true';
+                $routes = array_merge($routes, []);
             }
 
             $permissions = $this->getUserPermissions();
+
+            $suggested_ringotel_domain = strtolower(str_replace(' ', '', $model->domain_description));
+            $region = get_domain_setting('organization_region');
+            $package = get_domain_setting('package');
+            $dont_send_user_credentials = get_domain_setting('dont_send_user_credentials', $model->domain_uuid);
 
 
             // Construct the itemOptions object
@@ -253,8 +245,13 @@ class AppsController extends Controller
                 'navigation' => $navigation,
                 'model' => $model,
                 'regions' => $regions,
+                'packages' => $packages,
                 'permissions' => $permissions,
                 'routes' => $routes,
+                'suggested_ringotel_domain' => $suggested_ringotel_domain,
+                'default_region' => $region,
+                'default_package' => $package,
+                'dont_send_user_credentials' => $dont_send_user_credentials,
                 // Define options for other fields as needed
             ];
 
@@ -279,78 +276,69 @@ class AppsController extends Controller
     }
 
     /**
-     * Submit request to create a new organization to Ringotel
+     * Submit API request to Ringotel to create a new organization 
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createOrganization(RingotelApiService $ringotelApiService)
+    public function createOrganization(StoreRingotelActivationRequest $request, RingotelApiService $ringotelApiService)
     {
         $this->ringotelApiService = $ringotelApiService;
+
+        $inputs = $request->validated();
+        logger($inputs);
+
         try {
-            $users = $this->ringotelApiService->getUsersByOrgId($orgId);
-        } catch (\Exception $e) {
-            logger($e->getMessage());
+            // Send API request to create organization 
+            $organization = $this->ringotelApiService->createOrganization($inputs);
+
+
+            // Check for existing records with a different value
+            $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->first();
+
+            if ($existingSetting) {
+                if ($existingSetting->domain_setting_value !== $organization->org_id) {
+                    // Delete the existing record if the value is different
+                    $existingSetting->delete();
+                }
+            }
+
+            logger($organization);
+
+            // Save the new record
+            $domainSetting = DomainSettings::create([
+                'domain_uuid' => $inputs['domain_uuid'],
+                'domain_setting_category' => 'app shell',
+                'domain_setting_subcategory' => 'org_id',
+                'domain_setting_name' => 'text',
+                'domain_setting_value' => $organization['id'],
+                'domain_setting_enabled' => true,
+            ]);
+
+            // Return a JSON response indicating success
             return response()->json([
-                'error' => [
-                    'message' => $e->getMessage(),
-                ],
-            ], 400);
+                'messages' => ['success' => ['Organization succesfully activated']]
+            ], 201);
+
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to activate organization. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
 
-
-        return response()->json([
-            'users' => $users,
-            'status' => 200,
-            'success' => [
-                'message' => 'The request processed successfully'
-            ]
-        ]);
-
-        $request->dont_send_user_credentials = $request->dont_send_user_credentials === 'true' ? 'true' : 'false';
-
-        $data = array(
-            'method' => 'createOrganization',
-            'params' => array(
-                'name' => $request->organization_name,
-                'region' => $request->organization_region,
-                'domain' => $request->organization_domain,
-                'params' => array(
-                    'hidePassInEmail' => $request->dont_send_user_credentials == 'true'
-                )
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(5)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create organization'
-                ]);
-            })
-            ->json();
+        logger($organization);
+        return;
 
         //dd(isset($response['error']));
 
 
         // If successful store Org ID and return success status
         if (isset($response['result'])) {
-
-            // Add received OrgID to the request and store it in database
-            $request->merge(['org_id' => $response['result']['id']]);
-
-            if (!appsStoreOrganizationDetails($request)) {
-                return response()->json([
-                    'organization_name' => $request->organization_name,
-                    'organization_domain' => $request->organization_domain,
-                    'organization_region' => $request->organization_region,
-                    'org_id' => $response['result']['id'],
-                    'message' => 'Organization was created successfully, but unable to store Org ID in database',
-                ]);
-            }
 
             // Get connection port from database or env file
             $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
@@ -1334,16 +1322,7 @@ class AppsController extends Controller
     }
 
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+
 
     /**
      * Display the specified resource.
