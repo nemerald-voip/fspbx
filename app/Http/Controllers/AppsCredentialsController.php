@@ -26,7 +26,6 @@ class AppsCredentialsController extends Controller
         }
 
         $extension = $appCredentials->extension()->first();
-        //$extensionDomain = $extension->domain()->first();
 
         return Inertia::render('Auth/MobileAppGetPassword',
             [

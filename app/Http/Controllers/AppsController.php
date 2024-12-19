@@ -1178,6 +1178,7 @@ class AppsController extends Controller
             $appCredentials = new MobileAppPasswordResetLinks();
             $appCredentials->token = $passwordToken;
             $appCredentials->extension_uuid = $extension->extension_uuid;
+            $appCredentials->domain = $response['result']['domain'];
             $appCredentials->save();
             $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
             $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
