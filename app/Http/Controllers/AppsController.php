@@ -282,7 +282,7 @@ class AppsController extends Controller
     }
 
     /**
-     * Submit API request to Ringotel to create a new organization 
+     * Submit API request to Ringotel to create a new organization
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -293,7 +293,7 @@ class AppsController extends Controller
         $inputs = $request->validated();
 
         try {
-            // Send API request to create organization 
+            // Send API request to create organization
             $organization = $this->ringotelApiService->createOrganization($inputs);
 
 
@@ -332,7 +332,7 @@ class AppsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Organization succesfully activated']]
+                'messages' => ['success' => ['Organization successfully activated']]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -650,7 +650,7 @@ class AppsController extends Controller
                     'connection_domain' => $request->connection_domain,
                     'org_id' => $request->org_id,
                     'conn_id' => $response['result']['id'],
-                    'message' => 'Connection was created succesfully, but unable to store Conn ID in database',
+                    'message' => 'Connection was created successfully, but unable to store Conn ID in database',
                 ]);
             }
 
@@ -659,7 +659,7 @@ class AppsController extends Controller
                 'connection_domain' => $request->connection_domain,
                 'org_id' => $request->org_id,
                 'conn_id' => $response['result']['id'],
-                'message' => 'Connection created succesfully',
+                'message' => 'Connection created successfully',
             ]);
             // Otherwise return failed status
         } elseif (isset($response['error'])) {
@@ -1025,6 +1025,7 @@ class AppsController extends Controller
                 $appCredentials = new MobileAppPasswordResetLinks();
                 $appCredentials->token = $passwordToken;
                 $appCredentials->extension_uuid = $extension->extension_uuid;
+                $appCredentials->domain = $response['result']['domain'];
                 $appCredentials->save();
 
                 $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
