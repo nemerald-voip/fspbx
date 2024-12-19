@@ -133,9 +133,13 @@
 
     </div>
 
-    <!-- <RingotelConnectionModal :greeting="selectedGreeting" :show="showConnectionModal" :loading="isGreetingUpdating"
-    @confirm="handleGreetingUpdate" @close="showConnectionModal = false" /> -->
-
+    <AddEditItemModal :customClass="'sm:max-w-2xl'" :show="showConnectionModal" :header="'Create Connection'" :loading="loadingModal"
+        @close="handleModalClose">
+        <template #modal-body>
+            <CreateRingotelConnectionForm :options="options" :errors="formErrors"
+                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleCreateConnectionRequest" @cancel="handleModalClose"/>
+        </template>
+    </AddEditItemModal>
 
 </template>
 
@@ -160,7 +164,12 @@ import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
 import RingotelConnections from "../general/RingotelConnections.vue";
-import RingotelConnectionModal from "../modal/RingotelConnectionModal.vue";
+import AddEditItemModal from "../modal/AddEditItemModal.vue";
+import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.vue";
+
+const ringotelConnectionFormSubmiting = ref(null);
+const loadingModal = ref(false);
+const formErrors = ref(null);
 
 const props = defineProps({
     options: Object,
@@ -168,7 +177,6 @@ const props = defineProps({
     activeTab: String,
     errors: Object,
 });
-
 
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.activeTab || props.options.navigation[0].slug);
@@ -224,6 +232,30 @@ const handleUpdatePackageField = (selected) => {
 const handleAddConnection = (selected) => {
     console.log('add connection');
     showConnectionModal.value = true;
+}
+
+const handleCreateConnectionRequest = (form) => {
+    ringotelConnectionFormSubmiting.value = true;
+    formErrors.value = null;
+
+    // axios.post(props.routes.create_organization, form)
+    //     .then((response) => {
+    //         ringotelConnectionFormSubmiting.value = false;
+    //         showNotification('success', response.data.messages);
+    //         activationActiveTab.value = 'connections';
+    //         // handleSearchButtonClick();
+    //         // handleModalClose();
+    //         // handleClearSelection();
+    //     }).catch((error) => {
+    //         ringotelConnectionFormSubmiting.value = false;
+    //         handleClearSelection();
+    //         handleFormErrorResponse(error);
+    //     });
+
+};
+
+const handleModalClose = () => {
+    showConnectionModal.value = false;
 }
 
 
