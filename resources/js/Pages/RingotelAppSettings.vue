@@ -289,6 +289,7 @@ const handleCreateRequest = (form) => {
         .then((response) => {
             activateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
+            itemOptions.value.orgId = response.data.org_id;
             activationActiveTab.value = 'connections';
             // handleSearchButtonClick();
             // handleModalClose();

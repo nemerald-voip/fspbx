@@ -160,8 +160,6 @@ class AppsController extends Controller
     public function getItemOptions()
     {
         try {
-
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
             // Base navigation array without Greetings
@@ -197,6 +195,13 @@ class AppsController extends Controller
             $packages = [
                 ['value' => '1', 'name' => 'Essentials Package'],
                 ['value' => '2', 'name' => 'Pro Package'],
+            ];
+
+            $protocols = [
+                ['value' => 'sip', 'name' => 'UDP'],
+                ['value' => 'sip-tcp', 'name' => 'TCP'],
+                ['value' => 'sips', 'name' => 'TLS'],
+                ['value' => 'DNS-NAPTR', 'name' => 'DNS-NAPTR'],
             ];
 
             // Check if item_uuid exists to find an existing model
@@ -239,6 +244,9 @@ class AppsController extends Controller
             $package = get_domain_setting('package', $model->domain_uuid);
             $dont_send_user_credentials = get_domain_setting('dont_send_user_credentials', $model->domain_uuid);
             $org_id = get_domain_setting('org_id', $model->domain_uuid);
+            $protocol = get_domain_setting('mobile_app_conn_protocol', $model->domain_uuid);
+            $port = get_domain_setting('line_sip_port', $model->domain_uuid);
+            $proxy = get_domain_setting('mobile_app_proxy', $model->domain_uuid);
 
             logger($org_id);
             if (!$org_id) {
@@ -251,6 +259,7 @@ class AppsController extends Controller
                 'model' => $model,
                 'regions' => $regions,
                 'packages' => $packages,
+                'protocols' => $protocols,
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'suggested_ringotel_domain' => $suggested_ringotel_domain,
@@ -258,6 +267,9 @@ class AppsController extends Controller
                 'default_package' => $package,
                 'dont_send_user_credentials' => $dont_send_user_credentials,
                 'connections' => $connections,
+                'default_protocol' => $protocol,
+                'default_port' => $port,
+                'default_proxy' => $proxy,
                 // Define options for other fields as needed
             ];
 
@@ -296,18 +308,15 @@ class AppsController extends Controller
             // Send API request to create organization
             $organization = $this->ringotelApiService->createOrganization($inputs);
 
-
-            // Check for existing records with a different value
+            // Check for existing records
             $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
                 ->where('domain_setting_category', 'app shell')
                 ->where('domain_setting_subcategory', 'org_id')
                 ->first();
 
             if ($existingSetting) {
-                if ($existingSetting->domain_setting_value !== $organization->org_id) {
-                    // Delete the existing record if the value is different
-                    $existingSetting->delete();
-                }
+                // Delete the existing record 
+                $existingSetting->delete();
             }
 
             // Save the new record
@@ -319,6 +328,16 @@ class AppsController extends Controller
                 'domain_setting_value' => $organization['id'],
                 'domain_setting_enabled' => true,
             ]);
+
+            // Check for existing records
+            $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
+                ->where('domain_setting_category', 'mobile_apps')
+                ->where('domain_setting_subcategory', 'dont_send_user_credentials')
+                ->first();
+
+            if ($existingSetting) {
+                $existingSetting->delete();
+            }
 
             $domainSetting = DomainSettings::create([
                 'domain_uuid' => $inputs['domain_uuid'],
@@ -332,6 +351,7 @@ class AppsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
+                'org_id' => $organization['id'],
                 'messages' => ['success' => ['Organization successfully activated']]
             ], 201);
         } catch (\Exception $e) {

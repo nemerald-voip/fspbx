@@ -133,7 +133,7 @@
 
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-2xl'" :show="showConnectionModal" :header="'Create Connection'" :loading="loadingModal"
+    <AddEditItemModal :customClass="'sm:max-w-2xl'" :show="showConnectionModal" :header="'Create a Connection'" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <CreateRingotelConnectionForm :options="options" :errors="formErrors"
@@ -230,7 +230,6 @@ const handleUpdatePackageField = (selected) => {
 }
 
 const handleAddConnection = (selected) => {
-    console.log('add connection');
     showConnectionModal.value = true;
 }
 
