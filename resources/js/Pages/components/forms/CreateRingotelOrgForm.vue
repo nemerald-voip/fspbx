@@ -237,19 +237,19 @@ const handleCreateConnectionRequest = (form) => {
     ringotelConnectionFormSubmiting.value = true;
     formErrors.value = null;
 
-    // axios.post(props.routes.create_organization, form)
-    //     .then((response) => {
-    //         ringotelConnectionFormSubmiting.value = false;
-    //         showNotification('success', response.data.messages);
-    //         activationActiveTab.value = 'connections';
-    //         // handleSearchButtonClick();
-    //         // handleModalClose();
-    //         // handleClearSelection();
-    //     }).catch((error) => {
-    //         ringotelConnectionFormSubmiting.value = false;
-    //         handleClearSelection();
-    //         handleFormErrorResponse(error);
-    //     });
+    axios.post(props.routes.create_connection, form)
+        .then((response) => {
+            ringotelConnectionFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            
+            // handleSearchButtonClick();
+            // handleModalClose();
+            // handleClearSelection();
+        }).catch((error) => {
+            ringotelConnectionFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
 
 };
 

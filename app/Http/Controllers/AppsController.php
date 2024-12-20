@@ -52,6 +52,7 @@ class AppsController extends Controller
                 'routes' => [
                     'current_page' => route('apps.index'),
                     'create_organization' => route('apps.organization.create'),
+                    'create_connection' => route('apps.connection.create'),
                     'item_options' => route('apps.item.options'),
                 ]
             ]
@@ -363,48 +364,6 @@ class AppsController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
 
-        //dd(isset($response['error']));
-
-
-        // If successful store Org ID and return success status
-        if (isset($response['result'])) {
-
-            // Get connection port from database or env file
-            $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
-            $port = get_domain_setting('line_sip_port', $request->organization_uuid);
-            $proxy = get_domain_setting('mobile_app_proxy', $request->organization_uuid);
-
-            return response()->json([
-                'status' => 200,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'org_id' => $response['result']['id'],
-                'protocol' => ($protocol) ? $protocol : "",
-                'connection_port' => ($port) ? $port : "",
-                'outbound_proxy' => ($proxy) ? $proxy : "",
-                'success' => [
-                    'message' => 'Organization created successfully',
-                ]
-            ]);
-            // Otherwise return failed status
-        } elseif (isset($response['error'])) {
-            return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => $response['error']['message']
-            ]);
-        } else {
-            return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => 'Unknown error'
-            ]);
-        }
     }
 
     /**
@@ -524,9 +483,6 @@ class AppsController extends Controller
     }
 
 
-
-
-
     /**
      * Submit request to update organization to Ringotel
      *
@@ -535,9 +491,8 @@ class AppsController extends Controller
     public function updateOrganization(Request $request) {}
 
 
-
     /**
-     * Submit request to create connection to Ringotel
+     * Submit API request to Ringotel to create a new connection
      *
      * @return \Illuminate\Http\JsonResponse
      */
