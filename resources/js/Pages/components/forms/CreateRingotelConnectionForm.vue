@@ -10,7 +10,7 @@
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon
-                        v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings')"
+                        v-if="((errors?.connection_name || errors?.device_template) && item.slug === 'settings')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -35,7 +35,7 @@
                                     <LabelInputRequired target="connection_name" label="Connection Name"
                                         class="truncate mb-1" />
                                     <InputField v-model="form.connection_name" type="text" name="connection_name"
-                                        id="connection_name" class="mt-1" :error="!!errors?.organization_name"
+                                        id="connection_name" class="mt-1" :error="!!errors?.connection_name"
                                         :placeholder="'Enter connection name'" />
                                     <div v-if="errors?.connection_name" class="mt-2 text-xs text-red-600">
                                         {{ errors.connection_name[0] }}
@@ -68,7 +68,7 @@
                                 </div>
 
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="domain" label="Port" class="truncate mb-1" />
+                                    <LabelInputOptional target="domain" label="Port" class="truncate mb-1" />
                                     <InputField v-model="form.port" type="text" name="port" :placeholder="'Enter port'"
                                         id="port" class="mt-1" :error="!!errors?.port" />
                                     <div v-if="errors?.port" class="mt-2 text-xs text-red-600">
@@ -79,10 +79,10 @@
                                 <div class="divide-y divide-gray-200 col-span-6 ">
 
                                     <Toggle label="Do not verify server certificate" description=""
-                                        v-model="form.dont_send_user_credentials" customClass="py-4" />
+                                        v-model="form.dont_verify_server_certificate" customClass="py-4" />
 
-                                    <Toggle label="Disable SRTP" description=""
-                                        v-model="form.disable_srtp" customClass="py-4" />
+                                    <Toggle label="Disable SRTP" description="" v-model="form.disable_srtp"
+                                        customClass="py-4" />
 
                                 </div>
                             </div>
@@ -97,17 +97,148 @@
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6">
-                                    <LabelInputRequired target="proxy" label="Address"
-                                        class="truncate mb-1" />
-                                    <InputField v-model="form.proxy" type="text" name="proxy"
-                                        id="proxy" class="mt-1" :error="!!errors?.organization_name"
-                                        :placeholder="'Enter proxy address'" />
+                                    <LabelInputOptional target="proxy" label="Address" class="truncate mb-1" />
+                                    <InputField v-model="form.proxy" type="text" name="proxy" id="proxy" class="mt-1"
+                                        :error="!!errors?.proxy" :placeholder="'Enter proxy address'" />
                                     <div v-if="errors?.proxy" class="mt-2 text-xs text-red-600">
                                         {{ errors.proxy[0] }}
                                     </div>
                                 </div>
 
                             </div>
+
+                            <div class="w-full border-t border-gray-300" />
+
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Audio Codecs</h3>
+                            </div>
+
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-6">
+                                    <fieldset>
+                                        <div class="space-y-5">
+                                            <div class="flex gap-3">
+                                                <div class="flex h-6 shrink-0 items-center">
+                                                    <div class="group grid size-4 grid-cols-1">
+                                                        <input v-model="form.g711u_enabled" type="checkbox"
+                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
+                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
+                                                            viewBox="0 0 14 14" fill="none">
+                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
+                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
+                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <div class="text-sm/6">
+                                                    <label for="comments" class="font-medium text-gray-900">G.711
+                                                        Ulaw</label>
+
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <div class="flex h-6 shrink-0 items-center">
+                                                    <div class="group grid size-4 grid-cols-1">
+                                                        <input v-model="form.g711a_enabled" type="checkbox"
+                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
+                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
+                                                            viewBox="0 0 14 14" fill="none">
+                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
+                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
+                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <div class="text-sm/6">
+                                                    <label for="candidates" class="font-medium text-gray-900">G.711
+                                                        Alaw</label>
+
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <div class="flex h-6 shrink-0 items-center">
+                                                    <div class="group grid size-4 grid-cols-1">
+                                                        <input v-model="form.g729_enabled" type="checkbox"
+                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
+                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
+                                                            viewBox="0 0 14 14" fill="none">
+                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
+                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
+                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <div class="text-sm/6">
+                                                    <label for="offers" class="font-medium text-gray-900">G.729</label>
+
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <div class="flex h-6 shrink-0 items-center">
+                                                    <div class="group grid size-4 grid-cols-1">
+                                                        <input v-model="form.opus_enabled" type="checkbox"
+                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
+                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
+                                                            viewBox="0 0 14 14" fill="none">
+                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
+                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
+                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <div class="text-sm/6">
+                                                    <label for="offers" class="font-medium text-gray-900">Opus</label>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                </div>
+
+                            </div>
+
+                            <div class="w-full border-t border-gray-300" />
+
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Miscellaneous</h3>
+                            </div>
+
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputOptional target="registration_ttl" label="Registration TTL" class="truncate mb-1" />
+                                    <InputField v-model="form.registration_ttl" type="text" name="registration_ttl" id="registration_ttl" class="mt-1"
+                                        :error="!!errors?.registration_ttl" :placeholder="''" />
+                                    <div v-if="errors?.registration_ttl" class="mt-2 text-xs text-red-600">
+                                        {{ errors.registration_ttl[0] }}
+                                    </div>
+                                </div>
+
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputOptional target="max_registrations" label="Max. registrations per user" class="truncate mb-1" />
+                                    <InputField v-model="form.max_registrations" type="text" name="max_registrations" id="max_registrations" class="mt-1"
+                                        :error="!!errors?.max_registrations" :placeholder="''" />
+                                    <div v-if="errors?.max_registrations" class="mt-2 text-xs text-red-600">
+                                        {{ errors.max_registrations[0] }}
+                                    </div>
+                                </div>
+
+                            </div>
+
 
 
 
@@ -164,12 +295,18 @@ const form = reactive({
     domain: props.options.model.domain_name,
     port: props.options.settings.connection_port,
     dont_verify_server_certificate: props.options.settings.dont_verify_server_certificate === "true",
-    disable_srtp: props.options.settings.disable_srtp === "true", 
+    disable_srtp: props.options.settings.disable_srtp === "true",
     proxy: props.options.settings.mobile_app_proxy,
+    g711u_enabled: props.options.settings.g711u_enabled === "true",
+    g711a_enabled: props.options.settings.g711a_enabled === "true",
+    g729_enabled: props.options.settings.g729_enabled === "true",
+    opus_enabled: props.options.settings.opus_enabled === "true",
+    registration_ttl: props.options.settings.registration_ttl,
+    max_registrations: props.options.settings.max_registrations,
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
+const emits = defineEmits(['submit', 'cancel']);
 
 
 // Initialize activeTab with the currently active tab from props
@@ -181,64 +318,10 @@ const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
-const handleTemplateUpdate = (newSelectedItem) => {
-    form.device_template = newSelectedItem.value;
-}
-
 const handleUpdateProtocolField = (selected) => {
     form.protocol = selected.value;
 }
 
-const handleExtensionUpdate = (newSelectedItem, index) => {
-    form.lines[index].user_id = newSelectedItem.value;
-    form.lines[index].display_name = newSelectedItem.value;
-}
-
-const handleDomainUpdate = (newSelectedItem) => {
-    form.domain_uuid = newSelectedItem.value;
-    form.device_profile_uuid = "NULL";
-    form.extension = "NULL";
-    if (newSelectedItem.value !== "NULL") {
-        emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
-    }
-}
-
-// Function to determine placeholder based on the current value
-function placeholderText(fieldName) {
-    const fieldValue = form[fieldName];
-    if (fieldValue === null) {
-        return "Keep existing setting";
-    } else if (fieldValue === "NULL") {
-        return "Current settings will be cleared";
-    } else {
-        return fieldValue; // Use the actual value as the placeholder
-    }
-}
-
-const handleKeyTypeUpdate = (newSelectedItem, index) => {
-    const newValue = newSelectedItem.value === 'sharedline' ? 'true' : null;
-
-    // Only update if the value is different
-    if (form.lines[index].shared_line !== newValue) {
-        form.lines[index].shared_line = newValue;
-    }
-};
-
-
-const addNewLineKey = () => {
-    // console.log(props.options);
-    // Define the new line key object with default values
-    const newLineKey = {
-        line_number: form.lines.length + 1, // Increment line number based on the array length
-        user_id: null,                      // Set initial user_id to null or any default value
-        display_name: '',                   // Set initial display_name to an empty string
-        shared_line: null,                  // Set initial shared_line to null or any default value
-        device_line_uuid: null
-    };
-
-    // Push the new line key to the form.lines array
-    form.lines.push(newLineKey);
-};
 
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
@@ -249,9 +332,6 @@ const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
-const deleteLineKey = (index) => {
-    form.lines.splice(index, 1);  // Remove the line key at the specified index
-};
 
 
 </script>

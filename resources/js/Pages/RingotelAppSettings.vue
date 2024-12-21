@@ -159,7 +159,7 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+                @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"/>
         </template>
     </AddEditItemModal>
 

@@ -136,7 +136,7 @@
     <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showConnectionModal" :header="'Create a Connection'" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
-            <CreateRingotelConnectionForm :options="options" :errors="formErrors"
+            <CreateRingotelConnectionForm :options="options" :errors="errors"
                 :is-submitting="ringotelConnectionFormSubmiting" @submit="handleCreateConnectionRequest" @cancel="handleModalClose"/>
         </template>
     </AddEditItemModal>
@@ -215,7 +215,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const emits = defineEmits(['submit', 'cancel', 'error']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -237,7 +237,7 @@ const handleCreateConnectionRequest = (form) => {
     ringotelConnectionFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.create_connection, form)
+    axios.post(props.options.routes.create_connection, form)
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             showNotification('success', response.data.messages);
@@ -247,8 +247,9 @@ const handleCreateConnectionRequest = (form) => {
             // handleClearSelection();
         }).catch((error) => {
             ringotelConnectionFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
+            // handleClearSelection();
+            // handleFormErrorResponse(error);
+            emits('error', error); // Emit the event with error
         });
 
 };

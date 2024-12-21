@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Requests\StoreRingotelActivationRequest;
+use App\Http\Requests\StoreRingotelConnectionRequest;
 
 class AppsController extends Controller
 {
@@ -186,7 +187,9 @@ class AppsController extends Controller
             ];
 
 
-            $routes = [];
+            $routes = [
+                'create_connection' => route('apps.connection.create'),
+            ];
 
             $regions = [
                 ['value' => '1', 'name' => 'US East'],
@@ -521,8 +524,10 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createConnection(Request $request)
+    public function createConnection(StoreRingotelConnectionRequest $request, RingotelApiService $ringotelApiService)
     {
+
+        return;
         // Build data array
         $data = array(
             'method' => 'createBranch',
