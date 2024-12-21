@@ -133,7 +133,7 @@
 
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-2xl'" :show="showConnectionModal" :header="'Create a Connection'" :loading="loadingModal"
+    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showConnectionModal" :header="'Create a Connection'" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <CreateRingotelConnectionForm :options="options" :errors="formErrors"
@@ -207,10 +207,10 @@ const page = usePage();
 
 const form = reactive({
     organization_name: props.options.model.domain_description,
-    organization_domain: props.options.suggested_ringotel_domain,
-    region: props.options.default_region,
-    package: props.options.default_package,
-    dont_send_user_credentials: props.options.dont_send_user_credentials === "true",
+    organization_domain: props.options.settings.suggested_ringotel_domain,
+    region: props.options.settings.organization_region,
+    package: props.options.settings.package,
+    dont_send_user_credentials: props.options.settings.dont_send_user_credentials === "true",
     domain_uuid: props.options.model.domain_uuid,
     _token: page.props.csrf_token,
 })

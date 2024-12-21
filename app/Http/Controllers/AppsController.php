@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
+use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use Illuminate\Support\Facades\Log;
 use App\Services\RingotelApiService;
@@ -163,7 +164,6 @@ class AppsController extends Controller
         try {
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
-            // Base navigation array without Greetings
             $navigation = [
                 [
                     'name' => 'Organization',
@@ -174,6 +174,14 @@ class AppsController extends Controller
                     'name' => 'Connections',
                     'icon' => 'SyncAltIcon',
                     'slug' => 'connections',
+                ],
+            ];
+
+            $conn_navigation = [
+                [
+                    'name' => 'Settings',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'settings',
                 ],
             ];
 
@@ -240,37 +248,34 @@ class AppsController extends Controller
 
             $permissions = $this->getUserPermissions();
 
-            $suggested_ringotel_domain = strtolower(str_replace(' ', '', $model->domain_description));
-            $region = get_domain_setting('organization_region', $model->domain_uuid);
-            $package = get_domain_setting('package', $model->domain_uuid);
-            $dont_send_user_credentials = get_domain_setting('dont_send_user_credentials', $model->domain_uuid);
-            $org_id = get_domain_setting('org_id', $model->domain_uuid);
-            $protocol = get_domain_setting('mobile_app_conn_protocol', $model->domain_uuid);
-            $port = get_domain_setting('line_sip_port', $model->domain_uuid);
-            $proxy = get_domain_setting('mobile_app_proxy', $model->domain_uuid);
+            // Get all app settings from Default Settings and overrride with settings saved in Domain Settings
+            $appSettings = $this->getAppSettings($model->domain_uuid);
+            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '', $model->domain_description));
+            $appSettings['suggested_connection_name'] = 'Primary SIP Profile';
 
-            logger($org_id);
-            if (!$org_id) {
+            // Check if `connection_port` is empty and fall back to `line_sip_port`
+            if (empty($appSettings['connection_port'])) {
+                $appSettings['connection_port'] = get_domain_setting('line_sip_port', $model->domain_uuid)  ?? null;
+            }
+
+            // logger($appSettings['org_id']);
+            if (!isset($appSettings['org_id'])) {
                 $connections = [];
             }
 
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
+                'conn_navigation' => $conn_navigation,
                 'model' => $model,
                 'regions' => $regions,
                 'packages' => $packages,
                 'protocols' => $protocols,
                 'permissions' => $permissions,
                 'routes' => $routes,
-                'suggested_ringotel_domain' => $suggested_ringotel_domain,
-                'default_region' => $region,
-                'default_package' => $package,
-                'dont_send_user_credentials' => $dont_send_user_credentials,
+                'settings' => $appSettings,
                 'connections' => $connections,
-                'default_protocol' => $protocol,
-                'default_port' => $port,
-                'default_proxy' => $proxy,
+
                 // Define options for other fields as needed
             ];
 
@@ -287,6 +292,27 @@ class AppsController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
+
+    function getAppSettings($domain_uuid)
+    {
+        // Fetch all domain settings for the given domain_uuid
+        $domainSettings = DomainSettings::where('domain_uuid', $domain_uuid)
+            ->where('domain_setting_category', 'mobile_apps')
+            ->where('domain_setting_enabled', true)
+            ->pluck('domain_setting_value', 'domain_setting_subcategory');
+
+
+        // Fetch all default settings
+        $defaultSettings = DefaultSettings::where('default_setting_enabled', true)
+            ->where('default_setting_category', 'mobile_apps')
+            ->pluck('default_setting_value', 'default_setting_subcategory');
+
+        // Merge settings, prioritizing domain-level settings
+        $allSettings = $defaultSettings->merge($domainSettings);
+
+        return $allSettings;
+    }
+
 
     public function getUserPermissions()
     {
@@ -363,7 +389,6 @@ class AppsController extends Controller
                 'errors' => ['server' => ['Unable to activate organization. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
     }
 
     /**
