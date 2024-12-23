@@ -169,7 +169,6 @@ import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.
 
 const ringotelConnectionFormSubmiting = ref(null);
 const loadingModal = ref(false);
-const formErrors = ref(null);
 
 const props = defineProps({
     options: Object,
@@ -215,7 +214,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -230,17 +229,18 @@ const handleUpdatePackageField = (selected) => {
 }
 
 const handleAddConnection = (selected) => {
+    emits('clear-errors');
     showConnectionModal.value = true;
 }
 
 const handleCreateConnectionRequest = (form) => {
     ringotelConnectionFormSubmiting.value = true;
-    formErrors.value = null;
+    emits('clear-errors');
 
     axios.post(props.options.routes.create_connection, form)
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
+            emits('success', response.data.messages);
             
             // handleSearchButtonClick();
             // handleModalClose();

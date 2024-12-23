@@ -10,7 +10,7 @@
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon
-                        v-if="((errors?.connection_name || errors?.device_template) && item.slug === 'settings')"
+                        v-if="((errors?.connection_name || errors?.domain || errors?.registration_ttl || errors?.max_registrations) && item.slug === 'settings')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -220,24 +220,88 @@
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputOptional target="registration_ttl" label="Registration TTL" class="truncate mb-1" />
-                                    <InputField v-model="form.registration_ttl" type="text" name="registration_ttl" id="registration_ttl" class="mt-1"
-                                        :error="!!errors?.registration_ttl" :placeholder="''" />
+                                    <LabelInputRequired target="registration_ttl" label="Registration TTL"
+                                        class="truncate mb-1" />
+                                    <InputField v-model="form.registration_ttl" type="text" name="registration_ttl"
+                                        id="registration_ttl" class="mt-1" :error="!!errors?.registration_ttl"
+                                        :placeholder="''" />
                                     <div v-if="errors?.registration_ttl" class="mt-2 text-xs text-red-600">
                                         {{ errors.registration_ttl[0] }}
                                     </div>
                                 </div>
 
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputOptional target="max_registrations" label="Max. registrations per user" class="truncate mb-1" />
-                                    <InputField v-model="form.max_registrations" type="text" name="max_registrations" id="max_registrations" class="mt-1"
-                                        :error="!!errors?.max_registrations" :placeholder="''" />
+                                    <LabelInputRequired target="max_registrations" label="Max. registrations per user"
+                                        class="truncate mb-1" />
+                                    <InputField v-model="form.max_registrations" type="text" name="max_registrations"
+                                        id="max_registrations" class="mt-1" :error="!!errors?.max_registrations"
+                                        :placeholder="''" />
                                     <div v-if="errors?.max_registrations" class="mt-2 text-xs text-red-600">
                                         {{ errors.max_registrations[0] }}
                                     </div>
                                 </div>
 
+                                <div class="divide-y divide-gray-200 col-span-6">
+
+                                    <Toggle label="Use OPUS audio codec"
+                                        description="Enabling the OPUS audio codec between the softphone apps and a softphone server improves call quality on low bandwidth/congested networks, but may cause small audio delays."
+                                        v-model="form.app_opus_codec" customClass="py-4" />
+                                    <Toggle label="Send one push notification"
+                                        description="This option can be useful for Queues or Ring groups with sequential ring strategy. It doesn't try to send second push notification in the case of the user's mobile app was not waked up by the first one."
+                                        v-model="form.one_push" customClass="py-4" />
+
+                                </div>
+
+                                
+
                             </div>
+
+
+
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'features'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Features</h3>
+
+                                <!-- <Toggle label="Status" v-model="" /> -->
+
+                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
+                            </div>
+
+                         
+
+                            <div class="grid grid-cols-6 gap-6">
+
+
+                                <div class="divide-y divide-gray-200 col-span-6">
+
+                                    <Toggle label="Show call settings"
+                                        description="Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting."
+                                        v-model="form.show_call_settings" customClass="py-4" />
+                                    <Toggle label="Allow call recording"
+                                        description="Allow users to record calls. IMPORTANT: You are responsible for your compliance with call recording laws. We do not indemnify against legal claims that may arise from the use of this feature."
+                                        v-model="form.allow_call_recording" customClass="py-4" />
+
+                                </div>
+
+                            </div>
+    
 
 
 
@@ -289,7 +353,7 @@ const page = usePage();
 
 const form = reactive({
     // items: props.items,
-    org_id: props.options.settings.orgId,
+    org_id: props.options.orgId,
     connection_name: props.options.settings.suggested_connection_name,
     protocol: props.options.settings.mobile_app_conn_protocol,
     domain: props.options.model.domain_name,
@@ -297,12 +361,17 @@ const form = reactive({
     dont_verify_server_certificate: props.options.settings.dont_verify_server_certificate === "true",
     disable_srtp: props.options.settings.disable_srtp === "true",
     proxy: props.options.settings.mobile_app_proxy,
+    multitenant: props.options.settings.multitenant_mode === "true",
     g711u_enabled: props.options.settings.g711u_enabled === "true",
     g711a_enabled: props.options.settings.g711a_enabled === "true",
     g729_enabled: props.options.settings.g729_enabled === "true",
     opus_enabled: props.options.settings.opus_enabled === "true",
     registration_ttl: props.options.settings.registration_ttl,
     max_registrations: props.options.settings.max_registrations,
+    app_opus_codec: props.options.settings.app_opus_codec === "true",
+    one_push: props.options.settings.one_push === "true",
+    show_call_settings: props.options.settings.show_call_settings === "true",
+    allow_call_recording: props.options.settings.allow_call_recording === "true",
     _token: page.props.csrf_token,
 })
 

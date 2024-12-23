@@ -20,12 +20,14 @@ class StoreRingotelConnectionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'org_id' => 'present',
             'connection_name' => 'required|string|max:100',
             'protocol' => 'required|string',
             'domain' => 'required|string',
             'port' => 'nullable|numeric',
             'dont_verify_server_certificate' => 'present',
             'disable_srtp' => 'present',
+            'multitenant' => 'present',
             'proxy' => 'nullable|string',
             'g711u_enabled' => 'present',
             'g711a_enabled' => 'present',
@@ -33,29 +35,26 @@ class StoreRingotelConnectionRequest extends FormRequest
             'opus_enabled' => 'present',
             'registration_ttl' => 'required|numeric',
             'max_registrations' => 'required|numeric',
+            'app_opus_codec' => 'present',
+            'one_push' => 'present',
+            'show_call_settings' => 'present',
+            'allow_call_recording' => 'present',
         ];
     }
 
 
     public function prepareForValidation(): void
     {
-        logger($this);
-
         // Check if 'region' is missing or empty and set it to null
-        if (!$this->has('region') || $this->input('region') === 'NULL') {
-            $this->merge(['region' => null]);
+        if (!$this->has('protocol') || $this->input('protocol') === 'NULL') {
+            $this->merge(['protocol' => null]);
         }
 
-        // Check if 'package' is missing or empty and set it to null
-        if (!$this->has('package') || $this->input('package') === 'NULL') {
-            $this->merge(['package' => null]);
-        }
-
-        if ($this->has('dont_send_user_credentials')) {
-            $this->merge([
-                'dont_send_user_credentials' => $this->dont_send_user_credentials ? 'true' : 'false',
-            ]);
-        }
+        // if ($this->has('dont_send_user_credentials')) {
+        //     $this->merge([
+        //         'dont_send_user_credentials' => $this->dont_send_user_credentials ? 'true' : 'false',
+        //     ]);
+        // }
 
     }
 

@@ -159,7 +159,8 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
-                @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"/>
+                @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" 
+                @success="showNotification('success', { request: [$event] })" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
@@ -443,6 +444,11 @@ const getItemOptions = (itemUuid = null) => {
             handleErrorResponse(error);
         });
 }
+
+const handleClearErrors = () => {
+    formErrors.value = null;
+}
+
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {

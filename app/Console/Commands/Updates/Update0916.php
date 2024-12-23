@@ -17,6 +17,34 @@ class Update0916
         $updates = [
             [
                 'category' => 'mobile_apps',
+                'subcategory' => 'windows_link',
+                'type' => 'text',
+                'value' => '',
+                'description' => '',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'apple_store_link',
+                'type' => 'text',
+                'value' => '',
+                'description' => '',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'google_play_link',
+                'type' => 'text',
+                'value' => '',
+                'description' => '',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'mac_link',
+                'type' => 'text',
+                'value' => '',
+                'description' => '',
+            ],
+            [
+                'category' => 'mobile_apps',
                 'subcategory' => 'organization_region',
                 'type' => 'text',
                 'value' => '',
@@ -35,6 +63,27 @@ class Update0916
                 'type' => 'text',
                 'value' => '',
                 'description' => '',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'mobile_app_conn_protocol',
+                'type' => 'text',
+                'value' => 'sip',
+                'description' => 'sip or tcp or sips',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'mobile_app_proxy',
+                'type' => 'text',
+                'value' => '',
+                'description' => '',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'dont_send_user_credentials',
+                'type' => 'boolean',
+                'value' => 'false',
+                'description' => "Don't include user credentials in the welcome email",
             ],
             [
                 'category' => 'mobile_apps',
@@ -147,6 +196,27 @@ class Update0916
                 'type' => 'boolean',
                 'value' => 'false',
                 'description' => 'Enable OPUS codec',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'show_call_settings',
+                'type' => 'boolean',
+                'value' => 'true',
+                'description' => 'Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting.',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'app_opus_codec',
+                'type' => 'boolean',
+                'value' => 'true',
+                'description' => 'Enable the OPUS audio codec between the softphone apps and a softphone server',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'one_push',
+                'type' => 'boolean',
+                'value' => 'false',
+                'description' => "Don't send a second push notification in the case of the user's mobile app was not waked up by the first one.",
             ],
         ];
 

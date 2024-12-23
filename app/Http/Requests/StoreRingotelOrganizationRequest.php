@@ -2,12 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\UniqueExtension;
 use Illuminate\Support\Facades\Auth;
-use App\Rules\ValidVoicemailPassword;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreRingotelActivationRequest extends FormRequest
+class StoreRingotelOrganizationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

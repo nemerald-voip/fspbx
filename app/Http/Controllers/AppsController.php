@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use App\Http\Requests\StoreRingotelActivationRequest;
+use App\Http\Requests\StoreRingotelOrganizationRequest;
 use App\Http\Requests\StoreRingotelConnectionRequest;
 
 class AppsController extends Controller
@@ -184,6 +184,11 @@ class AppsController extends Controller
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'settings',
                 ],
+                [
+                    'name' => 'Features',
+                    'icon' => 'AdjustmentsHorizontalIcon',
+                    'slug' => 'features',
+                ],
             ];
 
 
@@ -328,7 +333,7 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createOrganization(StoreRingotelActivationRequest $request, RingotelApiService $ringotelApiService)
+    public function createOrganization(StoreRingotelOrganizationRequest $request, RingotelApiService $ringotelApiService)
     {
         $this->ringotelApiService = $ringotelApiService;
 
@@ -527,70 +532,29 @@ class AppsController extends Controller
     public function createConnection(StoreRingotelConnectionRequest $request, RingotelApiService $ringotelApiService)
     {
 
-        return;
-        // Build data array
-        $data = array(
-            'method' => 'createBranch',
-            'params' => array(
-                "orgid" => $request->org_id,
-                'name' => $request->connection_name,
-                'address' => $request->connection_domain . ":" . $request->connection_port,
-                'provision' => array(
-                    'protocol' => $request->connection_protocol,
-                    'noverify' => true,
-                    'multitenant' => true,
-                    'nosrtp' => true,
-                    'norec' => true,
-                    'internal' => false,
-                    'sms' => false,
-                    'maxregs' => 4,
-                    'private' => false,
-                    'dtmfmode' => 'rfc2833',
-                    'regexpires' => $request->connection_ttl,
-                    'proxy' => array(
-                        'paddr' => $request->connection_proxy_address,
-                        'pauth' => '',
-                        'ppass' => '',
-                    ),
-                    'httpsproxy' => array(
-                        'address' => '',
-                    ),
-                    'certificate' => '',
-                    'tones' => array(
-                        'Ringback2' => 'Ringback 1',
-                        'Progress' => 'Progress 1',
-                        'Ringback' => 'United States',
-                    ),
-                    'features' => 'pbx',
-                    "speeddial" => array(
-                        [
-                            'number' => '*97',
-                            'title' => 'Voicemail'
-                        ]
-                    ),
-                    'vmail' => [
-                        'ext' => '*97',
-                        'name' => 'Voicemail',
-                        'mess' => 'You have a new message',
-                        'off' => '',
-                        'on' => ''
-                    ],
-                    'dnd' => [
-                        'off' => '*79',
-                        'on' => '*78'
-                    ],
-                    'forwarding' => [
-                        'cfuon' => '',
-                        'cfboff' => '',
-                        'cfon' => '*72',
-                        'cfbon' => '',
-                        'cfuoff' => '',
-                        'cfoff' => '*73'
-                    ],
+        $this->ringotelApiService = $ringotelApiService;
 
-                )
-            )
-        );
+        $inputs = $request->validated();
+
+        logger($inputs);
+
+        try {
+            // Send API request to create organization
+            $organization = $this->ringotelApiService->createConnection($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'org_id' => $organization['id'],
+                'messages' => ['success' => ['Organization successfully activated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to add connection. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
 
 
         // Add codecs
@@ -603,31 +567,7 @@ class AppsController extends Controller
         }
 
 
-        if (isset($request->connection_codec_a711)) {
-            $codec = array(
-                'codec' => 'G.711 Alaw',
-                'frame' => 20
-            );
-            $codecs[] = $codec;
-        }
 
-        if (isset($request->connection_codec_729)) {
-            $codec = array(
-                'codec' => 'G.729',
-                'frame' => 20
-            );
-            $codecs[] = $codec;
-        }
-
-        if (isset($request->connection_codec_opus)) {
-            $codec = array(
-                'codec' => 'OPUS',
-                'frame' => 20
-            );
-            $codecs[] = $codec;
-        }
-
-        $data['params']['provision']['codecs'] = $codecs;
 
         // Send request to create Connecion to Ringotel
         $response = Http::ringotel()

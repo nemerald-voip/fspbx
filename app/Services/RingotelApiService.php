@@ -80,6 +80,134 @@ class RingotelApiService
         });
     }
 
+    public function createConnection($params)
+    {
+
+        // Build codecs array based on enabled flags
+        $codecs = [];
+
+        if ($params['g711u_enabled']) {
+            $codecs[] = [
+                'codec' => 'G.711 Ulaw',
+                'frame' => 20,
+            ];
+        }
+
+        if ($params['g711a_enabled']) {
+            $codecs[] = [
+                'codec' => 'G.711 Alaw',
+                'frame' => 20,
+            ];
+        }
+
+        if ($params['g729_enabled']) {
+            $codecs[] = [
+                'codec' => 'G.729',
+                'frame' => 20,
+            ];
+        }
+
+        if ($params['opus_enabled']) {
+            $codecs[] = [
+                'codec' => 'OPUS',
+                'frame' => 20,
+            ];
+        }
+
+        // Build data array
+        $data = array(
+            'method' => 'createBranch',
+            'params' => array(
+                "orgid" => $params['org_id'],
+                'name' => $params['connection_name'],
+                'address' => $params['domain'] . ":" . $params['port'],
+                'provision' => array(
+                    'protocol' => $params['protocol'],
+                    'noverify' => $params['dont_verify_server_certificate'],
+                    'nosrtp' => $params['disable_srtp'],
+                    'multitenant' => $params['multitenant'],
+                    'norec' => !$params['allow_call_recording'],
+                    // 'internal' => false,
+                    // 'sms' => false,
+                    'maxregs' => (int) $params['max_registrations'],
+                    // 'private' => false,
+                    'dtmfmode' => 'rfc2833',
+                    'regexpires' => (int) $params['registration_ttl'],
+                    'proxy' => array(
+                        'paddr' => $params['proxy'],
+                        'pauth' => '',
+                        'ppass' => '',
+                    ),
+                    'httpsproxy' => array(
+                        'address' => '',
+                    ),
+                    'certificate' => '',
+                    'tones' => array(
+                        'Ringback2' => 'Ringback 1',
+                        'Progress' => 'Progress 1',
+                        'Ringback' => 'United States',
+                    ),
+                    '1push' => $params['one_push'],
+                    'noptions' => !$params['show_call_settings'],
+                    'features' => 'pbx',
+                    // "speeddial" => array(
+                    //     [
+                    //         'number' => '*97',
+                    //         'title' => 'Voicemail'
+                    //     ]
+                    // ),
+                    // 'vmail' => [
+                    //     'ext' => '*97',
+                    //     'name' => 'Voicemail',
+                    //     'mess' => 'You have a new message',
+                    //     'off' => '',
+                    //     'on' => ''
+                    // ],
+                    // 'dnd' => [
+                    //     'off' => '*79',
+                    //     'on' => '*78'
+                    // ],
+                    // 'forwarding' => [
+                    //     'cfuon' => '',
+                    //     'cfboff' => '',
+                    //     'cfon' => '*72',
+                    //     'cfbon' => '',
+                    //     'cfuoff' => '',
+                    //     'cfoff' => '*73'
+                    // ],
+
+                    'codecs' => $codecs,
+                    'app' => array(
+                        'g711' => !$params['app_opus_codec'],
+
+                    ),
+
+                )
+            )
+        );
+
+        // logger($data);
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to activate organization");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return $response['result'];
+    }
+
     public function getUsersByOrgId($orgId)
     {
         $data = [
