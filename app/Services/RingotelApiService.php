@@ -149,32 +149,39 @@ class RingotelApiService
                     ),
                     '1push' => $params['one_push'],
                     'noptions' => !$params['show_call_settings'],
-                    'features' => 'pbx',
-                    // "speeddial" => array(
-                    //     [
-                    //         'number' => '*97',
-                    //         'title' => 'Voicemail'
-                    //     ]
-                    // ),
-                    // 'vmail' => [
-                    //     'ext' => '*97',
-                    //     'name' => 'Voicemail',
-                    //     'mess' => 'You have a new message',
-                    //     'off' => '',
-                    //     'on' => ''
-                    // ],
-                    // 'dnd' => [
-                    //     'off' => '*79',
-                    //     'on' => '*78'
-                    // ],
-                    // 'forwarding' => [
-                    //     'cfuon' => '',
-                    //     'cfboff' => '',
-                    //     'cfon' => '*72',
-                    //     'cfbon' => '',
-                    //     'cfuoff' => '',
-                    //     'cfoff' => '*73'
-                    // ],
+                    'norecents' => $params['disable_iphone_recents'],
+                    'novideo' => !$params['allow_video_calls'],
+                    'nostates' => !$params['allow_state_change'],
+                    'nochats' => !$params['allow_internal_chat'],
+                    'calldelay' => $params['call_delay'],
+                    'pcdelay' => $params['desktop_app_delay'],
+                    'features' => $params['pbx_features'] ? 'pbx' : '',
+                    "speeddial" => array(
+                        [
+                            'number' => $params['voicemail_extension'],
+                            'title' => 'Voicemail'
+                        ]
+                    ),
+                    'vmail' => [
+                        'ext' => $params['voicemail_extension'],
+                        'name' => 'Voicemail',
+                        'mess' => 'You have a new message',
+                        'off' => '',
+                        'on' => '',
+                        'spref' => ''
+                    ],
+                    'dnd' => [
+                        'off' => $params['dnd_on_code'],
+                        'on' => $params['dnd_off_code']
+                    ],
+                    'forwarding' => [
+                        'cfuon' => '',
+                        'cfboff' => '',
+                        'cfon' => $params['cf_on_code'],
+                        'cfbon' => '',
+                        'cfuoff' => '',
+                        'cfoff' => $params['cf_off_code']
+                    ],
 
                     'codecs' => $codecs,
                     'app' => array(

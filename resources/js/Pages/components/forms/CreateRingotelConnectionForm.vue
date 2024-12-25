@@ -252,7 +252,7 @@
 
                                 </div>
 
-                                
+
 
                             </div>
 
@@ -284,7 +284,7 @@
                                 <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
                             </div>
 
-                         
+
 
                             <div class="grid grid-cols-6 gap-6">
 
@@ -294,14 +294,57 @@
                                     <Toggle label="Show call settings"
                                         description="Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting."
                                         v-model="form.show_call_settings" customClass="py-4" />
+
                                     <Toggle label="Allow call recording"
                                         description="Allow users to record calls. IMPORTANT: You are responsible for your compliance with call recording laws. We do not indemnify against legal claims that may arise from the use of this feature."
                                         v-model="form.allow_call_recording" customClass="py-4" />
 
+                                    <Toggle label="Allow state change"
+                                        description="Allow users to change their state from the app, such as Online/DND/At the desk."
+                                        v-model="form.allow_state_change" customClass="py-4" />
+
+                                    <Toggle label="Allow video calls" description="Allow users to make 1-on-1 video calls."
+                                        v-model="form.allow_video_calls" customClass="py-4" />
+
+                                    <Toggle label="Allow internal chat"
+                                        description="Allow users to use internal chat feature and create new chats."
+                                        v-model="form.allow_internal_chat" customClass="py-4" />
+
+                                    <Toggle label="Disable call history syncing in iPhone Recents "
+                                        description="If enabled, this option disables call history syncing in iPhone Recents and hides the 'Show calls in iPhone Recents' option from the app's settings."
+                                        v-model="form.disable_iphone_recents" customClass="py-4" />
+
                                 </div>
 
                             </div>
-    
+
+                            <div class="grid grid-cols-6 gap-6">
+
+                                <div class="col-span-5">
+                                    <div class="flex items-center">
+                                        <LabelInputRequired target="call_delay"
+                                            label="Call Delay for 'At the Desk' Status (Seconds)"
+                                            class="mb-1 mr-1 flex-initial w-72" />
+                                        <InputField v-model="form.call_delay" type="text" name="call_delay" id="call_delay"
+                                            class="flex-none w-14" :error="!!errors?.call_delay" :placeholder="''" />
+                                    </div>
+
+                                    <div v-if="errors?.call_delay" class="mt-2 text-xs text-red-600">
+                                        {{ errors.call_delay[0] }}
+                                    </div>
+
+                                </div>
+
+                                <div class="divide-y divide-gray-200 col-span-6">
+
+                                    <Toggle label="Delay incoming calls to the desktop app" description=""
+                                        v-model="form.desktop_app_delay" customClass="py-4" />
+
+
+                                </div>
+
+                            </div>
+
 
 
 
@@ -319,6 +362,123 @@
                         </div>
                     </div>
                 </div>
+
+                <div v-if="activeTab === 'pbx_features'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">PBX Features</h3>
+                                <p class="mt-1 text-sm text-gray-500">Provide feature codes configured on your PBX to handle
+                                    them on your server.</p>
+                            </div>
+
+
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="divide-y divide-gray-200 col-span-6">
+
+                                    <Toggle label="Enable PBX features"
+                                        description="Handle features on the PBX. NOTE: Please ensure you provide shortcodes for the PBX features."
+                                        v-model="form.pbx_features" customClass="py-4" />
+
+                                </div>
+                            </div>
+
+                            <div v-if="form.pbx_features">
+                                <div>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Voicemail</h3>
+                                </div>
+
+                                <div class="grid grid-cols-6 gap-6 mt-1">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="voicemail_extension" label="Voicemail code"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.voicemail_extension" type="text"
+                                            name="voicemail_extension" id="voicemail_extension" class="mt-1"
+                                            :error="!!errors?.voicemail_extension" :placeholder="''" />
+                                        <div v-if="errors?.voicemail_extension" class="mt-2 text-xs text-red-600">
+                                            {{ errors.voicemail_extension[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div v-if="form.pbx_features">
+                                <div>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Do Not Disturb</h3>
+                                </div>
+
+                                <div class="grid grid-cols-6 gap-6 mt-1">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="dnd_on_code" label="Activate DND"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.dnd_on_code" type="text"
+                                            name="dnd_on_code" id="dnd_on_code" class="mt-1"
+                                            :error="!!errors?.dnd_on_code" :placeholder="''" />
+                                        <div v-if="errors?.dnd_on_code" class="mt-2 text-xs text-red-600">
+                                            {{ errors.dnd_on_code[0] }}
+                                        </div>
+                                    </div>
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="dnd_off_code" label="Deactivate DND"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.dnd_off_code" type="text"
+                                            name="dnd_off_code" id="dnd_off_code" class="mt-1"
+                                            :error="!!errors?.dnd_off_code" :placeholder="''" />
+                                        <div v-if="errors?.dnd_off_code" class="mt-2 text-xs text-red-600">
+                                            {{ errors.dnd_off_code[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div v-if="form.pbx_features">
+                                <div>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Call Forwarding</h3>
+                                </div>
+
+                                <div class="grid grid-cols-6 gap-6 mt-1">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="cf_on_code" label="Activate Call Forwarding"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.cf_on_code" type="text"
+                                            name="cf_on_code" id="cf_on_code" class="mt-1"
+                                            :error="!!errors?.cf_on_code" :placeholder="''" />
+                                        <div v-if="errors?.cf_on_code" class="mt-2 text-xs text-red-600">
+                                            {{ errors.cf_on_code[0] }}
+                                        </div>
+                                    </div>
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="cf_off_code" label="Deactivate Call Forwarding"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.cf_off_code" type="text"
+                                            name="cf_off_code" id="cf_off_code" class="mt-1"
+                                            :error="!!errors?.cf_off_code" :placeholder="''" />
+                                        <div v-if="errors?.cf_off_code" class="mt-2 text-xs text-red-600">
+                                            {{ errors.cf_off_code[0] }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </form>
         </div>
     </div>
@@ -340,6 +500,7 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/vue/24/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import Toggle from "@generalComponents/Toggle.vue";
+import SettingsApplications from "@icons/SettingsApplications.vue"
 
 
 const props = defineProps({
@@ -372,6 +533,18 @@ const form = reactive({
     one_push: props.options.settings.one_push === "true",
     show_call_settings: props.options.settings.show_call_settings === "true",
     allow_call_recording: props.options.settings.allow_call_recording === "true",
+    allow_state_change: props.options.settings.allow_state_change === "true",
+    allow_video_calls: props.options.settings.allow_video_calls === "true",
+    allow_internal_chat: props.options.settings.allow_internal_chat === "true",
+    disable_iphone_recents: props.options.settings.disable_iphone_recents === "true",
+    call_delay: props.options.settings.call_delay,
+    desktop_app_delay: props.options.settings.desktop_app_delay === "true",
+    pbx_features: props.options.settings.pbx_features === "true",
+    voicemail_extension: props.options.settings.voicemail_extension,
+    dnd_on_code: props.options.settings.dnd_on_code,
+    dnd_off_code: props.options.settings.dnd_off_code,
+    cf_on_code: props.options.settings.cf_on_code,
+    cf_off_code: props.options.settings.cf_off_code,
     _token: page.props.csrf_token,
 })
 
@@ -394,6 +567,7 @@ const handleUpdateProtocolField = (selected) => {
 
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
+    'SettingsApplications': SettingsApplications,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
 };
 

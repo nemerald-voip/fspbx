@@ -108,41 +108,6 @@ if (!function_exists('getFusionPBXPreviousURL')) {
     }
 }
 
-// if (!function_exists('appsStoreOrganizationDetails')) {
-//     function appsStoreOrganizationDetails(Request $request)
-//     {
-//         // Delete any existing records
-//         DB::table('v_domain_settings')
-//             ->where('domain_uuid', '=', $request->organization_uuid)
-//             ->delete();
-
-//         // Store new records
-//         $domainSetting1 = DomainSettings::create([
-//             'domain_uuid' => $request->organization_uuid,
-//             'domain_setting_category' => 'app shell',
-//             'domain_setting_subcategory' => 'org_id',
-//             'domain_setting_name' => 'text',
-//             'domain_setting_value' => $request->org_id,
-//             'domain_setting_enabled' => true,
-//         ]);
-
-//         $domainSetting2 = DomainSettings::create([
-//             'domain_uuid' => $request->organization_uuid,
-//             'domain_setting_category' => 'mobile_apps',
-//             'domain_setting_subcategory' => 'dont_send_user_credentials',
-//             'domain_setting_name' => 'boolean',
-//             'domain_setting_value' => $request->dont_send_user_credentials,
-//             'domain_setting_enabled' => true,
-//             'domain_setting_description' => "Don't include user credentials in the welcome email"
-//         ]);
-
-//         if ($domainSetting1->save() && $domainSetting2->save()/* && $domainSetting3->save()*/) {
-//             return true;
-//         } else {
-//             return false;
-//         }
-//     }
-// }
 
 if (!function_exists('appsGetOrganizationDetails')) {
     function appsGetOrganizationDetails($domain_uuid)
@@ -189,54 +154,6 @@ if (!function_exists('appsGetOrganization')) {
     }
 }
 
-
-if (!function_exists('appsStoreConnectionDetails')) {
-    function appsStoreConnectionDetails(Request $request)
-    {
-
-        // Store new records
-        $domainSettingsModel = DomainSettings::create([
-            'domain_uuid' => $request->connection_organization_uuid,
-            'domain_setting_category' => 'app shell',
-            'domain_setting_subcategory' => 'conn_id',
-            'domain_setting_name' => 'array',
-            'domain_setting_value' => $request->conn_id,
-            'domain_setting_enabled' => true,
-        ]);
-        $saved = $domainSettingsModel->save();
-        if ($saved) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-// Moved to Service container
-// if (!function_exists('appsGetOrganizations')) {
-//     function appsGetOrganizations()
-//     {
-//         $data = array(
-//             'method' => 'getOrganizations',
-//         );
-
-//         $response = Http::ringotel()
-//             //->dd()
-//             ->timeout(5)
-//             ->withBody(json_encode($data), 'application/json')
-//             ->post('/')
-//             ->throw(function ($response, $e) {
-//                 return response()->json([
-//                     'status' => 401,
-//                     'error' => [
-//                         'message' => "Unable to retrieve organizations",
-//                     ],
-//                 ])->getData(true);
-//             })
-//             ->json();
-//         return $response;
-//     }
-// }
 
 // Get a list of connections that belong to requested organization via Ringotel API call
 if (!function_exists('appsGetConnections')) {

@@ -206,6 +206,34 @@ class Update0916
             ],
             [
                 'category' => 'mobile_apps',
+                'subcategory' => 'allow_state_change',
+                'type' => 'boolean',
+                'value' => 'true',
+                'description' => 'Allow users to change their state from the app, such as Online/DND/At the desk.',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'allow_video_calls',
+                'type' => 'boolean',
+                'value' => 'true',
+                'description' => 'Allow users to make 1-on-1 video calls.',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'allow_internal_chat',
+                'type' => 'boolean',
+                'value' => 'true',
+                'description' => 'Allow users to use internal chat feature and create new chats.',
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'disable_iphone_recents',
+                'type' => 'boolean',
+                'value' => 'false',
+                'description' => "If enabled, this option disables call history syncing in iPhone Recents and hides the 'Show calls in iPhone Recents' option from the app's settings.",
+            ],
+            [
+                'category' => 'mobile_apps',
                 'subcategory' => 'app_opus_codec',
                 'type' => 'boolean',
                 'value' => 'true',
@@ -217,6 +245,20 @@ class Update0916
                 'type' => 'boolean',
                 'value' => 'false',
                 'description' => "Don't send a second push notification in the case of the user's mobile app was not waked up by the first one.",
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'call_delay',
+                'type' => 'text',
+                'value' => '10',
+                'description' => "Call Delay for 'At the Desk' Status (Seconds)",
+            ],
+            [
+                'category' => 'mobile_apps',
+                'subcategory' => 'desktop_app_delay',
+                'type' => 'boolean',
+                'value' => 'false',
+                'description' => "Delay incoming calls to the desktop app",
             ],
         ];
 

@@ -189,6 +189,41 @@ class AppsController extends Controller
                     'icon' => 'AdjustmentsHorizontalIcon',
                     'slug' => 'features',
                 ],
+                [
+                    'name' => 'PBX Features',
+                    'icon' => 'SettingsApplications',
+                    'slug' => 'pbx_features',
+                ],
+                // [
+                //     'name' => 'SMS Settings',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'sms_settings',
+                // ],
+                // [
+                //     'name' => 'Screen Pop-ups',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'screen_popups',
+                // ],
+                // [
+                //     'name' => 'Visual Call Park',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'screen_popups',
+                // ],
+                // [
+                //     'name' => 'Speed Dial',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'speed_dial',
+                // ],
+                // [
+                //     'name' => 'BLFs',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'blfs',
+                // ],
+                // [
+                //     'name' => 'Web Pages',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'web_pages',
+                // ],
             ];
 
 
@@ -540,12 +575,12 @@ class AppsController extends Controller
 
         try {
             // Send API request to create organization
-            $organization = $this->ringotelApiService->createConnection($inputs);
+            $connection = $this->ringotelApiService->createConnection($inputs);
 
             // Return a JSON response indicating success
             return response()->json([
-                'org_id' => $organization['id'],
-                'messages' => ['success' => ['Organization successfully activated']]
+                'conn_id' => $connection['id'],
+                'messages' => ['success' => ['Connection created successfully']]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -556,76 +591,6 @@ class AppsController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
 
-
-        // Add codecs
-        if (isset($request->connection_codec_u711)) {
-            $codec = array(
-                'codec' => 'G.711 Ulaw',
-                'frame' => 20
-            );
-            $codecs[] = $codec;
-        }
-
-
-
-
-        // Send request to create Connecion to Ringotel
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(5)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create connection'
-                ]);
-            })
-            ->json();
-
-
-        // If successful return success status
-        if (isset($response['result'])) {
-            // Add recieved OrgID to the request and store it in database
-            $request->merge(['conn_id' => $response['result']['id']]);
-
-            if (!appsStoreConnectionDetails($request)) {
-                return response()->json([
-                    'connection_name' => $request->connection_name,
-                    'connection_domain' => $request->connection_domain,
-                    'org_id' => $request->org_id,
-                    'conn_id' => $response['result']['id'],
-                    'message' => 'Connection was created successfully, but unable to store Conn ID in database',
-                ]);
-            }
-
-            return response()->json([
-                'connection_name' => $request->connection_name,
-                'connection_domain' => $request->connection_domain,
-                'org_id' => $request->org_id,
-                'conn_id' => $response['result']['id'],
-                'message' => 'Connection created successfully',
-            ]);
-            // Otherwise return failed status
-        } elseif (isset($response['error'])) {
-            return response()->json([
-                'error' => 401,
-                'connection_name' => $request->connection_name,
-                'connection_domain' => $request->connection_domain,
-                'org_id' => $request->org_id,
-                'conn_id' => $response['result']['id'],
-                'message' => $response['error']['message']
-            ]);
-        } else {
-            return response()->json([
-                'error' => 401,
-                'connection_name' => $request->connection_name,
-                'connection_domain' => $request->connection_domain,
-                'org_id' => $request->org_id,
-                'conn_id' => $response['result']['id'],
-                'message' => 'Unknown error'
-            ]);
-        }
     }
 
 

@@ -39,6 +39,18 @@ class StoreRingotelConnectionRequest extends FormRequest
             'one_push' => 'present',
             'show_call_settings' => 'present',
             'allow_call_recording' => 'present',
+            'allow_state_change' => 'present',
+            'allow_video_calls' => 'present',
+            'allow_internal_chat' => 'present',
+            'disable_iphone_recents' => 'present',
+            'call_delay' => 'required|numeric',
+            'desktop_app_delay' => 'present',
+            'pbx_features' => 'present',
+            'voicemail_extension' => 'nullable|string',
+            'dnd_on_code' => 'nullable|string',
+            'dnd_off_code' => 'nullable|string',
+            'cf_on_code' => 'nullable|string',
+            'cf_off_code' => 'nullable|string',
         ];
     }
 

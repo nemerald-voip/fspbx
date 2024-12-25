@@ -241,6 +241,8 @@ const handleCreateConnectionRequest = (form) => {
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
+
+            console.log(response.data);
             
             // handleSearchButtonClick();
             // handleModalClose();

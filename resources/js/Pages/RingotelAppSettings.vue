@@ -160,7 +160,7 @@
         <template #modal-body>
             <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
                 @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" 
-                @success="showNotification('success', { request: [$event] })" @clear-errors="handleClearErrors"/>
+                @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
