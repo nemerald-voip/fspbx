@@ -95,7 +95,7 @@ class Devices extends Model
             /** @var Devices $model */
             // If device is deleted
             // TODO: better if we would know that the device was provisioned before sending deregister request
-            $model->deregisterOnZtp();
+            $model->deregisterOnZtp(null, null, true);
         });
     }
 
@@ -145,7 +145,8 @@ class Devices extends Model
             'device_uuid' => $this->device_uuid,
         ], [
             'provider' => $this->getCloudProvider($deviceVendor)->getProviderName(),
-            'status' => 'pending'
+            'status' => 'pending',
+            'device_address' => $this->device_address
         ]);
     }
 

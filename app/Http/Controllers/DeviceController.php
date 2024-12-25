@@ -465,7 +465,7 @@ Stack trace:
             if ($inputs['device_provisioning']) {
                 $device->registerOnZtp();
             } else {
-                $device->deregisterOnZtp();
+                $device->deregisterOnZtp(null, null, true);
             }
 
             // Return a JSON response indicating success

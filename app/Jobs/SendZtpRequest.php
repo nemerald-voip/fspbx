@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\CloudProvisioningStatus;
 use App\Models\Devices;
 use App\Services\Exceptions\ZtpProviderException;
 use App\Services\PolycomZtpProvider;
@@ -134,6 +135,7 @@ class SendZtpRequest implements ShouldQueue
                     $device = null;
                     // In case a MacAddress was changed we have to force remove old device from ZTP to prevent duplications on ZTP side
                     if($this->forceRemove) {
+                        CloudProvisioningStatus::where('device_address', $this->deviceMacAddress)->delete();
                         $cloudProvider->deleteDevice(
                             $this->deviceMacAddress
                         );
@@ -156,6 +158,7 @@ class SendZtpRequest implements ShouldQueue
                             'device_uuid' => $device->device_uuid,
                         ], [
                             'provider' => $this->provider,
+                            'device_address' => $this->deviceMacAddress,
                             'status' => ($this->action == self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
                             'error' => ''
                         ]);
@@ -168,6 +171,7 @@ class SendZtpRequest implements ShouldQueue
                             'device_uuid' => $device->device_uuid,
                         ], [
                             'provider' => $this->provider,
+                            'device_address' => $this->deviceMacAddress,
                             'status' => 'error',
                             'error' => $response->message
                         ]);

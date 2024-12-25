@@ -24,6 +24,7 @@ class CloudProvisioningStatus extends Model
      */
     protected $fillable = [
         'device_uuid',
+        'device_address',
         'provider',
         'status',
         'error'
