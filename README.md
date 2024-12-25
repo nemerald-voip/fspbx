@@ -90,12 +90,19 @@ Add your mail server in .env file
    ```
 
 7. **Update your menu links to point to new pages**
+   
+   You can do it manually using a list of all updated links here - https://github.com/nemerald-voip/fspbx/wiki/List-of-all-redesigned-pages
+   
+   or run the following command to create the recommended FS PBX menu:
+   ```bash
+   php artisan menu:create-fspbx
+   ```
 
 ### Usage
 After completing the installation steps, you can access the application at your domain.
 
 
-### How to update
+## How to update
 After pulling the updates, run this command to install them.
 
    ```bash
@@ -111,7 +118,7 @@ If you find any updates pending, run this command to install them.
    php artisan migrate
    ```
 
-### Premium Modules
+## Premium Modules
 Unlock the full potential of your PBX with our two exciting premium modules designed to take your system to the next level:
 
 **Contact Center Module**: Elevate your call management with an elegant live dashboard and a powerful management portal, ensuring every queue is optimized and easy to control.
@@ -120,7 +127,7 @@ Unlock the full potential of your PBX with our two exciting premium modules desi
 
 Experience enhanced functionality and seamless control like never before!
 
-### Contact
+## Contact
 For any questions or feedback, please contact us for support.
 
 
