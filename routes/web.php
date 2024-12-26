@@ -225,6 +225,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings'])->name('mobileAppUserSettings');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
+    Route::post('/apps/connection/delete', [AppsController::class, 'destroyConnection'])->name('apps.connection.destroy');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
     Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('appsCreateUser');
     Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');

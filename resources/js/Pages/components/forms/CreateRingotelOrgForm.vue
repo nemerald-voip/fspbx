@@ -117,13 +117,14 @@
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <RingotelConnections v-model="props.options.connections"
-                                    :routingTypes="options.routing_types" :optionsUrl="options.routes.get_routing_options"
-                                    @add-connection="handleAddConnection" />
+                                <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
+                                    :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
+                                    @delete-connection="handleDeleteConnectionRequest" />
                             </div>
 
-
                         </div>
+
+
                     </div>
                 </div>
             </div>
@@ -133,14 +134,14 @@
 
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showConnectionModal" :header="'Create a Connection'" :loading="loadingModal"
-        @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showConnectionModal" :header="'Create a Connection'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateRingotelConnectionForm :options="options" :errors="errors"
-                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleCreateConnectionRequest" @cancel="handleModalClose"/>
+                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleCreateConnectionRequest"
+                @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
-
 </template>
 
 
@@ -201,6 +202,16 @@ const iconComponents = {
     'BuildingOfficeIcon': BuildingOfficeIcon,
 };
 
+const connections = ref([...props.options.connections]);
+
+// Watch for changes in props.options.connections and update the local variable
+watch(
+    () => props.options.connections,
+    (newConnections) => {
+        connections.value = [...newConnections];
+    }
+);
+
 
 const page = usePage();
 
@@ -242,15 +253,41 @@ const handleCreateConnectionRequest = (form) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
 
-            console.log(response.data);
-            
-            // handleSearchButtonClick();
-            // handleModalClose();
+            // Add the new connection to the connections array
+            connections.value.push({
+                org_id: response.data.org_id,
+                conn_id: response.data.conn_id,
+                connection_name: response.data.connection_name,
+                domain: response.data.domain
+            });
+
+            handleModalClose();
             // handleClearSelection();
         }).catch((error) => {
             ringotelConnectionFormSubmiting.value = false;
             // handleClearSelection();
             // handleFormErrorResponse(error);
+            emits('error', error); // Emit the event with error
+        });
+
+};
+
+const handleDeleteConnectionRequest = (connection) => {
+    console.log(connection);
+    // ringotelConnectionFormSubmiting.value = true;
+    // emits('clear-errors');
+
+    axios.post(props.options.routes.delete_connection, connection)
+        .then((response) => {
+            ringotelConnectionFormSubmiting.value = false;
+            emits('success', response.data.messages);
+
+            const updatedConnections = connections.value.filter(
+                (conn) => conn.conn_id !== connection.conn_id
+            );
+            connections.value = updatedConnections;
+
+        }).catch((error) => {
             emits('error', error); // Emit the event with error
         });
 

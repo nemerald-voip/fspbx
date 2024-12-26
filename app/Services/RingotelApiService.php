@@ -215,6 +215,39 @@ class RingotelApiService
         return $response['result'];
     }
 
+    public function deleteConnection($params)
+    {
+
+        $data = array(
+            'method' => 'deleteBranch',
+            'params' => array(
+                'id' => $params['conn_id'],
+                'orgid' => $params['org_id'],
+            )
+        );
+
+        // logger($data);
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to delete connection");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return $response['result'];
+    }
+
     public function getUsersByOrgId($orgId)
     {
         $data = [

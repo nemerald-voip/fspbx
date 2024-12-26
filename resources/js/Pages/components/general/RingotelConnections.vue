@@ -28,9 +28,8 @@
                             </tr>
                             <tr v-for="(option, index) in connections" :key="index">
                                 <td class=" py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
-                                    {{ connections[index].ivr_menu_option_digits }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500">{{ connections[index].key_type_display }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500">{{ connections[index].key_name }}</td>
+                                    {{ option.connection_name }}</td>
+                                <td class="px-3 py-4 text-sm text-gray-500">{{ option.domain }}</td>
                                 <td class="relative py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 lg:pr-8">
                                     <Menu as="div" class="relative inline-block text-left">
                                         <div>
@@ -57,7 +56,7 @@
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Edit</a>
                                                     </MenuItem>
                                                     <MenuItem v-slot="{ active }">
-                                                    <a href="#" @click.prevent="handleDelete(index)"
+                                                    <a href="#" @click.prevent="handleDelete(option)"
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
                                                     </MenuItem>
 
@@ -103,20 +102,22 @@ const props = defineProps({
 });
 
 
-const emit = defineEmits(['update:model-value', 'add-connection', 'edit', 'delete'])
+const emit = defineEmits(['update:model-value', 'add-connection', 'edit', 'delete-connection'])
 
 // Create a local reactive copy of the modelValue
 const connections = ref([...props.modelValue]);
 
 
-console.log(connections.value);
-
 const loading = ref(false)
 
 // Watch for changes to the modelValue from the parent and update local state
-watch(() => props.modelValue, (newVal) => {
-    connections.value = [...newVal];
-});
+watch(
+    () => props.modelValue,
+    (newVal) => {
+        connections.value = newVal; // Directly bind to the new value
+    },
+    { deep: true } // Ensure it watches for nested changes
+);
 
 const handleAddConnection = () => emit('add-connection');
 
@@ -124,8 +125,8 @@ const handleEdit = (index) => {
     emit('edit', index); // Emit the edit event with the index
 };
 
-const handleDelete = (index) => {
-    emit('delete', index); // Emit the delete event with the index
+const handleDelete = (connection) => {
+    emit('delete-connection', connection); // Emit the delete event
 };
 
 // Initialize connections and fetch typeOptions

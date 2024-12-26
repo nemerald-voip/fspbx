@@ -54,7 +54,8 @@ class AppsController extends Controller
                 'routes' => [
                     'current_page' => route('apps.index'),
                     'create_organization' => route('apps.organization.create'),
-                    'create_connection' => route('apps.connection.create'),
+                    // 'create_connection' => route('apps.connection.create'),
+                    // 'delete_connection' => route('apps.connection.destroy'),
                     'item_options' => route('apps.item.options'),
                 ]
             ]
@@ -229,6 +230,7 @@ class AppsController extends Controller
 
             $routes = [
                 'create_connection' => route('apps.connection.create'),
+                'delete_connection' => route('apps.connection.destroy'),
             ];
 
             $regions = [
@@ -571,15 +573,16 @@ class AppsController extends Controller
 
         $inputs = $request->validated();
 
-        logger($inputs);
-
         try {
             // Send API request to create organization
             $connection = $this->ringotelApiService->createConnection($inputs);
 
             // Return a JSON response indicating success
             return response()->json([
+                'org_id' => $inputs['org_id'],
                 'conn_id' => $connection['id'],
+                'connection_name' => $inputs['connection_name'],
+                'domain' => $inputs['domain'] . ":" . $inputs['port'],
                 'messages' => ['success' => ['Connection created successfully']]
             ], 201);
         } catch (\Exception $e) {
@@ -593,6 +596,35 @@ class AppsController extends Controller
 
     }
 
+
+    /**
+     * Submit API request to Ringotel to delete specified connection
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroyConnection(RingotelApiService $ringotelApiService)
+    {
+
+        $this->ringotelApiService = $ringotelApiService;
+
+        try {
+            // Send API request to create organization
+            $connection = $this->ringotelApiService->deleteConnection(request()->all());
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Connection deleted successfully']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to delete connection. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+
+    }
 
     /**
      * Submit request to update connection to Ringotel
