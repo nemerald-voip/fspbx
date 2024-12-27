@@ -179,7 +179,7 @@ class Devices extends Model
                 )->onQueue('ztp');
             }
         } catch (\Exception $exception) {
-            $this->logProvisioningError('Error occurred during device deregistration on ZTP.', $exception);
+            $this->logProvisioningError('Error occurred during device de-registration on ZTP.', $exception);
         }
     }
 
