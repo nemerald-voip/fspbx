@@ -45,7 +45,7 @@
                                     <LabelInputRequired target="organization_domain" label="Unique Organization Domain"
                                         class="truncate" />
                                     <InputField v-model="form.organization_domain" type="text" name="organization_domain"
-                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain" />
+                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain" disabled/>
                                     <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
                                         {{ errors.organization_domain[0] }}
                                     </div>
@@ -56,12 +56,12 @@
 
                                     <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'"
                                         :error="errors?.region && errors.region.length > 0" :selectedItem="form.region"
-                                        @update:model-value="handleUpdateRegionField" />
+                                        @update:model-value="handleUpdateRegionField" disabled/>
                                     <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
                                         {{ errors.region[0] }}
                                     </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
-                                        location. You won't be able to change it later.</p>
+                                    <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
+                                        location. You won't be able to change it later.</p> -->
 
                                 </div>
 
@@ -74,8 +74,7 @@
                                     <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
                                         {{ errors.package[0] }}
                                     </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">The selected package defines the
-                                        available features.</p>
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available features.</p>
 
                                 </div>
 
@@ -98,7 +97,7 @@
                                 class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                 ref="saveButtonRef" :disabled="isSubmitting">
                                 <Spinner :show="isSubmitting" />
-                                Next
+                                Save
                             </button>
                         </div>
                     </div>
@@ -120,6 +119,7 @@
                                 <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
                                     :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
                                     @delete-connection="handleDeleteConnectionRequest"
+                                    @edit-connection="handleEditConnection"
                                     :isDeleting="showConnectionDeletingStatus" />
                             </div>
 
@@ -131,7 +131,7 @@
                                 class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 
                                 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:text-indigo-500"
                                 :disabled="connections.length == 0">
-                                Finish
+                                Close
                             </button>
                         </div>
 
@@ -150,6 +150,15 @@
         <template #modal-body>
             <CreateRingotelConnectionForm :options="options" :errors="errors"
                 :is-submitting="ringotelConnectionFormSubmiting" @submit="handleCreateConnectionRequest"
+                @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal>
+
+    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showEditConnectionModal" :header="'Edit Connection'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateRingotelConnectionForm :options="options" :errors="errors" :selected-connection="selectedConnection"
+                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleUpdateConnectionRequest"
                 @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
@@ -178,6 +187,7 @@ import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
 import RingotelConnections from "../general/RingotelConnections.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.vue";
+import UpdateRingotelConnectionForm from "../forms/UpdateRingotelConnectionForm.vue";
 
 const ringotelConnectionFormSubmiting = ref(null);
 const loadingModal = ref(false);
@@ -201,12 +211,13 @@ watch(
 );
 
 const setActiveTab = (tabSlug) => {
-    // activeTab.value = tabSlug;
+    activeTab.value = tabSlug;
 };
 
 const showConnectionModal = ref(false);
 const showConnectionDeletingStatus = ref(false);
-
+const selectedConnection = ref(null);
+const showEditConnectionModal = ref(false);
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -214,20 +225,32 @@ const iconComponents = {
     'BuildingOfficeIcon': BuildingOfficeIcon,
 };
 
-const connections = ref([...props.options.connections]);
+const connections = ref(
+    props.options.connections.map((conn) => ({
+        org_id: conn.accountId,
+        conn_id: conn.id,
+        connection_name: conn.name,
+        domain: conn.address
+    }))
+);
 
 // Watch for changes in props.options.connections and update the local variable
 watch(
     () => props.options.connections,
     (newConnections) => {
-        connections.value = [...newConnections];
+        connections.value = newConnections.map((conn) => ({
+            org_id: conn.accountId,
+            conn_id: conn.id,
+            connection_name: conn.name,
+            domain: conn.address
+        }));
     }
 );
-
 
 const page = usePage();
 
 const form = reactive({
+    organization_id: props.options.organization.id,
     organization_name: props.options.organization.name,
     organization_domain: props.options.organization.domain,
     region: props.options.organization.region,
@@ -260,6 +283,7 @@ const handleAddConnection = (selected) => {
     showConnectionModal.value = true;
 }
 
+
 const handleCreateConnectionRequest = (form) => {
     ringotelConnectionFormSubmiting.value = true;
     emits('clear-errors');
@@ -288,6 +312,42 @@ const handleCreateConnectionRequest = (form) => {
 
 };
 
+const handleUpdateConnectionRequest = (form) => {
+    ringotelConnectionFormSubmiting.value = true;
+    emits('clear-errors');
+
+    axios.put(props.options.routes.update_connection, form)
+        .then((response) => {
+            ringotelConnectionFormSubmiting.value = false;
+            emits('success', response.data.messages);
+
+            handleModalClose();
+            // handleClearSelection();
+        }).catch((error) => {
+            ringotelConnectionFormSubmiting.value = false;
+            // handleClearSelection();
+            // handleFormErrorResponse(error);
+            emits('error', error); // Emit the event with error
+        });
+
+};
+
+const handleEditConnection = (connection) => {
+    emits('clear-errors');
+    // Find the matching connection from props.options.connections
+    const matchedConnection = props.options.connections.find(
+        (conn) => conn.id === connection.conn_id
+    );
+
+    if (matchedConnection) {
+        selectedConnection.value = matchedConnection;
+        showEditConnectionModal.value = true;
+        // console.log(selectedConnection.value);
+    } else {
+        emits('error', { request: "Matching connection not found" });
+    }
+}
+
 const handleDeleteConnectionRequest = (connection) => {
     showConnectionDeletingStatus.value = true;
     // emits('clear-errors');
@@ -301,7 +361,6 @@ const handleDeleteConnectionRequest = (connection) => {
                 (conn) => conn.conn_id !== connection.conn_id
             );
             connections.value = updatedConnections;
-            console.log(connections.value);
 
         }).catch((error) => {
             showConnectionDeletingStatus.value = false;
@@ -312,6 +371,7 @@ const handleDeleteConnectionRequest = (connection) => {
 
 const handleModalClose = () => {
     showConnectionModal.value = false;
+    showEditConnectionModal.value = false;
 }
 
 

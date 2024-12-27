@@ -13,12 +13,13 @@ use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use Illuminate\Support\Facades\Log;
 use App\Services\RingotelApiService;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use App\Http\Requests\StoreRingotelOrganizationRequest;
 use App\Http\Requests\StoreRingotelConnectionRequest;
+use App\Http\Requests\UpdateRingotelConnectionRequest;
+use App\Http\Requests\StoreRingotelOrganizationRequest;
+use App\Http\Requests\UpdateRingotelOrganizationRequest;
 
 class AppsController extends Controller
 {
@@ -54,8 +55,7 @@ class AppsController extends Controller
                 'routes' => [
                     'current_page' => route('apps.index'),
                     'create_organization' => route('apps.organization.create'),
-                    // 'create_connection' => route('apps.connection.create'),
-                    // 'delete_connection' => route('apps.connection.destroy'),
+                    'update_organization' => route('apps.organization.update'),
                     'item_options' => route('apps.item.options'),
                 ]
             ]
@@ -230,6 +230,7 @@ class AppsController extends Controller
 
             $routes = [
                 'create_connection' => route('apps.connection.create'),
+                'update_connection' => route('apps.connection.update'),
                 'delete_connection' => route('apps.connection.destroy'),
             ];
 
@@ -321,6 +322,7 @@ class AppsController extends Controller
                 'conn_navigation' => $conn_navigation,
                 'model' => $model ?? null,
                 'organization' => $organization ?? null,
+                'orgId' => $organization->id ?? null,
                 'regions' => $regions,
                 'packages' => $packages,
                 'protocols' => $protocols,
@@ -444,6 +446,35 @@ class AppsController extends Controller
         }
     }
 
+        /**
+     * Submit API request to Ringotel to create a new organization
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function UpdateOrganization(UpdateRingotelOrganizationRequest $request, RingotelApiService $ringotelApiService)
+    {
+        $this->ringotelApiService = $ringotelApiService;
+
+        $inputs = $request->validated();
+
+        try {
+            // Send API request to update organization
+            $organization = $this->ringotelApiService->updateOrganization($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Organization successfully updated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
     /**
      * Submit request to destroy organization to Ringotel
      *
@@ -560,15 +591,6 @@ class AppsController extends Controller
         }
     }
 
-
-    /**
-     * Submit request to update organization to Ringotel
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function updateOrganization(Request $request) {}
-
-
     /**
      * Submit API request to Ringotel to create a new connection
      *
@@ -582,7 +604,7 @@ class AppsController extends Controller
         $inputs = $request->validated();
 
         try {
-            // Send API request to create organization
+            // Send API request to create connection
             $connection = $this->ringotelApiService->createConnection($inputs);
 
             // Return a JSON response indicating success
@@ -615,7 +637,7 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
 
         try {
-            // Send API request to create organization
+            // Send API request to delete connection
             $connection = $this->ringotelApiService->deleteConnection(request()->all());
 
             // Return a JSON response indicating success
@@ -633,12 +655,33 @@ class AppsController extends Controller
     }
 
     /**
-     * Submit request to update connection to Ringotel
+     * Submit API request to update connection
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateConnection(Request $request) {}
+    public function updateConnection(UpdateRingotelConnectionRequest $request, RingotelApiService $ringotelApiService) 
+    {
+        $this->ringotelApiService = $ringotelApiService;
 
+        $inputs = $request->validated();
+
+        try {
+            // Send API request to create connection
+            $connection = $this->ringotelApiService->updateConnection($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Connection updated successfully']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update connection. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
 
     /**
      * Submit getOrganizations request to Ringotel API

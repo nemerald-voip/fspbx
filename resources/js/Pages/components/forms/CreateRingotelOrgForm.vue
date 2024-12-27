@@ -74,8 +74,7 @@
                                     <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
                                         {{ errors.package[0] }}
                                     </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">The selected package defines the
-                                        available features.</p>
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available features.</p>
 
                                 </div>
 
@@ -120,6 +119,7 @@
                                 <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
                                     :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
                                     @delete-connection="handleDeleteConnectionRequest"
+                                    @edit-connection="handleEditConnection"
                                     :isDeleting="showConnectionDeletingStatus" />
                             </div>
 
@@ -153,6 +153,15 @@
                 @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
+
+    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showEditConnectionModal" :header="'Edit Connection'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateRingotelConnectionForm :options="options" :errors="errors" :selected-connection="selectedConnection"
+                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleUpdateConnectionRequest"
+                @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal>
 </template>
 
 
@@ -178,6 +187,7 @@ import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
 import RingotelConnections from "../general/RingotelConnections.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.vue";
+import UpdateRingotelConnectionForm from "../forms/UpdateRingotelConnectionForm.vue";
 
 const ringotelConnectionFormSubmiting = ref(null);
 const loadingModal = ref(false);
@@ -206,7 +216,8 @@ const setActiveTab = (tabSlug) => {
 
 const showConnectionModal = ref(false);
 const showConnectionDeletingStatus = ref(false);
-
+const selectedConnection = ref(null);
+const showEditConnectionModal = ref(false);
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -288,6 +299,50 @@ const handleCreateConnectionRequest = (form) => {
 
 };
 
+const handleUpdateConnectionRequest = (form) => {
+    ringotelConnectionFormSubmiting.value = true;
+    emits('clear-errors');
+
+    axios.post(props.options.routes.create_connection, form)
+        .then((response) => {
+            ringotelConnectionFormSubmiting.value = false;
+            emits('success', response.data.messages);
+
+            // Add the new connection to the connections array
+            connections.value.push({
+                org_id: response.data.org_id,
+                conn_id: response.data.conn_id,
+                connection_name: response.data.connection_name,
+                domain: response.data.domain
+            });
+
+            handleModalClose();
+            // handleClearSelection();
+        }).catch((error) => {
+            ringotelConnectionFormSubmiting.value = false;
+            // handleClearSelection();
+            // handleFormErrorResponse(error);
+            emits('error', error); // Emit the event with error
+        });
+
+};
+
+const handleEditConnection = (connection) => {
+    emits('clear-errors');
+    // Find the matching connection from props.options.connections
+    const matchedConnection = props.options.connections.find(
+        (conn) => conn.id === connection.conn_id
+    );
+
+    if (matchedConnection) {
+        selectedConnection.value = matchedConnection;
+        showEditConnectionModal.value = true;
+        // console.log(selectedConnection.value);
+    } else {
+        emits('error', { request: "Matching connection not found" });
+    }
+}
+
 const handleDeleteConnectionRequest = (connection) => {
     showConnectionDeletingStatus.value = true;
     // emits('clear-errors');
@@ -312,6 +367,7 @@ const handleDeleteConnectionRequest = (connection) => {
 
 const handleModalClose = () => {
     showConnectionModal.value = false;
+    showEditConnectionModal.value = false;
 }
 
 

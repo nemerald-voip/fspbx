@@ -167,8 +167,8 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Ringotel Organization'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
-                @submit="handleCreateRequest" @cancel="handleActivationFinish" @error="handleFormErrorResponse" 
+            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting" :activeTab="activationActiveTab"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" 
                 @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
@@ -307,7 +307,7 @@ const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.put(form.update_route, form)
+    axios.put(props.routes.update_organization, form)
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
@@ -442,7 +442,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

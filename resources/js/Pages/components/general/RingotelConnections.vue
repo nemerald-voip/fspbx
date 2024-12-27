@@ -51,10 +51,10 @@
                                             <MenuItems
                                                 class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                                 <div class="py-1">
-                                                    <!-- <MenuItem v-slot="{ active }">
-                                                    <a href="#" @click.prevent="handleEdit(index)"
+                                                    <MenuItem v-slot="{ active }">
+                                                    <a href="#" @click.prevent="handleEdit(option)"
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Edit</a>
-                                                    </MenuItem> -->
+                                                    </MenuItem>
                                                     <MenuItem v-slot="{ active }">
                                                     <a href="#" @click.prevent="handleDelete(option)"
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex px-4 py-2 text-sm']">
@@ -107,7 +107,7 @@ const props = defineProps({
 });
 
 
-const emit = defineEmits(['update:model-value', 'add-connection', 'edit', 'delete-connection'])
+const emit = defineEmits(['update:model-value', 'add-connection', 'edit-connection', 'delete-connection'])
 
 // Create a local reactive copy of the modelValue
 const connections = ref([...props.modelValue]);
@@ -126,8 +126,8 @@ watch(
 
 const handleAddConnection = () => emit('add-connection');
 
-const handleEdit = (index) => {
-    emit('edit', index); // Emit the edit event with the index
+const handleEdit = (connection) => {
+    emit('edit-connection', connection); // Emit the edit event with
 };
 
 const handleDelete = (connection) => {
