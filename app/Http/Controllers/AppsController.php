@@ -161,7 +161,7 @@ class AppsController extends Controller
         });
     }
 
-    public function getItemOptions()
+    public function getItemOptions(RingotelApiService $ringotelApiService)
     {
         try {
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
@@ -274,6 +274,11 @@ class AppsController extends Controller
                             ->where('domain_setting_enabled', true);
                     }])->where($this->model->getKeyName(), $item_uuid)->first();
 
+                    if ($model) {
+                        // Transform settings into org_id
+                        $model->org_id = $model->settings->first()->domain_setting_value ?? null;
+                        unset($model->settings); // Remove settings relationship if not needed
+                    }
 
                 $model->ringotel_status = $model->settings()
                     ->where('domain_setting_category', 'app shell')
@@ -287,32 +292,35 @@ class AppsController extends Controller
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
-
                 $routes = array_merge($routes, []);
             }
 
             $permissions = $this->getUserPermissions();
 
             // Get all app settings from Default Settings and overrride with settings saved in Domain Settings
-            $appSettings = $this->getAppSettings($model->domain_uuid);
-            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '', $model->domain_description));
+            $appSettings = $this->getAppSettings($model->domain_uuid ?? null);
+            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '', $model->domain_description ?? ''));
             $appSettings['suggested_connection_name'] = 'Primary SIP Profile';
 
             // Check if `connection_port` is empty and fall back to `line_sip_port`
             if (empty($appSettings['connection_port'])) {
-                $appSettings['connection_port'] = get_domain_setting('line_sip_port', $model->domain_uuid)  ?? null;
+                $appSettings['connection_port'] = get_domain_setting('line_sip_port', $model->domain_uuid ?? null)  ?? null;
             }
 
-            // logger($appSettings['org_id']);
-            if (!isset($appSettings['org_id'])) {
+            if (!$model->org_id) {
                 $connections = [];
+            }  else {
+                $this->ringotelApiService = $ringotelApiService;
+                $organization = $this->ringotelApiService->getOrganization($model->org_id);
+                $connections = $this->ringotelApiService->getConnections($model->org_id);
             }
 
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
                 'conn_navigation' => $conn_navigation,
-                'model' => $model,
+                'model' => $model ?? null,
+                'organization' => $organization ?? null,
                 'regions' => $regions,
                 'packages' => $packages,
                 'protocols' => $protocols,
@@ -593,7 +601,6 @@ class AppsController extends Controller
                 'errors' => ['server' => ['Unable to add connection. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
     }
 
 
@@ -623,7 +630,6 @@ class AppsController extends Controller
                 'errors' => ['server' => ['Unable to delete connection. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
-
     }
 
     /**

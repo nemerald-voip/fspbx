@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTO\RingotelConnectionDTO;
 use Illuminate\Support\Facades\DB;
 use App\DTO\RingotelOrganizationDTO;
 use Illuminate\Support\Facades\Http;
@@ -50,6 +51,37 @@ class RingotelApiService
         }
 
         return $response['result'];
+    }
+
+    public function getOrganization($org_id)
+    {
+        // Prepare the payload
+        $data = array(
+            'method' => 'getOrganization',
+            'params' => array(
+                'id' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to fetch organization");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        // Transform the result into OrganizationDTO
+        return RingotelOrganizationDTO::fromArray($response['result']);
     }
 
     public function getOrganizations()
@@ -246,6 +278,37 @@ class RingotelApiService
         }
 
         return $response['result'];
+    }
+
+    public function getConnections($org_id)
+    {
+        $data = array(
+            'method' => 'getBranches',
+            'params' => array(
+                'orgid' => $org_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to retrieve connections");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return collect($response['result'])->map(function ($item) {
+            return RingotelConnectionDTO::fromArray($item);
+        });
     }
 
     public function getUsersByOrgId($orgId)

@@ -156,6 +156,7 @@ if (!function_exists('appsGetOrganization')) {
 
 
 // Get a list of connections that belong to requested organization via Ringotel API call
+// THERE IS a NEW VERSION OF THIS FUNCTION
 if (!function_exists('appsGetConnections')) {
     function appsGetConnections($org_id)
     {
@@ -185,35 +186,35 @@ if (!function_exists('appsGetConnections')) {
 }
 
 // Delete connection that belong to requested organization via Ringotel API call
-if (!function_exists('appsDeleteConnection')) {
-    function appsDeleteConnection($org_id, $conn_id)
-    {
-        $data = array(
-            'method' => 'deleteBranch',
-            'params' => array(
-                'id' => $conn_id,
-                'orgid' => $org_id,
-            )
-        );
+// if (!function_exists('appsDeleteConnection')) {
+//     function appsDeleteConnection($org_id, $conn_id)
+//     {
+//         $data = array(
+//             'method' => 'deleteBranch',
+//             'params' => array(
+//                 'id' => $conn_id,
+//                 'orgid' => $org_id,
+//             )
+//         );
 
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to delete connection",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
+//         $response = Http::ringotel()
+//             //->dd()
+//             ->timeout(30)
+//             ->withBody(json_encode($data), 'application/json')
+//             ->post('/')
+//             ->throw(function ($response, $e) {
+//                 return response()->json([
+//                     'status' => 401,
+//                     'error' => [
+//                         'message' => "Unable to delete connection",
+//                     ],
+//                 ])->getData(true);
+//             })
+//             ->json();
 
-        return $response;
-    }
-}
+//         return $response;
+//     }
+// }
 
 // Get a list of all user for this organization and connection
 if (!function_exists('appsGetUsers')) {

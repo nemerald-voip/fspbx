@@ -228,11 +228,11 @@ watch(
 const page = usePage();
 
 const form = reactive({
-    organization_name: props.options.model.domain_description,
-    organization_domain: props.options.settings.suggested_ringotel_domain,
-    region: props.options.settings.organization_region,
-    package: props.options.settings.package,
-    dont_send_user_credentials: props.options.settings.dont_send_user_credentials === "true",
+    organization_name: props.options.organization.name,
+    organization_domain: props.options.organization.domain,
+    region: props.options.organization.region,
+    package: String(props.options.organization.packageid),
+    dont_send_user_credentials: props.options.organization.params.hidePassInEmail === "true",
     domain_uuid: props.options.model.domain_uuid,
     _token: page.props.csrf_token,
 })

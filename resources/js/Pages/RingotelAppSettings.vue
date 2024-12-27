@@ -22,10 +22,10 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <!-- <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
-                </button>
+                </button> -->
 
 
             </template>
@@ -105,7 +105,7 @@
                                 <ejs-tooltip v-if="row.ringotel_status == 'true'" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
@@ -159,19 +159,19 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
-                @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" 
+                @submit="handleCreateRequest" @cancel="handleActivationFinish" @error="handleFormErrorResponse" 
                 @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
-    <!-- <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Ringotel Organization'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification('success', { request: [$event] })" />
+            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
+                @submit="handleCreateRequest" @cancel="handleActivationFinish" @error="handleFormErrorResponse" 
+                @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
         </template>
-    </AddEditItemModal> -->
+    </AddEditItemModal>
 
     <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
         @close="handleModalClose">
@@ -210,7 +210,7 @@ import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
-import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
+import UpdateRingotelOrgForm from "./components/forms/UpdateRingotelOrgForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import LinkOffIcon from "@icons/LinkOffIcon.vue";
@@ -223,8 +223,8 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const createModalTrigger = ref(false);
 const showActivateModal = ref(false);
+const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
@@ -275,8 +275,8 @@ const handleActivateButtonClick = (itemUuid) => {
     getItemOptions(itemUuid);
 }
 
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
+const handleEditButtonClick = (itemUuid) => {
+    showEditModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions(itemUuid);
@@ -366,11 +366,16 @@ const handleBulkActionRequest = (action) => {
 }
 
 
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
+// const handleCreateButtonClick = () => {
+//     createModalTrigger.value = true
+//     formErrors.value = null;
+//     loadingModal.value = true
+//     getItemOptions();
+// }
+
+const handleActivationFinish = () => {
+    handleModalClose();
+    handleSearchButtonClick();
 }
 
 const handleSelectAll = () => {
@@ -509,8 +514,8 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
     showActivateModal.value = false;
+    showEditModal.value = false,
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }

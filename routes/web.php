@@ -220,7 +220,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
     Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('apps.organization.create');
     Route::delete('/apps/organization/{domain}', [AppsController::class, 'destroyOrganization'])->name('appsDestroyOrganization');
-    Route::get('/apps/organization/', [AppsController::class, 'getOrganizations'])->name('appsGetOrganizations');
+    // Route::get('/apps/organization/', [AppsController::class, 'getOrganizations'])->name('appsGetOrganizations');
     Route::post('/apps/organization/sync', [AppsController::class, 'syncOrganizations'])->name('appsSyncOrganizations');
     Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings'])->name('mobileAppUserSettings');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');

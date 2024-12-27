@@ -51,13 +51,16 @@
                                             <MenuItems
                                                 class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                                 <div class="py-1">
-                                                    <MenuItem v-slot="{ active }">
+                                                    <!-- <MenuItem v-slot="{ active }">
                                                     <a href="#" @click.prevent="handleEdit(index)"
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Edit</a>
-                                                    </MenuItem>
+                                                    </MenuItem> -->
                                                     <MenuItem v-slot="{ active }">
                                                     <a href="#" @click.prevent="handleDelete(option)"
-                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
+                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex px-4 py-2 text-sm']">
+                                                        Delete
+                                                        <Spinner class="ml-1" :show="isDeleting" />
+                                                    </a>
                                                     </MenuItem>
 
                                                 </div>
@@ -93,12 +96,14 @@ import ComboBox from "../general/ComboBox.vue";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
 import InputField from "../general/InputField.vue";
+import Spinner from "../general/Spinner.vue";
 
 
 const props = defineProps({
     modelValue: [Object, null],
     routingTypes: [Object, null],
     optionsUrl: String,
+    isDeleting: Boolean,
 });
 
 
