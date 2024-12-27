@@ -317,24 +317,6 @@ class DeviceController extends Controller
             // Update the instance with the label
             $instance->save();
 
-            // TODO: The device isn't registered on a new devices
-            /*
-             *
-Next Illuminate\Database\QueryException: SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "device_uuid" of relation "cloud_provisioning_status" violates not-null constraint
-DETAIL:  Failing row contains (null, polycom, pending, null). (Connection: pgsql, SQL: insert into "cloud_provisioning_status" ("device_uuid", "provider", "status") values (?, polycom, pending)) in /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Connection.php:822
-Stack trace:
-#0 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Connection.php(776): Illuminate\Database\Connection->runQueryCallback()
-#1 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Connection.php(581): Illuminate\Database\Connection->run()
-#2 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Connection.php(533): Illuminate\Database\Connection->statement()
-#3 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3338): Illuminate\Database\Connection->insert()
-#4 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3457): Illuminate\Database\Query\Builder->insert()
-#5 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\Database\Query\Builder->updateOrInsert()
-#6 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1971): Illuminate\Database\Eloquent\Builder->forwardCallTo()
-#7 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->__call()
-#8 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(52): Illuminate\Database\Eloquent\Relations\Relation->forwardCallTo()
-#9 /var/www/freeswitchpbx/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/Relation.php(517): Illuminate\Database\Eloquent\Relations\Relation->forwardDecoratedCallTo()
-
-             */
             if($inputs['device_provisioning']) {
                 $instance->registerOnZtp();
             }
@@ -447,17 +429,16 @@ Stack trace:
 
             $deviceAddressBeforeChange = null;
             $deviceVendorBeforeChange = null;
-            //if ($inputs['device_provisioning']) {
-                if ($inputs['device_address'] != $device->device_address) {
-                    $deviceAddressBeforeChange = $device->device_address;
-                }
-                if ($inputs['device_vendor'] != $device->device_vendor) {
-                    $deviceVendorBeforeChange = $device->device_vendor;
-                }
-            //}
+            if ($inputs['device_address'] != $device->device_address) {
+                $deviceAddressBeforeChange = $device->device_address;
+            }
+            if ($inputs['device_vendor'] != $device->device_vendor) {
+                $deviceVendorBeforeChange = $device->device_vendor;
+            }
 
             $device->update($inputs);
 
+            // We have to de-register device if either vendor or mac address were changed to prevent issues
             if ($deviceAddressBeforeChange || $deviceVendorBeforeChange) {
                 $device->deregisterOnZtp($deviceAddressBeforeChange, $deviceVendorBeforeChange, true);
             }

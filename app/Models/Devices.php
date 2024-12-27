@@ -153,11 +153,7 @@ class Devices extends Model
     public function registerOnZtp(): void
     {
         try {
-            // Check if the device has a supported cloud provider
-            if ($this->hasSupportedCloudProvider()) {
-                // Set pending status
-                $this->setProvisioningPending();
-                // Send a request to create or update the new device address on ZTP
+            if ($this->canProvisionOnZtp()) {
                 SendZtpRequest::dispatch(
                     SendZtpRequest::ACTION_CREATE,
                     $this->device_vendor,
@@ -165,37 +161,50 @@ class Devices extends Model
                     $this->getCloudProviderOrganisationId()
                 )->onQueue('ztp');
             }
-        } catch (\Exception $e) {
-            // Log any exception that occurs during the creation process
-            logger('Error to register');
-            logger($e);
+        } catch (\Exception $exception) {
+            $this->logProvisioningError('Error occurred during device registration on ZTP.', $exception);
         }
     }
 
     public function deregisterOnZtp(string $deviceAddress = null, string $deviceVendor = null, bool $forceRemove = false): void
     {
         try {
-            // Check if the device has a supported cloud provider
-            if ($this->hasSupportedCloudProvider($deviceVendor)) {
-                // Set pending status
-                $this->setProvisioningPending($deviceVendor);
-                // Send a request to delete the device from the ZTP system using the current device address
+            if ($this->canProvisionOnZtp($deviceVendor)) {
                 SendZtpRequest::dispatch(
-                    SendZtpRequest::ACTION_DELETE, // Action name
-                    (empty($deviceVendor)) ? $this->device_vendor : $deviceVendor, // We have to send OLD (before update) Vendor to remove from ZTP
-                    (empty($deviceAddress)) ? $this->device_address : $deviceAddress, // We have to send OLD (before update) MacAddress to remove from ztp
+                    SendZtpRequest::ACTION_DELETE,
+                    $this->getOldOrCurrentValue($deviceVendor, $this->device_vendor),
+                    $this->getOldOrCurrentValue($deviceAddress, $this->device_address),
                     null,
-                    $forceRemove // Force remove device if MacAddress was changed
+                    $forceRemove
                 )->onQueue('ztp');
             }
-        } catch (\Exception $e) {
-            // Log any exception that occurs during the deregister process
-            logger('Error to deregister');
-            logger($e);
+        } catch (\Exception $exception) {
+            $this->logProvisioningError('Error occurred during device deregistration on ZTP.', $exception);
         }
     }
 
+    private function canProvisionOnZtp(?string $deviceVendor = null): bool
+    {
+        if ($this->hasSupportedCloudProvider($deviceVendor ?? $this->device_vendor)) {
+            $this->setProvisioningPending($deviceVendor);
+            return true;
+        }
+        return false;
+    }
+
+    private function getOldOrCurrentValue(?string $newValue, string $currentValue): string
+    {
+        return empty($newValue) ? $currentValue : $newValue;
+    }
+
+    private function logProvisioningError(string $message, \Exception $exception): void
+    {
+        logger($message);
+        logger($exception->getMessage(), ['exception' => $exception]);
+    }
+
     /**
+     * @param  string|null  $deviceVendor
      * @return bool
      */
     public function hasSupportedCloudProvider(string $deviceVendor = null): bool
@@ -208,7 +217,7 @@ class Devices extends Model
      */
     public function getCloudProvider(string $deviceVendor = null): ZtpProviderInterface
     {
-        // TODO: probably here we should prevent throw ingException if the provider isn't found
+        // TODO: probably here we should prevent Exception if the provider isn't found
         return match ((empty($deviceVendor)) ? $this->device_vendor : $deviceVendor) {
             'polycom' => new PolycomZtpProvider(),
             //'yealink' => new YealinkZTPApiProvider(),

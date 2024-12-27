@@ -127,65 +127,89 @@ class SendZtpRequest implements ShouldQueue
     public function handle(): void
     {
         Redis::throttle('ztp')->allow(2)->every(1)->then(function () {
-            $cloudProvider = match ($this->provider) {
-                'polycom' => new PolycomZtpProvider()
-            };
+            $cloudProvider = $this->createCloudProvider();
+
             try {
-                try {
-                    $device = null;
-                    // In case a MacAddress was changed we have to force remove old device from ZTP to prevent duplications on ZTP side
-                    if($this->forceRemove) {
-                        CloudProvisioningStatus::where('device_address', $this->deviceMacAddress)->delete();
-                        $cloudProvider->deleteDevice(
-                            $this->deviceMacAddress
-                        );
-                    } else {
-                        // Regular create/update flow
-                        /** @var Devices $device */
-                        $device = Devices::where(['device_address' => $this->deviceMacAddress])->firstOrFail();
+                $existingDevice = Devices::where(['device_address' => $this->deviceMacAddress])->first();
 
-                        match ($this->action) {
-                            self::ACTION_CREATE => $cloudProvider->createDevice(
-                                $this->deviceMacAddress,
-                                $this->organisationId
-                            ),
-                            self::ACTION_DELETE => $cloudProvider->deleteDevice(
-                                $this->deviceMacAddress
-                            )
-                        };
-
-                        $device->cloudProvisioningStatus()->updateOrInsert([
-                            'device_uuid' => $device->device_uuid,
-                        ], [
-                            'provider' => $this->provider,
-                            'device_address' => $this->deviceMacAddress,
-                            'status' => ($this->action == self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
-                            'error' => ''
-                        ]);
-                    }
-                } catch (ZtpProviderException $e) {
-                    logger($e);
-                    $response = json_decode($e->getMessage());
-                    if($device) {
-                        $device->cloudProvisioningStatus()->updateOrInsert([
-                            'device_uuid' => $device->device_uuid,
-                        ], [
-                            'provider' => $this->provider,
-                            'device_address' => $this->deviceMacAddress,
-                            'status' => 'error',
-                            'error' => $response->message
-                        ]);
-                    }
+                if ($this->forceRemove) {
+                    $this->processForceRemove($cloudProvider);
+                } else {
+                    $this->processDeviceAction($cloudProvider, $existingDevice);
                 }
-
+            } catch (ZtpProviderException $e) {
+                logger($e);
+                $this->handleError($existingDevice ?? null, $e->getMessage());
             } catch (\Exception $e) {
                 logger($e);
-                // Delete job if we have issue in it
-                $this->delete();
+                $this->delete(); // Delete job if an unknown issue occurs.
             }
         }, function () {
-            // Could not obtain lock; this job will be re-queued
-            $this->release(5);
+            $this->release(5); // Could not obtain lock; this job will be re-queued.
         });
+    }
+
+    private function createCloudProvider(): PolycomZtpProvider
+    {
+        return match ($this->provider) {
+            'polycom' => new PolycomZtpProvider(),
+            default => throw new \InvalidArgumentException('Invalid provider: ' . $this->provider),
+        };
+    }
+
+    private function processForceRemove($cloudProvider): void
+    {
+        CloudProvisioningStatus::where('device_address', $this->deviceMacAddress)->delete();
+        $cloudProvider->deleteDevice($this->deviceMacAddress);
+    }
+
+    private function processDeviceAction($cloudProvider, $existingDevice): void
+    {
+        if (!$existingDevice) {
+            throw new \RuntimeException('Device not found.');
+        }
+
+        // Perform action based on `action`
+        match ($this->action) {
+            self::ACTION_CREATE => $cloudProvider->createDevice(
+                $this->deviceMacAddress,
+                $this->organisationId
+            ),
+            self::ACTION_DELETE => $cloudProvider->deleteDevice(
+                $this->deviceMacAddress
+            ),
+            default => throw new \InvalidArgumentException('Invalid action: ' . $this->action),
+        };
+
+        $statusPayload = [
+            'provider' => $this->provider,
+            'device_address' => $this->deviceMacAddress,
+            'status' => ($this->action === self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
+            'error' => '',
+        ];
+
+        $existingDevice->cloudProvisioningStatus()->updateOrInsert(
+            ['device_uuid' => $existingDevice->device_uuid],
+            $statusPayload
+        );
+    }
+
+    private function handleError($device, $errorMessage): void
+    {
+        $response = json_decode($errorMessage);
+
+        if ($device) {
+            $errorPayload = [
+                'provider' => $this->provider,
+                'device_address' => $this->deviceMacAddress,
+                'status' => 'error',
+                'error' => $response->message ?? 'Unknown error',
+            ];
+
+            $device->cloudProvisioningStatus()->updateOrInsert(
+                ['device_uuid' => $device->device_uuid],
+                $errorPayload
+            );
+        }
     }
 }
