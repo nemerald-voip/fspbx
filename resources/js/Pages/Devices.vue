@@ -305,7 +305,7 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const deviceProvisionStatus = ref({});
-//const deviceProvisionStatusCheckInterval = ref(null);
+const deviceProvisionStatusCheckInterval = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
@@ -351,51 +351,64 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-    //console.log('On mount')
-    handleUpdateCloudProvisioningStatuses();
-    //deviceProvisionStatusCheckInterval.value = setInterval(checkForProcessingStatus, 5000);
+onBeforeUnmount(() => {
+    stopStatusWatching();
 });
 
-/*
-watch(
-    () => , // The property to watch
-    (newValue, oldValue) => { // Callback when value changes
-        if (newValue !== oldValue) {
-            emits('provision-option-changed', props.item.device_uuid, 'processing')
-        }
-    }
-);*/
+onMounted(() => {
+    handleUpdateCloudProvisioningStatuses();
+});
 
-//onBeforeUnmount(() => {
-    // Clear the interval when the component is about to be unmounted to prevent memory leaks
-    //clearInterval(deviceProvisionStatusCheckInterval.value);
-//});
+watch(
+    () => deviceProvisionStatus.value,
+    (newStatuses) => {
+        // If any device status is still "pending", start watching
+        if (Object.values(newStatuses).includes("pending")) {
+            startStatusWatching(); // Start the polling process
+        } else {
+            stopStatusWatching(); // Stop polling if no device is "pending"
+        }
+    },
+    { deep: true } // Watch deeply to react to changes inside the object
+);
+
+const startStatusWatching = () => {
+    if (!deviceProvisionStatusCheckInterval.value) {
+        // Avoid starting multiple intervals
+        deviceProvisionStatusCheckInterval.value = setInterval(() => {
+            handleUpdateCloudProvisioningStatuses();
+        }, 5000);
+    }
+};
+
+// Function to stop watching when no statuses are pending
+const stopStatusWatching = () => {
+    if (deviceProvisionStatusCheckInterval.value) {
+        clearInterval(deviceProvisionStatusCheckInterval.value);
+        deviceProvisionStatusCheckInterval.value = null;
+    }
+};
 
 const handleUpdateCloudProvisioningStatuses = () => {
     const deviceUuids = props.data.data.map(device => device.device_uuid);
     axios.post(props.routes.cloud_provisioning_status, {items: deviceUuids})
         .then(response => {
             if (response.data.status) {
-                deviceProvisionStatus.value = response.data.devicesData.reduce((acc, device) => {
-                    acc[device.device_uuid] = device.status;// ? 'provisioned' : device.error ? 'error' : 'not_provisioned';
-                    return acc;
-                }, {});
+                deviceProvisionStatus.value = response.data.devicesData.reduce(
+                    (acc, device) => {
+                        acc[device.device_uuid] =
+                            device.status || (device.error ? "error" : "not_provisioned");
+                        return acc;
+                    },
+                    {}
+                );
             }
         })
         .catch(error => {
             console.warn('Failed to fetch cloud provisioning statuses:', error);
         });
 }
-/*
-const checkForProcessingStatus = () => {
-    if (Object.values(deviceProvisionStatus.value).some(status => status === 'processing')) {
-        handleUpdateCloudProvisioningStatuses();
-    } else {
-        clearInterval(deviceProvisionStatusCheckInterval);
-    }
-};
-*/
+
 const handleEditRequest = (itemUuid) => {
     editModalTrigger.value = true
     formErrors.value = null;
@@ -687,7 +700,7 @@ const getItemOptions = (domain_uuid) => {
 }
 
 const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
+    if (error.request?.status === 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
