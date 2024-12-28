@@ -56,6 +56,7 @@ class AppsController extends Controller
                     'current_page' => route('apps.index'),
                     'create_organization' => route('apps.organization.create'),
                     'update_organization' => route('apps.organization.update'),
+                    'destroy_organization' => route('apps.organization.destroy'),
                     'item_options' => route('apps.item.options'),
                 ]
             ]
@@ -480,116 +481,61 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroyOrganization(Request $request, Domain $domain)
+    public function destroyOrganization(RingotelApiService $ringotelApiService)
     {
-
-        // Get Org ID from database
-        $org_id = appsGetOrganizationDetails($domain->domain_uuid);
-
-        //Get all connections
-        $response = appsGetConnections($org_id);
-
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-                'domain' => $domain->domain_name,
-            ]);
-        }
-
-        //Delete all connections
-        foreach ($response['result'] as $conn) {
-            $response = appsDeleteConnection($org_id, $conn['id']);
-            if (isset($response['error'])) {
+        $this->ringotelApiService = $ringotelApiService;
+    
+        try {
+            // Get Org ID from database
+            $domain_uuid = request('domain_uuid');
+            $org_id = $this->ringotelApiService->getOrgIdByDomainUuid($domain_uuid);
+    
+            if (!$org_id) {
                 return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                    'domain' => $domain->domain_name,
+                    'success' => false,
+                    'errors' => ['server' => ['Organization ID not found for the given domain.']]
+                ], 404); // 404 Not Found
+            }
+    
+            // Retrieve all connections for the organization
+            $connections = $this->ringotelApiService->getConnections($org_id);
+    
+            // Delete each connection
+            foreach ($connections as $connection) {
+                $this->ringotelApiService->deleteConnection([
+                    'conn_id' => $connection->id,
+                    'org_id' => $org_id,
                 ]);
             }
-        }
-
-        // Delete organization
-        $response = appsDeleteOrganization($org_id);
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-                'domain' => $domain->domain_name,
-            ]);
-        }
-        //Detele records from database
-        $appOrgID = DomainSettings::where('domain_uuid', $domain->domain_uuid)
-            ->where('domain_setting_category', 'app shell')
-            ->where('domain_setting_subcategory', 'org_id')
-            ->first();
-
-        Log::info($appOrgID);
-
-        $appOrgID->delete();
-
-
-        return response()->json([
-            'org_details' => $org_id,
-            'connections' => $response,
-            // 'organization_domain' => $request->organization_domain,
-            // 'organization_region' => $request->organization_region,
-            // 'org_id' => $response['result']['id'],
-            'message' => 'Success',
-        ]);
-
-
-
-
-        // !!!!! TODO: The code below is unreachable, do we need it ? !!!!!
-        // If successful store Org ID and return success status
-        if (isset($response['result'])) {
-
-            // Add recieved OrgID to the request and store it in database
-            $request->merge(['org_id' => $response['result']['id']]);
-
-            if (!appsStoreOrganizationDetails($request)) {
+    
+            // Delete the organization
+            $deleteResponse = $this->ringotelApiService->deleteOrganization($org_id);
+    
+            if ($deleteResponse) {
+                // Remove local references from the database
+                DomainSettings::where('domain_uuid', $domain_uuid)
+                    ->where('domain_setting_category', 'app shell')
+                    ->where('domain_setting_subcategory', 'org_id')
+                    ->delete();
+    
                 return response()->json([
-                    'organization_name' => $request->organization_name,
-                    'organization_domain' => $request->organization_domain,
-                    'organization_region' => $request->organization_region,
-                    'org_id' => $response['result']['id'],
-                    'message' => 'Organization was created succesfully, but unable to store Org ID in database',
-                ]);
+                    'messages' => ['success' => ['Organization and its connections were successfully deleted.']]
+                ], 200); // 200 OK
             }
-
+    
             return response()->json([
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'org_id' => $response['result']['id'],
-                'message' => 'Organization created succesfully',
-            ]);
-            // Otherwise return failed status
-        } elseif (isset($response['error'])) {
+                'success' => false,
+                'errors' => ['server' => ['Failed to delete the organization.']]
+            ], 500); // 500 Internal Server Error
+    
+        } catch (\Exception $e) {
             return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => $response['error']['message']
-            ]);
-        } else {
-            return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => 'Unknown error'
-            ]);
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error
         }
     }
+    
 
     /**
      * Submit API request to Ringotel to create a new connection

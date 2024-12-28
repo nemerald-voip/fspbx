@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DomainSettings;
 use App\DTO\RingotelConnectionDTO;
 use Illuminate\Support\Facades\DB;
 use App\DTO\RingotelOrganizationDTO;
@@ -119,6 +120,40 @@ class RingotelApiService
         // Transform the result into OrganizationDTO
         return RingotelOrganizationDTO::fromArray($response['result']);
     }
+
+    public function deleteOrganization($org_id)
+    {
+        // Prepare the payload
+        $data = [
+            'method' => 'deleteOrganization',
+            'params' => [
+                'id' => $org_id,
+            ],
+        ];
+
+        // Send the request
+        $response = Http::ringotel() // Ensure `ringotel` is configured in the HTTP client
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response) {
+                throw new \Exception("Failed to delete organization: {$response->body()}");
+            })
+            ->json();
+
+        // Check for errors in the response
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        // Handle empty response
+        if (!$response) {
+            return ['success' => true, 'message' => 'Organization and its connections were successfully deleted.'];
+        }
+
+        return $response['result'];
+    }
+
 
     public function getOrganizations()
     {
@@ -537,5 +572,15 @@ class RingotelApiService
         });
 
         return $orgArray;
+    }
+
+    public function getOrgIdByDomainUuid($domain_uuid)
+    {
+        return DomainSettings::where([
+            ['domain_uuid', '=', $domain_uuid],
+            ['domain_setting_category', '=', 'app shell'],
+            ['domain_setting_subcategory', '=', 'org_id'],
+            ['domain_setting_enabled', '=', true],
+        ])->value('domain_setting_value');
     }
 }

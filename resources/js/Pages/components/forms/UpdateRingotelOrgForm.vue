@@ -260,7 +260,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -302,11 +302,8 @@ const handleCreateConnectionRequest = (form) => {
             });
 
             handleModalClose();
-            // handleClearSelection();
         }).catch((error) => {
             ringotelConnectionFormSubmiting.value = false;
-            // handleClearSelection();
-            // handleFormErrorResponse(error);
             emits('error', error); // Emit the event with error
         });
 
@@ -320,13 +317,11 @@ const handleUpdateConnectionRequest = (form) => {
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
+            emits('refresh-data',props.options.model.domain_uuid);
 
             handleModalClose();
-            // handleClearSelection();
         }).catch((error) => {
             ringotelConnectionFormSubmiting.value = false;
-            // handleClearSelection();
-            // handleFormErrorResponse(error);
             emits('error', error); // Emit the event with error
         });
 

@@ -119,10 +119,10 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="row.ringotel_status == 'true'"  :content="'Delete'"
+                                <ejs-tooltip v-if="row.ringotel_status == 'true'"  :content="'Deactivate'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <LinkOffIcon @click="handleDeactivateRequest(row.destroy_route)"
+                                        <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -167,23 +167,15 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Ringotel Organization'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting" :activeTab="activationActiveTab"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" 
+            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" @refresh-data="getItemOptions"
                 @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Confirm Action'" :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
+        confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -201,20 +193,20 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
 import UpdateRingotelOrgForm from "./components/forms/UpdateRingotelOrgForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import LinkOffIcon from "@icons/LinkOffIcon.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
+import { XCircleIcon } from "@heroicons/vue/24/outline";
+
 
 
 const page = usePage()
@@ -226,11 +218,11 @@ const selectPageItems = ref(false);
 const showActivateModal = ref(false);
 const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const showConfirmationModal = ref(false);
 const activateFormSubmiting = ref(null);
 const activationActiveTab = ref('organization');
 const updateFormSubmiting = ref(null);
+const showDeactivateSpinner = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
@@ -269,6 +261,7 @@ onMounted(() => {
 });
 
 const handleActivateButtonClick = (itemUuid) => {
+    activationActiveTab.value = 'organization';
     showActivateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
@@ -292,9 +285,7 @@ const handleCreateRequest = (form) => {
             showNotification('success', response.data.messages);
             itemOptions.value.orgId = response.data.org_id;
             activationActiveTab.value = 'connections';
-            // handleSearchButtonClick();
-            // handleModalClose();
-            // handleClearSelection();
+
         }).catch((error) => {
             activateFormSubmiting.value = false;
             handleClearSelection();
@@ -322,38 +313,31 @@ const handleUpdateRequest = (form) => {
 
 };
 
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
+const handleDeactivateButtonClick = (uuid) => {
+    showConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(uuid);
 }
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
+const executeSingleDelete = (uuid) => {
+    showDeactivateSpinner.value = true;
+
+    axios.post(props.routes.destroy_organization, { domain_uuid: uuid })
+        .then((response) => {
+            showDeactivateSpinner.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            showDeactivateSpinner.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
 }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
@@ -516,7 +500,7 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     showActivateModal.value = false;
     showEditModal.value = false,
-    confirmationModalTrigger.value = false;
+    showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 
