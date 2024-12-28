@@ -30,6 +30,7 @@ class Domain extends Model
         'domain_description'
     ];
 
+
     /**
      * Get the settings for the domain.
      */

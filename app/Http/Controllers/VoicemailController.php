@@ -534,7 +534,7 @@ class VoicemailController extends Controller
 
             $routes = [];
 
-            // Check if item_uuid exists to find an existing voicemail
+            // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
                 // Find existing voicemail by item_uuid
                 $voicemail = Voicemails::with([

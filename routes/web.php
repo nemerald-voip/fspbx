@@ -216,14 +216,18 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/voicemails/{voicemail}/greetings/{filename}/delete', [VoicemailController::class, 'deleteVoicemailGreeting'])->name('deleteVoicemailGreeting');
 
     //Apps
-    Route::get('/apps', [AppsController::class, 'index'])->name('appsStatus');
-    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('appsCreateOrganization');
-    Route::delete('/apps/organization/{domain}', [AppsController::class, 'destroyOrganization'])->name('appsDestroyOrganization');
-    Route::get('/apps/organization/', [AppsController::class, 'getOrganizations'])->name('appsGetOrganizations');
+    Route::resource('apps', AppsController::class);
+    Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
+    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('apps.organization.create');
+    Route::put('/apps/organization/update', [AppsController::class, 'updateOrganization'])->name('apps.organization.update');
+    Route::post('/apps/organization/destroy', [AppsController::class, 'destroyOrganization'])->name('apps.organization.destroy');
+    // Route::get('/apps/organization/', [AppsController::class, 'getOrganizations'])->name('appsGetOrganizations');
     Route::post('/apps/organization/sync', [AppsController::class, 'syncOrganizations'])->name('appsSyncOrganizations');
     Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings'])->name('mobileAppUserSettings');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
-    Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('appsCreateConnection');
+    Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
+    Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
+    Route::post('/apps/connection/delete', [AppsController::class, 'destroyConnection'])->name('apps.connection.destroy');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
     Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('appsCreateUser');
     Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');
