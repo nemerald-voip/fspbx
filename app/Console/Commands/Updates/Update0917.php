@@ -5,7 +5,7 @@ namespace App\Console\Commands\Updates;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Str;
 
-class Update0916
+class Update0917
 {
     /**
      * Apply the 0.9.16 update steps.
@@ -69,7 +69,7 @@ class Update0916
                 'subcategory' => 'mobile_app_conn_protocol',
                 'type' => 'text',
                 'value' => 'sip',
-                'description' => 'sip or tcp or sips',
+                'description' => 'sip or sip-tcp or sips or DNS-NAPTR',
             ],
             [
                 'category' => 'mobile_apps',

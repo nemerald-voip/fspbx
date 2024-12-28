@@ -124,7 +124,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => 'sip',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Options: sip or tcp or sips",
+                'default_setting_description'   => "Options: sip or sip-tcp or sips or DNS-NAPTR",
             ],
             [
                 'default_setting_category'      => 'mobile_apps',
