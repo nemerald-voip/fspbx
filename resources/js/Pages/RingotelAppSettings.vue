@@ -22,10 +22,10 @@
             </template>
 
             <template #action>
-                <!-- <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button type="button" @click.prevent="handleApiTokenButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
-                </button> -->
+                    API Token
+                </button>
 
 
             </template>
@@ -173,6 +173,15 @@
         </template>
     </AddEditItemModal>
 
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Ringotel Api Token'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateRingotelApiTokenForm :options="itemOptions" :errors="formErrors" :is-submitting="updateApiTokenFormSubmiting"
+                @submit="handleUpdateApiTokenRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" @refresh-data="getItemOptions"
+                @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
+        </template>
+    </AddEditItemModal>
+
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Action'" :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
         confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner"/>
@@ -202,6 +211,7 @@ import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
 import UpdateRingotelOrgForm from "./components/forms/UpdateRingotelOrgForm.vue";
+import UpdateRingotelApiTokenForm from "./components/forms/UpdateRingotelApiTokenForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
@@ -217,11 +227,13 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const showActivateModal = ref(false);
 const showEditModal = ref(false);
+const showApiTokenModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showConfirmationModal = ref(false);
 const activateFormSubmiting = ref(null);
 const activationActiveTab = ref('organization');
 const updateFormSubmiting = ref(null);
+const updateApiTokenFormSubmiting = ref(null);
 const showDeactivateSpinner = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
@@ -313,6 +325,25 @@ const handleUpdateRequest = (form) => {
 
 };
 
+const handleUpdateApiTokenRequest = (form) => {
+    updateApiTokenFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.update_api_token, form)
+        .then((response) => {
+            updateApiTokenFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            updateApiTokenFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
 const handleDeactivateButtonClick = (uuid) => {
     showConfirmationModal.value = true;
     confirmDeleteAction.value = () => executeSingleDelete(uuid);
@@ -331,6 +362,8 @@ const executeSingleDelete = (uuid) => {
         }).catch((error) => {
             showDeactivateSpinner.value = false;
             handleClearSelection();
+            handleModalClose();
+            handleSearchButtonClick();
             handleFormErrorResponse(error);
         });
 }
@@ -349,13 +382,11 @@ const handleBulkActionRequest = (action) => {
 
 }
 
-
-// const handleCreateButtonClick = () => {
-//     createModalTrigger.value = true
-//     formErrors.value = null;
-//     loadingModal.value = true
-//     getItemOptions();
-// }
+const handleApiTokenButtonClick = () => {
+    showApiTokenModal.value = true
+    loadingModal.value = true
+    getApiToken();
+}
 
 const handleActivationFinish = () => {
     handleModalClose();
@@ -500,6 +531,7 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     showActivateModal.value = false;
     showEditModal.value = false,
+    showApiTokenModal.value =false;
     showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
 }

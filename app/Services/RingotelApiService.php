@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DomainSettings;
+use App\Models\DefaultSettings;
 use App\DTO\RingotelConnectionDTO;
 use Illuminate\Support\Facades\DB;
 use App\DTO\RingotelOrganizationDTO;
@@ -17,6 +18,29 @@ class RingotelApiService
     {
         // $this->apiUrl = config('services.third_party_api.url');
     }
+
+    /**
+     * Retrieve the configuration value for Ringotel settings with fallback.
+     *
+     * @return mixed
+     */
+    public function getRingotelApiToken()
+    {
+        // Check the DefaultSettings table
+        $value = DefaultSettings::where([
+            ['default_setting_category', '=', 'mobile_apps'],
+            ['default_setting_subcategory', '=', 'ringotel_api_token'],
+            ['default_setting_enabled', '=', 'true'],
+        ])->value('default_setting_value');
+
+        if ($value !== null) {
+            return $value;
+        }
+
+        // Fallback to config and .env
+        return config("ringotel.token", '');
+    }
+
 
     public function createOrganization($params)
     {
