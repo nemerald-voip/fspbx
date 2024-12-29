@@ -114,6 +114,15 @@ else
     exit 1
 fi
 
+# Include the install_cron_jobs.sh script
+sh /var/www/fspbx/install/install_cron_jobs.sh 
+if [ $? -eq 0 ]; then
+    print_success "Cron bob installation script executed successfully."
+else
+    print_error "Error occurred while executing cron job installation script."
+    exit 1
+fi
+
 # Include the add_web_server_to_sudoers.sh script
 sh /var/www/fspbx/install/add_web_server_to_sudoers.sh 
 if [ $? -eq 0 ]; then

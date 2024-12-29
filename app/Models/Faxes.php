@@ -284,7 +284,7 @@ class Faxes extends Model
         $this->dial_string = $this->getDialstring();
 
         //add fax to the fax queue or send it directly
-        if ($this->fax_queue_enabled) {
+        // if ($this->fax_queue_enabled) {
             $fax_queue = new FaxQueues();
             $fax_queue->fax_queue_uuid = $this->fax_queue_uuid;
             $fax_queue->domain_uuid = $this->domain->domain_uuid;
@@ -303,7 +303,7 @@ class Faxes extends Model
             $fax_queue->fax_accountcode = $this->fax_accountcode;
             $fax_queue->fax_command = 'originate '.$this->dial_string;
             $fax_queue->save();
-        }
+        // }
         
 
         // Log::alert("----------Webhook Job ends-----------");
@@ -356,16 +356,16 @@ class Faxes extends Model
         }
 
         // Check if Fax Queue is enabled
-        $fax_queue_enabled = DefaultSettings::where('default_setting_category','fax_queue')
-            ->where('default_setting_subcategory','enabled')
-            ->where('default_setting_enabled','true')
-            ->pluck('default_setting_value')
-            ->toArray();
-        if (sizeof($fax_queue_enabled) > 0 && $fax_queue_enabled[0] == 'true') {
-            $this->fax_queue_enabled = true;
-        } else {
-            $this->fax_queue_enabled = false;
-        }
+        // $fax_queue_enabled = DefaultSettings::where('default_setting_category','fax_queue')
+        //     ->where('default_setting_subcategory','enabled')
+        //     ->where('default_setting_enabled','true')
+        //     ->pluck('default_setting_value')
+        //     ->toArray();
+        // if (sizeof($fax_queue_enabled) > 0 && $fax_queue_enabled[0] == 'true') {
+        //     $this->fax_queue_enabled = true;
+        // } else {
+        //     $this->fax_queue_enabled = false;
+        // }
 
         //build the fax dial string
         $dial_string .= $fax_variables;
@@ -377,12 +377,12 @@ class Faxes extends Model
         $dial_string .= "fax_retry_sleep=180"  . ",";
         //$dial_string .= "fax_verbose=true"     . ",";
         $dial_string .= "fax_use_ecm=off"      . ",";
-        if ($this->fax_queue_enabled) {
+        // if ($this->fax_queue_enabled) {
             $dial_string .= "api_hangup_hook='lua app/fax/resources/scripts/hangup_tx.lua'";
-        }
-        else {
-            $dial_string .= "api_hangup_hook='lua fax_retry.lua'";
-        }
+        // }
+        // else {
+        //     $dial_string .= "api_hangup_hook='lua fax_retry.lua'";
+        // }
         $dial_string  = "{" . $dial_string . "}" . $fax_uri." &txfax('".$fax_file."')";
 
         return $dial_string;
