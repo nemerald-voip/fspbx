@@ -510,41 +510,41 @@ const props = defineProps({
 const page = usePage();
 
 const form = reactive({
-    // items: props.items,
-    org_id: props.options.orgId,
-    conn_id: props.selectedConnection.id,
-    connection_name: props.selectedConnection.name,
-    protocol: props.selectedConnection.provision.protocol,
-    domain: props.selectedConnection.address.split(':')[0], // Extracts the domain
-    port: props.selectedConnection.address.split(':')[1],   // Extracts the port
-    dont_verify_server_certificate: props.selectedConnection.provision.noverify,
-    disable_srtp: props.selectedConnection.provision.nosrtp,
-    proxy: props.selectedConnection.provision.proxy.paddr,
-    multitenant: props.options.settings.multitenant_mode === "true",
-    g711u_enabled: props.selectedConnection.provision.codecs.some(codec => codec.codec === "G.711 Ulaw"),
-    g711a_enabled: props.selectedConnection.provision.codecs.some(codec => codec.codec === "G.711 Alaw"),
-    g729_enabled: props.selectedConnection.provision.codecs.some(codec => codec.codec === "G.729"),
-    opus_enabled: props.selectedConnection.provision.codecs.some(codec => codec.codec === "Opus"),
-    registration_ttl: String(props.selectedConnection.provision.regexpires),
-    max_registrations: String(props.selectedConnection.provision.maxregs),
-    app_opus_codec: !props.selectedConnection.provision.app.g711, 
-    one_push: props.selectedConnection.provision["1push"],
-    show_call_settings: props.selectedConnection.provision.nostates === false, // Assuming inverse of `nostates`
-    allow_call_recording: !props.selectedConnection.provision.norec, // Inverse of `norec`
-    allow_state_change: props.selectedConnection.provision.nostates === false, // Assuming `nostates` indicates restriction
-    allow_video_calls: !props.selectedConnection.provision.novideo, // Inverse of `novideo`
-    allow_internal_chat: !props.selectedConnection.provision.nochats, // Inverse of `nochats`
-    disable_iphone_recents: props.selectedConnection.provision.norecents, // Assuming `norecents` indicates disabling
-    call_delay: props.selectedConnection.provision.calldelay,
-    desktop_app_delay: props.selectedConnection.provision.pcdelay, // Assuming `pcdelay` represents desktop app delay
-    pbx_features: props.selectedConnection.provision.features === "pbx",
-    voicemail_extension: props.selectedConnection.provision.vmail.ext,
-    dnd_on_code: props.selectedConnection.provision.dnd.on,
-    dnd_off_code: props.selectedConnection.provision.dnd.off,
-    cf_on_code: props.selectedConnection.provision.forwarding.cfon,
-    cf_off_code: props.selectedConnection.provision.forwarding.cfoff,
+    org_id: props.options?.orgId ?? null,
+    conn_id: props.selectedConnection?.id ?? null,
+    connection_name: props.selectedConnection?.name ?? '',
+    protocol: props.selectedConnection?.provision?.protocol ?? '',
+    domain: props.selectedConnection?.address?.split(':')[0] ?? '', // Extract domain
+    port: props.selectedConnection?.address?.split(':')[1] ?? '',   // Extract port
+    dont_verify_server_certificate: props.selectedConnection?.provision?.noverify ?? false,
+    disable_srtp: props.selectedConnection?.provision?.nosrtp ?? false,
+    proxy: props.selectedConnection?.provision?.proxy?.paddr ?? '',
+    multitenant: props.options?.settings?.multitenant_mode === "true",
+    g711u_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "G.711 Ulaw") ?? false,
+    g711a_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "G.711 Alaw") ?? false,
+    g729_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "G.729") ?? false,
+    opus_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "Opus") ?? false,
+    registration_ttl: String(props.selectedConnection?.provision?.regexpires ?? ''),
+    max_registrations: String(props.selectedConnection?.provision?.maxregs ?? ''),
+    app_opus_codec: !props.selectedConnection?.provision?.app?.g711 ?? false,
+    one_push: props.selectedConnection?.provision?.["1push"] ?? false,
+    show_call_settings: props.selectedConnection?.provision?.nostates === false, // Assuming inverse of `nostates`
+    allow_call_recording: !props.selectedConnection?.provision?.norec ?? false, // Inverse of `norec`
+    allow_state_change: props.selectedConnection?.provision?.nostates === false, // Assuming `nostates` indicates restriction
+    allow_video_calls: !props.selectedConnection?.provision?.novideo ?? false, // Inverse of `novideo`
+    allow_internal_chat: !props.selectedConnection?.provision?.nochats ?? false, // Inverse of `nochats`
+    disable_iphone_recents: props.selectedConnection?.provision?.norecents ?? false, // Assuming `norecents` indicates disabling
+    call_delay: props.selectedConnection?.provision?.calldelay ?? 0,
+    desktop_app_delay: props.selectedConnection?.provision?.pcdelay ?? 0, // Assuming `pcdelay` represents desktop app delay
+    pbx_features: props.selectedConnection?.provision?.features === "pbx",
+    voicemail_extension: props.selectedConnection?.provision?.vmail?.ext ?? '', // Ensure `vmail.ext` exists
+    dnd_on_code: props.selectedConnection?.provision?.dnd?.on ?? '',
+    dnd_off_code: props.selectedConnection?.provision?.dnd?.off ?? '',
+    cf_on_code: props.selectedConnection?.provision?.forwarding?.cfon ?? '',
+    cf_off_code: props.selectedConnection?.provision?.forwarding?.cfoff ?? '',
     _token: page.props.csrf_token,
-})
+});
+
 
 const emits = defineEmits(['submit', 'cancel']);
 
