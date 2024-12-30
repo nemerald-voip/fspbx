@@ -109,6 +109,7 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 }
 
 
+// THERE IS A NEW VERSION OF THIS FUCNTION
 if (!function_exists('appsGetOrganizationDetails')) {
     function appsGetOrganizationDetails($domain_uuid)
     {
