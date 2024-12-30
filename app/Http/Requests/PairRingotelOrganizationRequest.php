@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateRingotelApiTokenRequest extends FormRequest
+class PairRingotelOrganizationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,19 +20,14 @@ class UpdateRingotelApiTokenRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => 'present',
+            'org_id' => 'required|string',
+            'domain_uuid' => 'present',
         ];
     }
 
 
     public function prepareForValidation(): void
     {
-
-        // Sanitize token
-        if ($this->has('token') && $this->token) {
-            $sanitizedToken = $this->sanitizeInput($this->token);
-            $this->merge(['token' => $sanitizedToken]);
-        }
     }
 
     /**
@@ -58,4 +53,15 @@ class UpdateRingotelApiTokenRequest extends FormRequest
         return $input;
     }
 
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function attributes(): array
+    {
+        return [
+            'org_id' => 'organization',
+        ];
+    }
 }
