@@ -41,9 +41,27 @@ class RingotelApiService
         return config("ringotel.token", '');
     }
 
+    /**
+     * Ensure that the API token exists before making API calls.
+     *
+     * @throws \Exception
+     * @return string
+     */
+    protected function ensureApiTokenExists(): string
+    {
+        $token = $this->getRingotelApiToken();
+
+        if (empty($token)) {
+            throw new \Exception("Ringotel API token is missing. Please configure it in the DefaultSettings table or .env file.");
+        }
+
+        return $token;
+    }
+
 
     public function createOrganization($params)
     {
+        $this->ensureApiTokenExists();
         // Prepare the payload
         $data = [
             'method' => 'createOrganization',
@@ -80,6 +98,8 @@ class RingotelApiService
 
     public function updateOrganization($params)
     {
+        $this->ensureApiTokenExists();
+
         // Prepare the payload
         $data = [
             'method' => 'updateOrganization',
@@ -116,6 +136,8 @@ class RingotelApiService
 
     public function getOrganization($org_id)
     {
+        $this->ensureApiTokenExists();
+
         // Prepare the payload
         $data = array(
             'method' => 'getOrganization',
@@ -147,6 +169,7 @@ class RingotelApiService
 
     public function deleteOrganization($org_id)
     {
+        $this->ensureApiTokenExists();
         // Prepare the payload
         $data = [
             'method' => 'deleteOrganization',
@@ -181,6 +204,7 @@ class RingotelApiService
 
     public function getOrganizations()
     {
+        $this->ensureApiTokenExists();
         $data = array(
             'method' => 'getOrganizations',
         );
@@ -209,6 +233,7 @@ class RingotelApiService
 
     public function createConnection($params)
     {
+        $this->ensureApiTokenExists();
 
         // Build codecs array based on enabled flags
         $codecs = [];
@@ -344,7 +369,7 @@ class RingotelApiService
 
     public function updateConnection($params)
     {
-
+        $this->ensureApiTokenExists();
         // Build codecs array based on enabled flags
         $codecs = [];
 
@@ -481,7 +506,7 @@ class RingotelApiService
 
     public function deleteConnection($params)
     {
-
+        $this->ensureApiTokenExists();
         $data = array(
             'method' => 'deleteBranch',
             'params' => array(
@@ -514,6 +539,7 @@ class RingotelApiService
 
     public function getConnections($org_id)
     {
+        $this->ensureApiTokenExists();
         $data = array(
             'method' => 'getBranches',
             'params' => array(
@@ -545,6 +571,8 @@ class RingotelApiService
 
     public function getUsersByOrgId($orgId)
     {
+        $this->ensureApiTokenExists();
+        
         $data = [
             'method' => 'getUsers',
             'orgid' => $orgId,

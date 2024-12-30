@@ -11,7 +11,6 @@ use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
 use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
-use Illuminate\Support\Facades\Log;
 use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
@@ -58,6 +57,7 @@ class AppsController extends Controller
                     'create_organization' => route('apps.organization.create'),
                     'update_organization' => route('apps.organization.update'),
                     'destroy_organization' => route('apps.organization.destroy'),
+                    'get_api_token' => route('apps.token.get'),
                     'update_api_token' => route('apps.token.update'),
                     'item_options' => route('apps.item.options'),
                 ]
@@ -346,7 +346,7 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => ['Failed to fetch item details'],'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -444,7 +444,7 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to activate organization. Check logs for more details']]
+                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'],'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -1329,11 +1329,41 @@ class AppsController extends Controller
         return 'Dispatched email ';
     }
 
+    /**
+     * Retrieve the Ringotel API token from DefaultSettings.
+     *
+     * @param UpdateRingotelApiTokenRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getToken()
+    {
+        try {
+            // Retrieve the API token from DefaultSettings
+            $token = DefaultSettings::where([
+                ['default_setting_category', '=', 'mobile_apps'],
+                ['default_setting_subcategory', '=', 'ringotel_api_token'],
+                ['default_setting_enabled', '=', 'true'],
+            ])->value('default_setting_value');
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+            ], 200); // 200 OK with the token value
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
 
     /**
      * Update or create the Ringotel API token in DefaultSettings.
      *
-     * @param Request $request
+     * @param UpdateRingotelApiTokenRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateToken(UpdateRingotelApiTokenRequest $request)

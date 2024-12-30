@@ -39,10 +39,10 @@ import { usePage } from '@inertiajs/vue3';
 
 import InputField from "../general/InputField.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
-import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
+    token: [String, null],
     isSubmitting: Boolean,
     errors: Object,
 });
@@ -50,7 +50,7 @@ const props = defineProps({
 const page = usePage();
 
 const form = reactive({
-    token: null,
+    token: props.token,
     _token: page.props.csrf_token,
 })
 

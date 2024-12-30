@@ -494,11 +494,8 @@ import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
-import { InformationCircleIcon } from '@heroicons/vue/20/solid'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/vue/24/solid";
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import Toggle from "@generalComponents/Toggle.vue";
 import SettingsApplications from "@icons/SettingsApplications.vue"
 

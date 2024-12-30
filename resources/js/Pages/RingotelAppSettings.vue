@@ -176,7 +176,7 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Ringotel Api Token'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingotelApiTokenForm :options="itemOptions" :errors="formErrors" :is-submitting="updateApiTokenFormSubmiting"
+            <UpdateRingotelApiTokenForm :token="apiToken" :errors="formErrors" :is-submitting="updateApiTokenFormSubmiting"
                 @submit="handleUpdateApiTokenRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" @refresh-data="getItemOptions"
                 @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
         </template>
@@ -205,7 +205,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -236,7 +236,6 @@ const updateFormSubmiting = ref(null);
 const updateApiTokenFormSubmiting = ref(null);
 const showDeactivateSpinner = ref(null);
 const confirmDeleteAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -255,6 +254,7 @@ const filterData = ref({
 });
 
 const itemOptions = ref({})
+const apiToken = ref(null)
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -467,6 +467,19 @@ const getItemOptions = (itemUuid = null) => {
 
 const handleClearErrors = () => {
     formErrors.value = null;
+}
+
+const getApiToken = () => {
+    axios.post(props.routes.get_api_token)
+        .then((response) => {
+            loadingModal.value = false;
+            apiToken.value = response.data.token;
+            // console.log(apiToken.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
 }
 
 

@@ -172,16 +172,10 @@ import { usePage } from '@inertiajs/vue3';
 
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
-import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
-import Popover from "@generalComponents/Popover.vue";
-import Textarea from "@generalComponents/Textarea.vue";
 import SyncAltIcon from "@icons/SyncAltIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
-import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
-import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
 import RingotelConnections from "../general/RingotelConnections.vue";
