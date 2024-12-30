@@ -229,6 +229,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
     Route::post('/apps/connection/delete', [AppsController::class, 'destroyConnection'])->name('apps.connection.destroy');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
+    Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
+    Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
     Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('appsCreateUser');
     Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');
     Route::delete('/apps/users/{extension}', [AppsController::class, 'deleteUser'])->name('appsDeleteUser');

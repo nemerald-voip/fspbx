@@ -11,11 +11,11 @@ use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
 use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
-use Illuminate\Support\Facades\Log;
 use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Http\Requests\UpdateRingotelApiTokenRequest;
 use App\Http\Requests\StoreRingotelConnectionRequest;
 use App\Http\Requests\UpdateRingotelConnectionRequest;
 use App\Http\Requests\StoreRingotelOrganizationRequest;
@@ -57,6 +57,8 @@ class AppsController extends Controller
                     'create_organization' => route('apps.organization.create'),
                     'update_organization' => route('apps.organization.update'),
                     'destroy_organization' => route('apps.organization.destroy'),
+                    'get_api_token' => route('apps.token.get'),
+                    'update_api_token' => route('apps.token.update'),
                     'item_options' => route('apps.item.options'),
                 ]
             ]
@@ -276,11 +278,11 @@ class AppsController extends Controller
                             ->where('domain_setting_enabled', true);
                     }])->where($this->model->getKeyName(), $item_uuid)->first();
 
-                    if ($model) {
-                        // Transform settings into org_id
-                        $model->org_id = $model->settings->first()->domain_setting_value ?? null;
-                        unset($model->settings); // Remove settings relationship if not needed
-                    }
+                if ($model) {
+                    // Transform settings into org_id
+                    $model->org_id = $model->settings->first()->domain_setting_value ?? null;
+                    unset($model->settings); // Remove settings relationship if not needed
+                }
 
                 $model->ringotel_status = $model->settings()
                     ->where('domain_setting_category', 'app shell')
@@ -311,7 +313,7 @@ class AppsController extends Controller
 
             if (!$model->org_id) {
                 $connections = [];
-            }  else {
+            } else {
                 $this->ringotelApiService = $ringotelApiService;
                 $organization = $this->ringotelApiService->getOrganization($model->org_id);
                 $connections = $this->ringotelApiService->getConnections($model->org_id);
@@ -344,7 +346,7 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => ['Failed to fetch item details'],'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -442,12 +444,12 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to activate organization. Check logs for more details']]
+                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'],'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 
-        /**
+    /**
      * Submit API request to Ringotel to create a new organization
      *
      * @return \Illuminate\Http\JsonResponse
@@ -484,22 +486,28 @@ class AppsController extends Controller
     public function destroyOrganization(RingotelApiService $ringotelApiService)
     {
         $this->ringotelApiService = $ringotelApiService;
-    
+
         try {
             // Get Org ID from database
             $domain_uuid = request('domain_uuid');
             $org_id = $this->ringotelApiService->getOrgIdByDomainUuid($domain_uuid);
-    
+
+            // Remove local references from the database
+            DomainSettings::where('domain_uuid', $domain_uuid)
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->delete();
+
             if (!$org_id) {
                 return response()->json([
                     'success' => false,
                     'errors' => ['server' => ['Organization ID not found for the given domain.']]
                 ], 404); // 404 Not Found
             }
-    
+
             // Retrieve all connections for the organization
             $connections = $this->ringotelApiService->getConnections($org_id);
-    
+
             // Delete each connection
             foreach ($connections as $connection) {
                 $this->ringotelApiService->deleteConnection([
@@ -507,27 +515,21 @@ class AppsController extends Controller
                     'org_id' => $org_id,
                 ]);
             }
-    
+
             // Delete the organization
             $deleteResponse = $this->ringotelApiService->deleteOrganization($org_id);
-    
+
             if ($deleteResponse) {
-                // Remove local references from the database
-                DomainSettings::where('domain_uuid', $domain_uuid)
-                    ->where('domain_setting_category', 'app shell')
-                    ->where('domain_setting_subcategory', 'org_id')
-                    ->delete();
-    
                 return response()->json([
                     'messages' => ['success' => ['Organization and its connections were successfully deleted.']]
                 ], 200); // 200 OK
             }
-    
+
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to delete the organization.']]
             ], 500); // 500 Internal Server Error
-    
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -535,7 +537,7 @@ class AppsController extends Controller
             ], 500); // 500 Internal Server Error
         }
     }
-    
+
 
     /**
      * Submit API request to Ringotel to create a new connection
@@ -605,7 +607,7 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateConnection(UpdateRingotelConnectionRequest $request, RingotelApiService $ringotelApiService) 
+    public function updateConnection(UpdateRingotelConnectionRequest $request, RingotelApiService $ringotelApiService)
     {
         $this->ringotelApiService = $ringotelApiService;
 
@@ -1325,5 +1327,74 @@ class AppsController extends Controller
 
         //Log::info('Dispatched email ');
         return 'Dispatched email ';
+    }
+
+    /**
+     * Retrieve the Ringotel API token from DefaultSettings.
+     *
+     * @param UpdateRingotelApiTokenRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getToken()
+    {
+        try {
+            // Retrieve the API token from DefaultSettings
+            $token = DefaultSettings::where([
+                ['default_setting_category', '=', 'mobile_apps'],
+                ['default_setting_subcategory', '=', 'ringotel_api_token'],
+                ['default_setting_enabled', '=', 'true'],
+            ])->value('default_setting_value');
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+            ], 200); // 200 OK with the token value
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    /**
+     * Update or create the Ringotel API token in DefaultSettings.
+     *
+     * @param UpdateRingotelApiTokenRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateToken(UpdateRingotelApiTokenRequest $request)
+    {
+        $inputs = $request->validated();
+
+        try {
+            // Update or create the Ringotel API token in DefaultSettings
+            DefaultSettings::updateOrCreate(
+                [
+                    'default_setting_category' => 'mobile_apps',
+                    'default_setting_subcategory' => 'ringotel_api_token',
+                ],
+                [
+                    'default_setting_name' => 'text',
+                    'default_setting_value' => $inputs['token'], // Use the validated token input
+                    'default_setting_enabled' => 'true', // Ensure the setting is enabled
+                ]
+            );
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['API Token was successfully updated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update API Token. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
     }
 }

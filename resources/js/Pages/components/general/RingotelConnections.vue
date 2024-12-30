@@ -134,119 +134,11 @@ const handleDelete = (connection) => {
     emit('delete-connection', connection); // Emit the delete event
 };
 
-// Initialize connections and fetch typeOptions
-// if (props.selectedItems) {
-//     props.selectedItems.forEach((item, index) => {
-//         connections.value.push({
-//             type: item.type || null,
-//             typeOptions: [],  // Initially empty
-//             option: item.option || null,
-//             extension: item.extension || null,
-//         });
-
-//         // If type is available, fetch the options for that type
-//         if (item.type) {
-//             fetchTypeOptionsForItem(item.type, index);
-//         }
-//     });
-// }
-
-
-// Fetch new options for the selected type using Axios
-function fetchRoutingTypeOptions(newValue, index) {
-
-    connections.value[index].type = newValue.value;
-
-    // Reset the selected option when type changes
-    connections.value[index].option = null;
-
-    axios.post(props.optionsUrl, { 'category': newValue.value })
-        .then((response) => {
-            // console.log(response.data);
-            connections.value[index].typeOptions = response.data.options;
-        }).catch((error) => {
-            connections.value[index].typeOptions = null;
-        });
-}
-
-function fetchTypeOptionsForItem(type, index) {
-    axios.post(props.optionsUrl, { 'category': type })
-        .then((response) => {
-            connections.value[index].typeOptions = response.data.options;
-
-            // Automatically set the selected option if the option exists in the fetched options
-            const selectedOption = connections.value[index].option;
-            if (selectedOption) {
-                const match = response.data.options.find(option => option.value === selectedOption);
-                if (match) {
-                    connections.value[index].option = match.value;
-                } else {
-                    connections.value[index].option = null; // Reset if no match found
-                }
-            }
-        }).catch(() => {
-            connections.value[index].typeOptions = null;
-            connections.value[index].option = null;  // Reset option in case of an error
-        });
-}
 
 // Emit updates to the parent whenever routingOptions changes
 const updateParent = () => {
     emit('update:modelValue', routingOptions.value);
 };
 
-// Function to modify routing options
-const addRoutingOption = () => {
-    routingOptions.value.push({ type: null, typeOptions: [], option: null });
-    updateParent(); // Notify the parent about the changes
-};
-
-const removeRoutingOption = (index) => {
-    routingOptions.value.splice(index, 1);
-    updateParent();
-};
-
-const updateRoutingOption = (value, index) => {
-    routingOptions.value[index] = value;
-    updateParent();
-};
-
-
-// // Update connections and emit updated model value
-// function updateconnections(newValue, index) {
-//     connections.value[index].option = newValue.value;
-//     connections.value[index].extension = newValue.extension;
-
-//     // Prepare the updated options
-//     const updatedOptions = connections.value.map(({ type, option, extension }) => {
-//         return { type, option, extension };
-//     });
-
-//     emit('update:model-value', updatedOptions);
-// }
-
-
-// // Add a new routing option
-// const addRoutingOption = () => {
-//     connections.value.push({
-//         type: null,
-//         typeOptions: [],
-//         option: null,
-//     });
-// };
-
-// const removeRoutingOption = (index) => {
-//     // console.log(connections.value);
-//     connections.value.splice(index, 1);
-
-//     // Reassign the array to force Vue to track reactivity properly
-//     connections.value = [...connections.value];
-
-//     const updatedOptions = connections.value.map(({ type, option }) => {
-//         return { type, option };
-//     });
-//     // console.log(updatedOptions);
-//     emit('update:model-value', updatedOptions);
-// }
 
 </script>
