@@ -45,7 +45,8 @@
                                     <LabelInputRequired target="organization_domain" label="Unique Organization Domain"
                                         class="truncate" />
                                     <InputField v-model="form.organization_domain" type="text" name="organization_domain"
-                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain" disabled/>
+                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain"
+                                        disabled />
                                     <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
                                         {{ errors.organization_domain[0] }}
                                     </div>
@@ -56,7 +57,7 @@
 
                                     <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'"
                                         :error="errors?.region && errors.region.length > 0" :selectedItem="form.region"
-                                        @update:model-value="handleUpdateRegionField" disabled/>
+                                        @update:model-value="handleUpdateRegionField" disabled />
                                     <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
                                         {{ errors.region[0] }}
                                     </div>
@@ -74,7 +75,8 @@
                                     <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
                                         {{ errors.package[0] }}
                                     </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available features.</p>
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available
+                                        features.</p>
 
                                 </div>
 
@@ -119,8 +121,7 @@
                                 <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
                                     :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
                                     @delete-connection="handleDeleteConnectionRequest"
-                                    @edit-connection="handleEditConnection"
-                                    :isDeleting="showConnectionDeletingStatus" />
+                                    @edit-connection="handleEditConnection" :isDeleting="showConnectionDeletingStatus" />
                             </div>
 
                         </div>
@@ -129,9 +130,53 @@
 
                             <button @click.prevent="handleFinishButtonClick()"
                                 class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 
-                                disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:text-indigo-500"
-                                :disabled="connections.length == 0">
+                                disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:text-indigo-500" :disabled="connections.length == 0">
                                 Close
+                            </button>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="activeTab === 'users'">
+                <div class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <div>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Users</h3>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Sync users from Ringotel to ensure your local system stays up-to-date with the latest
+                                organizational data. Click the
+                                <strong>Sync Users</strong> button to initiate the process.
+                            </p>
+                            <div class="rounded-md bg-yellow-100 p-4 mt-4">
+                                <div class="flex">
+                                    <div class="shrink-0">
+                                        <ExclamationTriangleIcon class="size-5 text-yellow-500" aria-hidden="true" />
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
+                                        <div class="mt-2 text-sm text-yellow-700">
+                                            <p>
+                                                Syncing will replace all current user data in your system with the latest
+                                                user data from the cloud.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+
+                            <button @click.prevent="handleSyncButtonClick()"
+                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                 :disabled="ringotelSyncUsersSubmiting">
+                                <Spinner :show="ringotelSyncUsersSubmiting" />
+                                Sync Users
                             </button>
                         </div>
 
@@ -176,14 +221,15 @@ import SyncAltIcon from "@icons/SyncAltIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
+import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
+import { BuildingOfficeIcon, UsersIcon } from '@heroicons/vue/24/outline';
 import RingotelConnections from "../general/RingotelConnections.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.vue";
 import UpdateRingotelConnectionForm from "../forms/UpdateRingotelConnectionForm.vue";
 
 const ringotelConnectionFormSubmiting = ref(null);
+const ringotelSyncUsersSubmiting = ref(null);
 const loadingModal = ref(false);
 
 const props = defineProps({
@@ -217,6 +263,7 @@ const showEditConnectionModal = ref(false);
 const iconComponents = {
     'SyncAltIcon': SyncAltIcon,
     'BuildingOfficeIcon': BuildingOfficeIcon,
+    'UsersIcon': UsersIcon,
 };
 
 const connections = ref(
@@ -261,7 +308,7 @@ const submitForm = () => {
 }
 
 const handleFinishButtonClick = () => {
-    emits('cancel'); 
+    emits('cancel');
 }
 
 const handleUpdateRegionField = (selected) => {
@@ -303,6 +350,27 @@ const handleCreateConnectionRequest = (form) => {
 
 };
 
+const handleSyncButtonClick = () => {
+    ringotelSyncUsersSubmiting.value = true;
+
+    const postData = {
+        org_id: props.options.organization.id,
+        domain_uuid: props.options.model.domain_uuid,
+        _token: page.props.csrf_token,
+    };
+
+
+    axios.post(props.options.routes.sync_users, postData)
+        .then((response) => {
+            ringotelSyncUsersSubmiting.value = false;
+            emits('success', response.data.messages);
+        }).catch((error) => {
+            ringotelSyncUsersSubmiting.value = false;
+            emits('error', error); // Emit the event with error
+        });
+
+};
+
 const handleUpdateConnectionRequest = (form) => {
     ringotelConnectionFormSubmiting.value = true;
     emits('clear-errors');
@@ -311,7 +379,7 @@ const handleUpdateConnectionRequest = (form) => {
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
-            emits('refresh-data',props.options.model.domain_uuid);
+            emits('refresh-data', props.options.model.domain_uuid);
 
             handleModalClose();
         }).catch((error) => {
