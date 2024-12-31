@@ -242,19 +242,6 @@ class AppsController extends Controller
                 'sync_users' => route('apps.users.sync'),
             ];
 
-            $regions = [
-                ['value' => '1', 'name' => 'US East'],
-                ['value' => '2', 'name' => 'US West'],
-                ['value' => '3', 'name' => 'Europe (Frankfurt)'],
-                ['value' => '4', 'name' => 'Asia Pacific (Singapore)'],
-                ['value' => '5', 'name' => 'Europe (London)'],
-                ['value' => '6', 'name' => 'India'],
-                ['value' => '7', 'name' => 'Australia'],
-                ['value' => '8', 'name' => 'Europe (Dublin)'],
-                ['value' => '9', 'name' => 'Canada (Central)'],
-                ['value' => '10', 'name' => 'South Africa'],
-            ];
-
             $regions = $this->ringotelApiService->getRegions();
             $regions = $regions->map(function ($region) {
                 return [
