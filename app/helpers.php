@@ -217,36 +217,6 @@ if (!function_exists('appsGetConnections')) {
 //     }
 // }
 
-// Get a list of all user for this organization and connection
-if (!function_exists('appsGetUsers')) {
-    function appsGetUsers($org_id, $conn_id)
-    {
-        $data = array(
-            'method' => 'getUsers',
-            'params' => array(
-                'orgid' => $org_id,
-                'branchid' => $conn_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to retrieve connections",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-        return $response;
-    }
-}
-
 
 // Create mobile app user via Ringotel API call
 if (!function_exists('appsCreateUser')) {

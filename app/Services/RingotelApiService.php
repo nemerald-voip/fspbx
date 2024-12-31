@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\DTO\RingotelUserDTO;
+use App\DTO\RingotelRegionDTO;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
 use App\DTO\RingotelConnectionDTO;
@@ -572,7 +574,7 @@ class RingotelApiService
     public function getUsersByOrgId($orgId)
     {
         $this->ensureApiTokenExists();
-        
+
         $data = [
             'method' => 'getUsers',
             'orgid' => $orgId,
@@ -597,6 +599,72 @@ class RingotelApiService
 
         return $response['result'];
     }
+
+    public function getUsers($org_id, $conn_id)
+    {
+        $this->ensureApiTokenExists();
+
+        $data = array(
+            'method' => 'getUsers',
+            'params' => array(
+                'orgid' => $org_id,
+                'branchid' => $conn_id,
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout(30)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) use ($org_id) {
+                throw new \Exception("Unable to retrieve users for organization ID: $org_id");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return collect($response['result'])->map(function ($item) {
+            return RingotelUserDTO::fromArray($item);
+        });
+    }
+
+    public function getRegions()
+    {
+        $this->ensureApiTokenExists();
+
+        $data = [
+            'method' => 'getRegions',
+        ];
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                throw new \Exception("Unable to retrieve regions: " . $response->body());
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred while fetching regions");
+        }
+
+        return collect($response['result'])->map(function ($item) {
+            return RingotelRegionDTO::fromArray($item);
+        });
+    }
+
 
     public function matchLocalDomains($organizations)
     {
