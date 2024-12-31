@@ -12,6 +12,7 @@ use App\Models\MobileAppUsers;
 use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
+use Illuminate\Support\Facades\Cache;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Requests\UpdateRingotelApiTokenRequest;
@@ -242,16 +243,7 @@ class AppsController extends Controller
                 'sync_users' => route('apps.users.sync'),
             ];
 
-            $regions = $this->ringotelApiService->getRegions();
-            $regions = $regions->map(function ($region) {
-                return [
-                    'value' => $region->id,
-                    'name' => $region->name,
-                ];
-            })
-            ->sortBy('value') // Sort the collection by the 'value' field
-            ->values() // Reset the keys after sorting
-            ->toArray();
+            $regions = $this->getRegions();
 
             $packages = [
                 ['value' => '1', 'name' => 'Essentials Package'],
@@ -299,12 +291,14 @@ class AppsController extends Controller
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
-                // Add additional navigation item if item_uuid exists
-                $navigation[] = [
-                    'name' => 'Users',
-                    'icon' => 'UsersIcon',
-                    'slug' => 'users',
-                ];
+                // Add additional navigation item if ringotel status is true
+                if($model->ringotel_status == 'true'){
+                    $navigation[] = [
+                        'name' => 'Users',
+                        'icon' => 'UsersIcon',
+                        'slug' => 'users',
+                    ];
+                }
 
                 $routes = array_merge($routes, []);
             }
@@ -785,7 +779,7 @@ class AppsController extends Controller
                             'conn_id' => $connection->id,
                             'user_id' => $user->id,
                             'status' => $user->status,
-                            'created_at' => now(), 
+                            'created_at' => now(),
                             'updated_at' => now(),
                         ];
                     }
@@ -800,7 +794,6 @@ class AppsController extends Controller
             return response()->json([
                 'messages' => ['success' => ['User are successfully synced']]
             ], 200);
-
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
@@ -1369,5 +1362,28 @@ class AppsController extends Controller
                 'errors' => ['server' => ['Unable to update API Token. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function getRegions()
+    {
+        $cacheKey = 'ringotel_regions';
+        $cacheDuration = now()->addDay(); // Cache for 1 day
+
+        $regions = Cache::remember($cacheKey, $cacheDuration, function () {
+            $regions = $this->ringotelApiService->getRegions();
+
+            logger('getting from api');
+            return $regions->map(function ($region) {
+                return [
+                    'value' => $region->id,
+                    'name' => $region->name,
+                ];
+            })
+                ->sortBy('value') // Sort the collection by the 'value' field
+                ->values() // Reset the keys after sorting
+                ->toArray();
+        });
+
+        return $regions;
     }
 }
