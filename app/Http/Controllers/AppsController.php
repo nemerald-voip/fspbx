@@ -12,11 +12,11 @@ use App\Models\MobileAppUsers;
 use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
-use Illuminate\Support\Facades\Session;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Requests\UpdateRingotelApiTokenRequest;
 use App\Http\Requests\StoreRingotelConnectionRequest;
+use App\Http\Requests\PairRingotelOrganizationRequest;
 use App\Http\Requests\UpdateRingotelConnectionRequest;
 use App\Http\Requests\StoreRingotelOrganizationRequest;
 use App\Http\Requests\UpdateRingotelOrganizationRequest;
@@ -57,6 +57,8 @@ class AppsController extends Controller
                     'create_organization' => route('apps.organization.create'),
                     'update_organization' => route('apps.organization.update'),
                     'destroy_organization' => route('apps.organization.destroy'),
+                    'pair_organization' => route('apps.organization.pair'),
+                    'get_all_orgs' => route('apps.organization.all'),
                     'get_api_token' => route('apps.token.get'),
                     'update_api_token' => route('apps.token.update'),
                     'item_options' => route('apps.item.options'),
@@ -346,7 +348,7 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details'],'server2' => [$e->getMessage()]]
+                'errors' => ['server' => ['Failed to fetch item details'], 'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -444,7 +446,7 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'],'server2' => [$e->getMessage()]]
+                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'], 'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -638,31 +640,25 @@ class AppsController extends Controller
      */
     public function getOrganizations(RingotelApiService $ringotelApiService)
     {
-
         $this->ringotelApiService = $ringotelApiService;
+
         try {
             $organizations = $this->ringotelApiService->getOrganizations();
-            $orgs = $this->ringotelApiService->matchLocalDomains($organizations);
-            $domains = Session::get('domains');
-            // logger($organizations);
+            $formattedOrganizations = collect($organizations)->map(function ($org) {
+                return [
+                    'name' => "{$org->name} (id: {$org->id})",
+                    'value' => $org->id,  
+                ];
+            });
+            return $formattedOrganizations;
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'error' => [
                     'message' => $e->getMessage(),
                 ],
-            ], 400);
+            ], 404);
         }
-
-
-        return response()->json([
-            'cloud_orgs' => $orgs,
-            'local_orgs' => $domains,
-            'status' => 200,
-            'success' => [
-                'message' => 'The request processed successfully'
-            ]
-        ]);
     }
 
 
@@ -698,44 +694,53 @@ class AppsController extends Controller
 
 
     /**
-     * Return Ringotel app user settings
+     * Connect existing Ringotel organization to selected domain
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function syncOrganizations(Request $request)
+    public function pairOrganization(PairRingotelOrganizationRequest $request)
     {
-
-        $app_array = $request->get('app_array');
-
-        foreach ($app_array as $id => $domain_uuid) {
-            // Store new record
-            $domainSettings = DomainSettings::create([
-                'domain_uuid' => $domain_uuid,
-                'domain_setting_category' => 'app shell',
-                'domain_setting_subcategory' => 'org_id',
-                'domain_setting_name' => 'text',
-                'domain_setting_value' => $id,
-                'domain_setting_enabled' => true,
-            ]);
-
-            $saved = $domainSettings->save();
-            if (!$saved) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error saving some records',
-                    ],
-                ]);
+        // Extract data from the request
+        $orgId = $request->input('org_id');
+        $domainUuid = $request->input('domain_uuid');
+    
+        try {
+            // Store or update the domain setting record
+            $domainSettings = DomainSettings::updateOrCreate(
+                [
+                    'domain_uuid' => $domainUuid,
+                    'domain_setting_category' => 'app shell',
+                    'domain_setting_subcategory' => 'org_id',
+                ],
+                [
+                    'domain_setting_name' => 'text',
+                    'domain_setting_value' => $orgId,
+                    'domain_setting_enabled' => true,
+                ]
+            );
+    
+            // Check if the record was saved successfully
+            if (!$domainSettings) {
+                throw new \Exception('Unable to connect this organization');
             }
+    
+            return response()->json([
+                'status' => 200,
+                'success' => [
+                    'message' => 'The organization was successfully connected.',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
         }
-
-        return response()->json([
-            'status' => 200,
-            'success' => [
-                'message' => 'All organizations were successfully synced'
-            ]
-        ]);
     }
+    
 
     /**
      * Sync Ringotel app users from the cloud

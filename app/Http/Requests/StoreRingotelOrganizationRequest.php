@@ -74,21 +74,5 @@ class StoreRingotelOrganizationRequest extends FormRequest
         return $input;
     }
 
-    /**
-     * Get custom attributes for validator errors.
-     *
-     * @return array
-     */
-    public function attributes(): array
-    {
-        return [
-            'voicemail_id' => 'voicemail extension',
-            'voicemail_password' => 'voicemail password',
-            'greeting_id' => 'extension number',
-            'voicemail_mail_to' => 'email address',
-            'voicemail_enabled' => 'enabled',
-            'voicemail_description' => 'description',
-            'voicemail_alternate_greet_id' => 'value',
-        ];
-    }
+
 }

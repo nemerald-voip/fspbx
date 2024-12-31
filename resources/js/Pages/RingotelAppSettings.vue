@@ -102,8 +102,8 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="row.ringotel_status == 'true'" :content="'Edit'"
-                                    position='TopCenter' target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="row.ringotel_status == 'true'" :content="'Edit'" position='TopCenter'
+                                    target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -111,15 +111,15 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="row.ringotel_status == 'false'" :content="'Activate'" position='TopCenter'
-                                    target="#restart_tooltip_target">
+                                <ejs-tooltip v-if="row.ringotel_status == 'false'" :content="'Activate'"
+                                    position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="row.ringotel_status == 'true'"  :content="'Deactivate'"
+                                <ejs-tooltip v-if="row.ringotel_status == 'true'" :content="'Deactivate'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
@@ -158,9 +158,10 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate Ringotel Organization'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting" :activeTab="activationActiveTab"
-                @submit="handleCreateRequest" @cancel="handleActivationFinish" @error="handleFormErrorResponse" 
-                @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
+            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting"
+                :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
+                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
@@ -168,8 +169,9 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" @refresh-data="getItemOptions"
-                @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                @refresh-data="getItemOptions" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
@@ -177,19 +179,34 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateRingotelApiTokenForm :token="apiToken" :errors="formErrors" :is-submitting="updateApiTokenFormSubmiting"
-                @submit="handleUpdateApiTokenRequest" @cancel="handleModalClose" @error="handleFormErrorResponse" @refresh-data="getItemOptions"
-                @success="showNotification('success', $event )" @clear-errors="handleClearErrors"/>
+                @submit="handleUpdateApiTokenRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                @refresh-data="getItemOptions" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
-    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Action'" :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
-        confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner"/>
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing Ringotel Organization'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <PairRingotelOrganizationForm :orgs="ringotelOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairRingotelOrgSubmiting"
+                @submit="handlePairRingtotelOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                @success="showNotification('success', $event)"/>
+        </template>
+    </AddEditItemModal>
+
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmDeleteAction"
+        :header="'Confirm Action'"
+        :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
+        confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
+
+    <ConfirmationModal :show="showRingotelConfirmationModal" @close="cancelRingotelAction"
+        @confirm="confirmRingotelAction" :header="'Select a method to set up your Ringotel organization.'"
+        :text="'Would you like to connect to an existing Ringotel organization or create a new one?'"
+        confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
+        :loading="showConnectSpinner || showCreateSpinner" :color="'blue'"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
-    
-        
 </template>
 
 <script setup>
@@ -212,6 +229,7 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
 import UpdateRingotelOrgForm from "./components/forms/UpdateRingotelOrgForm.vue";
 import UpdateRingotelApiTokenForm from "./components/forms/UpdateRingotelApiTokenForm.vue";
+import PairRingotelOrganizationForm from "./components/forms/PairRingotelOrganizationForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
@@ -228,14 +246,21 @@ const selectPageItems = ref(false);
 const showActivateModal = ref(false);
 const showEditModal = ref(false);
 const showApiTokenModal = ref(false);
+const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showConfirmationModal = ref(false);
+const showRingotelConfirmationModal = ref(false);
 const activateFormSubmiting = ref(null);
 const activationActiveTab = ref('organization');
 const updateFormSubmiting = ref(null);
 const updateApiTokenFormSubmiting = ref(null);
-const showDeactivateSpinner = ref(null);
+const pairRingotelOrgSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
+const showDeactivateSpinner = ref(null);
+const showConnectSpinner = ref(null);
+const showCreateSpinner = ref(null);
+const confirmRingotelAction = ref(null);
+const cancelRingotelAction = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -254,6 +279,8 @@ const filterData = ref({
 });
 
 const itemOptions = ref({})
+const ringotelOrganizations = ref({})
+const selectedAccount =  ref(null)
 const apiToken = ref(null)
 
 // Computed property for bulk actions based on permissions
@@ -273,11 +300,26 @@ onMounted(() => {
 });
 
 const handleActivateButtonClick = (itemUuid) => {
+    showRingotelConfirmationModal.value = true;
+    confirmRingotelAction.value = () => executeNewRingotelOrgAction(itemUuid); 
+    cancelRingotelAction.value = () => executeExistingRingotelOrgAction(itemUuid); 
+};
+
+const executeNewRingotelOrgAction = (itemUuid) => {
     activationActiveTab.value = 'organization';
+    showRingotelConfirmationModal.value = false;
     showActivateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions(itemUuid);
+}
+
+const executeExistingRingotelOrgAction = (itemUuid) => {
+    showRingotelConfirmationModal.value = false;
+    showPairModal.value = true
+    loadingModal.value = true
+    selectedAccount.value = itemUuid;
+    getRingotelOrganizations(itemUuid);
 }
 
 const handleEditButtonClick = (itemUuid) => {
@@ -338,6 +380,25 @@ const handleUpdateApiTokenRequest = (form) => {
             handleClearSelection();
         }).catch((error) => {
             updateApiTokenFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
+const handlePairRingtotelOrgRequest = (form) => {
+    pairRingotelOrgSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.pair_organization, form)
+        .then((response) => {
+            pairRingotelOrgSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            pairRingotelOrgSubmiting.value = false;
             handleClearSelection();
             handleFormErrorResponse(error);
         });
@@ -465,6 +526,21 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
+const getRingotelOrganizations = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; 
+
+    axios.post(props.routes.get_all_orgs, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            ringotelOrganizations.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
 const handleClearErrors = () => {
     formErrors.value = null;
 }
@@ -544,9 +620,11 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     showActivateModal.value = false;
     showEditModal.value = false,
-    showApiTokenModal.value =false;
+    showApiTokenModal.value = false;
+    showRingotelConfirmationModal.value = false;
     showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
+    showPairModal.value = false;
 }
 
 const hideNotification = () => {
