@@ -232,7 +232,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
     Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
     Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('appsCreateUser');
-    Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');
+    // Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');
+    Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
     Route::delete('/apps/users/{extension}', [AppsController::class, 'deleteUser'])->name('appsDeleteUser');
     Route::post('/apps/users/{extension}/resetpassword', [AppsController::class, 'ResetPassword'])->name('appsResetPassword');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');

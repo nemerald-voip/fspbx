@@ -168,6 +168,8 @@ class AppsController extends Controller
 
     public function getItemOptions(RingotelApiService $ringotelApiService)
     {
+        $this->ringotelApiService = $ringotelApiService;
+
         try {
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
@@ -237,6 +239,7 @@ class AppsController extends Controller
                 'create_connection' => route('apps.connection.create'),
                 'update_connection' => route('apps.connection.update'),
                 'delete_connection' => route('apps.connection.destroy'),
+                'sync_users' => route('apps.users.sync'),
             ];
 
             $regions = [
@@ -251,6 +254,17 @@ class AppsController extends Controller
                 ['value' => '9', 'name' => 'Canada (Central)'],
                 ['value' => '10', 'name' => 'South Africa'],
             ];
+
+            $regions = $this->ringotelApiService->getRegions();
+            $regions = $regions->map(function ($region) {
+                return [
+                    'value' => $region->id,
+                    'name' => $region->name,
+                ];
+            })
+            ->sortBy('value') // Sort the collection by the 'value' field
+            ->values() // Reset the keys after sorting
+            ->toArray();
 
             $packages = [
                 ['value' => '1', 'name' => 'Essentials Package'],
@@ -298,6 +312,13 @@ class AppsController extends Controller
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
+                // Add additional navigation item if item_uuid exists
+                $navigation[] = [
+                    'name' => 'Users',
+                    'icon' => 'UsersIcon',
+                    'slug' => 'users',
+                ];
+
                 $routes = array_merge($routes, []);
             }
 
@@ -316,7 +337,6 @@ class AppsController extends Controller
             if (!$model->org_id) {
                 $connections = [];
             } else {
-                $this->ringotelApiService = $ringotelApiService;
                 $organization = $this->ringotelApiService->getOrganization($model->org_id);
                 $connections = $this->ringotelApiService->getConnections($model->org_id);
             }
@@ -647,7 +667,7 @@ class AppsController extends Controller
             $formattedOrganizations = collect($organizations)->map(function ($org) {
                 return [
                     'name' => "{$org->name} (id: {$org->id})",
-                    'value' => $org->id,  
+                    'value' => $org->id,
                 ];
             });
             return $formattedOrganizations;
@@ -703,7 +723,7 @@ class AppsController extends Controller
         // Extract data from the request
         $orgId = $request->input('org_id');
         $domainUuid = $request->input('domain_uuid');
-    
+
         try {
             // Store or update the domain setting record
             $domainSettings = DomainSettings::updateOrCreate(
@@ -718,18 +738,15 @@ class AppsController extends Controller
                     'domain_setting_enabled' => true,
                 ]
             );
-    
+
             // Check if the record was saved successfully
             if (!$domainSettings) {
                 throw new \Exception('Unable to connect this organization');
             }
-    
+
             return response()->json([
-                'status' => 200,
-                'success' => [
-                    'message' => 'The organization was successfully connected.',
-                ],
-            ]);
+                'messages' => ['success' => ['Connection updated successfully']]
+            ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
@@ -740,108 +757,72 @@ class AppsController extends Controller
             ]);
         }
     }
-    
+
 
     /**
      * Sync Ringotel app users from the cloud
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function syncUsers(Request $request, Domain $domain)
+    public function syncUsers(RingotelApiService $ringotelApiService)
     {
+        logger(request()->all());
+        $this->ringotelApiService = $ringotelApiService;
 
-        // Get Org ID from database
-        $org_id = appsGetOrganizationDetails($domain->domain_uuid);
+        try {
+            // Get all connections
+            $connections = $this->ringotelApiService->getConnections(request('org_id'));
+            $org_id = request('org_id');
+            $domain_uuid = request('domain_uuid');
 
-        // Delete any prior info from database
-        $deleted = MobileAppUsers::where('org_id', $org_id)->delete();
+            // Retrieve all extensions in a single query
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)->get();
+            $extensionMap = $extensions->keyBy('extension'); // Map extensions by 'extension' for quick lookups
 
-        //Get all connections
-        $response = appsGetConnections($org_id);
+            $mobileAppUsersData = []; // Array to hold bulk insert data
 
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-                'domain' => $domain->domain_name,
-            ]);
-        }
+            foreach ($connections as $connection) {
+                // Get all users for this connection
+                $users = $this->ringotelApiService->getUsers($org_id, $connection->id);
 
-        // If successful continue
-        if (isset($response['result'])) {
-            $connections = $response['result'];
-            $app_domain = $response['result'][0]['domain'];
+                foreach ($users as $user) {
+                    // Check if the extension exists in the map
+                    $extension = $extensionMap->get($user->extension);
 
-            // Otherwise return failed status
-        } elseif (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ]);
-        } else {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => 'Unknown error',
-                ],
-            ]);
-        }
-
-        foreach ($connections as $connection) {
-            //Get all users for this connection
-            $response = appsGetUsers($org_id, $connection['id']);
-
-            // If successful continue
-            if (isset($response['result'])) {
-                $users = $response['result'];
-
-                // Otherwise return failed status
-            } elseif (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'Unknown error',
-                    ],
-                ]);
-            }
-
-            foreach ($users as $user) {
-                // Get each user's extension
-                $extension = Extensions::where('extension', $user['extension'])
-                    ->where('domain_uuid', $domain->domain_uuid)
-                    ->first();
-                if ($extension) {
-                    // Save returned user info in database
-                    $appUser = new MobileAppUsers();
-                    $appUser->extension_uuid = $extension->extension_uuid;
-                    $appUser->domain_uuid = $extension->domain_uuid;
-                    $appUser->org_id = $org_id;
-                    $appUser->conn_id = $user['branchid'];
-                    $appUser->user_id = $user['id'];
-                    $appUser->status = $user['status'];
-
-                    $appUser->save();
+                    if ($extension) {
+                        // Prepare data for bulk insert
+                        $mobileAppUsersData[] = [
+                            'extension_uuid' => $extension->extension_uuid,
+                            'domain_uuid' => $extension->domain_uuid,
+                            'org_id' => $org_id,
+                            'conn_id' => $connection->id,
+                            'user_id' => $user->id,
+                            'status' => $user->status,
+                            'created_at' => now(), 
+                            'updated_at' => now(),
+                        ];
+                    }
                 }
             }
-        }
 
-        return response()->json([
-            'status' => 200,
-            'success' => [
-                'message' => 'Apps have been synced successfully'
-            ]
-        ]);
+            // Perform bulk insert for MobileAppUsers
+            if (!empty($mobileAppUsersData)) {
+                MobileAppUsers::insert($mobileAppUsersData);
+            }
+
+            return response()->json([
+                'messages' => ['success' => ['User are successfully synced']]
+            ], 200);
+
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
+        }
     }
 
     /**
