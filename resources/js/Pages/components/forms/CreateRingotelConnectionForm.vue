@@ -320,13 +320,13 @@
 
                             <div class="grid grid-cols-6 gap-6">
 
-                                <div class="col-span-5">
-                                    <div class="flex items-center">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <div class=" items-center">
                                         <LabelInputRequired target="call_delay"
                                             label="Call Delay for 'At the Desk' Status (Seconds)"
-                                            class="mb-1 mr-1 flex-initial w-72" />
+                                            class="mb-1 mr-1" />
                                         <InputField v-model="form.call_delay" type="text" name="call_delay" id="call_delay"
-                                            class="flex-none w-14" :error="!!errors?.call_delay" :placeholder="''" />
+                                            class="" :error="!!errors?.call_delay" :placeholder="''" />
                                     </div>
 
                                     <div v-if="errors?.call_delay" class="mt-2 text-xs text-red-600">
