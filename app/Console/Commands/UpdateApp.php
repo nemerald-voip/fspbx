@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Services\GitHubApiService;
 use Symfony\Component\Process\Process;
 use App\Console\Commands\Updates\Update097;
+use App\Console\Commands\Updates\Update0917;
 
 
 class UpdateApp extends Command
@@ -40,12 +41,15 @@ class UpdateApp extends Command
     {
         $this->info('Starting update...');
 
+        $this->runArtisanCommand('config:cache');
         $currentVersion = config('app.version');
         $downloadedVersion = config('version.release');
 
         // Define version-specific steps using an array
         $updateSteps = [
             '0.9.7' => Update097::class,
+            '0.9.11' => Update097::class,
+            '0.9.17' => Update0917::class,
             // Add more versions as needed
         ];
 
@@ -64,6 +68,12 @@ class UpdateApp extends Command
                 $this->call('version:set', ['version' => $version]);
                 $this->info("Version successfully updated to $version.");
             }
+        }
+
+        if (version_compare($currentVersion, $downloadedVersion, '<')) {
+            // Call version:set to update the version to the latest one, even if no steps were needed
+            $this->call('version:set', ['version' => $downloadedVersion]);
+            $this->info("Version successfully updated to $downloadedVersion.");
         }
 
         // Composer install

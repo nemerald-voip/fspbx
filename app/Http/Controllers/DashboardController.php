@@ -18,6 +18,7 @@ use App\Models\Voicemails;
 use App\Models\Destinations;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
+use App\Models\WhitelistedNumbers;
 use App\Services\CdrDataService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
@@ -151,6 +152,12 @@ class DashboardController extends Controller
         if (userCheckPermission("message_settings_list_view")) {
             $counts['messages'] = Messages::where('domain_uuid', $domain_id)
                 ->whereRaw("created_at >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
+                ->count();
+        }
+
+        //Whitelisted Numbers Count
+        if (userCheckPermission("whitelisted_numbers_list_view")) {
+            $counts['whitelisted_numbers'] = WhitelistedNumbers::where('domain_uuid', $domain_id)
                 ->count();
         }
 
@@ -345,6 +352,9 @@ class DashboardController extends Controller
         }
         if (userCheckPermission("message_settings_list_view")) {
             $apps[] = ['name' => 'Messages', 'href' => '/messages', 'icon' => 'UsersIcon', 'slug' => 'messages'];
+        }
+        if (userCheckPermission("whitelisted_numbers_list_view")) {
+            $apps[] = ['name' => 'Whitelisted Numbers', 'href' => route('whitelisted-numbers.index'), 'icon' => 'HeartIcon', 'slug' => 'whitelisted_numbers'];
         }
 
         if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {

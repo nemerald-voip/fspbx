@@ -101,6 +101,8 @@ return [
     'not_regex' => 'The :attribute format is invalid.',
     'numeric' => 'The :attribute must be a number.',
     'password' => 'The password is incorrect.',
+    'password.mixed' => 'The password must contain both uppercase and lowercase characters.',
+    'password.symbols' => 'The password must include at least one symbol.',
     'present' => 'The :attribute field must be present.',
     'prohibited' => 'The :attribute field is prohibited.',
     'prohibited_if' => 'The :attribute field is prohibited when :other is :value.',

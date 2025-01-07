@@ -9,6 +9,7 @@ use App\Models\Voicemails;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use App\Observers\ExtensionObserver;
+use App\Services\RingotelApiService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
@@ -51,15 +52,17 @@ class AppServiceProvider extends ServiceProvider
 
         // Ringotel
         Http::macro('ringotel', function () {
+            $service = app(RingotelApiService::class);
             return Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('ringotel.token',''),
+                'Authorization' => 'Bearer ' . $service->getRingotelApiToken(),
             ])->baseUrl(config('ringotel.url', 'https://shell.ringotel.co'));
         });
 
         // Ringotel API
         Http::macro('ringotel_api', function () {
+            $service = app(RingotelApiService::class);
             return Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('ringotel.token',''),
+                'Authorization' => 'Bearer ' . $service->getRingotelApiToken(),
             ])->baseUrl(config('ringotel.api_url','https://shell.ringotel.co/api'));
         });
 
@@ -150,13 +153,7 @@ class AppServiceProvider extends ServiceProvider
 
             return true;
         });
-        /*
-        Validator::extend('DeviceMacAddressNotExists', function ($attribute, $value, $parameters, $validator) {
-            $value = str_replace([':', '-', '.'], '', $value);
-            $value = strtolower($value);
-            return !Devices::where('device_address', $value)->exists();
-        });
-*/
+
 
         Password::defaults(function () {
             $rule = Password::min(8)

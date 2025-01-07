@@ -91,6 +91,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'firewall_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Whitelisted Numbers',
+                'permission_name'        => 'whitelisted_numbers_list_view',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 

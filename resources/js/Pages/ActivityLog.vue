@@ -107,8 +107,8 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <div class="font-medium text-gray-900">{{ formatUserName(row.causer.user_adv_fields) }}</div>
-                            <div class="mt-1 text-gray-500">{{ row.causer.user_email }}</div>
+                            <div class="font-medium text-gray-900">{{ formatUserName(row.causer) }}</div>
+                            <div class="mt-1 text-gray-500">{{ row.causer?.user_email }}</div>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
@@ -303,7 +303,7 @@ const bulkActions = computed(() => {
 });
 
 onMounted(() => {
-    console.log(props.data);
+    // console.log(props.data);
 });
 
 const handleEditRequest = (itemUuid) => {
@@ -623,11 +623,9 @@ const formatProperties = (item) => {
 };
 
 // Method to format user
-const formatUserName = (userAdvFields) => {
-    if (userAdvFields) {
-        const firstName = userAdvFields.first_name || '';
-        const lastName = userAdvFields.last_name || '';
-        return `${firstName} ${lastName}`.trim();
+const formatUserName = (causer) => {
+    if (causer && causer.name_formatted) {
+        return causer.name_formatted;
     }
     return '';
 };

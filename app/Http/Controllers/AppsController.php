@@ -2,23 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Extensions;
-use App\Models\MobileAppPasswordResetLinks;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MobileAppUsers;
+use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Http\Requests\UpdateRingotelApiTokenRequest;
+use App\Http\Requests\StoreRingotelConnectionRequest;
+use App\Http\Requests\PairRingotelOrganizationRequest;
+use App\Http\Requests\UpdateRingotelConnectionRequest;
+use App\Http\Requests\StoreRingotelOrganizationRequest;
+use App\Http\Requests\UpdateRingotelOrganizationRequest;
 
 class AppsController extends Controller
 {
     protected $ringotelApiService;
+
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'RingotelAppSettings';
+    protected $searchable = ['domain_name', 'domain_description'];
+
+    public function __construct()
+    {
+        $this->model = new Domain();
+    }
 
     /**
      * Display a listing of the resource.
@@ -27,117 +45,439 @@ class AppsController extends Controller
      */
     public function index()
     {
-        // Check all domains for registration in Ringotel Shell
 
-        $domains = Domain::where('domain_enabled','true')
-            ->orderBy('domain_description')
-            ->get();
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
 
-        foreach($domains as $domain) {
-            $settings = $domain->settings()
-            ->where('domain_setting_category', 'app shell')
-            ->where('domain_setting_subcategory', 'org_id')
-            ->get();
-
-            if ($settings->count() > 0) {
-                $domain->setAttribute('status', 'true');
-            } else {
-                $domain->setAttribute('status', 'false');
-            }
-
-        }
-
-        return view('layouts.apps.list')
-            ->with("domains",$domains);
+                'routes' => [
+                    'current_page' => route('apps.index'),
+                    'create_organization' => route('apps.organization.create'),
+                    'update_organization' => route('apps.organization.update'),
+                    'destroy_organization' => route('apps.organization.destroy'),
+                    'pair_organization' => route('apps.organization.pair'),
+                    'get_all_orgs' => route('apps.organization.all'),
+                    'get_api_token' => route('apps.token.get'),
+                    'update_api_token' => route('apps.token.update'),
+                    'item_options' => route('apps.item.options'),
+                ]
+            ]
+        );
     }
 
     /**
-     * Submit request to create a new organization to Ringotel
+     *  Get data
+     */
+    public function getData($paginate = 50)
+    {
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'domain_name'); // Default to 'voicemail_id'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
+
+        $data = $this->builder($this->filters);
+
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
+
+        // Add `ringotel_status` dynamically
+        $data->each(function ($domain) {
+            $domain->ringotel_status = $domain->settings()
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->where('domain_setting_enabled', true)
+                ->exists() ? 'true' : 'false';
+        });
+
+        return $data;
+    }
+
+    /**
+     * @param  array  $filters
+     * @return Builder
+     */
+    public function builder(array $filters = [])
+    {
+        $data =  $this->model::query();
+        // Get all domains with 'domain_enabled' set to 'true' and eager load settings
+        $data->where('domain_enabled', 'true')
+            ->with(['settings' => function ($query) {
+                $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value')
+                    ->where('domain_setting_category', 'app shell')
+                    ->where('domain_setting_subcategory', 'org_id')
+                    ->where('domain_setting_enabled', true);
+            }]);
+
+        $data->select(
+            'domain_uuid',
+            'domain_name',
+            'domain_description',
+        );
+
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
+                }
+            }
+        }
+
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
+
+        return $data;
+    }
+
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value)
+    {
+        $searchable = $this->searchable;
+
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
+            }
+        });
+    }
+
+    public function getItemOptions(RingotelApiService $ringotelApiService)
+    {
+        $this->ringotelApiService = $ringotelApiService;
+
+        try {
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+
+            $navigation = [
+                [
+                    'name' => 'Organization',
+                    'icon' => 'BuildingOfficeIcon',
+                    'slug' => 'organization',
+                ],
+                [
+                    'name' => 'Connections',
+                    'icon' => 'SyncAltIcon',
+                    'slug' => 'connections',
+                ],
+            ];
+
+            $conn_navigation = [
+                [
+                    'name' => 'Settings',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'settings',
+                ],
+                [
+                    'name' => 'Features',
+                    'icon' => 'AdjustmentsHorizontalIcon',
+                    'slug' => 'features',
+                ],
+                [
+                    'name' => 'PBX Features',
+                    'icon' => 'SettingsApplications',
+                    'slug' => 'pbx_features',
+                ],
+                // [
+                //     'name' => 'SMS Settings',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'sms_settings',
+                // ],
+                // [
+                //     'name' => 'Screen Pop-ups',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'screen_popups',
+                // ],
+                // [
+                //     'name' => 'Visual Call Park',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'screen_popups',
+                // ],
+                // [
+                //     'name' => 'Speed Dial',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'speed_dial',
+                // ],
+                // [
+                //     'name' => 'BLFs',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'blfs',
+                // ],
+                // [
+                //     'name' => 'Web Pages',
+                //     'icon' => 'AdjustmentsHorizontalIcon',
+                //     'slug' => 'web_pages',
+                // ],
+            ];
+
+
+            $routes = [
+                'create_connection' => route('apps.connection.create'),
+                'update_connection' => route('apps.connection.update'),
+                'delete_connection' => route('apps.connection.destroy'),
+                'sync_users' => route('apps.users.sync'),
+            ];
+
+            $regions = $this->getRegions();
+
+            $packages = [
+                ['value' => '1', 'name' => 'Essentials Package'],
+                ['value' => '2', 'name' => 'Pro Package'],
+            ];
+
+            $protocols = [
+                ['value' => 'sip', 'name' => 'UDP'],
+                ['value' => 'sip-tcp', 'name' => 'TCP'],
+                ['value' => 'sips', 'name' => 'TLS'],
+                ['value' => 'DNS-NAPTR', 'name' => 'DNS-NAPTR'],
+            ];
+
+            // Check if item_uuid exists to find an existing model
+            if ($item_uuid) {
+                // Find existing model by item_uuid
+                $model = $this->model
+                    ->select(
+                        'domain_uuid',
+                        'domain_name',
+                        'domain_description',
+                    )
+                    ->with(['settings' => function ($query) {
+                        $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value')
+                            ->where('domain_setting_category', 'app shell')
+                            ->where('domain_setting_subcategory', 'org_id')
+                            ->where('domain_setting_enabled', true);
+                    }])->where($this->model->getKeyName(), $item_uuid)->first();
+
+                if ($model) {
+                    // Transform settings into org_id
+                    $model->org_id = $model->settings->first()->domain_setting_value ?? null;
+                    unset($model->settings); // Remove settings relationship if not needed
+                }
+
+                $model->ringotel_status = $model->settings()
+                    ->where('domain_setting_category', 'app shell')
+                    ->where('domain_setting_subcategory', 'org_id')
+                    ->where('domain_setting_enabled', true)
+                    ->exists() ? 'true' : 'false';
+                // logger($model);
+
+                // If model doesn't exist throw an error
+                if (!$model) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+                // Add additional navigation item if ringotel status is true
+                if($model->ringotel_status == 'true'){
+                    $navigation[] = [
+                        'name' => 'Users',
+                        'icon' => 'UsersIcon',
+                        'slug' => 'users',
+                    ];
+                }
+
+                $routes = array_merge($routes, []);
+            }
+
+            $permissions = $this->getUserPermissions();
+
+            // Get all app settings from Default Settings and overrride with settings saved in Domain Settings
+            $appSettings = $this->getAppSettings($model->domain_uuid ?? null);
+            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '', $model->domain_description ?? ''));
+            $appSettings['suggested_connection_name'] = 'Primary SIP Profile';
+
+            // Check if `connection_port` is empty and fall back to `line_sip_port`
+            if (empty($appSettings['connection_port'])) {
+                $appSettings['connection_port'] = get_domain_setting('line_sip_port', $model->domain_uuid ?? null)  ?? null;
+            }
+
+            if (!$model->org_id) {
+                $connections = [];
+            } else {
+                $organization = $this->ringotelApiService->getOrganization($model->org_id);
+                $connections = $this->ringotelApiService->getConnections($model->org_id);
+            }
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'navigation' => $navigation,
+                'conn_navigation' => $conn_navigation,
+                'model' => $model ?? null,
+                'organization' => $organization ?? null,
+                'orgId' => $organization->id ?? null,
+                'regions' => $regions,
+                'packages' => $packages,
+                'protocols' => $protocols,
+                'permissions' => $permissions,
+                'routes' => $routes,
+                'settings' => $appSettings,
+                'connections' => $connections,
+
+                // Define options for other fields as needed
+            ];
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details'], 'server2' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    function getAppSettings($domain_uuid)
+    {
+        // Fetch all domain settings for the given domain_uuid
+        $domainSettings = DomainSettings::where('domain_uuid', $domain_uuid)
+            ->where('domain_setting_category', 'mobile_apps')
+            ->where('domain_setting_enabled', true)
+            ->pluck('domain_setting_value', 'domain_setting_subcategory');
+
+
+        // Fetch all default settings
+        $defaultSettings = DefaultSettings::where('default_setting_enabled', true)
+            ->where('default_setting_category', 'mobile_apps')
+            ->pluck('default_setting_value', 'default_setting_subcategory');
+
+        // Merge settings, prioritizing domain-level settings
+        $allSettings = $defaultSettings->merge($domainSettings);
+
+        return $allSettings;
+    }
+
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        return $permissions;
+    }
+
+    /**
+     * Submit API request to Ringotel to create a new organization
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createOrganization(Request $request)
+    public function createOrganization(StoreRingotelOrganizationRequest $request, RingotelApiService $ringotelApiService)
     {
-        $request->dont_send_user_credentials = isset($request->dont_send_user_credentials)
-            ? $request->dont_send_user_credentials == 'true' ? 'true' : 'false'
-            : get_domain_setting('dont_send_user_credentials') ?? 'false';
+        $this->ringotelApiService = $ringotelApiService;
 
-        $data = array(
-            'method' => 'createOrganization',
-            'params' => array(
-                'name' => $request->organization_name,
-                'region' => $request->organization_region,
-                'domain' => $request->organization_domain,
-                'params' => array(
-                    'hidePassInEmail' => $request->dont_send_user_credentials == 'true'
-                )
-            )
-        );
+        $inputs = $request->validated();
 
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create organization']);
-             })
-             ->json();
+        try {
+            // Send API request to create organization
+            $organization = $this->ringotelApiService->createOrganization($inputs);
 
-        //dd(isset($response['error']));
+            // Check for existing records
+            $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->first();
 
-
-        // If successful store Org ID and return success status
-        if (isset($response['result'])){
-
-            // Add received OrgID to the request and store it in database
-            $request->merge(['org_id' => $response['result']['id']]);
-
-            if (!appsStoreOrganizationDetails($request)){
-                return response()->json([
-                    'organization_name' => $request->organization_name,
-                    'organization_domain' => $request->organization_domain,
-                    'organization_region' => $request->organization_region,
-                    'org_id' => $response['result']['id'],
-                    'message' => 'Organization was created successfully, but unable to store Org ID in database',
-                ]);
+            if ($existingSetting) {
+                // Delete the existing record 
+                $existingSetting->delete();
             }
 
-            // Get connection port from database or env file
-            $protocol = get_domain_setting('mobile_app_conn_protocol', $request->organization_uuid);
-            $port = get_domain_setting('line_sip_port', $request->organization_uuid);
-            $proxy = get_domain_setting('mobile_app_proxy', $request->organization_uuid);
-
-            return response()->json([
-                'status' => 200,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'org_id' => $response['result']['id'],
-                'protocol' => ($protocol) ? $protocol : "",
-                'connection_port' => ($port) ? $port : config("ringotel.connection_port"),
-                'outbound_proxy' => ($proxy) ? $proxy : config("ringotel.outbound_proxy"),
-                'success' => [
-                    'message' => 'Organization created successfully',
-                ]
+            // Save the new record
+            $domainSetting = DomainSettings::create([
+                'domain_uuid' => $inputs['domain_uuid'],
+                'domain_setting_category' => 'app shell',
+                'domain_setting_subcategory' => 'org_id',
+                'domain_setting_name' => 'text',
+                'domain_setting_value' => $organization['id'],
+                'domain_setting_enabled' => true,
             ]);
-        // Otherwise return failed status
-        } elseif (isset($response['error'])) {
+
+            // Check for existing records
+            $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
+                ->where('domain_setting_category', 'mobile_apps')
+                ->where('domain_setting_subcategory', 'dont_send_user_credentials')
+                ->first();
+
+            if ($existingSetting) {
+                $existingSetting->delete();
+            }
+
+            $domainSetting = DomainSettings::create([
+                'domain_uuid' => $inputs['domain_uuid'],
+                'domain_setting_category' => 'mobile_apps',
+                'domain_setting_subcategory' => 'dont_send_user_credentials',
+                'domain_setting_name' => 'boolean',
+                'domain_setting_value' => $inputs['dont_send_user_credentials'],
+                'domain_setting_enabled' => true,
+                'domain_setting_description' => "Don't include user credentials in the welcome email"
+            ]);
+
+            // Return a JSON response indicating success
             return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => $response['error']['message']]);
-        } else {
+                'org_id' => $organization['id'],
+                'messages' => ['success' => ['Organization successfully activated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
             return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => 'Unknown error']);
+                'success' => false,
+                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'], 'server2' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Submit API request to Ringotel to create a new organization
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function UpdateOrganization(UpdateRingotelOrganizationRequest $request, RingotelApiService $ringotelApiService)
+    {
+        $this->ringotelApiService = $ringotelApiService;
+
+        $inputs = $request->validated();
+
+        try {
+            // Send API request to update organization
+            $organization = $this->ringotelApiService->updateOrganization($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Organization successfully updated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 
@@ -146,306 +486,153 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroyOrganization(Request $request, Domain $domain)
+    public function destroyOrganization(RingotelApiService $ringotelApiService)
     {
+        $this->ringotelApiService = $ringotelApiService;
 
-        // Get Org ID from database
-        $org_id = appsGetOrganizationDetails($domain->domain_uuid);
+        try {
+            // Get Org ID from database
+            $domain_uuid = request('domain_uuid');
+            $org_id = $this->ringotelApiService->getOrgIdByDomainUuid($domain_uuid);
 
-        //Get all connections
-        $response = appsGetConnections($org_id);
+            // Remove local references from the database
+            DomainSettings::where('domain_uuid', $domain_uuid)
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->delete();
 
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-                'domain' => $domain->domain_name,
-            ]);
-        }
-
-        //Delete all connections
-        foreach ($response['result'] as $conn) {
-            $response = appsDeleteConnection($org_id, $conn['id']);
-            if (isset($response['error'])) {
+            if (!$org_id) {
                 return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                    'domain' => $domain->domain_name,
-                ]);
+                    'success' => false,
+                    'errors' => ['server' => ['Organization ID not found for the given domain.']]
+                ], 404); // 404 Not Found
             }
-        }
 
-        // Delete organization
-        $response = appsDeleteOrganization($org_id);
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-                'domain' => $domain->domain_name,
-            ]);
-        }
-        //Detele records from database
-        $appOrgID = DomainSettings::where('domain_uuid',$domain->domain_uuid)
-        ->where ('domain_setting_category', 'app shell')
-        ->where ('domain_setting_subcategory', 'org_id')
-        ->first();
+            // Retrieve all connections for the organization
+            $connections = $this->ringotelApiService->getConnections($org_id);
 
-        Log::info($appOrgID);
-
-        $appOrgID->delete();
-
-
-        return response()->json([
-            'org_details' => $org_id,
-            'connections' => $response,
-            // 'organization_domain' => $request->organization_domain,
-            // 'organization_region' => $request->organization_region,
-            // 'org_id' => $response['result']['id'],
-            'message' => 'Success',
-        ]);
-
-
-
-
-        // !!!!! TODO: The code below is unreachable, do we need it ? !!!!!
-        // If successful store Org ID and return success status
-        if (isset($response['result'])){
-
-            // Add recieved OrgID to the request and store it in database
-            $request->merge(['org_id' => $response['result']['id']]);
-
-            if (!appsStoreOrganizationDetails($request)){
-                return response()->json([
-                    'organization_name' => $request->organization_name,
-                    'organization_domain' => $request->organization_domain,
-                    'organization_region' => $request->organization_region,
-                    'org_id' => $response['result']['id'],
-                    'message' => 'Organization was created succesfully, but unable to store Org ID in database',
+            // Delete each connection
+            foreach ($connections as $connection) {
+                $this->ringotelApiService->deleteConnection([
+                    'conn_id' => $connection->id,
+                    'org_id' => $org_id,
                 ]);
             }
 
+            // Delete the organization
+            $deleteResponse = $this->ringotelApiService->deleteOrganization($org_id);
+
+            if ($deleteResponse) {
+                return response()->json([
+                    'messages' => ['success' => ['Organization and its connections were successfully deleted.']]
+                ], 200); // 200 OK
+            }
+
             return response()->json([
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'org_id' => $response['result']['id'],
-                'message' => 'Organization created succesfully',
-            ]);
-        // Otherwise return failed status
-        } elseif (isset($response['error'])) {
+                'success' => false,
+                'errors' => ['server' => ['Failed to delete the organization.']]
+            ], 500); // 500 Internal Server Error
+
+        } catch (\Exception $e) {
             return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => $response['error']['message']]);
-        } else {
-            return response()->json([
-                'error' => 401,
-                'organization_name' => $request->organization_name,
-                'organization_domain' => $request->organization_domain,
-                'organization_region' => $request->organization_region,
-                'message' => 'Unknown error']);
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error
         }
     }
 
 
-
-
-
     /**
-     * Submit request to update organization to Ringotel
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function updateOrganization(Request $request)
-    {
-
-    }
-
-
-
-    /**
-     * Submit request to create connection to Ringotel
+     * Submit API request to Ringotel to create a new connection
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createConnection (Request $request)
+    public function createConnection(StoreRingotelConnectionRequest $request, RingotelApiService $ringotelApiService)
     {
-        // Build data array
-        $data = array(
-            'method' => 'createBranch',
-            'params' => array(
-                "orgid" => $request->org_id,
-                'name' => $request->connection_name,
-                'address' => $request->connection_domain . ":" . $request->connection_port,
-                'provision' => array(
-                    'protocol' => $request->connection_protocol,
-                    'noverify' => true,
-                    'multitenant' => true,
-                    'nosrtp' => true,
-                    'norec' => true,
-                    'internal' => false,
-                    'sms' => false,
-                    'maxregs' => 4,
-                    'private' => false,
-                    'dtmfmode' => 'rfc2833',
-                    'regexpires' => $request->connection_ttl,
-                    'proxy' => array(
-                        'paddr' => $request->connection_proxy_address,
-                        'pauth' => '',
-                        'ppass' => '',
-                    ),
-                    'httpsproxy' => array(
-                        'address' => '',
-                    ),
-                    'certificate' => '',
-                    'tones' => array(
-                        'Ringback2' => 'Ringback 1',
-                        'Progress' => 'Progress 1',
-                        'Ringback' => 'United States',
-                    ),
-                    'features' => 'pbx',
-                    "speeddial" => array(
-                        [
-                            'number' => '*97',
-                            'title' => 'Voicemail'
-                        ]
-                    ),
-                    'vmail' => [
-                        'ext' => '*97',
-                        'name' => 'Voicemail',
-                        'mess' => 'You have a new message',
-                        'off' => '',
-                        'on' => ''
-                    ],
-                    'dnd' => [
-                        'off' => '*79',
-                        'on' => '*78'
-                    ],
-                    'forwarding' => [
-                        'cfuon' => '',
-                        'cfboff' => '',
-                        'cfon' => '*72',
-                        'cfbon' => '',
-                        'cfuoff' => '',
-                        'cfoff' => '*73'
-                    ],
 
-                )
-            )
-        );
+        $this->ringotelApiService = $ringotelApiService;
 
+        $inputs = $request->validated();
 
-        // Add codecs
-        if (isset($request->connection_codec_u711)){
-            $codec = array(
-                    'codec' => 'G.711 Ulaw',
-                    'frame' => 20
-                );
-            $codecs[]=$codec;
-        }
+        try {
+            // Send API request to create connection
+            $connection = $this->ringotelApiService->createConnection($inputs);
 
-
-        if (isset($request->connection_codec_a711)){
-            $codec = array(
-                    'codec' => 'G.711 Alaw',
-                    'frame' => 20
-                );
-            $codecs[]=$codec;
-        }
-
-        if (isset($request->connection_codec_729)){
-            $codec = array(
-                    'codec' => 'G.729',
-                    'frame' => 20
-                );
-            $codecs[]=$codec;
-        }
-
-        if (isset($request->connection_codec_opus)){
-            $codec = array(
-                    'codec' => 'OPUS',
-                    'frame' => 20
-                );
-            $codecs[]=$codec;
-        }
-
-        $data['params']['provision']['codecs'] = $codecs;
-
-        // Send request to create Connecion to Ringotel
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(5)
-            ->withBody(json_encode($data),'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create connection']);
-             })
-             ->json();
-
-
-        // If successful return success status
-        if (isset($response['result'])){
-            // Add recieved OrgID to the request and store it in database
-            $request->merge(['conn_id' => $response['result']['id']]);
-
-            if (!appsStoreConnectionDetails($request)){
-                return response()->json([
-                    'connection_name' => $request->connection_name,
-                    'connection_domain' => $request->connection_domain,
-                    'org_id' => $request->org_id,
-                    'conn_id' => $response['result']['id'],
-                    'message' => 'Connection was created succesfully, but unable to store Conn ID in database',
-                ]);
-            }
-
+            // Return a JSON response indicating success
             return response()->json([
-                'connection_name' => $request->connection_name,
-                'connection_domain' => $request->connection_domain,
-                'org_id' => $request->org_id,
-                'conn_id' => $response['result']['id'],
-                'message' => 'Connection created succesfully',
-            ]);
-        // Otherwise return failed status
-        } elseif (isset($response['error'])) {
+                'org_id' => $inputs['org_id'],
+                'conn_id' => $connection['id'],
+                'connection_name' => $inputs['connection_name'],
+                'domain' => $inputs['domain'] . ":" . $inputs['port'],
+                'messages' => ['success' => ['Connection created successfully']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
             return response()->json([
-                'error' => 401,
-                'connection_name' => $request->connection_name,
-                'connection_domain' => $request->connection_domain,
-                'org_id' => $request->org_id,
-                'conn_id' => $response['result']['id'],
-                'message' => $response['error']['message']]);
-        } else {
-            return response()->json([
-                'error' => 401,
-                'connection_name' => $request->connection_name,
-                'connection_domain' => $request->connection_domain,
-                'org_id' => $request->org_id,
-                'conn_id' => $response['result']['id'],
-                'message' => 'Unknown error']);
+                'success' => false,
+                'errors' => ['server' => ['Unable to add connection. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 
 
     /**
-     * Submit request to update connection to Ringotel
+     * Submit API request to Ringotel to delete specified connection
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroyConnection(RingotelApiService $ringotelApiService)
+    {
+
+        $this->ringotelApiService = $ringotelApiService;
+
+        try {
+            // Send API request to delete connection
+            $connection = $this->ringotelApiService->deleteConnection(request()->all());
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Connection deleted successfully']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to delete connection. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Submit API request to update connection
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateConnection(Request $request)
+    public function updateConnection(UpdateRingotelConnectionRequest $request, RingotelApiService $ringotelApiService)
     {
+        $this->ringotelApiService = $ringotelApiService;
 
+        $inputs = $request->validated();
+
+        try {
+            // Send API request to create connection
+            $connection = $this->ringotelApiService->updateConnection($inputs);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Connection updated successfully']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update connection. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
     }
-
 
     /**
      * Submit getOrganizations request to Ringotel API
@@ -454,31 +641,25 @@ class AppsController extends Controller
      */
     public function getOrganizations(RingotelApiService $ringotelApiService)
     {
-
         $this->ringotelApiService = $ringotelApiService;
+
         try {
             $organizations = $this->ringotelApiService->getOrganizations();
-            $orgs = $this->ringotelApiService->matchLocalDomains($organizations);
-            $domains = Session::get('domains');
-            // logger($organizations);
+            $formattedOrganizations = collect($organizations)->map(function ($org) {
+                return [
+                    'name' => "{$org->name} (id: {$org->id})",
+                    'value' => $org->id,
+                ];
+            });
+            return $formattedOrganizations;
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'error' => [
                     'message' => $e->getMessage(),
                 ],
-            ], 400);
+            ], 404);
         }
-
-
-        return response()->json([
-            'cloud_orgs' => $orgs,
-            'local_orgs' => $domains,
-            'status' => 200,
-            'success' => [
-                'message' => 'The request processed successfully'
-            ]
-        ]);
     }
 
 
@@ -493,8 +674,6 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
         try {
             $users = $this->ringotelApiService->getUsersByOrgId($orgId);
-
-            logger($users);
         } catch (\Exception $e) {
             logger($e->getMessage());
             return response()->json([
@@ -516,148 +695,114 @@ class AppsController extends Controller
 
 
     /**
-     * Return Ringotel app user settings
+     * Connect existing Ringotel organization to selected domain
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function syncOrganizations(Request $request)
+    public function pairOrganization(PairRingotelOrganizationRequest $request)
     {
+        // Extract data from the request
+        $orgId = $request->input('org_id');
+        $domainUuid = $request->input('domain_uuid');
 
-        $app_array = $request->get('app_array');
+        try {
+            // Store or update the domain setting record
+            $domainSettings = DomainSettings::updateOrCreate(
+                [
+                    'domain_uuid' => $domainUuid,
+                    'domain_setting_category' => 'app shell',
+                    'domain_setting_subcategory' => 'org_id',
+                ],
+                [
+                    'domain_setting_name' => 'text',
+                    'domain_setting_value' => $orgId,
+                    'domain_setting_enabled' => true,
+                ]
+            );
 
-        foreach ($app_array as $id=>$domain_uuid) {
-             // Store new record
-            $domainSettings = DomainSettings::create([
-                'domain_uuid' => $domain_uuid,
-                'domain_setting_category' => 'app shell',
-                'domain_setting_subcategory' => 'org_id',
-                'domain_setting_name' => 'text',
-                'domain_setting_value' => $id,
-                'domain_setting_enabled' => true,
-            ]);
-
-            $saved = $domainSettings->save();
-            if (!$saved){
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error saving some records',
-                    ],
-                ]);
+            // Check if the record was saved successfully
+            if (!$domainSettings) {
+                throw new \Exception('Unable to connect this organization');
             }
+
+            return response()->json([
+                'messages' => ['success' => ['Connection updated successfully']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
         }
-
-        return response()->json([
-            'status' => 200,
-            'success' => [
-                'message' => 'All organizations were successfully synced'
-            ]
-        ]);
-
     }
+
 
     /**
      * Sync Ringotel app users from the cloud
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function syncUsers(Request $request, Domain $domain)
+    public function syncUsers(RingotelApiService $ringotelApiService)
     {
+        logger(request()->all());
+        $this->ringotelApiService = $ringotelApiService;
 
-        // Get Org ID from database
-        $org_id = appsGetOrganizationDetails($domain->domain_uuid);
+        try {
+            // Get all connections
+            $connections = $this->ringotelApiService->getConnections(request('org_id'));
+            $org_id = request('org_id');
+            $domain_uuid = request('domain_uuid');
 
-        // Delete any prior info from database
-        $deleted = MobileAppUsers::where('org_id', $org_id)->delete();
+            // Retrieve all extensions in a single query
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)->get();
+            $extensionMap = $extensions->keyBy('extension'); // Map extensions by 'extension' for quick lookups
 
-        //Get all connections
-        $response = appsGetConnections($org_id);
+            $mobileAppUsersData = []; // Array to hold bulk insert data
 
-        if (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-                'domain' => $domain->domain_name,
-            ]);
-        }
+            foreach ($connections as $connection) {
+                // Get all users for this connection
+                $users = $this->ringotelApiService->getUsers($org_id, $connection->id);
 
-        // If successful continue
-        if (isset($response['result'])){
-            $connections = $response['result'];
-            $app_domain = $response['result'][0]['domain'];
+                foreach ($users as $user) {
+                    // Check if the extension exists in the map
+                    $extension = $extensionMap->get($user->extension);
 
-        // Otherwise return failed status
-        } elseif (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ]);
-        } else {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => 'Unknown error',
-                ],
-            ]);
-        }
-
-        foreach ($connections as $connection){
-            //Get all users for this connection
-            $response = appsGetUsers($org_id, $connection['id']);
-
-            // If successful continue
-            if (isset($response['result'])){
-                $users = $response['result'];
-
-            // Otherwise return failed status
-            } elseif (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'Unknown error',
-                    ],
-                ]);
-            }
-
-            foreach ($users as $user){
-                // Get each user's extension
-                $extension = Extensions::where('extension', $user['extension'])
-                    ->where ('domain_uuid', $domain->domain_uuid)
-                    ->first();
-                if ($extension) {
-                    // Save returned user info in database
-                    $appUser = new MobileAppUsers();
-                    $appUser->extension_uuid = $extension->extension_uuid;
-                    $appUser->domain_uuid = $extension->domain_uuid;
-                    $appUser->org_id = $org_id;
-                    $appUser->conn_id = $user['branchid'];
-                    $appUser->user_id = $user['id'];
-                    $appUser->status = $user['status'];
-
-                    $appUser->save();
+                    if ($extension) {
+                        // Prepare data for bulk insert
+                        $mobileAppUsersData[] = [
+                            'extension_uuid' => $extension->extension_uuid,
+                            'domain_uuid' => $extension->domain_uuid,
+                            'org_id' => $org_id,
+                            'conn_id' => $connection->id,
+                            'user_id' => $user->id,
+                            'status' => $user->status,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
                 }
             }
 
+            // Perform bulk insert for MobileAppUsers
+            if (!empty($mobileAppUsersData)) {
+                MobileAppUsers::insert($mobileAppUsersData);
+            }
+
+            return response()->json([
+                'messages' => ['success' => ['User are successfully synced']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
         }
-
-        return response()->json([
-            'status' => 200,
-            'success' => [
-                'message' => 'Apps have been synced successfully'
-            ]
-        ]);
-
     }
 
     /**
@@ -682,7 +827,7 @@ class AppsController extends Controller
         $org_id = appsGetOrganizationDetails($extension->domain_uuid);
 
         // If Organization isn't set up return
-        if(!isset($org_id)) {
+        if (!isset($org_id)) {
             return response()->json([
                 'status' => 401,
                 'error' => [
@@ -695,11 +840,11 @@ class AppsController extends Controller
         $response = appsGetConnections($org_id);
 
         // If successful continue
-        if (isset($response['result'])){
+        if (isset($response['result'])) {
             $connections = $response['result'];
             $app_domain = $response['result'][0]['domain'];
 
-        // Otherwise return failed status
+            // Otherwise return failed status
         } elseif (isset($response['error'])) {
             return response()->json([
                 'status' => 401,
@@ -778,20 +923,21 @@ class AppsController extends Controller
 
         // If success and user is activated send user email with credentials
         if ($response['result']['status'] == 1) {
-            if($hidePassInEmail == 'true' && $request->activate == 'on') {
+            if ($hidePassInEmail == 'true' && $request->activate == 'on') {
                 // Include get-password link and remove password value
                 $passwordToken = Str::random(40);
                 MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                 $appCredentials = new MobileAppPasswordResetLinks();
                 $appCredentials->token = $passwordToken;
                 $appCredentials->extension_uuid = $extension->extension_uuid;
+                $appCredentials->domain = $response['result']['domain'];
                 $appCredentials->save();
 
                 $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
                 $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
                 $response['result']['password_url'] = $includePasswordUrl;
             }
-            if(isset($extension->voicemail->voicemail_mail_to)) {
+            if (isset($extension->voicemail->voicemail_mail_to)) {
                 SendAppCredentials::dispatch($response['result'])->onQueue('emails');
             }
         }
@@ -811,11 +957,11 @@ class AppsController extends Controller
         // Log::info($response);
 
         $qrcode = "";
-        if($hidePassInEmail == 'false') {
-            if ($request->activate == 'on'){
+        if ($hidePassInEmail == 'false') {
+            if ($request->activate == 'on') {
                 // Generate QR code
                 $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-                    '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+                    '","username":"' . $response['result']['username'] . '","password":"' .  $response['result']['password'] . '"}');
             }
         } else {
             $response['result']['password'] = null;
@@ -823,7 +969,7 @@ class AppsController extends Controller
 
         return response()->json([
             'user' => $response['result'],
-            'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
+            'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
             'status' => 'success',
             'message' => 'The user has been successfully created'
         ]);
@@ -910,13 +1056,14 @@ class AppsController extends Controller
         }
 
         // If success and user is activated send user email with credentials
-        if($hidePassInEmail == 'true') {
+        if ($hidePassInEmail == 'true') {
             // Include get-password link and remove password value
             $passwordToken = Str::random(40);
             MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
             $appCredentials = new MobileAppPasswordResetLinks();
             $appCredentials->token = $passwordToken;
             $appCredentials->extension_uuid = $extension->extension_uuid;
+            $appCredentials->domain = $response['result']['domain'];
             $appCredentials->save();
             $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
             $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
@@ -927,17 +1074,17 @@ class AppsController extends Controller
         }
 
         $qrcode = "";
-        if($hidePassInEmail == 'false') {
+        if ($hidePassInEmail == 'false') {
             // Generate QR code
             $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-                '","username":"' .$response['result']['username'] . '","password":"'.  $response['result']['password'] . '"}');
+                '","username":"' . $response['result']['username'] . '","password":"' .  $response['result']['password'] . '"}');
         } else {
             $response['result']['password'] = null;
         }
 
         return response()->json([
             'user' => $response['result'],
-            'qrcode' => ($qrcode!= "") ? base64_encode($qrcode) : null,
+            'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
             'status' => 200,
             'success' => [
                 'message' => 'The mobile app password was successfully reset'
@@ -970,7 +1117,7 @@ class AppsController extends Controller
 
         $appUser = $extension->mobile_app;
 
-        if ($mobile_app['status']==1) {
+        if ($mobile_app['status'] == 1) {
             // Send request to update user settings
             $response = appsUpdateUser($mobile_app);
 
@@ -997,8 +1144,7 @@ class AppsController extends Controller
                 $appUser->status = $mobile_app['status'];
                 $appUser->save();
             }
-
-        } else if ($mobile_app['status']==-1) {
+        } else if ($mobile_app['status'] == -1) {
 
             // Send request to delete user first and then recreate it
             $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
@@ -1078,7 +1224,6 @@ class AppsController extends Controller
             $appUser->user_id = $response['result']['id'];
             $appUser->status = $response['result']['status'];
             $appUser->save();
-
         }
 
 
@@ -1093,16 +1238,7 @@ class AppsController extends Controller
     }
 
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+
 
     /**
      * Display the specified resource.
@@ -1149,12 +1285,105 @@ class AppsController extends Controller
         //
     }
 
-    public function emailUser (){
+    public function emailUser()
+    {
 
         //Mail::to("info@nemerald.com")->send(new AppCredentialsGenerated());
         SendAppCredentials::dispatch()->onQueue('emails');
 
         //Log::info('Dispatched email ');
         return 'Dispatched email ';
+    }
+
+    /**
+     * Retrieve the Ringotel API token from DefaultSettings.
+     *
+     * @param UpdateRingotelApiTokenRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getToken()
+    {
+        try {
+            // Retrieve the API token from DefaultSettings
+            $token = DefaultSettings::where([
+                ['default_setting_category', '=', 'mobile_apps'],
+                ['default_setting_subcategory', '=', 'ringotel_api_token'],
+                ['default_setting_enabled', '=', 'true'],
+            ])->value('default_setting_value');
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+            ], 200); // 200 OK with the token value
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    /**
+     * Update or create the Ringotel API token in DefaultSettings.
+     *
+     * @param UpdateRingotelApiTokenRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateToken(UpdateRingotelApiTokenRequest $request)
+    {
+        $inputs = $request->validated();
+
+        try {
+            // Update or create the Ringotel API token in DefaultSettings
+            DefaultSettings::updateOrCreate(
+                [
+                    'default_setting_category' => 'mobile_apps',
+                    'default_setting_subcategory' => 'ringotel_api_token',
+                ],
+                [
+                    'default_setting_name' => 'text',
+                    'default_setting_value' => $inputs['token'], // Use the validated token input
+                    'default_setting_enabled' => 'true', // Ensure the setting is enabled
+                ]
+            );
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['API Token was successfully updated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update API Token. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function getRegions()
+    {
+        $cacheKey = 'ringotel_regions';
+        $cacheDuration = now()->addDay(); // Cache for 1 day
+
+        $regions = Cache::remember($cacheKey, $cacheDuration, function () {
+            $regions = $this->ringotelApiService->getRegions();
+
+            logger('getting from api');
+            return $regions->map(function ($region) {
+                return [
+                    'value' => $region->id,
+                    'name' => $region->name,
+                ];
+            })
+                ->sortBy('value') // Sort the collection by the 'value' field
+                ->values() // Reset the keys after sorting
+                ->toArray();
+        });
+
+        return $regions;
     }
 }

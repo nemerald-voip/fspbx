@@ -114,6 +114,15 @@ else
     exit 1
 fi
 
+# Include the install_cron_jobs.sh script
+sh /var/www/fspbx/install/install_cron_jobs.sh 
+if [ $? -eq 0 ]; then
+    print_success "Cron bob installation script executed successfully."
+else
+    print_error "Error occurred while executing cron job installation script."
+    exit 1
+fi
+
 # Include the add_web_server_to_sudoers.sh script
 sh /var/www/fspbx/install/add_web_server_to_sudoers.sh 
 if [ $? -eq 0 ]; then
@@ -518,6 +527,14 @@ else
     exit 1
 fi
 
+# Set /var/www/fspbx as a safe directory for Git
+sudo git config --global --add safe.directory /var/www/fspbx
+if [ $? -eq 0 ]; then
+    print_success "/var/www/fspbx added to Git's safe.directory list."
+else
+    print_error "Error occurred while adding /var/www/fspbx to Git's safe.directory list."
+    exit 1
+fi
 
 # Update settings for email_queue service
 sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service

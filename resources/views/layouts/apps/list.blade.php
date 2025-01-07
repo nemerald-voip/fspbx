@@ -204,13 +204,17 @@
                                     <div class="col-5">
                                         <div class="mb-3">
                                             <label for="organization_region" class="form-label">Region</label>
-                                            <select class="form-select mb-3" id="organization_region"
-                                                name="organization_region">
-                                                <option value="1">US East</option>
-                                                <option value="2" selected>US West</option>
-                                                <option value="3">Europe (Frankfurt)</option>
-                                                <option value="4">Asia Pacific (Singapore)</option>
-                                                <option value="5">Europe (London)</option>
+                                            <select class="form-select mb-3" id="organization_region" name="organization_region">
+                                                <option value="1" {{ $default_region == '1' ? 'selected' : '' }}>US East</option>
+                                                <option value="2" {{ $default_region == '2' ? 'selected' : '' }}>US West</option>
+                                                <option value="3" {{ $default_region == '3' ? 'selected' : '' }}>Europe (Frankfurt)</option>
+                                                <option value="4" {{ $default_region == '4' ? 'selected' : '' }}>Asia Pacific (Singapore)</option>
+                                                <option value="5" {{ $default_region == '5' ? 'selected' : '' }}>Europe (London)</option>
+                                                <option value="6" {{ $default_region == '6' ? 'selected' : '' }}>India</option>
+                                                <option value="7" {{ $default_region == '7' ? 'selected' : '' }}>Australia</option>
+                                                <option value="8" {{ $default_region == '8' ? 'selected' : '' }}>Europe (Dublin)</option>
+                                                <option value="9" {{ $default_region == '9' ? 'selected' : '' }}>Canada (Central)</option>
+                                                <option value="10" {{ $default_region == '10' ? 'selected' : '' }}>South Africa</option>
                                             </select>
 
                                         </div>
@@ -227,7 +231,7 @@
                                                 <input type="checkbox" class="form-check-input" id="dont_send_user_credentials" name="dont_send_user_credentials" value="true" />
                                                 <label class="form-check-label" for="dont_send_user_credentials">Don't send user credentials in a plain text</label>
                                             </div>
-                                            <span class="help-block"><small>If this option is enabled, users within this organization will need to follow a one-time link to retrieve their app password.</small></span>
+                                            <span class="help-block"><small>If this option is enabled, users in this organization must use a one-time link to access their app password.</small></span>
                                         </div>
                                     </div>
                                 </div>

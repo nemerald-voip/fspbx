@@ -30,4 +30,9 @@ class RingotelOrganizationDTO
     {
         return new self($data);
     }
+
+    public function __toString()
+    {
+        return json_encode(get_object_vars($this));
+    }
 }

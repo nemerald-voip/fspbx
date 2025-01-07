@@ -44,7 +44,7 @@
                 </TableColumnHeader>
 
                 <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <!-- <TableColumnHeader header="Transcription" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
+                <TableColumnHeader header="Transcription" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -92,9 +92,9 @@
                         :text="row.created_epoch_formatted" />
 
 
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" 
-                        :text="row.transcription"/> -->
-
+                    <TableField class="px-4 py-2 text-sm text-gray-500">
+                        <div>{{ row.message_transcription }}</div>
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
