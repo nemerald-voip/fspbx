@@ -1372,7 +1372,6 @@ class AppsController extends Controller
         $regions = Cache::remember($cacheKey, $cacheDuration, function () {
             $regions = $this->ringotelApiService->getRegions();
 
-            logger('getting from api');
             return $regions->map(function ($region) {
                 return [
                     'value' => $region->id,
