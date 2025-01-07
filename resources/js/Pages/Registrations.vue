@@ -201,9 +201,6 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import Badge from "./components/general/Badge.vue";
@@ -219,19 +216,14 @@ import Notification from "./components/notifications/Notification.vue";
 
 const page = usePage()
 const loading = ref(false)
-const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const confirmationModalDestroyPath = ref(null);
 const confirmAction = ref(null);
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const confirmationActionTrigger = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
 const bulkActionLabel = ref('');
 
 const props = defineProps({
@@ -321,7 +313,6 @@ const executeBulkAction = (action) => {
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
-            // selectedItems.value = response.data.items;
 
             // Convert props.data.data to an array using Object.values()
             const currentPageItems = Object.values(props.data.data);
