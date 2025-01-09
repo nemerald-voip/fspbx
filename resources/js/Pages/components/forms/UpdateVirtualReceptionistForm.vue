@@ -189,7 +189,10 @@
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
                                 <IvrOptions v-model="form.options" :routingTypes="options.routing_types"
-                                    :optionsUrl="options.routes.get_routing_options" @add-key="handleAddKey"/>
+                                    :optionsUrl="options.routes.get_routing_options" @add-key="handleAddKey" 
+                                    @delete-key="handleDeleteKeyRequest"
+                                    @edit-key="handleEditKey" :isDeleting="showKeyDeletingStatus" />
+
                             </div>
 
 
@@ -271,6 +274,15 @@
 
     <UpdateGreetingModal :greeting="selectedGreeting" :show="showUpdateKeyModal" :loading="isGreetingUpdating"
         @confirm="handleGreetingUpdate" @close="showUpdateKeyModal = false" />
+
+    <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showEditKeyModal" :header="'Edit Virtual Receptionist Key'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateVirtualReceptionistKeyForm :options="options" :errors="errors" :selected-key="selectedKey"
+                :is-submitting="submittingKeyUpdate" @submit="handleUpdateKeyRequest" @error="handleKeyFormError"
+                @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal>
 </template>
 
 <script setup>
@@ -298,7 +310,8 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import DialpadIcon from "@icons/DialpadIcon.vue"
 import IvrOptions from "../general/IvrOptions.vue";
-
+import AddEditItemModal from "../modal/AddEditItemModal.vue";
+import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
 
 
 
@@ -320,6 +333,13 @@ const isDownloading = ref(false);
 const showDeleteConfirmation = ref(false);
 const isGreetingUpdating = ref(false);
 const selectedGreeting = ref(null);
+const showKeyDeletingStatus = ref(false);
+const selectedKey = ref(null);
+const showEditKeyModal = ref(false);
+const loadingModal = ref(false);
+const submittingKeyUpdate = ref(false);
+
+
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
@@ -363,7 +383,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -373,6 +393,61 @@ const submitForm = () => {
 const handleDestinationActionsUpdate = (newSelectedItem) => {
     form.destination_actions = newSelectedItem;
 }
+
+
+const handleEditKey = (option) => {
+    emits('clear-errors');
+    // Find the matching key from props.options.ivr.options
+    const matchedKey = props.options.ivr.options.find(
+        (ivr) => ivr.ivr_menu_option_uuid === option.ivr_menu_option_uuid
+    );
+
+    if (matchedKey) {
+        selectedKey.value = matchedKey;
+        showEditKeyModal.value = true;
+    } else {
+        emits('error', { request: "Matching key not found" });
+    }
+}
+
+const handleUpdateKeyRequest = (form) => {
+    submittingKeyUpdate.value = true;
+    emits('clear-errors');
+
+    axios.put(props.options.routes.update_key_route, form)
+        .then((response) => {
+            submittingKeyUpdate.value = false;
+            emits('success', response.data.messages);
+            emits('refresh-data', props.options.model.domain_uuid);
+
+            handleModalClose();
+        }).catch((error) => {
+            submittingKeyUpdate.value = false;
+            emits('error', error); // Emit the event with error
+        });
+
+};
+
+const handleDeleteKeyRequest = (connection) => {
+    showConnectionDeletingStatus.value = true;
+    // emits('clear-errors');
+
+    axios.post(props.options.routes.delete_connection, connection)
+        .then((response) => {
+            showConnectionDeletingStatus.value = false;
+            emits('success', response.data.messages);
+
+            const updatedConnections = connections.value.filter(
+                (conn) => conn.conn_id !== connection.conn_id
+            );
+            connections.value = updatedConnections;
+
+        }).catch((error) => {
+            showConnectionDeletingStatus.value = false;
+            emits('error', error); // Emit the event with error
+        });
+
+};
 
 const handleUpdateGreetingField = (greeting) => {
     form.ivr_menu_greet_long = greeting.value;
@@ -590,6 +665,14 @@ const handleGreetingUpdate = (updatedGreeting) => {
         });
 
 };
+
+const handleModalClose = () => {
+    showEditKeyModal.value = false;
+}
+
+const handleKeyFormError = (error) => {
+    emits('error',error);
+}
 
 
 

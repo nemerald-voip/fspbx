@@ -29,6 +29,9 @@ class CallRoutingOptionsService
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
+        ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
+        ['value' => 'company_directory', 'name' => 'Company Directory'],
+        ['value' => 'hangup', 'name' => 'Hang up'],
         // ['value' => 'other', 'name' => 'Other']
     ];
 
@@ -233,25 +236,37 @@ class CallRoutingOptionsService
             // Split the string by spaces to extract details
             $parts = explode(' ', $ivrAction);
 
-            if (count($parts) < 3) {
-                throw new \InvalidArgumentException("Invalid IVR action format");
+            if (count($parts) < 3 && $ivrAction != "hangup") {
+                throw new \Exception("Invalid IVR action format");
             }
 
             // Extract relevant data
             $actionType = $parts[0]; // e.g., "transfer"
-            $destination = $parts[1]; // e.g., "201"
-            $context = $parts[2]; // e.g., "XML"
-            $domain = $parts[3] ?? null; // e.g., "api.us.nemerald.net"
+            if ($actionType != 'hangup') {
+                $destination = $parts[1]; // e.g., "201"
+                $context = $parts[2]; // e.g., "XML"
+                $domain = $parts[3] ?? null; // e.g., "api.us.nemerald.net"
+            }
 
             // Reverse engineer based on the action type
             switch ($actionType) {
                 case 'transfer':
                     return $this->reverseEngineerTransferAction("$destination $context $domain");
+                    break;
+                case 'lua':
+                    return $this->extractRecordingUuidFromData("$destination $context $domain");
+                    break;
+
+                case 'hangup':
+                    return array(
+                        'type' => 'hangup',
+                    );
+                    break;
 
                     // Add more cases for other IVR actions as needed
 
                 default:
-                    throw new \InvalidArgumentException("Unsupported IVR action type: $actionType");
+                    throw new \Exception("Unsupported IVR action type: $actionType");
             }
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -273,7 +288,10 @@ class CallRoutingOptionsService
                 ->orWhere('dialplan_number', '=', '1' . $extension);
         })
             ->where('dialplan_enabled', 'true')
-            ->where('domain_uuid', session('domain_uuid'))
+            ->where(function ($query) {
+                $query->where('domain_uuid', session('domain_uuid'))
+                    ->orWhereNull('domain_uuid');
+            })
             ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
             ->first();
 
@@ -335,6 +353,8 @@ class CallRoutingOptionsService
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
+            'check_voicemail' => '/app.lua voicemail/',
+            'company_directory' => '/directory.lua/',
         ];
 
         foreach ($patterns as $type => $pattern) {
@@ -346,6 +366,26 @@ class CallRoutingOptionsService
                         'extension' => $extension,
                         'option' => $dialplan->dialplan_uuid,
                         'name' => $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'check_voicemail') {
+                    // For time conditions, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => null,
+                        // 'name' => $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'company_directory') {
+                    // For time conditions, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => null,
+                        // 'name' => $dialplan->dialplan_name,
                     ];
                 }
 
@@ -396,6 +436,7 @@ class CallRoutingOptionsService
                 'type' => 'recordings',
                 'extension' => $fileName,
                 'option' => $recording->recording_uuid,
+                'name' => $recording->recording_name,
             ];
         } else {
             return [];
@@ -409,6 +450,10 @@ class CallRoutingOptionsService
             'voicemails' => 'Voicemail',
             'ring_groups' => 'Ring Group',
             'virtual_receptinists' => 'Virtual Receptionist',
+            'recordings' => 'Play recording',
+            'company_directory' => 'Company Direcotry',
+            'check_voicemail' => 'Check Voicemail',
+            'hangup' => 'Hang up',
         ];
 
         return $typeMapping[$type] ?? 'Unknown';

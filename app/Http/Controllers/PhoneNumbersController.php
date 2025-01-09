@@ -170,13 +170,6 @@ class PhoneNumbersController extends Controller
                 'routing_types' => $routingTypes,
                 'faxes' => $faxes,
                 'domains' => $domains,
-                // 'voicemail_copies' => $voicemailCopies,
-                // 'greetings' => $greetingsArray,
-                // 'voices' => $openAiVoices,
-                // 'speeds' => $openAiSpeeds,
-                // 'phone_call_instructions' => $phoneCallInstructions,
-                // 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
-                // 'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);

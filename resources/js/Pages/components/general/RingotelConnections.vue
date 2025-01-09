@@ -101,8 +101,6 @@ import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
     modelValue: [Object, null],
-    routingTypes: [Object, null],
-    optionsUrl: String,
     isDeleting: Boolean,
 });
 

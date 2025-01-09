@@ -44,17 +44,18 @@ class IvrMenuOptions extends Model
     {
         static::retrieved(function ($model) {
             if (!empty($model->ivr_menu_option_param)) {
-
                 $callRoutingOptionsService = new CallRoutingOptionsService();
 
                 $optionDetails = $callRoutingOptionsService->reverseEngineerIVROption($model->ivr_menu_option_param);
 
-                $model->key_uuid = $optionDetails['option'] ?? null;
-                $model->key_type = $optionDetails['type'] ?? null;
-                $model->key_type_display = $callRoutingOptionsService->getFriendlyTypeName($optionDetails['type']);
-                $model->key_name = $optionDetails['name'] ?? null;
-
-
+                if ($optionDetails) {
+                    $model->key_uuid = $optionDetails['option'] ?? null;
+                    $model->key_type = $optionDetails['type'] ?? null;
+                    $model->key_type_display = $optionDetails['type'] !== null
+                        ? $callRoutingOptionsService->getFriendlyTypeName($optionDetails['type'])
+                        : null;
+                    $model->key_name = $optionDetails['name'] ?? null;
+                }
             }
 
             return $model;

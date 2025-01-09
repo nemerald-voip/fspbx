@@ -1,0 +1,167 @@
+<template>
+    <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
+
+
+            <div class="grid grid-cols-1 gap-6 ">
+
+                <Toggle label="Status" v-model="form.status" />
+
+                <div>
+                    <LabelInputRequired :target="'key'" :label="'Key'" />
+                    <div class="mt-2">
+                        <InputField v-model="form.key" type="text" name="key"
+                            placeholder="Enter one or more digits (e.g., 1, 12, 123)" />
+                    </div>
+                    <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
+                        {{ errors.action[0] }}
+                    </div>
+                </div>
+
+                <div>
+                    <LabelInputRequired :target="'action'" :label="'Action'" />
+                    <div class="mt-2">
+                        <ComboBox :options="options.routing_types" :selectedItem="form.action" :search="true"
+                            placeholder="Choose Action" @update:model-value="(value) => handleUpdateActionField(value)" />
+                    </div>
+                    <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
+                        {{ errors.action[0] }}
+                    </div>
+                </div>
+
+                <div>
+                    <LabelInputRequired :target="'target'" :label="'Target'" />
+                    <div class="mt-2 relative">
+                        <ComboBox :options="targets" :selectedItem="form.target" :search="true" :key="targets"
+                            placeholder="Choose Target" @update:model-value="(value) => handleUpdateTargetField(value)" />
+
+                        <!-- Spinner Overlay -->
+                        <div v-if="loading"
+                            class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
+                            <Spinner class="w-10 h-10 text-gray-500" :show="loading" />
+                        </div>
+                    </div>
+                    <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
+                        {{ errors.action[0] }}
+                    </div>
+                </div>
+
+                <div>
+                    <LabelInputOptional :target="'description'" :label="'Description'" />
+                    <div class="mt-2">
+                        <InputField v-model="form.description" type="text" name="description"
+                            placeholder="Enter description" />
+                    </div>
+                </div>
+
+                <div class="border-t mt-4 sm:mt-4 ">
+                    <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                        <button @click.prevent="submitForm"
+                            class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                            ref="saveButtonRef" :disabled="isSubmitting">
+                            <Spinner :show="isSubmitting" />
+                            Save
+                        </button>
+                        <button type="button"
+                            class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                            @click="emits('cancel')" ref="cancelButtonRef">Cancel
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+    </div>
+</template>
+
+<script setup>
+import { reactive, ref, onMounted } from "vue";
+import { usePage } from '@inertiajs/vue3';
+
+
+import ComboBox from "../general/ComboBox.vue";
+import InputField from "../general/InputField.vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
+import LabelInputRequired from "../general/LabelInputRequired.vue";
+import Spinner from "../general/Spinner.vue";
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import Toggle from "@generalComponents/Toggle.vue";
+import SettingsApplications from "@icons/SettingsApplications.vue"
+
+
+const props = defineProps({
+    selectedKey: Object,
+    options: Object,
+    isSubmitting: Boolean,
+    errors: Object,
+});
+
+const page = usePage();
+const targets = ref();
+const loading = ref(false);
+
+const form = reactive({
+    option_uuid: props.selectedKey?.ivr_menu_option_uuid ?? null,
+    menu_uuid: props.selectedKey?.ivr_menu_uuid ?? null,
+    status: props.selectedKey?.ivr_menu_option_enabled === true,
+    key: props.selectedKey?.ivr_menu_option_digits ?? null,
+    action: props.selectedKey?.key_type ?? null,
+    target: props.selectedKey?.key_uuid ?? null,
+    description: props.selectedKey?.ivr_menu_option_description ?? null,
+    _token: page.props.csrf_token,
+});
+
+
+const emits = defineEmits(['submit', 'cancel', 'error']);
+
+
+// Initialize activeTab with the currently active tab from props
+// const activeTab = ref(props.options.conn_navigation.find(item => item.slug)?.slug || props.options.conn_navigation[0].slug);
+
+onMounted(() => {
+    if (props.selectedKey?.key_type) {
+        fetchRoutingTypeOptions(props.selectedKey.key_type); // Fetch options if `selectedKey` has a value
+    }
+});
+
+const submitForm = () => {
+    console.log(form);
+    emits('submit', form); // Emit the event with the form data
+}
+
+const handleUpdateActionField = (selected) => {
+    form.action = selected.value;
+    fetchRoutingTypeOptions(selected.value); // Fetch options when action field updates
+}
+
+const handleUpdateTargetField = (selected) => {
+    form.target = selected.value;
+}
+
+function fetchRoutingTypeOptions(newValue) {
+    loading.value = true; // Show spinner
+    axios.post(props.options.routes.get_routing_options, { 'category': newValue })
+        .then((response) => {
+            targets.value = response.data.options; // Assign the returned options to `targets`
+        }).catch((error) => {
+            emits('error', error);
+        })
+        .finally(() => {
+            loading.value = false; // Hide spinner after fetch completes
+        });
+}
+
+
+const iconComponents = {
+    'Cog6ToothIcon': Cog6ToothIcon,
+    'SettingsApplications': SettingsApplications,
+    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+};
+
+const setActiveTab = (tabSlug) => {
+    activeTab.value = tabSlug;
+};
+
+
+
+</script>

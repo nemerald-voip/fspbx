@@ -13,9 +13,14 @@
                                     Key</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Action
                                 </th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Ext./Number
+                                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+                                    Ext./Number
                                 </th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Desc
+                                <th scope="col"
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
+                                    Desc
+                                </th>
+                                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">Status
                                 </th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 lg:pr-8">
                                     <span class="sr-only">Edit</span>
@@ -25,12 +30,23 @@
                         <tbody class="divide-y divide-gray-200">
                             <tr v-for="(option, index) in keys" :key="index">
                                 <td class=" py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
-                                    {{ keys[index].ivr_menu_option_digits }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500">{{ keys[index].key_type_display }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500">{{ keys[index].key_name }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500">{{ keys[index].ivr_menu_option_description }}</td>
+                                    {{ option.ivr_menu_option_digits }}</td>
                                 <td class="px-3 py-4 text-sm text-gray-500">
-                                    <Toggle label="Status" v-model="keys[index].ivr_menu_option_enabled" />
+                                    {{ option.key_type_display }}
+                                    <dl class="font-normal md:hidden">
+                                        <dd class="mt-1 truncate text-gray-700">{{ option.key_name }}</dd>
+                                        <dd class="mt-1 truncate text-gray-500 md:hidden">{{ option.ivr_menu_option_description }}</dd>
+                                        <dd class="mt-1 md:hidden">
+                                            <Toggle v-model="option.ivr_menu_option_enabled" disabled/>
+                                        </dd>
+
+                                    </dl>
+                                </td>
+                                <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{{ option.key_name }}</td>
+                                <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{
+                                    option.ivr_menu_option_description }}</td>
+                                <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">
+                                    <Toggle v-model="option.ivr_menu_option_enabled" disabled/>
                                 </td>
                                 <td class="relative py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 lg:pr-8">
                                     <Menu as="div" class="relative inline-block text-left">
@@ -54,12 +70,15 @@
                                                 class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                                 <div class="py-1">
                                                     <MenuItem v-slot="{ active }">
-                                                        <a href="#" @click.prevent="handleEdit(index)"
+                                                    <a href="#" @click.prevent="handleEdit(option)"
                                                         :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Edit</a>
                                                     </MenuItem>
                                                     <MenuItem v-slot="{ active }">
-                                                        <a href="#" @click.prevent="handleDelete(index)"
-                                                            :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
+                                                    <a href="#" @click.prevent="handleDelete(option)"
+                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex px-4 py-2 text-sm']">
+                                                        Delete
+                                                        <Spinner class="ml-1" :show="isDeleting" />
+                                                    </a>
                                                     </MenuItem>
 
                                                 </div>
@@ -95,22 +114,21 @@ import ComboBox from "../general/ComboBox.vue";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
 import InputField from "../general/InputField.vue";
+import Spinner from "../general/Spinner.vue";
 
 
 const props = defineProps({
     modelValue: [Object, null],
     routingTypes: [Object, null],
     optionsUrl: String,
+    isDeleting: Boolean,
 });
 
 
-const emit = defineEmits(['update:model-value', 'add-key', 'edit', 'delete'])
+const emit = defineEmits(['update:model-value', 'add-key', 'edit-key', 'delete-key'])
 
 // Create a local reactive copy of the modelValue
 const keys = ref([...props.modelValue]);
-
-
-console.log(keys.value);
 
 const loading = ref(false)
 
@@ -121,12 +139,12 @@ watch(() => props.modelValue, (newVal) => {
 
 const handleAddKey = () => emit('add-key');
 
-const handleEdit = (index) => {
-    emit('edit', index); // Emit the edit event with the index
+const handleEdit = (option) => {
+    emit('edit-key', option); // Emit the edit event
 };
 
-const handleDelete = (index) => {
-    emit('delete', index); // Emit the delete event with the index
+const handleDelete = (option) => {
+    emit('delete-key', option); // Emit the delete event
 };
 
 // Initialize keys and fetch typeOptions
@@ -146,44 +164,6 @@ const handleDelete = (index) => {
 //     });
 // }
 
-
-// Fetch new options for the selected type using Axios
-function fetchRoutingTypeOptions(newValue, index) {
-
-    keys.value[index].type = newValue.value;
-
-    // Reset the selected option when type changes
-    keys.value[index].option = null;
-
-    axios.post(props.optionsUrl, { 'category': newValue.value })
-        .then((response) => {
-            // console.log(response.data);
-            keys.value[index].typeOptions = response.data.options;
-        }).catch((error) => {
-            keys.value[index].typeOptions = null;
-        });
-}
-
-function fetchTypeOptionsForItem(type, index) {
-    axios.post(props.optionsUrl, { 'category': type })
-        .then((response) => {
-            keys.value[index].typeOptions = response.data.options;
-
-            // Automatically set the selected option if the option exists in the fetched options
-            const selectedOption = keys.value[index].option;
-            if (selectedOption) {
-                const match = response.data.options.find(option => option.value === selectedOption);
-                if (match) {
-                    keys.value[index].option = match.value;
-                } else {
-                    keys.value[index].option = null; // Reset if no match found
-                }
-            }
-        }).catch(() => {
-            keys.value[index].typeOptions = null;
-            keys.value[index].option = null;  // Reset option in case of an error
-        });
-}
 
 // Emit updates to the parent whenever routingOptions changes
 const updateParent = () => {

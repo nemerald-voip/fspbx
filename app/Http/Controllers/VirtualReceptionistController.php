@@ -11,12 +11,12 @@ use Illuminate\Http\Request;
 use App\Models\VoicemailGreetings;
 use Illuminate\Support\Facades\DB;
 use App\Models\VoicemailDestinations;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreVoicemailRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
+use App\Http\Requests\UpdateVirtualReceptionistKeyRequest;
 
 class VirtualReceptionistController extends Controller
 {
@@ -518,6 +518,7 @@ class VirtualReceptionistController extends Controller
 
             $routes = [
                 'get_routing_options' => route('routing.options'),
+                'update_key_route' => route('virtual-receptionist.key.update'),
             ];
 
             // Check if item_uuid exists to find an existing voicemail
@@ -703,6 +704,71 @@ class VirtualReceptionistController extends Controller
             if (Str::startsWith(basename($file), 'temp')) {
                 Storage::disk('voicemail')->delete($file);
             }
+        }
+    }
+
+    /**
+     * Update Virtual Receptionist Key
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateKey(UpdateVirtualReceptionistKeyRequest $request)
+    {
+
+        $inputs = $request->validated();
+
+        logger($inputs);
+        return;
+        try {
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Organization successfully updated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+        /**
+     * Helper function to build destination action based on routing option type.
+     */
+    protected function buildDestinationAction($option)
+    {
+        switch ($option['type']) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
+                ];
+
+            case 'voicemails':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
+                ];
+
+            case 'recordings':
+                // Handle recordings with 'lua' destination app
+                return [
+                    'destination_app' => 'lua',
+                    'destination_data' => 'streamfile.lua ' . $option['extension'],
+                ];
+
+                // Add other cases as necessary for different types
+            default:
+                return [];
         }
     }
 

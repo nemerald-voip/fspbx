@@ -118,8 +118,8 @@
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
-                                    :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
+                                <RingotelConnections v-model="connections" 
+                                    @add-connection="handleAddConnection"
                                     @delete-connection="handleDeleteConnectionRequest"
                                     @edit-connection="handleEditConnection" :isDeleting="showConnectionDeletingStatus" />
                             </div>
