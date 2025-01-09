@@ -522,11 +522,29 @@ class PhoneNumbersController extends Controller
                     'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
                 ];
 
+            case 'check_voicemail':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*98 XML ' . session('domain_name'),
+                ];
+
+            case 'company_directory':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*411 XML ' . session('domain_name'),
+                ];
+
             case 'recordings':
                 // Handle recordings with 'lua' destination app
                 return [
                     'destination_app' => 'lua',
                     'destination_data' => 'streamfile.lua ' . $option['extension'],
+                ];
+
+            case 'hangup':
+                return [
+                    'destination_app' => 'hangup',
+                    'destination_data' => '',
                 ];
 
                 // Add other cases as necessary for different types

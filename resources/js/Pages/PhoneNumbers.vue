@@ -86,7 +86,7 @@
                                 :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditRequest(row.destination_uuid)">
+                                @click="handleEditRequest(row.destination_uuid)">
                                 {{ row.destination_number_formatted }}
                             </div>
 
@@ -114,6 +114,9 @@
                             <li v-for="(action, index) in row.routing_options" :key="index">
                                 <span v-if="action && action.type && action.extension">
                                     Type: {{ action.type }}, Extension: {{ action.extension }}
+                                </span>
+                                <span v-if="action && action.type=='hangup'">
+                                    Type: {{ action.type }}
                                 </span>
                                 <span v-else>
                                     Invalid action data

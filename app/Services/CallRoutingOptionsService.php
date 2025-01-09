@@ -212,6 +212,12 @@ class CallRoutingOptionsService
                             $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
                             break;
 
+                        case 'hangup':
+                            $routing_options[] =  array(
+                                'type' => 'hangup',
+                            );
+                            break;
+
                             // Add more cases as necessary
                     }
                 }
@@ -315,7 +321,7 @@ class CallRoutingOptionsService
                 'type' => 'voicemails',
                 'extension' => $voicemail->voicemail_id,
                 'option' => $voicemail->voicemail_uuid,
-                'name' => $voicemail->extension->name_formatted,
+                'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
             ];
         }
 
@@ -449,7 +455,8 @@ class CallRoutingOptionsService
             'extensions' => 'Extension',
             'voicemails' => 'Voicemail',
             'ring_groups' => 'Ring Group',
-            'virtual_receptinists' => 'Virtual Receptionist',
+            'ivrs' => 'Virtual Receptionist',
+            'contact_centers' => 'Contact Center',
             'recordings' => 'Play recording',
             'company_directory' => 'Company Direcotry',
             'check_voicemail' => 'Check Voicemail',
