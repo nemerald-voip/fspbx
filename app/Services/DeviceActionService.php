@@ -40,8 +40,14 @@ class DeviceActionService
             return "cisco-spa";
         } elseif (preg_match("/Algo/i", $agentString)) {
             return "polycom";
+        } elseif (preg_match("/snom/i", $agentString)) {
+                return "snom";
+        } elseif (preg_match("/sangoma/i", $agentString)) {
+            return "sangoma";
+        } elseif (preg_match("/htek/i", $agentString)) {
+            return "htek";
         } elseif (preg_match("/Obihai/i", $agentString)) {
-            return "polycom";
+            return "obihai";
         }
 
         return "";
