@@ -22,10 +22,12 @@ class UpdateVirtualReceptionistKeyRequest extends FormRequest
         return [
             'menu_uuid' => 'present',
             'option_uuid' => 'present',
+            'domain_uuid' => 'present',
             'key' => 'required|string|max:11',
             'status' => 'required',
             'action' => 'required',
             'target' => 'required',
+            'extension' => 'present',
             'description' => 'nullable|string|max:255',
         ];
     }

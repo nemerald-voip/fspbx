@@ -418,7 +418,7 @@ const handleUpdateKeyRequest = (form) => {
         .then((response) => {
             submittingKeyUpdate.value = false;
             emits('success', response.data.messages);
-            emits('refresh-data', props.options.model.domain_uuid);
+            // emits('refresh-data', props.options.model.domain_uuid);
 
             handleModalClose();
         }).catch((error) => {

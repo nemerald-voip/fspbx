@@ -103,10 +103,12 @@ const loading = ref(false);
 const form = reactive({
     option_uuid: props.selectedKey?.ivr_menu_option_uuid ?? null,
     menu_uuid: props.selectedKey?.ivr_menu_uuid ?? null,
+    domain_uuid: props.selectedKey?.domain_uuid ?? null,
     status: props.selectedKey?.ivr_menu_option_enabled === true,
     key: props.selectedKey?.ivr_menu_option_digits ?? null,
     action: props.selectedKey?.key_type ?? null,
     target: props.selectedKey?.key_uuid ?? null,
+    extension: props.selectedKey?.key_extension ?? null,
     description: props.selectedKey?.ivr_menu_option_description ?? null,
     _token: page.props.csrf_token,
 });
@@ -136,6 +138,7 @@ const handleUpdateActionField = (selected) => {
 
 const handleUpdateTargetField = (selected) => {
     form.target = selected.value;
+    form.extension = selected.extension;
 }
 
 function fetchRoutingTypeOptions(newValue) {

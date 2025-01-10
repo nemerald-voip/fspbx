@@ -115,7 +115,7 @@
                                 <span v-if="action && action.type && action.extension">
                                     Type: {{ action.type }}, Extension: {{ action.extension }}
                                 </span>
-                                <span v-if="action && action.type=='hangup'">
+                                <span v-else-if="action && action.type === 'hangup'">
                                     Type: {{ action.type }}
                                 </span>
                                 <span v-else>

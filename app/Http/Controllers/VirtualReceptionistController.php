@@ -8,6 +8,7 @@ use App\Models\IvrMenus;
 use App\Models\Recordings;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\IvrMenuOptions;
 use App\Models\VoicemailGreetings;
 use Illuminate\Support\Facades\DB;
 use App\Models\VoicemailDestinations;
@@ -493,27 +494,27 @@ class VirtualReceptionistController extends Controller
                 array_splice($navigation, 1, 0, [$greetingsTab]);
             }
 
-            $ivrs =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
-                // ->with(['extension' => function ($query) use ($domain_uuid) {
-                //     $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                //         ->where('domain_uuid', $domain_uuid);
-                // }])
-                ->select(
-                    'ivr_menu_uuid',
-                    'ivr_menu_name',
-                    'ivr_menu_extension',
+            // $ivrs =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
+            //     // ->with(['extension' => function ($query) use ($domain_uuid) {
+            //     //     $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+            //     //         ->where('domain_uuid', $domain_uuid);
+            //     // }])
+            //     ->select(
+            //         'ivr_menu_uuid',
+            //         'ivr_menu_name',
+            //         'ivr_menu_extension',
 
-                )
-                ->orderBy('ivr_menu_extension', 'asc')
-                ->get();
+            //     )
+            //     ->orderBy('ivr_menu_extension', 'asc')
+            //     ->get();
 
             // Transform the collection into the desired array format
-            $ivrOptions = $ivrs->map(function ($ivr) {
-                return [
-                    'value' => $ivr->ivr_menu_uuid,
-                    'name' => $ivr->ivr_menu_extension . " - " . $ivr->ivr_menu_name,
-                ];
-            })->toArray();
+            // $ivrOptions = $ivrs->map(function ($ivr) {
+            //     return [
+            //         'value' => $ivr->ivr_menu_uuid,
+            //         'name' => $ivr->ivr_menu_extension . " - " . $ivr->ivr_menu_name,
+            //     ];
+            // })->toArray();
 
 
             $routes = [
@@ -524,12 +525,11 @@ class VirtualReceptionistController extends Controller
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
                 // Find existing ivr by item_uuid
-                $ivr = $this->model::
-                with([
+                $ivr = $this->model::with([
                     'options' => function ($query) {
                         $query->select(
-                            'ivr_menu_option_uuid', 
-                            'ivr_menu_uuid', 
+                            'ivr_menu_option_uuid',
+                            'ivr_menu_uuid',
                             'ivr_menu_option_digits',
                             'ivr_menu_option_action',
                             'ivr_menu_option_param',
@@ -625,7 +625,7 @@ class VirtualReceptionistController extends Controller
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
-                'all_ivrs' => $ivrOptions,
+                // 'all_ivrs' => $ivrOptions,
                 'ivr' => $ivr,
                 'permissions' => $permissions,
                 'greetings' => $greetingsArray ?? null,
@@ -717,30 +717,49 @@ class VirtualReceptionistController extends Controller
 
         $inputs = $request->validated();
 
-        logger($inputs);
-        return;
         try {
+            // Find the IvrMenuOption by UUID and Menu UUID
+            $ivrMenuOption = IvrMenuOptions::where('ivr_menu_option_uuid', $inputs['option_uuid'])
+                ->first();
+
+            if (!$ivrMenuOption) {
+                // Handle case where the record is not found
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['Virtual Receptionist Key not found.']],
+                ], 404); // 404 Not Found
+            }
+
+            // Update the attributes
+            $ivrMenuOption->update([
+                'ivr_menu_option_digits' => $inputs['key'],
+                'ivr_menu_option_action' => 'menu-exec-app',
+                'ivr_menu_option_param' => $this->buildDestinationAction($inputs),
+                'ivr_menu_option_description' => $inputs['description'],
+                'ivr_menu_option_enabled' => $inputs['status'],
+            ]);
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Organization successfully updated']]
+                'messages' => ['success' => ['Virtual Receptionist Key successfully updated']],
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
+                'errors' => ['server' => ['Unable to update Virtual Receptionist Key.']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
 
-        /**
-     * Helper function to build destination action based on routing option type.
+    /**
+     * Helper function to build destination action based on key action.
      */
-    protected function buildDestinationAction($option)
+    protected function buildDestinationAction($key)
     {
-        switch ($option['type']) {
+        logger($key);
+        switch ($key['action']) {
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
@@ -748,28 +767,26 @@ class VirtualReceptionistController extends Controller
             case 'contact_centers':
             case 'faxes':
             case 'call_flows':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
-                ];
-
+                return 'transfer ' . $key['extension'] . ' XML ' . session('domain_name');
             case 'voicemails':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
-                ];
+                return 'transfer *99' . $key['extension'] . ' XML ' . session('domain_name');
 
             case 'recordings':
                 // Handle recordings with 'lua' destination app
-                return [
-                    'destination_app' => 'lua',
-                    'destination_data' => 'streamfile.lua ' . $option['extension'],
-                ];
+                return 'lua streamfile.lua ' . $key['extension'];
+
+            case 'check_voicemail':
+                return 'transfer *98 XML ' . session('domain_name');
+
+            case 'company_directory':
+                return 'transfer *411 XML ' . session('domain_name');
+
+            case 'hangup':
+                return 'hangup';
 
                 // Add other cases as necessary for different types
             default:
                 return [];
         }
     }
-
 }

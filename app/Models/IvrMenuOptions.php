@@ -42,6 +42,15 @@ class IvrMenuOptions extends Model
      */
     protected static function booted()
     {
+        static::saving(function ($model) {
+            // Remove attributes before saving to database
+            unset($model->key_uuid);
+            unset($model->key_type);
+            unset($model->key_type_display);
+            unset($model->key_name);
+            unset($model->key_extension);
+        });
+
         static::retrieved(function ($model) {
             if (!empty($model->ivr_menu_option_param)) {
                 $callRoutingOptionsService = new CallRoutingOptionsService();
@@ -55,6 +64,7 @@ class IvrMenuOptions extends Model
                         ? $callRoutingOptionsService->getFriendlyTypeName($optionDetails['type'])
                         : null;
                     $model->key_name = $optionDetails['name'] ?? null;
+                    $model->key_extension = $optionDetails['extension'] ?? null;
                 }
             }
 
