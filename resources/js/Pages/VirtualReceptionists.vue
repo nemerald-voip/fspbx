@@ -165,7 +165,7 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleErrorResponse"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
                 @success="showNotification('success', { request: [$event] })"/>
         </template>
     </AddEditItemModal>

@@ -758,7 +758,6 @@ class VirtualReceptionistController extends Controller
      */
     protected function buildDestinationAction($key)
     {
-        logger($key);
         switch ($key['action']) {
             case 'extensions':
             case 'ring_groups':
