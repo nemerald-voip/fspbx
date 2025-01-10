@@ -188,7 +188,7 @@
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <IvrOptions v-model="form.options" :routingTypes="options.routing_types"
+                                <IvrOptions v-model="localOptions.ivr.options" :routingTypes="options.routing_types" :key="form.options"
                                     :optionsUrl="options.routes.get_routing_options" @add-key="handleAddKey" 
                                     @delete-key="handleDeleteKeyRequest"
                                     @edit-key="handleEditKey" :isDeleting="showKeyDeletingStatus" />
@@ -379,11 +379,11 @@ const form = reactive({
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     update_route: props.options.routes.update_route,
     apply_greeting_route: props.options.routes.apply_greeting_route,
-    options: props.options.ivr.options,
+    // options: props.options.ivr.options,
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -418,7 +418,7 @@ const handleUpdateKeyRequest = (form) => {
         .then((response) => {
             submittingKeyUpdate.value = false;
             emits('success', response.data.messages);
-            // emits('refresh-data', props.options.model.domain_uuid);
+            emits('refresh-data', props.options.ivr.ivr_menu_uuid);
 
             handleModalClose();
         }).catch((error) => {

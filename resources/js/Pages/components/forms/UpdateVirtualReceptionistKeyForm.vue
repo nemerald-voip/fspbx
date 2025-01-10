@@ -116,7 +116,7 @@ const form = reactive({
 });
 
 
-const emits = defineEmits(['submit', 'cancel', 'error']);
+const emits = defineEmits(['submit', 'cancel', 'error','clear-errors']);
 
 
 // Initialize activeTab with the currently active tab from props

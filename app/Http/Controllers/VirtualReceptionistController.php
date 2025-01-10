@@ -536,7 +536,7 @@ class VirtualReceptionistController extends Controller
                             'ivr_menu_option_order',
                             'ivr_menu_option_description',
                             'ivr_menu_option_enabled',
-                        );
+                        )->orderByRaw('ivr_menu_option_digits::integer');
                     },
                 ])->where('ivr_menu_uuid', $item_uuid)->first();
 

@@ -457,8 +457,11 @@ class CallRoutingOptionsService
             'ring_groups' => 'Ring Group',
             'ivrs' => 'Virtual Receptionist',
             'contact_centers' => 'Contact Center',
+            'faxes' => "Fax",
+            'time_conditions' => 'Schedules',
+            'call_flows' => 'Call Flow',
             'recordings' => 'Play recording',
-            'company_directory' => 'Company Direcotry',
+            'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',
             'hangup' => 'Hang up',
         ];

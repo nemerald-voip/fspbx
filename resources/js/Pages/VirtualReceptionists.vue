@@ -109,13 +109,6 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Check messages'" position='TopCenter'
-                                    target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <EnvelopeIcon @click="navigateToMessages(row.messages_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
 
                                 <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
@@ -164,9 +157,9 @@
         :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" 
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors"
+            <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
-                @success="showNotification('success', { request: [$event] })"/>
+                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
@@ -548,10 +541,9 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const navigateToMessages = (messagesRoute) => {
-    // Use Inertia's router to visit the messages page
-    router.visit(messagesRoute);
-};
+const handleClearErrors = () => {
+    formErrors.value = null;
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

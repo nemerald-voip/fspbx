@@ -26,7 +26,17 @@ class UpdateVirtualReceptionistKeyRequest extends FormRequest
             'key' => 'required|string|max:11',
             'status' => 'required',
             'action' => 'required',
-            'target' => 'required',
+            // 'target' => 'required',
+            'target' => [
+                'sometimes', // Only validate if present
+                function ($attribute, $value, $fail) {
+                    $action = request()->input('action'); // Get the value of 'action'
+    
+                    if (!in_array($action, ["company_directory", "check_voicemail", "hangup"]) && empty($value)) {
+                        $fail('The target field is required.');
+                    }
+                },
+            ],
             'extension' => 'present',
             'description' => 'nullable|string|max:255',
         ];
