@@ -2,6 +2,6 @@
 
 return [
 
-    'release' => '0.9.22',
+    'release' => '0.9.23',
     
 ];

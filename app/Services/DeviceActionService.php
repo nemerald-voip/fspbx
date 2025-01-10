@@ -11,6 +11,11 @@ class DeviceActionService
         $agent = $this->determineAgent($reg['agent']);
 
         if (!$agent) return;
+
+        // if agent is cisco then override the action
+        if ($agent == 'cisco-spa') {
+            $action = 'provision';
+        }
         
         $command = $this->generateCommand($reg, $action, $agent);
 
@@ -31,6 +36,12 @@ class DeviceActionService
             return "yealink";
         } elseif (preg_match("/grandstream/i", $agentString)) {
             return "grandstream";
+        } elseif (preg_match("/Cisco/i", $agentString)) {
+            return "cisco-spa";
+        } elseif (preg_match("/Algo/i", $agentString)) {
+            return "polycom";
+        } elseif (preg_match("/Obihai/i", $agentString)) {
+            return "polycom";
         }
 
         return "";
