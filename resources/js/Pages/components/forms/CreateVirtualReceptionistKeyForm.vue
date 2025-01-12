@@ -90,7 +90,6 @@ import SettingsApplications from "@icons/SettingsApplications.vue"
 
 
 const props = defineProps({
-    selectedKey: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
@@ -103,31 +102,20 @@ const isTargetDisabled = ref(false);
 const disabledTypes = ['check_voicemail', 'company_directory', 'hangup'];
 
 const form = reactive({
-    option_uuid: props.selectedKey?.ivr_menu_option_uuid ?? null,
-    menu_uuid: props.selectedKey?.ivr_menu_uuid ?? null,
-    domain_uuid: props.selectedKey?.domain_uuid ?? null,
-    status: props.selectedKey?.ivr_menu_option_enabled === true,
-    key: props.selectedKey?.ivr_menu_option_digits ?? null,
-    action: props.selectedKey?.key_type ?? null,
-    target: props.selectedKey?.key_uuid ?? null,
-    extension: props.selectedKey?.key_extension ?? null,
-    description: props.selectedKey?.ivr_menu_option_description ?? null,
+    menu_uuid: props.options?.ivr?.ivr_menu_uuid ?? null,
+    domain_uuid: props.options?.ivr?.domain_uuid ?? null,
+    status: true,
+    key: null,
+    action: null,
+    target: null,
+    extension: null,
+    description: null,
     _token: page.props.csrf_token,
 });
 
 
 const emits = defineEmits(['submit', 'cancel', 'error','clear-errors']);
 
-onMounted(() => {
-    if (props.selectedKey?.key_type) {
-        if (disabledTypes.includes(props.selectedKey?.key_type)) {
-            isTargetDisabled.value = true;
-        } else {
-            isTargetDisabled.value = false;
-        }
-        fetchRoutingTypeOptions(props.selectedKey.key_type); // Fetch options if `selectedKey` has a value
-    }
-});
 
 const submitForm = () => {
     // console.log(form);

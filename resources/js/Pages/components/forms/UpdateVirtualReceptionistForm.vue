@@ -188,10 +188,10 @@
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">
                                 <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <IvrOptions v-model="localOptions.ivr.options" :routingTypes="options.routing_types" :key="form.options"
-                                    :optionsUrl="options.routes.get_routing_options" @add-key="handleAddKey" 
-                                    @delete-key="handleDeleteKeyRequest"
-                                    @edit-key="handleEditKey" :isDeleting="showKeyDeletingStatus" />
+                                <IvrOptions v-model="localOptions.ivr.options" :routingTypes="options.routing_types"
+                                    :key="form.options" :optionsUrl="options.routes.get_routing_options"
+                                    @add-key="handleAddKey" @delete-key="handleDeleteKeyRequest" @edit-key="handleEditKey"
+                                    :isDeleting="showKeyDeletingStatus" />
 
                             </div>
 
@@ -272,8 +272,14 @@
     <UpdateGreetingModal :greeting="selectedGreeting" :show="showEditModal" :loading="isGreetingUpdating"
         @confirm="handleGreetingUpdate" @close="showEditModal = false" />
 
-    <UpdateGreetingModal :greeting="selectedGreeting" :show="showUpdateKeyModal" :loading="isGreetingUpdating"
-        @confirm="handleGreetingUpdate" @close="showUpdateKeyModal = false" />
+    <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showAddKeyModal" :header="'Add Virtual Receptionist Key'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <CreateVirtualReceptionistKeyForm :options="options" :errors="errors" 
+                :is-submitting="submittingKeyCreate" @submit="handleCreateKeyRequest" @error="handleKeyFormError"
+                @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showEditKeyModal" :header="'Edit Virtual Receptionist Key'"
         :loading="loadingModal" @close="handleModalClose">
@@ -311,8 +317,8 @@ import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outl
 import DialpadIcon from "@icons/DialpadIcon.vue"
 import IvrOptions from "../general/IvrOptions.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
+import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
-
 
 
 const props = defineProps({
@@ -326,7 +332,6 @@ const props = defineProps({
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showGreetingForm = ref(false);
 const showEditModal = ref(false);
-const showUpdateKeyModal = ref(false);
 const showNameForm = ref(false);
 const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
@@ -336,9 +341,10 @@ const selectedGreeting = ref(null);
 const showKeyDeletingStatus = ref(false);
 const selectedKey = ref(null);
 const showEditKeyModal = ref(false);
+const showAddKeyModal = ref(false);
 const loadingModal = ref(false);
 const submittingKeyUpdate = ref(false);
-
+const submittingKeyCreate = ref(false);
 
 
 const setActiveTab = (tabSlug) => {
@@ -395,6 +401,12 @@ const handleDestinationActionsUpdate = (newSelectedItem) => {
 }
 
 
+const handleAddKey = () => {
+    emits('clear-errors');
+    showAddKeyModal.value = true;
+
+};
+
 const handleEditKey = (option) => {
     emits('clear-errors');
     // Find the matching key from props.options.ivr.options
@@ -409,6 +421,24 @@ const handleEditKey = (option) => {
         emits('error', { request: "Matching key not found" });
     }
 }
+
+const handleCreateKeyRequest = (form) => {
+    submittingKeyCreate.value = true;
+    emits('clear-errors');
+
+    axios.post(props.options.routes.create_key_route, form)
+        .then((response) => {
+            submittingKeyCreate.value = false;
+            emits('success', response.data.messages);
+            emits('refresh-data', props.options.ivr.ivr_menu_uuid);
+
+            handleModalClose();
+        }).catch((error) => {
+            submittingKeyCreate.value = false;
+            emits('error', error); // Emit the event with error
+        });
+
+};
 
 const handleUpdateKeyRequest = (form) => {
     submittingKeyUpdate.value = true;
@@ -428,22 +458,18 @@ const handleUpdateKeyRequest = (form) => {
 
 };
 
-const handleDeleteKeyRequest = (connection) => {
-    showConnectionDeletingStatus.value = true;
+const handleDeleteKeyRequest = (key) => {
+    showKeyDeletingStatus.value = true;
     // emits('clear-errors');
 
-    axios.post(props.options.routes.delete_connection, connection)
+    axios.post(props.options.routes.delete_key_route, key)
         .then((response) => {
-            showConnectionDeletingStatus.value = false;
+            showKeyDeletingStatus.value = false;
             emits('success', response.data.messages);
-
-            const updatedConnections = connections.value.filter(
-                (conn) => conn.conn_id !== connection.conn_id
-            );
-            connections.value = updatedConnections;
+            emits('refresh-data', props.options.ivr.ivr_menu_uuid);
 
         }).catch((error) => {
-            showConnectionDeletingStatus.value = false;
+            showKeyDeletingStatus.value = false;
             emits('error', error); // Emit the event with error
         });
 
@@ -619,15 +645,6 @@ const editGreeting = () => {
     }
 };
 
-const editIvrKey = () => {
-    showUpdateKeyModal.value = true;
-
-};
-
-const handleAddKey = () => {
-    showUpdateKeyModal.value = true;
-
-};
 
 const handleGreetingUpdate = (updatedGreeting) => {
     isGreetingUpdating.value = true;
@@ -668,10 +685,11 @@ const handleGreetingUpdate = (updatedGreeting) => {
 
 const handleModalClose = () => {
     showEditKeyModal.value = false;
+    showAddKeyModal.value = false
 }
 
 const handleKeyFormError = (error) => {
-    emits('error',error);
+    emits('error', error);
 }
 
 

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Response;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreVoicemailRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
+use App\Http\Requests\CreateVirtualReceptionistKeyRequest;
 use App\Http\Requests\UpdateVirtualReceptionistKeyRequest;
 
 class VirtualReceptionistController extends Controller
@@ -340,123 +341,6 @@ class VirtualReceptionistController extends Controller
         return $response;
     }
 
-    /**
-     * Get voicemail greeting.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function deleteVoicemailGreeting(Voicemails $voicemail, string $filename)
-    {
-
-        $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-
-        $file = Storage::disk('voicemail')->delete($path);
-
-        if (Storage::disk('voicemail')->exists($path)) {
-            return response()->json([
-                'error' => 401,
-                'message' => 'Failed to delete file'
-            ]);
-        }
-
-        // Remove greeting from database
-        foreach ($voicemail->greetings as $greeting) {
-            if ($greeting->filename = "greeting_1.wav") {
-                $greeting->delete();
-                break;
-            }
-        }
-
-        // Update default gretting ID
-        $voicemail->greeting_id = null;
-        $voicemail->save();
-
-        return response()->json([
-            'status' => "success",
-            'voicemail' => $voicemail->voicemail_id,
-            'filename' => 'greeting_1.wav',
-            'message' => 'Greeting deleted successfully'
-        ]);
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Voicemails $voicemail)
-    {
-
-        try {
-            // throw new \Exception;
-
-            // Start a database transaction to ensure atomic operations
-            DB::beginTransaction();
-
-            // Delete related voicemail destinations
-            $voicemail->voicemail_destinations()->delete();
-
-            // Delete related voicemail messages
-            $voicemail->messages()->delete();
-
-            // Delete related voicemail greetings
-            $voicemail->greetings()->delete();
-
-            // Define the path to the voicemail folder
-            $path = session('domain_name') . '/' . $voicemail->voicemail_id;
-
-            // Check if the directory exists and delete it
-            if (Storage::disk('voicemail')->exists($path)) {
-                Storage::disk('voicemail')->deleteDirectory($path);
-            }
-
-            // Finally, delete the voicemail itself
-            $voicemail->delete();
-
-            // Commit the transaction
-            DB::commit();
-
-            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
-        } catch (\Exception $e) {
-            // Rollback the transaction if an error occurs
-            DB::rollBack();
-            // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
-        }
-
-        $voicemail = Voicemails::findOrFail($id);
-
-        if (isset($voicemail)) {
-            $deleted = $voicemail->delete();
-            $filename = "recorded_name.wav";
-            $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-            $file = Storage::disk('voicemail')->delete($path);
-            $filename = "greeting_1.wav";
-            $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-            $file = Storage::disk('voicemail')->delete($path);
-
-            if ($deleted) {
-                return response()->json([
-                    'status' => 200,
-                    'success' => [
-                        'message' => 'Selected vocemail extensions have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting selected voicemail extensions'
-                    ]
-                ]);
-            }
-        }
-    }
-
 
     public function getItemOptions()
     {
@@ -519,7 +403,9 @@ class VirtualReceptionistController extends Controller
 
             $routes = [
                 'get_routing_options' => route('routing.options'),
+                'create_key_route' => route('virtual-receptionist.key.create'),
                 'update_key_route' => route('virtual-receptionist.key.update'),
+                'delete_key_route' => route('virtual-receptionist.key.destroy'),
             ];
 
             // Check if item_uuid exists to find an existing voicemail
@@ -655,16 +541,6 @@ class VirtualReceptionistController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
-        $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
-        $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
-        $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
-
-        // $permissions['manage_voicemail_copies'] = false;
-        // $permissions['manage_voicemail_transcription'] = false;
-        // $permissions['manage_voicemail_auto_delete'] = false;
-        // $permissions['manage_voicemail_recording_instructions'] = false;
-
         return $permissions;
     }
 
@@ -696,16 +572,37 @@ class VirtualReceptionistController extends Controller
         }
     }
 
-
-    public function deleteTempFiles($folderPath)
+    public function createKey(CreateVirtualReceptionistKeyRequest $request)
     {
-        $files = Storage::disk('voicemail')->files($folderPath);
-        foreach ($files as $file) {
-            if (Str::startsWith(basename($file), 'temp')) {
-                Storage::disk('voicemail')->delete($file);
-            }
+        $inputs = $request->validated();
+
+        try {
+            // Create a new IvrMenuOption
+            $ivrMenuOption = IvrMenuOptions::create([
+                'ivr_menu_option_uuid' => $inputs['option_uuid'] ?? (string) Str::uuid(),
+                'ivr_menu_uuid' => $inputs['menu_uuid'],
+                'ivr_menu_option_digits' => $inputs['key'],
+                'ivr_menu_option_action' => 'menu-exec-app',
+                'ivr_menu_option_param' => $this->buildDestinationAction($inputs),
+                'ivr_menu_option_description' => $inputs['description'],
+                'ivr_menu_option_enabled' => $inputs['status'],
+            ]);
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Virtual Receptionist Key successfully created']],
+                'data' => $ivrMenuOption, // Return the created option for confirmation or further use
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to create Virtual Receptionist Key.']]
+            ], 500);  // 500 Internal Server Error for any other errors
         }
     }
+
 
     /**
      * Update Virtual Receptionist Key
@@ -752,6 +649,46 @@ class VirtualReceptionistController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
+
+    /**
+     * Update Virtual Receptionist Key
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroyKey()
+    {
+        $inputs = request()->all();
+
+        try {
+            // Find the IvrMenuOption by UUID
+            $ivrMenuOption = IvrMenuOptions::where('ivr_menu_option_uuid', $inputs['ivr_menu_option_uuid'])
+                ->first();
+
+            if (!$ivrMenuOption) {
+                // Handle case where the record is not found
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['Virtual Receptionist Key not found.']],
+                ], 404); // 404 Not Found
+            }
+
+            // Delete the record
+            $ivrMenuOption->delete();
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['Virtual Receptionist Key successfully deleted']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to delete Virtual Receptionist Key.']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
 
     /**
      * Helper function to build destination action based on key action.

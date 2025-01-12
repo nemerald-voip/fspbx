@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateVirtualReceptionistKeyRequest extends FormRequest
+class CreateVirtualReceptionistKeyRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,7 +21,6 @@ class UpdateVirtualReceptionistKeyRequest extends FormRequest
     {
         return [
             'menu_uuid' => 'present',
-            'option_uuid' => 'present',
             'domain_uuid' => 'present',
             'key' => 'required|string|max:11',
             'status' => 'required',
