@@ -41,13 +41,15 @@ class DeviceActionService
         } elseif (preg_match("/Algo/i", $agentString)) {
             return "polycom";
         } elseif (preg_match("/snom/i", $agentString)) {
-                return "snom";
+                return "yealink"; //This is correct, Snom and Yealink are the same
         } elseif (preg_match("/sangoma/i", $agentString)) {
             return "sangoma";
         } elseif (preg_match("/htek/i", $agentString)) {
             return "htek";
         } elseif (preg_match("/Obihai/i", $agentString)) {
             return "obihai";
+        } elseif (preg_match("/panasonic/i", $agentString)) {
+            return "panasonic";
         }
 
         return "";
