@@ -505,7 +505,7 @@ const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
             // console.log(response.data);
             if (response.data.success) {
                 // Notify the parent component or show a local success message
-                emits('success', response.data.message.success); // Or handle locally
+                emits('success', response.data.messages); // Or handle locally
             }
         }).catch((error) => {
             emits('error', error);
@@ -614,7 +614,7 @@ const confirmDeleteAction = () => {
                 form.ivr_menu_greet_long = null; // Or set it to another default if needed
 
                 // Notify the parent component or show a local success message
-                emits('success', response.data.message.success); // Or handle locally
+                emits('success', response.data.messages); 
             }
         })
         .catch((error) => {
@@ -671,7 +671,7 @@ const handleGreetingUpdate = (updatedGreeting) => {
         .then((response) => {
             if (response.data.success) {
                 // Notify the parent component or show a local success message
-                emits('success', response.data.message.success); // Or handle locally
+                emits('success', response.data.messages); // Or handle locally
             }
         })
         .catch((error) => {

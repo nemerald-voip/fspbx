@@ -558,7 +558,7 @@ class VirtualReceptionistController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => ['success' => 'Your AI-generated greeting has been saved and successfully activated.']
+                'messages' => ['success' => ['Your AI-generated greeting has been saved and successfully activated.']]
             ], 200);
         } catch (\Exception $e) {
             // Log the error message

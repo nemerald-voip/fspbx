@@ -257,7 +257,7 @@ const uploadFile = () => {
                 });
                 selectedFileName.value = '';
                 fileToUpload.value = null;
-                successMessage.value = response.data.message.success;
+                successMessage.value = response.data.messages.success[0];
 
                 // Dismiss success message after 5 seconds
                 setTimeout(() => {
@@ -308,7 +308,7 @@ const saveGreeting = () => {
                     greeting_name: response.data.greeting_name
                 });
                 audioUrl.value = false;
-                successMessage.value = response.data.message.success;
+                successMessage.value = response.data.messages.success[0];
                 // Dismiss success message after 5 seconds
                 setTimeout(() => {
                     successMessage.value = null;

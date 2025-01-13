@@ -136,7 +136,7 @@ class GreetingsController extends Controller
         }
     }
 
-    public function applyGreetingFile($file_name)
+    public function applyAIGreetingFile($file_name)
     {
         try {
             $domain_name = session('domain_name');
@@ -151,7 +151,7 @@ class GreetingsController extends Controller
             // Step 2: Generate new greeting_id and filename
             $newFileName = str_replace("temp", "ai_generated", $file_name);
             $datePart = str_replace("temp", "", $file_name); // Remove temp
-            $datePart = str_replace(".wav", "", $file_name); // Remove .wav
+            $datePart = str_replace(".wav", "", $datePart); // Remove .wav
             $datePart = ltrim($datePart, "_"); // Remove leading underscore
 
             // Step 3: Construct the new file path
@@ -168,15 +168,15 @@ class GreetingsController extends Controller
             // Step 5: Save greeting info to the database
             Recordings::create([
                 'recording_filename' => $newFileName,
-                'recording_name' => "AI Greeting" . $datePart,
+                'recording_name' => "AI Greeting " . $datePart,
             ]);
 
 
             return response()->json([
                 'success' => true,
                 'greeting_id' => $newFileName,
-                'greeting_name' => "AI Greeting" . $datePart,
-                'message' => ['success' => 'Your AI-generated greeting has been saved.']
+                'greeting_name' => "AI Greeting " . $datePart,
+                'messages' => ['success' => ['Your AI-generated greeting has been saved.']]
             ], 200);
         } catch (\Exception $e) {
             // Log the error message
@@ -222,7 +222,7 @@ class GreetingsController extends Controller
             // Return a successful JSON response
             return response()->json([
                 'success' => true,
-                'message' => ['success' => 'Greeting has been removed.']
+                'messages' => ['success' => ['Greeting has been removed.']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -250,7 +250,7 @@ class GreetingsController extends Controller
             // Return a successful JSON response
             return response()->json([
                 'success' => true,
-                'message' => ['success' => 'Greeting has been updated.']
+                'messages' => ['success' => ['Greeting has been updated.']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -313,7 +313,7 @@ class GreetingsController extends Controller
                     'success' => true,
                     'greeting_id' => $convertedFileName,
                     'greeting_name' => "Uploaded File " . $datePart,
-                    'message' => ['success' => 'Your greeting has been uploaded and activated.']
+                    'messages' => ['success' => ['Your greeting has been uploaded and activated.']]
                 ], 200);
             } else {
                 // If conversion fails, retain the original file and notify the user
