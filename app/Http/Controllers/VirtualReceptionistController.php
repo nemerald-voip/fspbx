@@ -508,6 +508,14 @@ class VirtualReceptionistController extends Controller
 
             $sampleMessage = 'Thank you for calling. For Sales, press 1. For Support, press 2. To repeat this menu, press 9.';
 
+            $promptRepeatOptions = [
+                ['value' => '1', 'name' => '1 Time'],
+                ['value' => '2', 'name' => '2 Times'],
+                ['value' => '3', 'name' => '3 Times'],
+                ['value' => '4', 'name' => '4 Times'],
+                ['value' => '5', 'name' => '5 Times'],
+            ];
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -521,6 +529,7 @@ class VirtualReceptionistController extends Controller
                 'routing_types' => $routingTypes,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
+                'promt_repeat_options' => $promptRepeatOptions,
                 // Define options for other fields as needed
             ];
 

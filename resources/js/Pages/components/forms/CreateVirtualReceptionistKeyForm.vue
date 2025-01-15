@@ -151,16 +151,4 @@ function fetchRoutingTypeOptions(newValue) {
 }
 
 
-const iconComponents = {
-    'Cog6ToothIcon': Cog6ToothIcon,
-    'SettingsApplications': SettingsApplications,
-    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
-};
-
-const setActiveTab = (tabSlug) => {
-    activeTab.value = tabSlug;
-};
-
-
-
 </script>

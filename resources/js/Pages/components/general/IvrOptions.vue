@@ -94,7 +94,7 @@
         </div>
 
         <div
-            class="col-span-full flex justify-center bg-gray-50 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+            class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
             <button href="#" @click.prevent="handleAddKey" class="flex items-center gap-2">
                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
                 <span>

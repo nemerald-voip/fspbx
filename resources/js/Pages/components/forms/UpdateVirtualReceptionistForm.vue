@@ -59,38 +59,6 @@
                                 </div>
                             </div>
 
-                            <!-- <div class="divide-y divide-gray-200 col-span-6">
-
-                                <Toggle v-if="localOptions.permissions.manage_voicemail_transcription"
-                                    label="Voicemail Transcription"
-                                    description="Convert voicemail messages to text using AI-powered transcription."
-                                    v-model="form.voicemail_transcription_enabled" customClass="py-4" />
-
-                                <Toggle label="Attach File to Email Notifications"
-                                    description="Attach voicemail recording file to the email notification."
-                                    v-model="form.voicemail_email_attachment" customClass="py-4" />
-
-                                <Toggle v-if="localOptions.permissions.manage_voicemail_auto_delete"
-                                    label="Automatically Delete Voicemail After Email"
-                                    description="Remove voicemail from the cloud once the email is sent."
-                                    v-model="form.voicemail_delete" customClass="py-4" />
-
-                            </div>
-
-                            <div v-if="localOptions.permissions.manage_voicemail_copies"
-                                class="col-span-4 text-sm font-medium leading-6 text-gray-900">
-                                <LabelInputOptional label="Copy Voicemail to
-                                    Other Extensions" class="truncate mb-1" />
-
-                                <ComboBox :options="localOptions.all_voicemails" :search="true" multiple
-                                    :placeholder="'Enter name or extension'" :selectedItem="localOptions.voicemail_copies"
-                                    @update:model-value="handleUpdateCopyToField" />
-                                <div class="mt-1 text-sm text-gray-500">
-                                    Automatically send a copy of the voicemail to selected additional extensions.
-
-                                </div>
-
-                            </div> -->
 
                         </div>
 
@@ -109,21 +77,19 @@
                 <div class="mt-6 shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Greeting Message</h3>
-                            <p class="mt-1 text-sm text-gray-500">Customize the greeting message that callers hear when they
-                                reach
-                                this virtual receptionist.</p>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Audio Prompt</h3>
+                            <p class="mt-1 text-sm text-gray-500">Personalize the audio callers hear when they reach your
+                                virtual receptionist.</p>
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
 
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                <LabelInputOptional label="Select greeting" class="truncate mb-1" />
+                                <LabelInputOptional label="Select prompt" class="truncate mb-1" />
 
-                                <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select greeting'"
+                                <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select prompt'"
                                     :selectedItem="form.ivr_menu_greet_long"
                                     @update:model-value="handleUpdateGreetingField" />
-
                             </div>
 
                             <div class="content-end col-span-2 pb-1 text-sm font-medium leading-6 text-gray-900">
@@ -159,31 +125,70 @@
 
                             </div>
 
+                        </div>
 
+                        <div class="pt-3 grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                <LabelInputRequired label="If caller enters no action or an invalid option"
+                                    class="truncate mb-1" />
+
+                                <ComboBox :options="localOptions.promt_repeat_options" :search="false"
+                                    :placeholder="'Select a repeat option'" :selectedItem="form.repeat_prompt"
+                                    @update:model-value="handleUpdateRepeatPropmtField" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                <LabelInputRequired :target="'action'" :label="'Forward calls to'" class="truncate mb-1" />
+                                <div class="">
+                                    <ComboBox :options="options.routing_types" :selectedItem="form.action" :search="true"
+                                        placeholder="Choose Action"
+                                        @update:model-value="(value) => handleUpdateActionField(value)"
+                                        :error="errors?.action && errors.action.length > 0" />
+                                </div>
+                                <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
+                                    {{ errors.action[0] }}
+                                </div>
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                <LabelInputRequired :target="'target'" :label="'Target'" class="truncate mb-1" />
+                                <div class="relative">
+                                    <ComboBox :options="targets" :selectedItem="form.target" :search="true" :key="targets"
+                                        placeholder="Choose Target"
+                                        @update:model-value="(value) => handleUpdateTargetField(value)"
+                                        :disabled="isTargetDisabled" :error="errors?.target && errors.target.length > 0" />
+
+                                    <!-- Spinner Overlay -->
+                                    <div v-if="loading"
+                                        class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
+                                        <Spinner class="w-10 h-10 text-gray-500" :show="loading" />
+                                    </div>
+                                </div>
+                                <div v-if="errors?.target" class="mt-2 text-xs text-red-600">
+                                    {{ errors.target[0] }}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                        <button type="submit"
-                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
-                    </div>
                 </div>
-
-                <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
-                    :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
-                    @greeting-saved="handleGreetingSaved" />
-
+                <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                    <button type="submit"
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                </div>
             </div>
+
+            <!-- New Greeting Form -->
+            <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
+                :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
+                @greeting-saved="handleGreetingSaved" />
+
 
             <div v-if="activeTab === 'keys'">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                        <!-- <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
-                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
-                                Select a routing option below to fit your business needs.</p>
-                        </div> -->
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-full space-y-3">
@@ -199,6 +204,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
@@ -275,9 +281,8 @@
     <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showAddKeyModal" :header="'Add Virtual Receptionist Key'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateVirtualReceptionistKeyForm :options="options" :errors="errors" 
-                :is-submitting="submittingKeyCreate" @submit="handleCreateKeyRequest" @error="handleKeyFormError"
-                @cancel="handleModalClose" />
+            <CreateVirtualReceptionistKeyForm :options="options" :errors="errors" :is-submitting="submittingKeyCreate"
+                @submit="handleCreateKeyRequest" @error="handleKeyFormError" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
@@ -297,14 +302,11 @@ import { usePage } from '@inertiajs/vue3';
 
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
-import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
 import Popover from "@generalComponents/Popover.vue";
 import Textarea from "@generalComponents/Textarea.vue";
-import VisibilityIcon from "@icons/VisibilityIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
-import UpdateIvrKeyModal from "../modal/UpdateIvrKeyModal.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
@@ -320,7 +322,6 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
 
-
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
@@ -333,7 +334,6 @@ const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || 
 const showGreetingForm = ref(false);
 const showEditModal = ref(false);
 const showNameForm = ref(false);
-const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
 const showDeleteConfirmation = ref(false);
 const isGreetingUpdating = ref(false);
@@ -350,8 +350,6 @@ const submittingKeyCreate = ref(false);
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
-
-const showPassword = ref(false);
 
 const toggleGreetingForm = () => {
     showGreetingForm.value = !showGreetingForm.value;
@@ -385,9 +383,17 @@ const form = reactive({
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     update_route: props.options.routes.update_route,
     apply_greeting_route: props.options.routes.apply_greeting_route,
-    // options: props.options.ivr.options,
+    repeat_prompt: '3',
+    exit_action: null,
+    exit_target: null,
+    exit_extension: null,
     _token: page.props.csrf_token,
 })
+
+const targets = ref();
+const loading = ref(false);
+const isTargetDisabled = ref(false);
+const disabledTypes = ['check_voicemail', 'company_directory', 'hangup'];
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
 
@@ -396,8 +402,8 @@ const submitForm = () => {
 }
 
 
-const handleDestinationActionsUpdate = (newSelectedItem) => {
-    form.destination_actions = newSelectedItem;
+const handleUpdateRepeatPropmtField = (newSelectedItem) => {
+    form.repeat_prompt = newSelectedItem.value;
 }
 
 
@@ -474,6 +480,34 @@ const handleDeleteKeyRequest = (key) => {
         });
 
 };
+
+const handleUpdateActionField = (selected) => {
+    form.exit_action = selected.value;
+    if (disabledTypes.includes(selected.value)) {
+        isTargetDisabled.value = true;
+    } else {
+        isTargetDisabled.value = false;
+    }
+    fetchRoutingTypeOptions(selected.value); // Fetch options when action field updates
+}
+
+const handleUpdateTargetField = (selected) => {
+    form.exit_target = selected.value;
+    form.exit_extension = selected.extension;
+}
+
+function fetchRoutingTypeOptions(newValue) {
+    loading.value = true; // Show spinner
+    axios.post(props.options.routes.get_routing_options, { 'category': newValue })
+        .then((response) => {
+            targets.value = response.data.options; // Assign the returned options to `targets`
+        }).catch((error) => {
+            emits('error', error);
+        })
+        .finally(() => {
+            loading.value = false; // Hide spinner after fetch completes
+        });
+}
 
 const handleUpdateGreetingField = (greeting) => {
     form.ivr_menu_greet_long = greeting.value;
@@ -614,7 +648,7 @@ const confirmDeleteAction = () => {
                 form.ivr_menu_greet_long = null; // Or set it to another default if needed
 
                 // Notify the parent component or show a local success message
-                emits('success', response.data.messages); 
+                emits('success', response.data.messages);
             }
         })
         .catch((error) => {
