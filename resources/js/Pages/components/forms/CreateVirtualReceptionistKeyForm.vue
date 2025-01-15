@@ -86,7 +86,7 @@ import Spinner from "../general/Spinner.vue";
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import Toggle from "@generalComponents/Toggle.vue";
-import SettingsApplications from "@icons/SettingsApplications.vue"
+
 
 
 const props = defineProps({
