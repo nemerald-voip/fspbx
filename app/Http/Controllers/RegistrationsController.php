@@ -194,11 +194,26 @@ class RegistrationsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function selectAll(FreeswitchEslService $eslService,)
+    public function selectAll(FreeswitchEslService $eslService)
     {
         try {
+
+            // Check if search parameter is present and not empty
+            if (!empty(request('search'))) {
+                $this->filters['search'] = request('search');
+            }
+
+            // Check if showGlobal parameter is present and not empty
+            if (!empty(request('showGlobal'))) {
+                $this->filters['showGlobal'] = request('showGlobal');
+            } else {
+                $this->filters['showGlobal'] = null;
+            }
+
             // Fetch all registrations without pagination
             $allRegistrations = $this->builder($this->filters, $eslService);
+
+            logger($allRegistrations);
     
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
