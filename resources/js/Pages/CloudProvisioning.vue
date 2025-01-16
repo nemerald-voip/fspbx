@@ -11,75 +11,54 @@
                         <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
-                        id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                           id="mobile-search-candidate"
+                           class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                           placeholder="Search" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
-                        id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                           id="desktop-search-candidate"
+                           class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                           placeholder="Search" />
                 </div>
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
-                </button>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
-                    @click.prevent="handleShowGlobal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
-                </button>
-
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
-                    @click.prevent="handleShowLocal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
-                </button>
             </template>
 
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                           :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                           @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header="Date"
+
+                <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                           class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Date</span>
+                                      :has-selected-items="selectedItems.length > 0" />
+                    <span class="pl-4">Tenant</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-
-                <TableColumnHeader header="In/Out" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Source" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Message" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Tenant Domain"
+                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
-                            @click="handleSelectAll">
+                        <button v-if="!selectAll && selectedItems.length !== data.total"
+                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
-                            @click="handleClearSelection">
+                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                @click="handleClearSelection">
                             Clear selection
                         </button>
                     </div>
@@ -87,70 +66,61 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.message_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.created_at_formatted">
+                <tr v-for="row in data.data" :key="row.domain_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
                         <div class="flex items-center">
-                            <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row.message_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.domain_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                   :value="row.domain_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
-                                {{ row.created_at_formatted }}
-                            </div>
+                                <span v-if="row.domain_description" class="flex items-center">
+                                    {{ row.domain_description }}
+                                </span>
+                                <span v-else class="flex items-center">
+                                    {{ row.domain_name }}
+                                </span>
 
+                            </div>
                         </div>
                     </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description">
-                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
-                            <div id="domain_tooltip_target">
-                                {{ row.domain?.domain_description }}
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" />
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.destination_formatted" />
-
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.message" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
-                            :textColor="determineColor(row.status).textColor"
-                            :ringColor="determineColor(row.status).ringColor" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ringotel_status">
+                        <Badge v-if="row.ringotel_status === 'true'" text="Activated" backgroundColor="bg-green-50"
+                               textColor="text-green-700" ringColor="ring-green-600/20" />
+                        <Badge v-else text="Inactive" backgroundColor="bg-rose-50" textColor="text-rose-700"
+                               ringColor="ring-rose-600/20" />
 
                     </TableField>
+
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                            <div class="flex items-center whitespace-nowrap justify-end">
+                                <ejs-tooltip v-if="row.ringotel_status === 'true'" :content="'Edit'" position='TopCenter'
+                                             target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
+                                                          class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                    </div>
-                                </ejs-tooltip> -->
-
-                                <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRetry(row.message_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
-                                    target="#delete_tooltip_target">
-                                    <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                <ejs-tooltip v-if="row.ringotel_status === 'false'" :content="'Activate'"
+                                             position='TopCenter' target="#restart_tooltip_target">
+                                    <div id="restart_tooltip_target">
+                                        <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
+                                                   class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
-                                </ejs-tooltip> -->
+                                </ejs-tooltip>
+
+                                <ejs-tooltip v-if="row.ringotel_status === 'true'" :content="'Deactivate'"
+                                             position='TopCenter' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
+                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
                             </div>
                         </template>
                     </TableField>
@@ -173,53 +143,55 @@
 
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                           :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                           @pagination-change-page="renderRequestedPage" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-
-
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate ZTP Organization'"
+                      :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting"
+                                   :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
+                                   @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                                   @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit ZTP Organization'"
+                      :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
+            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+                                   @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                   @refresh-data="getItemOptions" @success="showNotification('success', $event)"
+                                   @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing ZTP Organization'"
+                      :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
+            <PairRingotelOrganizationForm :orgs="ringotelOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairRingotelOrgSubmiting"
+                                          @submit="handlePairRingtotelOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                          @success="showNotification('success', $event)"/>
         </template>
     </AddEditItemModal>
 
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmDeleteAction"
+                       :header="'Confirm Action'"
+                       :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
+                       confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
 
-    <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
-        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
-        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="showRingotelConfirmationModal" @close="cancelRingotelAction"
+                       @confirm="confirmRingotelAction" :header="'Select a method to set up your Ringotel organization.'"
+                       :text="'Would you like to connect to an existing Ringotel organization or create a new one?'"
+                       confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
+                       :loading="showConnectSpinner || showCreateSpinner" :color="'blue'"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
-        @update:show="hideNotification" />
+                  @update:show="hideNotification" />
 </template>
 
 <script setup>
@@ -231,22 +203,22 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
-import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue";
-import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
-import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
+import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
+import UpdateRingotelOrgForm from "./components/forms/UpdateRingotelOrgForm.vue";
+import UpdateRingotelApiTokenForm from "./components/forms/UpdateRingotelApiTokenForm.vue";
+import PairRingotelOrganizationForm from "./components/forms/PairRingotelOrganizationForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import Badge from "@generalComponents/Badge.vue";
+import { PowerIcon } from "@heroicons/vue/24/outline";
+import { XCircleIcon } from "@heroicons/vue/24/outline";
 
 const page = usePage()
 const loading = ref(false)
@@ -254,31 +226,33 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const showActivateModal = ref(false);
+const showEditModal = ref(false);
+const showApiTokenModal = ref(false);
+const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationRetryTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
+const showConfirmationModal = ref(false);
+const showRingotelConfirmationModal = ref(false);
+const activateFormSubmiting = ref(null);
+const activationActiveTab = ref('organization');
 const updateFormSubmiting = ref(null);
+const updateApiTokenFormSubmiting = ref(null);
+const pairRingotelOrgSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmRetryAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
+const showDeactivateSpinner = ref(null);
+const showConnectSpinner = ref(null);
+const showCreateSpinner = ref(null);
+const confirmRingotelAction = ref(null);
+const cancelRingotelAction = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
-    // itemData: Object,
-    // itemOptions: Object,
+    itemData: Object,
 });
 
 
@@ -287,75 +261,73 @@ const filterData = ref({
     showGlobal: props.showGlobal,
 });
 
-const showGlobal = ref(props.showGlobal);
+const itemOptions = ref({})
+const ringotelOrganizations = ref({})
+const selectedAccount =  ref(null)
+const apiToken = ref(null)
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
-            id: 'bulk_retry',
-            label: 'Retry',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_delete',
-            label: 'Delete',
-            icon: 'TrashIcon'
-        }
+        // {
+        //     id: 'bulk_update',
+        //     label: 'Edit',
+        //     icon: 'PencilSquareIcon'
+        // }
     ];
 
     return actions;
 });
 
 onMounted(() => {
-    // console.log(props.data);
 });
 
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
+const handleActivateButtonClick = (itemUuid) => {
+    showRingotelConfirmationModal.value = true;
+    confirmRingotelAction.value = () => executeNewRingotelOrgAction(itemUuid);
+    cancelRingotelAction.value = () => executeExistingRingotelOrgAction(itemUuid);
+};
+
+const executeNewRingotelOrgAction = (itemUuid) => {
+    activationActiveTab.value = 'organization';
+    showRingotelConfirmationModal.value = false;
+    showActivateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
+    getItemOptions(itemUuid);
+}
 
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+const executeExistingRingotelOrgAction = (itemUuid) => {
+    showRingotelConfirmationModal.value = false;
+    showPairModal.value = true
+    loadingModal.value = true
+    selectedAccount.value = itemUuid;
+    getRingotelOrganizations(itemUuid);
+}
 
-        });
+const handleEditButtonClick = (itemUuid) => {
+    showEditModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions(itemUuid);
 }
 
 const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
+    activateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.store, form)
+    axios.post(props.routes.create_organization, form)
         .then((response) => {
-            createFormSubmiting.value = false;
+            activateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
+            itemOptions.value.orgId = response.data.org_id;
+            activationActiveTab.value = 'connections';
+
         }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
+        activateFormSubmiting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
 
 };
 
@@ -363,7 +335,7 @@ const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.put(props.itemData.update_url, form)
+    axios.put(props.routes.update_organization, form)
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
@@ -371,103 +343,79 @@ const handleUpdateRequest = (form) => {
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
+        updateFormSubmiting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
 
 };
 
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
+const handlePairRingtotelOrgRequest = (form) => {
+    pairRingotelOrgSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.pair_organization, form)
+        .then((response) => {
+            pairRingotelOrgSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        pairRingotelOrgSubmiting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
+
+};
+
+const handleDeactivateButtonClick = (uuid) => {
+    showConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(uuid);
 }
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
+const executeSingleDelete = (uuid) => {
+    showDeactivateSpinner.value = true;
+
+    axios.post(props.routes.destroy_organization, { domain_uuid: uuid })
+        .then((response) => {
+            showDeactivateSpinner.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        showDeactivateSpinner.value = false;
+        handleClearSelection();
+        handleModalClose();
+        handleSearchButtonClick();
+        handleFormErrorResponse(error);
     });
 }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
-
-    if (action === 'bulk_retry') {
-        confirmationRetryTrigger.value = true;
-        confirmRetryAction.value = () => executeBulkRetry();
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
     }
+
 }
 
-const executeBulkRetry = () => {
-    axios.post(props.routes.retry,
-        { 'items': selectedItems.value },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleFormErrorResponse(error);
-        });
-}
-
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
-        .then((response) => {
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
-
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
-
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
+const handleApiTokenButtonClick = () => {
+    showApiTokenModal.value = true
     loadingModal.value = true
-    getItemOptions();
+    getApiToken();
+}
+
+const handleActivationFinish = () => {
+    handleModalClose();
+    handleSearchButtonClick();
 }
 
 const handleSelectAll = () => {
@@ -478,39 +426,13 @@ const handleSelectAll = () => {
             showNotification('success', response.data.messages);
 
         }).catch((error) => {
-            handleClearSelection();
-            handleErrorResponse(error);
-        });
+        handleClearSelection();
+        handleErrorResponse(error);
+    });
 
 };
 
 
-const handleRetry = (message_uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [message_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
-
-
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -522,7 +444,6 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;
@@ -554,29 +475,53 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
 
-        });
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+        handleModalClose();
+        handleErrorResponse(error);
+    });
 }
+
+const getRingotelOrganizations = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {};
+
+    axios.post(props.routes.get_all_orgs, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            ringotelOrganizations.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+        handleModalClose();
+        handleErrorResponse(error);
+    });
+}
+
+const handleClearErrors = () => {
+    formErrors.value = null;
+}
+
+const getApiToken = () => {
+    axios.post(props.routes.get_api_token)
+        .then((response) => {
+            loadingModal.value = false;
+            apiToken.value = response.data.token;
+            // console.log(apiToken.value);
+
+        }).catch((error) => {
+        handleModalClose();
+        handleErrorResponse(error);
+    });
+}
+
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
@@ -622,7 +567,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
+        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -637,11 +582,13 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
-    editModalTrigger.value = false;
-    confirmationModalTrigger.value = false;
-    confirmationRetryTrigger.value = false;
+    showActivateModal.value = false;
+    showEditModal.value = false,
+        showApiTokenModal.value = false;
+    showRingotelConfirmationModal.value = false;
+    showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
+    showPairModal.value = false;
 }
 
 const hideNotification = () => {
@@ -656,30 +603,6 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-  switch (status) {
-    case 'success':
-    case 'emailed':
-    case 'delivered':
-      return {
-        backgroundColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        ringColor: 'ring-green-600/20'
-      };
-    case 'queued':
-      return {
-        backgroundColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        ringColor: 'ring-blue-600/20'
-      };
-    default:
-      return {
-        backgroundColor: 'bg-yellow-50',
-        textColor: 'text-yellow-700',
-        ringColor: 'ring-yellow-600/20'
-      };
-  }
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
