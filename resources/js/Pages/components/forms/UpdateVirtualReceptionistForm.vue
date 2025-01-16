@@ -212,52 +212,99 @@
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Advanced</h3>
-                            <p class="mt-1 text-sm text-gray-500">Set advanced settings for this voicemail
+                            <p class="mt-1 text-sm text-gray-500">Set advanced settings for this virtual receptionist
                             </p>
                         </div>
 
-                        <div class="divide-y divide-gray-200 col-span-6">
-
-                            <Toggle label="Play Voicemail Tutorial"
-                                description="Provide user with a guided tutorial when accessing voicemail for the first time."
-                                v-model="form.voicemail_tutorial" customClass="py-4" />
-
-                            <Toggle v-if="localOptions.permissions.manage_voicemail_recording_instructions"
-                                label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
-                                        speaking to end the recording."'
-                                v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
-
-                        </div>
-
                         <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-3 sm:col-span-2">
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional target="caller_id_prefix" label="Caller ID Name Prefix" />
+
+                                <InputField v-model="form.caller_id_prefix" type="text" name="caller_id_prefix"
+                                    :error="!!errors?.caller_id_prefix" id="caller_id_prefix" class="mt-2" />
+
+                                <div v-if="errors?.caller_id_prefix" class="mt-2 text-xs text-red-600">
+                                    {{ errors.caller_id_prefix[0] }}
+                                </div>
+
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional target="digit_length" label="Digit Length" />
+
+                                <InputField v-model="form.digit_length" type="text" name="digit_length"
+                                    :error="!!errors?.digit_length" id="digit_length" class="mt-2" />
+
+                                <div v-if="errors?.digit_length" class="mt-2 text-xs text-red-600">
+                                    {{ errors.digit_length[0] }}
+                                </div>
+
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
                                 <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="voicemail_alternate_greet_id" label="Announce Voicemail
-                                        Extension as" />
+                                    <LabelInputOptional target="timeout" label="Prompt Timeout (ms)" />
 
                                     <Popover>
                                         <template v-slot:popover-button>
                                             <InformationCircleIcon class="h-5 w-5 text-blue-500" />
                                         </template>
                                         <template v-slot:popover-panel>
-                                            <div>The parameter allows you to override the voicemail extension number
-                                                spoken
-                                                by the system in the voicemail greeting. This controls system greetings
-                                                that
-                                                read back an extension number, not user recorded greetings.</div>
+                                            <div>The time, in milliseconds, to wait for the caller's input after the prompt
+                                                finishes playing. If no input is received within this time, the system will
+                                                proceed based on the configured timeout action.</div>
                                         </template>
                                     </Popover>
                                 </div>
 
-                                <InputField v-model="form.voicemail_alternate_greet_id" type="text"
-                                    name="voicemail_alternate_greet_id" :error="!!errors?.voicemail_alternate_greet_id"
-                                    id="voicemail_alternate_greet_id" class="mt-2" />
+                                <InputField v-model="form.timeout" type="text" name="timeout" :error="!!errors?.timeout"
+                                    id="timeout" class="mt-2" />
 
-                                <div v-if="errors?.voicemail_alternate_greet_id" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_alternate_greet_id[0] }}
+                                <div v-if="errors?.timeout" class="mt-2 text-xs text-red-600">
+                                    {{ errors.timeout[0] }}
                                 </div>
 
                             </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <div class="flex items-center gap-1">
+                                    <LabelInputOptional target="pin" label="Pin Number" />
+
+                                    <Popover>
+                                        <template v-slot:popover-button>
+                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
+                                        </template>
+                                        <template v-slot:popover-panel>
+                                            <div>Use a PIN to protect this menu from unauthorized access.</div>
+                                        </template>
+                                    </Popover>
+                                </div>
+
+                                <InputField v-model="form.pin" type="text" name="pin" :error="!!errors?.pin" id="pin"
+                                    class="mt-2" />
+
+                                <div v-if="errors?.pin" class="mt-2 text-xs text-red-600">
+                                    {{ errors.pin[0] }}
+                                </div>
+
+                            </div>
+
+
+
+
+                        </div>
+
+                        <div class="divide-y divide-gray-200 col-span-6">
+
+                            <Toggle label="Enable Direct Dialing"
+                                description="Allows callers to dial extensions directly (e.g., If you know your party's extension, you may dial it now)."
+                                v-model="form.direct_dial" customClass="py-4" />
+
+                            <Toggle v-if="localOptions.permissions.manage_voicemail_recording_instructions"
+                                label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
+                                        speaking to end the recording."'
+                                v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
 
                         </div>
 
@@ -383,7 +430,12 @@ const form = reactive({
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     update_route: props.options.routes.update_route,
     apply_greeting_route: props.options.routes.apply_greeting_route,
-    repeat_prompt: '3',
+    repeat_prompt: props.options.ivr.ivr_menu_max_timeouts,
+    timeout: props.options.ivr.ivr_menu_timeout,
+    direct_dial: props.options.ivr.ivr_menu_direct_dial === "true",
+    caller_id_prefix: props.options.ivr.ivr_menu_cid_prefix,
+    pin: props.options.ivr.ivr_menu_pin_number,
+    digit_length: props.options.ivr.ivr_menu_digit_len,
     exit_action: null,
     exit_target: null,
     exit_extension: null,
