@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Devices;
 use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
 
 class CloudProvisioningController extends Controller
 {
@@ -12,7 +13,7 @@ class CloudProvisioningController extends Controller
     //public array $filters = [];
     //public string $sortField;
     //public string $sortOrder;
-    //protected string $viewName = 'CloudProvisioning';
+    protected string $viewName = 'CloudProvisioning';
     //protected array $searchable = ['source', 'destination', 'message'];
 
     public function __construct()
@@ -20,6 +21,29 @@ class CloudProvisioningController extends Controller
         $this->model = new Devices();
     }
 
+    public function index()
+    {
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return []; //$this->getData();
+                },
+
+                'routes' => [
+                    /*'current_page' => route('apps.index'),
+                    'create_organization' => route('apps.organization.create'),
+                    'update_organization' => route('apps.organization.update'),
+                    'destroy_organization' => route('apps.organization.destroy'),
+                    'pair_organization' => route('apps.organization.pair'),
+                    'get_all_orgs' => route('apps.organization.all'),
+                    'get_api_token' => route('apps.token.get'),
+                    'update_api_token' => route('apps.token.update'),
+                    'item_options' => route('apps.item.options'),*/
+                ]
+            ]
+        );
+    }
     /**
      * Retrieves the status of devices based on the provided request items.
      *
