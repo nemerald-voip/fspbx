@@ -85,8 +85,8 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ringotel_status">
-                        <Badge v-if="row.ringotel_status === 'true'" text="Activated" backgroundColor="bg-green-50"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ztp_status">
+                        <Badge v-if="row.ztp_status === 'true'" text="Activated" backgroundColor="bg-green-50"
                                textColor="text-green-700" ringColor="ring-green-600/20" />
                         <Badge v-else text="Inactive" backgroundColor="bg-rose-50" textColor="text-rose-700"
                                ringColor="ring-rose-600/20" />
@@ -97,7 +97,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="row.ringotel_status === 'true'" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Edit'" position='TopCenter'
                                              target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
@@ -106,7 +106,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="row.ringotel_status === 'false'" :content="'Activate'"
+                                <ejs-tooltip v-if="row.ztp_status === 'false'" :content="'Activate'"
                                              position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
@@ -114,7 +114,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="row.ringotel_status === 'true'" :content="'Deactivate'"
+                                <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Deactivate'"
                                              position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
@@ -153,7 +153,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting"
+            <CreateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
                                    :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
                                    @error="handleFormErrorResponse" @success="showNotification('success', $event)"
                                    @clear-errors="handleClearErrors" />
@@ -163,7 +163,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+            <UpdateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
                                    @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                                    @refresh-data="getItemOptions" @success="showNotification('success', $event)"
                                    @clear-errors="handleClearErrors" />
@@ -173,8 +173,8 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <PairZtpOrganizationForm :orgs="ringotelOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairRingotelOrgSubmiting"
-                                          @submit="handlePairRingtotelOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+            <PairZtpOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairZtpOrgSubmitting"
+                                          @submit="handlePairZtpOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                                           @success="showNotification('success', $event)"/>
         </template>
     </AddEditItemModal>
@@ -184,9 +184,9 @@
                        :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
                        confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
 
-    <ConfirmationModal :show="showRingotelConfirmationModal" @close="cancelRingotelAction"
-                       @confirm="confirmRingotelAction" :header="'Select a method to set up your Ringotel organization.'"
-                       :text="'Would you like to connect to an existing Ringotel organization or create a new one?'"
+    <ConfirmationModal :show="showZtpConfirmationModal" @close="cancelZtpAction"
+                       @confirm="confirmZtpAction" :header="'Select a method to set up your Ztp organization.'"
+                       :text="'Would you like to connect to an existing Ztp organization or create a new one?'"
                        confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
                        :loading="showConnectSpinner || showCreateSpinner" :color="'blue'"/>
 
@@ -231,18 +231,17 @@ const showApiTokenModal = ref(false);
 const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showConfirmationModal = ref(false);
-const showRingotelConfirmationModal = ref(false);
-const activateFormSubmiting = ref(null);
+const showZtpConfirmationModal = ref(false);
+const activateFormSubmitting = ref(null);
 const activationActiveTab = ref('organization');
-const updateFormSubmiting = ref(null);
-const updateApiTokenFormSubmiting = ref(null);
-const pairRingotelOrgSubmiting = ref(null);
+const updateFormSubmitting = ref(null);
+const pairZtpOrgSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const showDeactivateSpinner = ref(null);
 const showConnectSpinner = ref(null);
 const showCreateSpinner = ref(null);
-const confirmRingotelAction = ref(null);
-const cancelRingotelAction = ref(null);
+const confirmZtpAction = ref(null);
+const cancelZtpAction = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -261,47 +260,45 @@ const filterData = ref({
 });
 
 const itemOptions = ref({})
-const ringotelOrganizations = ref({})
+const ztpOrganizations = ref({})
 const selectedAccount =  ref(null)
 const apiToken = ref(null)
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
+    return [
         // {
         //     id: 'bulk_update',
         //     label: 'Edit',
         //     icon: 'PencilSquareIcon'
         // }
     ];
-
-    return actions;
 });
 
 onMounted(() => {
 });
 
 const handleActivateButtonClick = (itemUuid) => {
-    showRingotelConfirmationModal.value = true;
-    confirmRingotelAction.value = () => executeNewRingotelOrgAction(itemUuid);
-    cancelRingotelAction.value = () => executeExistingRingotelOrgAction(itemUuid);
+    showZtpConfirmationModal.value = true;
+    confirmZtpAction.value = () => executeNewZtpOrgAction(itemUuid);
+    cancelZtpAction.value = () => executeExistingZtpOrgAction(itemUuid);
 };
 
-const executeNewRingotelOrgAction = (itemUuid) => {
+const executeNewZtpOrgAction = (itemUuid) => {
     activationActiveTab.value = 'organization';
-    showRingotelConfirmationModal.value = false;
+    showZtpConfirmationModal.value = false;
     showActivateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions(itemUuid);
 }
 
-const executeExistingRingotelOrgAction = (itemUuid) => {
-    showRingotelConfirmationModal.value = false;
+const executeExistingZtpOrgAction = (itemUuid) => {
+    showZtpConfirmationModal.value = false;
     showPairModal.value = true
     loadingModal.value = true
     selectedAccount.value = itemUuid;
-    getRingotelOrganizations(itemUuid);
+    getZtpOrganizations(itemUuid);
 }
 
 const handleEditButtonClick = (itemUuid) => {
@@ -312,18 +309,18 @@ const handleEditButtonClick = (itemUuid) => {
 }
 
 const handleCreateRequest = (form) => {
-    activateFormSubmiting.value = true;
+    activateFormSubmitting.value = true;
     formErrors.value = null;
 
     axios.post(props.routes.create_organization, form)
         .then((response) => {
-            activateFormSubmiting.value = false;
+            activateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             itemOptions.value.orgId = response.data.org_id;
             activationActiveTab.value = 'connections';
 
         }).catch((error) => {
-        activateFormSubmiting.value = false;
+        activateFormSubmitting.value = false;
         handleClearSelection();
         handleFormErrorResponse(error);
     });
@@ -331,37 +328,37 @@ const handleCreateRequest = (form) => {
 };
 
 const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
+    updateFormSubmitting.value = true;
     formErrors.value = null;
 
     axios.put(props.routes.update_organization, form)
         .then((response) => {
-            updateFormSubmiting.value = false;
+            updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-        updateFormSubmiting.value = false;
+        updateFormSubmitting.value = false;
         handleClearSelection();
         handleFormErrorResponse(error);
     });
 
 };
 
-const handlePairRingtotelOrgRequest = (form) => {
-    pairRingotelOrgSubmiting.value = true;
+const handlePairZtpOrgRequest = (form) => {
+    pairZtpOrgSubmitting.value = true;
     formErrors.value = null;
 
     axios.post(props.routes.pair_organization, form)
         .then((response) => {
-            pairRingotelOrgSubmiting.value = false;
+            pairZtpOrgSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-        pairRingotelOrgSubmiting.value = false;
+        pairZtpOrgSubmitting.value = false;
         handleClearSelection();
         handleFormErrorResponse(error);
     });
@@ -489,13 +486,13 @@ const getItemOptions = (itemUuid = null) => {
     });
 }
 
-const getRingotelOrganizations = (itemUuid = null) => {
+const getZtpOrganizations = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {};
 
     axios.post(props.routes.get_all_orgs, payload)
         .then((response) => {
             loadingModal.value = false;
-            ringotelOrganizations.value = response.data;
+            ztpOrganizations.value = response.data;
             // console.log(itemOptions.value);
 
         }).catch((error) => {
@@ -584,7 +581,7 @@ const handleModalClose = () => {
     showActivateModal.value = false;
     showEditModal.value = false,
         showApiTokenModal.value = false;
-    showRingotelConfirmationModal.value = false;
+    showZtpConfirmationModal.value = false;
     showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
     showPairModal.value = false;
