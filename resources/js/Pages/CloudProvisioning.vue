@@ -153,7 +153,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting"
+            <CreateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmiting"
                                    :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
                                    @error="handleFormErrorResponse" @success="showNotification('success', $event)"
                                    @clear-errors="handleClearErrors" />
@@ -163,7 +163,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingotelOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+            <UpdateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
                                    @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                                    @refresh-data="getItemOptions" @success="showNotification('success', $event)"
                                    @clear-errors="handleClearErrors" />
@@ -173,7 +173,7 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <PairRingotelOrganizationForm :orgs="ringotelOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairRingotelOrgSubmiting"
+            <PairZtpOrganizationForm :orgs="ringotelOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairRingotelOrgSubmiting"
                                           @submit="handlePairRingtotelOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                                           @success="showNotification('success', $event)"/>
         </template>
@@ -211,10 +211,9 @@ import { MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateRingotelOrgForm from "./components/forms/CreateRingotelOrgForm.vue";
-import UpdateRingotelOrgForm from "./components/forms/UpdateRingotelOrgForm.vue";
-import UpdateRingotelApiTokenForm from "./components/forms/UpdateRingotelApiTokenForm.vue";
-import PairRingotelOrganizationForm from "./components/forms/PairRingotelOrganizationForm.vue";
+import CreateZtpOrgForm from "./components/forms/CreateZtpOrgForm.vue";
+import UpdateZtpOrgForm from "./components/forms/UpdateZtpOrgForm.vue";
+import PairZtpOrganizationForm from "./components/forms/PairZtpOrganizationForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
