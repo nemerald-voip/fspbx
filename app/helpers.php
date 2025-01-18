@@ -1,27 +1,30 @@
 <?php
 
-use App\Models\DefaultSettings;
-use App\Models\DeviceProfile;
-use App\Models\DeviceVendor;
-use App\Models\Dialplans;
-use App\Models\DomainSettings;
-use App\Models\Extensions;
 use App\Models\IvrMenus;
-use App\Models\MusicOnHold;
+use App\Models\Settings;
+use App\Models\Dialplans;
+use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\RingGroups;
-use App\Models\Settings;
-use App\Models\SipProfiles;
 use App\Models\Voicemails;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
+use App\Models\MusicOnHold;
+use App\Models\SipProfiles;
 use Illuminate\Support\Str;
-use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
+use App\Models\DeviceVendor;
+use App\Models\MusicStreams;
+use Illuminate\Http\Request;
+use App\Models\DeviceProfile;
+use App\Models\DomainSettings;
+use App\Models\SwitchVariable;
+use App\Models\DefaultSettings;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
+use Illuminate\Support\Facades\Http;
+use libphonenumber\PhoneNumberFormat;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use libphonenumber\NumberParseException;
 
 if (!function_exists('userCheckPermission')) {
     function userCheckPermission($permission)
@@ -772,11 +775,11 @@ if (!function_exists('getDestinationByCategory')) {
                     ->get();
                 break;
             case 'recordings':
-                    $rows = Recordings::where('domain_uuid', Session::get('domain_uuid'))
-                        //->whereNotIn('extension_uuid', [$extension->extension_uuid])
-                        ->orderBy('recording_name')
-                        ->get();
-                    break;
+                $rows = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('recording_name')
+                    ->get();
+                break;
             case 'voicemails':
                 $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
                     ->where('voicemail_enabled', 'true')
@@ -788,13 +791,16 @@ if (!function_exists('getDestinationByCategory')) {
                     [
                         'id' => sprintf('*98 XML %s', Session::get('domain_name')),
                         'label' => 'Check Voicemail'
-                    ], [
+                    ],
+                    [
                         'id' => sprintf('*411 XML %s', Session::get('domain_name')),
                         'label' => 'Company Directory'
-                    ], [
+                    ],
+                    [
                         'id' => 'hangup:',
                         'label' => 'Hangup'
-                    ], [
+                    ],
+                    [
                         'id' => sprintf('*732 XML %s', Session::get('domain_name')),
                         'label' => 'Record'
                     ]
@@ -832,10 +838,10 @@ if (!function_exists('getDestinationByCategory')) {
                         $app_name = "Auto Receptionist";
                         break;
                     case 'recordings':
-                            $id = sprintf('streamfile.lua %s', $row->recording_filename);
-                            $label = $row->recording_name;
-                            $app_name = "Recordings";
-                            break;
+                        $id = sprintf('streamfile.lua %s', $row->recording_filename);
+                        $label = $row->recording_name;
+                        $app_name = "Recordings";
+                        break;
                     case 'others':
                         $id = $row['id'];
                         $label = $row['label'];
@@ -884,15 +890,17 @@ if (!function_exists('getTimeoutDestinations')) {
             'categories' => [],
             'targets' => [],
         ];
-        foreach ([
-            'ringgroup',
-            'dialplans',
-            'extensions',
-            'timeconditions',
-            'voicemails',
-            'ivrs',
-            'others'
-        ] as $i => $category) {
+        foreach (
+            [
+                'ringgroup',
+                'dialplans',
+                'extensions',
+                'timeconditions',
+                'voicemails',
+                'ivrs',
+                'others'
+            ] as $i => $category
+        ) {
             $data = getDestinationByCategory($category)['list'];
             foreach ($data as $b => $d) {
                 $output['categories'][$category] = [
@@ -921,11 +929,11 @@ if (!function_exists('getTimeoutDestinationsLabels')) {
     {
         $destinations = getTimeoutDestinations($domain);
         $output = [];
-        foreach($actions as $action) {
+        foreach ($actions as $action) {
             foreach ($destinations["targets"] as $category => $values) {
                 foreach ($values as $data) {
                     if ($data["value"] == $action['destination_data']) {
-                        $output[] = $destinations["categories"][(string) $category]["name"].' '.$data["name"];
+                        $output[] = $destinations["categories"][(string) $category]["name"] . ' ' . $data["name"];
                     }
                 }
             }
@@ -944,9 +952,7 @@ if (!function_exists('pr')) {
 }
 
 if (!function_exists('setDefaultS3')) {
-    function setDefaultS3($arr)
-    {
-    }
+    function setDefaultS3($arr) {}
 }
 
 if (!function_exists('getCredentialKey')) {
@@ -1383,8 +1389,8 @@ if (!function_exists('getProfileCollection')) {
     }
 }
 
-if (!function_exists('getMusicOnHoldCollection')) {
-    function getMusicOnHoldCollection(string $domain = null): array
+if (!function_exists('getSoundsCollection')) {
+    function getSoundsCollection(string $domain = null): array
     {
         $musicOnHold = [];
         $musicOnHoldCollection = MusicOnHold::query();
@@ -1412,16 +1418,64 @@ if (!function_exists('getMusicOnHoldCollection')) {
             ];
         }
 
-        unset($musicOnHoldCollection, $recordingsCollection, $item);
+        $ringtonesCollection = SwitchVariable::where('var_category', 'Ringtones')
+            ->where('var_enabled', 'true')
+            ->orderBy('var_name')
+            ->select('var_uuid', 'var_name', 'var_value')
+            ->get();
+        foreach ($ringtonesCollection as $item) {
+            $ringtones[] = [
+                'name' => $item->var_name,
+                'value' => $item->var_value
+            ];
+        }
+
+        $streamsCollection = MusicStreams::where('stream_enabled', 'true')
+            ->orderBy('stream_name')
+            ->select('stream_uuid', 'stream_name', 'stream_location')
+            ->get();
+        foreach ($streamsCollection as $item) {
+            $streams[] = [
+                'name' => $item->stream_name,
+                'value' => $item->stream_location
+            ];
+        }
+
+        $variables = SwitchVariable::whereIn('var_name', ['default_language', 'default_dialect', 'default_voice'])
+            ->pluck('var_value', 'var_name');
+        // Extract values
+        $defaultLanguage = $variables['default_language'] ?? 'en'; // Fallback to 'en' if not found
+        $defaultDialect = $variables['default_dialect'] ?? 'us';  // Fallback to 'us' if not found
+        $defaultVoice = $variables['default_voice'] ?? 'callie';  // Fallback to 'callie' if not found
+
+        // Construct the path
+        $path = "/usr/share/freeswitch/sounds/{$defaultLanguage}/{$defaultDialect}/{$defaultVoice}/";
+
+        $sounds = Storage::build([
+            'driver' => 'local',
+            'root' => $path,
+        ])->allFiles();
+
+        $sounds = collect($sounds)
+            ->map(function ($file) {
+                // Remove subdirectories with numbers (e.g., 8000, 32000) or specific names like 'flac'
+                $cleanedFile = preg_replace('#/(\d+|flac)/#', '/', $file);
+                return [
+                    'name' => $cleanedFile,
+                    'value' => $cleanedFile,
+                ];
+            })
+            ->unique('name') // Ensure uniqueness by 'name'
+            ->values()
+            ->all();
+
+        unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
         return [
             'Music on Hold' => $musicOnHold,
             'Recordings' => $recordings,
-            'Ringtones' => [
-                [
-                    'name' => 'us-ring',
-                    'value' => 'us-ring'
-                ]
-            ]
+            'Ringtones' => $ringtones,
+            'Streams' => $streams,
+            'Sounds' => $sounds,
         ];
     }
 }

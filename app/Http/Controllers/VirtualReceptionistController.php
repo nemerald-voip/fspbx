@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\IvrMenuOptions;
 use App\Models\VoicemailGreetings;
-use Illuminate\Support\Facades\DB;
 use App\Models\VoicemailDestinations;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -516,6 +515,8 @@ class VirtualReceptionistController extends Controller
                 ['value' => '5', 'name' => '5 Times'],
             ];
 
+            $sounds = getSoundsCollection();
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -530,6 +531,7 @@ class VirtualReceptionistController extends Controller
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'promt_repeat_options' => $promptRepeatOptions,
+                'sounds' => $sounds,
                 // Define options for other fields as needed
             ];
 

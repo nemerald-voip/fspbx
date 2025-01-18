@@ -309,6 +309,13 @@
                         </div>
 
 
+                        <ListboxGroup
+      :options="options.sounds"
+      v-model="form.ring_back"
+      placeholder="Choose an option"
+    />
+
+
                     </div>
                     <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
                         <button type="submit"
@@ -368,6 +375,8 @@ import IvrOptions from "../general/IvrOptions.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
+import ListboxGroup from "../general/ListboxGroup.vue";
+
 
 const props = defineProps({
     options: Object,
@@ -436,6 +445,7 @@ const form = reactive({
     caller_id_prefix: props.options.ivr.ivr_menu_cid_prefix,
     pin: props.options.ivr.ivr_menu_pin_number,
     digit_length: props.options.ivr.ivr_menu_digit_len,
+    ring_back: null,
     exit_action: null,
     exit_target: null,
     exit_extension: null,
