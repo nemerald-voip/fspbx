@@ -61,4 +61,12 @@ class Recordings extends Model
             event(new GreetingDeleted($model->recording_uuid, $model->domain_uuid, $model->recording_filename));
         });
     }
+
+    /**
+     * Get the domain to which this model belongs
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
 }

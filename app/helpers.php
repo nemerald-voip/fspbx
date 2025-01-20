@@ -1389,13 +1389,14 @@ if (!function_exists('getProfileCollection')) {
     }
 }
 
-if (!function_exists('getSoundsCollection')) {
-    function getSoundsCollection(string $domain = null): array
+if (!function_exists('getRingBackTonesCollection')) {
+    function getRingBackTonesCollection(string $domain = null): array
     {
         $musicOnHold = [];
         $musicOnHoldCollection = MusicOnHold::query();
         if ($domain) {
-            $musicOnHoldCollection->where('domain_uuid', $domain);
+            $musicOnHoldCollection->where('domain_uuid', $domain)
+                ->orWhere('domain_uuid', null);
         }
         $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get()->unique('music_on_hold_name');
         foreach ($musicOnHoldCollection as $item) {
@@ -1406,40 +1407,91 @@ if (!function_exists('getSoundsCollection')) {
         }
 
         $recordings = [];
-        $recordingsCollection = Recordings::query();
+        $recordingsCollection = Recordings::query()
+            ->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name'); // Select only the fields you need from the domain
+            }])
+            ->select('domain_uuid', 'recording_filename', 'recording_name');
         if ($domain) {
             $recordingsCollection->where('domain_uuid', $domain);
         }
         $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
+        $recording_path = DefaultSettings::where('default_setting_category', 'switch')
+            ->where('default_setting_subcategory', 'recordings')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value');
+
+            // logger($recordingsCollection);
         foreach ($recordingsCollection as $item) {
             $recordings[] = [
                 'name' => $item->recording_name,
-                'value' => $item->recording_filename
+                'value' => $recording_path . '/' . $item->domain->domain_name .'/'. $item->recording_filename
             ];
         }
+        // logger($recordings);
 
         $ringtonesCollection = SwitchVariable::where('var_category', 'Ringtones')
             ->where('var_enabled', 'true')
             ->orderBy('var_name')
             ->select('var_uuid', 'var_name', 'var_value')
             ->get();
+        $ringtones = [];
         foreach ($ringtonesCollection as $item) {
             $ringtones[] = [
                 'name' => $item->var_name,
-                'value' => $item->var_value
+                'value' => '${' . $item->var_name . '}'
             ];
         }
 
         $streamsCollection = MusicStreams::where('stream_enabled', 'true')
             ->orderBy('stream_name')
-            ->select('stream_uuid', 'stream_name', 'stream_location')
-            ->get();
+            ->select('stream_uuid', 'stream_name', 'stream_location');
+        if ($domain) {
+            $streamsCollection->where('domain_uuid', $domain)
+                ->orWhere('domain_uuid', null);
+        }
+        $streamsCollection = $streamsCollection->get();
+        $streams = [];
         foreach ($streamsCollection as $item) {
             $streams[] = [
                 'name' => $item->stream_name,
                 'value' => $item->stream_location
             ];
         }
+
+        unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
+        return [
+            'Music on Hold' => $musicOnHold,
+            'Recordings' => $recordings,
+            'Ringtones' => $ringtones,
+            'Streams' => $streams,
+        ];
+    }
+}
+
+if (!function_exists('getSoundsCollection')) {
+    function getSoundsCollection(string $domain = null): array
+    {
+        $recordings = [];
+        $recordingsCollection = Recordings::query()
+            ->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name'); // Select only the fields you need from the domain
+            }])
+            ->select('domain_uuid', 'recording_filename', 'recording_name');
+        if ($domain) {
+            $recordingsCollection->where('domain_uuid', $domain);
+        }
+        $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
+ 
+            // logger($recordingsCollection);
+        foreach ($recordingsCollection as $item) {
+            $recordings[] = [
+                'name' => $item->recording_name,
+                'value' => $item->recording_filename
+            ];
+        }
+        // logger($recordings);
+
 
         $variables = SwitchVariable::whereIn('var_name', ['default_language', 'default_dialect', 'default_voice'])
             ->pluck('var_value', 'var_name');
@@ -1471,10 +1523,7 @@ if (!function_exists('getSoundsCollection')) {
 
         unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
         return [
-            'Music on Hold' => $musicOnHold,
             'Recordings' => $recordings,
-            'Ringtones' => $ringtones,
-            'Streams' => $streams,
             'Sounds' => $sounds,
         ];
     }

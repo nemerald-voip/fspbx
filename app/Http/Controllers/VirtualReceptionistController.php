@@ -515,7 +515,8 @@ class VirtualReceptionistController extends Controller
                 ['value' => '5', 'name' => '5 Times'],
             ];
 
-            $sounds = getSoundsCollection();
+            $ring_back_tones = getRingBackTonesCollection(session('domain_uuid'));
+            $sounds = getSoundsCollection(session('domain_uuid'));
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -531,6 +532,7 @@ class VirtualReceptionistController extends Controller
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'promt_repeat_options' => $promptRepeatOptions,
+                'ring_back_tones' => $ring_back_tones,
                 'sounds' => $sounds,
                 // Define options for other fields as needed
             ];

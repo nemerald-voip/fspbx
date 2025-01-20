@@ -290,8 +290,75 @@
 
                             </div>
 
+                            <div class="col-span-6 sm:col-span-3">
+                                <div class="flex items-center gap-1">
+                                    <LabelInputOptional target="ring_back_tone" label="Ring Back Tone" />
 
+                                    <Popover>
+                                        <template v-slot:popover-button>
+                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
+                                        </template>
+                                        <template v-slot:popover-panel>
+                                            <div>Specify the sound or tone the caller hears while waiting for the
+                                                destination to answer the call.</div>
+                                        </template>
+                                    </Popover>
+                                </div>
 
+                                <ListboxGroup :options="options.ring_back_tones" v-model="form.ring_back_tone"
+                                    placeholder="Choose an option" />
+                                <div v-if="errors?.ring_back_tone" class="mt-2 text-xs text-red-600">
+                                    {{ errors.ring_back_tone[0] }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3">
+                                <div class="flex items-center gap-1">
+                                    <LabelInputOptional target="invalid_input_message" label="Invalid Input Message" />
+
+                                    <Popover>
+                                        <template v-slot:popover-button>
+                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
+                                        </template>
+                                        <template v-slot:popover-panel>
+                                            <div>Specify the audio message played to the caller when they provide an invalid input or press an unrecognized key.</div>
+                                        </template>
+                                    </Popover>
+                                </div>
+
+                                <ListboxGroup :options="options.sounds" v-model="form.invalid_input_message"
+                                    placeholder="Choose an option" />
+                                <div v-if="errors?.invalid_input_message" class="mt-2 text-xs text-red-600">
+                                    {{ errors.invalid_input_message[0] }}
+                                </div>
+
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <div class="flex items-center gap-1">
+                                    <LabelInputOptional target="exit_message" label="Exit Message" />
+
+                                    <Popover>
+                                        <template v-slot:popover-button>
+                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
+                                        </template>
+                                        <template v-slot:popover-panel>
+                                            <div>Specify the audio message played to the caller when the menu is terminated.</div>
+                                        </template>
+                                    </Popover>
+                                </div>
+
+                                <ListboxGroup :options="options.sounds" v-model="form.exit_message"
+                                    placeholder="Choose an option" />
+                                <div v-if="errors?.exit_message" class="mt-2 text-xs text-red-600">
+                                    {{ errors.exit_message[0] }}
+                                </div>
+
+                            </div>
 
                         </div>
 
@@ -308,12 +375,6 @@
 
                         </div>
 
-
-                        <ListboxGroup
-      :options="options.sounds"
-      v-model="form.ring_back"
-      placeholder="Choose an option"
-    />
 
 
                     </div>
@@ -445,7 +506,9 @@ const form = reactive({
     caller_id_prefix: props.options.ivr.ivr_menu_cid_prefix,
     pin: props.options.ivr.ivr_menu_pin_number,
     digit_length: props.options.ivr.ivr_menu_digit_len,
-    ring_back: null,
+    ring_back_tone: props.options.ivr.ivr_menu_ringback,
+    invalid_input_message: props.options.ivr.ivr_menu_invalid_sound,
+    exit_message: props.options.ivr.ivr_menu_exit_sound,
     exit_action: null,
     exit_target: null,
     exit_extension: null,
