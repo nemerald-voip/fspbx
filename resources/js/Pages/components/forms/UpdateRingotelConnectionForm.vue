@@ -528,7 +528,7 @@ const form = reactive({
     max_registrations: String(props.selectedConnection?.provision?.maxregs ?? ''),
     app_opus_codec: !props.selectedConnection?.provision?.app?.g711 ?? false,
     one_push: props.selectedConnection?.provision?.["1push"] ?? false,
-    show_call_settings: props.selectedConnection?.provision?.nostates === false, // Assuming inverse of `nostates`
+    show_call_settings: props.selectedConnection?.provision?.noptions === false, // Assuming inverse of `noptions`
     allow_call_recording: !props.selectedConnection?.provision?.norec ?? false, // Inverse of `norec`
     allow_state_change: props.selectedConnection?.provision?.nostates === false, // Assuming `nostates` indicates restriction
     allow_video_calls: !props.selectedConnection?.provision?.novideo ?? false, // Inverse of `novideo`
