@@ -38,7 +38,7 @@ class Update0924
             return false;
         }
 
-        if (!$this->downloadAndReplaceFile($this->functionsFileUrl, $this->functionsFilePath, 'fax_send.php')) {
+        if (!$this->downloadAndReplaceFile($this->faxSendFileUrl, $this->faxSendFilePath, 'fax_send.php')) {
             return false;
         }
 
