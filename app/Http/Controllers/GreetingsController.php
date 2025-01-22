@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Recordings;
 use Illuminate\Support\Str;
-use App\Services\OpenAIService;
 use Illuminate\Http\Request;
+use App\Models\SwitchVariable;
+use App\Services\OpenAIService;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\TextToSpeechRequest;
@@ -75,6 +76,94 @@ class GreetingsController extends Controller
         // Serve the file inline
         return response()->file(Storage::disk('recordings')->path($filePath));
     }
+
+
+        /**
+     * Serve the greeting file as a URL.
+     *
+     * @param string $greetingId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getIvrMessageUrl()
+    {
+        try {
+            // Step 1: Get the greeting_id from the request
+            $file_name = request('file_name');
+
+            // Check if the greeting exists
+            if (!$file_name) {
+                throw new \Exception('File not found');
+            }
+
+            // Generate the file URL using the defined route
+            $fileUrl = route('ivr.message.file.serve', [
+                'file_name' => urlencode($file_name),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_url' => $fileUrl,
+            ]);
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    public function serveIvrMessageFile($file_name)
+    {
+        // Primary path in the 'recordings' disk
+        $primaryPath = session('domain_name') . '/' . $file_name;
+    
+        // Check if the file exists in the primary path
+        if (!Storage::disk('recordings')->exists($primaryPath)) {
+            // Check the alternative path
+
+            // Retrieve default variables for the alternative path
+            $variables = SwitchVariable::whereIn('var_name', ['default_language', 'default_dialect', 'default_voice'])
+                ->pluck('var_value', 'var_name');
+
+            $defaultLanguage = $variables['default_language'] ?? 'en'; // Fallback to 'en' if not found
+            $defaultDialect = $variables['default_dialect'] ?? 'us';  // Fallback to 'us' if not found
+            $defaultVoice = $variables['default_voice'] ?? 'callie';  // Fallback to 'callie' if not found
+
+            // Alternative path in the 'sounds' disk
+            $alternativePath = $defaultLanguage . "/" . $defaultDialect . "/" . $defaultVoice  . "/". str_replace('/', "/16000/", $file_name);
+
+            if (!Storage::disk('sounds')->exists($alternativePath)) {
+                // File not found in either location
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => 'File not found']
+                ], 404);
+            }
+    
+            // File found in the alternative path
+            $filePath = Storage::disk('sounds')->path($alternativePath);
+        } else {
+            // File found in the primary path
+            $filePath = Storage::disk('recordings')->path($primaryPath);
+        }
+    
+        // Check if the 'download' parameter is present and set to true
+        $download = request()->query('download', false);
+    
+        if ($download) {
+            // Serve the file as a download
+            return response()->download($filePath);
+        }
+    
+        // Serve the file inline
+        return response()->file($filePath);
+    }
+    
 
     public function textToSpeech(OpenAIService $openAIService, TextToSpeechRequest $request)
     {

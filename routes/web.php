@@ -184,8 +184,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('greetings/delete-greeting', [GreetingsController::class, 'deleteGreetingFile'])->name('greetings.file.delete');
     Route::post('greetings/update-greeting', [GreetingsController::class, 'updateGreetingFile'])->name('greetings.file.update');
     Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
-
-
+    Route::post('/ivr/message/url', [GreetingsController::class, 'getIvrMessageUrl'])->name('ivr.message.url');
+    Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
+    ->name('ivr.message.file.serve')
+    ->where('file_name', '(.*)');
+    
     // SIP Credentials
     Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
 

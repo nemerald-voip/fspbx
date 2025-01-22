@@ -1500,18 +1500,13 @@ if (!function_exists('getSoundsCollection')) {
         $defaultDialect = $variables['default_dialect'] ?? 'us';  // Fallback to 'us' if not found
         $defaultVoice = $variables['default_voice'] ?? 'callie';  // Fallback to 'callie' if not found
 
-        // Construct the path
-        $path = "/usr/share/freeswitch/sounds/{$defaultLanguage}/{$defaultDialect}/{$defaultVoice}/";
-
-        $sounds = Storage::build([
-            'driver' => 'local',
-            'root' => $path,
-        ])->allFiles();
+        $sounds = Storage::disk('sounds')->allFiles($defaultLanguage . "/" . $defaultDialect . "/" . $defaultVoice);
 
         $sounds = collect($sounds)
             ->map(function ($file) {
-                // Remove subdirectories with numbers (e.g., 8000, 32000) or specific names like 'flac'
-                $cleanedFile = preg_replace('#/(\d+|flac)/#', '/', $file);
+                // Remove the "en/us/callie" prefix and subdirectories with numbers or specific names like 'flac'
+                $cleanedFile = preg_replace('#^en/us/callie/#', '', $file); // Remove "en/us/callie"
+                $cleanedFile = preg_replace('#/(\d+|flac)/#', '/', $cleanedFile);
                 return [
                     'name' => $cleanedFile,
                     'value' => $cleanedFile,

@@ -450,6 +450,7 @@ class VirtualReceptionistController extends Controller
                 $routes = array_merge($routes, [
                     'text_to_speech_route' => route('greetings.textToSpeech'),
                     'greeting_route' => route('greeting.url'),
+                    'ivr_message_route' => route('ivr.message.url'),
                     'delete_greeting_route' => route('greetings.file.delete'),
                     'update_greeting_route' => route('greetings.file.update'),
                     'upload_greeting_route' => route('greetings.file.upload'),

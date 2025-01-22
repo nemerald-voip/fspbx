@@ -127,7 +127,11 @@
 
                         </div>
 
-                        <div class="pt-3 grid grid-cols-6 gap-6">
+                        <div>
+                            <h3 class="pt-3 text-base font-semibold leading-6 text-gray-900">Failback Options</h3>
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputRequired label="If caller enters no action or an invalid option"
                                     class="truncate mb-1" />
@@ -313,6 +317,23 @@
 
                             </div>
 
+                            <div class="content-end col-span-3 pb-1 text-sm font-medium leading-6 text-gray-900">
+                                <div class="flex items-center whitespace-nowrap gap-2">
+                                    <!-- Play Button -->
+                                    <PlayCircleIcon 
+                                        v-if="form.ring_back_tone && !isRingBackTonePlaying && (form.ring_back_tone.endsWith('.wav') || form.ring_back_tone.endsWith('.mp3'))" 
+                                        @click="playRingBackTone"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                    <!-- Pause Button -->
+                                    <PauseCircleIcon 
+                                    v-if="form.ring_back_tone && isRingBackTonePlaying && (form.ring_back_tone.endsWith('.wav') || form.ring_back_tone.endsWith('.mp3'))" 
+                                        @click="pauseRingBackTone"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                    </div>
+                            </div>
+
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
@@ -338,6 +359,20 @@
 
                             </div>
 
+                            <div class="content-end col-span-3 pb-1 text-sm font-medium leading-6 text-gray-900">
+                                <div class="flex items-center whitespace-nowrap gap-2">
+                                    <!-- Play Button -->
+                                    <PlayCircleIcon v-if="form.invalid_input_message && !isInvalidInputMessageAudioPlaying" @click="playInvalidInputMessage"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                    <!-- Pause Button -->
+                                    <PauseCircleIcon v-if="form.invalid_input_message && isInvalidInputMessageAudioPlaying"
+                                        @click="pauseInvalidInputMessage"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                    </div>
+                            </div>
+
                             <div class="col-span-6 sm:col-span-3">
                                 <div class="flex items-center gap-1">
                                     <LabelInputOptional target="exit_message" label="Exit Message" />
@@ -358,6 +393,20 @@
                                     {{ errors.exit_message[0] }}
                                 </div>
 
+                            </div>
+
+                            <div class="content-end col-span-3 pb-1 text-sm font-medium leading-6 text-gray-900">
+                                <div class="flex items-center whitespace-nowrap gap-2">
+                                    <!-- Play Button -->
+                                    <PlayCircleIcon v-if="form.exit_message && !isExitMessageAudioPlaying" @click="playExitMessage"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                    <!-- Pause Button -->
+                                    <PauseCircleIcon v-if="form.exit_message && isExitMessageAudioPlaying"
+                                        @click="pauseExitMessage"
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                    </div>
                             </div>
 
                         </div>
@@ -710,6 +759,7 @@ const playGreeting = () => {
         });
 };
 
+
 const downloadGreeting = () => {
     isDownloading.value = true; // Start the spinner
 
@@ -841,6 +891,185 @@ const handleGreetingUpdate = (updatedGreeting) => {
         });
 
 };
+
+const currentInvalidInputMessageAudio = ref(null);
+const isInvalidInputMessageAudioPlaying = ref(false);
+
+// Watch for changes in the invalid_input_message field
+watch(
+    () => form.invalid_input_message,
+    (newValue, oldValue) => {
+        // Reset the audio object if the message changes
+        if (newValue !== oldValue) {
+            if (currentInvalidInputMessageAudio.value) {
+                currentInvalidInputMessageAudio.value.pause();
+                currentInvalidInputMessageAudio.value = null; // Clear the previous audio object
+            }
+            isInvalidInputMessageAudioPlaying.value = false; // Reset playing state
+        }
+    }
+);
+
+const playInvalidInputMessage = () => {
+    currentExitMessageAudio.value = null;
+    // Check if there's already an audio object and it is paused
+    if (currentInvalidInputMessageAudio.value && currentInvalidInputMessageAudio.value.paused) {
+        currentInvalidInputMessageAudio.value.play();
+        isInvalidInputMessageAudioPlaying.value = true;
+        return;
+    }
+    axios.post(props.options.routes.ivr_message_route, { file_name: form.invalid_input_message })
+        .then((response) => {
+            // Stop the currently playing audio (if any)
+            if (currentInvalidInputMessageAudio.value) {
+                currentInvalidInputMessageAudio.value.pause();
+                currentInvalidInputMessageAudio.value.currentTime = 0; // Reset the playback position
+            }
+            if (response.data.success) {
+                isInvalidInputMessageAudioPlaying.value = true;
+
+                currentInvalidInputMessageAudio.value = new Audio(response.data.file_url);
+                currentInvalidInputMessageAudio.value.play().catch((error) => {
+                    isInvalidInputMessageAudioPlaying.value = false;
+                    emits('error', { message: 'Audio playback failed', });
+                });
+
+                // Add an event listener for when the audio ends
+                currentInvalidInputMessageAudio.value.addEventListener("ended", () => {
+                    isInvalidInputMessageAudioPlaying.value = false;
+                });
+            }
+
+        }).catch((error) => {
+            emits('error', error);
+        });
+};
+
+const pauseInvalidInputMessage = () => {
+    if (currentInvalidInputMessageAudio.value) {
+        currentInvalidInputMessageAudio.value.pause();
+        isInvalidInputMessageAudioPlaying.value = false;
+    }
+};
+
+
+const currentExitMessageAudio = ref(null);
+const isExitMessageAudioPlaying = ref(false);
+
+// Watch for changes in the invalid_input_message field
+watch(
+    () => form.exit_message,
+    (newValue, oldValue) => {
+        // Reset the audio object if the message changes
+        if (newValue !== oldValue) {
+            if (currentExitMessageAudio.value) {
+                currentExitMessageAudio.value.pause();
+                currentExitMessageAudio.value = null; // Clear the previous audio object
+            }
+            isExitMessageAudioPlaying.value = false; // Reset playing state
+        }
+    }
+);
+
+const playExitMessage = () => {
+    currentInvalidInputMessageAudio.value = null;
+    // Check if there's already an audio object and it is paused
+    if (currentExitMessageAudio.value && currentExitMessageAudio.value.paused) {
+            currentExitMessageAudio.value.play();
+            isExitMessageAudioPlaying.value = true;
+        return;
+    }
+    axios.post(props.options.routes.ivr_message_route, { file_name: form.exit_message })
+        .then((response) => {
+            // Stop the currently playing audio (if any)
+            if (currentExitMessageAudio.value) {
+                currentExitMessageAudio.value.pause();
+                currentExitMessageAudio.value.currentTime = 0; // Reset the playback position
+            }
+            if (response.data.success) {
+                isExitMessageAudioPlaying.value = true;
+
+                currentExitMessageAudio.value = new Audio(response.data.file_url);
+                currentExitMessageAudio.value.play().catch((error) => {
+                    isExitMessageAudioPlaying.value = false;
+                    emits('error', { message: 'Audio playback failed', });
+                });
+
+                // Add an event listener for when the audio ends
+                currentExitMessageAudio.value.addEventListener("ended", () => {
+                    isExitMessageAudioPlaying.value = false;
+                });
+            }
+
+        }).catch((error) => {
+            emits('error', error);
+        });
+};
+
+
+const currentRingBackToneAudio = ref(null);
+const isRingBackTonePlaying = ref(false);
+
+// Watch for changes in the invalid_input_message field
+watch(
+    () => form.ring_back_tone,
+    (newValue, oldValue) => {
+        // Reset the audio object if the message changes
+        if (newValue !== oldValue) {
+            if (currentRingBackToneAudio.value) {
+                currentRingBackToneAudio.value.pause();
+                currentRingBackToneAudio.value = null; // Clear the previous audio object
+            }
+            isRingBackTonePlaying.value = false; // Reset playing state
+        }
+    }
+);
+
+const playRingBackTone = () => {
+    currentInvalidInputMessageAudio.value = null;
+    // Check if there's already an audio object and it is paused
+    if (currentRingBackToneAudio.value && currentRingBackToneAudio.value.paused) {
+        currentRingBackToneAudio.value.play();
+        isRingBackTonePlaying.value = true;
+        return;
+    }
+    const filePath = form.ring_back_tone; // The full path
+    const fileName = filePath.substring(filePath.lastIndexOf('/') + 1); // Extract the file name
+
+    axios.post(props.options.routes.greeting_route, { file_name: fileName })
+        .then((response) => {
+            // Stop the currently playing audio (if any)
+            if (currentRingBackToneAudio.value) {
+                currentRingBackToneAudio.value.pause();
+                currentRingBackToneAudio.value.currentTime = 0; // Reset the playback position
+            }
+            if (response.data.success) {
+                isRingBackTonePlaying.value = true;
+
+                currentRingBackToneAudio.value = new Audio(response.data.file_url);
+                currentRingBackToneAudio.value.play().catch((error) => {
+                    isRingBackTonePlaying.value = false;
+                    emits('error', { message: 'Audio playback failed', });
+                });
+
+                // Add an event listener for when the audio ends
+                currentRingBackToneAudio.value.addEventListener("ended", () => {
+                    isRingBackTonePlaying.value = false;
+                });
+            }
+
+        }).catch((error) => {
+            emits('error', error);
+        });
+};
+
+const pauseRingBackTone = () => {
+    if (currentRingBackToneAudio.value) {
+        currentRingBackToneAudio.value.pause();
+        isRingBackTonePlaying.value = false;
+    }
+};
+
 
 const handleModalClose = () => {
     showEditKeyModal.value = false;
