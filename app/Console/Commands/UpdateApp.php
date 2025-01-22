@@ -7,6 +7,7 @@ use App\Services\GitHubApiService;
 use Symfony\Component\Process\Process;
 use App\Console\Commands\Updates\Update097;
 use App\Console\Commands\Updates\Update0917;
+use App\Console\Commands\Updates\Update0924;
 
 
 class UpdateApp extends Command
@@ -50,6 +51,7 @@ class UpdateApp extends Command
             '0.9.7' => Update097::class,
             '0.9.11' => Update097::class,
             '0.9.17' => Update0917::class,
+            '0.9.24' => Update0924::class,
             // Add more versions as needed
         ];
 
