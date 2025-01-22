@@ -20,6 +20,7 @@ class Update0924
     public function __construct()
     {
         $this->dialplanFilePath = base_path('public/app/dialplans/resources/classes/dialplan.php');
+        $this->functionsFilePath = base_path('public/app/xml_cdr/resources/classes/xml_cdr.php');
         $this->functionsFilePath = base_path('public/app/fax_queue/resources/job/fax_send.php');
     }
 
