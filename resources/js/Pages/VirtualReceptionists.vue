@@ -295,8 +295,9 @@ const handleCreateRequest = (form) => {
 const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
+    console.log(form);
 
-    axios.put(form.update_route, form)
+    axios.put(itemOptions.value.routes.update_route, form)
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);

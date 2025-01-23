@@ -34,11 +34,15 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             // 'greeting_id' => 'required|string',
             'ivr_menu_enabled' => 'present',
             'ivr_menu_description' => 'nullable|string|max:100',
-            // 'voicemail_transcription_enabled' => 'present',
-            // 'voicemail_file' => 'present',
-            // 'voicemail_local_after_email' => 'present',
-            // 'voicemail_recording_instructions' => 'present',
-            // 'voicemail_copies' => 'nullable|array',
+            'repeat_prompt' => 'required',
+            'caller_id_prefix' => 'nullable|string|max:25',
+            'digit_length' => 'required|numeric',
+            'prompt_timeout' => 'required|numeric',
+            'pin' => 'nullable|numeric',
+            'ring_back_tone' => 'present',
+            'invalid_input_message' => 'present',
+            'exit_message' => 'present',
+            'direct_dial' => 'present',
             // 'extension' => "uuid",
         ];
     }
@@ -85,11 +89,11 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         //     ]);
         // }
 
-        // if ($this->has('voicemail_tutorial')) {
-        //     $this->merge([
-        //         'voicemail_tutorial' => $this->voicemail_tutorial ? 'true' : 'false',
-        //     ]);
-        // }
+        if ($this->has('repeat_prompt') && $this->repeat_prompt == 'NULL') {
+            $this->merge([
+                'repeat_prompt' => null,
+            ]);
+        }
 
         if ($this->has('ivr_menu_enabled')) {
             $this->merge([
@@ -146,7 +150,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'ivr_menu_name' => 'name',
             'ivr_menu_extension' => 'extension',
             'greeting_id' => 'greeting',
-            'ivr_menu_description' => 'email address',
+            'caller_id_prefix' => 'caller id name prefix',
             'voicemail_enabled' => 'enabled',
             'voicemail_description' => 'description',
             'voicemail_alternate_greet_id' => 'value',

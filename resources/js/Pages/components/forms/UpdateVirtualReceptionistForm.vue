@@ -9,8 +9,8 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension) && item.slug === 'settings') ||
-                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
+                    <ExclamationCircleIcon v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension || errors?.repeat_prompt) && item.slug === 'settings') ||
+                        ((errors?.caller_id_prefix || errors?.digit_length || errors?.prompt_timeout || errors?.pin) && item.slug === 'advanced')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -137,8 +137,12 @@
                                     class="truncate mb-1" />
 
                                 <ComboBox :options="localOptions.promt_repeat_options" :search="false"
-                                    :placeholder="'Select a repeat option'" :selectedItem="form.repeat_prompt"
+                                    :placeholder="'Select a repeat option'" :selectedItem="form.repeat_prompt" :error="errors?.repeat_prompt && errors.repeat_prompt.length > 0"
                                     @update:model-value="handleUpdateRepeatPropmtField" />
+
+                                <div v-if="errors?.repeat_prompt" class="mt-2 text-xs text-red-600">
+                                    {{ errors.repeat_prompt[0] }}
+                                </div>
                             </div>
                         </div>
 
@@ -235,7 +239,7 @@
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
-                                <LabelInputOptional target="digit_length" label="Digit Length" />
+                                <LabelInputRequired target="digit_length" label="Digit Length" />
 
                                 <InputField v-model="form.digit_length" type="text" name="digit_length"
                                     :error="!!errors?.digit_length" id="digit_length" class="mt-2" />
@@ -248,7 +252,7 @@
 
                             <div class="col-span-6 sm:col-span-3">
                                 <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="timeout" label="Prompt Timeout (ms)" />
+                                    <LabelInputRequired target="prompt_timeout" label="Prompt Timeout (ms)" />
 
                                     <Popover>
                                         <template v-slot:popover-button>
@@ -262,11 +266,11 @@
                                     </Popover>
                                 </div>
 
-                                <InputField v-model="form.timeout" type="text" name="timeout" :error="!!errors?.timeout"
+                                <InputField v-model="form.prompt_timeout" type="text" name="prompt_timeout" :error="!!errors?.prompt_timeout"
                                     id="timeout" class="mt-2" />
 
-                                <div v-if="errors?.timeout" class="mt-2 text-xs text-red-600">
-                                    {{ errors.timeout[0] }}
+                                <div v-if="errors?.prompt_timeout" class="mt-2 text-xs text-red-600">
+                                    {{ errors.prompt_timeout[0] }}
                                 </div>
 
                             </div>
@@ -547,10 +551,8 @@ const form = reactive({
     ivr_menu_description: props.options.ivr.ivr_menu_description,
     ivr_menu_greet_long: props.options.ivr.ivr_menu_greet_long,
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
-    update_route: props.options.routes.update_route,
-    apply_greeting_route: props.options.routes.apply_greeting_route,
     repeat_prompt: props.options.ivr.ivr_menu_max_timeouts,
-    timeout: props.options.ivr.ivr_menu_timeout,
+    prompt_timeout: props.options.ivr.ivr_menu_timeout,
     direct_dial: props.options.ivr.ivr_menu_direct_dial === "true",
     caller_id_prefix: props.options.ivr.ivr_menu_cid_prefix,
     pin: props.options.ivr.ivr_menu_pin_number,
@@ -572,6 +574,7 @@ const disabledTypes = ['check_voicemail', 'company_directory', 'hangup'];
 const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
 
 const submitForm = () => {
+    // console.log (form);
     emits('submit', form); // Emit the event with the form data
 }
 
@@ -702,7 +705,7 @@ const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
     currentAudio.value = null;
 
     // Apply greeting
-    axios.post(form.apply_greeting_route,
+    axios.post(props.options.routes.apply_greeting_route,
         {
             ivr: props.options.ivr.ivr_menu_uuid,
             file_name: greeting_id,

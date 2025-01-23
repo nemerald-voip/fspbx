@@ -203,6 +203,9 @@ class VirtualReceptionistController extends Controller
     {
         $inputs = $request->validated();
 
+        logger($inputs);
+        return;
+
         try {
             // Retrieve the item by ID from the route parameter
             $voicemail = $this->model->findOrFail($uuid);
