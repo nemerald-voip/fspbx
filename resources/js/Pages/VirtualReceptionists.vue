@@ -295,7 +295,6 @@ const handleCreateRequest = (form) => {
 const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
-    console.log(form);
 
     axios.put(itemOptions.value.routes.update_route, form)
         .then((response) => {
@@ -457,7 +456,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

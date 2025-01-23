@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\CallRoutingOptionsService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class IvrMenus extends Model
 {
@@ -31,15 +32,37 @@ class IvrMenus extends Model
         'ivr_menu_enabled'
     ];
 
-    /*
-    public function __construct(array $attributes = [])
+    protected static function booted()
     {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
-    }*/
+        static::saving(function ($model) {
+            // Remove attributes before saving to database
+            unset($model->exit_target_uuid);
+            unset($model->exit_action);
+            unset($model->exit_action_display);
+            unset($model->exit_target_name);
+            unset($model->exit_target_extension);
+        });
+
+        static::retrieved(function ($model) {
+            if (!empty($model->ivr_menu_exit_data)) {
+                $callRoutingOptionsService = new CallRoutingOptionsService();
+
+                $optionDetails = $callRoutingOptionsService->reverseEngineerIVROption('transfer ' .$model->ivr_menu_exit_data);
+
+                if ($optionDetails) {
+                    $model->exit_target_uuid = $optionDetails['option'] ?? null;
+                    $model->exit_action = $optionDetails['type'] ?? null;
+                    $model->exit_action_display = $optionDetails['type'] !== null
+                        ? $callRoutingOptionsService->getFriendlyTypeName($optionDetails['type'])
+                        : null;
+                    $model->exit_target_name = $optionDetails['name'] ?? null;
+                    $model->exit_target_extension = $optionDetails['extension'] ?? null;
+                }
+            }
+
+            return $model;
+        });
+    }
 
     public function options()
     {

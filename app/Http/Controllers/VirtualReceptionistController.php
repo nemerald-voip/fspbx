@@ -199,7 +199,7 @@ class VirtualReceptionistController extends Controller
         }
     }
 
-    function update(UpdateVirtualReceptionistRequest $request, $uuid)
+    function update(UpdateVirtualReceptionistRequest $request)
     {
         $inputs = $request->validated();
 

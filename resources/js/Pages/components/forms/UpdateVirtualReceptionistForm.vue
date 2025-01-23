@@ -9,7 +9,7 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension || errors?.repeat_prompt) && item.slug === 'settings') ||
+                    <ExclamationCircleIcon v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension || errors?.repeat_prompt || errors?.exit_target_uuid) && item.slug === 'settings') ||
                         ((errors?.caller_id_prefix || errors?.digit_length || errors?.prompt_timeout || errors?.pin) && item.slug === 'advanced')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
@@ -127,8 +127,29 @@
 
                         </div>
 
+
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                        <button type="submit"
+                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                    </div>
+                </div>
+
+                            
+                <!-- New Greeting Form -->
+                <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                    :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
+                    @greeting-saved="handleGreetingSaved" />
+
+
+                
+                    <div class="mt-6 shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+
                         <div>
-                            <h3 class="pt-3 text-base font-semibold leading-6 text-gray-900">Failback Options</h3>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Failback Options</h3>
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
@@ -148,25 +169,25 @@
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                <LabelInputRequired :target="'action'" :label="'Forward calls to'" class="truncate mb-1" />
+                                <LabelInputRequired :target="'exit_action'" :label="'Forward calls to'" class="truncate mb-1" />
                                 <div class="">
-                                    <ComboBox :options="options.routing_types" :selectedItem="form.action" :search="true"
+                                    <ComboBox :options="options.routing_types" :selectedItem="form.exit_action" :search="true"
                                         placeholder="Choose Action"
                                         @update:model-value="(value) => handleUpdateActionField(value)"
-                                        :error="errors?.action && errors.action.length > 0" />
+                                        :error="errors?.exit_action && errors.exit_action.length > 0" />
                                 </div>
-                                <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
-                                    {{ errors.action[0] }}
+                                <div v-if="errors?.exit_action" class="mt-2 text-xs text-red-600">
+                                    {{ errors.exit_action[0] }}
                                 </div>
                             </div>
 
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                <LabelInputRequired :target="'target'" :label="'Target'" class="truncate mb-1" />
+                                <LabelInputRequired :target="'exit_target_uuid'" :label="'Target'" class="truncate mb-1" />
                                 <div class="relative">
-                                    <ComboBox :options="targets" :selectedItem="form.target" :search="true" :key="targets"
+                                    <ComboBox :options="targets" :selectedItem="form.exit_target_uuid" :search="true" :key="targets"
                                         placeholder="Choose Target"
                                         @update:model-value="(value) => handleUpdateTargetField(value)"
-                                        :disabled="isTargetDisabled" :error="errors?.target && errors.target.length > 0" />
+                                        :disabled="isTargetDisabled" :error="errors?.exit_target_uuid && errors.exit_target_uuid.length > 0" />
 
                                     <!-- Spinner Overlay -->
                                     <div v-if="loading"
@@ -174,24 +195,21 @@
                                         <Spinner class="w-10 h-10 text-gray-500" :show="loading" />
                                     </div>
                                 </div>
-                                <div v-if="errors?.target" class="mt-2 text-xs text-red-600">
-                                    {{ errors.target[0] }}
+                                <div v-if="errors?.exit_target_uuid" class="mt-2 text-xs text-red-600">
+                                    {{ errors.exit_target_uuid[0] }}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                    <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+
+                    <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                        <button type="submit"
+                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- New Greeting Form -->
-            <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
-                :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
-                :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
-                @greeting-saved="handleGreetingSaved" />
+
 
 
             <div v-if="activeTab === 'keys'">
@@ -465,7 +483,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch, computed } from "vue";
+import { reactive, ref, watch, computed, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 import ComboBox from "../general/ComboBox.vue";
@@ -546,6 +564,7 @@ watch(() => props.options, (newOptions) => {
 });
 
 const form = reactive({
+    ivr_menu_uuid: props.options.ivr.ivr_menu_uuid,
     ivr_menu_name: props.options.ivr.ivr_menu_name,
     ivr_menu_extension: props.options.ivr.ivr_menu_extension,
     ivr_menu_description: props.options.ivr.ivr_menu_description,
@@ -560,9 +579,9 @@ const form = reactive({
     ring_back_tone: props.options.ivr.ivr_menu_ringback,
     invalid_input_message: props.options.ivr.ivr_menu_invalid_sound,
     exit_message: props.options.ivr.ivr_menu_exit_sound,
-    exit_action: null,
-    exit_target: null,
-    exit_extension: null,
+    exit_action: props.options.ivr.exit_action,
+    exit_target_uuid: props.options.ivr.exit_target_uuid,
+    exit_target_extension: props.options.ivr.exit_target_extension,
     _token: page.props.csrf_token,
 })
 
@@ -572,6 +591,17 @@ const isTargetDisabled = ref(false);
 const disabledTypes = ['check_voicemail', 'company_directory', 'hangup'];
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
+
+onMounted(() => {
+    if (props.options?.ivr?.exit_action) {
+        if (disabledTypes.includes(props.options?.ivr?.exit_action)) {
+            isTargetDisabled.value = true;
+        } else {
+            isTargetDisabled.value = false;
+        }
+        fetchRoutingTypeOptions(props.options?.ivr?.exit_action);
+    }
+});
 
 const submitForm = () => {
     // console.log (form);
@@ -665,12 +695,14 @@ const handleUpdateActionField = (selected) => {
     } else {
         isTargetDisabled.value = false;
     }
+    form.exit_target_extension = null;
+    form.exit_target_uuid = null;
     fetchRoutingTypeOptions(selected.value); // Fetch options when action field updates
 }
 
 const handleUpdateTargetField = (selected) => {
-    form.exit_target = selected.value;
-    form.exit_extension = selected.extension;
+    form.exit_target_uuid = selected.value;
+    form.exit_target_extension = selected.extension;
 }
 
 function fetchRoutingTypeOptions(newValue) {

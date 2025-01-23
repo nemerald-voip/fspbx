@@ -43,35 +43,6 @@ class CallRoutingOptionsService
         $this->domainName = session('domain_name');
     }
 
-    // public function getData(): array
-    // {
-    //     $output = [];
-    //     foreach ($this->categories as $key => $label) {
-    //         $output[$key] = [
-    //             'name' => $label,
-    //             'options' => $this->getOptions($key)
-    //         ];
-    //     }
-
-
-    //     return $output;
-    // }
-
-    // public function findLabel(array $actions): array
-    // {
-    //     $data = $this->getData();
-    //     $output = [];
-    //     foreach ($actions as $action) {
-    //         foreach ($data as $values) {
-    //             foreach ($values['options'] as $value) {
-    //                 if (str_contains($value["value"], $action['destination_app'].':'.$action['destination_data'])) {
-    //                     $output[] = $values['name'].' '.$value["name"];
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return $output;
-    // }
 
     public function getOptions(): array
     {

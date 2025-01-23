@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -24,14 +25,14 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         $currentUuid = $this->route('virtual_receptionist');
 
         return [
-            'ivr_menu_name' => 'string',
+            'ivr_menu_uuid' => 'present',
+            'ivr_menu_name' => 'required|string|max:75',
             'ivr_menu_extension' => [
                 'required',
                 'numeric',
                 new UniqueExtension($currentUuid),
             ],
             'ivr_menu_greet_long' => 'present',
-            // 'greeting_id' => 'required|string',
             'ivr_menu_enabled' => 'present',
             'ivr_menu_description' => 'nullable|string|max:100',
             'repeat_prompt' => 'required',
@@ -42,6 +43,17 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'ring_back_tone' => 'present',
             'invalid_input_message' => 'present',
             'exit_message' => 'present',
+            'exit_action' => 'present',
+            'exit_target_extension' => 'nullable',
+            'exit_target_uuid' => [
+                'sometimes', 
+                function ($attribute, $value, $fail) {
+                    $action = request()->input('exit_action'); 
+                    if ($action && !in_array($action, ["company_directory", "check_voicemail", "hangup"]) && empty($value)) {
+                        $fail('The target field is required when action is selected.');
+                    }
+                },
+            ],
             'direct_dial' => 'present',
             // 'extension' => "uuid",
         ];
@@ -51,47 +63,22 @@ class UpdateVirtualReceptionistRequest extends FormRequest
     public function prepareForValidation(): void
     {
         // logger($this);
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
-        }
-
-        // Convert boolean values back to strings
-        // if ($this->has('voicemail_delete')) {
-        //     $this->merge([
-        //         'voicemail_local_after_email' => $this->voicemail_delete ? 'false' : 'true',
-        //     ]);
-        // } else {
-        //     //merge default value
-        //     $this->merge([
-        //         'voicemail_local_after_email' => get_domain_setting('keep_local'),
-        //     ]);
-        // }
-
-        // if ($this->has('voicemail_email_attachment')) {
-        //     $this->merge([
-        //         'voicemail_file' => $this->voicemail_email_attachment ? 'attach' : '',
-        //     ]);
-        // } else {
-        //     // Merge default value
-        //     $this->merge([
-        //         'voicemail_file' => get_domain_setting('voicemail_file'),
-        //     ]);
-        // }
-
-        // if ($this->has('voicemail_transcription_enabled')) {
-        //     $this->merge([
-        //         'voicemail_transcription_enabled' => $this->voicemail_transcription_enabled ? 'true' : 'false',
-        //     ]);
-        // } else {
-        //     // Merge default value
-        //     $this->merge([
-        //         'voicemail_transcription_enabled' => get_domain_setting('transcription_enabled_default'),
-        //     ]);
-        // }
 
         if ($this->has('repeat_prompt') && $this->repeat_prompt == 'NULL') {
             $this->merge([
                 'repeat_prompt' => null,
+            ]);
+        }
+
+        if ($this->has('exit_action') && $this->exit_action == 'NULL') {
+            $this->merge([
+                'exit_action' => null,
+            ]);
+        }
+
+        if ($this->has('exit_target_uuid') && $this->exit_target_uuid == 'NULL') {
+            $this->merge([
+                'exit_target_uuid' => null,
             ]);
         }
 
@@ -101,19 +88,13 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             ]);
         }
 
-
-        // Sanitize voicemail_description
+        // Sanitize description
         if ($this->has('ivr_menu_description') && $this->ivr_menu_description) {
             $sanitizedDescription = $this->sanitizeInput($this->ivr_menu_description);
             $this->merge(['ivr_menu_description' => $sanitizedDescription]);
         }
 
-        if ($this->has('greeting_id')) {
-            if ($this->greeting_id == 'NULL') {
-                $this->merge(['greeting_id' => '-1']);
-            }
-           
-        }
+
     }
 
     /**
@@ -149,11 +130,14 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         return [
             'ivr_menu_name' => 'name',
             'ivr_menu_extension' => 'extension',
-            'greeting_id' => 'greeting',
             'caller_id_prefix' => 'caller id name prefix',
-            'voicemail_enabled' => 'enabled',
-            'voicemail_description' => 'description',
-            'voicemail_alternate_greet_id' => 'value',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'exit_target.required' => 'The Exit Target is required when an Exit Action is selected.', 
         ];
     }
 }
