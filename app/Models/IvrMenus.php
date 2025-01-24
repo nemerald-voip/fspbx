@@ -29,7 +29,16 @@ class IvrMenus extends Model
         'ivr_menu_extension',
         'ivr_menu_description',
         'ivr_menu_greet_long',
-        'ivr_menu_enabled'
+        'ivr_menu_enabled',
+        'ivr_menu_digit_len',
+        'ivr_menu_timeout',
+        'ivr_menu_ringback',
+        'ivr_menu_invalid_sound',
+        'ivr_menu_exit_sound',
+        'ivr_menu_direct_dial',
+        'ivr_menu_max_failures',
+        'ivr_menu_exit_app',
+        'ivr_menu_exit_data',
     ];
 
     protected static function booted()
@@ -44,10 +53,10 @@ class IvrMenus extends Model
         });
 
         static::retrieved(function ($model) {
-            if (!empty($model->ivr_menu_exit_data)) {
+            if (!empty($model->ivr_menu_exit_app)) {
                 $callRoutingOptionsService = new CallRoutingOptionsService();
 
-                $optionDetails = $callRoutingOptionsService->reverseEngineerIVROption('transfer ' .$model->ivr_menu_exit_data);
+                $optionDetails = $callRoutingOptionsService->reverseEngineerIVROption($model->ivr_menu_exit_app .' ' . $model->ivr_menu_exit_data);
 
                 if ($optionDetails) {
                     $model->exit_target_uuid = $optionDetails['option'] ?? null;

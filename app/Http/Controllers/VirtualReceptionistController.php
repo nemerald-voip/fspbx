@@ -204,34 +204,33 @@ class VirtualReceptionistController extends Controller
         $inputs = $request->validated();
 
         logger($inputs);
-        return;
 
         try {
-            // Retrieve the item by ID from the route parameter
-            $voicemail = $this->model->findOrFail($uuid);
+            // Retrieve the IVR menu by UUID
+            $ivrMenu = IvrMenus::where('ivr_menu_uuid', $inputs['ivr_menu_uuid'])->firstOrFail();
 
-            // Update the voicemail with the new inputs
-            $voicemail->fill($inputs);
+            $exit_data = $this->buildExitDestinationAction($inputs);
 
-            // Save the updated voicemail to the database
-            $voicemail->save();
+            // Update basic IVR menu fields
+            $ivrMenu->fill([
+                'ivr_menu_name' => $inputs['ivr_menu_name'],
+                'ivr_menu_extension' => $inputs['ivr_menu_extension'],
+                'ivr_menu_greet_long' => $inputs['ivr_menu_greet_long'] ?? null,
+                'ivr_menu_description' => $inputs['ivr_menu_description'] ?? null,
+                'ivr_menu_enabled' => $inputs['ivr_menu_enabled'] === 'true' ? 'true' : 'false',
+                'ivr_menu_digit_len' => $inputs['digit_length'],
+                'ivr_menu_timeout' => $inputs['prompt_timeout'],
+                'ivr_menu_ringback' => $inputs['ring_back_tone'],
+                'ivr_menu_invalid_sound' => $inputs['invalid_input_message'],
+                'ivr_menu_exit_sound' => $inputs['exit_message'],
+                'ivr_menu_direct_dial' => $inputs['direct_dial'] ? 'true' : 'false',
+                'ivr_menu_max_failures' => $inputs['repeat_prompt'],
+                'ivr_menu_exit_app' => $exit_data['action'],
+                'ivr_menu_exit_data' => $exit_data['data'],
+            ]);
 
-            // Check if voicemail_copies is present and is an array
-            if (isset($inputs['voicemail_copies']) && is_array($inputs['voicemail_copies'])) {
-                // Delete existing voicemail copies for this voicemail
-                VoicemailDestinations::where('voicemail_uuid', $voicemail->voicemail_uuid)->delete();
-
-                // Prepare data for new VoicemailDestinations
-                foreach ($inputs['voicemail_copies'] as $copyUuid) {
-                    // Create a new VoicemailDestinations instance and set the fields
-                    $voicemailDestination = new VoicemailDestinations();
-                    $voicemailDestination->voicemail_uuid = $voicemail->voicemail_uuid; // Set the parent voicemail UUID
-                    $voicemailDestination->voicemail_uuid_copy = $copyUuid; // Set the copy UUID
-
-                    // Save the VoicemailDestinations instance
-                    $voicemailDestination->save();
-                }
-            }
+            // Save the updated IVR menu
+            $ivrMenu->save();
 
             //clear the destinations session array
             if (isset($_SESSION['destinations']['array'])) {
@@ -600,7 +599,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_uuid' => $inputs['menu_uuid'],
                 'ivr_menu_option_digits' => $inputs['key'],
                 'ivr_menu_option_action' => 'menu-exec-app',
-                'ivr_menu_option_param' => $this->buildDestinationAction($inputs),
+                'ivr_menu_option_param' => $this->buildKeyDestinationAction($inputs),
                 'ivr_menu_option_description' => $inputs['description'],
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
@@ -648,7 +647,7 @@ class VirtualReceptionistController extends Controller
             $ivrMenuOption->update([
                 'ivr_menu_option_digits' => $inputs['key'],
                 'ivr_menu_option_action' => 'menu-exec-app',
-                'ivr_menu_option_param' => $this->buildDestinationAction($inputs),
+                'ivr_menu_option_param' => $this->buildKeyDestinationAction($inputs),
                 'ivr_menu_option_description' => $inputs['description'],
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
@@ -710,7 +709,7 @@ class VirtualReceptionistController extends Controller
     /**
      * Helper function to build destination action based on key action.
      */
-    protected function buildDestinationAction($key)
+    protected function buildKeyDestinationAction($key)
     {
         switch ($key['action']) {
             case 'extensions':
@@ -742,4 +741,41 @@ class VirtualReceptionistController extends Controller
                 return [];
         }
     }
+
+        /**
+     * Helper function to build destination action based on exit action.
+     */
+    protected function buildExitDestinationAction($inputs)
+    {
+        switch ($inputs['exit_action']) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return  ['action' => 'transfer', 'data' => $inputs['exit_target_extension'] . ' XML ' . session('domain_name')];
+            case 'voicemails':
+                return ['action' => 'transfer', 'data' => '*99' . $inputs['exit_target_extension'] . ' XML ' . session('domain_name')];
+
+            case 'recordings':
+                // Handle recordings with 'lua' destination app
+                return ['action' => 'lua', 'data' =>'streamfile.lua ' . $inputs['exit_target_extension']];
+
+            case 'check_voicemail':
+                return ['action' => 'transfer', 'data' => '*98 XML ' . session('domain_name')];
+
+            case 'company_directory':
+                return ['action' => 'transfer', 'data' => '*411 XML ' . session('domain_name')];
+
+            case 'hangup':
+                return ['action' =>'hangup', 'data' => ''];
+
+                // Add other cases as necessary for different types
+            default:
+                return [];
+        }
+    }
+
 }

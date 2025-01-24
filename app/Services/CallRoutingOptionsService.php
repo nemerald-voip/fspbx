@@ -23,7 +23,7 @@ class CallRoutingOptionsService
         ['value' => 'extensions', 'name' => 'Extension'],
         ['value' => 'voicemails', 'name' => 'Voicemail'],
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
-        ['value' => 'ivrs', 'name' => 'Auto Receptionist'],
+        ['value' => 'ivrs', 'name' => 'Virtual Receptionist'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'faxes', 'name' => 'Fax'],
@@ -210,6 +210,7 @@ class CallRoutingOptionsService
     public function reverseEngineerIVROption($ivrAction)
     {
         try {
+            $ivrAction = trim($ivrAction);
             // Split the string by spaces to extract details
             $parts = explode(' ', $ivrAction);
 
