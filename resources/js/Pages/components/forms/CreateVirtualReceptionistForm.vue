@@ -9,9 +9,8 @@
                         :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon
-                        v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension || errors?.repeat_prompt || errors?.exit_target_uuid || errors?.ivr_menu_greet_long) && item.slug === 'settings') ||
-                            ((errors?.caller_id_prefix || errors?.digit_length || errors?.prompt_timeout || errors?.pin) && item.slug === 'advanced')"
+                    <ExclamationCircleIcon v-if="((errors?.ivr_menu_name || errors?.ivr_menu_extension || errors?.repeat_prompt || errors?.exit_target_uuid) && item.slug === 'settings') ||
+                        ((errors?.caller_id_prefix || errors?.digit_length || errors?.prompt_timeout || errors?.pin) && item.slug === 'advanced')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -91,17 +90,9 @@
                                 <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select prompt'"
                                     :selectedItem="form.ivr_menu_greet_long"
                                     @update:model-value="handleUpdateGreetingField" />
-
-                                <div v-if="errors?.ivr_menu_greet_long" class="mt-2 text-xs text-red-600">
-                                    {{ errors.ivr_menu_greet_long[0] }}
-                                </div>
-
                             </div>
 
-                            <div :class="{
-                                'pb-7': errors?.ivr_menu_greet_long,
-                                'pb-1': !errors?.ivr_menu_greet_long
-                            }" class="content-end col-span-2 text-sm font-medium leading-6 text-gray-900">
+                            <div class="content-end col-span-2 pb-1 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
                                     <PlayCircleIcon v-if="form.ivr_menu_greet_long && !isAudioPlaying" @click="playGreeting"
@@ -145,7 +136,7 @@
                     </div>
                 </div>
 
-
+                            
                 <!-- New Greeting Form -->
                 <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
                     :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
@@ -153,8 +144,8 @@
                     @greeting-saved="handleGreetingSaved" />
 
 
-
-                <div class="mt-6 shadow sm:rounded-md">
+                
+                    <div class="mt-6 shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
 
                         <div>
@@ -167,8 +158,7 @@
                                     class="truncate mb-1" />
 
                                 <ComboBox :options="localOptions.promt_repeat_options" :search="false"
-                                    :placeholder="'Select a repeat option'" :selectedItem="form.repeat_prompt"
-                                    :error="errors?.repeat_prompt && errors.repeat_prompt.length > 0"
+                                    :placeholder="'Select a repeat option'" :selectedItem="form.repeat_prompt" :error="errors?.repeat_prompt && errors.repeat_prompt.length > 0"
                                     @update:model-value="handleUpdateRepeatPropmtField" />
 
                                 <div v-if="errors?.repeat_prompt" class="mt-2 text-xs text-red-600">
@@ -179,11 +169,10 @@
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                <LabelInputRequired :target="'exit_action'" :label="'Forward calls to'"
-                                    class="truncate mb-1" />
+                                <LabelInputRequired :target="'exit_action'" :label="'Forward calls to'" class="truncate mb-1" />
                                 <div class="">
-                                    <ComboBox :options="options.routing_types" :selectedItem="form.exit_action"
-                                        :search="true" placeholder="Choose Action"
+                                    <ComboBox :options="options.routing_types" :selectedItem="form.exit_action" :search="true"
+                                        placeholder="Choose Action"
                                         @update:model-value="(value) => handleUpdateActionField(value)"
                                         :error="errors?.exit_action && errors.exit_action.length > 0" />
                                 </div>
@@ -195,11 +184,10 @@
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
                                 <LabelInputRequired :target="'exit_target_uuid'" :label="'Target'" class="truncate mb-1" />
                                 <div class="relative">
-                                    <ComboBox :options="targets" :selectedItem="form.exit_target_uuid" :search="true"
-                                        :key="targets" placeholder="Choose Target"
+                                    <ComboBox :options="targets" :selectedItem="form.exit_target_uuid" :search="true" :key="targets"
+                                        placeholder="Choose Target"
                                         @update:model-value="(value) => handleUpdateTargetField(value)"
-                                        :disabled="isTargetDisabled"
-                                        :error="errors?.exit_target_uuid && errors.exit_target_uuid.length > 0" />
+                                        :disabled="isTargetDisabled" :error="errors?.exit_target_uuid && errors.exit_target_uuid.length > 0" />
 
                                     <!-- Spinner Overlay -->
                                     <div v-if="loading"
@@ -296,8 +284,8 @@
                                     </Popover>
                                 </div>
 
-                                <InputField v-model="form.prompt_timeout" type="text" name="prompt_timeout"
-                                    :error="!!errors?.prompt_timeout" id="timeout" class="mt-2" />
+                                <InputField v-model="form.prompt_timeout" type="text" name="prompt_timeout" :error="!!errors?.prompt_timeout"
+                                    id="timeout" class="mt-2" />
 
                                 <div v-if="errors?.prompt_timeout" class="mt-2 text-xs text-red-600">
                                     {{ errors.prompt_timeout[0] }}
@@ -354,18 +342,18 @@
                             <div class="content-end col-span-3 pb-1 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
-                                    <PlayCircleIcon
-                                        v-if="form.ring_back_tone && !isRingBackTonePlaying && (form.ring_back_tone.endsWith('.wav') || form.ring_back_tone.endsWith('.mp3'))"
+                                    <PlayCircleIcon 
+                                        v-if="form.ring_back_tone && !isRingBackTonePlaying && (form.ring_back_tone.endsWith('.wav') || form.ring_back_tone.endsWith('.mp3'))" 
                                         @click="playRingBackTone"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
-                                    <PauseCircleIcon
-                                        v-if="form.ring_back_tone && isRingBackTonePlaying && (form.ring_back_tone.endsWith('.wav') || form.ring_back_tone.endsWith('.mp3'))"
+                                    <PauseCircleIcon 
+                                    v-if="form.ring_back_tone && isRingBackTonePlaying && (form.ring_back_tone.endsWith('.wav') || form.ring_back_tone.endsWith('.mp3'))" 
                                         @click="pauseRingBackTone"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
-                                </div>
+                                    </div>
                             </div>
 
                         </div>
@@ -380,8 +368,7 @@
                                             <InformationCircleIcon class="h-5 w-5 text-blue-500" />
                                         </template>
                                         <template v-slot:popover-panel>
-                                            <div>Specify the audio message played to the caller when they provide an invalid
-                                                input or press an unrecognized key.</div>
+                                            <div>Specify the audio message played to the caller when they provide an invalid input or press an unrecognized key.</div>
                                         </template>
                                     </Popover>
                                 </div>
@@ -397,8 +384,7 @@
                             <div class="content-end col-span-3 pb-1 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
-                                    <PlayCircleIcon v-if="form.invalid_input_message && !isInvalidInputMessageAudioPlaying"
-                                        @click="playInvalidInputMessage"
+                                    <PlayCircleIcon v-if="form.invalid_input_message && !isInvalidInputMessageAudioPlaying" @click="playInvalidInputMessage"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
@@ -406,7 +392,7 @@
                                         @click="pauseInvalidInputMessage"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
-                                </div>
+                                    </div>
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
@@ -418,8 +404,7 @@
                                             <InformationCircleIcon class="h-5 w-5 text-blue-500" />
                                         </template>
                                         <template v-slot:popover-panel>
-                                            <div>Specify the audio message played to the caller when the menu is terminated.
-                                            </div>
+                                            <div>Specify the audio message played to the caller when the menu is terminated.</div>
                                         </template>
                                     </Popover>
                                 </div>
@@ -435,8 +420,7 @@
                             <div class="content-end col-span-3 pb-1 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
-                                    <PlayCircleIcon v-if="form.exit_message && !isExitMessageAudioPlaying"
-                                        @click="playExitMessage"
+                                    <PlayCircleIcon v-if="form.exit_message && !isExitMessageAudioPlaying" @click="playExitMessage"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
@@ -444,7 +428,7 @@
                                         @click="pauseExitMessage"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
-                                </div>
+                                    </div>
                             </div>
 
                         </div>
@@ -969,6 +953,8 @@ const playInvalidInputMessage = () => {
         isInvalidInputMessageAudioPlaying.value = true;
         return;
     }
+
+    console.log(props.options.routes);
     axios.post(props.options.routes.ivr_message_route, { file_name: form.invalid_input_message })
         .then((response) => {
             // Stop the currently playing audio (if any)
@@ -1026,8 +1012,8 @@ const playExitMessage = () => {
     currentInvalidInputMessageAudio.value = null;
     // Check if there's already an audio object and it is paused
     if (currentExitMessageAudio.value && currentExitMessageAudio.value.paused) {
-        currentExitMessageAudio.value.play();
-        isExitMessageAudioPlaying.value = true;
+            currentExitMessageAudio.value.play();
+            isExitMessageAudioPlaying.value = true;
         return;
     }
     axios.post(props.options.routes.ivr_message_route, { file_name: form.exit_message })
@@ -1142,4 +1128,5 @@ const handleKeyFormError = (error) => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>

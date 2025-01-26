@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.virtual_receptionist_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -77,8 +77,8 @@
                             <input v-if="row.ivr_menu_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.ivr_menu_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                @click="page.props.auth.can.voicemail_update && handleEditRequest(row.ivr_menu_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.virtual_receptionist_update, }"
+                                @click="page.props.auth.can.virtual_receptionist_update && handleEditRequest(row.ivr_menu_uuid)">
                                     {{ row.ivr_menu_name }}
                             </div>
                         </div>
@@ -100,17 +100,17 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="page.props.auth.can.virtual_receptionist_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
+                                        <PencilSquareIcon @click="handleEditRequest(row.ivr_menu_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
 
 
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.virtual_receptionist_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
@@ -146,14 +146,15 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Virtual Receptionist'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Virtual Receptionist'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <CreateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
+                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
+                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" 
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal" 
         :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" 
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
@@ -190,7 +191,6 @@ import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -198,11 +198,10 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
 import UpdateVirtualReceptionistForm from "./components/forms/UpdateVirtualReceptionistForm.vue";
+import CreateVirtualReceptionistForm from "./components/forms/CreateVirtualReceptionistForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
 
 
 
@@ -212,8 +211,8 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const showCreateModal = ref(false);
+const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
@@ -225,7 +224,6 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
@@ -252,7 +250,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.virtual_receptionist_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -267,7 +265,7 @@ onMounted(() => {
 });
 
 const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
+    showEditModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions(itemUuid);
@@ -386,7 +384,7 @@ const handleBulkUpdateRequest = (form) => {
 }
 
 const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
+    showCreateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions();
@@ -523,8 +521,8 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
-    editModalTrigger.value = false;
+    showCreateModal.value = false;
+    showEditModal.value = false;
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }

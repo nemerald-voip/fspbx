@@ -182,7 +182,7 @@ class Voicemails extends Model
 
         // Voicemails will have extensions in the range between 9100 and 9150 by default
         $rangeStart = 9100;
-        $rangeEnd = 9150;
+        $rangeEnd = 9149;
 
         $domainUuid = session('domain_uuid');
 

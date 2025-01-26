@@ -6,7 +6,7 @@ use App\Rules\UniqueExtension;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateVirtualReceptionistRequest extends FormRequest
+class StoreVirtualReceptionistRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,14 +24,13 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         $currentUuid = $this->route('virtual_receptionist');
 
         return [
-            'ivr_menu_uuid' => 'present',
             'ivr_menu_name' => 'required|string|max:75',
             'ivr_menu_extension' => [
                 'required',
                 'numeric',
                 new UniqueExtension($currentUuid),
             ],
-            'ivr_menu_greet_long' => 'required',
+            // 'ivr_menu_greet_long' => 'required',
             'ivr_menu_enabled' => 'present',
             'ivr_menu_description' => 'nullable|string|max:100',
             'repeat_prompt' => 'required',
@@ -41,18 +40,18 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'pin' => 'nullable|numeric',
             'ring_back_tone' => 'present',
             'invalid_input_message' => 'present',
-            'exit_message' => 'present',
-            'exit_action' => 'present',
-            'exit_target_extension' => 'nullable',
-            'exit_target_uuid' => [
-                'sometimes', 
-                function ($attribute, $value, $fail) {
-                    $action = request()->input('exit_action'); 
-                    if ($action && !in_array($action, ["company_directory", "check_voicemail", "hangup"]) && empty($value)) {
-                        $fail('The target field is required when action is selected.');
-                    }
-                },
-            ],
+            // 'exit_message' => 'present',
+            // 'exit_action' => 'present',
+            // 'exit_target_extension' => 'nullable',
+            // 'exit_target_uuid' => [
+            //     'sometimes', 
+            //     function ($attribute, $value, $fail) {
+            //         $action = request()->input('exit_action'); 
+            //         if ($action && !in_array($action, ["company_directory", "check_voicemail", "hangup"]) && empty($value)) {
+            //             $fail('The target field is required when action is selected.');
+            //         }
+            //     },
+            // ],
             'direct_dial' => 'present',
             // 'extension' => "uuid",
         ];

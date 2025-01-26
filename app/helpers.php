@@ -1518,6 +1518,12 @@ if (!function_exists('getSoundsCollection')) {
 
         unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
         return [
+            '' => [
+            [
+                'name' => 'None',
+                'value' => null,
+            ],
+        ],
             'Recordings' => $recordings,
             'Sounds' => $sounds,
         ];

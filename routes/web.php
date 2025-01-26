@@ -167,7 +167,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
     Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
 
-    // Auto Receptionist
+    // Virtual Receptionist
     Route::resource('virtual-receptionists', VirtualReceptionistController::class);
     Route::post('virtual-receptionists/item-options', [VirtualReceptionistController::class, 'getItemOptions'])->name('virtual-receptionists.item.options');
     Route::post('/virtual-receptionists/{virtual_receptionist}/greeting', [VirtualReceptionistController::class, 'getVirtualReceptionistGreeting'])->name('virtual-receptionist.greeting');
