@@ -3,15 +3,12 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\Domain;
 use App\Models\IvrMenus;
 use App\Models\Recordings;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\IvrMenuOptions;
-use App\Models\VoicemailGreetings;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\DB;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreVirtualReceptionistRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
@@ -159,8 +156,6 @@ class VirtualReceptionistController extends Controller
     {
         $inputs = $request->validated();
 
-        logger($inputs);
-
         try {
             // Create a new IVR menu instance
             $ivrMenu = new IvrMenus();
@@ -190,6 +185,7 @@ class VirtualReceptionistController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
+                'item_uuid' => $ivrMenu->ivr_menu_uuid,
                 'messages' => ['success' => ['New item created']]
             ], 201);
         } catch (\Exception $e) {
@@ -259,92 +255,40 @@ class VirtualReceptionistController extends Controller
     }
 
     /**
-     * Upload a voicemail greeting.
+     * Remove the specified Virtual Receptionist (IVR Menu) from storage.
      *
+     * @param  IvrMenus $ivrMenu
      * @return \Illuminate\Http\Response
      */
-    public function uploadVoicemailGreeting(Request $request, Voicemails $voicemail)
+    public function destroy(IvrMenus $virtual_receptionist)
     {
+        try {
+            // Start a database transaction to ensure atomic operations
+            DB::beginTransaction();
 
-        $domain = Domain::where('domain_uuid', $voicemail->domain_uuid)->first();
+            // Delete related IVR menu options (keys)
+            $virtual_receptionist->options()->delete();
 
-        if ($request->greeting_type == "unavailable") {
-            $filename = "greeting_1.wav";
-            $path = $request->voicemail_unavailable_upload_file->storeAs(
-                $domain->domain_name . '/' . $voicemail->voicemail_id,
-                $filename,
-                'voicemail'
-            );
-        } elseif ($request->greeting_type == "name") {
-            $filename = "recorded_name.wav";
-            $path = $request->voicemail_name_upload_file->storeAs(
-                $domain->domain_name . '/' . $voicemail->voicemail_id,
-                $filename,
-                'voicemail'
-            );
+            // Finally, delete the IVR menu itself
+            $virtual_receptionist->delete();
+
+            // Commit the transaction
+            DB::commit();
+
+            // Return success message
+            return redirect()->back()->with('message', ['server' => ['Item deleted successfully']]);
+        } catch (\Exception $e) {
+            // Rollback the transaction if an error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Return error message
+            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
-
-        if (!Storage::disk('voicemail')->exists($path)) {
-            return response()->json([
-                'error' => 401,
-                'message' => 'Failed to upload file'
-            ]);
-        }
-
-        // Remove old greeting
-        foreach ($voicemail->greetings as $greeting) {
-            if ($greeting->filename = $filename) {
-                $greeting->delete();
-                break;
-            }
-        }
-
-        if ($request->greeting_type == "unavailable") {
-            // Save new greeting in the database
-            $greeting = new VoicemailGreetings();
-            $greeting->domain_uuid = Session::get('domain_uuid');
-            $greeting->voicemail_id = $voicemail->voicemail_id;
-            $greeting->greeting_id = 1;
-            $greeting->greeting_name = "Greeting 1";
-            $greeting->greeting_filename = $filename;
-            $voicemail->greetings()->save($greeting);
-
-            // Save default gretting ID
-            $voicemail->greeting_id = 1;
-            $voicemail->save();
-        }
-
-        return response()->json([
-            'status' => "success",
-            'voicemail' => $voicemail->voicemail_id,
-            'filename' => $filename,
-            'message' => 'Greeting uploaded successfully'
-        ]);
     }
 
-
-    /**
-     * Get voicemail greeting.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function downloadVoicemailGreeting(Voicemails $voicemail, string $filename)
-    {
-
-        $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-
-        if (!Storage::disk('voicemail')->exists($path)) abort(404);
-
-        $file = Storage::disk('voicemail')->path($path);
-        $type = Storage::disk('voicemail')->mimeType($path);
-        $headers = array(
-            'Content-Type: ' . $type,
-        );
-
-        $response = Response::download($file, $filename, $headers);
-
-        return $response;
-    }
 
 
     public function getItemOptions()

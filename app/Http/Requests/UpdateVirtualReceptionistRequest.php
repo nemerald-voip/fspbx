@@ -42,7 +42,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'ring_back_tone' => 'present',
             'invalid_input_message' => 'present',
             'exit_message' => 'present',
-            'exit_action' => 'present',
+            'exit_action' => 'required',
             'exit_target_extension' => 'nullable',
             'exit_target_uuid' => [
                 'sometimes', 

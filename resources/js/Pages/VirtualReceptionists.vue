@@ -282,6 +282,7 @@ const handleCreateRequest = (form) => {
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
+            handleEditRequest(response.data.item_uuid);
         }).catch((error) => {
             createFormSubmiting.value = false;
             handleClearSelection();

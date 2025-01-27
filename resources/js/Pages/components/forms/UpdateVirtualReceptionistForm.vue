@@ -586,7 +586,7 @@ const form = reactive({
     ivr_menu_description: props.options.ivr.ivr_menu_description,
     ivr_menu_greet_long: props.options.ivr.ivr_menu_greet_long,
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
-    repeat_prompt: props.options.ivr.ivr_menu_max_timeouts,
+    repeat_prompt: props.options.ivr.ivr_menu_max_timeouts ?? '3',
     prompt_timeout: props.options.ivr.ivr_menu_timeout,
     direct_dial: props.options.ivr.ivr_menu_direct_dial === "true",
     caller_id_prefix: props.options.ivr.ivr_menu_cid_prefix,

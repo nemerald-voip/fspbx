@@ -51,6 +51,7 @@ class IvrMenus extends Model
             unset($model->exit_action_display);
             unset($model->exit_target_name);
             unset($model->exit_target_extension);
+            unset($model->destroy_route);
         });
 
         static::retrieved(function ($model) {
@@ -69,6 +70,8 @@ class IvrMenus extends Model
                     $model->exit_target_extension = $optionDetails['extension'] ?? null;
                 }
             }
+
+            $model->destroy_route = route('virtual-receptionists.destroy', $model);
 
             return $model;
         });

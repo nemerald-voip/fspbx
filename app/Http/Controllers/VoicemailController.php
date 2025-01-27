@@ -446,33 +446,6 @@ class VoicemailController extends Controller
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
 
-        $voicemail = Voicemails::findOrFail($id);
-
-        if (isset($voicemail)) {
-            $deleted = $voicemail->delete();
-            $filename = "recorded_name.wav";
-            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-            $file = Storage::disk('voicemail')->delete($path);
-            $filename = "greeting_1.wav";
-            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-            $file = Storage::disk('voicemail')->delete($path);
-
-            if ($deleted) {
-                return response()->json([
-                    'status' => 200,
-                    'success' => [
-                        'message' => 'Selected voicemail extensions have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting selected voicemail extensions'
-                    ]
-                ]);
-            }
-        }
     }
 
 
