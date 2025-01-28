@@ -174,7 +174,6 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_timeout' => $inputs['prompt_timeout'],
                 'ivr_menu_ringback' => $inputs['ring_back_tone'],
                 'ivr_menu_invalid_sound' => $inputs['invalid_input_message'],
-                'ivr_menu_max_failures' => $inputs['repeat_prompt'],
                 'ivr_menu_direct_dial' => $inputs['direct_dial'] ? 'true' : 'false',
             ]);
 
@@ -324,7 +323,7 @@ class VirtualReceptionistController extends Controller
             $dialPlan->dialplan_uuid = $ivr->dialplan_uuid;
             $dialPlan->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
             $dialPlan->domain_uuid = session('domain_uuid');
-            $dialPlan->context = session('domain_name');
+            $dialPlan->dialplan_context = session('domain_name');
             $dialPlan->dialplan_name = $ivr->ivr_menu_name;
             $dialPlan->dialplan_number = $ivr->ivr_menu_extension;
             $dialPlan->dialplan_continue = $data['dialplan_continue'];
