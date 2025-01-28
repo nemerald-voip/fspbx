@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Events\GreetingDeleted;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Recordings extends Model
 {
@@ -25,14 +26,47 @@ class Recordings extends Model
         'recording_base64'
     ];
 
-    public function __construct(array $attributes = [])
+    // public function __construct(array $attributes = [])
+    // {
+    //     parent::__construct();
+    //     $this->attributes['domain_uuid'] = Session::get('domain_uuid');
+    //     $this->attributes['insert_date'] = date('Y-m-d H:i:s');
+    //     $this->attributes['insert_user'] = Session::get('user_uuid');
+    //     $this->attributes['update_date'] = date('Y-m-d H:i:s');
+    //     $this->attributes['update_user'] = Session::get('user_uuid');
+    //     $this->fill($attributes);
+    // }
+
+    protected static function booted()
     {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->attributes['update_date'] = date('Y-m-d H:i:s');
-        $this->attributes['update_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
+        static::creating(function ($model) {
+            $model->insert_date = date('Y-m-d H:i:s');
+            $model->insert_user = session('user_uuid');
+        });
+
+        static::saving(function ($model) {
+            if (!$model->domain_uuid) {
+                $model->domain_uuid = session('domain_uuid');
+            }
+            // unset($model->destroy_route);
+            // unset($model->messages_route);
+        });
+
+        static::retrieved(function ($model) {
+            // $model->destroy_route = route('voicemails.destroy', $model);
+            // $model->messages_route = route('voicemails.messages.index', $model);
+        });
+
+        static::deleted(function ($model) {
+            event(new GreetingDeleted($model->recording_uuid, $model->domain_uuid, $model->recording_filename));
+        });
+    }
+
+    /**
+     * Get the domain to which this model belongs
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 }

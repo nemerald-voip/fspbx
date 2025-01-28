@@ -10,9 +10,17 @@
                             <tr>
                                 <th scope="col"
                                     class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 lg:pl-8">
-                                    Name</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                    Domain/Port
+                                    Key</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Action
+                                </th>
+                                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+                                    Ext./Number
+                                </th>
+                                <th scope="col"
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
+                                    Desc
+                                </th>
+                                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">Status
                                 </th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 lg:pr-8">
                                     <span class="sr-only">Edit</span>
@@ -20,16 +28,26 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            <!-- Check if connections array is empty -->
-                            <tr v-if="connections.length === 0">
-                                <td colspan="6" class="py-4 text-center text-sm italic text-gray-500">
-                                    No connections available.
-                                </td>
-                            </tr>
-                            <tr v-for="(option, index) in connections" :key="index">
+                            <tr v-for="(option, index) in keys" :key="index">
                                 <td class=" py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
-                                    {{ option.connection_name }}</td>
-                                <td class="px-3 py-4 text-sm text-gray-500">{{ option.domain }}</td>
+                                    {{ option.ivr_menu_option_digits }}</td>
+                                <td class="px-3 py-4 text-sm text-gray-500">
+                                    {{ option.key_type_display }}
+                                    <dl class="font-normal md:hidden">
+                                        <dd class="mt-1 truncate text-gray-700">{{ option.key_name }}</dd>
+                                        <dd class="mt-1 truncate text-gray-500 md:hidden">{{ option.ivr_menu_option_description }}</dd>
+                                        <dd class="mt-1 md:hidden">
+                                            <Toggle v-model="option.ivr_menu_option_enabled" disabled/>
+                                        </dd>
+
+                                    </dl>
+                                </td>
+                                <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">{{ option.key_name }}</td>
+                                <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{
+                                    option.ivr_menu_option_description }}</td>
+                                <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">
+                                    <Toggle v-model="option.ivr_menu_option_enabled" disabled/>
+                                </td>
                                 <td class="relative py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 lg:pr-8">
                                     <Menu as="div" class="relative inline-block text-left">
                                         <div>
@@ -77,10 +95,10 @@
 
         <div
             class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
-            <button href="#" @click.prevent="handleAddConnection" class="flex items-center gap-2">
+            <button href="#" @click.prevent="handleAddKey" class="flex items-center gap-2">
                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
                 <span>
-                    Add new connection
+                    Add new key
                 </span>
             </button>
         </div>
@@ -101,36 +119,50 @@ import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
     modelValue: [Object, null],
+    routingTypes: [Object, null],
+    optionsUrl: String,
     isDeleting: Boolean,
 });
 
 
-const emit = defineEmits(['update:model-value', 'add-connection', 'edit-connection', 'delete-connection'])
+const emit = defineEmits(['update:model-value', 'add-key', 'edit-key', 'delete-key'])
 
 // Create a local reactive copy of the modelValue
-const connections = ref([...props.modelValue]);
-
+const keys = ref([...props.modelValue]);
 
 const loading = ref(false)
 
 // Watch for changes to the modelValue from the parent and update local state
-watch(
-    () => props.modelValue,
-    (newVal) => {
-        connections.value = newVal; // Directly bind to the new value
-    },
-    { deep: true } // Ensure it watches for nested changes
-);
+watch(() => props.modelValue, (newVal) => {
+    keys.value = [...newVal];
+});
 
-const handleAddConnection = () => emit('add-connection');
+const handleAddKey = () => emit('add-key');
 
-const handleEdit = (connection) => {
-    emit('edit-connection', connection); // Emit the edit event with
+const handleEdit = (option) => {
+    emit('edit-key', option); // Emit the edit event
 };
 
-const handleDelete = (connection) => {
-    emit('delete-connection', connection); // Emit the delete event
+const handleDelete = (option) => {
+    emit('delete-key', option); // Emit the delete event
 };
+
+// Initialize keys and fetch typeOptions
+// if (props.selectedItems) {
+//     props.selectedItems.forEach((item, index) => {
+//         keys.value.push({
+//             type: item.type || null,
+//             typeOptions: [],  // Initially empty
+//             option: item.option || null,
+//             extension: item.extension || null,
+//         });
+
+//         // If type is available, fetch the options for that type
+//         if (item.type) {
+//             fetchTypeOptionsForItem(item.type, index);
+//         }
+//     });
+// }
 
 
 // Emit updates to the parent whenever routingOptions changes
@@ -138,5 +170,58 @@ const updateParent = () => {
     emit('update:modelValue', routingOptions.value);
 };
 
+// Function to modify routing options
+const addRoutingOption = () => {
+    routingOptions.value.push({ type: null, typeOptions: [], option: null });
+    updateParent(); // Notify the parent about the changes
+};
+
+const removeRoutingOption = (index) => {
+    routingOptions.value.splice(index, 1);
+    updateParent();
+};
+
+const updateRoutingOption = (value, index) => {
+    routingOptions.value[index] = value;
+    updateParent();
+};
+
+
+// // Update keys and emit updated model value
+// function updatekeys(newValue, index) {
+//     keys.value[index].option = newValue.value;
+//     keys.value[index].extension = newValue.extension;
+
+//     // Prepare the updated options
+//     const updatedOptions = keys.value.map(({ type, option, extension }) => {
+//         return { type, option, extension };
+//     });
+
+//     emit('update:model-value', updatedOptions);
+// }
+
+
+// // Add a new routing option
+// const addRoutingOption = () => {
+//     keys.value.push({
+//         type: null,
+//         typeOptions: [],
+//         option: null,
+//     });
+// };
+
+// const removeRoutingOption = (index) => {
+//     // console.log(keys.value);
+//     keys.value.splice(index, 1);
+
+//     // Reassign the array to force Vue to track reactivity properly
+//     keys.value = [...keys.value];
+
+//     const updatedOptions = keys.value.map(({ type, option }) => {
+//         return { type, option };
+//     });
+//     // console.log(updatedOptions);
+//     emit('update:model-value', updatedOptions);
+// }
 
 </script>

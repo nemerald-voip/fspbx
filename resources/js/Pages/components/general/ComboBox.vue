@@ -98,8 +98,7 @@
                             Reset
                         </button> -->
 
-                        <button type="button" @click.prevent="applySelection"
-                            :disabled="!hasCurrentSelection"
+                        <button type="button" @click.prevent="applySelection" :disabled="!hasCurrentSelection"
                             class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-300">
                             Apply
                         </button>
@@ -214,11 +213,15 @@ const filteredOptions = computed(() => {
 
 // Compute the classes based on the error state
 const inputClass = computed(() => {
-    let baseClasses = 'w-full text-gray-900 border-0 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left ring-1 ring-inset focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm sm:leading-6';
+    let baseClasses = 'w-full truncate text-gray-900 border-0 cursor-default rounded-md bg-white py-1.5 pl-3 text-left ring-1 ring-inset focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm sm:leading-6';
+
+    // Check if either `hasCurrentSelection` or `showClear` is true to adjust padding-right
+    let paddingRight = (hasCurrentSelection.value || props.showClear) ? 'pr-20' : 'pr-10';
+
     if (props.error) {
         return `${baseClasses} ring-red-600 focus-visible:ring-offset-red-600`; // Apply red ring if there's an error
     }
-    return `${baseClasses} ring-gray-300 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed`;  // Default ring color when no error
+    return `${baseClasses} ${paddingRight} ring-gray-300 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed`;  // Default ring color when no error
 });
 
 // Determine if there is a current selection
