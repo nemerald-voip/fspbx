@@ -170,13 +170,6 @@ class PhoneNumbersController extends Controller
                 'routing_types' => $routingTypes,
                 'faxes' => $faxes,
                 'domains' => $domains,
-                // 'voicemail_copies' => $voicemailCopies,
-                // 'greetings' => $greetingsArray,
-                // 'voices' => $openAiVoices,
-                // 'speeds' => $openAiSpeeds,
-                // 'phone_call_instructions' => $phoneCallInstructions,
-                // 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
-                // 'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -529,11 +522,29 @@ class PhoneNumbersController extends Controller
                     'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
                 ];
 
+            case 'check_voicemail':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*98 XML ' . session('domain_name'),
+                ];
+
+            case 'company_directory':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*411 XML ' . session('domain_name'),
+                ];
+
             case 'recordings':
                 // Handle recordings with 'lua' destination app
                 return [
                     'destination_app' => 'lua',
                     'destination_data' => 'streamfile.lua ' . $option['extension'],
+                ];
+
+            case 'hangup':
+                return [
+                    'destination_app' => 'hangup',
+                    'destination_data' => '',
                 ];
 
                 // Add other cases as necessary for different types

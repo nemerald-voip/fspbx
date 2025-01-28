@@ -318,31 +318,31 @@ class DashboardController extends Controller
         $apps = [];
 
         if (userCheckPermission("extension_view")) {
-            $apps[] = ['name' => 'Extensions', 'href' => '/extensions', 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
+            $apps[] = ['name' => 'Extensions', 'href' => route('extensions.index'), 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
         }
         if (userCheckPermission("voicemail_view")) {
-            $apps[] = ['name' => 'Voicemails', 'href' => '/voicemails', 'icon' => 'VoicemailIcon', 'slug' => 'voicemails'];
+            $apps[] = ['name' => 'Voicemails', 'href' => route('voicemails.index'), 'icon' => 'VoicemailIcon', 'slug' => 'voicemails'];
         }
         if (userCheckPermission("device_view")) {
             $apps[] = ['name' => 'Devices', 'href' => route('devices.index'), 'icon' => 'DevicesIcon', 'slug' => 'devices'];
         }
         if (userCheckPermission("user_view")) {
-            $apps[] = ['name' => 'Users', 'href' => '/users', 'icon' => 'UsersIcon', 'slug' => 'users'];
+            $apps[] = ['name' => 'Users', 'href' => route('users.index'), 'icon' => 'UsersIcon', 'slug' => 'users'];
         }
         if (userCheckPermission("ring_group_view")) {
-            $apps[] = ['name' => 'Ring Groups', 'href' => '/ring-groups', 'icon' => 'UserGroupIcon', 'slug' => 'ring_groups'];
+            $apps[] = ['name' => 'Ring Groups', 'href' => route('ring-groups.index'), 'icon' => 'UserGroupIcon', 'slug' => 'ring_groups'];
         }
         if (userCheckPermission("destination_view")) {
-            $apps[] = ['name' => 'Phone Numbers', 'href' => 'phone-numbers', 'icon' => 'DialpadIcon', 'slug' => 'phone_numbers'];
+            $apps[] = ['name' => 'Phone Numbers', 'href' => route('phone-numbers.index'), 'icon' => 'DialpadIcon', 'slug' => 'phone_numbers'];
         }
         if (userCheckPermission("ivr_menu_view")) {
-            $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => '/app/ivr_menus/ivr_menus.php', 'icon' => 'IvrIcon', 'slug' => 'ivrs'];
+            $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => route('virtual-receptionists.index'), 'icon' => 'IvrIcon', 'slug' => 'ivrs'];
         }
         if (userCheckPermission("time_condition_view")) {
             $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'slug' => 'schedules'];
         }
         if (userCheckPermission("xml_cdr_view")) {
-            $apps[] = ['name' => 'Call History (CDRs)', 'href' => '/call-detail-records', 'icon' => 'CallHistoryIcon', 'slug' => 'cdrs'];
+            $apps[] = ['name' => 'Call History (CDRs)', 'href' => route('cdrs.index'), 'icon' => 'CallHistoryIcon', 'slug' => 'cdrs'];
         }
         if (userCheckPermission("call_flow_view")) {
             $apps[] = ['name' => 'Call Flows', 'href' => '/app/call_flows/call_flows.php', 'icon' => 'AlternativeRouteIcon', 'slug' => 'call_flows'];

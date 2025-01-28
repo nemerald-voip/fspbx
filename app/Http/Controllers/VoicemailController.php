@@ -446,33 +446,6 @@ class VoicemailController extends Controller
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
 
-        $voicemail = Voicemails::findOrFail($id);
-
-        if (isset($voicemail)) {
-            $deleted = $voicemail->delete();
-            $filename = "recorded_name.wav";
-            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-            $file = Storage::disk('voicemail')->delete($path);
-            $filename = "greeting_1.wav";
-            $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-            $file = Storage::disk('voicemail')->delete($path);
-
-            if ($deleted) {
-                return response()->json([
-                    'status' => 200,
-                    'success' => [
-                        'message' => 'Selected voicemail extensions have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting selected voicemail extensions'
-                    ]
-                ]);
-            }
-        }
     }
 
 
@@ -653,6 +626,8 @@ class VoicemailController extends Controller
                 'Press <strong>3</strong> to record your name, then follow the prompts.',
             ];
 
+            $sampleMessage = 'Thank you for calling. Please, leave us a message and will call you back as soon as possible';
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -666,6 +641,7 @@ class VoicemailController extends Controller
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
+                'sample_message' => $sampleMessage,
                 'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
                 // Define options for other fields as needed
             ];
@@ -881,7 +857,7 @@ class VoicemailController extends Controller
             }
 
             // Step 7: Save greeting info to the database
-            $voicemail->greetings()->create([
+            $greeting = $voicemail->greetings()->create([
                 'domain_uuid' => $voicemail->domain_uuid,
                 'voicemail_id' => $voicemail->voicemail_id,
                 'greeting_id' => $newGreetingId,
@@ -890,6 +866,8 @@ class VoicemailController extends Controller
                 'greeting_description' => "Generated greeting {$newGreetingId}",
 
             ]);
+
+            logger($greeting);
 
             // Step 8: Update the voicemail table with the new greeting_id
             $voicemail->update([

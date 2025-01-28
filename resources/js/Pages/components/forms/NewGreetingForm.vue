@@ -45,7 +45,7 @@
                     <LabelInputOptional target="custom_greeting_message" label="Custom greeting message" class="truncate" />
                     <div class="mt-2">
                         <Textarea v-model="greetingForm.input" id="custom_greeting_message"
-                            placeholder="Thank you for calling. Please, leave us a message and will call you back as soon as possible"
+                            :placeholder="sample_message"
                             name="custom_greeting_message" rows="3" :error="!!errors?.input" />
                     </div>
                     <div v-if="errors?.input" class="mt-2 text-xs text-red-600">
@@ -188,6 +188,7 @@ const props = defineProps({
     voices: Object,
     speeds: Object,
     routes: Object,
+    sample_message: String,
     phone_call_instructions: Object,
 });
 
@@ -256,7 +257,7 @@ const uploadFile = () => {
                 });
                 selectedFileName.value = '';
                 fileToUpload.value = null;
-                successMessage.value = response.data.message.success;
+                successMessage.value = response.data.messages.success[0];
 
                 // Dismiss success message after 5 seconds
                 setTimeout(() => {
@@ -307,7 +308,7 @@ const saveGreeting = () => {
                     greeting_name: response.data.greeting_name
                 });
                 audioUrl.value = false;
-                successMessage.value = response.data.message.success;
+                successMessage.value = response.data.messages.success[0];
                 // Dismiss success message after 5 seconds
                 setTimeout(() => {
                     successMessage.value = null;

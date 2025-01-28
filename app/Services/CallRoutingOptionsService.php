@@ -23,12 +23,15 @@ class CallRoutingOptionsService
         ['value' => 'extensions', 'name' => 'Extension'],
         ['value' => 'voicemails', 'name' => 'Voicemail'],
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
-        ['value' => 'ivrs', 'name' => 'Auto Receptionist'],
+        ['value' => 'ivrs', 'name' => 'Virtual Receptionist'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
+        ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
+        ['value' => 'company_directory', 'name' => 'Company Directory'],
+        ['value' => 'hangup', 'name' => 'Hang up'],
         // ['value' => 'other', 'name' => 'Other']
     ];
 
@@ -40,35 +43,6 @@ class CallRoutingOptionsService
         $this->domainName = session('domain_name');
     }
 
-    // public function getData(): array
-    // {
-    //     $output = [];
-    //     foreach ($this->categories as $key => $label) {
-    //         $output[$key] = [
-    //             'name' => $label,
-    //             'options' => $this->getOptions($key)
-    //         ];
-    //     }
-
-
-    //     return $output;
-    // }
-
-    // public function findLabel(array $actions): array
-    // {
-    //     $data = $this->getData();
-    //     $output = [];
-    //     foreach ($actions as $action) {
-    //         foreach ($data as $values) {
-    //             foreach ($values['options'] as $value) {
-    //                 if (str_contains($value["value"], $action['destination_app'].':'.$action['destination_data'])) {
-    //                     $output[] = $values['name'].' '.$value["name"];
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return $output;
-    // }
 
     public function getOptions(): array
     {
@@ -203,12 +177,18 @@ class CallRoutingOptionsService
                             // Use regex and the Dialplan database to determine the type and details
                             $routing_options[] = $this->reverseEngineerTransferAction($action['destination_data']);
                             break;
-        
+
                         case 'lua':
                             // Handle recordings
                             $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
                             break;
-        
+
+                        case 'hangup':
+                            $routing_options[] =  array(
+                                'type' => 'hangup',
+                            );
+                            break;
+
                             // Add more cases as necessary
                     }
                 }
@@ -219,7 +199,57 @@ class CallRoutingOptionsService
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
         }
+    }
 
+    /**
+     * Reverse engineer IVR options based on the provided parameter.
+     *
+     * @param string $ivrAction A string containing the action details (e.g., "transfer 201 XML api.us.nemerald.net").
+     * @return array Reverse-engineered IVR option details.
+     */
+    public function reverseEngineerIVROption($ivrAction)
+    {
+        try {
+            $ivrAction = trim($ivrAction);
+            // Split the string by spaces to extract details
+            $parts = explode(' ', $ivrAction);
+
+            if (count($parts) < 3 && $ivrAction != "hangup") {
+                throw new \Exception("Invalid IVR action format");
+            }
+
+            // Extract relevant data
+            $actionType = $parts[0]; // e.g., "transfer"
+            if ($actionType != 'hangup') {
+                $destination = $parts[1]; // e.g., "201"
+                $context = $parts[2]; // e.g., "XML"
+                $domain = $parts[3] ?? null; // e.g., "api.us.nemerald.net"
+            }
+
+            // Reverse engineer based on the action type
+            switch ($actionType) {
+                case 'transfer':
+                    return $this->reverseEngineerTransferAction("$destination $context $domain");
+                    break;
+                case 'lua':
+                    return $this->extractRecordingUuidFromData("$destination $context $domain");
+                    break;
+
+                case 'hangup':
+                    return array(
+                        'type' => 'hangup',
+                    );
+                    break;
+
+                    // Add more cases for other IVR actions as needed
+
+                default:
+                    throw new \Exception("Unsupported IVR action type: $actionType");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
     }
 
     /**
@@ -236,7 +266,10 @@ class CallRoutingOptionsService
                 ->orWhere('dialplan_number', '=', '1' . $extension);
         })
             ->where('dialplan_enabled', 'true')
-            ->where('domain_uuid', session('domain_uuid'))
+            ->where(function ($query) {
+                $query->where('domain_uuid', session('domain_uuid'))
+                    ->orWhereNull('domain_uuid');
+            })
             ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
             ->first();
 
@@ -249,6 +282,10 @@ class CallRoutingOptionsService
         if ((substr($extension, 0, 3) == '*99') !== false) {
             $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
                 ->where('voicemail_id', substr($extension, 3))
+                ->with(['extension' => function ($query) {
+                    $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                        ->where('domain_uuid', session('domain_uuid'));
+                }])
                 ->first();
 
             if (!$voicemail) return null;
@@ -256,6 +293,7 @@ class CallRoutingOptionsService
                 'type' => 'voicemails',
                 'extension' => $voicemail->voicemail_id,
                 'option' => $voicemail->voicemail_uuid,
+                'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
             ];
         }
 
@@ -268,12 +306,14 @@ class CallRoutingOptionsService
                 'type' => null,
                 'extension' => null,
                 'option' => null,
+                'name' => null
             ];
         } else {
             return [
                 'type' => 'extensions',
                 'extension' => $ext->extension,
                 'option' => $ext->extension_uuid,
+                'name' => $ext->name_formatted,
             ];
         }
     }
@@ -291,6 +331,8 @@ class CallRoutingOptionsService
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
+            'check_voicemail' => '/app.lua voicemail/',
+            'company_directory' => '/directory.lua/',
         ];
 
         foreach ($patterns as $type => $pattern) {
@@ -301,6 +343,27 @@ class CallRoutingOptionsService
                         'type' => $type,
                         'extension' => $extension,
                         'option' => $dialplan->dialplan_uuid,
+                        'name' => $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'check_voicemail') {
+                    // For time conditions, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => null,
+                        // 'name' => $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'company_directory') {
+                    // For time conditions, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => null,
+                        // 'name' => $dialplan->dialplan_name,
                     ];
                 }
 
@@ -309,6 +372,7 @@ class CallRoutingOptionsService
                     'type' => $type,
                     'extension' => $extension,
                     'option' => $matches[1],
+                    'name' => $dialplan->dialplan_name,
                 ];
             }
         }
@@ -319,6 +383,7 @@ class CallRoutingOptionsService
                 'type' => 'time_conditions',
                 'extension' => $extension,
                 'option' => $dialplan->dialplan_uuid,
+                'name' => $dialplan->dialplan_name,
             ];
         }
 
@@ -349,9 +414,30 @@ class CallRoutingOptionsService
                 'type' => 'recordings',
                 'extension' => $fileName,
                 'option' => $recording->recording_uuid,
+                'name' => $recording->recording_name,
             ];
         } else {
             return [];
         }
+    }
+
+    public function getFriendlyTypeName(string $type): string
+    {
+        $typeMapping = [
+            'extensions' => 'Extension',
+            'voicemails' => 'Voicemail',
+            'ring_groups' => 'Ring Group',
+            'ivrs' => 'Virtual Receptionist',
+            'contact_centers' => 'Contact Center',
+            'faxes' => "Fax",
+            'time_conditions' => 'Schedules',
+            'call_flows' => 'Call Flow',
+            'recordings' => 'Play recording',
+            'company_directory' => 'Company Directory',
+            'check_voicemail' => 'Check Voicemail',
+            'hangup' => 'Hang up',
+        ];
+
+        return $typeMapping[$type] ?? 'Unknown';
     }
 }
