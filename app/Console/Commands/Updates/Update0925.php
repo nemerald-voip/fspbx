@@ -15,7 +15,7 @@ class Update0925
     public function __construct()
     {
         $this->ivrConfFilePath = base_path('public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua');
-        $this->ivrConfFilePath2 = base_path('/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua');
+        $this->ivrConfFilePath2 = '/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua';
     }
 
     /**
