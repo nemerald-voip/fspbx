@@ -481,6 +481,42 @@ else
     exit 1
 fi
 
+# Download and replace the dialplan.php file
+sudo curl -o /var/www/fspbx/public/app/dialplans/resources/classes/dialplan.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/dialplans/resources/classes/dialplan.php
+if [ $? -eq 0 ]; then
+    print_success "dialplan.php file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing dialplan.php file."
+    exit 1
+fi
+
+# Download and replace the fax_send.php file
+sudo curl -o /var/www/fspbx/public/app/fax_queue/resources/job/fax_send.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/fax_queue/resources/job/fax_send.php
+if [ $? -eq 0 ]; then
+    print_success "fax_send.php file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing fax_send.php file."
+    exit 1
+fi
+
+# Download and replace the ivr.conf.lua file
+sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
+if [ $? -eq 0 ]; then
+    print_success "ivr.conf.lua file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing ivr.conf.lua file."
+    exit 1
+fi
+
+# Download and replace the ivr.conf.lua file
+sudo curl -o /usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
+if [ $? -eq 0 ]; then
+    print_success "ivr.conf.lua file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing ivr.conf.lua file."
+    exit 1
+fi
+
 
 # Change ownership of the entire fspbx directory to www-data
 sudo chown -R www-data:www-data /var/www/fspbx
