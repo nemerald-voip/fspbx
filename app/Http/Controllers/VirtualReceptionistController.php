@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\IvrMenus;
+use App\Models\Dialplans;
 use App\Models\Recordings;
+use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\IvrMenuOptions;
@@ -22,7 +24,7 @@ class VirtualReceptionistController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'VirtualReceptionists';
-    protected $searchable = ['voicemail_id', 'voicemail_mail_to', 'extension.effective_caller_id_name'];
+    protected $searchable = ['ivr_menu_name', 'ivr_menu_extension', 'ivr_menu_description'];
 
     public function __construct()
     {
@@ -52,6 +54,7 @@ class VirtualReceptionistController extends Controller
                     'current_page' => route('virtual-receptionists.index'),
                     'store' => route('virtual-receptionists.store'),
                     'item_options' => route('virtual-receptionists.item.options'),
+                    'select_all' => route('virtual-receptionists.select.all'),
                 ]
             ]
         );
@@ -157,13 +160,13 @@ class VirtualReceptionistController extends Controller
         $inputs = $request->validated();
 
         try {
-            // Create a new IVR menu instance
-            $ivrMenu = new IvrMenus();
+            // Create a new model instance
+            $instance = $this->model;
 
-            // Fill the IVR menu with validated input data
-            $ivrMenu->fill([
-                // 'ivr_menu_uuid' => (string) Str::uuid(), // Generate a unique UUID
+            // Fill the model with validated input data
+            $instance->fill([
                 'domain_uuid' => session('domain_uuid'), // Set domain_uuid from session
+                'dialplan_uuid' => Str::uuid(),
                 'ivr_menu_name' => $inputs['ivr_menu_name'],
                 'ivr_menu_extension' => $inputs['ivr_menu_extension'],
                 'ivr_menu_enabled' => $inputs['ivr_menu_enabled'] === 'true' ? 'true' : 'false',
@@ -175,8 +178,10 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_direct_dial' => $inputs['direct_dial'] ? 'true' : 'false',
             ]);
 
-            // Save the IVR menu to the database
-            $ivrMenu->save();
+            // Save the model to the database
+            $instance->save();
+
+            $this->generateDialPlanXML($instance);
 
             // Clear cached destinations session array
             if (isset($_SESSION['destinations']['array'])) {
@@ -185,7 +190,7 @@ class VirtualReceptionistController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'item_uuid' => $ivrMenu->ivr_menu_uuid,
+                'item_uuid' => $instance->ivr_menu_uuid,
                 'messages' => ['success' => ['New item created']]
             ], 201);
         } catch (\Exception $e) {
@@ -207,12 +212,12 @@ class VirtualReceptionistController extends Controller
 
         try {
             // Retrieve the IVR menu by UUID
-            $ivrMenu = IvrMenus::where('ivr_menu_uuid', $inputs['ivr_menu_uuid'])->firstOrFail();
+            $instance = $this->model::where('ivr_menu_uuid', $inputs['ivr_menu_uuid'])->firstOrFail();
 
             $exit_data = $this->buildExitDestinationAction($inputs);
 
             // Update basic IVR menu fields
-            $ivrMenu->fill([
+            $instance->fill([
                 'ivr_menu_name' => $inputs['ivr_menu_name'],
                 'ivr_menu_extension' => $inputs['ivr_menu_extension'],
                 'ivr_menu_greet_long' => $inputs['ivr_menu_greet_long'] ?? null,
@@ -230,7 +235,9 @@ class VirtualReceptionistController extends Controller
             ]);
 
             // Save the updated IVR menu
-            $ivrMenu->save();
+            $instance->save();
+
+            $this->generateDialPlanXML($instance);
 
             //clear the destinations session array
             if (isset($_SESSION['destinations']['array'])) {
@@ -289,6 +296,64 @@ class VirtualReceptionistController extends Controller
         }
     }
 
+    private function generateDialPlanXML(IvrMenus $ivr): void
+    {
+
+        // logger($ivr);
+        // Data to pass to the Blade template
+        $data = [
+            'ivr' => $ivr,
+            // 'domain_name' => session('domain_name'),
+            'dialplan_continue' => 'false',
+        ];
+
+
+        // Render the Blade template and get the XML content as a string
+        $xml = trim(view('layouts.xml.ivr-dial-plan-template', $data)->render());
+
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;  // Removes extra spaces
+        $dom->loadXML($xml);
+        $dom->formatOutput = true;         // Formats XML properly
+        $xml = $dom->saveXML($dom->documentElement);
+
+        $dialPlan = Dialplans::where('dialplan_uuid', $ivr->dialplan_uuid)->first();
+
+        if (!$dialPlan) {
+            $dialPlan = new Dialplans();
+            $dialPlan->dialplan_uuid = $ivr->dialplan_uuid;
+            $dialPlan->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
+            $dialPlan->domain_uuid = session('domain_uuid');
+            $dialPlan->context = session('domain_name');
+            $dialPlan->dialplan_name = $ivr->ivr_menu_name;
+            $dialPlan->dialplan_number = $ivr->ivr_menu_extension;
+            $dialPlan->dialplan_continue = $data['dialplan_continue'];
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_order = 101;
+            $dialPlan->dialplan_enabled = $ivr->ivr_menu_enabled;
+            $dialPlan->dialplan_description = $ivr->ivr_menu_description;
+            $dialPlan->insert_date = date('Y-m-d H:i:s');
+            $dialPlan->insert_user = session('user_uuid');
+        } else {
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_name = $ivr->ivr_menu_name;
+            $dialPlan->dialplan_number = $ivr->ivr_menu_extension;
+            $dialPlan->dialplan_enabled = $ivr->ivr_menu_enabled;
+            $dialPlan->dialplan_description = $ivr->ivr_menu_description;
+            $dialPlan->update_date = date('Y-m-d H:i:s');
+            $dialPlan->update_user = session('user_uuid');
+        }
+
+        $dialPlan->save();
+
+        $this->clearCache($ivr);
+    }
+
+    private function clearCache($ivr): void
+    {
+        FusionCache::clear("dialplan." . session('domain_name'));
+        FusionCache::clear("configuration.ivr.conf." . $ivr->ivr_menu_uuid);
+    }
 
 
     public function getItemOptions()
@@ -695,6 +760,32 @@ class VirtualReceptionistController extends Controller
                 // Add other cases as necessary for different types
             default:
                 return [];
+        }
+    }
+
+    /**
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     */
+    public function selectAll()
+    {
+        try {
+            $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 }
