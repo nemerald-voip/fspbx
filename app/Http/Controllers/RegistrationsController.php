@@ -64,6 +64,9 @@ class RegistrationsController extends Controller
         } else {
             $this->filters['showGlobal'] = null;
         }
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'sip_auth_user'); // Default to 'sip_auth_user'
+        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
 
         $data = $this->builder($this->filters, $eslService);
 
