@@ -57,6 +57,8 @@ class VoicemailController extends Controller
                     'current_page' => route('voicemails.index'),
                     'store' => route('voicemails.store'),
                     'item_options' => route('voicemails.item.options'),
+                    'bulk_delete' => route('voicemails.bulk.delete'),
+                    'select_all' => route('voicemails.select.all'),
                 ]
             ]
         );
@@ -65,7 +67,7 @@ class VoicemailController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData($paginate = 5)
     {
 
         // Check if search parameter is present and not empty
@@ -445,7 +447,61 @@ class VoicemailController extends Controller
 
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
+    }
 
+    /**
+     * Remove the specified resource from storage.
+     * @return JsonResponse
+     */
+    public function bulkDelete()
+    {
+        try {
+            // Begin Transaction
+            DB::beginTransaction();
+
+            // Retrieve all items at once
+            $items = $this->model::whereIn('voicemail_uuid', request('items'))
+                ->get(['voicemail_uuid']);
+
+            foreach ($items as $item) {
+                // Delete related voicemail destinations
+                $item->voicemail_destinations()->delete();
+
+                // Delete related voicemail messages
+                $item->messages()->delete();
+
+                // Delete related voicemail greetings
+                $item->greetings()->delete();
+
+                // Define the path to the voicemail folder
+                $path = session('domain_name') . '/' . $item->voicemail_id;
+
+                // Check if the directory exists and delete it
+                if (Storage::disk('voicemail')->exists($path)) {
+                    Storage::disk('voicemail')->deleteDirectory($path);
+                }
+
+                // Delete the item itself
+                $item->delete();
+            }
+
+            // Commit Transaction
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+            ], 200);
+        } catch (\Exception $e) {
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e);
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 
 
@@ -555,7 +611,6 @@ class VoicemailController extends Controller
                     'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $voicemail),
                     'update_route' => route('voicemails.update', $voicemail),
                 ]);
-
             } else {
                 // Create a new voicemail if item_uuid is not provided
                 $voicemail = $this->model;
@@ -1250,6 +1305,35 @@ class VoicemailController extends Controller
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500);
+        }
+    }
+
+    /**
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     */
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 }
