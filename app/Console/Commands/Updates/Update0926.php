@@ -17,7 +17,7 @@ class Update0926
     public function __construct()
     {
         $this->filePath3 = base_path('public/app/fax_queue/resources/job/fax_send.php');
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua');
+        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua');
         $this->filePath2 = '/usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua';
     }
 
