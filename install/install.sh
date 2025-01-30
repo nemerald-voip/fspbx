@@ -517,6 +517,24 @@ else
     exit 1
 fi
 
+# Download and replace the hangup_tx.lua file
+sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
+if [ $? -eq 0 ]; then
+    print_success "hangup_tx.lua file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing hangup_tx.lua file."
+    exit 1
+fi
+
+# Download and replace the hangup_tx.lua file
+sudo curl -o /usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
+if [ $? -eq 0 ]; then
+    print_success "hangup_tx.lua file downloaded and replaced successfully."
+else
+    print_error "Error occurred while downloading and replacing hangup_tx.lua file."
+    exit 1
+fi
+
 
 # Change ownership of the entire fspbx directory to www-data
 sudo chown -R www-data:www-data /var/www/fspbx
