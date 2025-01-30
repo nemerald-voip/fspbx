@@ -276,6 +276,12 @@ class VirtualReceptionistController extends Controller
             // Delete related IVR menu options (keys)
             $virtual_receptionist->options()->delete();
 
+            // Delete related Dialplan entry
+            Dialplans::where('dialplan_uuid', $virtual_receptionist->dialplan_uuid)->delete();
+
+            // Clear FusionCache for the deleted IVR
+            $this->clearCache($virtual_receptionist);
+
             // Finally, delete the IVR menu itself
             $virtual_receptionist->delete();
 
@@ -313,6 +319,12 @@ class VirtualReceptionistController extends Controller
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
                 $item->options()->delete();
+
+                // Delete related Dialplan entry
+                Dialplans::where('dialplan_uuid', $item->dialplan_uuid)->delete();
+
+                // Clear cache
+                $this->clearCache($item);
 
                 // Delete the item itself
                 $item->delete();
