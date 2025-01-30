@@ -38,8 +38,10 @@ class IvrMenus extends Model
         'ivr_menu_exit_sound',
         'ivr_menu_direct_dial',
         'ivr_menu_max_failures',
+        'ivr_menu_max_timeouts',
         'ivr_menu_exit_app',
         'ivr_menu_exit_data',
+        'ivr_menu_context',
     ];
 
     protected static function booted()

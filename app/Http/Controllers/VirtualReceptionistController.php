@@ -176,6 +176,10 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_ringback' => $inputs['ring_back_tone'],
                 'ivr_menu_invalid_sound' => $inputs['invalid_input_message'],
                 'ivr_menu_direct_dial' => $inputs['direct_dial'] ? 'true' : 'false',
+                'ivr_menu_context' => session('domain_name'),
+                'ivr_menu_max_failures' => '3',
+                'ivr_menu_max_timeouts' => '3',
+
             ]);
 
             // Save the model to the database
