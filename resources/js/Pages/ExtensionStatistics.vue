@@ -143,21 +143,12 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
-import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
-import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
-import SelectBox from "./components/general/SelectBox.vue"
-import ComboBox from "./components/general/ComboBox.vue"
 import moment from 'moment-timezone';
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
 import Notification from "./components/notifications/Notification.vue";
 import {
-    PlayCircleIcon,
-    PauseCircleIcon,
-    CloudArrowDownIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
 import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
@@ -166,7 +157,6 @@ import {
     startOfDay, endOfDay,
 } from 'date-fns';
 import Loading from "./components/general/Loading.vue";
-import Spinner from "./components/general/Spinner.vue";
 
 const page = usePage()
 const today = new Date();
@@ -177,7 +167,6 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isExporting = ref(null);
-const selectedStatuses = ref([]);
 
 
 const props = defineProps({
@@ -187,11 +176,6 @@ const props = defineProps({
     endPeriod: String,
     search: String,
     timezone: String,
-    direction: String,
-    recordingUrl: String,
-    entities: Array,
-    selectedEntity: String,
-    selectedEntityType: String,
     csvUrl: Object,
     routes: Object,
     itemData: Object,
@@ -213,71 +197,8 @@ const filterData = ref({
     dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
     // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
     timezone: props.timezone,
-    direction: props.direction,
-    entity: props.selectedEntity,
-    entityType: props.selectedEntityType,
+
 });
-
-const showGlobal = ref(props.showGlobal);
-
-const callDirections = [
-    { value: 'outbound', name: 'Outbound' },
-    { value: 'inbound', name: 'Inbound' },
-    { value: 'local', name: 'Local' },
-]
-
-const handleSelectedStatusUpdate = (updatedStatuses) => {
-    filterData.value.statuses = updatedStatuses;
-};
-
-
-const handleViewRequest = (itemUuid) => {
-    viewModalTrigger.value = true
-    loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-            ],
-            onSuccess: (page) => {
-                // console.log(props.itemData);
-                if (!props.itemData) {
-                    viewModalTrigger.value = false;
-                    showNotification('error', { error: ['Unable to retrieve this item'] });
-                } else {
-                    loadingModal.value = false;
-                    viewModalTrigger.value = true;
-                }
-
-            },
-            onFinish: () => {
-                // loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
-
-const handleUpdateCallDirectionFilter = (newSelectedItem) => {
-    if (newSelectedItem.value == "NULL") {
-        filterData.value.direction = null;
-    } else {
-        filterData.value.direction = newSelectedItem.value;
-    }
-}
-
-const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
-    filterData.value.entity = newSelectedItem.value;
-    filterData.value.entityType = newSelectedItem.type;
-}
 
 const handleSearchButtonClick = () => {
     loading.value = true;
@@ -331,82 +252,6 @@ const renderRequestedPage = (url) => {
     });
 };
 
-const currentAudio = ref(null);
-const currentAudioUuid = ref(null);
-const isAudioPlaying = ref(false);
-
-const fetchAndPlayAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            // Stop the currently playing audio (if any)
-            if (currentAudio.value) {
-                currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
-            }
-
-            currentAudioUuid.value = uuid;
-            isAudioPlaying.value = true;
-
-            currentAudio.value = new Audio(props.recordingUrl);
-            currentAudio.value.play();
-
-            // Add an event listener for when the audio ends
-            currentAudio.value.addEventListener("ended", () => {
-                isAudioPlaying.value = false;
-                currentAudioUuid.value = null;
-            });
-        },
-    });
-};
-
-const downloadAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            filterData: filterData._rawValue,
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            let fileName;
-
-            if (props.recordingUrl.includes("call-detail-records/file")) {
-                // Shorten the name
-                fileName = uuid;
-            } else {
-                // If the substring is not present, use the original URL
-                fileName = props.recordingUrl;
-            }
-
-            // Create an anchor element and set the attributes for downloading
-            const anchor = document.createElement("a");
-            anchor.href = props.recordingUrl;
-            anchor.download = fileName; // You can set a specific filename here if desired
-            document.body.appendChild(anchor);
-
-            // Trigger the download
-            anchor.click();
-
-            // Clean up by removing the anchor element
-            document.body.removeChild(anchor);
-        },
-    });
-};
-
-const pauseAudio = () => {
-    // Check if currentAudio has an Audio object before calling pause
-    if (currentAudio.value) {
-        currentAudio.value.pause();
-        isAudioPlaying.value = false;
-    }
-};
 
 const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
@@ -431,50 +276,6 @@ const exportCsv = () => {
 
 };
 
-// const exportCsv = () => {
-//     isExporting.value = true;
-
-//     axios.post(props.routes.export, {
-//         filterData: filterData._rawValue,
-//     }, {
-//         responseType: 'blob'
-//     })
-//         .then(response => {
-//             // Create a blob link to download
-//             const url = window.URL.createObjectURL(new Blob([response.data]));
-//             const link = document.createElement('a');
-//             link.href = url;
-//             link.setAttribute('download', 'call-detail-records.csv'); // Set the file name for the download
-//             document.body.appendChild(link);
-//             link.click();
-//             document.body.removeChild(link); // Clean up
-//             window.URL.revokeObjectURL(url); // Free up memory
-
-//             filterData.value.download = 'false'; // Reset download flag on success
-//             showNotification('success', response.data.messages);
-//             isExporting.value = false;
-//         })
-//         .catch(error => {
-//             console.error('There was an error with the request:', error);
-//             filterData.value.download = 'false'; // Reset download flag on error
-//             isExporting.value = false;
-//             handleErrorResponse(error);
-//         });
-
-
-// };
-
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
 
 const handleModalClose = () => {
     viewModalTrigger.value = false;
@@ -511,13 +312,5 @@ const handleErrorResponse = (error) => {
     }
 }
 
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
-
-
-
 </script>
 
-<style>
-@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
