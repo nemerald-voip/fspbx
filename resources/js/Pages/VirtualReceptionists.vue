@@ -181,7 +181,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -261,8 +261,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
 
 const handleEditRequest = (itemUuid) => {
     showEditModal.value = true

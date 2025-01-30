@@ -43,6 +43,9 @@ class IvrMenuOptions extends Model
     protected static function booted()
     {
         static::saving(function ($model) {
+            if (!$model->domain_uuid) {
+                $model->domain_uuid = session('domain_uuid');
+            }
             // Remove attributes before saving to database
             unset($model->key_uuid);
             unset($model->key_type);

@@ -36,7 +36,7 @@ class VirtualReceptionistController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
         // Check permissions
         if (!userCheckPermission("ivr_menu_view")) {
@@ -55,6 +55,7 @@ class VirtualReceptionistController extends Controller
                     'store' => route('virtual-receptionists.store'),
                     'item_options' => route('virtual-receptionists.item.options'),
                     'select_all' => route('virtual-receptionists.select.all'),
+                    'bulk_delete' => route('virtual-receptionists.bulk.delete')
                 ]
             ]
         );
@@ -292,6 +293,47 @@ class VirtualReceptionistController extends Controller
 
             // Return error message
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     * @return JsonResponse
+     */
+    public function bulkDelete()
+    {
+        try {
+            // Begin Transaction
+            DB::beginTransaction();
+
+            // Retrieve all items at once
+            $items = $this->model::whereIn('ivr_menu_uuid', request('items'))
+                ->get(['ivr_menu_uuid']);
+
+            foreach ($items as $item) {
+                // Delete related IVR menu options (keys)
+                $item->options()->delete();
+
+                // Delete the item itself
+                $item->delete();
+            }
+
+            // Commit Transaction
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+            ], 200);
+        } catch (\Exception $e) {
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e);
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 
