@@ -276,6 +276,12 @@ class VirtualReceptionistController extends Controller
             // Delete related IVR menu options (keys)
             $virtual_receptionist->options()->delete();
 
+            // Delete related Dialplan entry
+            Dialplans::where('dialplan_uuid', $virtual_receptionist->dialplan_uuid)->delete();
+
+            // Clear FusionCache for the deleted IVR
+            $this->clearCache($virtual_receptionist);
+
             // Finally, delete the IVR menu itself
             $virtual_receptionist->delete();
 
@@ -313,6 +319,12 @@ class VirtualReceptionistController extends Controller
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
                 $item->options()->delete();
+
+                // Delete related Dialplan entry
+                Dialplans::where('dialplan_uuid', $item->dialplan_uuid)->delete();
+
+                // Clear cache
+                $this->clearCache($item);
 
                 // Delete the item itself
                 $item->delete();
@@ -361,8 +373,10 @@ class VirtualReceptionistController extends Controller
         $dialPlan = Dialplans::where('dialplan_uuid', $ivr->dialplan_uuid)->first();
 
         if (!$dialPlan) {
+            $newDialplanUuid = Str::uuid();
+
             $dialPlan = new Dialplans();
-            $dialPlan->dialplan_uuid = $ivr->dialplan_uuid;
+            $dialPlan->dialplan_uuid = $newDialplanUuid;
             $dialPlan->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
             $dialPlan->domain_uuid = session('domain_uuid');
             $dialPlan->dialplan_context = session('domain_name');
@@ -375,6 +389,10 @@ class VirtualReceptionistController extends Controller
             $dialPlan->dialplan_description = $ivr->ivr_menu_description;
             $dialPlan->insert_date = date('Y-m-d H:i:s');
             $dialPlan->insert_user = session('user_uuid');
+
+            // Update IVR with the new dialplan_uuid
+            $ivr->dialplan_uuid = $newDialplanUuid;
+            $ivr->save();
         } else {
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_name = $ivr->ivr_menu_name;
