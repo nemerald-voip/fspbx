@@ -34,7 +34,6 @@ class FaxQueueController extends Controller
      */
     public function index()
     {
-        // logger($request->all());
         // Check permissions
         if (!userCheckPermission("fax_queue_all")) {
             return redirect('/');
@@ -192,6 +191,8 @@ class FaxQueueController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
+        logger($data);
+
         return $data;
     }
 
@@ -208,10 +209,13 @@ class FaxQueueController extends Controller
         $data->select(
             'fax_queue_uuid',
             'fax_date',
+            'fax_number',
             'fax_caller_id_number',
             'fax_email_address',
             'fax_retry_date',
+            'fax_retry_count',
             'fax_notify_date',
+            'fax_status',
         );
 
         if (is_array($filters)) {

@@ -65,38 +65,81 @@
                         @pagination-change-page="renderRequestedPage" />
                 </template>
                 <template #table-header>
-                    <TableColumnHeader header="Extension"
-                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
+                    <TableColumnHeader
+                        class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                            :has-selected-items="selectedItems.length > 0" />
+                        <span class="pl-4">From</span>
+                    </TableColumnHeader>
 
-                    <TableColumnHeader header="Total Calls"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                    <TableColumnHeader header="Inbound"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                    <TableColumnHeader header="Outbound"
+                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    </TableColumnHeader>
+                    <TableColumnHeader header="Last Attempt"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Total Talk" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Retry Count"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Avg Call Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Notify Date"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
 
-                    <!-- <TableColumnHeader header="Actions"
-                        class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" /> -->
+                    <TableColumnHeader header="" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
 
                 </template>
 
-                <template #table-body>
-                    <tr v-for="row in data.data" :key="row.extension_uuid">
+                <template v-if="selectPageItems" v-slot:current-selection>
+                    <td colspan="6">
+                        <div class="text-sm text-center m-2">
+                            <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                            <button v-if="!selectAll && selectedItems.length != data.total"
+                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                @click="handleSelectAll">
+                                Select all {{ data.total }} items
+                            </button>
+                            <button v-if="selectAll"
+                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                @click="handleClearSelection">
+                                Clear selection
+                            </button>
+                        </div>
+                    </td>
+                </template>
 
-                        <TableField class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm text-gray-500" :text="row.extension_label" />
+                <template #table-body>
+                    <tr v-for="row in data.data" :key="row.fax_queue_uuid">
+
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.fax_caller_id_number">
+                        <div class="flex items-center">
+                            <input v-if="row.fax_queue_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.fax_queue_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9"
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
+                                @click="page.props.auth.can.voicemail_update && handleEditRequest(row.fax_queue_uuid)">
+                                <span class="flex items-center">
+                                    <UserIcon class="mr-2 h-5 w-5 text-indigo-500" />
+                                    {{ row.fax_caller_id_number }}
+                                </span>
+                            </div>
+                        </div>
+                    </TableField>
+
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_number" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.call_count" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.inbound" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.outbound" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.total_talk_time_formatted" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.average_duration_formatted" />
+                            :text="row.fax_email_address" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_status" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_retry_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_retry_count" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_notify_date" />
                     </tr>
                 </template>
                 <template #empty>
@@ -135,7 +178,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -167,6 +210,8 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isExporting = ref(null);
+const selectedItems = ref([]);
+const selectPageItems = ref(false);
 
 
 const props = defineProps({
@@ -252,6 +297,33 @@ const renderRequestedPage = (url) => {
     });
 };
 
+// Computed property for bulk actions based on permissions
+const bulkActions = computed(() => {
+    const actions = [
+        {
+            id: 'bulk_retry',
+            label: 'Retry',
+            icon: 'PencilSquareIcon'
+        }
+    ];
+
+    return actions;
+});
+
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        confirmationModalTrigger.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
+    }
+
+}
+
 
 const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
@@ -311,6 +383,16 @@ const handleErrorResponse = (error) => {
         console.log(error.message);
     }
 }
+
+const handleSelectPageItems = () => {
+    if (selectPageItems.value) {
+        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
+    } else {
+        selectedItems.value = [];
+    }
+};
+
+
 
 </script>
 
