@@ -229,7 +229,6 @@ import Loading from "./components/general/Loading.vue";
 const page = usePage()
 const today = new Date();
 const loading = ref(false)
-const viewModalTrigger = ref(false);
 const loadingModal = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
