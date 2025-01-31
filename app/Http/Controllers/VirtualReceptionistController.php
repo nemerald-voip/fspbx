@@ -179,7 +179,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_context' => session('domain_name'),
                 'ivr_menu_max_failures' => '3',
                 'ivr_menu_max_timeouts' => '3',
-
+                'ivr_menu_cid_prefix' => $inputs['caller_id_prefix'],
             ]);
 
             // Save the model to the database
@@ -236,6 +236,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_max_failures' => $inputs['repeat_prompt'],
                 'ivr_menu_exit_app' => $exit_data['action'],
                 'ivr_menu_exit_data' => $exit_data['data'],
+                'ivr_menu_cid_prefix' => $inputs['caller_id_prefix'],
             ]);
 
             // Save the updated IVR menu
@@ -652,6 +653,9 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
 
+            // Clear FusionCache
+            $this->clearCache($ivrMenuOption->ivrMenu);
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Virtual Receptionist Key successfully created']],
@@ -681,6 +685,7 @@ class VirtualReceptionistController extends Controller
         try {
             // Find the IvrMenuOption by UUID and Menu UUID
             $ivrMenuOption = IvrMenuOptions::where('ivr_menu_option_uuid', $inputs['option_uuid'])
+                ->with('IvrMenu')
                 ->first();
 
             if (!$ivrMenuOption) {
@@ -699,6 +704,9 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_option_description' => $inputs['description'],
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
+
+            // Clear FusionCache
+            $this->clearCache($ivrMenuOption->ivrMenu);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -726,6 +734,7 @@ class VirtualReceptionistController extends Controller
         try {
             // Find the IvrMenuOption by UUID
             $ivrMenuOption = IvrMenuOptions::where('ivr_menu_option_uuid', $inputs['ivr_menu_option_uuid'])
+                ->with('ivrMenu')
                 ->first();
 
             if (!$ivrMenuOption) {
@@ -738,6 +747,9 @@ class VirtualReceptionistController extends Controller
 
             // Delete the record
             $ivrMenuOption->delete();
+
+            // Clear FusionCache
+            $this->clearCache($ivrMenuOption->ivrMenu);
 
             // Return a JSON response indicating success
             return response()->json([

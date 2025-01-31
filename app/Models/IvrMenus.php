@@ -42,6 +42,7 @@ class IvrMenus extends Model
         'ivr_menu_exit_app',
         'ivr_menu_exit_data',
         'ivr_menu_context',
+        'ivr_menu_cid_prefix',
     ];
 
     protected static function booted()
