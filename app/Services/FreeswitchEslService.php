@@ -167,11 +167,9 @@ class FreeswitchEslService
             throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact administrator");
         }
 
-
         $cmd = "show channels as json";
+        // $cmd = "show channels";
         $result = $this->executeCommand($cmd);
-
-        // logger($result);
 
         // Initialize an array to hold channel information
         $channels = [];
@@ -255,14 +253,14 @@ class FreeswitchEslService
         }
 
         if ($response) {
-            // Check if the response contains CSV-like data
-            if (strpos($response, '|') !== false) {
-                return $this->convertEslResponseToArray($response);
-            }
-
             // Check if the response is a valid JSON string
             if ($this->isValidJson($response)) {
                 return json_decode($response, true); // Decode JSON response as an associative array
+            }
+
+            // Check if the response contains CSV-like data
+            if (strpos($response, '|') !== false) {
+                return $this->convertEslResponseToArray($response);
             }
 
             // Assume XML otherwise
