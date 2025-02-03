@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Firewall</template>
+            <template #title>Virtual Receptionists</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,7 +13,7 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
@@ -22,10 +22,11 @@
             </template>
 
             <template #action>
-                <button type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.virtual_receptionist_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Block IP
+                    Create
                 </button>
+
 
             </template>
 
@@ -35,27 +36,23 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header=""
+
+                <TableColumnHeader 
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Hostname</span>
+                    <span class="pl-4">Virtual Receptionist</span>
                 </TableColumnHeader>
-
-
-                <TableColumnHeader header="IP Address" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Filter" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="User Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="8">
+                <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -73,48 +70,53 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.hostname">
+                <tr v-for="row in data.data" :key="row.ivr_menu_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
+                        :text="row.voicemail_id">
                         <div class="flex items-center">
-                            <input v-if="row.hostname" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.ip" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9">
-                                {{ row.hostname }}
+                            <input v-if="row.ivr_menu_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.ivr_menu_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-9"
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.virtual_receptionist_update, }"
+                                @click="page.props.auth.can.virtual_receptionist_update && handleEditRequest(row.ivr_menu_uuid)">
+                                    {{ row.ivr_menu_name }}
                             </div>
-
                         </div>
                     </TableField>
 
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_extension" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_enabled" >
+                        <Badge v-if="row.ivr_menu_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
+                            textColor="text-green-700"
+                            ringColor="ring-green-600/20" />
+                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50"
+                            textColor="text-rose-700"
+                            ringColor="ring-rose-600/20" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ip" />
+                        </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.filter" />
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.extension" />
-
-                    <TableField class="truncate max-w-64 px-2 py-2 text-sm text-gray-500" :text="row.user_agent" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.date" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
-                            :textColor="determineColor(row.status).textColor"
-                            :ringColor="determineColor(row.status).ringColor" />
-
-                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
+                            <div class="flex items-center whitespace-nowrap justify-end">
+                                <ejs-tooltip v-if="page.props.auth.can.virtual_receptionist_update" :content="'Edit'" position='TopCenter'
+                                    target="#destination_tooltip_target">
+                                    <div id="destination_tooltip_target">
+                                        <PencilSquareIcon @click="handleEditRequest(row.ivr_menu_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                <!-- <RestartIcon @click="handleRetry(row.message_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
-
-
-                                    <div class="flex items-center  font-medium text-blue-600 hover:text-blue-500 hover:cursor-pointer"
-                                        @click="handleSingleItemDeleteRequest(row.ip)">
-                                        Unblock
                                     </div>
+                                </ejs-tooltip>
 
 
+                                <ejs-tooltip v-if="page.props.auth.can.virtual_receptionist_destroy" :content="'Delete'"
+                                    position='TopCenter' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
                             </div>
                         </template>
                     </TableField>
@@ -144,24 +146,42 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-
-    <AddEditItemModal :show="createModalTrigger" :header="'Block new IP address'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Virtual Receptionist'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateNewIpBlockForm :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <CreateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
+                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
+                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
-    <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm unblocking selected IP addreses.'"
-        :confirm-button-label="'Unblock'" cancel-button-label="Cancel" :loading="confirmationModalLoading"/>
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal" 
+        :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" 
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
+                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
+        </template>
+    </AddEditItemModal>
+
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+        @close="handleModalClose">
+        <template #modal-body>
+            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
+                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
+                @domain-selected="getItemOptions" />
+        </template>
+    </AddEditItemModal>
+
+    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+        @confirm="confirmDeleteAction" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -170,15 +190,20 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
-import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
-import CreateNewIpBlockForm from "./components/forms/CreateNewIpBlockForm.vue";
+import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
-import Badge from "./components/general/Badge.vue";
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
+import { registerLicense } from '@syncfusion/ej2-base';
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
+import UpdateVirtualReceptionistForm from "./components/forms/UpdateVirtualReceptionistForm.vue";
+import CreateVirtualReceptionistForm from "./components/forms/CreateVirtualReceptionistForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import Badge from "@generalComponents/Badge.vue";
+
+
 
 const page = usePage()
 const loading = ref(false)
@@ -186,13 +211,15 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const showCreateModal = ref(false);
+const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationModalLoading = ref(false);
+const confirmationModalDestroyPath = ref(null);
 const createFormSubmiting = ref(null);
+const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
+const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -201,74 +228,59 @@ const notificationShow = ref(null);
 const props = defineProps({
     data: Object,
     routes: Object,
-    // itemData: Object,
-    // itemOptions: Object,
+    itemData: Object,
 });
 
 
 const filterData = ref({
     search: null,
+    showGlobal: props.showGlobal,
 });
 
+const itemOptions = ref({})
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
-            id: 'bulk_unblock',
-            label: 'Unblock',
-            icon: ''
-        },
-
+        // {
+        //     id: 'bulk_update',
+        //     label: 'Edit',
+        //     icon: 'PencilSquareIcon'
+        // }
     ];
+
+    // Conditionally add the delete action if permission is granted
+    if (page.props.auth.can.virtual_receptionist_destroy) {
+        actions.push({
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
+        });
+    }
 
     return actions;
 });
 
-onMounted(() => {
-    // console.log(props.data);
-});
 
 const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
+    showEditModal.value = true
     formErrors.value = null;
     loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
+    getItemOptions(itemUuid);
 }
 
 const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.block, form)
+    axios.post(props.routes.store, form)
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
+            handleEditRequest(response.data.item_uuid);
         }).catch((error) => {
             createFormSubmiting.value = false;
             handleClearSelection();
@@ -277,42 +289,72 @@ const handleCreateRequest = (form) => {
 
 };
 
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
 
-const handleSingleItemDeleteRequest = (ip) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(ip);
-}
-
-const executeSingleDelete = (ip) => {
-    confirmationModalLoading.value = true;
-
-    axios.post(props.routes.unblock,
-        { 'items': [ip] },
-    )
+    axios.put(itemOptions.value.routes.update_route, form)
         .then((response) => {
+            updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleModalClose();
             handleSearchButtonClick();
-            confirmationModalLoading.value = false;
-        }).catch((error) => {
             handleModalClose();
-            handleErrorResponse(error);
-            confirmationModalLoading.value = false;
+            handleClearSelection();
+        }).catch((error) => {
+            updateFormSubmiting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
         });
 
+};
 
+const handleSingleItemDeleteRequest = (url) => {
+    confirmationModalTrigger.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(url);
+}
+
+const executeSingleDelete = (url) => {
+    router.delete(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            if (page.props.flash.error) {
+                showNotification('error', page.props.flash.error);
+            }
+            if (page.props.flash.message) {
+                showNotification('success', page.props.flash.message);
+            }
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onFinish: () => {
+            confirmationModalTrigger.value = false;
+            confirmationModalDestroyPath.value = null;
+        },
+        onError: (errors) => {
+            console.log(errors);
+        },
+    });
 }
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_unblock') {
+    if (action === 'bulk_delete') {
         confirmationModalTrigger.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
+    }
+
 }
 
 
+
 const executeBulkDelete = () => {
-    axios.post(props.routes.unblock, { items: selectedItems.value })
+    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -325,9 +367,23 @@ const executeBulkDelete = () => {
         });
 }
 
+const handleBulkUpdateRequest = (form) => {
+    bulkUpdateFormSubmiting.value = true
+    axios.post(`${props.routes.bulk_update}`, form)
+        .then((response) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            bulkUpdateFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
+}
 
 const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
+    showCreateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions();
@@ -346,21 +402,6 @@ const handleSelectAll = () => {
         });
 
 };
-
-
-const handleUnblock = (message_uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [message_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
 
 
 
@@ -405,27 +446,18 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
 
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
         });
 }
 
@@ -473,7 +505,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.ip);
+        selectedItems.value = props.data.data.map(item => item.ivr_menu_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -488,8 +520,10 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
+    showCreateModal.value = false;
+    showEditModal.value = false;
     confirmationModalTrigger.value = false;
+    bulkUpdateModalTrigger.value = false;
 }
 
 const hideNotification = () => {
@@ -504,22 +538,13 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-    switch (status) {
-        case 'blocked':
-            return {
-                backgroundColor: 'bg-rose-50',
-                textColor: 'text-rose-700',
-                ringColor: 'ring-rose-600/20'
-            };
-        default:
-            return {
-                backgroundColor: 'bg-yellow-50',
-                textColor: 'text-yellow-700',
-                ringColor: 'ring-yellow-600/20'
-            };
-    }
-};
+const handleClearErrors = () => {
+    formErrors.value = null;
+}
 
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
+
+<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>

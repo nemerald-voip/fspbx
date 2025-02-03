@@ -12,11 +12,11 @@
                         @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
                 </div>
 
-                <div v-if="routingOptions[index].typeOptions" 
+                <div v-if="routingOptions[index].typeOptions"
                     class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
                     <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="routingOptions[index].option"
-                        :search="true" :placeholder="'Choose option'"   :key="routingOptions[index].typeOptions.length + routingOptions[index].option" 
-                        @update:model-value="(value) => updateRoutingOptions(value, index)" />
+                        :search="true" :placeholder="'Choose option'" :key="`combobox-${index}-${Math.random()}`"
+                        @update:model-value="(value) => updateRoutingOptions(value, index)" :disabled="routingOptions[index].optionDisabled" />
                 </div>
 
             </div>
@@ -87,6 +87,8 @@ const emit = defineEmits(['update:model-value'])
 
 
 const routingOptions = ref([]);
+const disabledTypes = ['check_voicemail', 'company_directory', 'hangup'];
+
 
 // Initialize routingOptions and fetch typeOptions
 if (props.selectedItems) {
@@ -96,6 +98,7 @@ if (props.selectedItems) {
             typeOptions: [],  // Initially empty
             option: item.option || null,
             extension: item.extension || null,
+            optionDisabled: false,
         });
 
         // If type is available, fetch the options for that type
@@ -113,25 +116,27 @@ function fetchRoutingTypeOptions(newValue, index) {
 
     // Reset the selected option when type changes
     routingOptions.value[index].option = null;
+    routingOptions.value[index].extension = null;
+
+    //Update parent
+    updateRoutingOptions(routingOptions.value[index], index);
+
+    // Check if the selected type is in the list of disabled types
+    routingOptions.value[index].optionDisabled = disabledTypes.includes(newValue.value);
 
     axios.post(props.optionsUrl, { 'category': newValue.value })
         .then((response) => {
             // console.log(response.data);
             routingOptions.value[index].typeOptions = response.data.options;
-            // createFormSubmiting.value = false;
-            // showNotification('success', response.data.messages);
-            // handleSearchButtonClick();
-            // handleModalClose();
-            // handleClearSelection();
         }).catch((error) => {
-            // createFormSubmiting.value = false;
-            // handleClearSelection();
-            // handleFormErrorResponse(error);
             routingOptions.value[index].typeOptions = null;
         });
 }
 
 function fetchTypeOptionsForItem(type, index) {
+    // Check if the selected type is in the list of disabled types
+    routingOptions.value[index].optionDisabled = disabledTypes.includes(type);
+
     axios.post(props.optionsUrl, { 'category': type })
         .then((response) => {
             routingOptions.value[index].typeOptions = response.data.options;
@@ -183,7 +188,7 @@ const removeRoutingOption = (index) => {
 
     // Reassign the array to force Vue to track reactivity properly
     routingOptions.value = [...routingOptions.value];
-    
+
     const updatedOptions = routingOptions.value.map(({ type, option }) => {
         return { type, option };
     });

@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Events\GreetingDeleted;
 use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
 use App\Listeners\NotifySuperadminListener;
 use App\Events\ExtensionSuspendedStatusChanged;
+use App\Listeners\NotifyModelsOnGreetingDeleted;
 use App\Listeners\UpdateUserWhenExtensionIsUpdated;
 use App\Listeners\SuspendUserWhenExtensionIsDeleted;
 use App\Listeners\HandleExtensionSuspendedStatusChange;
@@ -35,6 +37,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         ExtensionSuspendedStatusChanged::class => [
             HandleExtensionSuspendedStatusChange::class,
+        ],
+        GreetingDeleted::class => [
+            NotifyModelsOnGreetingDeleted::class,
         ],
 
 

@@ -155,25 +155,25 @@
                                 <div class="flex items-center whitespace-nowrap gap-2">
                                     <!-- Play Button -->
                                     <PlayCircleIcon v-if="form.greeting_id > 0 && !isAudioPlaying" @click="playGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
                                     <PauseCircleIcon v-if="form.greeting_id > 0 && isAudioPlaying" @click="pauseGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <CloudArrowDownIcon v-if="form.greeting_id > 0 && !isDownloading"
                                         @click="downloadGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <Spinner :show="isDownloading"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Delete Button -->
                                     <TrashIcon v-if="form.greeting_id > 0" @click="deleteGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <PlusIcon @click="toggleGreetingForm"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                 </div>
 
@@ -195,31 +195,31 @@
                                     <PlayCircleIcon
                                         v-if="!isNameAudioPlaying && localOptions.recorded_name === 'Custom recording'"
                                         @click="playRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
                                     <PauseCircleIcon
                                         v-if="isNameAudioPlaying && localOptions.recorded_name === 'Custom recording'"
                                         @click="pauseRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Download Button -->
                                     <CloudArrowDownIcon
                                         v-if="localOptions.recorded_name === 'Custom recording' && !isNameDownloading"
                                         @click="downloadRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Spinner -->
                                     <Spinner :show="isNameDownloading"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Delete Button -->
                                     <TrashIcon v-if="localOptions.recorded_name === 'Custom recording'"
                                         @click="deleteRecordedName"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <PlusIcon @click="toggleNameForm"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                 </div>
 
@@ -238,12 +238,12 @@
 
                 <!-- New Greeting Form -->
                 <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions" :sample_message="localOptions.sample_message"
                     :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
 
                 <!-- Recorded Name Form -->
                 <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name"
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name" sample_message="John Dow"
                     :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
             </div>
 

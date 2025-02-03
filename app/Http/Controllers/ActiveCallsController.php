@@ -195,12 +195,12 @@ class ActiveCallsController extends Controller
     }
 
 
-    public function handleAction()
+    public function handleAction(FreeswitchEslService $eslService)
     {
         try {
             foreach (request('ids') as $uuid) {
                 if (request('action') == 'end_call') {
-                    $result = $this->eslService->killChannel($uuid);
+                    $result = $eslService->killChannel($uuid);
                 }
             }
 

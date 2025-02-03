@@ -17,6 +17,7 @@ use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
@@ -40,6 +41,7 @@ use App\Http\Controllers\WhitelistedNumbersController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
+use App\Http\Controllers\VirtualReceptionistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -144,6 +146,8 @@ Route::group(['middleware' => 'auth'], function () {
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
     Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
+    Route::post('/voicemails/bulk-delete', [VoicemailController::class, 'bulkDelete'])->name('voicemails.bulk.delete');
+    Route::post('/voicemails/select-all', [VoicemailController::class, 'selectAll'])->name('voicemails.select.all');
     Route::post('/voicemails/{voicemail}/text-to-speech', [VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
     Route::post('/voicemails/{voicemail}/text-to-speech-for-name', [VoicemailController::class, 'textToSpeechForName'])->name('voicemails.textToSpeechForName');
     Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file.serve');
@@ -166,9 +170,31 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
     Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
 
+    // Virtual Receptionist
+    Route::resource('virtual-receptionists', VirtualReceptionistController::class);
+    Route::post('virtual-receptionists/item-options', [VirtualReceptionistController::class, 'getItemOptions'])->name('virtual-receptionists.item.options');
+    Route::post('/virtual-receptionists/bulk-delete', [VirtualReceptionistController::class, 'bulkDelete'])->name('virtual-receptionists.bulk.delete');
+    Route::post('/virtual-receptionists/select-all', [VirtualReceptionistController::class, 'selectAll'])->name('virtual-receptionists.select.all');
+    Route::post('/virtual-receptionists/{virtual_receptionist}/greeting', [VirtualReceptionistController::class, 'getVirtualReceptionistGreeting'])->name('virtual-receptionist.greeting');
+    Route::post('/virtual-receptionists/greeting/apply', [VirtualReceptionistController::class, 'applyGreeting'])->name('virtual-receptionist.greeting.apply');
+    Route::post('/virtual-receptionists/key/create', [VirtualReceptionistController::class, 'createKey'])->name('virtual-receptionist.key.create');
+    Route::put('/virtual-receptionists/key/update', [VirtualReceptionistController::class, 'updateKey'])->name('virtual-receptionist.key.update');
+    Route::post('/virtual-receptionists/key/delete', [VirtualReceptionistController::class, 'destroyKey'])->name('virtual-receptionist.key.destroy');
 
 
-
+    // Greetings
+    Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
+    Route::get('/greetings/serve/{file_name}', [GreetingsController::class, 'serveGreetingFile'])->name('greeting.file.serve');
+    Route::post('/greetings/text-to-speech', [GreetingsController::class, 'textToSpeech'])->name('greetings.textToSpeech');
+    Route::post('/greetings/apply/{file_name}', [GreetingsController::class, 'applyAIGreetingFile'])->name('greeting.file.apply');
+    Route::post('greetings/delete-greeting', [GreetingsController::class, 'deleteGreetingFile'])->name('greetings.file.delete');
+    Route::post('greetings/update-greeting', [GreetingsController::class, 'updateGreetingFile'])->name('greetings.file.update');
+    Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
+    Route::post('/ivr/message/url', [GreetingsController::class, 'getIvrMessageUrl'])->name('ivr.message.url');
+    Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
+    ->name('ivr.message.file.serve')
+    ->where('file_name', '(.*)');
+    
     // SIP Credentials
     Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
 

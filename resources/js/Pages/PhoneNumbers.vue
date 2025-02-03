@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
                 </div>
             </template>
 
@@ -86,7 +86,7 @@
                                 :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditRequest(row.destination_uuid)">
+                                @click="handleEditRequest(row.destination_uuid)">
                                 {{ row.destination_number_formatted }}
                             </div>
 
@@ -114,6 +114,9 @@
                             <li v-for="(action, index) in row.routing_options" :key="index">
                                 <span v-if="action && action.type && action.extension">
                                     Type: {{ action.type }}, Extension: {{ action.extension }}
+                                </span>
+                                <span v-else-if="action && action.type === 'hangup'">
+                                    Type: {{ action.type }}
                                 </span>
                                 <span v-else>
                                     Invalid action data

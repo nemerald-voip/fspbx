@@ -10,7 +10,7 @@ import { computed } from 'vue';
 
 const props = defineProps({
     text: {
-        type: String,
+        type: [String, Number],
         default: 'Default Text'
     },
     backgroundColor: {

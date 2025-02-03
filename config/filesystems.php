@@ -59,6 +59,11 @@ return [
             'root' => '/var/lib/freeswitch/recordings',
         ],
 
+        'sounds' => [
+            'driver' => 'local',
+            'root' => '/usr/share/freeswitch/sounds',
+        ],
+
         'fax' => [
             'driver' => 'local',
             'root' => '/var/lib/freeswitch/storage/fax',

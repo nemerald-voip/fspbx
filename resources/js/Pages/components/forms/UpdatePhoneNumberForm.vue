@@ -312,15 +312,11 @@ import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Toggle from "../general/Toggle.vue";
 import CallRouting from "../general/ActionSelect.vue";
-import ConditionDestinations from "../general/ActionSelect.vue";
 import InputField from "../general/InputField.vue";
 import Textarea from "../general/Textarea.vue";
 import { usePage } from "@inertiajs/vue3";
 import Spinner from "../general/Spinner.vue";
 import ComboBox from "../general/ComboBox.vue";
-import { MinusIcon, PlusIcon } from "@heroicons/vue/24/solid/index.js";
-import ArrowCurvedRightIcon from "../icons/ArrowCurvedRightIcon.vue";
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 
