@@ -3,10 +3,8 @@
 namespace App\Models;
 
 use fpdi;
-use tcdpf;
-use Exception;
 use Throwable;
-use permisssions;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\FaxAllowedEmails;
@@ -19,7 +17,6 @@ use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendFaxNotificationToSlack;
 use libphonenumber\NumberParseException;
 use App\Jobs\SendFaxInTransitNotification;
-use Illuminate\Support\ItemNotFoundException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -50,6 +47,7 @@ class Faxes extends Model
         'fax_send_channels',
         'fax_description'
     ];
+
 
     // private $domain
     public function dialplans()
@@ -289,7 +287,7 @@ class Faxes extends Model
             $fax_queue->fax_queue_uuid = $this->fax_queue_uuid;
             $fax_queue->domain_uuid = $this->domain->domain_uuid;
             $fax_queue->fax_uuid = $this->fax_extension ->fax_uuid;
-            $fax_queue->fax_date = now();
+            $fax_queue->fax_date = Carbon::now(get_local_time_zone($this->domain->domain_uuid))->utc()->toIso8601String();
             $fax_queue->hostname = gethostname();
             $fax_queue->fax_caller_id_name = $this->fax_caller_id_name;
             $fax_queue->fax_caller_id_number = $this->fax_caller_id_number;
