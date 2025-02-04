@@ -235,6 +235,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_exit_sound' => $inputs['exit_message'],
                 'ivr_menu_direct_dial' => $inputs['direct_dial'] ? 'true' : 'false',
                 'ivr_menu_max_failures' => $inputs['repeat_prompt'],
+                'ivr_menu_max_timeouts' => $inputs['repeat_prompt'],
                 'ivr_menu_exit_app' => $exit_data['action'],
                 'ivr_menu_exit_data' => $exit_data['data'],
                 'ivr_menu_cid_prefix' => $inputs['caller_id_prefix'],
