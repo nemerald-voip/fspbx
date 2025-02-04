@@ -74,6 +74,8 @@
 
                     <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
+                    <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
                     <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -131,18 +133,30 @@
                         </TableField>
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_number" />
+                        <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.domain?.domain_description">
+                            <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                                target="#domain_tooltip_target">
+                                <div id="domain_tooltip_target">
+                                    {{ row.domain?.domain_description }}
+                                </div>
+                            </ejs-tooltip>
+                        </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.fax_email_address" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.fax_date_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_status">
                             <Badge :text="row.fax_status" :backgroundColor="determineColor(row.fax_status).backgroundColor"
                                 :textColor="determineColor(row.fax_status).textColor"
                                 :ringColor="determineColor(row.fax_status).ringColor" />
 
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_retry_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.fax_retry_date_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_retry_count" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_notify_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.fax_notify_date_formatted" />
 
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
@@ -158,7 +172,7 @@
 
                                     <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
                                         <div id="restart_tooltip_target">
-                                            <RestartIcon @click="handleRetry(row.message_uuid)"
+                                            <RestartIcon @click="handleRetry(row.fax_queue_uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
@@ -197,6 +211,10 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <ConfirmationModal :show="showRetryConfirmationModal" @close="showRetryConfirmationModal = false"
+        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Are you sure you want to retry sending the selected faxes? This action will attempt to resend them immediately.'"
+        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
@@ -219,6 +237,8 @@ import BulkActionButton from "./components/general/BulkActionButton.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Badge from "./components/general/Badge.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+
 
 
 import {
@@ -236,6 +256,8 @@ const notificationShow = ref(null);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const selectAll = ref(false);
+const showRetryConfirmationModal = ref(false);
+const confirmRetryAction = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -246,13 +268,13 @@ const props = defineProps({
     statusOptions: Object,
 });
 
-onMounted(() => {
-    //request list of entities
-    // getEntities();
-    if (props.data.data.length === 0) {
-        handleSearchButtonClick();
-    }
-})
+// onMounted(() => {
+//     //request list of entities
+//     // getEntities();
+//     if (props.data.data.length === 0) {
+//         handleSearchButtonClick();
+//     }
+// })
 
 
 const filterData = ref({
@@ -340,17 +362,44 @@ const bulkActions = computed(() => {
 });
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
-    }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
+    if (action === 'bulk_retry') {
+        showRetryConfirmationModal.value = true;
+        confirmRetryAction.value = () => executeBulkRetry();
     }
 
+}
+
+const handleRetry = (uuid) => {
+    axios.post(props.routes.retry,
+        { 'items': [uuid] },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        }).finally(() => {
+            handleSearchButtonClick();
+        });
+}
+
+const executeBulkRetry = () => {
+    axios.post(props.routes.retry,
+        { 'items': selectedItems.value },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleModalClose();
+            handleFormErrorResponse(error);
+        }).finally(() => {
+            handleSearchButtonClick();
+        });
 }
 
 
@@ -410,6 +459,17 @@ const handleSelectPageItems = () => {
         selectedItems.value = [];
     }
 };
+
+const handleClearSelection = () => {
+    selectedItems.value = [],
+        selectPageItems.value = false;
+    selectAll.value = false;
+}
+
+
+const handleModalClose = () => {
+    showRetryConfirmationModal.value = false;
+}
 
 const determineColor = (status) => {
     switch (status) {
