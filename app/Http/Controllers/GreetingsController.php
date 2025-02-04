@@ -351,7 +351,7 @@ class GreetingsController extends Controller
     {
         // Validate the file input
         $request->validate([
-            'file' => 'required|mimes:wav,mp3|max:51200', // Allow only WAV and MP3 files, max size 50MB
+            'file' => 'required|mimes:wav,mp3,m4a|max:51200', // Allow only WAV and MP3 files, max size 50MB
         ]);
 
         $file = $request->file('file');
