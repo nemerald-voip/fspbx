@@ -417,24 +417,20 @@ watch(() => props.options, (newOptions) => {
 });
 
 const form = reactive({
-    ivr_menu_uuid: props.options.ivr.ivr_menu_uuid,
     ivr_menu_name: props.options.ivr.ivr_menu_name,
     ivr_menu_extension: props.options.ivr.ivr_menu_extension,
-    ivr_menu_description: props.options.ivr.ivr_menu_description,
-    ivr_menu_greet_long: props.options.ivr.ivr_menu_greet_long,
+    ivr_menu_description: null,
+    ivr_menu_greet_long: null,
     ivr_menu_enabled: props.options.ivr.ivr_menu_enabled === "true",
     repeat_prompt: props.options.ivr.ivr_menu_max_timeouts,
     prompt_timeout: props.options.ivr.ivr_menu_timeout,
     direct_dial: props.options.ivr.ivr_menu_direct_dial === "true",
-    caller_id_prefix: props.options.ivr.ivr_menu_cid_prefix,
-    pin: props.options.ivr.ivr_menu_pin_number,
+    caller_id_prefix: null,
+    pin: null,
     digit_length: props.options.ivr.ivr_menu_digit_len,
     ring_back_tone: props.options.ivr.ivr_menu_ringback,
     invalid_input_message: props.options.ivr.ivr_menu_invalid_sound,
-    exit_message: props.options.ivr.ivr_menu_exit_sound,
-    exit_action: props.options.ivr.exit_action,
-    exit_target_uuid: props.options.ivr.exit_target_uuid,
-    exit_target_extension: props.options.ivr.exit_target_extension,
+
     _token: page.props.csrf_token,
 })
 
