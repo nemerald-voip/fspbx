@@ -892,6 +892,63 @@ class PhoneNumbersController extends Controller
             $detailOrder += 10;
         }
 
+        if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "export";
+            $dialPlanDetails->dialplan_detail_data = "fax_enable_t38=true";
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
+        if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "export";
+            $dialPlanDetails->dialplan_detail_data = "fax_enable_t38_request=true";
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
+        if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "export";
+            $dialPlanDetails->dialplan_detail_data = "fax_use_ecm=true";
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
+        if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "export";
+            $dialPlanDetails->dialplan_detail_data = "inbound-proxy-media=true";
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
+
         if (!empty($phoneNumber->destination_hold_music)) {
             $dialPlanDetails = new DialplanDetails();
             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
