@@ -8,7 +8,7 @@
         <action application="set" data="transfer_ringback={{ $ivr->ivr_menu_ringback }}" />
         <action application="set" data="ivr_menu_uuid={{ $ivr->ivr_menu_uuid }}" />
         @if (!empty($ivr->ivr_menu_cid_prefix))
-            <action application="set" data="caller_id_name={{ $ivr->ivr_menu_cid_prefix }}#${caller_id_name}" />
+        <action application="set" data="ivr_caller_id_name={{ $ivr->ivr_menu_cid_prefix }}#${ivr_caller_id_name}" />
             <action application="set" data="effective_caller_id_name=${caller_id_name}" />
         @endif
         <action application="ivr" data="{{ $ivr->ivr_menu_uuid }}" />
