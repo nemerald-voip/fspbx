@@ -2,111 +2,199 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\FaxQueues;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use libphonenumber\PhoneNumberUtil;
+use Illuminate\Support\Facades\Cache;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use libphonenumber\NumberParseException;
-use libphonenumber\PhoneNumberFormat;
-use libphonenumber\PhoneNumberUtil;
 
 class FaxQueueController extends Controller
 {
+
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'FaxQueue';
+    protected $searchable = ['fax_caller_id_number'];
+
+    public function __construct()
+    {
+        $this->model = new FaxQueues();
+    }
+
     /**
-     * @param Request $request
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
         // Check permissions
         if (!userCheckPermission("fax_queue_all")) {
             return redirect('/');
         }
 
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
+                'startPeriod' => function () {
+                    return $this->filters['startPeriod'];
+                },
+                'endPeriod' => function () {
+                    return $this->filters['endPeriod'];
+                },
+                'timezone' => function () {
+                    return $this->getTimezone();
+                },
+                'routes' => [
+                    'current_page' => route('faxqueue.index'),
+                    'retry' => route('faxqueue.retry'),
+                    'select_all' => route('faxqueue.select.all'),
+                ]
+
+            ]
+        );
+
         $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed', 'sending' => 'Sending'];
-        $scopes = ['global', 'local'];
-        $selectedStatus = $request->get('status');
-        $searchString = $request->get('search');
-        $selectedScope = $request->get('scope', 'local');
-        $searchPeriod = $request->get('period');
-        $period = [
-            Carbon::now()->startOfDay()->subDays(30),
-            Carbon::now()->endOfDay()
+
+
+    }
+
+    public function getData($paginate = 50)
+    {
+        if (!empty(request('filterData.dateRange'))) {
+            $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
+            $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
+        } else {
+            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+        }
+
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'fax_date'); // Default to 'fax_date'
+        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+
+        $this->filters = [
+            'startPeriod' => $startPeriod,
+            'endPeriod' => $endPeriod,
+            // 'direction' => request('filterData.direction') ?? null,
+            'search' => request('filterData.search') ?? null,
         ];
 
-        if(preg_match('/^(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)\s-\s(0[1-9]|1[1-2])\/(0[1-9]|1[0-9]|2[0-9]|3[0-1])\/([1-9+]{2})\s(0[0-9]|1[0-2]:([0-5][0-9]?\d))\s(AM|PM)$/', $searchPeriod)) {
-            $e = explode("-", $searchPeriod);
-            $period[0] = Carbon::createFromFormat('m/d/y h:i A', trim($e[0]));
-            $period[1] = Carbon::createFromFormat('m/d/y h:i A', trim($e[1]));
-        }
-
-        // Get local Time Zone
-        $timeZone = get_local_time_zone(Session::get('domain_uuid'));
-        $domainUuid = Session::get('domain_uuid');
-        $faxQueues = FaxQueues::query();
-        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
-            $faxQueues
-                ->where('domain_uuid', $domainUuid);
+        // Check if showGlobal parameter is present and not empty
+        if (!empty(request('filterData.showGlobal'))) {
+            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
         } else {
-            $faxQueues
-                ->join('v_domains','v_domains.domain_uuid','=','v_fax_queue.domain_uuid');
+            $this->filters['showGlobal'] = null;
         }
-        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
-            $faxQueues
-                ->where('fax_status', $selectedStatus);
+
+        $data = $this->builder($this->filters);
+
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
         }
-        if ($searchString) {
-            $faxQueues->where(function ($query) use ($searchString) {
-                $query
-                    ->orWhereLike('fax_email_address', strtolower($searchString));
-                try {
-                    $phoneNumberUtil = PhoneNumberUtil::getInstance();
-                    $phoneNumberObject = $phoneNumberUtil->parse($searchString, 'US');
-                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                        $query->orWhereLike('fax_caller_id_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
-                        $query->orWhereLike('fax_number', $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164));
-                    } else {
-                        $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
-                        $query->orWhereLike('fax_number', str_replace("-", "",  $searchString));
-                    }
-                } catch (NumberParseException $e) {
-                    $query->orWhereLike('fax_caller_id_number', str_replace("-", "",  $searchString));
-                    $query->orWhereLike('fax_number', str_replace("-", "",  $searchString));
-                }
+
+        // logger($data);
+
+        return $data;
+    }
+
+    /**
+     * @param  array  $filters
+     * @return Builder
+     */
+    public function builder(array $filters = [])
+    {
+        $data =  $this->model::query();
+        if (isset($filters['showGlobal']) && $filters['showGlobal']) {
+            logger('with domain');
+            $data->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
+            }]);
+            // Access domains through the session and filter devices by those domains
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $data->whereHas('domain', function ($query) use ($domainUuids) {
+                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
             });
-        }
-        $faxQueues->whereBetween('fax_date', $period);
-        $faxQueues = $faxQueues->orderBy('fax_date', 'desc')->paginate(10)->onEachSide(1);
-
-        foreach ($faxQueues as $i => $faxQueue) {
-            $faxQueues[$i]['fax_date'] = Carbon::parse($faxQueue['fax_date'])->setTimezone($timeZone);
-            if(!empty($faxQueue['fax_notify_date'])) {
-                $faxQueues[$i]['fax_notify_date'] = Carbon::parse($faxQueue['fax_notify_date'])->setTimezone($timeZone);
-            }
-            if(!empty($faxQueue['fax_retry_date'])) {
-                $faxQueues[$i]['fax_retry_date'] = Carbon::parse($faxQueue['fax_retry_date'])->setTimezone($timeZone);
-            }
+        } else {
+            // Directly filter devices by the session's domain_uuid
+            $domainUuid = Session::get('domain_uuid');
+            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         }
 
-        $data = array();
-        $data['faxQueues'] = $faxQueues;
-        $data['statuses'] = $statuses;
-        $data['selectedStatus'] = $selectedStatus;
-        $data['selectedScope'] = $selectedScope;
-        $data['searchString'] = $searchString;
-        $data['searchPeriodStart'] = $period[0]->format('m/d/y h:i A');
-        $data['searchPeriodEnd'] = $period[1]->format('m/d/y h:i A');
-        $data['searchPeriod'] = implode(" - ", [$data['searchPeriodStart'], $data['searchPeriodEnd']]);
-        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
+        $data->select(
+            'fax_queue_uuid',
+            'domain_uuid',
+            'fax_date',
+            'fax_number',
+            'fax_caller_id_number',
+            'fax_email_address',
+            'fax_retry_date',
+            'fax_retry_count',
+            'fax_notify_date',
+            'fax_status',
+        );
 
-        unset($statuses, $faxQueues, $faxQueue, $domainUuid, $timeZone, $selectedStatus, $searchString, $selectedScope);
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
+                }
+            }
+        }
 
-        $permissions['delete'] = userCheckPermission('fax_queue_delete');
-        $permissions['view'] = userCheckPermission('fax_queue_view');
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
 
-        return view('layouts.faxqueue.list')
-            ->with($data)
-            ->with('permissions', $permissions);
+        return $data;
+    }
+
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value)
+    {
+        $searchable = $this->searchable;
+
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
+            }
+        });
+    }
+
+    protected function filterStartPeriod($query, $value)
+    {
+        $query->where('fax_date', '>=', $value->toIso8601String());
+    }
+
+    protected function filterEndPeriod($query, $value)
+    {
+        $query->where('fax_date', '<=', $value->toIso8601String());
     }
 
     /**
@@ -137,14 +225,108 @@ class FaxQueueController extends Controller
         }
     }
 
-    public function updateStatus(FaxQueues $faxQueue, $status = null)
+    protected function getTimezone()
     {
-        $faxQueue->update([
-            'fax_status' => $status,
-            'fax_retry_count' => 0,
-            'fax_retry_date' => null
-        ]);
 
-        return redirect()->back();
+        if (!Cache::has(auth()->user()->user_uuid . '_' . session('domain_uuid') . '_timeZone')) {
+            $timezone = get_local_time_zone(session('domain_uuid'));
+            Cache::put(auth()->user()->user_uuid . session('domain_uuid') .  '_timeZone', $timezone, 600);
+        } else {
+            $timezone = Cache::get(auth()->user()->user_uuid . '_' . session('domain_uuid') . '_timeZone');
+        }
+        return $timezone;
+    }
+
+    public function retry()
+    {    
+        $items = request('items', []);
+    
+        if (empty($items)) {
+            return response()->json([
+                'status' => 400,
+                'error' => ['message' => 'No fax queue items provided.']
+            ], 400);
+        }
+    
+        // Retrieve and update the selected fax queue records
+        $updated = FaxQueues::whereIn('fax_queue_uuid', $items)->update([
+            'fax_status' => 'waiting',
+            'fax_retry_count' => 0,
+            'fax_retry_date' => null,
+            'fax_notify_date' => null,
+            'fax_notify_sent' => false,
+        ]);
+    
+        if ($updated) {
+            return response()->json([
+                'status' => 200,
+                'success' => ['message' => 'Selected faxes have been reset for retry.']
+            ]);
+        } else {
+            return response()->json([
+                'status' => 500,
+                'error' => ['message' => 'Failed to update the selected faxes.']
+            ], 500);
+        }
+    }
+
+    /**
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     */
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+    
+
+    public function getStatusOptions()
+    {
+        return [
+            [
+                'name' => 'Answered',
+                'value' => 'answered'
+            ],
+            [
+                'name' => 'No Answer',
+                'value' => 'no_answer'
+            ],
+            [
+                'name' => 'Cancelled',
+                'value' => 'cancelled'
+            ],
+            [
+                'name' => 'Voicemail',
+                'value' => 'voicemail'
+            ],
+            [
+                'name' => 'Missed Call',
+                'value' => 'missed call'
+            ],
+            [
+                'name' => 'Abandoned',
+                'value' => 'abandoned'
+            ],
+        ];
     }
 }

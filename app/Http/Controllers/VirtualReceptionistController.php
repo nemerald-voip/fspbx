@@ -169,6 +169,7 @@ class VirtualReceptionistController extends Controller
                 'domain_uuid' => session('domain_uuid'), // Set domain_uuid from session
                 'dialplan_uuid' => Str::uuid(),
                 'ivr_menu_name' => $inputs['ivr_menu_name'],
+                'ivr_menu_description' => $inputs['ivr_menu_description'],
                 'ivr_menu_extension' => $inputs['ivr_menu_extension'],
                 'ivr_menu_enabled' => $inputs['ivr_menu_enabled'] === 'true' ? 'true' : 'false',
                 'ivr_menu_digit_len' => $inputs['digit_length'],
