@@ -194,7 +194,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
     ->name('ivr.message.file.serve')
     ->where('file_name', '(.*)');
-    
+
     // SIP Credentials
     Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
 
@@ -389,11 +389,14 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Cloud Provisioning
     Route::resource('cloud-provisioning', CloudProvisioningController::class);
+    Route::post('/cloud-provisioning/item-options', [CloudProvisioningController::class, 'getItemOptions'])->name('cloud-provisioning.item.options');
+    Route::post('/cloud-provisioning/organization/create', [CloudProvisioningController::class, 'createOrganization'])->name('cloud-provisioning.organization.create');
+    Route::put('/cloud-provisioning/organization/update', [CloudProvisioningController::class, 'updateOrganization'])->name('cloud-provisioning.organization.update');
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
-    Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloudProvisioning.status');
-    Route::post('/cloud-provisioning/register', [CloudProvisioningController::class, 'register'])->name('cloudProvisioning.register');
-    Route::post('/cloud-provisioning/deregister', [CloudProvisioningController::class, 'deregister'])->name('cloudProvisioning.deregister');
+    Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
+    Route::post('/cloud-provisioning/register', [CloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
+    Route::post('/cloud-provisioning/deregister', [CloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');
     //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
     //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
     //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');

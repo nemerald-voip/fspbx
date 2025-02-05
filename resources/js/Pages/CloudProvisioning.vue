@@ -473,7 +473,7 @@ const renderRequestedPage = (url) => {
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-
+console.log('asdasdasd');
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             loadingModal.value = false;
