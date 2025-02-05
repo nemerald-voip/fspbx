@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DefaultSettings;
 use App\Models\Devices;
 use App\Services\Exceptions\ZtpProviderException;
 use App\Services\Interfaces\ZtpProviderInterface;
@@ -10,7 +11,6 @@ use Illuminate\Support\Facades\Http;
 
 class PolycomZtpProvider implements ZtpProviderInterface
 {
-    protected string $apiKey;
     protected string $baseUrl;
     protected string $providerName = 'polycom';
 
@@ -20,8 +20,46 @@ class PolycomZtpProvider implements ZtpProviderInterface
      */
     public function __construct()
     {
-        $this->apiKey = config('services.ztp.polycom.api_key');
         $this->baseUrl = 'https://api.ztp.poly.com/preview';
+    }
+
+    /**
+     * Retrieve the configuration value for Polycom settings with fallback.
+     *
+     * @return string
+     */
+    public function getApiToken(): string
+    {
+        // Check the DefaultSettings table
+        $value = DefaultSettings::where([
+            ['default_setting_category', '=', 'cloud provision'],
+            ['default_setting_subcategory', '=', 'polycom_api_token'],
+            ['default_setting_enabled', '=', 'true'],
+        ])->value('default_setting_value');
+
+        if ($value !== null) {
+            return $value;
+        }
+
+        // Fallback to config and .env
+        return config("services.ztp.polycom.api_key", '');
+    }
+
+    /**
+     * Ensure that the API token exists before making API calls.
+     *
+     * @throws \Exception
+     * @return string
+     */
+    protected function ensureApiTokenExists(): string
+    {
+        $token = $this->getApiToken();
+
+        if (empty($token)) {
+            throw new \Exception("Polycom API token is missing. Please configure it in the DefaultSettings table or .env file.");
+        }
+
+        return $token;
     }
 
     public function getProviderName(): string
@@ -41,8 +79,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/devices?limit=$limit";
 
+        $token = $this->ensureApiTokenExists();
+
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->get($url);
 
         $allDevices = $this->handleResponse($response)['results'];
@@ -76,8 +116,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/devices/$deviceId";
 
+        $token = $this->ensureApiTokenExists();
+
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->get($url);
 
         return $this->handleResponse($response);
@@ -95,13 +137,15 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/devices";
 
+        $token = $this->ensureApiTokenExists();
+
         $payload = [
             'id' => $deviceId,
             'profile' => $orgId
         ];
 
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
             'Content-Type' => 'application/json',
         ])->post($url, $payload);
 
@@ -119,8 +163,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/devices/$deviceId";
 
+        $token = $this->ensureApiTokenExists();
+
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->delete($url);
 
         return $this->handleResponse($response);
@@ -137,9 +183,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/devices/$device->device_address";
 
+        $token = $this->ensureApiTokenExists();
+
         logger($url);
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->get($url);
 
         return $this->handleResponse($response);
@@ -156,8 +204,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/profiles?limit=$limit";
 
+        $token = $this->ensureApiTokenExists();
+
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->get($url);
 
         return $this->handleResponse($response);
@@ -174,12 +224,14 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/profiles";
 
+        $token = $this->ensureApiTokenExists();
+
         $payload = [
             'name' => $name
         ];
 
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
             'Content-Type' => 'application/json',
         ])->post($url, $payload);
 
@@ -197,8 +249,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/profiles/$profileId";
 
+        $token = $this->ensureApiTokenExists();
+
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->get($url);
 
         return $this->handleResponse($response);
@@ -216,12 +270,14 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/profiles/$profileId";
 
+        $token = $this->ensureApiTokenExists();
+
         $payload = [
             'name' => $name
         ];
 
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
             'Content-Type' => 'application/json',
         ])->post($url, $payload);
 
@@ -239,8 +295,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $url = "$this->baseUrl/profiles/$profileId";
 
+        $token = $this->ensureApiTokenExists();
+
         $response = Http::withHeaders([
-            'API-KEY' => $this->apiKey,
+            'API-KEY' => $token,
         ])->delete($url);
 
         return $this->handleResponse($response);
