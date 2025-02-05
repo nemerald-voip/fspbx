@@ -13,14 +13,17 @@
                                     Key</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Action
                                 </th>
-                                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+                                <th scope="col"
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
                                     Ext./Number
                                 </th>
                                 <th scope="col"
                                     class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
                                     Desc
                                 </th>
-                                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">Status
+                                <th scope="col"
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+                                    Status
                                 </th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 lg:pr-8">
                                     <span class="sr-only">Edit</span>
@@ -35,9 +38,10 @@
                                     {{ option.key_type_display }}
                                     <dl class="font-normal md:hidden">
                                         <dd class="mt-1 truncate text-gray-700">{{ option.key_name }}</dd>
-                                        <dd class="mt-1 truncate text-gray-500 md:hidden">{{ option.ivr_menu_option_description }}</dd>
+                                        <dd class="mt-1 truncate text-gray-500 md:hidden">{{
+                                            option.ivr_menu_option_description }}</dd>
                                         <dd class="mt-1 md:hidden">
-                                            <Toggle v-model="option.ivr_menu_option_enabled" disabled/>
+                                            <Toggle v-model="option.ivr_menu_option_enabled" disabled />
                                         </dd>
 
                                     </dl>
@@ -46,7 +50,14 @@
                                 <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{
                                     option.ivr_menu_option_description }}</td>
                                 <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">
-                                    <Toggle v-model="option.ivr_menu_option_enabled" disabled/>
+                                    <Badge v-if="option.ivr_menu_option_enabled" :text="'Enabled'"
+                                        backgroundColor="bg-green-50" textColor="text-green-700"
+                                        ringColor="ring-green-600/20" />
+
+                                    <Badge v-else :text="'Disabled'" backgroundColor="bg-rose-50" textColor="text-rose-700"
+                                        ringColor="ring-rose-600/20" />
+
+                                    <!-- <Toggle v-model="option.ivr_menu_option_enabled" disabled/> -->
                                 </td>
                                 <td class="relative py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 lg:pr-8">
                                     <Menu as="div" class="relative inline-block text-left">
@@ -109,7 +120,7 @@
 import { ref, watch } from 'vue'
 import { PlusIcon } from "@heroicons/vue/24/solid";
 import Toggle from "@generalComponents/Toggle.vue";
-
+import Badge from "@generalComponents/Badge.vue";
 import ComboBox from "../general/ComboBox.vue";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';

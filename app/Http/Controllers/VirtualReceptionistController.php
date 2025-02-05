@@ -169,6 +169,7 @@ class VirtualReceptionistController extends Controller
                 'domain_uuid' => session('domain_uuid'), // Set domain_uuid from session
                 'dialplan_uuid' => Str::uuid(),
                 'ivr_menu_name' => $inputs['ivr_menu_name'],
+                'ivr_menu_description' => $inputs['ivr_menu_description'],
                 'ivr_menu_extension' => $inputs['ivr_menu_extension'],
                 'ivr_menu_enabled' => $inputs['ivr_menu_enabled'] === 'true' ? 'true' : 'false',
                 'ivr_menu_digit_len' => $inputs['digit_length'],
@@ -234,6 +235,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_exit_sound' => $inputs['exit_message'],
                 'ivr_menu_direct_dial' => $inputs['direct_dial'] ? 'true' : 'false',
                 'ivr_menu_max_failures' => $inputs['repeat_prompt'],
+                'ivr_menu_max_timeouts' => $inputs['repeat_prompt'],
                 'ivr_menu_exit_app' => $exit_data['action'],
                 'ivr_menu_exit_data' => $exit_data['data'],
                 'ivr_menu_cid_prefix' => $inputs['caller_id_prefix'],

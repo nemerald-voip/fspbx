@@ -67,7 +67,7 @@ class VoicemailController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 5)
+    public function getData($paginate = 50)
     {
 
         // Check if search parameter is present and not empty
@@ -1086,7 +1086,7 @@ class VoicemailController extends Controller
     {
         // Validate the file input
         $request->validate([
-            'file' => 'required|mimes:wav,mp3|max:10240', // Limit to WAV or MP3 files, max size 10MB
+            'file' => 'required|mimes:wav,mp3,m4a|max:51200', // Limit to WAV or MP3, M4A files, max size 50MB
         ]);
 
         $file = $request->file('file');

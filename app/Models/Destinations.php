@@ -151,7 +151,7 @@ class Destinations extends Model
     }
 
     /**
-     * Get domain that this message settings belongs to
+     * Get domain that this model belongs to
      */
     public function domain()
     {

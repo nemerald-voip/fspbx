@@ -111,9 +111,9 @@
                             </div>
                         </div>
                         <input ref="fileInput" type="file" name="file" id="file" class="hidden" @change="handleFileUpload"
-                            accept=".wav, .mp3" />
-                        <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV
-                            or MP3</p>
+                            accept=".wav, .mp3, .m4a" />
+                        <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV, 
+                            MP3, or M4A</p>
                     </div>
                 </div>
 
