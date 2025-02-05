@@ -1214,7 +1214,7 @@ class FaxesController extends Controller
             ], 400); // Bad Request status code
         }
 
-        $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'on';
+        $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'true';
         // logger($data['send_confirmation']);
 
         if (!isset($data['fax_uuid'])) {
@@ -1233,7 +1233,7 @@ class FaxesController extends Controller
         $payload = array(
             'From' => Session::get('user.user_email'),
             'FromFull' => array(
-                'Email' => ($data['send_confirmation'] === 'on') ? Session::get('user.user_email') : '',
+                'Email' => ($data['send_confirmation']) ? Session::get('user.user_email') : '',
             ),
             'To' => $data['recipient'] . '@fax.domain.com',
             'Subject' => ($data['fax_message'] == "") ? $data['fax_subject'] : $data['fax_subject'] . " body",
