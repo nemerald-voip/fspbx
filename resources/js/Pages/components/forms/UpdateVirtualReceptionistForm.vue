@@ -136,6 +136,10 @@
 
                         </div>
 
+                        <div v-if="greetingDescription">
+                            <p class="mt-1 text-xs text-gray-500 italic" v-html="`&quot;${decodedGreetingDescription}&quot;`"></p>
+
+                        </div>
 
                     </div>
 
@@ -551,6 +555,21 @@ const submittingKeyUpdate = ref(false);
 const submittingKeyCreate = ref(false);
 
 
+const greetingDescription = computed(() => {
+    // Find the greeting object in the array whose value matches the selected greeting
+    const selected = localOptions.greetings.find(
+        (greeting) => greeting.value === form.ivr_menu_greet_long
+    );
+    return selected ? selected.description : null;
+});
+
+const decodedGreetingDescription = computed(() => {
+    // Create a temporary DOM element (textarea works well for this)
+    const txt = document.createElement("textarea");
+    txt.innerHTML = greetingDescription.value; // greetingDescription comes from your computed/watched property
+    return txt.value;
+});
+
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
@@ -740,9 +759,9 @@ const handleUpdateGreetingField = (greeting) => {
 }
 
 // Handler for the greeting-saved event
-const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
+const handleGreetingSaved = ({ greeting_id, greeting_name, description }) => {
     // Add the new greeting to the localOptions.greetings array
-    localOptions.greetings.push({ value: String(greeting_id), name: greeting_name });
+    localOptions.greetings.push({ value: String(greeting_id), name: greeting_name, description: description });
 
     // Sort the greetings array by greeting_id
     localOptions.greetings.sort((a, b) => Number(a.value) - Number(b.value));
@@ -1142,4 +1161,5 @@ const handleKeyFormError = (error) => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>

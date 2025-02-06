@@ -126,10 +126,7 @@ return [
     |
     */
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        gethostname(). '_' . Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
-    ),
+    'cookie' => env('SESSION_COOKIE', Str::slug(parse_url(env('APP_URL', 'https://default.local'), PHP_URL_HOST), '_') . '_fs_pbx_session'),
 
     /*
     |--------------------------------------------------------------------------

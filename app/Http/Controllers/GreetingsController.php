@@ -78,7 +78,7 @@ class GreetingsController extends Controller
     }
 
 
-        /**
+    /**
      * Serve the greeting file as a URL.
      *
      * @param string $greetingId
@@ -121,7 +121,7 @@ class GreetingsController extends Controller
     {
         // Primary path in the 'recordings' disk
         $primaryPath = session('domain_name') . '/' . $file_name;
-    
+
         // Check if the file exists in the primary path
         if (!Storage::disk('recordings')->exists($primaryPath)) {
             // Check the alternative path
@@ -135,7 +135,7 @@ class GreetingsController extends Controller
             $defaultVoice = $variables['default_voice'] ?? 'callie';  // Fallback to 'callie' if not found
 
             // Alternative path in the 'sounds' disk
-            $alternativePath = $defaultLanguage . "/" . $defaultDialect . "/" . $defaultVoice  . "/". str_replace('/', "/16000/", $file_name);
+            $alternativePath = $defaultLanguage . "/" . $defaultDialect . "/" . $defaultVoice  . "/" . str_replace('/', "/16000/", $file_name);
 
             if (!Storage::disk('sounds')->exists($alternativePath)) {
                 // File not found in either location
@@ -144,26 +144,26 @@ class GreetingsController extends Controller
                     'errors' => ['server' => 'File not found']
                 ], 404);
             }
-    
+
             // File found in the alternative path
             $filePath = Storage::disk('sounds')->path($alternativePath);
         } else {
             // File found in the primary path
             $filePath = Storage::disk('recordings')->path($primaryPath);
         }
-    
+
         // Check if the 'download' parameter is present and set to true
         $download = request()->query('download', false);
-    
+
         if ($download) {
             // Serve the file as a download
             return response()->download($filePath);
         }
-    
+
         // Serve the file inline
         return response()->file($filePath);
     }
-    
+
 
     public function textToSpeech(OpenAIService $openAIService, TextToSpeechRequest $request)
     {
@@ -193,14 +193,13 @@ class GreetingsController extends Controller
             ]);
 
             // Generate the file URL using the defined route
-            $applyUrl = route('greeting.file.apply', [
-                'file_name' => $fileName,
-            ]);
+            $applyUrl = route('greeting.file.apply');
 
             return response()->json([
                 'success' => true,
                 'file_url' => $fileUrl,
                 'apply_url' => $applyUrl,
+                'file_name' => $fileName,
             ]);
         } catch (\Exception $e) {
             // Log the error message
@@ -225,10 +224,14 @@ class GreetingsController extends Controller
         }
     }
 
-    public function applyAIGreetingFile($file_name)
+    public function applyAIGreetingFile()
     {
         try {
             $domain_name = session('domain_name');
+
+            // Retrieve the file name and custom greeting message from the request payload
+            $file_name = request('file_name');
+            $customMessage = request('input');
 
             // Step 1: Make sure the file exists
             $filePath = $domain_name . "/" . $file_name;
@@ -254,17 +257,20 @@ class GreetingsController extends Controller
                 ], 500);
             }
 
+            $sanitizedDescription =  preg_replace('/\s+/', ' ',htmlspecialchars(strip_tags(trim($customMessage)), ENT_QUOTES, 'UTF-8'));
+
             // Step 5: Save greeting info to the database
             Recordings::create([
                 'recording_filename' => $newFileName,
                 'recording_name' => "AI Greeting " . $datePart,
+                'recording_description' => $sanitizedDescription,
             ]);
-
 
             return response()->json([
                 'success' => true,
                 'greeting_id' => $newFileName,
                 'greeting_name' => "AI Greeting " . $datePart,
+                'description' => $sanitizedDescription,
                 'messages' => ['success' => ['Your AI-generated greeting has been saved.']]
             ], 200);
         } catch (\Exception $e) {
