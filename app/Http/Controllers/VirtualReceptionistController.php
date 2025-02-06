@@ -497,6 +497,7 @@ class VirtualReceptionistController extends Controller
                         return [
                             'value' => $greeting->recording_filename,
                             'name' => $greeting->recording_name,
+                            'description' => $greeting->recording_description,
                         ];
                     })->toArray();
 
@@ -540,7 +541,7 @@ class VirtualReceptionistController extends Controller
 
             $openAiSpeeds = [];
 
-            for ($i = 0.25; $i <= 4.0; $i += 0.25) {
+            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
                 if (floor($i) == $i) {
                     // Whole number, format with one decimal place
                     $formattedValue = sprintf('%.1f', $i);
