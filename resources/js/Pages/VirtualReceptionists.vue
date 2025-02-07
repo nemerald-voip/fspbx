@@ -272,9 +272,7 @@ const handleEditRequest = (itemUuid) => {
 const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
-
-    console.log(form);
-
+    
     axios.post(props.routes.store, form)
         .then((response) => {
             createFormSubmiting.value = false;

@@ -321,7 +321,7 @@ class VirtualReceptionistController extends Controller
 
             // Retrieve all items at once
             $items = $this->model::whereIn('ivr_menu_uuid', request('items'))
-                ->get(['ivr_menu_uuid']);
+                ->get(['ivr_menu_uuid', 'dialplan_uuid']);
 
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
