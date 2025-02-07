@@ -205,6 +205,7 @@ const applyUrl = ref(null);
 const newGreetingFileName = ref(null);
 const selectedFileName = ref('');
 const fileToUpload = ref(null);
+const voicemail_uuid = ref(null);
 
 const greetingForm = reactive({
     input: null,
@@ -286,6 +287,9 @@ const generateGreeting = () => {
                 audioUrl.value = response.data.file_url; // Set the audio URL
                 applyUrl.value = response.data.apply_url; // Set the audio URL
                 newGreetingFileName.value = response.data.file_name;
+                if (response.data.voicemail_uuid) {
+                    voicemail_uuid.value = response.data.voicemail_uuid;
+                }
             }
         }).catch((error) => {
             isFormSubmiting.value = false;
@@ -304,6 +308,11 @@ const saveGreeting = () => {
         file_name: newGreetingFileName.value, // using .value because it's a ref
         _token: page.props.csrf_token, // Include CSRF token if needed
     };
+
+    // Add voicemail_id if it exists
+    if (voicemail_uuid.value) {
+        payload.voicemail_uuid = voicemail_uuid.value;
+    }
 
     axios.post(applyUrl.value, payload)
         .then((response) => {
