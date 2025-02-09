@@ -15,14 +15,14 @@
                             @if ($fax->exists)
                                 <li class="breadcrumb-item active">Edit Vitual Fax Machine</li>
                             @else
-                                <li class="breadcrumb-item active">Create Vertual Fax Machine</li>
+                                <li class="breadcrumb-item active">Create Virtual Fax Machine</li>
                             @endif
                         </ol>
                     </div>
                     @if ($fax->exists)
                         <h4 class="page-title">Edit Vitual Fax Machine ({{ $fax->fax_name ?? '' }})</h4>
                     @else
-                        <h4 class="page-title">Create Vertual Fax Machine</h4>
+                        <h4 class="page-title">Create Virtual Fax Machine</h4>
                     @endif
 
                 </div>
