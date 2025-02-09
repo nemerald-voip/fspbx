@@ -180,6 +180,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('/virtual-receptionists/key/update', [VirtualReceptionistController::class, 'updateKey'])->name('virtual-receptionist.key.update');
     Route::post('/virtual-receptionists/key/delete', [VirtualReceptionistController::class, 'destroyKey'])->name('virtual-receptionist.key.destroy');
 
+    //Settings
+    Route::resource('settings', SettingsController::class);
 
     // Greetings
     Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
@@ -191,9 +193,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
     Route::post('/ivr/message/url', [GreetingsController::class, 'getIvrMessageUrl'])->name('ivr.message.url');
     Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
-    ->name('ivr.message.file.serve')
-    ->where('file_name', '(.*)');
-    
+        ->name('ivr.message.file.serve')
+        ->where('file_name', '(.*)');
+
     // SIP Credentials
     Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
 
@@ -390,9 +392,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
     Route::post('/whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
     Route::post('/whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
-
-
-
 });
 
 

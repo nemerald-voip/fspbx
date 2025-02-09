@@ -1,7 +1,6 @@
 <template>
     <MainLayout>
-        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-rose-600"
-            :text="topBannerText" />
+        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-rose-600" :text="topBannerText" />
 
         <main>
             <div class="mx-auto max-w-8xl px-4 py-10 sm:px-6 lg:px-8">
@@ -54,17 +53,15 @@
                                             class="pr-3 text-green-600 text-nowrap">
                                             Online: {{ counts.local_reg_count }}
                                         </span>
-                                        <span v-else
-                                            class="pr-3 text-green-600 text-nowrap">
+                                        <span v-else class="pr-3 text-green-600 text-nowrap">
                                             Online: 0
                                         </span>
                                         <span v-if="counts.local_reg_count && counts.local_reg_count >= 0"
                                             class=" text-rose-600 text-nowrap">
                                             Offline: {{ counts.extensions - counts.local_reg_count }}
                                         </span>
-                                        <span v-else
-                                            class=" text-rose-600 text-nowrap">
-                                            Offline: {{ counts.extensions  }}
+                                        <span v-else class=" text-rose-600 text-nowrap">
+                                            Offline: {{ counts.extensions }}
                                         </span>
                                     </dd>
                                 </div>
@@ -96,10 +93,15 @@
                                 </div>
                             </dl>
 
-                            <!-- <div class="mt-6 border-t border-gray-900/5 px-6 py-6">
-                                <a href="#" class="text-sm font-semibold leading-6 text-gray-900">Download receipt <span
-                                        aria-hidden="true">&rarr;</span></a>
-                            </div> -->
+                            <div class="mt-6 border-t border-gray-900/5 px-6 py-6">
+
+                                <a type="button" :href="routes.settings_page"
+                                    class="inline-flex justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    <CogIcon class="-ml-0.5 size-5 text-gray-400" aria-hidden="true" />
+                                    Settings
+                                </a>
+
+                            </div>
                         </div>
                     </div>
 
@@ -317,7 +319,8 @@
 
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Global Info <span
                                 class="font-normal italic text-gray-600 text-sm">(Superadmin only)</span>
-                                <span v-if="props.data.version" class="text-sm font-normal  text-gray-600"> Version: {{ props.data.version }}</span>
+                            <span v-if="props.data.version" class="text-sm font-normal  text-gray-600"> Version: {{
+                                props.data.version }}</span>
                         </h3>
                         <dl
                             class="mt-3 grid grid-cols-4 divide-x divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
@@ -486,7 +489,7 @@ import {
 } from '@heroicons/vue/20/solid'
 
 import { TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, CogIcon } from '@heroicons/vue/24/outline'
 import TopBanner from './components/notifications/TopBanner.vue';
 
 
@@ -501,6 +504,7 @@ const props = defineProps({
         type: Object,
         default: () => ({}) // Providing an empty object as default
     },
+    routes: Object,
 
 })
 
@@ -509,10 +513,11 @@ const open = ref(false);
 const showTopBanner = ref(Boolean(props.company_data.billing_suspension));
 const topBannerText = ref('Your account has been suspended. Reactivation requires payment for past-due invoice(s).');
 
-
 onMounted(() => {
     //request list of entities
     getCounts();
+    console.log('Settings Route:', props.routes.settings_page);
+
 })
 
 const getCounts = () => {
@@ -546,7 +551,7 @@ const getData = () => {
             // if (props.data.billing_suspension) {
             //     showTopBanner.value = true;
             // }
-        
+
         }
 
     });
