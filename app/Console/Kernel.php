@@ -19,7 +19,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Cache the job settings for 2 hours (120 minutes)
+        // Cache the job settings for 2 minutes (120 seconds)
         $jobSettings = Cache::remember('scheduled_jobs_settings', 120, function () {
             return DefaultSettings::where('default_setting_category', 'scheduled_jobs')
                 ->where('default_setting_enabled', true)
@@ -34,7 +34,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('UploadArchiveFiles')
                 ->dailyAt('01:00')
                 ->timezone('America/Los_Angeles');
-        } 
+        }
 
         // Clear the export directory
         if (isset($jobSettings['clear_export_directory']) && $jobSettings['clear_export_directory'] === "true") {
@@ -64,10 +64,15 @@ class Kernel extends ConsoleKernel
         }
 
         if (isset($jobSettings['backup']) && $jobSettings['backup'] === "true") {
-                // Schedule the backup command to run at 2 AM daily
-                $schedule->command('app:backup')
+            // Schedule the backup command to run at 2 AM daily
+            $schedule->command('app:backup')
                 ->dailyAt('02:00')
                 ->timezone('America/Los_Angeles');
+        }
+
+        // Check fax service status
+        if (isset($jobSettings['check_fax_service_status']) && $jobSettings['check_fax_service_status'] === "true") {
+            $schedule->job(new \App\Jobs\CheckFaxServiceStatus())->everyThirtyMinutes();
         }
     }
 
