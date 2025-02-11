@@ -116,26 +116,5 @@ class AuditStaleRingotelUsers implements ShouldQueue
         });
     }
 
-    /**
-     * Notify the admin about stale users.
-     */
-    protected function notifyAdmin($notifyEmail, $staleUsers, $staleThreshold)
-    {
-        if (!filter_var($notifyEmail, FILTER_VALIDATE_EMAIL)) {
-            Log::error("Invalid Ringotel notify email: {$notifyEmail}");
-            return;
-        }
 
-        $userList = implode("\n", array_map(fn($user) => "{$user['name']} ({$user['email']}) - Last Active: {$user['last_active']}", $staleUsers));
-
-        \Mail::raw(
-            "Alert: " . count($staleUsers) . " Ringotel users have been inactive for over {$staleThreshold} minutes.\n\n" . $userList,
-            function ($message) use ($notifyEmail) {
-                $message->to($notifyEmail)
-                    ->subject('Ringotel Stale Users Alert');
-            }
-        );
-
-        Log::info("Admin notified via email: {$notifyEmail} - " . count($staleUsers) . " stale users detected.");
-    }
 }
