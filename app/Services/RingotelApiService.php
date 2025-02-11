@@ -748,4 +748,49 @@ class RingotelApiService
             return [];
         }
     }
+
+    public function getStaleUsers($staleThresholdDays)
+    {
+        // Generate timestamps (milliseconds since epoch)
+        $endTimestamp = now()->timestamp * 1000; // Current time in milliseconds
+        $beginTimestamp = now()->subDays($staleThresholdDays)->timestamp * 1000; // Convert days to milliseconds
+
+        // Fetch all organizations
+        $organizations = $this->getOrganizations();
+
+        if (!$organizations || $organizations->isEmpty()) {
+            logger("Failed to fetch organizations from Ringotel API.");
+            return [];
+        }
+
+        // Array to hold stale users
+        $staleUsers = [];
+
+        // Loop through organizations and get users
+        foreach ($organizations as $organization) {
+            $orgId = $organization->id;
+            $users = $this->getUsersByOrgId($orgId);
+
+            foreach ($users as $user) {
+                // Ignore unactivated users (-1) and park extensions (-2)
+                if ($user->status != -1 && $user->status != -2) {
+                    $history = $this->getUserRegistrationsHistory($orgId, $user->id, $beginTimestamp, $endTimestamp);
+
+                    // If history is empty, user is stale
+                    if (empty($history)) {
+                        $staleUsers[] = [
+                            'org_id' => $organization->id,
+                            'org_name' => $organization->name,
+                            'user_id' => $user->id,
+                            'user_name' => $user->name,
+                            'extension' => $user->extension,
+                            'email' => $user->email ?? 'N/A',
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $staleUsers;
+    }
 }

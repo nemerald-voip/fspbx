@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
+use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Redis;
@@ -83,71 +84,32 @@ class AuditStaleRingotelUsers implements ShouldQueue
      */
     public function handle()
     {
-        // Allow only 2 tasks every 30 second
+        // Allow only 1 tasks every 30 second
         Redis::throttle('default')->allow(1)->every(30)->then(function () {
+            try {
+                // Retrieve all required settings in a single query
+                $settings = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
+                    ->whereIn('default_setting_subcategory', [
+                        'stale_ringotel_users_threshold',
+                        'ringotel_audit_notify_email'
+                    ])
+                    ->pluck('default_setting_value', 'default_setting_subcategory');
 
-            // Retrieve the stale user threshold from settings (in minutes)
-            // $staleThreshold = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
-            //     ->where('default_setting_subcategory', 'ringotel_stale_user_threshold')
-            //     ->value('default_setting_value') ?? 60;
+                // Assign values with defaults
+                $staleThresholdDays = $settings['stale_ringotel_users_threshold'] ?? 180; // Default to 180 days
+                $notifyEmail = $settings['ringotel_audit_notify_email'] ?? null;
 
-            // // Retrieve notification email for stale users
-            // $notifyEmail = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
-            //     ->where('default_setting_subcategory', 'ringotel_notify_email')
-            //     ->value('default_setting_value') ?? null;
+                // Get stale users using the Ringotel API service
+                $staleUsers = $this->ringotelApi->getStaleUsers($staleThresholdDays);
 
-            // Fetch all organizations
-            $organizations = $this->ringotelApi->getOrganizations();
-
-            if (!$organizations || $organizations->isEmpty()) {
-                logger("Failed to fetch organizations from Ringotel API.");
+                // Send email notification if enabled
+                if (!empty($staleUsers) && $notifyEmail) {
+                    $params['user_email'] = $notifyEmail;
+                    ExportReport::dispatch($params, $staleUsers);
+                }
+            } catch (\Exception $e) {
                 return $this->release(30);
             }
-
-            // Generate timestamps (milliseconds since epoch)
-            $endTimestamp = now()->timestamp * 1000; // Current time in milliseconds
-            $beginTimestamp = now()->subMonths(6)->timestamp * 1000; // 6 months ago in milliseconds
-
-
-            // Loop through organizations and get users
-            foreach ($organizations as $organization) {
-                $orgId = $organization->id;
-                $users = $this->ringotelApi->getUsersByOrgId($orgId);
-
-                foreach ($users as $user) {
-                    // Ignoring status "-1" for unactivated users and status "-2" for Parks
-                    if ($user->status != -1 && $user->status != -2) {
-                        logger($user->name);
-                        $history = $this->ringotelApi->getUserRegistrationsHistory($orgId, $user->id, $beginTimestamp, $endTimestamp);
-                        logger($history);
-                    }
-                }
-            }
-
-            // // Fetch users from Ringotel API
-            // $users = $this->ringotelApi->getUsers();
-
-            // if (!$users) {
-            //     Log::error("Failed to fetch users from Ringotel API.");
-            //     return;
-            // }
-
-            // $staleUsers = [];
-            // $staleTime = now()->subMinutes($staleThreshold)->toIso8601String();
-
-            // foreach ($users as $user) {
-            //     if (!isset($user['last_active']) || Carbon::parse($user['last_active'])->toIso8601String() < $staleTime) {
-            //         $staleUsers[] = $user;
-            //     }
-            // }
-
-            // if (count($staleUsers) > 0) {
-            //     Log::warning(count($staleUsers) . " stale Ringotel users detected. Last active beyond {$staleThreshold} minutes.");
-
-            //     if ($notifyEmail) {
-            //         $this->notifyAdmin($notifyEmail, $staleUsers, $staleThreshold);
-            //     }
-            // }
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(30);

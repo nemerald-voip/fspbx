@@ -77,7 +77,7 @@ class Kernel extends ConsoleKernel
 
         // Find stale Ringotel users
         if (isset($jobSettings['audit_stale_ringotel_users']) && $jobSettings['audit_stale_ringotel_users'] === "true") {
-            $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->everyTwoMinutes();
+            $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');
         }
     }
 

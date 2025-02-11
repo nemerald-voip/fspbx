@@ -105,13 +105,7 @@ class CheckFaxServiceStatus implements ShouldQueue
             // logger('waitTimeThreshold - ' . $waitTimeThreshold);
             // logger('timeThreshold - ' . $timeThreshold);
             // logger('pendingFaxes - ' . $pendingFaxes);
-
-            // $pendingFaxes = FaxQueues::where('fax_status', 'waiting')
-            //     ->where('fax_date', '<', $timeThreshold)
-            //     ->get();
-
-            // logger($pendingFaxes);
-
+            
             if ($pendingFaxes >= $threshold) {
                 logger("Fax service alert: {$pendingFaxes} faxes have been pending for longer than {$waitTimeThreshold} minutes. Check fax queue service status");
 
