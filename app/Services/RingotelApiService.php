@@ -577,7 +577,9 @@ class RingotelApiService
 
         $data = [
             'method' => 'getUsers',
-            'orgid' => $orgId,
+            'params' => array(
+                'orgid' => $orgId,
+            )
         ];
 
         $response = Http::ringotel()
@@ -596,8 +598,11 @@ class RingotelApiService
         if (!isset($response['result'])) {
             throw new \Exception("An unknown error has occurred");
         }
+        // return $response['result'];
 
-        return $response['result'];
+        return collect($response['result'])->map(function ($item) {
+            return RingotelUserDTO::fromArray($item);
+        });
     }
 
     public function getUsers($org_id, $conn_id)
@@ -702,5 +707,45 @@ class RingotelApiService
             ['domain_setting_subcategory', '=', 'org_id'],
             ['domain_setting_enabled', '=', true],
         ])->value('domain_setting_value');
+    }
+
+    public function getUserRegistrationsHistory($orgId, $userId, $beginTimestamp, $endTimestamp)
+    {
+        $this->ensureApiTokenExists();
+
+        // Prepare request payload
+        $data = [
+            'method' => 'getUserRegistrationsHistory',
+            'params' => [
+                'orgid' => $orgId,
+                'userid' => $userId,
+                'begin' => $beginTimestamp,
+                'end' => $endTimestamp,
+            ],
+        ];
+
+        try {
+            $response = Http::ringotel()
+                ->timeout($this->timeout)
+                ->withBody(json_encode($data), 'application/json')
+                ->post('/')
+                ->json();
+
+
+            if (isset($response['error'])) {
+                // logger("Ringotel API error: " . $response['error']['message'], ['error' => $response['error']]);
+                throw new \Exception($response['error']['message']);
+            }
+
+            if (!isset($response['result']) || empty($response['result'])) {
+                // logger("No registration history returned for user ID: {$userId} in org ID: {$orgId}");
+                return [];
+            }
+
+            return $response['result'];
+        } catch (\Exception $e) {
+            // logger("Failed to retrieve user registration history from Ringotel API", ['error' => $e->getMessage()]);
+            return [];
+        }
     }
 }
