@@ -74,6 +74,11 @@ class Kernel extends ConsoleKernel
         if (isset($jobSettings['check_fax_service_status']) && $jobSettings['check_fax_service_status'] === "true") {
             $schedule->job(new \App\Jobs\CheckFaxServiceStatus())->everyThirtyMinutes();
         }
+
+        // Find stale Ringotel users
+        if (isset($jobSettings['audit_stale_ringotel_users']) && $jobSettings['audit_stale_ringotel_users'] === "true") {
+            $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');
+        }
     }
 
     /**

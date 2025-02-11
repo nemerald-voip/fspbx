@@ -76,7 +76,7 @@ class CheckFaxServiceStatus implements ShouldQueue
      */
     public function handle()
     {
-        // Allow only 2 tasks every 1 second
+        // Allow only 2 tasks every 30 second
         Redis::throttle('default')->allow(1)->every(30)->then(function () {
 
             // Retrieve the fax service settings
@@ -101,17 +101,11 @@ class CheckFaxServiceStatus implements ShouldQueue
                 ->where('fax_date', '<', $timeThreshold)
                 ->count();
 
-            logger('Threshold - ' . $threshold);
-            logger('waitTimeThreshold - ' . $waitTimeThreshold);
-            logger('timeThreshold - ' . $timeThreshold);
-            logger('pendingFaxes - ' . $pendingFaxes);
-
-            // $pendingFaxes = FaxQueues::where('fax_status', 'waiting')
-            //     ->where('fax_date', '<', $timeThreshold)
-            //     ->get();
-
-            // logger($pendingFaxes);
-
+            // logger('Threshold - ' . $threshold);
+            // logger('waitTimeThreshold - ' . $waitTimeThreshold);
+            // logger('timeThreshold - ' . $timeThreshold);
+            // logger('pendingFaxes - ' . $pendingFaxes);
+            
             if ($pendingFaxes >= $threshold) {
                 logger("Fax service alert: {$pendingFaxes} faxes have been pending for longer than {$waitTimeThreshold} minutes. Check fax queue service status");
 

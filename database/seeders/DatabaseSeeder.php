@@ -481,6 +481,30 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Email address to receive notifications when pending faxes exceed the allowed wait time threshold.",
             ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'audit_stale_ringotel_users',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Enables checking for stale Ringotel users based on last active time.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'ringotel_audit_notify_email',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Email address to receive notifications for stale Ringotel users.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'stale_ringotel_users_threshold',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "180",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Defines the number of days after which a Ringotel user is considered stale.",
+            ],
             
 
         ];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Jobs\ExportReport;
+use App\Jobs\AuditStaleRingotelUsers;
 
 class ReportsController extends Controller
 {
@@ -55,7 +56,7 @@ class ReportsController extends Controller
 
         $data = collect([
             ['reportName' => 'Active and suspended extensions per domain'],
-
+            ['reportName' => 'Stale Ringotel users'],
         ]);
 
         return $data;
@@ -72,6 +73,9 @@ class ReportsController extends Controller
                 $this->handleActiveAndSuspendedExtensionsReport();
             }
 
+            if (request('reportName') == "Stale Ringotel users") {
+                $this->handleStaleRingotelusersReport();
+            }
 
             // Return a JSON response indicating success
             return response()->json([
@@ -138,7 +142,11 @@ class ReportsController extends Controller
 
         ExportReport::dispatch($params, $domainData);
 
-
-
     }
+
+    private function handleStaleRingotelUsersReport()
+    {
+        AuditStaleRingotelUsers::dispatch();
+    }
+
 }

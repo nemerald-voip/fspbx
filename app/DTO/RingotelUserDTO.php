@@ -28,7 +28,7 @@ class RingotelUserDTO
         $this->devices = $data['devs'] ?? [];
         $this->domain = $data['domain'];
         $this->name = $data['name'];
-        $this->authName = $data['authname'];
+        $this->authName = $data['authname'] ?? [];
         $this->id = $data['id'];
         $this->state = $data['state'];
         $this->status = $data['status'];
@@ -38,5 +38,10 @@ class RingotelUserDTO
     public static function fromArray(array $data)
     {
         return new self($data);
+    }
+
+    public function __toString()
+    {
+        return json_encode(get_object_vars($this));
     }
 }
