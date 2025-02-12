@@ -6,6 +6,7 @@ use App\Models\IvrMenus;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
+use App\Services\PolycomZtpProvider;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use App\Observers\ExtensionObserver;
@@ -66,6 +67,12 @@ class AppServiceProvider extends ServiceProvider
             ])->baseUrl(config('ringotel.api_url','https://shell.ringotel.co/api'));
         });
 
+        Http::macro('polycom', function () {
+            $service = app(PolycomZtpProvider::class);
+            return Http::withHeaders([
+                'API-KEY' => $service->getApiToken(),
+            ])->baseUrl(config('ztp.polycom.api_url', 'https://api.ztp.poly.com/v1'));
+        });
 
         Horizon::auth(function ($request) {
             // Always show admin if local development
@@ -83,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
         Builder::macro('andWhereLike', function (string $column, string $search) {
             return $this->where($column, 'ILIKE', '%' . trim($search) . '%');
         });
+
         /* Note: Temporary commented. Not removed because it can be used in next updates
         Validator::extend('PhoneOrExtension', function ($attribute, $value, $parameters, $validator) {
             $phoneFormat = 'US';

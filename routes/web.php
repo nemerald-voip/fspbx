@@ -392,6 +392,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/cloud-provisioning/item-options', [CloudProvisioningController::class, 'getItemOptions'])->name('cloud-provisioning.item.options');
     Route::post('/cloud-provisioning/organization/create', [CloudProvisioningController::class, 'createOrganization'])->name('cloud-provisioning.organization.create');
     Route::put('/cloud-provisioning/organization/update', [CloudProvisioningController::class, 'updateOrganization'])->name('cloud-provisioning.organization.update');
+    Route::post('/cloud-provisioning/organization/all', [CloudProvisioningController::class, 'getOrganizations'])->name('cloud-provisioning.organization.all');
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
     Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');

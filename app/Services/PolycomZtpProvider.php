@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTO\RingotelOrganizationDTO;
 use App\Models\DefaultSettings;
 use App\Models\Devices;
 use App\Services\Exceptions\ZtpProviderException;
@@ -11,8 +12,8 @@ use Illuminate\Support\Facades\Http;
 
 class PolycomZtpProvider implements ZtpProviderInterface
 {
-    protected string $baseUrl;
     protected string $providerName = 'polycom';
+    protected int $timeout = 30;
 
     /**
      * ZTPApiService constructor.
@@ -20,7 +21,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      */
     public function __construct()
     {
-        $this->baseUrl = 'https://api.ztp.poly.com/preview';
+
     }
 
     /**
@@ -75,7 +76,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return array
      * @throws \Exception
      */
-    public function listDevices(array $addresses = [], int $limit = 50): array
+    public function getDevices(array $addresses = [], int $limit = 50): array
     {
         $url = "$this->baseUrl/devices?limit=$limit";
 
@@ -173,135 +174,164 @@ class PolycomZtpProvider implements ZtpProviderInterface
     }
 
     /**
-     * Retrieve details of a specific device by its ID.
-     *
-     * @param  Devices $device
-     * @return string
-     * @throws \Exception
-     *
-    public function getDevice(Devices $device): string
-    {
-        $url = "$this->baseUrl/devices/$device->device_address";
-
-        $token = $this->ensureApiTokenExists();
-
-        logger($url);
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->get($url);
-
-        return $this->handleResponse($response);
-    }
-
-    /**
      * Retrieve a list of profiles with a configurable limit.
      *
-     * @param  int  $limit
-     * @return string
      * @throws \Exception
-     *
-    public function getProfiles(int $limit = 50): string
+     */
+    public function getOrganisations(): array
     {
-        $url = "$this->baseUrl/profiles?limit=$limit";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
+        $response = Http::polycom()
+            ->timeout($this->timeout)
+            ->get('/profiles')
+            ->throw(function ($error) {
+                throw new \Exception("Unable to retrieve organizations");
+            });
 
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->get($url);
-
-        return $this->handleResponse($response);
+        return $this->handleResponse($response)['results'];
     }
 
-    /**
-     * Create a new profile with the given name.
-     *
-     * @param  string  $name
-     * @return string
-     * @throws \Exception
-     *
-    public function createProfile(string $name): string
+    public function createOrganisation(array $params): string
     {
-        $url = "$this->baseUrl/profiles";
-
-        $token = $this->ensureApiTokenExists();
-
-        $payload = [
-            'name' => $name
+        $this->ensureApiTokenExists();
+        // Prepare the payload
+        $data = [
+            'method' => 'createOrganization',
+            'params' => [
+                'name' => $params['organization_name'],
+                'region' => $params['region'],
+                'domain' => $params['organization_domain'],
+                'packageid' => (int) $params['package'],
+                'params' => [
+                    'hidePassInEmail' => $params['dont_send_user_credentials'],
+                ],
+            ],
         ];
 
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-            'Content-Type' => 'application/json',
-        ])->post($url, $payload);
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to activate organization");
+            })
+            ->json();
 
-        return $this->handleResponse($response);
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return $response['result'];
     }
 
-    /**
-     * Retrieve details of a specific profile by its ID.
-     *
-     * @param  string  $profileId
-     * @return string
-     * @throws \Exception
-     *
-    public function getProfile(string $profileId): string
+    public function updateOrganisation(array $params): string
     {
-        $url = "$this->baseUrl/profiles/$profileId";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
-
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->get($url);
-
-        return $this->handleResponse($response);
-    }
-
-    /**
-     * Update a profile by its ID with a new name.
-     *
-     * @param  string  $profileId
-     * @param  string  $name
-     * @return string
-     * @throws \Exception
-     *
-    public function updateProfile(string $profileId, string $name): string
-    {
-        $url = "$this->baseUrl/profiles/$profileId";
-
-        $token = $this->ensureApiTokenExists();
-
-        $payload = [
-            'name' => $name
+        // Prepare the payload
+        $data = [
+            'method' => 'updateOrganization',
+            'params' => [
+                'id' => $params['organization_id'],
+                'name' => $params['organization_name'],
+                'packageid' => (int) $params['package'],
+                'params' => [
+                    'hidePassInEmail' => $params['dont_send_user_credentials'],
+                ],
+            ],
         ];
 
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-            'Content-Type' => 'application/json',
-        ])->post($url, $payload);
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to update organization");
+            })
+            ->json();
 
-        return $this->handleResponse($response);
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        // Handle empty response
+        if (!$response) {
+            return ['success' => true, 'message' => 'Organization updated successfully'];
+        }
+
+        return $response['result'];
     }
 
-    /**
-     * Delete a profile by its ID.
-     *
-     * @param  string  $profileId
-     * @return string
-     * @throws \Exception
-     *
-    public function deleteProfile(string $profileId): string
+    public function getOrganisation($id): string
     {
-        $url = "$this->baseUrl/profiles/$profileId";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
+        // Prepare the payload
+        $data = array(
+            'method' => 'getOrganization',
+            'params' => array(
+                'id' => $id,
+            )
+        );
 
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->delete($url);
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to fetch organization");
+            })
+            ->json();
 
-        return $this->handleResponse($response);
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        // Transform the result into OrganizationDTO
+        return RingotelOrganizationDTO::fromArray($response['result']);
+    }
+
+    public function deleteOrganisation($id): string
+    {
+        $this->ensureApiTokenExists();
+        // Prepare the payload
+        $data = [
+            'method' => 'deleteOrganization',
+            'params' => [
+                'id' => $id,
+            ],
+        ];
+
+        // Send the request
+        $response = Http::ringotel() // Ensure `ringotel` is configured in the HTTP client
+        ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response) {
+                throw new \Exception("Failed to delete organization: {$response->body()}");
+            })
+            ->json();
+
+        // Check for errors in the response
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        // Handle empty response
+        if (!$response) {
+            return ['success' => true, 'message' => 'Organization and its connections were successfully deleted.'];
+        }
+
+        return $response['result'];
     }
 
     /**

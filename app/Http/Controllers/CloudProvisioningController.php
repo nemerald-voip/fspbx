@@ -14,6 +14,7 @@ use App\Services\PolycomZtpProvider;
 use App\Services\RingotelApiService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 
 class CloudProvisioningController extends Controller
@@ -45,7 +46,7 @@ class CloudProvisioningController extends Controller
                     //'update_organization' => route('cloud-provisioning.organization.update'),
                     //'destroy_organization' => route('cloud-provisioning.organization.destroy'),
                     //'pair_organization' => route('cloud-provisioning.organization.pair'),
-                    //'get_all_orgs' => route('cloud-provisioning.organization.all'),
+                    'get_all_orgs' => route('cloud-provisioning.organization.all'),
                     //'get_api_token' => route('cloud-provisioning.token.get'),
                     //'update_api_token' => route('cloud-provisioning.token.update'),
                     'item_options' => route('cloud-provisioning.item.options'),
@@ -421,7 +422,9 @@ class CloudProvisioningController extends Controller
     /**
      * Submit API request to ZTP to create a new organization
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @param  UpdateZtpOrganizationRequest  $request
+     * @param  PolycomZtpProvider  $polycomZtpProvider
+     * @return JsonResponse
      */
     public function updateOrganization(UpdateZtpOrganizationRequest $request, PolycomZtpProvider $polycomZtpProvider): JsonResponse
     {
@@ -444,6 +447,32 @@ class CloudProvisioningController extends Controller
                 'success' => false,
                 'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * @param  PolycomZtpProvider  $polycomZtpProvider
+     * @return JsonResponse|Collection
+     */
+    public function getOrganizations(PolycomZtpProvider $polycomZtpProvider): JsonResponse|Collection
+    {
+        $this->polycomZtpProvider = $polycomZtpProvider;
+
+        try {
+            $organizations = $this->polycomZtpProvider->getOrganisations(500);
+            return collect($organizations)->map(function ($org) {
+                return [
+                    'name' => "{$org->name} (id: {$org->id})",
+                    'value' => $org->id,
+                ];
+            });
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage(),
+                ],
+            ], 404);
         }
     }
 
@@ -488,7 +517,7 @@ class CloudProvisioningController extends Controller
                     // Initializing provider instance
                     /** @var ZtpProviderInterface $providerInstance */
                     $providerInstance = new $providerClass();
-                    $cloudDevicesData = $providerInstance->listDevices($ids);
+                    $cloudDevicesData = $providerInstance->getOrganisations($ids);
 
                     foreach ($items as $item) {
                         $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
