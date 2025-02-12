@@ -480,8 +480,13 @@ class VirtualReceptionistController extends Controller
                             'ivr_menu_option_order',
                             'ivr_menu_option_description',
                             'ivr_menu_option_enabled',
-                        )->orderByRaw('ivr_menu_option_digits::integer');
-                    },
+                            )->orderByRaw("
+                            CASE WHEN ivr_menu_option_digits ~ '^[0-9]+$' 
+                                 THEN ivr_menu_option_digits::integer 
+                                 ELSE NULL END ASC, 
+                            ivr_menu_option_digits ASC
+                        ");
+                        },
                 ])->where('ivr_menu_uuid', $item_uuid)->first();
 
                 // If a voicemail exists, use it; otherwise, create a new one
