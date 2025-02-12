@@ -571,7 +571,7 @@ class VoicemailController extends Controller
                         $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
                     },
                     'greetings' => function ($query) use ($domain_uuid) {
-                        $query->select('voicemail_id', 'greeting_id', 'greeting_name')
+                        $query->select('voicemail_id', 'greeting_id', 'greeting_name', 'greeting_description')
                             ->where('domain_uuid', $domain_uuid);
                     }
                 ])->where('voicemail_uuid', $item_uuid)->first();
@@ -589,6 +589,7 @@ class VoicemailController extends Controller
                         return [
                             'value' => $greeting->greeting_id,
                             'name' => $greeting->greeting_name,
+                            'description' => $greeting->greeting_description,
                         ];
                     })->toArray();
 
@@ -649,7 +650,7 @@ class VoicemailController extends Controller
 
             $openAiSpeeds = [];
 
-            for ($i = 0.25; $i <= 4.0; $i += 0.25) {
+            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
                 if (floor($i) == $i) {
                     // Whole number, format with one decimal place
                     $formattedValue = sprintf('%.1f', $i);
@@ -760,17 +761,15 @@ class VoicemailController extends Controller
                 'file' => $fileName,
             ]);
 
-            // Generate the file URL using the defined route
-            $applyUrl = route('voicemail.file.apply', [
-                'domain' => $domainName,
-                'voicemail' => $voicemail,
-                'file' => $fileName,
-            ]);
+            // Generate the apply URL using the defined route
+            $applyUrl = route('voicemail.file.apply');
 
             return response()->json([
                 'success' => true,
                 'file_url' => $fileUrl,
                 'apply_url' => $applyUrl,
+                'voicemail_uuid' => $voicemail->voicemail_uuid,
+                'file_name' => $fileName,
             ]);
         } catch (\Exception $e) {
             // Log the error message
@@ -863,10 +862,14 @@ class VoicemailController extends Controller
         return response()->file(Storage::disk('voicemail')->path($filePath));
     }
 
-    public function applyVoicemailFile($domain, Voicemails $voicemail, $file)
+    public function applyVoicemailFile()
     {
         try {
-            $filePath = "{$domain}/{$voicemail->voicemail_id}/{$file}";
+            $domain = session('domain_name');
+
+            $voicemail = Voicemails::find(request('voicemail_uuid'));
+
+            $filePath = $domain . "/" . $voicemail->voicemail_id . "/" . request('file_name');
 
             if (!Storage::disk('voicemail')->exists($filePath)) {
                 abort(404); // File not found
@@ -911,6 +914,8 @@ class VoicemailController extends Controller
                 ], 500);
             }
 
+            $sanitizedDescription =  preg_replace('/\s+/', ' ',htmlspecialchars(strip_tags(trim(request('input'))), ENT_QUOTES, 'UTF-8'));
+
             // Step 7: Save greeting info to the database
             $greeting = $voicemail->greetings()->create([
                 'domain_uuid' => $voicemail->domain_uuid,
@@ -918,11 +923,9 @@ class VoicemailController extends Controller
                 'greeting_id' => $newGreetingId,
                 'greeting_name' => "AI Greeting " . date('Ymd_His'),
                 'greeting_filename' => $newFileName,
-                'greeting_description' => "Generated greeting {$newGreetingId}",
+                'greeting_description' => $sanitizedDescription,
 
             ]);
-
-            logger($greeting);
 
             // Step 8: Update the voicemail table with the new greeting_id
             $voicemail->update([
@@ -933,7 +936,8 @@ class VoicemailController extends Controller
                 'success' => true,
                 'greeting_id' => $newGreetingId,
                 'greeting_name' => "AI Greeting " . date('Ymd_His'),
-                'message' => ['success' => 'Your AI-generated greeting has been saved and successfully activated.']
+                'description' => $sanitizedDescription,
+                'messages' => ['success' => ['Your AI-generated greeting has been saved and successfully activated.']]
             ], 200);
         } catch (\Exception $e) {
             // Log the error message

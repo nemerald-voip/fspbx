@@ -577,7 +577,9 @@ class RingotelApiService
 
         $data = [
             'method' => 'getUsers',
-            'orgid' => $orgId,
+            'params' => array(
+                'orgid' => $orgId,
+            )
         ];
 
         $response = Http::ringotel()
@@ -596,8 +598,11 @@ class RingotelApiService
         if (!isset($response['result'])) {
             throw new \Exception("An unknown error has occurred");
         }
+        // return $response['result'];
 
-        return $response['result'];
+        return collect($response['result'])->map(function ($item) {
+            return RingotelUserDTO::fromArray($item);
+        });
     }
 
     public function getUsers($org_id, $conn_id)
@@ -702,5 +707,90 @@ class RingotelApiService
             ['domain_setting_subcategory', '=', 'org_id'],
             ['domain_setting_enabled', '=', true],
         ])->value('domain_setting_value');
+    }
+
+    public function getUserRegistrationsHistory($orgId, $userId, $beginTimestamp, $endTimestamp)
+    {
+        $this->ensureApiTokenExists();
+
+        // Prepare request payload
+        $data = [
+            'method' => 'getUserRegistrationsHistory',
+            'params' => [
+                'orgid' => $orgId,
+                'userid' => $userId,
+                'begin' => $beginTimestamp,
+                'end' => $endTimestamp,
+            ],
+        ];
+
+        try {
+            $response = Http::ringotel()
+                ->timeout($this->timeout)
+                ->withBody(json_encode($data), 'application/json')
+                ->post('/')
+                ->json();
+
+
+            if (isset($response['error'])) {
+                // logger("Ringotel API error: " . $response['error']['message'], ['error' => $response['error']]);
+                throw new \Exception($response['error']['message']);
+            }
+
+            if (!isset($response['result']) || empty($response['result'])) {
+                // logger("No registration history returned for user ID: {$userId} in org ID: {$orgId}");
+                return [];
+            }
+
+            return $response['result'];
+        } catch (\Exception $e) {
+            // logger("Failed to retrieve user registration history from Ringotel API", ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public function getStaleUsers($staleThresholdDays)
+    {
+        // Generate timestamps (milliseconds since epoch)
+        $endTimestamp = now()->timestamp * 1000; // Current time in milliseconds
+        $beginTimestamp = now()->subDays($staleThresholdDays)->timestamp * 1000; // Convert days to milliseconds
+
+        // Fetch all organizations
+        $organizations = $this->getOrganizations();
+
+        if (!$organizations || $organizations->isEmpty()) {
+            logger("Failed to fetch organizations from Ringotel API.");
+            return [];
+        }
+
+        // Array to hold stale users
+        $staleUsers = [];
+
+        // Loop through organizations and get users
+        foreach ($organizations as $organization) {
+            $orgId = $organization->id;
+            $users = $this->getUsersByOrgId($orgId);
+
+            foreach ($users as $user) {
+                // Ignore unactivated users (-1) and park extensions (-2)
+                if ($user->status != -1 && $user->status != -2) {
+                    $history = $this->getUserRegistrationsHistory($orgId, $user->id, $beginTimestamp, $endTimestamp);
+
+                    // If history is empty, user is stale
+                    if (empty($history)) {
+                        $staleUsers[] = [
+                            'org_id' => $organization->id,
+                            'org_name' => $organization->name,
+                            'user_id' => $user->id,
+                            'user_name' => $user->name,
+                            'extension' => $user->extension,
+                            'email' => $user->email ?? 'N/A',
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $staleUsers;
     }
 }
