@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\PolycomOrganizationDTO;
+use App\DTO\RingotelOrganizationDTO;
 use App\Http\Requests\StoreRingotelOrganizationRequest;
 use App\Http\Requests\StoreZtpOrganizationRequest;
+use App\Http\Requests\UpdatePolycomApiTokenRequest;
+use App\Http\Requests\UpdateRingotelApiTokenRequest;
 use App\Http\Requests\UpdateRingotelOrganizationRequest;
 use App\Http\Requests\UpdateZtpOrganizationRequest;
+use App\Models\DefaultSettings;
 use App\Models\Devices;
 use App\Models\Domain;
 use App\Models\DomainSettings;
@@ -25,6 +30,7 @@ class CloudProvisioningController extends Controller
     public string $sortOrder;
     protected string $viewName = 'CloudProvisioning';
     protected PolycomZtpProvider $polycomZtpProvider;
+
     //protected array $searchable = ['source', 'destination', 'message'];
 
     public function __construct()
@@ -47,8 +53,8 @@ class CloudProvisioningController extends Controller
                     //'destroy_organization' => route('cloud-provisioning.organization.destroy'),
                     //'pair_organization' => route('cloud-provisioning.organization.pair'),
                     'get_all_orgs' => route('cloud-provisioning.organization.all'),
-                    //'get_api_token' => route('cloud-provisioning.token.get'),
-                    //'update_api_token' => route('cloud-provisioning.token.update'),
+                    'get_api_token' => route('cloud-provisioning.token.get'),
+                    'update_api_token' => route('cloud-provisioning.token.update'),
                     'item_options' => route('cloud-provisioning.item.options'),
                 ]
             ]
@@ -94,15 +100,18 @@ class CloudProvisioningController extends Controller
      */
     public function builder(array $filters = [])
     {
-        $data =  $this->model::query();
+        $data = $this->model::query();
         // Get all domains with 'domain_enabled' set to 'true' and eager load settings
         $data->where('domain_enabled', 'true')
-            ->with(['settings' => function ($query) {
-                $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value')
-                    ->where('domain_setting_category', 'cloud provision')
-                    ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
-                    ->where('domain_setting_enabled', true);
-            }]);
+            ->with([
+                'settings' => function ($query) {
+                    $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category',
+                        'domain_setting_subcategory', 'domain_setting_value')
+                        ->where('domain_setting_category', 'cloud provision')
+                        ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
+                        ->where('domain_setting_enabled', true);
+                }
+            ]);
 
         $data->select(
             'domain_uuid',
@@ -112,7 +121,7 @@ class CloudProvisioningController extends Controller
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                if (method_exists($this, $method = "filter".ucfirst($field))) {
                     $this->$method($data, $value);
                 }
             }
@@ -141,11 +150,11 @@ class CloudProvisioningController extends Controller
                     [$relation, $nestedField] = explode('.', $field, 2);
 
                     $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
-                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                        $query->where($nestedField, 'ilike', '%'.$value.'%');
                     });
                 } else {
                     // Direct field
-                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                    $query->orWhere($field, 'ilike', '%'.$value.'%');
                 }
             }
         });
@@ -250,12 +259,15 @@ class CloudProvisioningController extends Controller
                         'domain_name',
                         'domain_description',
                     )
-                    ->with(['settings' => function ($query) {
-                        $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value')
-                            ->where('domain_setting_category', 'app shell')
-                            ->where('domain_setting_subcategory', 'org_id')
-                            ->where('domain_setting_enabled', true);
-                    }])->where($this->model->getKeyName(), $item_uuid)->first();
+                    ->with([
+                        'settings' => function ($query) {
+                            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category',
+                                'domain_setting_subcategory', 'domain_setting_value')
+                                ->where('domain_setting_category', 'app shell')
+                                ->where('domain_setting_subcategory', 'org_id')
+                                ->where('domain_setting_enabled', true);
+                        }
+                    ])->where($this->model->getKeyName(), $item_uuid)->first();
 
                 if ($model) {
                     // Transform settings into org_id
@@ -292,12 +304,14 @@ class CloudProvisioningController extends Controller
             // Get all app settings from Default Settings and overrride with settings saved in Domain Settings
             //$appSettings = $this->getAppSettings($model->domain_uuid ?? null);
             $appSettings = [];
-            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '', $model->domain_description ?? ''));
+            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '',
+                $model->domain_description ?? ''));
             $appSettings['suggested_connection_name'] = 'Primary SIP Profile';
 
             // Check if `connection_port` is empty and fall back to `line_sip_port`
             if (empty($appSettings['connection_port'])) {
-                $appSettings['connection_port'] = get_domain_setting('line_sip_port', $model->domain_uuid ?? null)  ?? null;
+                $appSettings['connection_port'] = get_domain_setting('line_sip_port',
+                    $model->domain_uuid ?? null) ?? null;
             }
 
             if (!$model->org_id) {
@@ -328,13 +342,81 @@ class CloudProvisioningController extends Controller
             return $itemOptions;
         } catch (\Exception $e) {
             // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
             // report($e);
 
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to fetch item details'], 'server2' => [$e->getMessage()]]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Retrieve the Polucom API token from DefaultSettings.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getToken(): JsonResponse
+    {
+        try {
+            // Retrieve the API token from DefaultSettings
+            $token = DefaultSettings::where([
+                ['default_setting_category', '=', 'cloud provision'],
+                ['default_setting_subcategory', '=', 'polycom_api_token'],
+                ['default_setting_enabled', '=', 'true'],
+            ])->value('default_setting_value');
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+            ]); // 200 OK with the token value
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+
+    /**
+     * Update or create the Polycom API token in DefaultSettings.
+     *
+     * @param UpdatePolycomApiTokenRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateToken(UpdatePolycomApiTokenRequest $request): JsonResponse
+    {
+        $inputs = $request->validated();
+
+        try {
+            // Update or create the Polycom API token in DefaultSettings
+            DefaultSettings::updateOrCreate(
+                [
+                    'default_setting_category' => 'cloud provision',
+                    'default_setting_subcategory' => 'polycom_api_token',
+                ],
+                [
+                    'default_setting_name' => 'text',
+                    'default_setting_value' => $inputs['token'], // Use the validated token input
+                    'default_setting_enabled' => 'true', // Ensure the setting is enabled
+                ]
+            );
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['API Token was successfully updated']]
+            ], 201);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Unable to update API Token. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -352,8 +434,10 @@ class CloudProvisioningController extends Controller
      * @param  PolycomZtpProvider  $polycomZtpProvider
      * @return JsonResponse
      */
-    public function createOrganization(StoreZtpOrganizationRequest $request, PolycomZtpProvider $polycomZtpProvider): JsonResponse
-    {
+    public function createOrganization(
+        StoreZtpOrganizationRequest $request,
+        PolycomZtpProvider $polycomZtpProvider
+    ): JsonResponse {
         $this->polycomZtpProvider = $polycomZtpProvider;
 
         $inputs = $request->validated();
@@ -410,11 +494,14 @@ class CloudProvisioningController extends Controller
                 'messages' => ['success' => ['Organization successfully activated']]
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'], 'server2' => [$e->getMessage()]]
+                'errors' => [
+                    'server' => ['Unable to activate organization. Check logs for more details'],
+                    'server2' => [$e->getMessage()]
+                ]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -426,8 +513,10 @@ class CloudProvisioningController extends Controller
      * @param  PolycomZtpProvider  $polycomZtpProvider
      * @return JsonResponse
      */
-    public function updateOrganization(UpdateZtpOrganizationRequest $request, PolycomZtpProvider $polycomZtpProvider): JsonResponse
-    {
+    public function updateOrganization(
+        UpdateZtpOrganizationRequest $request,
+        PolycomZtpProvider $polycomZtpProvider
+    ): JsonResponse {
         $this->polycomZtpProvider = $polycomZtpProvider;
 
         $inputs = $request->validated();
@@ -441,7 +530,7 @@ class CloudProvisioningController extends Controller
                 'messages' => ['success' => ['Organization successfully updated']]
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
@@ -459,7 +548,8 @@ class CloudProvisioningController extends Controller
         $this->polycomZtpProvider = $polycomZtpProvider;
 
         try {
-            $organizations = $this->polycomZtpProvider->getOrganisations(500);
+            $organizations = $this->polycomZtpProvider->getOrganisations();
+
             return collect($organizations)->map(function ($org) {
                 return [
                     'name' => "{$org->name} (id: {$org->id})",
@@ -467,7 +557,7 @@ class CloudProvisioningController extends Controller
                 ];
             });
         } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
             return response()->json([
                 'error' => [
                     'message' => $e->getMessage(),
@@ -498,7 +588,7 @@ class CloudProvisioningController extends Controller
                     $provider = get_class($item->getCloudProvider());
                     $supportedProviders[$provider][] = $item->device_address;
                     $localStatus = $item->cloudProvisioningStatus()->first();
-                    if($localStatus) {
+                    if ($localStatus) {
                         $localStatuses[$provider][$item->device_address] = [
                             'status' => $localStatus->status,
                             'error' => $localStatus->error
@@ -522,7 +612,7 @@ class CloudProvisioningController extends Controller
                     foreach ($items as $item) {
                         $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
                         $provisioned = $cloudDeviceData && !empty($cloudDeviceData['profileid']);
-                        if($provisioned) {
+                        if ($provisioned) {
                             $devicesData[] = [
                                 'device_uuid' => $item->device_uuid,
                                 'status' => 'provisioned',

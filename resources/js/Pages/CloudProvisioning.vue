@@ -22,7 +22,10 @@
             </template>
 
             <template #action>
-
+                <button type="button" @click.prevent="handleApiTokenButtonClick()"
+                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    API Token
+                </button>
             </template>
 
             <template #navigation>
@@ -179,6 +182,16 @@
         </template>
     </AddEditItemModal>
 
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Polycom Api Token'"
+                      :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdatePolycomApiTokenForm :token="apiToken" :errors="formErrors" :is-submitting="updateApiTokenFormSubmitting"
+                                        @submit="handleUpdateApiTokenRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                        @refresh-data="getItemOptions" @success="showNotification('success', $event)"
+                                        @clear-errors="handleClearErrors" />
+        </template>
+    </AddEditItemModal>
+
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmDeleteAction"
                        :header="'Confirm Action'"
                        :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
@@ -218,6 +231,8 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
 import { XCircleIcon } from "@heroicons/vue/24/outline";
+import UpdateRingotelApiTokenForm from "./components/forms/UpdateRingotelApiTokenForm.vue";
+import UpdatePolycomApiTokenForm from "./components/forms/UpdatePolycomApiTokenForm.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -236,6 +251,7 @@ const activateFormSubmitting = ref(null);
 const activationActiveTab = ref('organization');
 const updateFormSubmitting = ref(null);
 const pairZtpOrgSubmitting = ref(null);
+const updateApiTokenFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const showDeactivateSpinner = ref(null);
 const showConnectSpinner = ref(null);
@@ -340,6 +356,25 @@ const handleUpdateRequest = (form) => {
             handleClearSelection();
         }).catch((error) => {
         updateFormSubmitting.value = false;
+        handleClearSelection();
+        handleFormErrorResponse(error);
+    });
+
+};
+
+const handleUpdateApiTokenRequest = (form) => {
+    updateApiTokenFormSubmitting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.update_api_token, form)
+        .then((response) => {
+            updateApiTokenFormSubmitting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+        updateApiTokenFormSubmitting.value = false;
         handleClearSelection();
         handleFormErrorResponse(error);
     });
@@ -473,7 +508,6 @@ const renderRequestedPage = (url) => {
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-console.log('asdasdasd');
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             loadingModal.value = false;
@@ -520,7 +554,7 @@ const getApiToken = () => {
 
 
 const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
+    if (error.request?.status === 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
     } else if (error.response) {
         // The request was made and the server responded with a status code

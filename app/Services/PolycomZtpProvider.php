@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\DTO\PolycomOrganizationDTO;
 use App\DTO\RingotelOrganizationDTO;
 use App\Models\DefaultSettings;
 use App\Models\Devices;
 use App\Services\Exceptions\ZtpProviderException;
 use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 
 class PolycomZtpProvider implements ZtpProviderInterface
@@ -182,10 +184,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     /**
      * Retrieve a list of organizations.
      *
-     * @return array The list of organizations.
+     * @return Collection The list of organizations.
      * @throws \Exception If the API request fails.
      */
-    public function getOrganisations(): array
+    public function getOrganisations(): Collection
     {
         $this->ensureApiTokenExists();
 
@@ -196,7 +198,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 throw new \Exception("Unable to retrieve organizations: ".json_encode($error));
             });
 
-        return $this->handleResponse($response)['results'];
+        $response = $this->handleResponse($response);
+
+        return collect($response['results'])->map(function ($item) {
+            return PolycomOrganizationDTO::fromArray($item);
+        });
     }
 
     /**
