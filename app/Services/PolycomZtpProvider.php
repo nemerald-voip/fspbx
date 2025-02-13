@@ -16,8 +16,8 @@ class PolycomZtpProvider implements ZtpProviderInterface
     protected int $timeout = 30;
 
     /**
-     * ZTPApiService constructor.
-     * Retrieves the API key from the configuration and sets the base URL.
+     * Constructor for PolycomZtpProvider.
+     * Initializes necessary service objects or parameters.
      */
     public function __construct()
     {
@@ -25,9 +25,9 @@ class PolycomZtpProvider implements ZtpProviderInterface
     }
 
     /**
-     * Retrieve the configuration value for Polycom settings with fallback.
+     * Retrieve the Polycom API token from the database or configuration.
      *
-     * @return string
+     * @return string The API token.
      */
     public function getApiToken(): string
     {
@@ -47,10 +47,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
     }
 
     /**
-     * Ensure that the API token exists before making API calls.
+     * Ensure an API token exists before making API requests.
      *
-     * @throws \Exception
-     * @return string
+     * @return string The validated API token.
+     * @throws \Exception If the API token is missing.
      */
     protected function ensureApiTokenExists(): string
     {
@@ -63,28 +63,33 @@ class PolycomZtpProvider implements ZtpProviderInterface
         return $token;
     }
 
+    /**
+     * Get the provider name.
+     *
+     * @return string The provider name.
+     */
     public function getProviderName(): string
     {
         return $this->providerName;
     }
 
     /**
-     * Retrieve a list of devices with a configurable limit.
+     * Retrieve a list of devices with optional filtering by addresses.
      *
-     * @param  array  $addresses
-     * @param  int  $limit
-     * @return array
-     * @throws \Exception
+     * @param  array  $addresses  Optional array of device IDs for filtering.
+     * @return array The list of devices.
+     * @throws \Exception If the API request fails.
      */
-    public function getDevices(array $addresses = [], int $limit = 50): array
+    public function getDevices(array $addresses = []): array
     {
-        $url = "$this->baseUrl/devices?limit=$limit";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
-
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->get($url);
+        $response = Http::polycom()
+            ->timeout($this->timeout)
+            ->get('/devices')
+            ->throw(function ($error) {
+                throw new \Exception("Unable to retrieve devices: ".json_encode($error));
+            });
 
         $allDevices = $this->handleResponse($response)['results'];
 
@@ -107,48 +112,48 @@ class PolycomZtpProvider implements ZtpProviderInterface
     }
 
     /**
-     * Get a device with the given ID..
+     * Retrieve a single device by its ID.
      *
-     * @param  string  $deviceId
-     * @return array
-     * @throws \Exception
+     * @param  string  $id  The device ID.
+     * @return array The device information.
+     * @throws \Exception If the API request fails.
      */
-    public function getDevice(string $deviceId): array
+    public function getDevice(string $id): array
     {
-        $url = "$this->baseUrl/devices/$deviceId";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
-
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->get($url);
+        $response = Http::polycom()
+            ->timeout($this->timeout)
+            ->get('/devices/'.$id)
+            ->throw(function ($error) {
+                throw new \Exception("Unable to retrieve devices: ".json_encode($error));
+            });
 
         return $this->handleResponse($response);
     }
 
     /**
-     * Create a new device with the given ID and organisation.
+     * Create a new device with the given ID and organization ID.
      *
-     * @param  string  $deviceId
-     * @param  string  $orgId
-     * @return array
-     * @throws \Exception
+     * @param  string  $id  The device ID.
+     * @param  string  $orgId  The organization ID.
+     * @return array The response from the API.
+     * @throws \Exception If the API request fails.
      */
-    public function createDevice(string $deviceId, string $orgId): array
+    public function createDevice(string $id, string $orgId): array
     {
-        $url = "$this->baseUrl/devices";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
-
-        $payload = [
-            'id' => $deviceId,
-            'profile' => $orgId
-        ];
-
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-            'Content-Type' => 'application/json',
-        ])->post($url, $payload);
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode([
+                'id' => $id,
+                'profile' => $orgId
+            ]), 'application/json')
+            ->post('/devices')
+            ->throw(function ($error) {
+                throw new \Exception("Unable to create device: ".json_encode($error));
+            });
 
         return $this->handleResponse($response);
     }
@@ -156,27 +161,29 @@ class PolycomZtpProvider implements ZtpProviderInterface
     /**
      * Delete a device by its ID.
      *
-     * @param  string  $deviceId
-     * @return array
-     * @throws \Exception
+     * @param  string  $id  The device ID.
+     * @return array The response from the API.
+     * @throws \Exception If the API request fails.
      */
-    public function deleteDevice(string $deviceId): array
+    public function deleteDevice(string $id): array
     {
-        $url = "$this->baseUrl/devices/$deviceId";
+        $this->ensureApiTokenExists();
 
-        $token = $this->ensureApiTokenExists();
-
-        $response = Http::withHeaders([
-            'API-KEY' => $token,
-        ])->delete($url);
+        $response = Http::polycom()
+            ->timeout($this->timeout)
+            ->delete('/devices/'.$id)
+            ->throw(function ($error) {
+                throw new \Exception("Unable to delete device: ".json_encode($error));
+            });
 
         return $this->handleResponse($response);
     }
 
     /**
-     * Retrieve a list of profiles with a configurable limit.
+     * Retrieve a list of organizations.
      *
-     * @throws \Exception
+     * @return array The list of organizations.
+     * @throws \Exception If the API request fails.
      */
     public function getOrganisations(): array
     {
@@ -186,87 +193,116 @@ class PolycomZtpProvider implements ZtpProviderInterface
             ->timeout($this->timeout)
             ->get('/profiles')
             ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve organizations");
+                throw new \Exception("Unable to retrieve organizations: ".json_encode($error));
             });
 
         return $this->handleResponse($response)['results'];
     }
 
+    /**
+     * Create an organization with the given parameters.
+     *
+     * @param  array  $params  The organization parameters.
+     * @return string The result of the operation.
+     * @throws ZtpProviderException If the API request fails.
+     */
     public function createOrganisation(array $params): string
     {
         $this->ensureApiTokenExists();
-        // Prepare the payload
-        $data = [
-            'method' => 'createOrganization',
-            'params' => [
-                'name' => $params['organization_name'],
-                'region' => $params['region'],
-                'domain' => $params['organization_domain'],
-                'packageid' => (int) $params['package'],
-                'params' => [
-                    'hidePassInEmail' => $params['dont_send_user_credentials'],
+
+        $payload = [
+            "name" => $params['name'],
+            "enabled" => $params['enabled'],
+            "template" => [
+                "software" => [
+                    "version" => $params['software_version'],
+                ],
+                "provisioning" => [
+                    "server" => [
+                        "address" => $params['server_address'],
+                        "username" => $params['server_username'],
+                        "password" => $params['server_password'],
+                    ],
+                    "polling" => $params['polling'],
+                    "quickSetup" => $params['quick_setup'],
+                ],
+                "dhcp" => [
+                    "bootServerOption" => $params['dhcp_boot_server_option'],
+                    "option60Type" => $params['dhcp_option_60_type'],
+                ],
+                "localization" => [
+                    "language" => $params['language'],
                 ],
             ],
         ];
 
         $response = Http::ringotel()
             ->timeout($this->timeout)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
+            ->withBody(json_encode($payload), 'application/json')
+            ->post('/profiles')
             ->throw(function () {
                 throw new \Exception("Unable to activate organization");
-            })
-            ->json();
+            });
 
-        if (isset($response['error'])) {
-            throw new \Exception($response['error']['message']);
-        }
-
-        if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
-        }
-
-        return $response['result'];
+        return $this->handleResponse($response)['result'];
     }
 
-    public function updateOrganisation(array $params): string
+    /**
+     * Update an existing organization with the given ID and parameters.
+     *
+     * @param  string  $id  The organization ID.
+     * @param  array  $params  The parameters to update.
+     * @return string The result of the operation.
+     * @throws \Exception If the API request fails.
+     */
+    public function updateOrganisation(string $id, array $params): string
     {
         $this->ensureApiTokenExists();
 
-        // Prepare the payload
-        $data = [
-            'method' => 'updateOrganization',
-            'params' => [
-                'id' => $params['organization_id'],
-                'name' => $params['organization_name'],
-                'packageid' => (int) $params['package'],
-                'params' => [
-                    'hidePassInEmail' => $params['dont_send_user_credentials'],
+        $payload = [
+            "name" => $params['name'],
+            "enabled" => $params['enabled'],
+            "template" => [
+                "software" => [
+                    "version" => $params['software_version'],
+                ],
+                "provisioning" => [
+                    "server" => [
+                        "address" => $params['server_address'],
+                        "username" => $params['server_username'],
+                        "password" => $params['server_password'],
+                    ],
+                    "polling" => $params['polling'],
+                    "quickSetup" => $params['quick_setup'],
+                ],
+                "dhcp" => [
+                    "bootServerOption" => $params['dhcp_boot_server_option'],
+                    "option60Type" => $params['dhcp_option_60_type'],
+                ],
+                "localization" => [
+                    "language" => $params['language'],
                 ],
             ],
         ];
 
         $response = Http::ringotel()
             ->timeout($this->timeout)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
+            ->withBody(json_encode($payload), 'application/json')
+            ->put('/profiles/'.$id)
             ->throw(function () {
                 throw new \Exception("Unable to update organization");
-            })
-            ->json();
+            });
 
-        if (isset($response['error'])) {
-            throw new \Exception($response['error']['message']);
-        }
-
-        // Handle empty response
-        if (!$response) {
-            return ['success' => true, 'message' => 'Organization updated successfully'];
-        }
-
-        return $response['result'];
+        return $this->handleResponse($response)['result'];
     }
 
+    /**
+     * Retrieve details of a specific organization by ID.
+     *
+     * @param  string  $id  The ID of the organization to retrieve.
+     * @return string The organization information as a DTO.
+     * @throws \Exception If the API request fails or returns an error.
+     */
     public function getOrganisation($id): string
     {
         $this->ensureApiTokenExists();
@@ -300,46 +336,33 @@ class PolycomZtpProvider implements ZtpProviderInterface
         return RingotelOrganizationDTO::fromArray($response['result']);
     }
 
+    /**
+     * Delete an organization by its ID.
+     *
+     * @param  string  $id  The organization ID.
+     * @return string The result of the operation.
+     * @throws ZtpProviderException|\Exception If the API request fails.
+     */
     public function deleteOrganisation($id): string
     {
         $this->ensureApiTokenExists();
-        // Prepare the payload
-        $data = [
-            'method' => 'deleteOrganization',
-            'params' => [
-                'id' => $id,
-            ],
-        ];
 
-        // Send the request
-        $response = Http::ringotel() // Ensure `ringotel` is configured in the HTTP client
-        ->timeout($this->timeout)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response) {
-                throw new \Exception("Failed to delete organization: {$response->body()}");
-            })
-            ->json();
+        $response = Http::polycom()
+            ->timeout($this->timeout)
+            ->delete('/profiles/'.$id)
+            ->throw(function ($error) {
+                throw new \Exception("Unable to delete organization: ".json_encode($error));
+            });
 
-        // Check for errors in the response
-        if (isset($response['error'])) {
-            throw new \Exception($response['error']['message']);
-        }
-
-        // Handle empty response
-        if (!$response) {
-            return ['success' => true, 'message' => 'Organization and its connections were successfully deleted.'];
-        }
-
-        return $response['result'];
+        return $this->handleResponse($response)['result'];
     }
 
     /**
-     * Handle the API response, checking for different types of errors and successes.
+     * Handle the API responses, checking for errors or returning data.
      *
-     * @param  Response  $response
-     * @return array
-     * @throws ZtpProviderException
+     * @param  Response  $response  The HTTP response.
+     * @return array The decoded JSON response.
+     * @throws ZtpProviderException If an error occurs during processing.
      */
     private function handleResponse(Response $response): array
     {
