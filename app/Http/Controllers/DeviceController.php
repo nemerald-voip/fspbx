@@ -72,9 +72,9 @@ class DeviceController extends Controller
                     'bulk_delete' => route('devices.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
                     'restart' => route('devices.restart'),
-                    'cloud_provisioning_status' => route('cloudProvisioning.status'),
-                    'cloud_provisioning_register' => route('cloudProvisioning.register'),
-                    'cloud_provisioning_deregister' => route('cloudProvisioning.deregister'),
+                    'cloud_provisioning_status' => route('cloud-provisioning.status'),
+                    'cloud_provisioning_register' => route('cloud-provisioning.register'),
+                    'cloud_provisioning_deregister' => route('cloud-provisioning.deregister'),
                 ]
             ]
         );
