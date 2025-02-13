@@ -607,7 +607,7 @@ class CloudProvisioningController extends Controller
                     // Initializing provider instance
                     /** @var ZtpProviderInterface $providerInstance */
                     $providerInstance = new $providerClass();
-                    $cloudDevicesData = $providerInstance->getOrganisations($ids);
+                    $cloudDevicesData = $providerInstance->getOrganisations();
 
                     foreach ($items as $item) {
                         $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
