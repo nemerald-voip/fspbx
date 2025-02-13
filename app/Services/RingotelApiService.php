@@ -769,6 +769,7 @@ class RingotelApiService
         // Loop through organizations and get users
         foreach ($organizations as $organization) {
             $orgId = $organization->id;
+            logger($organization->name);
             $users = $this->getUsersByOrgId($orgId);
 
             foreach ($users as $user) {

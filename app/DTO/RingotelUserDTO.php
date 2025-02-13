@@ -27,7 +27,7 @@ class RingotelUserDTO
         $this->stime = $data['stime'];
         $this->devices = $data['devs'] ?? [];
         $this->domain = $data['domain'];
-        $this->name = $data['name'];
+        $this->name = $data['name'] ?? "";
         $this->authName = $data['authname'] ?? [];
         $this->id = $data['id'];
         $this->state = $data['state'];

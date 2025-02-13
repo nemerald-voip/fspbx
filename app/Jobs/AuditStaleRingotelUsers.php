@@ -24,7 +24,7 @@ class AuditStaleRingotelUsers implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 10;
+    public $tries = 2;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
@@ -108,6 +108,7 @@ class AuditStaleRingotelUsers implements ShouldQueue
                     ExportReport::dispatch($params, $staleUsers);
                 }
             } catch (\Exception $e) {
+                logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return $this->release(30);
             }
         }, function () {
