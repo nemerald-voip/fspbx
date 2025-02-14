@@ -1260,7 +1260,7 @@
                                                                 <div class="mb-3 text-sm-end">
                                                                     <input type="hidden" name="exclude_from_ringotel_stale_users" value="false">
                                                                     <input type="checkbox" id="exclude_from_ringotel_stale_users" name="exclude_from_ringotel_stale_users"
-                                                                    @if ($extension->mobile_app->exclude_from_stale_report) checked @endif
+                                                                    @if ($extension->mobile_app && $extension->mobile_app->exclude_from_stale_report) checked @endif
                                                                     data-switch="primary"/>
                                                                     <label for="exclude_from_ringotel_stale_users" data-on-label="On" data-off-label="Off"></label>
                                                                     <div class="text-danger exclude_from_ringotel_stale_users_err error_message"></div>
