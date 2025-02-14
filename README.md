@@ -100,7 +100,7 @@ Add your mail server in .env file
    
 8. **Add recommended default settings**
    
-   FS PBX has new default settings that we recommend having. Install them by running this command
+   FS PBX includes new default settings that we highly recommend enabling. To install them, run the following command:
    
    ```bash
    php artisan db:seed RecommendedSettingsSeeder
