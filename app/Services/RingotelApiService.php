@@ -767,9 +767,10 @@ class RingotelApiService
         // Array to hold stale users
         $staleUsers = [];
 
-        $local_mobile_app_users = MobileAppUsers::select('user_id')
-            ->where('exclude_from_stale_report', true)
-            ->get();
+        // Fetch all MobileAppUsers and store them in an associative array
+        $local_mobile_app_users = MobileAppUsers::select('user_id', 'exclude_from_stale_report')->get()
+            ->keyBy('user_id'); // Key by user_id for quick lookup
+
 
         // Loop through organizations and get users
         foreach ($organizations as $organization) {
@@ -780,10 +781,16 @@ class RingotelApiService
                 // Ignore unactivated users (-1) and park extensions (-2)
                 if ($user->status != -1 && $user->status != -2) {
 
-                    $excludedUser = $local_mobile_app_users->firstWhere('user_id', $user->id);
-                    if ($excludedUser) {
+                    // Ensure the user exists in MobileAppUsers
+                    if (!isset($local_mobile_app_users[$user->id])) {
+                        continue; // Skip users not found in MobileAppUsers
+                    }
+
+                    // Skip users that should be excluded from the stale report
+                    if ($local_mobile_app_users[$user->id]->exclude_from_stale_report) {
                         continue;
                     }
+
                     $history = $this->getUserRegistrationsHistory($orgId, $user->id, $beginTimestamp, $endTimestamp);
 
                     // If history is empty, user is stale
