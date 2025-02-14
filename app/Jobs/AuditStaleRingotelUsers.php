@@ -24,7 +24,7 @@ class AuditStaleRingotelUsers implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 10;
+    public $tries = 2;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
@@ -105,9 +105,10 @@ class AuditStaleRingotelUsers implements ShouldQueue
                 // Send email notification if enabled
                 if (!empty($staleUsers) && $notifyEmail) {
                     $params['user_email'] = $notifyEmail;
-                    ExportReport::dispatch($params, $staleUsers);
+                    // ExportReport::dispatch($params, $staleUsers);
                 }
             } catch (\Exception $e) {
+                logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return $this->release(30);
             }
         }, function () {

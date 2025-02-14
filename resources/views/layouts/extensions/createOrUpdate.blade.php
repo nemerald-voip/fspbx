@@ -1244,6 +1244,30 @@
                                                             </div>
                                                         </div> <!-- end row -->
                                                         @endif
+
+                                                        @if ($extension->exists)
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Exclude this user from the App Stale Users report</label>
+                                                                    <a href="javascript://"  data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                                                        data-bs-content="If enabled, this user will not appear in the App Stale Users report, preventing them from being flagged as inactive.">
+                                                                        <i class="uil uil-info-circle"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="mb-3 text-sm-end">
+                                                                    <input type="hidden" name="exclude_from_ringotel_stale_users" value="false">
+                                                                    <input type="checkbox" id="exclude_from_ringotel_stale_users" name="exclude_from_ringotel_stale_users"
+                                                                    @if ($extension->mobile_app->exclude_from_stale_report) checked @endif
+                                                                    data-switch="primary"/>
+                                                                    <label for="exclude_from_ringotel_stale_users" data-on-label="On" data-off-label="Off"></label>
+                                                                    <div class="text-danger exclude_from_ringotel_stale_users_err error_message"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div> <!-- end row -->
+                                                        @endif
                                                     @endif
 
                                                 </div>

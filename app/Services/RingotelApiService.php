@@ -9,6 +9,7 @@ use App\Models\DefaultSettings;
 use App\DTO\RingotelConnectionDTO;
 use Illuminate\Support\Facades\DB;
 use App\DTO\RingotelOrganizationDTO;
+use App\Models\MobileAppUsers;
 use Illuminate\Support\Facades\Http;
 
 class RingotelApiService
@@ -766,6 +767,10 @@ class RingotelApiService
         // Array to hold stale users
         $staleUsers = [];
 
+        $local_mobile_app_users = MobileAppUsers::select('user_id')
+            ->where('exclude_from_stale_report', true)
+            ->get();
+
         // Loop through organizations and get users
         foreach ($organizations as $organization) {
             $orgId = $organization->id;
@@ -774,6 +779,11 @@ class RingotelApiService
             foreach ($users as $user) {
                 // Ignore unactivated users (-1) and park extensions (-2)
                 if ($user->status != -1 && $user->status != -2) {
+
+                    $excludedUser = $local_mobile_app_users->firstWhere('user_id', $user->id);
+                    if ($excludedUser) {
+                        continue;
+                    }
                     $history = $this->getUserRegistrationsHistory($orgId, $user->id, $beginTimestamp, $endTimestamp);
 
                     // If history is empty, user is stale
