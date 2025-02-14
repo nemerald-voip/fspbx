@@ -105,7 +105,7 @@ class AuditStaleRingotelUsers implements ShouldQueue
                 // Send email notification if enabled
                 if (!empty($staleUsers) && $notifyEmail) {
                     $params['user_email'] = $notifyEmail;
-                    ExportReport::dispatch($params, $staleUsers);
+                    // ExportReport::dispatch($params, $staleUsers);
                 }
             } catch (\Exception $e) {
                 logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

@@ -17,6 +17,7 @@ class RingotelUserDTO
     public $state;
     public $status;
     public $username;
+    public $email;
 
     public function __construct(array $data)
     {
@@ -33,6 +34,9 @@ class RingotelUserDTO
         $this->state = $data['state'];
         $this->status = $data['status'];
         $this->username = $data['username'];
+
+        // Check if 'info' exists and extract 'email' if present
+        $this->email = $data['info']['email'] ?? null;
     }
 
     public static function fromArray(array $data)
