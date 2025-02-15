@@ -31,6 +31,7 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\RegistrationsController;
+use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\SansayActiveCallsController;
@@ -181,7 +182,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/virtual-receptionists/key/delete', [VirtualReceptionistController::class, 'destroyKey'])->name('virtual-receptionist.key.destroy');
 
     //Settings
-    Route::resource('settings', SettingsController::class);
+    Route::resource('account-settings', AccountSettingsController::class);
 
     // Greetings
     Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');

@@ -97,6 +97,8 @@ class HandleInertiaRequests extends Middleware
         $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
         $permissions['virtual_receptionist_destroy'] = userCheckPermission('ivr_menu_delete');
 
+        $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
+
         // logger($permissions);
         return $permissions;
     }

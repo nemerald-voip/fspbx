@@ -93,9 +93,9 @@
                                 </div>
                             </dl>
 
-                            <div class="mt-6 border-t border-gray-900/5 px-6 py-6">
+                            <div v-if="page.props.auth.can.account_settings_index" class="mt-6 border-t border-gray-900/5 px-6 py-6">
 
-                                <a type="button" :href="routes.settings_page"
+                                <a v-if="page.props.auth.can.account_settings_index" type="button" :href="routes.account_settings_page"
                                     class="inline-flex justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                     <CogIcon class="-ml-0.5 size-5 text-gray-400" aria-hidden="true" />
                                     Settings
@@ -479,6 +479,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { router } from "@inertiajs/vue3";
+import { usePage } from '@inertiajs/vue3'
 import MainLayout from '../Layouts/MainLayout.vue'
 import DashboardTile from './components/general/DashboardTile.vue'
 import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
@@ -508,6 +509,7 @@ const props = defineProps({
 
 })
 
+const page = usePage()
 const open = ref(false);
 
 const showTopBanner = ref(Boolean(props.company_data.billing_suspension));
@@ -516,8 +518,6 @@ const topBannerText = ref('Your account has been suspended. Reactivation require
 onMounted(() => {
     //request list of entities
     getCounts();
-    console.log('Settings Route:', props.routes.settings_page);
-
 })
 
 const getCounts = () => {

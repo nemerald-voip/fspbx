@@ -55,7 +55,7 @@ class DashboardController extends Controller
                     $this->getCounts()
                 ),
                 'routes' => [
-                    'settings_page' => route('settings.index'),
+                    'account_settings_page' => route('account-settings.index'),
                 ]
             ]
         );
