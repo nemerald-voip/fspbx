@@ -163,23 +163,35 @@ class CloudProvisioningController extends Controller
     public function getItemOptions(/*RingotelApiService $ringotelApiService*/)
     {
         //$this->ztpApiService = $ringotelApiService;
-        logger('test');
+        //logger('test');
         try {
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
             $navigation = [
                 [
-                    'name' => 'Organization',
+                    'name' => 'General',
                     'icon' => 'BuildingOfficeIcon',
-                    'slug' => 'organization',
+                    'slug' => 'general',
                 ],
                 [
-                    'name' => 'Connections',
+                    'name' => 'Provisioning',
                     'icon' => 'SyncAltIcon',
-                    'slug' => 'connections',
+                    'slug' => 'provisioning',
                 ],
             ];
 
+            $options_60_type = [
+                ['value' => 'ASCII', 'name' => 'ASCII'],
+                ['value' => 'BINARY', 'name' => 'BINARY'],
+            ];
+
+            $boot_server_options = [
+                ['value' => 'OPTION66', 'name' => 'OPTION66'],
+                ['value' => 'CUSTOM', 'name' => 'CUSTOM'],
+                ['value' => 'STATIC', 'name' => 'STATIC'],
+                ['value' => 'CUSTOM_OPTION66', 'name' => 'CUSTOM_OPTION66'],
+            ];
+/*
             $conn_navigation = [
                 [
                     'name' => 'Settings',
@@ -227,15 +239,15 @@ class CloudProvisioningController extends Controller
                 //     'slug' => 'web_pages',
                 // ],
             ];
-
-
+*/
+/*
             $routes = [
                 'create_connection' => route('apps.connection.create'),
                 'update_connection' => route('apps.connection.update'),
                 'delete_connection' => route('apps.connection.destroy'),
                 'sync_users' => route('apps.users.sync'),
             ];
-
+*/
             /*$regions = $this->getRegions();
 
             $packages = [
@@ -296,7 +308,7 @@ class CloudProvisioningController extends Controller
                     ];
                 }*/
 
-                $routes = array_merge($routes, []);
+                //$routes = array_merge($routes, []);
             }
 
             $permissions = $this->getUserPermissions();
@@ -322,24 +334,22 @@ class CloudProvisioningController extends Controller
             }
 
             // Construct the itemOptions object
-            $itemOptions = [
+            return [
                 'navigation' => $navigation,
-                'conn_navigation' => $conn_navigation,
+                //'conn_navigation' => $conn_navigation,
                 'model' => $model ?? null,
                 'organization' => $organization ?? null,
                 'orgId' => $organization->id ?? null,
                 //'regions' => $regions,
-                //'packages' => $packages,
-                //'protocols' => $protocols,
+                'options_60_type' => $options_60_type,
+                'boot_server_options' => $boot_server_options,
                 'permissions' => $permissions,
-                'routes' => $routes,
+                //'routes' => $routes,
                 'settings' => $appSettings,
-                'connections' => $connections,
+                //'connections' => $connections,
 
                 // Define options for other fields as needed
             ];
-
-            return $itemOptions;
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());

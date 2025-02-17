@@ -19,18 +19,14 @@
 
         <div class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
             <form @submit.prevent="submitForm">
-                <div v-if="activeTab === 'organization'">
+                <div v-if="activeTab === 'general'">
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-base font-semibold leading-6 text-gray-900">Organization Details</h3>
-
-                                <!-- <Toggle label="Status" v-model="" /> -->
-
-                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
                             </div>
 
-                            <div class="grid grid-cols-6 gap-6">
+                            <div class="grid grid-cols-1 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
                                     <LabelInputRequired target="organization_name" label="Organization Name"
                                         class="truncate" />
@@ -40,54 +36,6 @@
                                         {{ errors.organization_name[0] }}
                                     </div>
                                 </div>
-
-                                <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="organization_domain" label="Unique Organization Domain"
-                                        class="truncate" />
-                                    <InputField v-model="form.organization_domain" type="text" name="organization_domain"
-                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain" />
-                                    <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
-                                        {{ errors.organization_domain[0] }}
-                                    </div>
-                                </div>
-
-                                <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired label="Region" class="truncate mb-1" />
-
-                                    <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'"
-                                        :error="errors?.region && errors.region.length > 0" :selectedItem="form.region"
-                                        @update:model-value="handleUpdateRegionField" />
-                                    <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
-                                        {{ errors.region[0] }}
-                                    </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
-                                        location. You won't be able to change it later.</p>
-
-                                </div>
-
-                                <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired label="Package" class="truncate mb-1" />
-
-                                    <ComboBox :options="options.packages" :search="true" :placeholder="'Select package'"
-                                        :error="errors?.package && errors.package.length > 0" :selectedItem="form.package"
-                                        @update:model-value="handleUpdatePackageField" />
-                                    <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
-                                        {{ errors.package[0] }}
-                                    </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available features.</p>
-
-                                </div>
-
-                                <div class="divide-y divide-gray-200 col-span-6">
-
-                                    <Toggle label="Secure User Credentials"
-                                        description="When enabled, users will receive a one-time link to access their app password instead of plain text."
-                                        v-model="form.dont_send_user_credentials" customClass="py-4" />
-
-                                </div>
-
-
-
                             </div>
 
                         </div>
@@ -102,43 +50,102 @@
                         </div>
                     </div>
                 </div>
-            </form>
 
-            <div v-if="activeTab === 'connections'" action="#" method="POST">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <!-- <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
-                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
-                                Select a routing option below to fit your business needs.</p>
-                        </div> -->
+                <div v-if="activeTab === 'provisioning'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                            <div class="r">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure a provisioning server.</p>
+                            </div>
 
-                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                            <div class="sm:col-span-full space-y-3">
-                                <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
-                                    :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
-                                    @delete-connection="handleDeleteConnectionRequest"
-                                    @edit-connection="handleEditConnection"
-                                    :isDeleting="showConnectionDeletingStatus" />
+                            <div class="grid grid-cols-1 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputRequired target="version" label="Address"
+                                                        class="truncate" />
+                                    <InputField v-model="form.provisioning_address" type="text" name="provisioning_address"
+                                                id="provisioning_address" class="mt-2" :error="!!errors?.provisioning_address" />
+                                    <div v-if="errors?.provisioning_address" class="mt-2 text-xs text-red-600">
+                                        {{ errors.provisioning_address[0] }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-3 sm:col-span-3">
+                                    <LabelInputRequired target="version" label="Username"
+                                                        class="truncate" />
+                                    <InputField v-model="form.provisioning_username" type="text" name="provisioning_username"
+                                                id="provisioning_username" class="mt-2" :error="!!errors?.provisioning_username" />
+                                    <div v-if="errors?.provisioning_username" class="mt-2 text-xs text-red-600">
+                                        {{ errors.provisioning_username[0] }}
+                                    </div>
+                                </div>
+                                <div class="col-span-3 sm:col-span-3">
+                                    <LabelInputRequired target="version" label="Password"
+                                                        class="truncate" />
+                                    <InputField v-model="form.provisioning_password" type="text" name="provisioning_password"
+                                                id="provisioning_password" class="mt-2" :error="!!errors?.provisioning_password" />
+                                    <div v-if="errors?.provisioning_password" class="mt-2 text-xs text-red-600">
+                                        {{ errors.provisioning_password[0] }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">DHCP</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure DHCP options to determine boot behavior.</p>
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional label="Boot Server Option" class="truncate mb-1" />
+                                <ComboBox :options="options.boot_server_options" :search="true" :placeholder="'Select'"
+                                          :error="errors?.boot_server_option && errors.boot_server_option.length > 0" :selectedItem="form.boot_server_option" :allowEmpty="true"
+                                          @update:model-value="handleUpdateBootServerOptionField" />
+                                <div v-if="errors?.boot_server_option" class="mt-2 text-xs text-red-600">
+                                    {{ errors.boot_server_option[0] }}
+                                </div>
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional label="Option 60 Type" class="truncate mb-1" />
+                                <ComboBox :options="options.options_60_type" :search="true" :placeholder="'Select'"
+                                          :error="errors?.option_60_type && errors.option_60_type.length > 0" :selectedItem="form.option_60_type" :allowEmpty="true"
+                                          @update:model-value="handleUpdateOption60TypeField" />
+                                <div v-if="errors?.option_60_type" class="mt-2 text-xs text-red-600">
+                                    {{ errors.option_60_type[0] }}
+                                </div>
+                            </div>
+
+                            <div class="justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Software</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure the software that will be loaded during provisioning.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <InputField v-model="form.software_version" type="text" name="software_version"
+                                                id="organization_name" class="mt-2" :error="!!errors?.software_version" />
+                                    <div v-if="errors?.software_version" class="mt-2 text-xs text-red-600">
+                                        {{ errors.organization_name[0] }}
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
+                        <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
 
-                        <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
-
-                            <button @click.prevent="handleFinishButtonClick()"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 
-                                disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:text-indigo-500"
-                                :disabled="connections.length == 0">
-                                Finish
+                            <button type="submit"
+                                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                    ref="saveButtonRef" :disabled="isSubmitting">
+                                <Spinner :show="isSubmitting" />
+                                Next
                             </button>
                         </div>
-
-
                     </div>
                 </div>
-            </div>
+            </form>
+
         </div>
 
 
@@ -182,6 +189,8 @@ import RingotelConnections from "../general/RingotelConnections.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.vue";
 import UpdateRingotelConnectionForm from "../forms/UpdateRingotelConnectionForm.vue";
+import {SwitchDescription} from "@headlessui/vue";
+import LabelInputOptional from "../general/LabelInputOptional.vue";
 
 const ringotelConnectionFormSubmiting = ref(null);
 const loadingModal = ref(false);
@@ -205,7 +214,7 @@ watch(
 );
 
 const setActiveTab = (tabSlug) => {
-    // activeTab.value = tabSlug;
+    activeTab.value = tabSlug;
 };
 
 const showConnectionModal = ref(false);
@@ -219,6 +228,7 @@ const iconComponents = {
     'BuildingOfficeIcon': BuildingOfficeIcon,
 };
 
+/*
 const connections = ref([...props.options.connections]);
 
 // Watch for changes in props.options.connections and update the local variable
@@ -228,7 +238,7 @@ watch(
         connections.value = [...newConnections];
     }
 );
-
+*/
 
 const page = usePage();
 
@@ -249,7 +259,7 @@ const submitForm = () => {
 }
 
 const handleFinishButtonClick = () => {
-    emits('cancel'); 
+    emits('cancel');
 }
 
 const handleUpdateRegionField = (selected) => {
