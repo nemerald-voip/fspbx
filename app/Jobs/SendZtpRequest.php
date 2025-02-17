@@ -77,7 +77,7 @@ class SendZtpRequest implements ShouldQueue
 
     private string $provider;
 
-    private ?string $organisationId;
+    private ?string $organizationId;
 
     private bool $forceRemove;
 
@@ -90,7 +90,7 @@ class SendZtpRequest implements ShouldQueue
      * @param  string  $action
      * @param  string  $provider
      * @param  string  $deviceMacAddress
-     * @param  ?string $organisationId
+     * @param  ?string $organizationId
      * @param  bool    $forceRemove
      * @return void
      */
@@ -98,13 +98,13 @@ class SendZtpRequest implements ShouldQueue
         string $action,
         string $provider,
         string $deviceMacAddress,
-        string $organisationId = null,
+        string $organizationId = null,
         bool $forceRemove = false
     ) {
         $this->action = $action;
         $this->provider = $provider;
         $this->deviceMacAddress = $deviceMacAddress;
-        $this->organisationId = $organisationId;
+        $this->organizationId = $organizationId;
         $this->forceRemove = $forceRemove;
     }
 
@@ -173,7 +173,7 @@ class SendZtpRequest implements ShouldQueue
         match ($this->action) {
             self::ACTION_CREATE => $cloudProvider->createDevice(
                 $this->deviceMacAddress,
-                $this->organisationId
+                $this->organizationId
             ),
             self::ACTION_DELETE => $cloudProvider->deleteDevice(
                 $this->deviceMacAddress

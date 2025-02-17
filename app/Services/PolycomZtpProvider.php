@@ -187,7 +187,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return Collection The list of organizations.
      * @throws \Exception If the API request fails.
      */
-    public function getOrganisations(): Collection
+    public function getOrganizations(): Collection
     {
         $this->ensureApiTokenExists();
 
@@ -212,12 +212,12 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The result of the operation.
      * @throws ZtpProviderException If the API request fails.
      */
-    public function createOrganisation(array $params): string
+    public function createOrganization(array $params): string
     {
         $this->ensureApiTokenExists();
 
         $payload = [
-            "name" => $params['name'],
+            "name" => $params['organization_name'],
             "enabled" => $params['enabled'],
             "template" => [
                 "software" => [
@@ -225,19 +225,19 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 ],
                 "provisioning" => [
                     "server" => [
-                        "address" => $params['server_address'],
-                        "username" => $params['server_username'],
-                        "password" => $params['server_password'],
+                        "address" => $params['provisioning_server_address'],
+                        "username" => $params['provisioning_server_username'],
+                        "password" => $params['provisioning_server_password'],
                     ],
-                    "polling" => $params['polling'],
-                    "quickSetup" => $params['quick_setup'],
+                    "polling" => $params['provisioning_polling'],
+                    "quickSetup" => $params['provisioning_quick_setup'],
                 ],
                 "dhcp" => [
                     "bootServerOption" => $params['dhcp_boot_server_option'],
                     "option60Type" => $params['dhcp_option_60_type'],
                 ],
                 "localization" => [
-                    "language" => $params['language'],
+                    "language" => $params['localization_language'],
                 ],
             ],
         ];
@@ -261,7 +261,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The result of the operation.
      * @throws \Exception If the API request fails.
      */
-    public function updateOrganisation(string $id, array $params): string
+    public function updateOrganization(string $id, array $params): string
     {
         $this->ensureApiTokenExists();
 
@@ -309,7 +309,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The organization information as a DTO.
      * @throws \Exception If the API request fails or returns an error.
      */
-    public function getOrganisation($id): string
+    public function getOrganization($id): string
     {
         $this->ensureApiTokenExists();
 
@@ -349,7 +349,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The result of the operation.
      * @throws ZtpProviderException|\Exception If the API request fails.
      */
-    public function deleteOrganisation($id): string
+    public function deleteOrganization($id): string
     {
         $this->ensureApiTokenExists();
 

@@ -110,21 +110,21 @@
 
                             <div class="col-span-6 sm:col-span-3">
                                 <LabelInputOptional label="Boot Server Option" class="truncate mb-1" />
-                                <ComboBox :options="options.boot_server_options" :search="true" :placeholder="'Select'"
-                                          :error="errors?.boot_server_option && errors.boot_server_option.length > 0" :selectedItem="form.boot_server_option" :allowEmpty="true"
+                                <ComboBox :options="options.dhcp_boot_server_option_list" :search="true" :placeholder="'Select'"
+                                          :error="errors?.dhcp_boot_server_option && errors.dhcp_boot_server_option.length > 0" :selectedItem="form.dhcp_boot_server_option" :allowEmpty="true"
                                           @update:model-value="handleUpdateBootServerOptionField" />
-                                <div v-if="errors?.boot_server_option" class="mt-2 text-xs text-red-600">
-                                    {{ errors.boot_server_option[0] }}
+                                <div v-if="errors?.dhcp_boot_server_option" class="mt-2 text-xs text-red-600">
+                                    {{ errors.dhcp_boot_server_option[0] }}
                                 </div>
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
                                 <LabelInputOptional label="Option 60 Type" class="truncate mb-1" />
-                                <ComboBox :options="options.options_60_type" :search="true" :placeholder="'Select'"
-                                          :error="errors?.option_60_type && errors.option_60_type.length > 0" :selectedItem="form.option_60_type" :allowEmpty="true"
+                                <ComboBox :options="options.dhcp_option_60_type_list" :search="true" :placeholder="'Select'"
+                                          :error="errors?.dhcp_option_60_type && errors.dhcp_option_60_type.length > 0" :selectedItem="form.dhcp_option_60_type" :allowEmpty="true"
                                           @update:model-value="handleUpdateOption60TypeField" />
-                                <div v-if="errors?.option_60_type" class="mt-2 text-xs text-red-600">
-                                    {{ errors.option_60_type[0] }}
+                                <div v-if="errors?.dhcp_option_60_type" class="mt-2 text-xs text-red-600">
+                                    {{ errors.dhcp_option_60_type[0] }}
                                 </div>
                             </div>
                             <div class="w-full border-t border-gray-300" />
@@ -226,8 +226,8 @@ const form = reactive({
     provisioning_server_address: '',
     provisioning_server_username: '',
     provisioning_server_password: '',
-    boot_server_option: '',
-    option_60_type: '',
+    dhcp_boot_server_option: '',
+    dhcp_option_60_type: '',
     software_version: '',
     localization_language: '',
     domain_uuid: props.options.model.domain_uuid,
@@ -245,11 +245,11 @@ const handleUpdateLocalizationLanguageField = (selected) => {
 }
 
 const handleUpdateOption60TypeField = (selected) => {
-    form.option_60_type = selected.value;
+    form.dhcp_option_60_type = selected.value;
 }
 
 const handleUpdateBootServerOptionField = (selected) => {
-    form.boot_server_option = selected.value;
+    form.dhcp_boot_server_option = selected.value;
 }
 
 </script>

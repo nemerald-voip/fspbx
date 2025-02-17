@@ -400,9 +400,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
     Route::post('/cloud-provisioning/register', [CloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
     Route::post('/cloud-provisioning/deregister', [CloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');
-    //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
-    //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
-    //Route::post('/cloud-provisioning/devices/organisations', [CloudProvisioningController::class, 'devicesOrganisations'])->name('cloudProvisioning.devices.organisations');
+    //Route::post('/cloud-provisioning/devices/organizations', [CloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    //Route::post('/cloud-provisioning/devices/organizations', [CloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    //Route::post('/cloud-provisioning/devices/organizations', [CloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
 
 
     // Whitelisted Numbers

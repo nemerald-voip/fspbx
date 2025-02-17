@@ -11,9 +11,9 @@ interface ZtpProviderInterface {
     public function getDevice(string $id): array;
     public function createDevice(string $id, string $orgId): array;
     public function deleteDevice(string $id): array;
-    public function getOrganisations(): Collection;
-    public function createOrganisation(array $params): string;
-    public function getOrganisation(string $id): string;
-    public function updateOrganisation(string $id, array $params): string;
-    public function deleteOrganisation(string $id): string;
+    public function getOrganizations(): Collection;
+    public function createOrganization(array $params): string;
+    public function getOrganization(string $id): string;
+    public function updateOrganization(string $id, array $params): string;
+    public function deleteOrganization(string $id): string;
 }

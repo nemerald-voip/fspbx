@@ -180,12 +180,12 @@ class CloudProvisioningController extends Controller
                 ],
             ];
 
-            $options_60_type = [
+            $DhcpOption60TypeList = [
                 ['value' => 'ASCII', 'name' => 'ASCII'],
                 ['value' => 'BINARY', 'name' => 'BINARY'],
             ];
 
-            $boot_server_options = [
+            $DhcpBootServerOptionList = [
                 ['value' => 'OPTION66', 'name' => 'OPTION66'],
                 ['value' => 'CUSTOM', 'name' => 'CUSTOM'],
                 ['value' => 'STATIC', 'name' => 'STATIC'],
@@ -213,76 +213,6 @@ class CloudProvisioningController extends Controller
                 ['value' => 'Spanish_Spain', 'name' => 'Spanish_Spain'],
                 ['value' => 'Swedish_Sweden', 'name' => 'Swedish_Sweden'],
             ];
-/*
-            $conn_navigation = [
-                [
-                    'name' => 'Settings',
-                    'icon' => 'Cog6ToothIcon',
-                    'slug' => 'settings',
-                ],
-                [
-                    'name' => 'Features',
-                    'icon' => 'AdjustmentsHorizontalIcon',
-                    'slug' => 'features',
-                ],
-                [
-                    'name' => 'PBX Features',
-                    'icon' => 'SettingsApplications',
-                    'slug' => 'pbx_features',
-                ],
-                // [
-                //     'name' => 'SMS Settings',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'sms_settings',
-                // ],
-                // [
-                //     'name' => 'Screen Pop-ups',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'screen_popups',
-                // ],
-                // [
-                //     'name' => 'Visual Call Park',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'screen_popups',
-                // ],
-                // [
-                //     'name' => 'Speed Dial',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'speed_dial',
-                // ],
-                // [
-                //     'name' => 'BLFs',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'blfs',
-                // ],
-                // [
-                //     'name' => 'Web Pages',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'web_pages',
-                // ],
-            ];
-*/
-/*
-            $routes = [
-                'create_connection' => route('apps.connection.create'),
-                'update_connection' => route('apps.connection.update'),
-                'delete_connection' => route('apps.connection.destroy'),
-                'sync_users' => route('apps.users.sync'),
-            ];
-*/
-            /*$regions = $this->getRegions();
-
-            $packages = [
-                ['value' => '1', 'name' => 'Essentials Package'],
-                ['value' => '2', 'name' => 'Pro Package'],
-            ];
-
-            $protocols = [
-                ['value' => 'sip', 'name' => 'UDP'],
-                ['value' => 'sip-tcp', 'name' => 'TCP'],
-                ['value' => 'sips', 'name' => 'TLS'],
-                ['value' => 'DNS-NAPTR', 'name' => 'DNS-NAPTR'],
-            ];*/
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
@@ -363,8 +293,8 @@ class CloudProvisioningController extends Controller
                 'organization' => $organization ?? null,
                 'orgId' => $organization->id ?? null,
                 //'regions' => $regions,
-                'options_60_type' => $options_60_type,
-                'boot_server_options' => $boot_server_options,
+                'dhcp_option_60_type_list' => $DhcpOption60TypeList,
+                'dhcp_boot_server_option_list' => $DhcpBootServerOptionList,
                 'locales' => $locales,
                 'permissions' => $permissions,
                 //'routes' => $routes,
@@ -475,6 +405,10 @@ class CloudProvisioningController extends Controller
 
         $inputs = $request->validated();
 
+        $inputs['enabled'] = true;
+
+        logger($inputs);
+
         try {
             // Send API request to create organization
             $organization = $this->polycomZtpProvider->createOrganization($inputs);
@@ -581,7 +515,7 @@ class CloudProvisioningController extends Controller
         $this->polycomZtpProvider = $polycomZtpProvider;
 
         try {
-            $organizations = $this->polycomZtpProvider->getOrganisations();
+            $organizations = $this->polycomZtpProvider->getOrganizations();
 
             return collect($organizations)->map(function ($org) {
                 return [
@@ -640,7 +574,7 @@ class CloudProvisioningController extends Controller
                     // Initializing provider instance
                     /** @var ZtpProviderInterface $providerInstance */
                     $providerInstance = new $providerClass();
-                    $cloudDevicesData = $providerInstance->getOrganisations();
+                    $cloudDevicesData = $providerInstance->getOrganizations();
 
                     foreach ($items as $item) {
                         $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
@@ -710,7 +644,7 @@ class CloudProvisioningController extends Controller
                         $cloudProvider = $item->getCloudProvider();
                         $cloudProvider->createDevice(
                             $item->device_address,
-                            $item->getCloudProviderOrganisationId()
+                            $item->getCloudProviderOrganizationId()
                         );
                         $provisioned = true;
                         $error = null;

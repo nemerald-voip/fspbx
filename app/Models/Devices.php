@@ -158,7 +158,7 @@ class Devices extends Model
                     SendZtpRequest::ACTION_CREATE,
                     $this->device_vendor,
                     $this->device_address,
-                    $this->getCloudProviderOrganisationId()
+                    $this->getCloudProviderOrganizationId()
                 )->onQueue('ztp');
             }
         } catch (\Exception $exception) {
@@ -228,7 +228,7 @@ class Devices extends Model
     /**
      * @throws \Exception
      */
-    public function getCloudProviderOrganisationId(): string
+    public function getCloudProviderOrganizationId(): string
     {
         $domainSettings = DomainSettings::where('domain_uuid', Session::get('domain_uuid'))
             ->where('domain_setting_category', 'cloud provision');
@@ -240,13 +240,13 @@ class Devices extends Model
         };
 
         if ($domainSettings->count() == 0) {
-            throw new \Exception("Organisation ID not found");
+            throw new \Exception("Organization ID not found");
         }
 
         $orgId = $domainSettings->value('domain_setting_value');
 
         if (empty($orgId)) {
-            throw new \Exception("Organisation ID is empty");
+            throw new \Exception("Organization ID is empty");
         }
 
         return $orgId;
