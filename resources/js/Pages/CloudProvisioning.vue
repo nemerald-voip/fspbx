@@ -153,7 +153,7 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate ZTP Organization'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate Polycom Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
@@ -163,7 +163,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit ZTP Organization'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Polycom Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
@@ -197,9 +197,9 @@
                        :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
                        confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
 
-    <ConfirmationModal :show="showZtpConfirmationModal" @close="cancelZtpAction"
-                       @confirm="confirmZtpAction" :header="'Select a method to set up your Ztp organization.'"
-                       :text="'Would you like to connect to an existing Ztp organization or create a new one?'"
+    <ConfirmationModal :show="showPolycomConfirmationModal" @close="cancelPolycomAction"
+                       @confirm="confirmPolycomAction" :header="'Select a method to set up your Polycom organization.'"
+                       :text="'Would you like to connect to an existing Polycom organization or create a new one?'"
                        confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
                        :loading="showConnectSpinner || showCreateSpinner" :color="'blue'"/>
 
@@ -231,7 +231,6 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";
 import { XCircleIcon } from "@heroicons/vue/24/outline";
-import UpdateRingotelApiTokenForm from "./components/forms/UpdateRingotelApiTokenForm.vue";
 import UpdatePolycomApiTokenForm from "./components/forms/UpdatePolycomApiTokenForm.vue";
 
 const page = usePage()
@@ -246,7 +245,7 @@ const showApiTokenModal = ref(false);
 const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showConfirmationModal = ref(false);
-const showZtpConfirmationModal = ref(false);
+const showPolycomConfirmationModal = ref(false);
 const activateFormSubmitting = ref(null);
 const activationActiveTab = ref('organization');
 const updateFormSubmitting = ref(null);
@@ -256,8 +255,8 @@ const confirmDeleteAction = ref(null);
 const showDeactivateSpinner = ref(null);
 const showConnectSpinner = ref(null);
 const showCreateSpinner = ref(null);
-const confirmZtpAction = ref(null);
-const cancelZtpAction = ref(null);
+const confirmPolycomAction = ref(null);
+const cancelPolycomAction = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -295,14 +294,14 @@ onMounted(() => {
 });
 
 const handleActivateButtonClick = (itemUuid) => {
-    showZtpConfirmationModal.value = true;
-    confirmZtpAction.value = () => executeNewZtpOrgAction(itemUuid);
-    cancelZtpAction.value = () => executeExistingZtpOrgAction(itemUuid);
+    showPolycomConfirmationModal.value = true;
+    confirmPolycomAction.value = () => executeNewZtpOrgAction(itemUuid);
+    cancelPolycomAction.value = () => executeExistingZtpOrgAction(itemUuid);
 };
 
 const executeNewZtpOrgAction = (itemUuid) => {
     activationActiveTab.value = 'organization';
-    showZtpConfirmationModal.value = false;
+    showPolycomConfirmationModal.value = false;
     showActivateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
@@ -310,7 +309,7 @@ const executeNewZtpOrgAction = (itemUuid) => {
 }
 
 const executeExistingZtpOrgAction = (itemUuid) => {
-    showZtpConfirmationModal.value = false;
+    showPolycomConfirmationModal.value = false;
     showPairModal.value = true
     loadingModal.value = true
     selectedAccount.value = itemUuid;
@@ -615,7 +614,7 @@ const handleModalClose = () => {
     showActivateModal.value = false;
     showEditModal.value = false,
         showApiTokenModal.value = false;
-    showZtpConfirmationModal.value = false;
+    showPolycomConfirmationModal.value = false;
     showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
     showPairModal.value = false;
