@@ -21,10 +21,6 @@ class StoreZtpOrganizationRequest extends FormRequest
     {
         return [
             'organization_name' => 'required|string|max:100',
-            'organization_domain' => 'required|string|max:40',
-            'region' => 'required',
-            'package' => 'required',
-            'dont_send_user_credentials' => 'required',
             'domain_uuid' => 'present',
         ];
     }
@@ -32,23 +28,18 @@ class StoreZtpOrganizationRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-
-        // Check if 'region' is missing or empty and set it to null
-        if (!$this->has('region') || $this->input('region') === 'NULL') {
-            $this->merge(['region' => null]);
+        if (!$this->has('boot_server_option') || $this->input('boot_server_option') === 'NULL') {
+            $this->merge(['boot_server_option' => null]);
         }
 
         // Check if 'package' is missing or empty and set it to null
-        if (!$this->has('package') || $this->input('package') === 'NULL') {
-            $this->merge(['package' => null]);
+        if (!$this->has('option_60_type') || $this->input('option_60_type') === 'NULL') {
+            $this->merge(['option_60_type' => null]);
         }
 
-        if ($this->has('dont_send_user_credentials')) {
-            $this->merge([
-                'dont_send_user_credentials' => $this->dont_send_user_credentials ? 'true' : 'false',
-            ]);
+        if (!$this->has('localization_language') || $this->input('localization_language') === 'NULL') {
+            $this->merge(['localization_language' => null]);
         }
-
     }
 
     /**

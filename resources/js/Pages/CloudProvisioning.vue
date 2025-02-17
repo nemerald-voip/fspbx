@@ -156,7 +156,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
+            <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
                                    :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
                                    @error="handleFormErrorResponse" @success="showNotification('success', $event)"
                                    @clear-errors="handleClearErrors" />
@@ -166,7 +166,7 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateZtpOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
+            <UpdatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
                                    @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                                    @refresh-data="getItemOptions" @success="showNotification('success', $event)"
                                    @clear-errors="handleClearErrors" />
@@ -176,7 +176,7 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <PairZtpOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairZtpOrgSubmitting"
+            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairZtpOrgSubmitting"
                                           @submit="handlePairZtpOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                                           @success="showNotification('success', $event)"/>
         </template>
@@ -224,9 +224,9 @@ import { MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateZtpOrgForm from "./components/forms/CreateZtpOrgForm.vue";
-import UpdateZtpOrgForm from "./components/forms/UpdateZtpOrgForm.vue";
-import PairZtpOrganizationForm from "./components/forms/PairZtpOrganizationForm.vue";
+import CreatePolycomOrgForm from "./components/forms/CreatePolycomOrgForm.vue";
+import UpdatePolycomOrgForm from "./components/forms/UpdatePolycomOrgForm.vue";
+import PairPolycomOrganizationForm from "./components/forms/PairPolycomOrganizationForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { PowerIcon } from "@heroicons/vue/24/outline";

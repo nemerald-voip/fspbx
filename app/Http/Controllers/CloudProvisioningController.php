@@ -169,9 +169,9 @@ class CloudProvisioningController extends Controller
 
             $navigation = [
                 [
-                    'name' => 'General',
+                    'name' => 'Organization',
                     'icon' => 'BuildingOfficeIcon',
-                    'slug' => 'general',
+                    'slug' => 'organization',
                 ],
                 [
                     'name' => 'Provisioning',
@@ -190,6 +190,28 @@ class CloudProvisioningController extends Controller
                 ['value' => 'CUSTOM', 'name' => 'CUSTOM'],
                 ['value' => 'STATIC', 'name' => 'STATIC'],
                 ['value' => 'CUSTOM_OPTION66', 'name' => 'CUSTOM_OPTION66'],
+            ];
+
+            $locales = [
+                ['value' => 'Chinese_China', 'name' => 'Chinese_China'],
+                ['value' => 'Chinese_Taiwan', 'name' => 'Chinese_Taiwan'],
+                ['value' => 'Danish_Denmark', 'name' => 'Danish_Denmark'],
+                ['value' => 'Dutch_Netherlands', 'name' => 'Dutch_Netherlands'],
+                ['value' => 'English_Canada', 'name' => 'English_Canada'],
+                ['value' => 'English_United_Kingdom', 'name' => 'English_United_Kingdom'],
+                ['value' => 'English_United_States', 'name' => 'English_United_States'],
+                ['value' => 'French_France', 'name' => 'French_France'],
+                ['value' => 'German_Germany', 'name' => 'German_Germany'],
+                ['value' => 'Italian_Italy', 'name' => 'Italian_Italy'],
+                ['value' => 'Japanese_Japan', 'name' => 'Japanese_Japan'],
+                ['value' => 'Korean_Korea', 'name' => 'Korean_Korea'],
+                ['value' => 'Norwegian_Norway', 'name' => 'Norwegian_Norway'],
+                ['value' => 'Polish_Poland', 'name' => 'Polish_Poland'],
+                ['value' => 'Portuguese_Portugal', 'name' => 'Portuguese_Portugal'],
+                ['value' => 'Russian_Russia', 'name' => 'Russian_Russia'],
+                ['value' => 'Slovenian_Slovenia', 'name' => 'Slovenian_Slovenia'],
+                ['value' => 'Spanish_Spain', 'name' => 'Spanish_Spain'],
+                ['value' => 'Swedish_Sweden', 'name' => 'Swedish_Sweden'],
             ];
 /*
             $conn_navigation = [
@@ -343,6 +365,7 @@ class CloudProvisioningController extends Controller
                 //'regions' => $regions,
                 'options_60_type' => $options_60_type,
                 'boot_server_options' => $boot_server_options,
+                'locales' => $locales,
                 'permissions' => $permissions,
                 //'routes' => $routes,
                 'settings' => $appSettings,
