@@ -1,65 +1,76 @@
 <template>
     <MainLayout>
 
-        <Disclosure as="header" class="bg-white shadow" >
-
-
-            <DisclosurePanel as="nav" class="lg:hidden" aria-label="Global">
-                <div class="space-y-1 px-2 pb-3 pt-2">
-                    <DisclosureButton v-for="item in navigation" :key="item.name" as="a" :href="item.href"
-                        class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50 hover:text-gray-900">
-                        {{ item.name }}</DisclosureButton>
-                </div>
-                <div class="border-t border-gray-200 pb-3 pt-4">
-                    <div class="flex items-center px-4">
-                        <div class="shrink-0">
-                        </div>
-                        <div class="ml-3">
-                            <div class="text-base font-medium text-gray-800">{{ user.name }}</div>
-                            <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
-                        </div>
-                        <button type="button"
-                            class="relative ml-auto shrink-0 rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
-                            <span class="absolute -inset-1.5" />
-                            <span class="sr-only">View notifications</span>
-                            <BellIcon class="size-6" aria-hidden="true" />
-                        </button>
-                    </div>
-                    <div class="mt-3 space-y-1 px-2">
-                        <DisclosureButton v-for="item in userNavigation" :key="item.name" as="a" :href="item.href"
-                            class="block rounded-md px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900">
-                            {{ item.name }}</DisclosureButton>
-                    </div>
-                </div>
-            </DisclosurePanel>
-        </Disclosure>
-
-
-        <main class="mx-auto max-w-7xl pb-10 lg:px-8 lg:py-12">
-            <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-                <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+        <main class="mx-auto max-w-full pb-10 lg:px-8 lg:py-12">
+            <div class=" rounded-lg bg-white px-4 pb-4 pt-10 text-left shadow-xl lg:grid lg:grid-cols-12 lg:gap-x-5">
+                <aside class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
                     <nav class="space-y-1">
-                        <a v-for="item in subNavigation" :key="item.name" :href="item.href"
-                            :class="[item.current ? 'bg-gray-50 text-orange-600 hover:bg-white' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
-                            :aria-current="item.current ? 'page' : undefined">
-                            <component :is="item.icon"
-                                :class="[item.current ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 size-6 shrink-0']"
+                        <a v-for="item in navigation" :key="item.name" href="#"
+                            :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-600 hover:bg-gray-100' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
+                            @click.prevent="setActiveTab(item.slug)"
+                            :aria-current="activeTab === item.slug ? 'page' : undefined">
+                            <component :is="iconComponents[item.icon]"
+                                :class="[activeTab === item.slug ? 'text-indigo-500' : 'text-gray-400  group-hover:text-gray-500', '-ml-1 mr-3 size-6 shrink-0']"
                                 aria-hidden="true" />
                             <span class="truncate">{{ item.name }}</span>
+                            <ExclamationCircleIcon v-if="((errors?.voicemail_id || errors?.voicemail_password) && item.slug === 'settings') ||
+                                (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
+                                class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
                         </a>
                     </nav>
                 </aside>
 
-                <!-- Payment details -->
-                <div class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+                <div v-if="activeTab === 'settings'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
+                    <section aria-labelledby="settings-heading">
+                        <div class="shadow sm:overflow-hidden sm:rounded-md">
+
+                            <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                                <div class="flex justify-between items-center">
+                                    <h3 id="settings-heading" class="text-base font-semibold leading-6 text-gray-900">
+                                        Settings</h3>
+
+                                    <Toggle label="Status" v-model="data.domain_enabled" />
+
+                                    <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-6">
+                                    <div class="col-span-6">
+                                        <LabelInputOptional :target="'domain_description'" :label="'Account Name'" />
+                                        <div class="mt-2">
+                                            <InputField v-model="data.domain_description" type="text"
+                                                id="domain_description" name="domain_description"
+                                                placeholder="Enter caller prefix"
+                                                :error="errors?.domain_description && errors.domain_description.length > 0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-span-6">
+                                        <LabelInputOptional :target="'domain_name'" :label="'Domain'" />
+                                        <div class="mt-2">
+                                            <InputField v-model="data.domain_name" type="text" :disabled="true"
+                                                id="domain_name" name="domain_name" placeholder="Enter caller prefix"
+                                                :error="errors?.domain_name && errors.domain_name.length > 0" />
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div v-if="activeTab === 'billing'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
                     <section aria-labelledby="payment-details-heading">
                         <form action="#" method="POST">
                             <div class="shadow sm:overflow-hidden sm:rounded-md">
-                                <div class="bg-white px-4 py-6 sm:p-6">
+                                <div class="bg-gray-100 px-4 py-6 sm:p-6">
                                     <div>
-                                        <h2 id="payment-details-heading" class="text-lg/6 font-medium text-gray-900">Payment
+                                        <h2 id="payment-details-heading" class="text-lg/6 font-medium text-gray-900">
+                                            Payment
                                             details</h2>
-                                        <p class="mt-1 text-sm text-gray-500">Update your billing information. Please note
+                                        <p class="mt-1 text-sm text-gray-500">Update your billing information. Please
+                                            note
                                             that updating your location could affect your tax rates.</p>
                                     </div>
 
@@ -174,18 +185,7 @@
                                         </label>
                                     </fieldset>
 
-                                    <SwitchGroup as="div" class="flex items-center">
-                                        <Switch v-model="annualBillingEnabled"
-                                            :class="[annualBillingEnabled ? 'bg-orange-500' : 'bg-gray-200', 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2']">
-                                            <span aria-hidden="true"
-                                                :class="[annualBillingEnabled ? 'translate-x-5' : 'translate-x-0', 'inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
-                                        </Switch>
-                                        <SwitchLabel as="span" class="ml-3 text-sm">
-                                            <span class="font-medium text-gray-900">Annual billing</span>
-                                            {{ ' ' }}
-                                            <span class="text-gray-500">(Save 10%)</span>
-                                        </SwitchLabel>
-                                    </SwitchGroup>
+
                                 </div>
                                 <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
                                     <button type="submit"
@@ -199,7 +199,8 @@
                     <section aria-labelledby="billing-history-heading">
                         <div class="bg-white pt-6 shadow sm:overflow-hidden sm:rounded-md">
                             <div class="px-4 sm:px-6">
-                                <h2 id="billing-history-heading" class="text-lg/6 font-medium text-gray-900">Billing history
+                                <h2 id="billing-history-heading" class="text-lg/6 font-medium text-gray-900">Billing
+                                    history
                                 </h2>
                             </div>
                             <div class="mt-6 flex flex-col">
@@ -248,18 +249,21 @@
                                             </table>
                                         </div>
                                     </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-            </div>
-        </div>
-    </main>
+                    </section>
+                </div>
 
-</MainLayout></template>
+
+            </div>
+        </main>
+
+    </MainLayout>
+</template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { router } from "@inertiajs/vue3";
 import { usePage } from '@inertiajs/vue3'
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -274,28 +278,32 @@ import {
 import { TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon, CogIcon } from '@heroicons/vue/24/outline'
 import TopBanner from './components/notifications/TopBanner.vue';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
+import InputField from "@generalComponents/InputField.vue";
+import Toggle from "@generalComponents/Toggle.vue";
 
 
 import {
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  Switch,
-  SwitchGroup,
-  SwitchLabel,
+    Disclosure,
+    DisclosureButton,
+    DisclosurePanel,
+    Menu,
+    MenuButton,
+    MenuItem,
+    MenuItems,
+    Switch,
+    SwitchGroup,
+    SwitchLabel,
 } from '@headlessui/vue'
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon } from '@heroicons/vue/20/solid'
+import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import {
-  Bars3Icon,
-  BellIcon,
-  CreditCardIcon,
-  KeyIcon,
-  SquaresPlusIcon,
-  UserCircleIcon,
+    Bars3Icon,
+    BellIcon,
+    CreditCardIcon,
+    KeyIcon,
+    SquaresPlusIcon,
+    UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
 
@@ -305,81 +313,86 @@ const props = defineProps({
         type: Object,
         default: () => ({}) // Providing an empty object as default
     },
-    company_data: Object,
-    cards: Array,
-    counts: {
-        type: Object,
-        default: () => ({}) // Providing an empty object as default
-    },
+    navigation: Object,
     routes: Object,
+    errors: Object,
 
 })
 
+const settings = computed(() => props.data.settings.map(setting => ({
+    uuid: setting.domain_setting_uuid,
+    subcategory: setting.domain_setting_subcategory,
+    value: setting.domain_setting_value
+})));
+
+
+const getSetting = (subcategory) => {
+    return settings.value.find(setting => setting.subcategory === subcategory) || { uuid: null, value: '' };
+};
+
 const page = usePage()
-const open = ref(false);
-
-
 
 
 const user = {
-  name: 'Lisa Marie',
-  email: 'lisamarie@example.com',
-  imageUrl:
-    'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=80',
+    name: 'Lisa Marie',
+    email: 'lisamarie@example.com',
+    imageUrl:
+        'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=80',
 }
-const navigation = [
-  { name: 'Dashboard', href: '#' },
-  { name: 'Jobs', href: '#' },
-  { name: 'Applicants', href: '#' },
-  { name: 'Company', href: '#' },
-]
+
 const userNavigation = [
-  { name: 'Your Profile', href: '#' },
-  { name: 'Settings', href: '#' },
-  { name: 'Sign out', href: '#' },
+    { name: 'Your Profile', href: '#' },
+    { name: 'Settings', href: '#' },
+    { name: 'Sign out', href: '#' },
 ]
 const subNavigation = [
-  { name: 'Profile', href: '#', icon: UserCircleIcon, current: false },
-  { name: 'Account', href: '#', icon: CogIcon, current: false },
-  { name: 'Password', href: '#', icon: KeyIcon, current: false },
-  { name: 'Notifications', href: '#', icon: BellIcon, current: false },
-  { name: 'Plan & Billing', href: '#', icon: CreditCardIcon, current: true },
-  { name: 'Integrations', href: '#', icon: SquaresPlusIcon, current: false },
+    { name: 'Profile', href: '#', icon: UserCircleIcon, current: false },
+    { name: 'Account', href: '#', icon: CogIcon, current: false },
+    { name: 'Password', href: '#', icon: KeyIcon, current: false },
+    { name: 'Notifications', href: '#', icon: BellIcon, current: false },
+    { name: 'Plan & Billing', href: '#', icon: CreditCardIcon, current: true },
+    { name: 'Integrations', href: '#', icon: SquaresPlusIcon, current: false },
 ]
 const plans = [
-  { name: 'Startup', priceMonthly: '$29', priceYearly: '$290', limit: 'Up to 5 active job postings', selected: true },
-  {
-    name: 'Business',
-    priceMonthly: '$99',
-    priceYearly: '$990',
-    limit: 'Up to 25 active job postings',
-    selected: false,
-  },
-  {
-    name: 'Enterprise',
-    priceMonthly: '$249',
-    priceYearly: '$2490',
-    limit: 'Unlimited active job postings',
-    selected: false,
-  },
+    { name: 'Startup', priceMonthly: '$29', priceYearly: '$290', limit: 'Up to 5 active job postings', selected: true },
+    {
+        name: 'Business',
+        priceMonthly: '$99',
+        priceYearly: '$990',
+        limit: 'Up to 25 active job postings',
+        selected: false,
+    },
+    {
+        name: 'Enterprise',
+        priceMonthly: '$249',
+        priceYearly: '$2490',
+        limit: 'Unlimited active job postings',
+        selected: false,
+    },
 ]
 const payments = [
-  {
-    id: 1,
-    date: '1/1/2020',
-    datetime: '2020-01-01',
-    description: 'Business Plan - Annual Billing',
-    amount: 'CA$109.00',
-    href: '#',
-  },
-  // More payments...
+    {
+        id: 1,
+        date: '1/1/2020',
+        datetime: '2020-01-01',
+        description: 'Business Plan - Annual Billing',
+        amount: 'CA$109.00',
+        href: '#',
+    },
+    // More payments...
 ]
 
 
 
 
 
+const activeTab = ref(props.navigation.find(item => item.slug)?.slug || props.navigation[0].slug);
 
+// Map icon names to their respective components
+const iconComponents = {
+    'Cog6ToothIcon': Cog6ToothIcon,
+    'CreditCardIcon': CreditCardIcon,
+};
 
 onMounted(() => {
     //request list of entities
@@ -408,6 +421,10 @@ const getData = () => {
     });
 
 }
+
+const setActiveTab = (tabSlug) => {
+    activeTab.value = tabSlug;
+};
 
 
 </script>

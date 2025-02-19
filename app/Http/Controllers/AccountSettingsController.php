@@ -6,24 +6,19 @@ use Inertia\Inertia;
 use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Dialplans;
-use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
-use App\Models\DialplanDetails;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
+use App\Models\Domain;
 use Illuminate\Contracts\Foundation\Application;
-use App\Http\Requests\BulkUpdatePhoneNumberRequest;
-use App\Models\DomainSettings;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class AccountSettingsController extends Controller
 {
@@ -36,7 +31,7 @@ class AccountSettingsController extends Controller
 
     public function __construct()
     {
-        $this->model = new DomainSettings();
+        $this->model = new Domain();
     }
 
     /**
@@ -56,6 +51,9 @@ class AccountSettingsController extends Controller
             [
                 'data' => function () {
                     return $this->getData();
+                },
+                'navigation' => function () {
+                    return $this->getNavigation();
                 },
 
                 // 'routes' => [
@@ -195,7 +193,9 @@ class AccountSettingsController extends Controller
 
         $data = $this->builder($this->filters);
 
-        $data = $data->get(); // This will return a collection
+        $data = $data->first(); // This will return a collection
+
+        logger($data);
 
         return $data;
     }
@@ -209,18 +209,43 @@ class AccountSettingsController extends Controller
     {
         $data =  $this->model::query();
 
-        // Directly filter items by the session's domain_uuid
         $domainUuid = Session::get('domain_uuid');
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
 
         $data->select(
-            'domain_setting_uuid',
-            'domain_setting_category',
-            'domain_setting_name',
-            'domain_setting_value',
+            'domain_uuid',
+            'domain_name',
+            'domain_description',
+            'domain_enabled',
         );
 
+        $data->with(['settings' => function ($query) {
+            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value'); 
+        }]);
+
         return $data;
+    }
+
+
+    /**
+     * @return Array
+     */
+    public function getNavigation()
+    {
+        $navigation = [
+            [
+                'name' => 'Settings',
+                'icon' => 'Cog6ToothIcon',
+                'slug' => 'settings',
+            ],
+            [
+                'name' => 'Billing',
+                'icon' => 'CreditCardIcon',
+                'slug' => 'billing',
+            ],
+        ];
+
+        return $navigation;
     }
 
     /**
