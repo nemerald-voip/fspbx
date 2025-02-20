@@ -38,7 +38,7 @@
                                     <div class="col-span-6">
                                         <LabelInputOptional :target="'domain_description'" :label="'Account Name'" />
                                         <div class="mt-2">
-                                            <InputField v-model="data.domain_description" type="text"
+                                            <InputField v-model="localData.domain_description" type="text"
                                                 id="domain_description" name="domain_description"
                                                 placeholder="Enter caller prefix"
                                                 :error="errors?.domain_description && errors.domain_description.length > 0" />
@@ -47,7 +47,7 @@
                                     <div class="col-span-6">
                                         <LabelInputOptional :target="'domain_name'" :label="'Domain'" />
                                         <div class="mt-2">
-                                            <InputField v-model="data.domain_name" type="text" :disabled="true"
+                                            <InputField v-model="localData.domain_name" type="text" :disabled="true"
                                                 id="domain_name" name="domain_name" placeholder="Enter caller prefix"
                                                 :error="errors?.domain_name && errors.domain_name.length > 0" />
                                         </div>
@@ -55,6 +55,16 @@
 
 
                                 </div>
+
+                            </div>
+                            <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+
+                                <button @click.prevent="saveSettings"
+                                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                    :disabled="isSubmitting">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
                             </div>
                         </div>
                     </section>
@@ -319,15 +329,23 @@ const props = defineProps({
 
 })
 
-const settings = computed(() => props.data.settings.map(setting => ({
-    uuid: setting.domain_setting_uuid,
-    subcategory: setting.domain_setting_subcategory,
-    value: setting.domain_setting_value
-})));
+const localData = ref(null);
+const localSettings = ref([]);
+
+
+onMounted(() => {
+    localData.value = props.data; // Deep copy to prevent modifying props directly
+    console.log(localData);
+    localSettings.value = props.data.settings.map(setting => ({
+        uuid: setting.domain_setting_uuid,
+        subcategory: setting.domain_setting_subcategory,
+        value: setting.domain_setting_value
+    }));
+});
 
 
 const getSetting = (subcategory) => {
-    return settings.value.find(setting => setting.subcategory === subcategory) || { uuid: null, value: '' };
+    return localSettings.value.find(setting => setting.subcategory === subcategory) || { uuid: null, value: '' };
 };
 
 const page = usePage()

@@ -220,7 +220,7 @@ class AccountSettingsController extends Controller
         );
 
         $data->with(['settings' => function ($query) {
-            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value'); 
+            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled'); 
         }]);
 
         return $data;
