@@ -1,7 +1,7 @@
 <?php
 namespace App\DTO;
 
-class PolycomOrganizationDTO
+class PolycomOrganizationDTO implements OrganizationDTOInterface
 {
     public ?string $id;
     public ?string $name;
@@ -59,7 +59,7 @@ class PolycomOrganizationDTO
      * @param array $data
      * @return PolycomOrganizationDTO
      */
-    public static function fromArray(array $data): self
+    public static function fromArray(array $data): OrganizationDTOInterface
     {
         return new self($data);
     }

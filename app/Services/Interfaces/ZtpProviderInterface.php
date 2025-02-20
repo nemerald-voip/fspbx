@@ -2,6 +2,7 @@
 
 namespace App\Services\Interfaces;
 
+use App\DTO\OrganizationDTOInterface;
 use \Illuminate\Support\Collection;
 
 interface ZtpProviderInterface {
@@ -13,7 +14,7 @@ interface ZtpProviderInterface {
     public function deleteDevice(string $id): array;
     public function getOrganizations(): Collection;
     public function createOrganization(array $params): string;
-    public function getOrganization(string $id): string;
+    public function getOrganization(string $id): OrganizationDTOInterface;
     public function updateOrganization(string $id, array $params): string;
     public function deleteOrganization(string $id): string;
     public function getOrgIdByDomainUuid(string $domainUuid): mixed;

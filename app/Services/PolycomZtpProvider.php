@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTO\OrganizationDTOInterface;
 use App\DTO\PolycomOrganizationDTO;
 use App\DTO\RingotelOrganizationDTO;
 use App\Models\DefaultSettings;
@@ -308,40 +309,18 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * Retrieve details of a specific organization by ID.
      *
      * @param  string  $id  The ID of the organization to retrieve.
-     * @return string The organization information as a DTO.
+     * @return OrganizationDTOInterface The organization information as a DTO.
      * @throws \Exception If the API request fails or returns an error.
      */
-    public function getOrganization(string $id): string
+    public function getOrganization(string $id): OrganizationDTOInterface
     {
-        $this->ensureApiTokenExists();
-
-        // Prepare the payload
-        $data = array(
-            'method' => 'getOrganization',
-            'params' => array(
-                'id' => $id,
-            )
-        );
-
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function () {
-                throw new \Exception("Unable to fetch organization");
-            })
-            ->json();
-
-        if (isset($response['error'])) {
-            throw new \Exception($response['error']['message']);
-        }
-
-        if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
-        }
-
-        // Transform the result into OrganizationDTO
-        return PolycomOrganizationDTO::fromArray($response['result']);
+            ->get('/profiles/'.$id)
+            ->throw(function ($error) {
+                throw new \Exception("Unable to retrieve organizations: ".json_encode($error));
+            });
+        return PolycomOrganizationDTO::fromArray($this->handleResponse($response));
     }
 
     /**

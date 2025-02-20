@@ -2,13 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\DTO\PolycomOrganizationDTO;
-use App\DTO\RingotelOrganizationDTO;
-use App\Http\Requests\StoreRingotelOrganizationRequest;
 use App\Http\Requests\StoreZtpOrganizationRequest;
 use App\Http\Requests\UpdatePolycomApiTokenRequest;
-use App\Http\Requests\UpdateRingotelApiTokenRequest;
-use App\Http\Requests\UpdateRingotelOrganizationRequest;
 use App\Http\Requests\UpdateZtpOrganizationRequest;
 use App\Models\DefaultSettings;
 use App\Models\Devices;
@@ -16,8 +11,6 @@ use App\Models\Domain;
 use App\Models\DomainSettings;
 use App\Services\Interfaces\ZtpProviderInterface;
 use App\Services\PolycomZtpProvider;
-use App\Services\RingotelApiService;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -160,10 +153,9 @@ class CloudProvisioningController extends Controller
         });
     }
 
-    public function getItemOptions(/*RingotelApiService $ringotelApiService*/)
+    public function getItemOptions(PolycomZtpProvider $polycomZtpProvider)
     {
-        //$this->ztpApiService = $ringotelApiService;
-        //logger('test');
+        $this->polycomZtpProvider = $polycomZtpProvider;
         try {
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
@@ -216,6 +208,7 @@ class CloudProvisioningController extends Controller
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
+                logger("Fetching item details for item_uuid: ".$item_uuid);
                 // Find existing model by item_uuid
                 $model = $this->model
                     ->select(
@@ -227,8 +220,8 @@ class CloudProvisioningController extends Controller
                         'settings' => function ($query) {
                             $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category',
                                 'domain_setting_subcategory', 'domain_setting_value')
-                                ->where('domain_setting_category', 'app shell')
-                                ->where('domain_setting_subcategory', 'org_id')
+                                ->where('domain_setting_category', 'cloud provision')
+                                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
                                 ->where('domain_setting_enabled', true);
                         }
                     ])->where($this->model->getKeyName(), $item_uuid)->first();
@@ -244,64 +237,29 @@ class CloudProvisioningController extends Controller
                     ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
                     ->where('domain_setting_enabled', true)
                     ->exists() ? 'true' : 'false';
-                logger($model);
 
                 // If model doesn't exist throw an error
                 if (!$model) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
-
-                // Add additional navigation item if ringotel status is true
-                /*if($model->ringotel_status == 'true'){
-                    $navigation[] = [
-                        'name' => 'Users',
-                        'icon' => 'UsersIcon',
-                        'slug' => 'users',
-                    ];
-                }*/
-
-                //$routes = array_merge($routes, []);
             }
 
             $permissions = $this->getUserPermissions();
 
-            // Get all app settings from Default Settings and overrride with settings saved in Domain Settings
-            //$appSettings = $this->getAppSettings($model->domain_uuid ?? null);
-            $appSettings = [];
-            $appSettings['suggested_ringotel_domain'] = strtolower(str_replace(' ', '',
-                $model->domain_description ?? ''));
-            $appSettings['suggested_connection_name'] = 'Primary SIP Profile';
-
-            // Check if `connection_port` is empty and fall back to `line_sip_port`
-            if (empty($appSettings['connection_port'])) {
-                $appSettings['connection_port'] = get_domain_setting('line_sip_port',
-                    $model->domain_uuid ?? null) ?? null;
-            }
-
-            if (!$model->org_id) {
-                $connections = [];
-            } else {
-                //$organization = $this->ringotelApiService->getOrganization($model->org_id);
-                //$connections = $this->ringotelApiService->getConnections($model->org_id);
+            if ($model->org_id) {
+                $organization = $this->polycomZtpProvider->getOrganization($model->org_id);
             }
 
             // Construct the itemOptions object
             return [
                 'navigation' => $navigation,
-                //'conn_navigation' => $conn_navigation,
                 'model' => $model ?? null,
                 'organization' => $organization ?? null,
                 'orgId' => $organization->id ?? null,
-                //'regions' => $regions,
                 'dhcp_option_60_type_list' => $dhcpOption60TypeList,
                 'dhcp_boot_server_option_list' => $dhcpBootServerOptionList,
                 'locales' => $locales,
                 'permissions' => $permissions,
-                //'routes' => $routes,
-                'settings' => $appSettings,
-                //'connections' => $connections,
-
-                // Define options for other fields as needed
             ];
         } catch (\Exception $e) {
             // Log the error message
