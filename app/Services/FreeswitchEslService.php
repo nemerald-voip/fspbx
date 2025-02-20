@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Throwable;
 use ESLconnection;
-use App\Models\Settings;
 use App\Models\SipProfiles;
 
 class FreeswitchEslService
@@ -13,27 +12,25 @@ class FreeswitchEslService
 
     public function __construct()
     {
-        // Check if the 'esl' extension is loaded
-        if (!extension_loaded('esl')) {
-            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact the administrator.");
-        }
+        try {
+            // Check if the 'esl' extension is loaded
+            if (!extension_loaded('esl')) {
+                throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact the administrator.");
+            }
 
-        // Get event socket credentials
-        $settings = Settings::first();
+            // Create the event socket connection
+            $this->conn = new ESLconnection(
+                config('eventsocket.ip'),
+                config('eventsocket.port'),
+                config('eventsocket.password')
+            );
 
-        if (!$settings) {
-            throw new \Exception("Event socket settings are not configured.");
-        }
-
-        // Create the event socket connection
-        $this->conn = new ESLconnection(
-            $settings->event_socket_ip_address,
-            $settings->event_socket_port,
-            $settings->event_socket_password
-        );
-
-        if (!$this->conn->connected()) {
-            throw new \Exception("Failed to connect to FreeSWITCH event socket.");
+            if (!$this->conn->connected()) {
+                throw new \Exception("Failed to connect to FreeSWITCH event socket.");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // throw new \Exception("Failed to connect to FreeSWITCH event socket.");
         }
     }
 
