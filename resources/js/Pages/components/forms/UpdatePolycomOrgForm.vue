@@ -3,15 +3,15 @@
         <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
                 <a v-for="item in options.navigation" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
-                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
+                   :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
+                   @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
-                        aria-hidden="true" />
+                               :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
+                               aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.organization_name || errors?.organization_domain || errors?.region || errors?.package) && item.slug === 'organization') ||
-                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
-                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+                    <ExclamationCircleIcon v-if="((errors?.organization_name) && item.slug === 'organization') ||
+                        (errors?.voicemail_alternate_greet_id && item.slug === 'provisioning')"
+                                           class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
             </nav>
@@ -24,80 +24,144 @@
                         <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-base font-semibold leading-6 text-gray-900">Organization Details</h3>
-
-                                <!-- <Toggle label="Status" v-model="" /> -->
-
-                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
                             </div>
 
-                            <div class="grid grid-cols-6 gap-6">
+                            <div class="grid grid-cols-1 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
                                     <LabelInputRequired target="organization_name" label="Organization Name"
-                                        class="truncate" />
+                                                        class="truncate" />
                                     <InputField v-model="form.organization_name" type="text" name="organization_name"
-                                        id="organization_name" class="mt-2" :error="!!errors?.organization_name" />
+                                                id="organization_name" class="mt-2" :error="!!errors?.organization_name" />
                                     <div v-if="errors?.organization_name" class="mt-2 text-xs text-red-600">
                                         {{ errors.organization_name[0] }}
                                     </div>
                                 </div>
-
-                                <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="organization_domain" label="Unique Organization Domain"
-                                        class="truncate" />
-                                    <InputField v-model="form.organization_domain" type="text" name="organization_domain"
-                                        id="organization_domain" class="mt-2" :error="!!errors?.organization_domain"
-                                        disabled />
-                                    <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
-                                        {{ errors.organization_domain[0] }}
-                                    </div>
-                                </div>
-
-                                <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired label="Region" class="truncate mb-1" />
-
-                                    <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'"
-                                        :error="errors?.region && errors.region.length > 0" :selectedItem="form.region"
-                                        @update:model-value="handleUpdateRegionField" disabled />
-                                    <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
-                                        {{ errors.region[0] }}
-                                    </div>
-                                    <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
-                                        location. You won't be able to change it later.</p> -->
-
-                                </div>
-
-                                <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired label="Package" class="truncate mb-1" />
-
-                                    <ComboBox :options="options.packages" :search="true" :placeholder="'Select package'"
-                                        :error="errors?.package && errors.package.length > 0" :selectedItem="form.package"
-                                        @update:model-value="handleUpdatePackageField" />
-                                    <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
-                                        {{ errors.package[0] }}
-                                    </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available
-                                        features.</p>
-
-                                </div>
-
-                                <div class="divide-y divide-gray-200 col-span-6">
-
-                                    <Toggle label="Secure User Credentials"
-                                        description="When enabled, users will receive a one-time link to access their app password instead of plain text."
-                                        v-model="form.dont_send_user_credentials" customClass="py-4" />
-
-                                </div>
-
-
-
                             </div>
 
                         </div>
                         <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-
                             <button type="submit"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                                ref="saveButtonRef" :disabled="isSubmitting">
+                                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                    ref="saveButtonRef" :disabled="isSubmitting">
+                                <Spinner :show="isSubmitting" />
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'provisioning'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                            <div class="r">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure a provisioning server.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputOptional target="version" label="Address"
+                                                        class="truncate" />
+                                    <InputField v-model="form.provisioning_server_address" type="text" name="provisioning_address"
+                                                id="provisioning_address" class="mt-2" :error="!!errors?.provisioning_server_address" />
+                                    <div v-if="errors?.provisioning_server_address" class="mt-2 text-xs text-red-600">
+                                        {{ errors.provisioning_server_address[0] }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-3 sm:col-span-3">
+                                    <LabelInputOptional target="version" label="Username"
+                                                        class="truncate" />
+                                    <InputField v-model="form.provisioning_server_username" type="text" name="provisioning_server_username"
+                                                id="provisioning_server_username" class="mt-2" :error="!!errors?.provisioning_server_username" />
+                                    <div v-if="errors?.provisioning_server_username" class="mt-2 text-xs text-red-600">
+                                        {{ errors.provisioning_server_username[0] }}
+                                    </div>
+                                </div>
+                                <div class="col-span-3 sm:col-span-3">
+                                    <LabelInputOptional target="version" label="Password"
+                                                        class="truncate" />
+                                    <InputField v-model="form.provisioning_server_password" type="text" name="provisioning_server_password"
+                                                id="provisioning_server_password" class="mt-2" :error="!!errors?.provisioning_server_password" />
+                                    <div v-if="errors?.provisioning_server_password" class="mt-2 text-xs text-red-600">
+                                        {{ errors.provisioning_server_password[0] }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="divide-y divide-gray-200 col-span-6">
+                                <Toggle label="Polling"
+                                        description="Enable provisioning server polling."
+                                        v-model="form.provisioning_polling" customClass="py-4" />
+                            </div>
+
+                            <div class="divide-y divide-gray-200 col-span-6">
+                                <Toggle label="Quick Setup"
+                                        description="Enable the quick setup option for phones."
+                                        v-model="form.provisioning_quick_setup" customClass="py-4" />
+                            </div>
+                            <div class="w-full border-t border-gray-300" />
+                            <div class="">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">DHCP</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure DHCP options to determine boot behavior.</p>
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional label="Boot Server Option" class="truncate mb-1" />
+                                <ComboBox :options="options.dhcp_boot_server_option_list" :search="true" :placeholder="'Select'"
+                                          :error="errors?.dhcp_boot_server_option && errors.dhcp_boot_server_option.length > 0" :selectedItem="form.dhcp_boot_server_option" :allowEmpty="true"
+                                          @update:model-value="handleUpdateBootServerOptionField" />
+                                <div v-if="errors?.dhcp_boot_server_option" class="mt-2 text-xs text-red-600">
+                                    {{ errors.dhcp_boot_server_option[0] }}
+                                </div>
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional label="Option 60 Type" class="truncate mb-1" />
+                                <ComboBox :options="options.dhcp_option_60_type_list" :search="true" :placeholder="'Select'"
+                                          :error="errors?.dhcp_option_60_type && errors.dhcp_option_60_type.length > 0" :selectedItem="form.dhcp_option_60_type" :allowEmpty="true"
+                                          @update:model-value="handleUpdateOption60TypeField" />
+                                <div v-if="errors?.dhcp_option_60_type" class="mt-2 text-xs text-red-600">
+                                    {{ errors.dhcp_option_60_type[0] }}
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-300" />
+                            <div class="justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Software</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure the software that will be loaded during provisioning.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <InputField v-model="form.software_version" type="text" name="software_version"
+                                                id="software_version" class="mt-2" :error="!!errors?.software_version" />
+                                    <div v-if="errors?.software_version" class="mt-2 text-xs text-red-600">
+                                        {{ errors.software_version[0] }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-300" />
+                            <div class="justify-between items-center">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Localization</h3>
+                                <p class="mt-3 text-sm leading-6 text-gray-600">Specify the operating locale for this profile.</p>
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <LabelInputOptional label="Localization" class="truncate mb-1" />
+                                <ComboBox :options="options.locales" :search="true" :placeholder="'Select'"
+                                          :error="errors?.localization_language && errors.localization_language.length > 0" :selectedItem="form.localization_language" :allowEmpty="true"
+                                          @update:model-value="handleUpdateLocalizationLanguageField" />
+                                <div v-if="errors?.localization_language" class="mt-2 text-xs text-red-600">
+                                    {{ errors.localization_language[0] }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                            <button type="submit"
+                                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                    ref="saveButtonRef" :disabled="isSubmitting">
                                 <Spinner :show="isSubmitting" />
                                 Save
                             </button>
@@ -105,108 +169,8 @@
                     </div>
                 </div>
             </form>
-
-            <div v-if="activeTab === 'connections'" action="#" method="POST">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <!-- <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
-                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
-                                Select a routing option below to fit your business needs.</p>
-                        </div> -->
-
-                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                            <div class="sm:col-span-full space-y-3">
-                                <!-- <LabelInputOptional :target="'destination_actions'" :label="'Send calls to'" /> -->
-                                <RingotelConnections v-model="connections" :routingTypes="options.routing_types"
-                                    :optionsUrl="options.routes.get_routing_options" @add-connection="handleAddConnection"
-                                    @delete-connection="handleDeleteConnectionRequest"
-                                    @edit-connection="handleEditConnection" :isDeleting="showConnectionDeletingStatus" />
-                            </div>
-
-                        </div>
-
-                        <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
-
-                            <button @click.prevent="handleFinishButtonClick()"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 
-                                disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:text-indigo-500" :disabled="connections.length == 0">
-                                Close
-                            </button>
-                        </div>
-
-
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="activeTab === 'users'">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Users</h3>
-                            <p class="mt-1 text-sm text-gray-500">
-                                Sync users from Ringotel to ensure your local system stays up-to-date with the latest
-                                organizational data. Click the
-                                <strong>Sync Users</strong> button to initiate the process.
-                            </p>
-                            <div class="rounded-md bg-yellow-100 p-4 mt-4">
-                                <div class="flex">
-                                    <div class="shrink-0">
-                                        <ExclamationTriangleIcon class="size-5 text-yellow-500" aria-hidden="true" />
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
-                                        <div class="mt-2 text-sm text-yellow-700">
-                                            <p>
-                                                Syncing will replace all current user data in your system with the latest
-                                                user data from the cloud.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-
-                        <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
-
-                            <button @click.prevent="handleSyncButtonClick()"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                                 :disabled="ringotelSyncUsersSubmiting">
-                                <Spinner :show="ringotelSyncUsersSubmiting" />
-                                Sync Users
-                            </button>
-                        </div>
-
-
-                    </div>
-                </div>
-            </div>
         </div>
-
-
-
     </div>
-
-    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showConnectionModal" :header="'Create a Connection'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateRingotelConnectionForm :options="options" :errors="errors"
-                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleCreateConnectionRequest"
-                @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :customClass="'sm:max-w-3xl'" :show="showEditConnectionModal" :header="'Edit Connection'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateRingotelConnectionForm :options="options" :errors="errors" :selected-connection="selectedConnection"
-                :is-submitting="ringotelConnectionFormSubmiting" @submit="handleUpdateConnectionRequest"
-                @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
 </template>
 
 
@@ -221,15 +185,10 @@ import SyncAltIcon from "@icons/SyncAltIcon.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
-import { BuildingOfficeIcon, UsersIcon } from '@heroicons/vue/24/outline';
-import RingotelConnections from "../general/RingotelConnections.vue";
-import AddEditItemModal from "../modal/AddEditItemModal.vue";
-import CreateRingotelConnectionForm from "../forms/CreateRingotelConnectionForm.vue";
-import UpdateRingotelConnectionForm from "../forms/UpdateRingotelConnectionForm.vue";
+import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
+import LabelInputOptional from "../general/LabelInputOptional.vue";
 
-const ringotelConnectionFormSubmiting = ref(null);
-const ringotelSyncUsersSubmiting = ref(null);
 const loadingModal = ref(false);
 
 const props = defineProps({
@@ -254,182 +213,46 @@ const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
-const showConnectionModal = ref(false);
-const showConnectionDeletingStatus = ref(false);
-const selectedConnection = ref(null);
-const showEditConnectionModal = ref(false);
-
 // Map icon names to their respective components
 const iconComponents = {
     'SyncAltIcon': SyncAltIcon,
     'BuildingOfficeIcon': BuildingOfficeIcon,
-    'UsersIcon': UsersIcon,
 };
-
-const connections = ref(
-    props.options.connections.map((conn) => ({
-        org_id: conn.accountId,
-        conn_id: conn.id,
-        connection_name: conn.name,
-        domain: conn.address
-    }))
-);
-
-// Watch for changes in props.options.connections and update the local variable
-watch(
-    () => props.options.connections,
-    (newConnections) => {
-        connections.value = newConnections.map((conn) => ({
-            org_id: conn.accountId,
-            conn_id: conn.id,
-            connection_name: conn.name,
-            domain: conn.address
-        }));
-    }
-);
 
 const page = usePage();
 
 const form = reactive({
     organization_id: props.options.organization.id,
     organization_name: props.options.organization.name,
-    organization_domain: props.options.organization.domain,
-    region: props.options.organization.region,
-    package: String(props.options.organization.packageid),
-    dont_send_user_credentials: props.options.organization.params.hidePassInEmail === "true",
+    provisioning_server_address: props.options.organization.template.provisioning.server.address,
+    provisioning_server_username: props.options.organization.template.provisioning.server.username,
+    provisioning_server_password: props.options.organization.template.provisioning.server.password,
+    dhcp_boot_server_option: props.options.organization.template.dhcp.bootServerOption,
+    dhcp_option_60_type: props.options.organization.template.dhcp.option60Type,
+    software_version: props.options.organization.template.software.version,
+    localization_language: props.options.organization.template.localization.language,
+    provisioning_polling: props.options.organization.template.provisioning.polling,
+    provisioning_quick_setup: props.options.organization.template.provisioning.quickSetup,
     domain_uuid: props.options.model.domain_uuid,
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
-const handleFinishButtonClick = () => {
-    emits('cancel');
+const handleUpdateLocalizationLanguageField = (selected) => {
+    form.localization_language = selected.value;
 }
 
-const handleUpdateRegionField = (selected) => {
-    form.region = selected.value;
+const handleUpdateOption60TypeField = (selected) => {
+    form.dhcp_option_60_type = selected.value;
 }
 
-const handleUpdatePackageField = (selected) => {
-    form.package = selected.value;
+const handleUpdateBootServerOptionField = (selected) => {
+    form.dhcp_boot_server_option = selected.value;
 }
-
-const handleAddConnection = (selected) => {
-    emits('clear-errors');
-    showConnectionModal.value = true;
-}
-
-
-const handleCreateConnectionRequest = (form) => {
-    ringotelConnectionFormSubmiting.value = true;
-    emits('clear-errors');
-
-    axios.post(props.options.routes.create_connection, form)
-        .then((response) => {
-            ringotelConnectionFormSubmiting.value = false;
-            emits('success', response.data.messages);
-
-            // Add the new connection to the connections array
-            connections.value.push({
-                org_id: response.data.org_id,
-                conn_id: response.data.conn_id,
-                connection_name: response.data.connection_name,
-                domain: response.data.domain
-            });
-
-            handleModalClose();
-        }).catch((error) => {
-            ringotelConnectionFormSubmiting.value = false;
-            emits('error', error); // Emit the event with error
-        });
-
-};
-
-const handleSyncButtonClick = () => {
-    ringotelSyncUsersSubmiting.value = true;
-
-    const postData = {
-        org_id: props.options.organization.id,
-        domain_uuid: props.options.model.domain_uuid,
-        _token: page.props.csrf_token,
-    };
-
-
-    axios.post(props.options.routes.sync_users, postData)
-        .then((response) => {
-            ringotelSyncUsersSubmiting.value = false;
-            emits('success', response.data.messages);
-        }).catch((error) => {
-            ringotelSyncUsersSubmiting.value = false;
-            emits('error', error); // Emit the event with error
-        });
-
-};
-
-const handleUpdateConnectionRequest = (form) => {
-    ringotelConnectionFormSubmiting.value = true;
-    emits('clear-errors');
-
-    axios.put(props.options.routes.update_connection, form)
-        .then((response) => {
-            ringotelConnectionFormSubmiting.value = false;
-            emits('success', response.data.messages);
-            emits('refresh-data', props.options.model.domain_uuid);
-
-            handleModalClose();
-        }).catch((error) => {
-            ringotelConnectionFormSubmiting.value = false;
-            emits('error', error); // Emit the event with error
-        });
-
-};
-
-const handleEditConnection = (connection) => {
-    emits('clear-errors');
-    // Find the matching connection from props.options.connections
-    const matchedConnection = props.options.connections.find(
-        (conn) => conn.id === connection.conn_id
-    );
-
-    if (matchedConnection) {
-        selectedConnection.value = matchedConnection;
-        showEditConnectionModal.value = true;
-        // console.log(selectedConnection.value);
-    } else {
-        emits('error', { request: "Matching connection not found" });
-    }
-}
-
-const handleDeleteConnectionRequest = (connection) => {
-    showConnectionDeletingStatus.value = true;
-    // emits('clear-errors');
-
-    axios.post(props.options.routes.delete_connection, connection)
-        .then((response) => {
-            showConnectionDeletingStatus.value = false;
-            emits('success', response.data.messages);
-
-            const updatedConnections = connections.value.filter(
-                (conn) => conn.conn_id !== connection.conn_id
-            );
-            connections.value = updatedConnections;
-
-        }).catch((error) => {
-            showConnectionDeletingStatus.value = false;
-            emits('error', error); // Emit the event with error
-        });
-
-};
-
-const handleModalClose = () => {
-    showConnectionModal.value = false;
-    showEditConnectionModal.value = false;
-}
-
 
 </script>

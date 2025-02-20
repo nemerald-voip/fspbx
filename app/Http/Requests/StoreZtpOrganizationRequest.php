@@ -110,6 +110,4 @@ class StoreZtpOrganizationRequest extends FormRequest
 
         return $input;
     }
-
-
 }

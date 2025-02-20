@@ -425,7 +425,7 @@ class CloudProvisioningController extends Controller
 
         try {
             // Send API request to update organization
-            $organization = $this->polycomZtpProvider->updateOrganization($inputs);
+            $organization = $this->polycomZtpProvider->updateOrganization($inputs['organization_id'], $inputs);
 
             // Return a JSON response indicating success
             return response()->json([
