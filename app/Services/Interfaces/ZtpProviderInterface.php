@@ -16,4 +16,5 @@ interface ZtpProviderInterface {
     public function getOrganization(string $id): string;
     public function updateOrganization(string $id, array $params): string;
     public function deleteOrganization(string $id): string;
+    public function getOrgIdByDomainUuid(string $domainUuid): mixed;
 }

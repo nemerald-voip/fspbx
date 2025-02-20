@@ -6,6 +6,7 @@ use App\DTO\PolycomOrganizationDTO;
 use App\DTO\RingotelOrganizationDTO;
 use App\Models\DefaultSettings;
 use App\Models\Devices;
+use App\Models\DomainSettings;
 use App\Services\Exceptions\ZtpProviderException;
 use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Http\Client\Response;
@@ -146,7 +147,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
     {
         $this->ensureApiTokenExists();
 
-        $response = Http::ringotel()
+        $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode([
                 'id' => $id,
@@ -211,6 +212,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @param  array  $params  The organization parameters.
      * @return string The result of the operation.
      * @throws ZtpProviderException If the API request fails.
+     * @throws \Exception
      */
     public function createOrganization(array $params): string
     {
@@ -242,7 +244,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
             ],
         ];
 
-        $response = Http::ringotel()
+        $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($payload), 'application/json')
             ->post('/profiles')
@@ -250,7 +252,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 throw new \Exception("Unable to activate organization");
             });
 
-        return $this->handleResponse($response)['result'];
+        return $this->handleResponse($response)['id'];
     }
 
     /**
@@ -291,7 +293,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
             ],
         ];
 
-        $response = Http::ringotel()
+        $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($payload), 'application/json')
             ->put('/profiles/'.$id)
@@ -299,7 +301,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 throw new \Exception("Unable to update organization");
             });
 
-        return $this->handleResponse($response)['result'];
+        return $this->handleResponse($response)['id'];
     }
 
     /**
@@ -309,7 +311,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The organization information as a DTO.
      * @throws \Exception If the API request fails or returns an error.
      */
-    public function getOrganization($id): string
+    public function getOrganization(string $id): string
     {
         $this->ensureApiTokenExists();
 
@@ -321,7 +323,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
             )
         );
 
-        $response = Http::ringotel()
+        $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
@@ -339,7 +341,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
         }
 
         // Transform the result into OrganizationDTO
-        return RingotelOrganizationDTO::fromArray($response['result']);
+        return PolycomOrganizationDTO::fromArray($response['result']);
     }
 
     /**
@@ -349,7 +351,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The result of the operation.
      * @throws ZtpProviderException|\Exception If the API request fails.
      */
-    public function deleteOrganization($id): string
+    public function deleteOrganization(string $id): string
     {
         $this->ensureApiTokenExists();
 
@@ -360,7 +362,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 throw new \Exception("Unable to delete organization: ".json_encode($error));
             });
 
-        return $this->handleResponse($response)['result'];
+        return $this->handleResponse($response)['message'];
     }
 
     /**
@@ -382,5 +384,15 @@ class PolycomZtpProvider implements ZtpProviderInterface
 
         // Handle unexpected errors
         throw new ZtpProviderException($response);
+    }
+
+    public function getOrgIdByDomainUuid(string $domainUuid): mixed
+    {
+        return DomainSettings::where([
+            ['domain_uuid', '=', $domainUuid],
+            ['domain_setting_category', '=', 'cloud provision'],
+            ['domain_setting_subcategory', '=', 'polycom_ztp_profile_id'],
+            ['domain_setting_enabled', '=', true],
+        ])->value('domain_setting_value');
     }
 }

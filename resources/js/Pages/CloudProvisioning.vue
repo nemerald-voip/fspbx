@@ -331,12 +331,14 @@ const handleCreateRequest = (form) => {
         .then((response) => {
             activateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-            itemOptions.value.orgId = response.data.org_id;
-            activationActiveTab.value = 'connections';
-
+            //itemOptions.value.orgId = response.data.org_id;
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
         }).catch((error) => {
         activateFormSubmitting.value = false;
         handleClearSelection();
+        handleModalClose();
         handleFormErrorResponse(error);
     });
 

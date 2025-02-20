@@ -49,9 +49,9 @@ class CloudProvisioningController extends Controller
                 'routes' => [
                     'current_page' => route('cloud-provisioning.index'),
                     'create_organization' => route('cloud-provisioning.organization.create'),
-                    //'update_organization' => route('cloud-provisioning.organization.update'),
-                    //'destroy_organization' => route('cloud-provisioning.organization.destroy'),
-                    //'pair_organization' => route('cloud-provisioning.organization.pair'),
+                    'update_organization' => route('cloud-provisioning.organization.update'),
+                    'destroy_organization' => route('cloud-provisioning.organization.destroy'),
+                    'pair_organization' => route('cloud-provisioning.organization.pair'),
                     'get_all_orgs' => route('cloud-provisioning.organization.all'),
                     'get_api_token' => route('cloud-provisioning.token.get'),
                     'update_api_token' => route('cloud-provisioning.token.update'),
@@ -180,12 +180,12 @@ class CloudProvisioningController extends Controller
                 ],
             ];
 
-            $DhcpOption60TypeList = [
+            $dhcpOption60TypeList = [
                 ['value' => 'ASCII', 'name' => 'ASCII'],
                 ['value' => 'BINARY', 'name' => 'BINARY'],
             ];
 
-            $DhcpBootServerOptionList = [
+            $dhcpBootServerOptionList = [
                 ['value' => 'OPTION66', 'name' => 'OPTION66'],
                 ['value' => 'CUSTOM', 'name' => 'CUSTOM'],
                 ['value' => 'STATIC', 'name' => 'STATIC'],
@@ -293,8 +293,8 @@ class CloudProvisioningController extends Controller
                 'organization' => $organization ?? null,
                 'orgId' => $organization->id ?? null,
                 //'regions' => $regions,
-                'dhcp_option_60_type_list' => $DhcpOption60TypeList,
-                'dhcp_boot_server_option_list' => $DhcpBootServerOptionList,
+                'dhcp_option_60_type_list' => $dhcpOption60TypeList,
+                'dhcp_boot_server_option_list' => $dhcpBootServerOptionList,
                 'locales' => $locales,
                 'permissions' => $permissions,
                 //'routes' => $routes,
@@ -319,7 +319,7 @@ class CloudProvisioningController extends Controller
     /**
      * Retrieve the Polucom API token from DefaultSettings.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getToken(): JsonResponse
     {
@@ -350,7 +350,7 @@ class CloudProvisioningController extends Controller
      * Update or create the Polycom API token in DefaultSettings.
      *
      * @param UpdatePolycomApiTokenRequest $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateToken(UpdatePolycomApiTokenRequest $request): JsonResponse
     {
@@ -407,16 +407,14 @@ class CloudProvisioningController extends Controller
 
         $inputs['enabled'] = true;
 
-        logger($inputs);
-
         try {
             // Send API request to create organization
-            $organization = $this->polycomZtpProvider->createOrganization($inputs);
+            $organizationId = $this->polycomZtpProvider->createOrganization($inputs);
 
             // Check for existing records
             $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
-                ->where('domain_setting_category', 'app shell')
-                ->where('domain_setting_subcategory', 'org_id')
+                ->where('domain_setting_category', 'cloud provision')
+                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
                 ->first();
 
             if ($existingSetting) {
@@ -427,37 +425,16 @@ class CloudProvisioningController extends Controller
             // Save the new record
             $domainSetting = DomainSettings::create([
                 'domain_uuid' => $inputs['domain_uuid'],
-                'domain_setting_category' => 'app shell',
-                'domain_setting_subcategory' => 'org_id',
+                'domain_setting_category' => 'cloud provision',
+                'domain_setting_subcategory' => 'polycom_ztp_profile_id',
                 'domain_setting_name' => 'text',
-                'domain_setting_value' => $organization['id'],
+                'domain_setting_value' => $organizationId,
                 'domain_setting_enabled' => true,
             ]);
 
-            /*
-            // Check for existing records
-            $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
-                ->where('domain_setting_category', 'mobile_apps')
-                ->where('domain_setting_subcategory', 'dont_send_user_credentials')
-                ->first();
-
-            if ($existingSetting) {
-                $existingSetting->delete();
-            }
-
-            $domainSetting = DomainSettings::create([
-                'domain_uuid' => $inputs['domain_uuid'],
-                'domain_setting_category' => 'mobile_apps',
-                'domain_setting_subcategory' => 'dont_send_user_credentials',
-                'domain_setting_name' => 'boolean',
-                'domain_setting_value' => $inputs['dont_send_user_credentials'],
-                'domain_setting_enabled' => true,
-                'domain_setting_description' => "Don't include user credentials in the welcome email"
-            ]);*/
-
             // Return a JSON response indicating success
             return response()->json([
-                'org_id' => $organization['id'],
+                'org_id' => $organizationId,
                 'messages' => ['success' => ['Organization successfully activated']]
             ], 201);
         } catch (\Exception $e) {
@@ -503,6 +480,55 @@ class CloudProvisioningController extends Controller
                 'success' => false,
                 'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
             ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Submit request to destroy organization to ZTP
+     *
+     * @return JsonResponse
+     */
+    public function destroyOrganization(PolycomZtpProvider $polycomZtpProvider)
+    {
+        $this->polycomZtpProvider = $polycomZtpProvider;
+
+        try {
+            // Get Org ID from database
+            $domain_uuid = request('domain_uuid');
+            $org_id = $this->polycomZtpProvider->getOrgIdByDomainUuid($domain_uuid);
+
+            // Remove local references from the database
+            DomainSettings::where('domain_uuid', $domain_uuid)
+                ->where('domain_setting_category', 'cloud provision')
+                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
+                ->delete();
+
+            if (!$org_id) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['Organization ID not found for the given domain.']]
+                ], 404); // 404 Not Found
+            }
+
+            // Delete the organization
+            $deleteResponse = $this->polycomZtpProvider->deleteOrganization($org_id);
+
+            if ($deleteResponse) {
+                return response()->json([
+                    'messages' => ['success' => ['Organization was successfully deleted.']]
+                ], 200); // 200 OK
+            }
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to delete the organization.']]
+            ], 500); // 500 Internal Server Error
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error
         }
     }
 
