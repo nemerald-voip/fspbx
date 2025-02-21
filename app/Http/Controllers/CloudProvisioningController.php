@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PairZtpOrganizationRequest;
 use App\Http\Requests\StoreZtpOrganizationRequest;
 use App\Http\Requests\UpdatePolycomApiTokenRequest;
 use App\Http\Requests\UpdateZtpOrganizationRequest;
@@ -404,6 +405,46 @@ class CloudProvisioningController extends Controller
                     'server2' => [$e->getMessage()]
                 ]
             ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function pairOrganization(PairZtpOrganizationRequest $request)
+    {
+        // Extract data from the request
+        $orgId = $request->input('org_id');
+        $domainUuid = $request->input('domain_uuid');
+
+        try {
+            // Store or update the domain setting record
+            $domainSettings = DomainSettings::updateOrCreate(
+                [
+                    'domain_uuid' => $domainUuid,
+                    'domain_setting_category' => 'cloud provision',
+                    'domain_setting_subcategory' => 'polycom_ztp_profile_id',
+                ],
+                [
+                    'domain_setting_name' => 'text',
+                    'domain_setting_value' => $orgId,
+                    'domain_setting_enabled' => true,
+                ]
+            );
+
+            // Check if the record was saved successfully
+            if (!$domainSettings) {
+                throw new \Exception('Unable to connect this organization');
+            }
+
+            return response()->json([
+                'messages' => ['success' => ['Connection updated successfully']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
         }
     }
 
