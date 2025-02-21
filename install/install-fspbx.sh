@@ -19,16 +19,41 @@ if ! command -v git &> /dev/null; then
     print_success "Git installed successfully."
 fi
 
-# Define installation directory
+# Define installation directories
 INSTALL_DIR="/var/www/fspbx"
+PUBLIC_DIR="$INSTALL_DIR/public"
+BACKUP_DIR="/var/www/fspbx_backup_$(date +%Y%m%d_%H%M%S)"
+
+# Define FusionPBX version to download
+FUSIONPBX_VERSION="1.0.0"  # Change this to the desired release version
+FUSIONPBX_RELEASE="https://github.com/nemerald-voip/fusionpbx/releases/download/v${FUSIONPBX_VERSION}/fusionpbx-${FUSIONPBX_VERSION}.tar.gz"
+
+# Backup existing installation if the directory is not empty
+if [ -d "$INSTALL_DIR" ] && [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
+    print_success "Backing up existing installation to $BACKUP_DIR..."
+    mv $INSTALL_DIR $BACKUP_DIR
+    print_success "Backup completed: $BACKUP_DIR"
+fi
 
 # Clone FS PBX repository
 print_success "Cloning FS PBX repository..."
-rm -rf $INSTALL_DIR
 git clone --depth 1 https://github.com/nemerald-voip/fspbx.git $INSTALL_DIR
 print_success "FS PBX repository cloned successfully."
 
-# Run the main installer script
+# Ensure public directory exists
+mkdir -p $PUBLIC_DIR
+
+# Download the specified FusionPBX release
+print_success "Downloading FusionPBX v$FUSIONPBX_VERSION release..."
+wget -qO "$PUBLIC_DIR/fusionpbx-${FUSIONPBX_VERSION}.tar.gz" $FUSIONPBX_RELEASE
+
+# Extract the FusionPBX archive
+print_success "Extracting FusionPBX files..."
+tar -xvzf "$PUBLIC_DIR/fusionpbx-${FUSIONPBX_VERSION}.tar.gz" -C $PUBLIC_DIR --strip-components=1
+rm "$PUBLIC_DIR/fusionpbx-${FUSIONPBX_VERSION}.tar.gz"
+print_success "FusionPBX v$FUSIONPBX_VERSION files extracted successfully."
+
+# Run the FS PBX main installer script
 print_success "Running FS PBX installation script..."
-#bash $INSTALL_DIR/install/install.sh
+bash $INSTALL_DIR/install/install.sh
 print_success "FS PBX installation completed successfully!"
