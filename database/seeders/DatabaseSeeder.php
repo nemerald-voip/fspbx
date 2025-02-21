@@ -505,6 +505,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Defines the number of days after which a Ringotel user is considered stale.",
             ],
+            [
+                'default_setting_category'      => 'authentication',
+                'default_setting_subcategory'   => 'email_challenge',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
+            ],
             
 
         ];
