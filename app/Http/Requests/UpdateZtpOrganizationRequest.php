@@ -44,9 +44,10 @@ class UpdateZtpOrganizationRequest extends FormRequest
         ];
 
         return [
+            'organization_id' => 'required|string',
             'organization_name' => 'required|string|max:100',
             'software_version' => 'nullable|string|max:100',
-            'domain_uuid' => 'nullable|uuid',
+            'domain_uuid' => 'required|uuid',
             'dhcp_boot_server_option' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
             'dhcp_option_60_type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),
             'localization_language' => 'nullable|string|in:' . implode(',', $locales),

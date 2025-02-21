@@ -269,7 +269,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
         $this->ensureApiTokenExists();
 
         $payload = [
-            "name" => $params['name'],
+            "name" => $params['organization_name'],
             "enabled" => $params['enabled'],
             "template" => [
                 "software" => [
@@ -277,19 +277,19 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 ],
                 "provisioning" => [
                     "server" => [
-                        "address" => $params['server_address'],
-                        "username" => $params['server_username'],
-                        "password" => $params['server_password'],
+                        "address" => $params['provisioning_server_address'],
+                        "username" => $params['provisioning_server_username'],
+                        "password" => $params['provisioning_server_password'],
                     ],
-                    "polling" => $params['polling'],
-                    "quickSetup" => $params['quick_setup'],
+                    "polling" => $params['provisioning_polling'],
+                    "quickSetup" => $params['provisioning_quick_setup'],
                 ],
                 "dhcp" => [
                     "bootServerOption" => $params['dhcp_boot_server_option'],
                     "option60Type" => $params['dhcp_option_60_type'],
                 ],
                 "localization" => [
-                    "language" => $params['language'],
+                    "language" => $params['localization_language'],
                 ],
             ],
         ];

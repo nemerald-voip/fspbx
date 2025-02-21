@@ -208,7 +208,6 @@ class CloudProvisioningController extends Controller
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
-                logger("Fetching item details for item_uuid: ".$item_uuid);
                 // Find existing model by item_uuid
                 $model = $this->model
                     ->select(
@@ -422,6 +421,8 @@ class CloudProvisioningController extends Controller
         $this->polycomZtpProvider = $polycomZtpProvider;
 
         $inputs = $request->validated();
+
+        $inputs['enabled'] = true;
 
         try {
             // Send API request to update organization
