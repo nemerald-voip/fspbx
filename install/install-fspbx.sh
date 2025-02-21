@@ -45,7 +45,7 @@ mkdir -p $PUBLIC_DIR
 
 # Download the specified FusionPBX release
 print_success "Downloading FusionPBX v$FUSIONPBX_VERSION release..."
-wget -qO "$PUBLIC_DIR/fusionpbx-${FUSIONPBX_VERSION}.tar.gz" $FUSIONPBX_RELEASE
+wget -O "$PUBLIC_DIR/fusionpbx-${FUSIONPBX_VERSION}.tar.gz" $FUSIONPBX_RELEASE
 
 # Extract the FusionPBX archive
 print_success "Extracting FusionPBX files..."
@@ -55,5 +55,5 @@ print_success "FusionPBX v$FUSIONPBX_VERSION files extracted successfully."
 
 # Run the FS PBX main installer script
 print_success "Running FS PBX installation script..."
-bash $INSTALL_DIR/install/install.sh
+#bash $INSTALL_DIR/install/install.sh
 print_success "FS PBX installation completed successfully!"
