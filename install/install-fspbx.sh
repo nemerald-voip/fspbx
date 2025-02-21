@@ -3,31 +3,33 @@
 # Set error handling
 set -e
 
-# Define installation variables
-INSTALL_DIR="/var/www/fspbx"
-BRANCH="main"  # Change to a specific branch if needed
-PHP_VERSION="8.1"
+# Function to print success message
+print_success() {
+    echo -e "\e[32m$1 \e[0m"  # Green text
+}
 
-echo "Starting FS PBX installation..."
+# Function to print error message
+print_error() {
+    echo -e "\e[31m$1 \e[0m"  # Red text
+}
 
 # Ensure Git is installed
 if ! command -v git &> /dev/null; then
-    echo "Installing Git..."
+    print_error "Git is not installed. Installing Git..."
     apt update && apt install -y git
+    print_success "Git installed successfully."
 fi
 
-# Ensure required dependencies are installed
-echo "Installing dependencies..."
-apt install -y curl unzip software-properties-common
-
-# Ensure Composer is installed
-if ! command -v composer &> /dev/null; then
-    echo "Installing Composer..."
-    curl -sS https://getcomposer.org/installer | php
-    mv composer.phar /usr/local/bin/composer
-fi
+# Define installation directory
+INSTALL_DIR="/var/www/fspbx"
 
 # Clone FS PBX repository
-echo "Cloning FS PBX repository..."
+print_success "Cloning FS PBX repository..."
 rm -rf $INSTALL_DIR
-git clone --depth 1 --branch $BRANCH https://github.com/nemerald-voip/fspbx.git $INSTALL_DIR
+git clone --depth 1 https://github.com/nemerald-voip/fspbx.git $INSTALL_DIR
+print_success "FS PBX repository cloned successfully."
+
+# Run the main installer script
+print_success "Running FS PBX installation script..."
+#bash $INSTALL_DIR/install/install.sh
+print_success "FS PBX installation completed successfully!"
