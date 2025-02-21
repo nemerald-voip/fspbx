@@ -15,7 +15,6 @@ print_error() {
 
 # Ensure Git is installed
 if ! command -v git &> /dev/null; then
-    print_error "Git is not installed. Installing Git..."
     apt update && apt install -y git
     print_success "Git installed successfully."
 fi
