@@ -13,6 +13,36 @@ print_error() {
 
 print_success  "Welcome to FS PBX installation script"
 
+# Install essential dependencies
+print_success "Installing essential dependencies..."
+apt-get update && apt-get install -y \
+    wget \
+    lsb-release \
+    systemd \
+    systemd-sysv \
+    ca-certificates \
+    dialog \
+    nano \
+    net-tools \
+    gpg
+if [ $? -eq 0 ]; then
+    print_success "Essential dependencies installed successfully."
+else
+    print_error "Error occurred during essential dependency installation."
+    exit 1
+fi
+
+# Install SNMP and configure it
+print_success "Installing and configuring SNMP..."
+apt-get install -y snmpd
+if [ $? -eq 0 ]; then
+    echo "rocommunity public" > /etc/snmp/snmpd.conf
+    service snmpd restart
+    print_success "SNMP installed and configured successfully."
+else
+    print_error "Error occurred while installing SNMP."
+    exit 1
+fi
 
 # Update and upgrade
 apt update && apt upgrade -y
