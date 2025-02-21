@@ -24,9 +24,19 @@ INSTALL_DIR="/var/www/fspbx"
 PUBLIC_DIR="$INSTALL_DIR/public"
 BACKUP_DIR="/var/www/fspbx_backup_$(date +%Y%m%d_%H%M%S)"
 
-# Define FusionPBX version to download
-FUSIONPBX_VERSION="1.0.0"  # Change this to the desired release version
-FUSIONPBX_RELEASE="https://github.com/nemerald-voip/fusionpbx/releases/download/v${FUSIONPBX_VERSION}/fusionpbx-${FUSIONPBX_VERSION}.tar.gz"
+# Fetch the latest FusionPBX version from GitHub API
+print_success "Fetching the latest FusionPBX release version..."
+FUSIONPBX_VERSION=$(curl -s https://api.github.com/repos/nemerald-voip/fusionpbx/releases/latest | grep "tag_name" | cut -d '"' -f 4)
+
+if [[ -z "$FUSIONPBX_VERSION" ]]; then
+    print_error "Failed to fetch FusionPBX version. Exiting..."
+    exit 1
+fi
+
+print_success "Latest FusionPBX version: $FUSIONPBX_VERSION"
+
+# Construct the download URL
+FUSIONPBX_RELEASE="https://github.com/nemerald-voip/fusionpbx/archive/refs/tags/${FUSIONPBX_VERSION}.tar.gz"
 
 # Backup existing installation if the directory is not empty
 if [ -d "$INSTALL_DIR" ] && [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
