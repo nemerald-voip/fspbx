@@ -430,6 +430,7 @@ class CloudProvisioningController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
+                'org_id' => $inputs['organization_id'],
                 'messages' => ['success' => ['Organization successfully updated']]
             ], 201);
         } catch (\Exception $e) {

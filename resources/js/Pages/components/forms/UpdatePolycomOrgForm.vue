@@ -88,6 +88,7 @@
                                     <div v-if="errors?.provisioning_server_password" class="mt-2 text-xs text-red-600">
                                         {{ errors.provisioning_server_password[0] }}
                                     </div>
+                                    <p class="mt-2 text-sm text-gray-500">Enter new password if you'd like to change it</p>
                                 </div>
                             </div>
 
@@ -226,7 +227,7 @@ const form = reactive({
     organization_name: props.options.organization.name,
     provisioning_server_address: props.options.organization.template.provisioning.server.address,
     provisioning_server_username: props.options.organization.template.provisioning.server.username,
-    provisioning_server_password: props.options.organization.template.provisioning.server.password,
+    provisioning_server_password: '', // initially the password is empty, because polycom returns [REDACTED] as password value
     dhcp_boot_server_option: props.options.organization.template.dhcp.bootServerOption,
     dhcp_option_60_type: props.options.organization.template.dhcp.option60Type,
     software_version: props.options.organization.template.software.version,

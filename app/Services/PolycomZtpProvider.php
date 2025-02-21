@@ -236,11 +236,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
                     "quickSetup" => $params['provisioning_quick_setup'],
                 ],
                 "dhcp" => [
-                    "bootServerOption" => $params['dhcp_boot_server_option'],
-                    "option60Type" => $params['dhcp_option_60_type'],
+                    "bootServerOption" => $params['dhcp_boot_server_option'] ?? null,
+                    "option60Type" => $params['dhcp_option_60_type'] ?? null,
                 ],
                 "localization" => [
-                    "language" => $params['localization_language'],
+                    "language" => $params['localization_language'] ?? null,
                 ],
             ],
         ];
@@ -285,11 +285,11 @@ class PolycomZtpProvider implements ZtpProviderInterface
                     "quickSetup" => $params['provisioning_quick_setup'],
                 ],
                 "dhcp" => [
-                    "bootServerOption" => $params['dhcp_boot_server_option'],
-                    "option60Type" => $params['dhcp_option_60_type'],
+                    "bootServerOption" => $params['dhcp_boot_server_option'] ?? null,
+                    "option60Type" => $params['dhcp_option_60_type'] ?? null,
                 ],
                 "localization" => [
-                    "language" => $params['localization_language'],
+                    "language" => $params['localization_language'] ?? null,
                 ],
             ],
         ];
