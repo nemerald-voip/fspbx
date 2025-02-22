@@ -13,6 +13,15 @@ print_error() {
 
 print_success  "Welcome to FS PBX installation script"
 
+# Update and upgrade
+apt update && apt upgrade -y
+if [ $? -eq 0 ]; then
+    print_success "System updated and upgraded successfully."
+else
+    print_error "Error occurred during update and upgrade."
+    exit 1
+fi
+
 # Install essential dependencies
 print_success "Installing essential dependencies..."
 apt-get update && apt-get install -y \
@@ -44,12 +53,30 @@ else
     exit 1
 fi
 
-# Update and upgrade
-apt update && apt upgrade -y
+print_success "Configuring IPTables firewall rules..."
+bash /var/www/fspbx/install/configure_iptables.sh
 if [ $? -eq 0 ]; then
-    print_success "System updated and upgraded successfully."
+    print_success "IPTables configured successfully."
 else
-    print_error "Error occurred during update and upgrade."
+    print_error "Error occurred while configuring IPTables."
+    exit 1
+fi
+
+print_success "Installing Sngrep..."
+bash /var/www/fspbx/install/install_sngrep.sh
+if [ $? -eq 0 ]; then
+    print_success "Sngrep installed successfully."
+else
+    print_error "Error occurred while installing Sngrep."
+    exit 1
+fi
+
+print_success "Installing PHP..."
+bash /var/www/fspbx/install/install_php.sh
+if [ $? -eq 0 ]; then
+    print_success "PHP installed successfully."
+else
+    print_error "Error occurred while installing PHP."
     exit 1
 fi
 
@@ -223,6 +250,16 @@ else
     exit 1
 fi
 
+print_success "Installing Nginx..."
+bash /var/www/fspbx/install/install_nginx.sh
+if [ $? -eq 0 ]; then
+    print_success "Nginx installed successfully."
+else
+    print_error "Error occurred while installing Nginx."
+    exit 1
+fi
+
+
 # Nginx configuration
 if [ -f /etc/nginx/sites-enabled/fusionpbx ]; then
     rm /etc/nginx/sites-enabled/fusionpbx
@@ -302,6 +339,24 @@ else
     print_error "Error occurred during Nginx reload and restart."
     exit 1
 fi
+
+# Ensure the FusionPBX cache directory exists
+print_success "Setting up FusionPBX cache directory..."
+mkdir -p /var/cache/fusionpbx
+chown -R www-data:www-data /var/cache/fusionpbx
+
+print_success "FusionPBX cache directory setup completed."
+
+print_success "Installing FS PBX Apps..."
+bash /var/www/fspbx/install/install_fusionpbx_apps.sh
+if [ $? -eq 0 ]; then
+    print_success "FS PBX Apps installed successfully."
+else
+    print_error "Error occurred while installing FS PBX Apps."
+    exit 1
+fi
+
+exit 1
 
 # Install ffmpeg
 sudo apt-get install -y ffmpeg
