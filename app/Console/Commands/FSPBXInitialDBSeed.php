@@ -107,10 +107,15 @@ class FSPBXInitialDBSeed extends Command
         // Step 11: Set Correct Permissions
         $this->updatePermissions();
 
-        // Step 12: Restart FreeSWITCH
+        // Step 12: Migrate SQLite to RAM
+        $this->info("Migrating SQLite to RAM...");
+        $this->call('fs:migrate-sqlite-to-ram');
+        $this->info("SQLite migration to RAM completed.");
+
+        // Step 13: Restart FreeSWITCH
         $this->restartFreeSwitch();
 
-        // Step 13: Display Installation Summary
+        // Step 14: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
 
         return 0;
@@ -144,37 +149,37 @@ class FSPBXInitialDBSeed extends Command
         $installProcess = new Process(['npm', 'install'], base_path());
         $installProcess->setTimeout(300);
         $installProcess->run();
-    
+
         if (!$installProcess->isSuccessful()) {
             throw new ProcessFailedException($installProcess);
         }
-    
+
         $this->info("✅ NPM dependencies installed successfully.\n");
-    
+
         // Start the spinner for progress indication
         $this->info("🚀 Building frontend assets... (This may take a while)");
-    
+
         $spinnerChars = ['-', '\\', '|', '/']; // Spinner animation characters
         $index = 0;
-    
+
         $buildProcess = new Process(['npm', 'run', 'build'], base_path());
         $buildProcess->setTimeout(300);
         $buildProcess->start();
-    
+
         while ($buildProcess->isRunning()) {
             echo "\r\e[36m" . $spinnerChars[$index % 4] . " Building frontend assets... \e[0m";
             usleep(250000); // Update every 250ms
             $index++;
         }
-    
+
         if (!$buildProcess->isSuccessful()) {
             throw new ProcessFailedException($buildProcess);
         }
-    
+
         echo "\r✅ Frontend assets built successfully!          \n";
     }
-    
-    
+
+
 
     private function updatePermissions()
     {
