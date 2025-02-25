@@ -715,6 +715,16 @@ else
 fi
 
 # Update settings for email_queue service
+# Copy email_queue service file
+sudo cp /var/www/fspbx/public/app/email_queue/resources/service/debian.service /etc/systemd/system/email_queue.service
+if [ $? -eq 0 ]; then
+    print_success "email_queue service file copied successfully."
+else
+    print_error "Error occurred while copying fax_queue service file."
+    exit 1
+fi
+
+# Update settings for email_queue service
 sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated WorkingDirectory for email_queue service successfully."
@@ -763,6 +773,16 @@ if [ $? -eq 0 ]; then
     print_success "Updated ExecStart for fax_queue service successfully."
 else
     print_error "Error occurred while updating ExecStart for fax_queue service."
+    exit 1
+fi
+
+# Update settings for event_guard service
+# Copy event_guard service file
+sudo cp /var/www/fspbx/public/app/event_guard/resources/service/debian.service /etc/systemd/system/event_guard.service
+if [ $? -eq 0 ]; then
+    print_success "event_guard service file copied successfully."
+else
+    print_error "Error occurred while copying event_guard service file."
     exit 1
 fi
 
