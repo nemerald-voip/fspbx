@@ -206,15 +206,14 @@ else
 fi
 
 # Install Node.js
-sudo apt-get update
 if [ $? -eq 0 ]; then
-    sudo apt-get install -y ca-certificates curl gnupg
+    sudo apt-get install -y curl gnupg
     if [ $? -eq 0 ]; then
         sudo mkdir -p /etc/apt/keyrings
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
         if [ $? -eq 0 ]; then
             NODE_MAJOR=20
-            echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+            echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
             sudo apt-get update
             if [ $? -eq 0 ]; then
                 sudo apt-get install -y nodejs
@@ -240,6 +239,7 @@ else
     print_error "Error occurred during APT update."
     exit 1
 fi
+
 
 # Change to the Freeswitch PBX directory
 cd /var/www/fspbx/
@@ -356,7 +356,7 @@ else
     exit 1
 fi
 
-exit 1
+
 
 # Install ffmpeg
 sudo apt-get install -y ffmpeg
@@ -423,6 +423,57 @@ else
     exit 1
 fi
 
+print_success "Installing FreeSWITCH..."
+bash /var/www/fspbx/install/install_freeswitch.sh
+if [ $? -eq 0 ]; then
+    print_success "FreeSWITCH installed successfully."
+else
+    print_error "Error occurred while installing FreeSWITCH."
+    exit 1
+fi
+
+
+print_success "Installing FreeSWITCH Sounds..."
+bash /var/www/fspbx/install/install_freeswitch_sounds.sh
+if [ $? -eq 0 ]; then
+    print_success "FreeSWITCH sounds installed successfully."
+else
+    print_error "Error occurred while installing FreeSWITCH sounds."
+    exit 1
+fi
+
+print_success "Installing Fail2Ban and securing Nginx..."
+bash /var/www/fspbx/install/install_fail2ban.sh
+if [ $? -eq 0 ]; then
+    print_success "Fail2Ban installed and configured successfully."
+else
+    print_error "Error occurred while installing Fail2Ban."
+    exit 1
+fi
+
+# Ensure the /etc/fusionpbx directory exists
+if [ ! -d "/etc/fusionpbx" ]; then
+    sudo mkdir -p /etc/fusionpbx
+    print_success "Created /etc/fusionpbx directory."
+fi
+
+# Copy the fusionpbx_config.conf file to /etc/fusionpbx
+sudo cp /var/www/fspbx/install/fusionpbx_config.conf /etc/fusionpbx/config.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied fusionpbx_config.conf to /etc/fusionpbx successfully."
+else
+    print_error "Error occurred while copying fusionpbx_config.conf."
+    exit 1
+fi
+
+print_success "Installing PostgreSQL..."
+bash /var/www/fspbx/install/install_postgresql.sh
+if [ $? -eq 0 ]; then
+    print_success "PostgreSQL installed successfully."
+else
+    print_error "Error occurred while installing PostgreSQL."
+    exit 1
+fi
 
 # Update document root in config.conf
 sudo sed -i 's|document.root = /var/www/fusionpbx|document.root = /var/www/fspbx/public|' /etc/fusionpbx/config.conf
@@ -509,7 +560,6 @@ else
     print_error "Error occurred while installing UUID-OSSP extension in the fusionpbx database."
     exit 1
 fi
-
 
 
 # Create a symbolic link from "public/storage" to "storage/app/public"
