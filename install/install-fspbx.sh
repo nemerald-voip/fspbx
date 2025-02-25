@@ -47,7 +47,7 @@ fi
 
 # Clone FS PBX repository
 print_success "Cloning FS PBX repository..."
-git clone --depth 1 -feature-new-instal-script https://github.com/nemerald-voip/fspbx.git $INSTALL_DIR
+git clone --depth 1 -b feature-new-instal-script https://github.com/nemerald-voip/fspbx.git $INSTALL_DIR
 print_success "FS PBX repository cloned successfully."
 
 # Ensure public directory exists
