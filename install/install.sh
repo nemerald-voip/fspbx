@@ -24,7 +24,7 @@ fi
 
 # Install essential dependencies
 print_success "Installing essential dependencies..."
-apt-get update && apt-get install -y \
+apt-get install -y \
     wget \
     lsb-release \
     systemd \
@@ -33,7 +33,18 @@ apt-get update && apt-get install -y \
     dialog \
     nano \
     net-tools \
-    gpg
+    gpg \
+    ffmpeg \
+    curl \
+    gnupg \
+    ghostscript \
+    libtiff-tools \
+    libreoffice \
+    libreoffice-base \
+    libreoffice-common \
+    libreoffice-java-common \
+    supervisor \
+    redis-server
 if [ $? -eq 0 ]; then
     print_success "Essential dependencies installed successfully."
 else
@@ -207,7 +218,6 @@ fi
 
 # Install Node.js
 if [ $? -eq 0 ]; then
-    sudo apt-get install -y curl gnupg
     if [ $? -eq 0 ]; then
         sudo mkdir -p /etc/apt/keyrings
         curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
@@ -357,17 +367,6 @@ else
 fi
 
 
-
-# Install ffmpeg
-sudo apt-get install -y ffmpeg
-if [ $? -eq 0 ]; then
-    print_success "ffmpeg installed successfully."
-else
-    print_error "Error occurred during ffmpeg installation."
-    exit 1
-fi
-
-
 # Copy .env.example to .env
 cp .env.example .env
 if [ $? -eq 0 ]; then
@@ -378,7 +377,7 @@ else
 fi
 
 # Install Composer dependencies without interaction
-composer install --no-interaction
+composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
 if [ $? -eq 0 ]; then
     print_success "Composer dependencies installed successfully."
 else
@@ -387,13 +386,13 @@ else
 fi
 
 # Regenerate Composer autoload files without interaction
-composer dump-autoload --no-interaction
-if [ $? -eq 0 ]; then
-    print_success "Composer autoload files regenerated successfully."
-else
-    print_error "Error occurred while regenerating Composer autoload files."
-    exit 1
-fi
+# composer dump-autoload --no-interaction
+# if [ $? -eq 0 ]; then
+#     print_success "Composer autoload files regenerated successfully."
+# else
+#     print_error "Error occurred while regenerating Composer autoload files."
+#     exit 1
+# fi
 
 
 # Generate application key
@@ -552,16 +551,6 @@ else
 fi
 
 
-# Switch to the postgres user and install the uuid-ossp extension
-sudo -u postgres psql -d fusionpbx -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-if [ $? -eq 0 ]; then
-    print_success "UUID-OSSP extension installed successfully in the fusionpbx database."
-else
-    print_error "Error occurred while installing UUID-OSSP extension in the fusionpbx database."
-    exit 1
-fi
-
-
 # Create a symbolic link from "public/storage" to "storage/app/public"
 php artisan storage:link
 if [ $? -eq 0 ]; then
@@ -581,94 +570,94 @@ else
 fi
 
 # Download and replace the groups.php file
-sudo curl -o /var/www/fspbx/public/resources/classes/groups.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/groups.php
-if [ $? -eq 0 ]; then
-    print_success "groups.php file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing groups.php file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/resources/classes/groups.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/groups.php
+# if [ $? -eq 0 ]; then
+#     print_success "groups.php file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing groups.php file."
+#     exit 1
+# fi
 
 # Download and replace the xml_cdr.php file
-sudo curl -o /var/www/fspbx/public/app/xml_cdr/resources/classes/xml_cdr.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/xml_cdr/resources/classes/xml_cdr.php
-if [ $? -eq 0 ]; then
-    print_success "xml_cdr.php file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing xml_cdr.php file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/app/xml_cdr/resources/classes/xml_cdr.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/xml_cdr/resources/classes/xml_cdr.php
+# if [ $? -eq 0 ]; then
+#     print_success "xml_cdr.php file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing xml_cdr.php file."
+#     exit 1
+# fi
 
 # Download and replace the functions.php file
-sudo curl -o /var/www/fspbx/public/resources/functions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/functions.php
-if [ $? -eq 0 ]; then
-    print_success "functions.php file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing functions.php file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/resources/functions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/functions.php
+# if [ $? -eq 0 ]; then
+#     print_success "functions.php file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing functions.php file."
+#     exit 1
+# fi
 
 # Download and replace the permissions.php file
-sudo curl -o /var/www/fspbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
-if [ $? -eq 0 ]; then
-    print_success "permissions.php file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing permissions.php file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
+# if [ $? -eq 0 ]; then
+#     print_success "permissions.php file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing permissions.php file."
+#     exit 1
+# fi
 
 # Download and replace the dialplan.php file
-sudo curl -o /var/www/fspbx/public/app/dialplans/resources/classes/dialplan.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/dialplans/resources/classes/dialplan.php
-if [ $? -eq 0 ]; then
-    print_success "dialplan.php file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing dialplan.php file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/app/dialplans/resources/classes/dialplan.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/dialplans/resources/classes/dialplan.php
+# if [ $? -eq 0 ]; then
+#     print_success "dialplan.php file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing dialplan.php file."
+#     exit 1
+# fi
 
 # Download and replace the fax_send.php file
-sudo curl -o /var/www/fspbx/public/app/fax_queue/resources/job/fax_send.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/fax_queue/resources/job/fax_send.php
-if [ $? -eq 0 ]; then
-    print_success "fax_send.php file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing fax_send.php file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/app/fax_queue/resources/job/fax_send.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/fax_queue/resources/job/fax_send.php
+# if [ $? -eq 0 ]; then
+#     print_success "fax_send.php file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing fax_send.php file."
+#     exit 1
+# fi
 
 # Download and replace the ivr.conf.lua file
-sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
-if [ $? -eq 0 ]; then
-    print_success "ivr.conf.lua file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing ivr.conf.lua file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
+# if [ $? -eq 0 ]; then
+#     print_success "ivr.conf.lua file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing ivr.conf.lua file."
+#     exit 1
+# fi
 
 # Download and replace the ivr.conf.lua file
-sudo curl -o /usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
-if [ $? -eq 0 ]; then
-    print_success "ivr.conf.lua file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing ivr.conf.lua file."
-    exit 1
-fi
+# sudo curl -o /usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
+# if [ $? -eq 0 ]; then
+#     print_success "ivr.conf.lua file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing ivr.conf.lua file."
+#     exit 1
+# fi
 
 # Download and replace the hangup_tx.lua file
-sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
-if [ $? -eq 0 ]; then
-    print_success "hangup_tx.lua file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing hangup_tx.lua file."
-    exit 1
-fi
+# sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
+# if [ $? -eq 0 ]; then
+#     print_success "hangup_tx.lua file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing hangup_tx.lua file."
+#     exit 1
+# fi
 
 # Download and replace the hangup_tx.lua file
-sudo curl -o /usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
-if [ $? -eq 0 ]; then
-    print_success "hangup_tx.lua file downloaded and replaced successfully."
-else
-    print_error "Error occurred while downloading and replacing hangup_tx.lua file."
-    exit 1
-fi
+# sudo curl -o /usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
+# if [ $? -eq 0 ]; then
+#     print_success "hangup_tx.lua file downloaded and replaced successfully."
+# else
+#     print_error "Error occurred while downloading and replacing hangup_tx.lua file."
+#     exit 1
+# fi
 
 
 # Change ownership of the entire fspbx directory to www-data
@@ -855,42 +844,23 @@ else
     exit 1
 fi
 
-# Install ghostscript and libtiff-tools
-sudo apt-get install -y ghostscript libtiff-tools
-if [ $? -eq 0 ]; then
-    print_success "Ghostscript and libtiff-tools installed successfully."
-else
-    print_error "Error occurred during Ghostscript and libtiff-tools installation."
-    exit 1
-fi
-
-# Install LibreOffice and related packages
-sudo apt-get install -y libreoffice libreoffice-base libreoffice-common libreoffice-java-common
-if [ $? -eq 0 ]; then
-    print_success "LibreOffice and related packages installed successfully."
-else
-    print_error "Error occurred during LibreOffice installation."
-    exit 1
-fi
-
 # Install Supervisor
-sudo apt-get -y install supervisor
-if [ $? -eq 0 ]; then
-    echo "Supervisor is installed\n\n"
-    print_success "Supervisor installed successfully."
-else
-    print_error "Error occurred while installing Supervisor."
-    exit 1
-fi
+# sudo apt-get -y install supervisor
+# if [ $? -eq 0 ]; then
+#     print_success "Supervisor installed successfully."
+# else
+#     print_error "Error occurred while installing Supervisor."
+#     exit 1
+# fi
 
 # Install Redis Server
-sudo apt-get -y install redis-server
-if [ $? -eq 0 ]; then
-    print_success "Redis Server installed successfully."
-else
-    print_error "Error occurred while installing Redis Server."
-    exit 1
-fi
+# sudo apt-get -y install redis-server
+# if [ $? -eq 0 ]; then
+#     print_success "Redis Server installed successfully."
+# else
+#     print_error "Error occurred while installing Redis Server."
+#     exit 1
+# fi
 
 # Copy Redis configuration
 sudo cp install/redis.conf /etc/redis/redis.conf
@@ -904,7 +874,7 @@ fi
 # Restart Redis Server
 sudo service redis-server restart
 if [ $? -eq 0 ]; then
-    echo "Redis Server is installed\n\n"
+    sleep 6
     print_success "Redis Server restarted successfully."
 else
     print_error "Error occurred while restarting Redis Server."
@@ -932,6 +902,7 @@ fi
 # Reload Supervisor to read new configuration
 sudo supervisorctl reread
 if [ $? -eq 0 ]; then
+    sleep 6
     print_success "Supervisor reread configuration successfully."
 else
     print_error "Error occurred while rereading Supervisor configuration."
@@ -941,6 +912,7 @@ fi
 # Update Supervisor with new configuration
 sudo supervisorctl update
 if [ $? -eq 0 ]; then
+    sleep 6
     print_success "Supervisor updated with new configuration successfully."
 else
     print_error "Error occurred while updating Supervisor with new configuration."
@@ -950,6 +922,7 @@ fi
 # Restart Supervisor
 sudo systemctl restart supervisor
 if [ $? -eq 0 ]; then
+    sleep 6
     print_success "Supervisor restarted successfully."
 else
     print_error "Error occurred while restarting Supervisor."
@@ -959,15 +932,28 @@ fi
 # Restart Horizon processes under Supervisor
 sudo supervisorctl restart horizon:*
 if [ $? -eq 0 ]; then
-    echo "Horizon is installed\n\n"
+    sleep 6
     print_success "Horizon processes restarted successfully."
 else
     print_error "Error occurred while restarting Horizon processes."
     exit 1
 fi
 
+print_success "Seeding the database and configuring FS PBX..."
+# Navigate to Laravel project directory
+cd /var/www/fspbx
+# Run Laravel's initial seed command
+php artisan fspbx:initial-seed
 
-print_success "All tasks completed successfully!"
+# Check if the command was successful
+if [ $? -eq 0 ]; then
+    print_success "All installation tasks completed successfully!"
+else
+    print_error "Error occurred during database seeding and FS PBX configuration."
+    exit 1
+fi
+
+
 
 # Terminal graphic for FS PBX
 echo ""
