@@ -140,27 +140,42 @@ class FSPBXInitialDBSeed extends Command
     private function installAndBuildNpm()
     {
         $this->info("Installing NPM dependencies...");
-        $process = new Process(['npm', 'install'], base_path());
-        $process->setTimeout(300);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+        $installProcess = new Process(['npm', 'install'], base_path());
+        $installProcess->setTimeout(300);
+        $installProcess->run(function ($type, $buffer) {
+            echo $buffer; // Show npm install output in real-time
+        });
+    
+        if (!$installProcess->isSuccessful()) {
+            throw new ProcessFailedException($installProcess);
         }
-
-        $this->info("NPM dependencies installed successfully.");
-
-        $this->info("Building frontend assets...");
-        $process = new Process(['npm', 'run', 'build'], base_path());
-        $process->setTimeout(300);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+    
+        $this->info("✅ NPM dependencies installed successfully.\n");
+    
+        // Start the spinner for progress indication
+        $this->info("🚀 Building frontend assets... (This may take a while)");
+    
+        $spinnerChars = ['-', '\\', '|', '/']; // Spinner animation characters
+        $index = 0;
+    
+        $buildProcess = new Process(['npm', 'run', 'build'], base_path());
+        $buildProcess->setTimeout(300);
+        $buildProcess->start();
+    
+        while ($buildProcess->isRunning()) {
+            echo "\r\e[36m" . $spinnerChars[$index % 4] . " Building frontend assets... \e[0m";
+            usleep(250000); // Update every 250ms
+            $index++;
         }
-
-        $this->info("Frontend assets built successfully.");
+    
+        if (!$buildProcess->isSuccessful()) {
+            throw new ProcessFailedException($buildProcess);
+        }
+    
+        echo "\r✅ Frontend assets built successfully!          \n";
     }
+    
+    
 
     private function updatePermissions()
     {
