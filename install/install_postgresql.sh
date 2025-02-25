@@ -69,7 +69,18 @@ print_success "Configuring database and user..."
 sudo -u postgres psql <<EOF
 CREATE DATABASE fusionpbx;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE ROLE fusionpbx WITH SUPERUSER LOGIN PASSWORD '$DB_PASSWORD';
+
+DO
+\$do\$
+BEGIN
+   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'fusionpbx') THEN
+      CREATE ROLE fusionpbx WITH SUPERUSER LOGIN PASSWORD '$DB_PASSWORD';
+   ELSE
+      ALTER ROLE fusionpbx WITH PASSWORD '$DB_PASSWORD';
+   END IF;
+END
+\$do\$;
+
 GRANT ALL PRIVILEGES ON DATABASE fusionpbx TO fusionpbx;
 
 -- Create the Freeswitch user if it doesn't exist
