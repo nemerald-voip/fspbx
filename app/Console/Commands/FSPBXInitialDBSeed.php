@@ -80,10 +80,15 @@ class FSPBXInitialDBSeed extends Command
         // Step 6: Run Upgrade Defaults
         $this->runUpgradeDefaults();
 
-        // Step 7: Run Menu Creation
-        $this->info("Creating FS PBX menu...");
-        Artisan::call('menu:create-fspbx');
-        $this->info("Menu created successfully.");
+        // Step 7: Run Additional Laravel Commands
+        $this->info("Caching configuration...");
+        Artisan::call('config:cache');
+
+        $this->info("Caching routes...");
+        Artisan::call('route:cache');
+
+        $this->info("Restarting queue workers...");
+        Artisan::call('queue:restart');
 
         // Step 8: Run Laravel Migrations
         $this->info("Running database migrations...");
@@ -95,10 +100,16 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder']);
         $this->info("Recommended settings seeded successfully.");
 
-        // Step 10: Restart FreeSWITCH
+        // Step 10: Install & Build Frontend (NPM)
+        $this->installAndBuildNpm();
+
+        // Step 11: Set Correct Permissions
+        $this->updatePermissions();
+
+        // Step 12: Restart FreeSWITCH
         $this->restartFreeSwitch();
 
-        // Step 11: Display Installation Summary
+        // Step 13: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
 
         return 0;
@@ -123,6 +134,40 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Running upgrade defaults script...");
         shell_exec("cd /var/www/fspbx && /usr/bin/php /var/www/fspbx/public/core/upgrade/upgrade.php > /dev/null 2>&1");
         $this->info("Upgrade defaults executed successfully.");
+    }
+
+
+    private function installAndBuildNpm()
+    {
+        $this->info("Installing NPM dependencies...");
+        $process = new Process(['npm', 'install'], base_path());
+        $process->setTimeout(300);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+
+        $this->info("NPM dependencies installed successfully.");
+
+        $this->info("Building frontend assets...");
+        $process = new Process(['npm', 'run', 'build'], base_path());
+        $process->setTimeout(300);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+
+        $this->info("Frontend assets built successfully.");
+    }
+
+    private function updatePermissions()
+    {
+        $directory = base_path();
+        $this->info("Updating ownership for $directory...");
+        shell_exec("chown -R www-data:www-data $directory");
+        $this->info("Permissions updated successfully.");
     }
 
     private function restartFreeSwitch()
