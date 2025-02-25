@@ -40,7 +40,7 @@ class FSPBXInitialDBSeed extends Command
         $username = "admin@fspbx.net";
         $password = Str::random(25);
 
-        $user = User::where('username', $username)->first();
+        $user = User::where('user_email', $username)->first();
 
         if ($user) {
             // Update existing user's password
@@ -50,7 +50,8 @@ class FSPBXInitialDBSeed extends Command
             // Create new Superadmin user
             $user = User::create([
                 'domain_uuid' => $domain->domain_uuid,
-                'username' => $username,
+                'username' => 'admin',
+                'user_email' => $username,
                 'password' => Hash::make($password),
                 'user_enabled' => true,
             ]);
