@@ -142,9 +142,7 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Installing NPM dependencies...");
         $installProcess = new Process(['npm', 'install'], base_path());
         $installProcess->setTimeout(300);
-        $installProcess->run(function ($type, $buffer) {
-            echo $buffer; // Show npm install output in real-time
-        });
+        $installProcess->run();
     
         if (!$installProcess->isSuccessful()) {
             throw new ProcessFailedException($installProcess);
