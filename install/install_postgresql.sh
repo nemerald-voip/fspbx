@@ -68,7 +68,11 @@ print_success "PostgreSQL $DB_VERSION installed successfully."
 print_success "Configuring database and user..."
 sudo -u postgres psql <<EOF
 CREATE DATABASE fusionpbx;
+
+-- Ensure the extension is created inside the fusionpbx database
+\c fusionpbx
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 
 DO
 \$do\$
