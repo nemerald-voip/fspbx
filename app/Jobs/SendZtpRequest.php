@@ -169,29 +169,41 @@ class SendZtpRequest implements ShouldQueue
             throw new \RuntimeException('Device not found.');
         }
 
-        // Perform action based on `action`
-        match ($this->action) {
-            self::ACTION_CREATE => $cloudProvider->createDevice(
-                $this->deviceMacAddress,
-                $this->organizationId
-            ),
-            self::ACTION_DELETE => $cloudProvider->deleteDevice(
-                $this->deviceMacAddress
-            ),
-            default => throw new \InvalidArgumentException('Invalid action: ' . $this->action),
-        };
+        try {
+            // Perform action based on `action`
+            match ($this->action) {
+                self::ACTION_CREATE => $cloudProvider->createDevice(
+                    $this->deviceMacAddress,
+                    $this->organizationId
+                ),
+                self::ACTION_DELETE => $cloudProvider->deleteDevice(
+                    $this->deviceMacAddress
+                ),
+                default => throw new \InvalidArgumentException('Invalid action: '.$this->action),
+            };
 
-        $statusPayload = [
-            'provider' => $this->provider,
-            'device_address' => $this->deviceMacAddress,
-            'status' => ($this->action === self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
-            'error' => '',
-        ];
+            $statusPayload = [
+                'provider' => $this->provider,
+                'device_address' => $this->deviceMacAddress,
+                'status' => ($this->action === self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
+                'error' => '',
+            ];
 
-        $existingDevice->cloudProvisioningStatus()->updateOrInsert(
-            ['device_uuid' => $existingDevice->device_uuid],
-            $statusPayload
-        );
+            $existingDevice->cloudProvisioningStatus()->updateOrInsert(
+                ['device_uuid' => $existingDevice->device_uuid],
+                $statusPayload
+            );
+        } catch (\Exception $e) {
+            $existingDevice->cloudProvisioningStatus()->updateOrInsert(
+                ['device_uuid' => $existingDevice->device_uuid],
+                [
+                    'provider' => $this->provider,
+                    'device_address' => $this->deviceMacAddress,
+                    'status' => 'error',
+                    'error' => $e->getMessage() ?? 'Unknown error',
+                ]
+            );
+        }
     }
 
     private function handleError($device, $errorMessage): void
