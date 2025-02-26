@@ -40,7 +40,7 @@ class FSPBXInitialDBSeed extends Command
         $username = "admin@fspbx.net";
         $password = Str::random(25);
 
-        $user = User::where('user_email', $username)->first();
+        $user = User::where('user_email', $username)->with('user_adv_fields')->first();
 
         if ($user) {
             // Update existing user's password
