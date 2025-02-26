@@ -13,14 +13,22 @@ print_error() {
 
 print_success  "Welcome to FS PBX installation script"
 
-# Update and upgrade
-apt update && apt upgrade -y
+# Set the environment variable to suppress prompts
+export DEBIAN_FRONTEND=noninteractive
+
+# Run the upgrade with the option to keep the existing configuration files
+apt update && apt -o Dpkg::Options::="--force-confold" upgrade -y
+
+# Check if the upgrade was successful
 if [ $? -eq 0 ]; then
     print_success "System updated and upgraded successfully."
 else
     print_error "Error occurred during update and upgrade."
     exit 1
 fi
+
+# Unset the environment variable to restore normal behavior
+unset DEBIAN_FRONTEND
 
 # Install essential dependencies
 print_success "Installing essential dependencies..."
