@@ -179,6 +179,13 @@
 
                             </div>
 
+                            <div v-if="greetingDescription" class="col-span-6">
+                                <p class="text-xs text-gray-500 italic"
+                                    v-html="`&quot;${decodedGreetingDescription}&quot;`"></p>
+
+                            </div>
+                            
+
                             <!-- Recorded Name -->
                             <div class="mt-1 col-span-6 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center  whitespace-nowrap space-x-2">
@@ -238,13 +245,14 @@
 
                 <!-- New Greeting Form -->
                 <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions" :sample_message="localOptions.sample_message"
-                    :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                    :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
+                    @greeting-saved="handleGreetingSaved" />
 
                 <!-- Recorded Name Form -->
                 <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name" sample_message="John Dow"
-                    :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
+                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name"
+                    sample_message="John Dow" :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
@@ -425,6 +433,21 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
+const greetingDescription = computed(() => {
+    // Find the greeting object in the array whose value matches the selected greeting
+    const selected = localOptions.greetings.find(
+        (greeting) => greeting.value === form.greeting_id
+    );
+    return selected ? selected.description : null;
+});
+
+const decodedGreetingDescription = computed(() => {
+    // Create a temporary DOM element (textarea works well for this)
+    const txt = document.createElement("textarea");
+    txt.innerHTML = greetingDescription.value; // greetingDescription comes from your computed/watched property
+    return txt.value;
+});
+
 const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
 const submitForm = () => {
@@ -447,9 +470,9 @@ const handleUpdateGreetingField = (greeting) => {
 }
 
 // Handler for the greeting-saved event
-const handleGreetingSaved = ({ greeting_id, greeting_name }) => {
+const handleGreetingSaved = ({ greeting_id, greeting_name, description }) => {
     // Add the new greeting to the localOptions.greetings array
-    localOptions.greetings.push({ value: String(greeting_id), name: greeting_name });
+    localOptions.greetings.push({ value: String(greeting_id), name: greeting_name, description: description });
 
     // Sort the greetings array by greeting_id
     localOptions.greetings.sort((a, b) => Number(a.value) - Number(b.value));

@@ -14,7 +14,6 @@ use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DefaultSettings;
 use App\Models\FaxAllowedEmails;
-use App\Models\FreeswitchSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
@@ -737,11 +736,10 @@ class FaxesController extends Controller
             }
         }
 
-        $freeswitchSettings = FreeswitchSettings::first();
         $fp = event_socket_create(
-            $freeswitchSettings['event_socket_ip_address'],
-            $freeswitchSettings['event_socket_port'],
-            $freeswitchSettings['event_socket_password']
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         );
 
         //clear fusionpbx cache
@@ -980,11 +978,10 @@ class FaxesController extends Controller
             }
         }
 
-        $freeswitchSettings = FreeswitchSettings::first();
         $fp = event_socket_create(
-            $freeswitchSettings['event_socket_ip_address'],
-            $freeswitchSettings['event_socket_port'],
-            $freeswitchSettings['event_socket_password']
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         );
 
         //clear fusionpbx cache

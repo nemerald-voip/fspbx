@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Traits\CausesActivity;
@@ -59,7 +60,7 @@ class User extends Authenticatable
         'add_user',
         'contact_uuid',
         'user_totp_secret',
-        'user_type', 
+        'user_type',
         'user_status',
     ];
 
@@ -77,17 +78,19 @@ class User extends Authenticatable
             if (!$model->domain_uuid) {
                 $model->domain_uuid = session('domain_uuid');
             }
-
         });
 
         static::retrieved(function ($model) {
-            if ($model->user_adv_fields && ($model->user_adv_fields->first_name || $model->user_adv_fields->last_name)) {
-                $model->name_formatted = trim(($model->user_adv_fields->first_name ?? '') . ' ' . ($model->user_adv_fields->last_name ?? ''));
+            if (Schema::hasTable('users_adv_fields')) {
+                if ($model->user_adv_fields && ($model->user_adv_fields->first_name || $model->user_adv_fields->last_name)) {
+                    $model->name_formatted = trim(($model->user_adv_fields->first_name ?? '') . ' ' . ($model->user_adv_fields->last_name ?? ''));
+                } else {
+                    $model->name_formatted = $model->username;
+                }
+                // $model->destroy_route = route('devices.destroy', $model);
             } else {
                 $model->name_formatted = $model->username;
             }
-            // $model->destroy_route = route('devices.destroy', $model);
-
             return $model;
         });
     }

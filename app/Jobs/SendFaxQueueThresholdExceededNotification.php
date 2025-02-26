@@ -2,7 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Mail\FaxQueueStatus;
+use App\Mail\ExportCompleted;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -10,10 +13,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class UpdateAppSettings implements ShouldQueue
+class SendFaxQueueThresholdExceededNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $mobile_app;
 
     /**
      * The number of times the job may be attempted.
@@ -48,7 +50,7 @@ class UpdateAppSettings implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 15;
+    public $backoff = 30;
 
     /**
      * Delete the job if its models no longer exist.
@@ -57,14 +59,16 @@ class UpdateAppSettings implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
+    private $params;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($mobile_app)
+    public function __construct($params)
     {
-        $this->mobile_app = $mobile_app;
+        $this->params = $params;
     }
 
     /**
@@ -85,28 +89,15 @@ class UpdateAppSettings implements ShouldQueue
     public function handle()
     {
         // Allow only 2 tasks every 1 second
-        Redis::throttle('ringotel')->allow(2)->every(1)->then(function () {
+        Redis::throttle('email')->allow(2)->every(1)->then(function () {
 
-            //If there is no app then just return
-            if(!isset($this->mobile_app)) {
-                // If there is no app for this user, delete the job from the queue
-                $this->delete();
-                return;
-            }
+            // Send email notification to user that the export has been completed
+            Mail::to($this->params['notifyEmail'])->send(new FaxQueueStatus($this->params));
 
-            // Send request to delеte user
-            $response = appsUpdateUser($this->mobile_app);
-
-            //If there is an error return failed status and requeue the job
-            if (isset($response['error'])) {
-                return $this->release(5);
-            } elseif (!isset($response['result'])) {
-                return $this->release(5);
-            }
 
         }, function () {
             // Could not obtain lock; this job will be re-queued
-            return $this->release(5);
+            return $this->release(30);
         });
 
     }

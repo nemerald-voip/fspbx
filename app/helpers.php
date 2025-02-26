@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\IvrMenus;
-use App\Models\Settings;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\Recordings;
@@ -12,12 +11,10 @@ use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use App\Models\DeviceVendor;
 use App\Models\MusicStreams;
-use Illuminate\Http\Request;
 use App\Models\DeviceProfile;
 use App\Models\DomainSettings;
 use App\Models\SwitchVariable;
 use App\Models\DefaultSettings;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Http;
@@ -461,14 +458,11 @@ if (!function_exists('event_socket_request_cmd')) {
     function event_socket_request_cmd($cmd)
     {
 
-        // Get event socket credentials
-        $settings = Settings::first();
-
         $esl = new event_socket;
         if (!$esl->connect(
-            $settings->event_socket_ip_address,
-            $settings->event_socket_port,
-            $settings->event_socket_password
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         )) {
             return false;
         }
@@ -609,15 +603,11 @@ if (!function_exists('outbound_route_to_bridge')) {
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)
     {
-
-        // Get event socket credentials
-        $settings = Settings::first();
-
         //create the event socket connection
         $fp = event_socket_create(
-            $settings->event_socket_ip_address,
-            $settings->event_socket_port,
-            $settings->event_socket_password
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         );
 
         $sip_profiles = SipProfiles::where('sip_profile_enabled', 'true')

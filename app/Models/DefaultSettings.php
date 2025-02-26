@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class DefaultSettings extends Model
 {
@@ -32,4 +32,14 @@ class DefaultSettings extends Model
         'update_date',
         'update_user',
     ];
+
+    // protected static function booted()
+    // {
+    //     static::saved(function ($model) {
+    //         if ($model->default_setting_subcategory === 'email_challenge') {
+    //             Artisan::call('config:clear');
+    //             Artisan::call('config:cache');
+    //         }
+    //     });
+    // }
 }

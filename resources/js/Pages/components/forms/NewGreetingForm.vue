@@ -44,8 +44,7 @@
                 <div class="col-span-6">
                     <LabelInputOptional target="custom_greeting_message" label="Custom greeting message" class="truncate" />
                     <div class="mt-2">
-                        <Textarea v-model="greetingForm.input" id="custom_greeting_message"
-                            :placeholder="sample_message"
+                        <Textarea v-model="greetingForm.input" id="custom_greeting_message" :placeholder="sample_message"
                             name="custom_greeting_message" rows="3" :error="!!errors?.input" />
                     </div>
                     <div v-if="errors?.input" class="mt-2 text-xs text-red-600">
@@ -65,7 +64,7 @@
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
                     <LabelInputOptional label="Speed" class="truncate mb-1" />
                     <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.0'"
-                        @update:model-value="handleUpdateSpeed" :error="!!errors?.spped" />
+                        @update:model-value="handleUpdateSpeed" :error="!!errors?.speed" />
                     <div v-if="errors?.speed" class="mt-2 text-xs text-red-600">
                         {{ errors.speed[0] }}
                     </div>
@@ -112,7 +111,7 @@
                         </div>
                         <input ref="fileInput" type="file" name="file" id="file" class="hidden" @change="handleFileUpload"
                             accept=".wav, .mp3, .m4a" />
-                        <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV, 
+                        <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV,
                             MP3, or M4A</p>
                     </div>
                 </div>
@@ -129,12 +128,12 @@
 
             <!-- Phone Call Instructions -->
             <div v-if="selectedGreetingMethod === 'phone-call'" class="mt-3">
-              <p class="text-sm text-gray-500">
-                To record a new  greeting using your phone, follow these steps:
-              </p>
-              <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
-                <li v-for="(instruction, index) in phone_call_instructions" :key="index" v-html="instruction"></li>
-              </ul>
+                <p class="text-sm text-gray-500">
+                    To record a new greeting using your phone, follow these steps:
+                </p>
+                <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
+                    <li v-for="(instruction, index) in phone_call_instructions" :key="index" v-html="instruction"></li>
+                </ul>
             </div>
 
             <div v-if="errors?.server" class="grid grid-cols-6 gap-6">
@@ -203,8 +202,10 @@ const errors = ref(null);
 const successMessage = ref(null);
 const audioUrl = ref(null);
 const applyUrl = ref(null);
+const newGreetingFileName = ref(null);
 const selectedFileName = ref('');
 const fileToUpload = ref(null);
+const voicemail_uuid = ref(null);
 
 const greetingForm = reactive({
     input: null,
@@ -285,6 +286,10 @@ const generateGreeting = () => {
             if (response.data.success) {
                 audioUrl.value = response.data.file_url; // Set the audio URL
                 applyUrl.value = response.data.apply_url; // Set the audio URL
+                newGreetingFileName.value = response.data.file_name;
+                if (response.data.voicemail_uuid) {
+                    voicemail_uuid.value = response.data.voicemail_uuid;
+                }
             }
         }).catch((error) => {
             isFormSubmiting.value = false;
@@ -297,7 +302,19 @@ const saveGreeting = () => {
     isSaving.value = true;
     errors.value = null;
 
-    axios.post(applyUrl.value)
+    // Create the payload containing greetingForm.input and newGreetingFileName
+    const payload = {
+        input: greetingForm.input,
+        file_name: newGreetingFileName.value, // using .value because it's a ref
+        _token: page.props.csrf_token, // Include CSRF token if needed
+    };
+
+    // Add voicemail_id if it exists
+    if (voicemail_uuid.value) {
+        payload.voicemail_uuid = voicemail_uuid.value;
+    }
+
+    axios.post(applyUrl.value, payload)
         .then((response) => {
             isSaving.value = false;
             // console.log(response.data);
@@ -305,7 +322,8 @@ const saveGreeting = () => {
                 // Emit the event with the greeting_id and greeting_name
                 emits('greeting-saved', {
                     greeting_id: response.data.greeting_id,
-                    greeting_name: response.data.greeting_name
+                    greeting_name: response.data.greeting_name,
+                    description: response.data.description
                 });
                 audioUrl.value = false;
                 successMessage.value = response.data.messages.success[0];

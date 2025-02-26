@@ -321,7 +321,7 @@ class VirtualReceptionistController extends Controller
 
             // Retrieve all items at once
             $items = $this->model::whereIn('ivr_menu_uuid', request('items'))
-                ->get(['ivr_menu_uuid']);
+                ->get(['ivr_menu_uuid', 'dialplan_uuid']);
 
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
@@ -480,8 +480,13 @@ class VirtualReceptionistController extends Controller
                             'ivr_menu_option_order',
                             'ivr_menu_option_description',
                             'ivr_menu_option_enabled',
-                        )->orderByRaw('ivr_menu_option_digits::integer');
-                    },
+                            )->orderByRaw("
+                            CASE WHEN ivr_menu_option_digits ~ '^[0-9]+$' 
+                                 THEN ivr_menu_option_digits::integer 
+                                 ELSE NULL END ASC, 
+                            ivr_menu_option_digits ASC
+                        ");
+                        },
                 ])->where('ivr_menu_uuid', $item_uuid)->first();
 
                 // If a voicemail exists, use it; otherwise, create a new one
@@ -497,6 +502,7 @@ class VirtualReceptionistController extends Controller
                         return [
                             'value' => $greeting->recording_filename,
                             'name' => $greeting->recording_name,
+                            'description' => $greeting->recording_description,
                         ];
                     })->toArray();
 
@@ -540,7 +546,7 @@ class VirtualReceptionistController extends Controller
 
             $openAiSpeeds = [];
 
-            for ($i = 0.25; $i <= 4.0; $i += 0.25) {
+            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
                 if (floor($i) == $i) {
                     // Whole number, format with one decimal place
                     $formattedValue = sprintf('%.1f', $i);
