@@ -19,10 +19,13 @@ if ! command -v git &> /dev/null; then
     print_success "Git installed successfully."
 fi
 
-# Define installation directories
+# Define variables
 INSTALL_DIR="/var/www/fspbx"
 PUBLIC_DIR="$INSTALL_DIR/public"
 BACKUP_DIR="/var/www/fspbx_backup_$(date +%Y%m%d_%H%M%S)"
+export PHP_VERSION="8.1"
+export FREESWITCH_VERSION="v1.10"
+export POSTGRESQL_VERSION="17"
 
 # Fetch the latest FusionPBX version from GitHub API
 print_success "Fetching the latest FusionPBX release version..."
