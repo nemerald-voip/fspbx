@@ -15,9 +15,9 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 ## Video Installation tutorial in 10 minutes
 
-https://youtu.be/7v8sepsqnH4
+[https://youtu.be/7v8sepsqnH4](https://youtu.be/go6dUce0Nis)
 
-[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/7v8sepsqnH4/0.jpg)](https://www.youtube.com/watch?v=7v8sepsqnH4)
+[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/go6dUce0Nis/0.jpg)](https://www.youtube.com/watch?v=go6dUce0Nis)
 
 
 ## Screenshots
