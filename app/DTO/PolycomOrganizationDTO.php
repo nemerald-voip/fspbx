@@ -8,67 +8,95 @@ class PolycomOrganizationDTO implements OrganizationDTOInterface
     public bool $enabled;
     public object|array $template;
 
+    private const DEFAULT_PROVISIONING = [
+        'server' => [
+            'address' => null,
+            'username' => null,
+            'password' => null,
+        ],
+        'polling' => false,
+        'quickSetup' => false,
+    ];
+
+    private const DEFAULT_DHCP = [
+        'bootServerOption' => null,
+        'option60Type' => null,
+    ];
+
+    private const DEFAULT_SOFTWARE = [
+        'version' => null,
+    ];
+
+    private const DEFAULT_LOCALIZATION = [
+        'language' => null,
+    ];
+
     public function __construct(array $data)
     {
         $this->id = $data['id'] ?? null;
         $this->name = $data['name'] ?? null;
         $this->enabled = $data['enabled'] ?? false;
-        $this->template = $this->parseTemplate($data['template'] ?? []);
+        $this->template = $this->buildTemplate($data['template'] ?? []);
     }
 
-    /**
-     * Parse the "template" data structure from the JSON.
-     *
-     * @param array $template
-     * @return object
-     */
-    private function parseTemplate(array $template): object
+    private function buildTemplate(array $templateData): object
     {
         return (object) [
-            'software' => $template['software'] ?? null,
-            'provisioning' => isset($template['provisioning'])
-                ? $this->parseProvisioning($template['provisioning'])
-                : null,
-            'dhcp' => $template['dhcp'] ?? null,
-            'localization' => $template['localization'] ?? null,
+            'software' => $this->buildSoftware($templateData['software'] ?? []),
+            'provisioning' => $this->buildProvisioning($templateData['provisioning'] ?? []),
+            'dhcp' => $this->buildDhcp($templateData['dhcp'] ?? []),
+            'localization' => $this->buildLocalization($templateData['localization'] ?? []),
         ];
     }
 
-    /**
-     * Parse the "provisioning" data structure.
-     *
-     * @param array $provisioning
-     * @return object
-     */
-    private function parseProvisioning(array $provisioning): object
+    private function buildSoftware(array $softwareData): object
     {
+        $software = array_merge(self::DEFAULT_SOFTWARE, $softwareData);
+
+        return (object) [
+            'version' => $software['version'],
+        ];
+    }
+
+    private function buildProvisioning(array $provisioningData): object
+    {
+        $provisioning = array_merge(self::DEFAULT_PROVISIONING, $provisioningData);
+
         return (object) [
             'server' => (object) [
-                'address' => $provisioning['server']['address'] ?? null,
-                'username' => $provisioning['server']['username'] ?? null,
-                'password' => $provisioning['server']['password'] ?? null,
+                'address' => $provisioning['server']['address'],
+                'username' => $provisioning['server']['username'],
+                'password' => $provisioning['server']['password'],
             ],
-            'polling' => $provisioning['polling'] ?? null,
-            'quickSetup' => $provisioning['quickSetup'] ?? null,
+            'polling' => $provisioning['polling'],
+            'quickSetup' => $provisioning['quickSetup'],
         ];
     }
 
-    /**
-     * Creates a new instance of PolycomOrganizationDTO from an array of data.
-     *
-     * @param array $data
-     * @return PolycomOrganizationDTO
-     */
+    private function buildDhcp(array $dhcpData): object
+    {
+        $dhcp = array_merge(self::DEFAULT_DHCP, $dhcpData);
+
+        return (object) [
+            'bootServerOption' => $dhcp['bootServerOption'],
+            'option60Type' => $dhcp['option60Type'],
+        ];
+    }
+
+    private function buildLocalization(array $localizationData): object
+    {
+        $localization = array_merge(self::DEFAULT_LOCALIZATION, $localizationData);
+
+        return (object) [
+            'language' => $localization['language'],
+        ];
+    }
+
     public static function fromArray(array $data): OrganizationDTOInterface
     {
         return new self($data);
     }
 
-    /**
-     * Converts the DTO object into a JSON string representation.
-     *
-     * @return string
-     */
     public function __toString(): string
     {
         return json_encode(get_object_vars($this), JSON_PRETTY_PRINT);
