@@ -571,7 +571,8 @@ class CloudProvisioningController extends Controller
     {
         try {
             $requestedItems = request('items');
-            $items = $this->model::whereIn($this->model->getKeyName(), $requestedItems)->get();
+            $model = new Devices();
+            $items = $model::whereIn($model->getKeyName(), $requestedItems)->get();
             $supportedProviders = [];
             $localStatuses = [];
 
