@@ -230,7 +230,7 @@ class Devices extends Model
      */
     public function getCloudProviderOrganizationId(): string
     {
-        $domainSettings = DomainSettings::where('domain_uuid', Session::get('domain_uuid'))
+        $domainSettings = DomainSettings::where('domain_uuid', $this->domain_uuid /*Session::get('domain_uuid')*/)
             ->where('domain_setting_category', 'cloud provision');
 
         $domainSettings = match ($this->device_vendor) {
