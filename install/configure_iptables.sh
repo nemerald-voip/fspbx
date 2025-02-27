@@ -15,6 +15,15 @@ print_error() {
 
 print_success "Checking and Installing IPTables..."
 
+# Ensure /usr/sbin is in PATH
+if ! echo "$PATH" | grep -q "/usr/sbin"; then
+    echo 'export PATH=$PATH:/usr/sbin' >> /etc/profile
+    echo 'export PATH=$PATH:/usr/sbin' >> /etc/bash.bashrc
+fi
+
+# Reload the profile immediately for the current session
+export PATH=$PATH:/usr/sbin
+
 # Detect OS version dynamically
 OS_VERSION=$(lsb_release -cs)
 
