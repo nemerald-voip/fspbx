@@ -25,7 +25,7 @@ apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool
                libpcre3-dev devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
                libmemcached-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
                libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev python3-distutils \
-               sox libsox-fmt-all sqlite3 unzip cmake uuid-dev
+               sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev
 
 print_success "All required dependencies installed."
 
