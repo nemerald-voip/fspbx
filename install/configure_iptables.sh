@@ -51,7 +51,7 @@ fi
 # Remove UFW if installed
 if command -v ufw &>/dev/null; then
     print_success "Removing UFW..."
-    ufw reset
+    echo "y" | sudo ufw reset
     ufw disable
     apt-get remove -y ufw
 else
