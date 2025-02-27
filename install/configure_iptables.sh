@@ -13,10 +13,33 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"
 }
 
-print_success "Configuring IPTables Firewall Rules..."
+print_success "Checking and Installing IPTables..."
 
 # Detect OS version dynamically
 OS_VERSION=$(lsb_release -cs)
+
+# Ensure iptables is installed
+if ! command -v iptables &>/dev/null; then
+    print_success "iptables not found, installing..."
+    apt-get update && apt-get install -y iptables
+fi
+
+# Ensure iptables-legacy is set as default on Debian-based systems
+if [[ "$OS_VERSION" == "buster" || "$OS_VERSION" == "bullseye" || "$OS_VERSION" == "bookworm" ]]; then
+    print_success "Setting iptables-legacy as the default version..."
+    apt-get install -y iptables-legacy
+    update-alternatives --set iptables /usr/sbin/iptables-legacy
+    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+fi
+
+# Confirm iptables is now available
+if ! command -v iptables &>/dev/null; then
+    print_error "iptables is still missing! Exiting."
+    exit 1
+fi
+
+print_success "iptables is installed and configured correctly."
+
 
 # Install iptables and set alternatives for older versions
 if [[ "$OS_VERSION" == "buster" || "$OS_VERSION" == "bullseye" || "$OS_VERSION" == "bookworm" ]]; then
