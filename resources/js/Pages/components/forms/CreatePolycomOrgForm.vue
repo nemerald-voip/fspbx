@@ -223,9 +223,9 @@ const page = usePage();
 
 const form = reactive({
     organization_name: props.options.model.domain_description,
-    provisioning_server_address: '',
-    provisioning_server_username: '',
-    provisioning_server_password: '',
+    provisioning_server_address: props.options.settings.polycom_provision_url,
+    provisioning_server_username: props.options.settings.http_auth_username,
+    provisioning_server_password: props.options.settings.http_auth_password,
     dhcp_boot_server_option: '',
     dhcp_option_60_type: '',
     software_version: '',

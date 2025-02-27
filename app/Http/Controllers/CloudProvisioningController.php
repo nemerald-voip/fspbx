@@ -244,6 +244,8 @@ class CloudProvisioningController extends Controller
                 }
             }
 
+            $settings = $this->getProvisioningSettings($model->domain_uuid ?? null);
+
             $permissions = $this->getUserPermissions();
 
             if ($model->org_id) {
@@ -258,6 +260,7 @@ class CloudProvisioningController extends Controller
                 'orgId' => $organization->id ?? null,
                 'dhcp_option_60_type_list' => $dhcpOption60TypeList,
                 'dhcp_boot_server_option_list' => $dhcpBootServerOptionList,
+                'settings' => $settings,
                 'locales' => $locales,
                 'permissions' => $permissions,
             ];
@@ -381,7 +384,7 @@ class CloudProvisioningController extends Controller
             }
 
             // Save the new record
-            $domainSetting = DomainSettings::create([
+           DomainSettings::create([
                 'domain_uuid' => $inputs['domain_uuid'],
                 'domain_setting_category' => 'cloud provision',
                 'domain_setting_subcategory' => 'polycom_ztp_profile_id',
@@ -467,7 +470,7 @@ class CloudProvisioningController extends Controller
 
         try {
             // Send API request to update organization
-            $organization = $this->polycomZtpProvider->updateOrganization($inputs['organization_id'], $inputs);
+            $this->polycomZtpProvider->updateOrganization($inputs['organization_id'], $inputs);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -755,5 +758,30 @@ class CloudProvisioningController extends Controller
                 'deviceData' => null
             ], 500);
         }
+    }
+
+    /**
+     * Get provisioning default settings
+     *
+     * @return array
+     */
+    private function getProvisioningSettings($domain_uuid)
+    {
+        // Fetch all domain settings for the given domain_uuid
+        $domainSettings = DomainSettings::where('domain_uuid', $domain_uuid)
+            ->where('domain_setting_category', 'provision')
+            ->where('domain_setting_enabled', true)
+            ->whereIn('domain_setting_subcategory', ['http_auth_username', 'http_auth_password', 'polycom_provision_url'])
+            ->pluck('domain_setting_value', 'domain_setting_subcategory');
+
+
+        // Fetch all default settings
+        $defaultSettings = DefaultSettings::where('default_setting_enabled', true)
+            ->where('default_setting_category', 'provision')
+            ->whereIn('default_setting_subcategory', ['http_auth_username', 'http_auth_password', 'polycom_provision_url'])
+            ->pluck('default_setting_value', 'default_setting_subcategory');
+
+        // Merge settings, prioritizing domain-level settings
+        return $defaultSettings->merge($domainSettings);
     }
 }
