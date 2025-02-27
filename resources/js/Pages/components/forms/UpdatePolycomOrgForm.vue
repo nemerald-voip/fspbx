@@ -227,7 +227,8 @@ const form = reactive({
     organization_name: props.options.organization.name,
     provisioning_server_address: props.options.organization.template.provisioning.server.address,
     provisioning_server_username: props.options.organization.template.provisioning.server.username,
-    provisioning_server_password: '', // initially the password is empty, because polycom returns [REDACTED] as password value
+    // Since polycom returns [REDACTED] as the password value, we just fill up the content from default/domain settings
+    provisioning_server_password: props.options.settings.http_auth_password,
     dhcp_boot_server_option: props.options.organization.template.dhcp.bootServerOption,
     dhcp_option_60_type: props.options.organization.template.dhcp.option60Type,
     software_version: props.options.organization.template.software.version,
