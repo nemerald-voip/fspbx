@@ -24,14 +24,6 @@ if ! command -v iptables &>/dev/null; then
     apt-get update && apt-get install -y iptables
 fi
 
-# Ensure iptables-legacy is set as default on Debian-based systems
-if [[ "$OS_VERSION" == "buster" || "$OS_VERSION" == "bullseye" || "$OS_VERSION" == "bookworm" ]]; then
-    print_success "Setting iptables-legacy as the default version..."
-    apt-get install -y iptables-legacy
-    update-alternatives --set iptables /usr/sbin/iptables-legacy
-    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-fi
-
 # Confirm iptables is now available
 if ! command -v iptables &>/dev/null; then
     print_error "iptables is still missing! Exiting."
@@ -40,13 +32,6 @@ fi
 
 print_success "iptables is installed and configured correctly."
 
-
-# Install iptables and set alternatives for older versions
-if [[ "$OS_VERSION" == "buster" || "$OS_VERSION" == "bullseye" || "$OS_VERSION" == "bookworm" ]]; then
-    apt-get install -y iptables
-    update-alternatives --set iptables /usr/sbin/iptables-legacy
-    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-fi
 
 # Remove UFW if installed
 if command -v ufw &>/dev/null; then

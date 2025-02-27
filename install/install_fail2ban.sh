@@ -43,6 +43,10 @@ mkdir -p /etc/fail2ban/filter.d
 # ------------------------------
 print_success "Configuring Fail2Ban jails..."
 cat > /etc/fail2ban/jail.local <<EOL
+[DEFAULT]
+# Debian 12 has no log files, just journalctl
+backend = systemd
+
 [nginx-404]
 enabled  = true
 port     = 80,443
