@@ -564,11 +564,9 @@ class CloudProvisioningController extends Controller
     }
 
     /**
-     * Retrieves the status of devices based on the provided request items.
+     * Retrieves the status of devices including their provisioning status, errors, and corresponding cloud data.
      *
-     * @return JsonResponse Returns a JSON response indicating the success or failure of the status retrieval process.
-     * The response contains the status, the device data with their provisioning status, any errors encountered,
-     * and appropriate HTTP status codes.
+     * @return JsonResponse
      */
     public function status(): JsonResponse
     {
@@ -605,27 +603,35 @@ class CloudProvisioningController extends Controller
                     // Initializing provider instance
                     /** @var ZtpProviderInterface $providerInstance */
                     $providerInstance = new $providerClass();
-                    $cloudDevicesData = $providerInstance->getOrganizations();
+                    // Get device list from ZTP
+                    $cloudDevicesData = $providerInstance->getDevices();
 
                     foreach ($items as $item) {
+                        // Retrieve cloud device data for the current device
                         $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
+
+                        // Determine if the device is provisioned
                         $provisioned = $cloudDeviceData && !empty($cloudDeviceData['profileid']);
+
                         if ($provisioned) {
+                            // If provisioned, add provisioned status and data without errors
                             $devicesData[] = [
                                 'device_uuid' => $item->device_uuid,
                                 'status' => 'provisioned',
                                 'error' => null,
-                                'data' => $cloudDeviceData
+                                'data' => $cloudDeviceData,
                             ];
                         } else {
+                            // If not provisioned, retrieve status and error from localStatuses
                             $devicesData[] = [
                                 'device_uuid' => $item->device_uuid,
                                 'status' => $localStatuses[$providerClass][$item->device_address]['status'] ?? 'not_provisioned',
                                 'error' => $localStatuses[$providerClass][$item->device_address]['error'] ?? null,
-                                'data' => $cloudDeviceData
+                                'data' => $cloudDeviceData,
                             ];
                         }
                     }
+
                 } catch (\Exception $e) {
                     logger($e);
 
