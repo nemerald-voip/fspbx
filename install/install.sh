@@ -43,7 +43,6 @@ apt-get install -y \
     net-tools \
     gpg \
     ffmpeg \
-    curl \
     gnupg \
     ghostscript \
     libtiff-tools \
