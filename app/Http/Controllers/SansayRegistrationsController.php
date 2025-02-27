@@ -95,8 +95,17 @@ class SansayRegistrationsController extends Controller
         // Return an empty Collection if the request variable is empty
         if (empty(request('filterData.server'))) return collect();
 
+        // Prepare parameters array
+        $params = [
+            'server' => request('filterData.server'),
+            'userDomain' => $filters['showGlobal'] === false ? session('domain_name') : null,
+        ];
+
+        // Remove null values to avoid unnecessary filters
+        $params = array_filter($params);
+
         // get a list of current registrations
-        $data = $this->sansayApiService->fetchStats(request('filterData.server'));
+        $data = $this->sansayApiService->fetchStats($params);
 
         // logger($data);
 

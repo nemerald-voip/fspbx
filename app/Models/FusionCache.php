@@ -25,11 +25,10 @@ class FusionCache extends Model
         //cache method memcache 
         if ($cacheType == "memcache") {
             // connect to Freeswitch 
-            $freeswitchSettings = FreeswitchSettings::first();
             $fp = event_socket_create(
-                $freeswitchSettings['event_socket_ip_address'],
-                $freeswitchSettings['event_socket_port'],
-                $freeswitchSettings['event_socket_password']
+                config('eventsocket.ip'),
+                config('eventsocket.port'),
+                config('eventsocket.password')
             );
             if ($fp === false) {
                 return false;
@@ -57,11 +56,10 @@ class FusionCache extends Model
             $key = str_replace(":", ".", $key);
 
             // connect to Freeswitch 
-            $freeswitchSettings = FreeswitchSettings::first();
             $fp = event_socket_create(
-                $freeswitchSettings['event_socket_ip_address'],
-                $freeswitchSettings['event_socket_port'],
-                $freeswitchSettings['event_socket_password']
+                config('eventsocket.ip'),
+                config('eventsocket.port'),
+                config('eventsocket.password')
             );
             if ($fp === false) {
                 return false;

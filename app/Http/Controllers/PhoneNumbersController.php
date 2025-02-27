@@ -679,14 +679,6 @@ class PhoneNumbersController extends Controller
 
         $this->generateDialplanDetails($phoneNumber, $dialPlan);
 
-        // $freeswitchSettings = FreeswitchSettings::first();
-        // $fp = event_socket_create(
-        //     $freeswitchSettings['event_socket_ip_address'],
-        //     $freeswitchSettings['event_socket_port'],
-        //     $freeswitchSettings['event_socket_password']
-        // );
-        // event_socket_request($fp, 'bgapi reloadxml');
-
         //clear fusionpbx cache
         $this->clearCache($phoneNumber);
     }

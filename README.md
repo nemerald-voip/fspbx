@@ -15,9 +15,9 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 ## Video Installation tutorial in 10 minutes
 
-https://youtu.be/7v8sepsqnH4
+[https://youtu.be/7v8sepsqnH4](https://youtu.be/go6dUce0Nis)
 
-[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/7v8sepsqnH4/0.jpg)](https://www.youtube.com/watch?v=7v8sepsqnH4)
+[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/go6dUce0Nis/0.jpg)](https://www.youtube.com/watch?v=go6dUce0Nis)
 
 
 ## Screenshots
@@ -45,66 +45,15 @@ https://youtu.be/7v8sepsqnH4
 Before you begin, ensure you have met the following requirements:
 
 - Debian 11 or 12
-- FusionPBX 5.1 installed
 
 ## Installation
 
-### Backend
-
-1. **Clone the Repository**
+1. **Download and run the installation script**
 
    ```bash
-   cd /var/www
-   git clone https://github.com/nemerald-voip/fspbx.git fspbx
-   ```
-
-2. **Move FusionPBX repository into public folder**
-
-   ```bash
-   cd fspbx
-   mkdir public
-   mv ../fusionpbx/* public/
+    wget -O- https://raw.githubusercontent.com/nemerald-voip/fspbx/main/install/install-fspbx.sh | bash
    ```
    
-3.  **Run FS PBX installation script**
-
-   ```bash
-   cd install
-   sh install.sh
-   ```
-
-4. **Run database migration script**
-
-   ```bash
-   cd /var/www/fspbx
-   php artisan migrate
-   ```
-
-5. **Edit .env file**
-Add your mail server in .env file 
-
-6. **Run the update command**
-
-   ```bash
-   php artisan app:update
-   ```
-
-7. **Update your menu links to point to new pages**
-   
-   You can do it manually using a list of all updated links here - https://github.com/nemerald-voip/fspbx/wiki/List-of-all-redesigned-pages
-   
-   or run the following command to create the recommended FS PBX menu:
-   ```bash
-   php artisan menu:create-fspbx
-   ```
-   
-8. **Add recommended default settings**
-   
-   FS PBX includes new default settings that we highly recommend enabling. To install them, run the following command:
-   
-   ```bash
-   php artisan db:seed RecommendedSettingsSeeder
-   ```
 ### Usage
 After completing the installation steps, you can access the application at your domain.
 

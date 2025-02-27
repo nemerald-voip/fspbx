@@ -12,7 +12,6 @@ use App\Models\MusicOnHold;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use App\Models\FreeswitchSettings;
 use App\Models\RingGroupsDestinations;
 use Illuminate\Support\Facades\Session;
 use Propaganistas\LaravelPhone\PhoneNumber;
@@ -306,11 +305,10 @@ class RingGroupsController extends Controller
 
         $dialPlan->save();
 
-        $freeswitchSettings = FreeswitchSettings::first();
         $fp = event_socket_create(
-            $freeswitchSettings['event_socket_ip_address'],
-            $freeswitchSettings['event_socket_port'],
-            $freeswitchSettings['event_socket_password']
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         );
         event_socket_request($fp, 'bgapi reloadxml');
 
@@ -509,11 +507,10 @@ class RingGroupsController extends Controller
 
         $this->generateDialPlanXML($ringGroup);
 
-        $freeswitchSettings = FreeswitchSettings::first();
         $fp = event_socket_create(
-            $freeswitchSettings['event_socket_ip_address'],
-            $freeswitchSettings['event_socket_port'],
-            $freeswitchSettings['event_socket_password']
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         );
         event_socket_request($fp, 'bgapi reloadxml');
 
@@ -543,11 +540,10 @@ class RingGroupsController extends Controller
         $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
         $dialPlan->delete();
 
-        $freeswitchSettings = FreeswitchSettings::first();
         $fp = event_socket_create(
-            $freeswitchSettings['event_socket_ip_address'],
-            $freeswitchSettings['event_socket_port'],
-            $freeswitchSettings['event_socket_password']
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
         );
 
         event_socket_request($fp, 'bgapi reloadxml');
