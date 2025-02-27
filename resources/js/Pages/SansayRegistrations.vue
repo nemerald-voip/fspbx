@@ -33,6 +33,18 @@
                     Refresh
                 </button>
 
+                <button v-if="!showGlobal" type="button"
+                    @click.prevent="handleShowGlobal()"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show global
+                </button>
+
+                <button v-if="showGlobal" type="button"
+                    @click.prevent="handleShowLocal()"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show local
+                </button>
+
             </template>
 
             <template #navigation>
@@ -230,12 +242,15 @@ const filterData = ref({
     server: 'server1',
     sortedField: null,
     sortOrder: null,
+    showGlobal: false,
 });
 
 const servers = [
     { value: 'server1', name: 'SBC1' },
     { value: 'server2', name: 'SBC2' },
 ]
+
+const showGlobal = ref(false);
 
 const isDeleteConfirmationModalVisible = ref(false);
 const isDeleteRequestProcessing = ref(false);
@@ -474,6 +489,18 @@ const handleSort = ({ field, order }) => {
     // Fetch the data with the updated sort field and order
     handleSearchButtonClick();
 };
+
+const handleShowGlobal = () => {
+    filterData.value.showGlobal = true;
+    showGlobal.value = true;
+    handleSearchButtonClick();
+}
+
+const handleShowLocal = () => {
+    filterData.value.showGlobal = false;
+    showGlobal.value = false;
+    handleSearchButtonClick();
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

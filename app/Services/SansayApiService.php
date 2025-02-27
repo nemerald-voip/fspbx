@@ -13,30 +13,45 @@ class SansayApiService
         $this->servers = config('sansay.servers');
     }
 
-    public function fetchStats($server)
+    public function fetchStats(array $params)
     {
         try {
-            $serverDetails = $this->servers[$server];
+            if (!isset($params['server'])) {
+                throw new \Exception('Server parameter is required');
+            }
+    
+            $serverDetails = $this->servers[$params['server']];
 
             $authorization = 'Basic ' . base64_encode($serverDetails['user'] . ':' . $serverDetails['api_key']);
 
 
             // Define the endpoint and parameters
             $endpoint = '/SSConfig/webresources/stats/sub_stats';
-            $params = ['format' => 'json'];
+            $queryParams = ['format' => 'json'];
 
             // Build the URL by combining base_url and endpoint
             $url = $serverDetails['base_url'] . $endpoint;
 
             $response = Http::withHeaders([
                 'Authorization' => $authorization,
-            ])->withoutVerifying()->get($url, $params);
+            ])->withoutVerifying()->get($url, $queryParams);
 
             // Check for successful response
             if ($response->successful()) {
                 $data = $response->json();
                 if (isset($data['XBSubStatsList']) && isset($data['XBSubStatsList']['XBSubStats'])) {
-                    return collect($data['XBSubStatsList']['XBSubStats']);
+                    $collection = collect($data['XBSubStatsList']['XBSubStats']);
+
+                    // Apply additional filters from the array
+                    if (!empty($params['userDomain'])) {
+                        $collection = $collection->where('userDomain', $params['userDomain']);
+                    }
+    
+                    if (!empty($params['username'])) {
+                        $collection = $collection->where('username', $params['username']);
+                    }
+    
+                    return $collection->values(); // Ensure re-indexing of the collection
                 } else {
                     return collect();
                 }
