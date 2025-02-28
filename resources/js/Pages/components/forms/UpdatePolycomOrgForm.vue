@@ -92,8 +92,15 @@
                                 <div class="col-span-3 sm:col-span-3">
                                     <LabelInputOptional target="version" label="Password"
                                                         class="truncate" />
-                                    <InputField v-model="form.provisioning_server_password" type="password" name="provisioning_server_password"
-                                                id="provisioning_server_password" class="mt-2" :error="!!errors?.provisioning_server_password" />
+                                    <InputFieldWithIcon v-model="form.provisioning_server_password" id="provisioning_server_password"
+                                                        name="provisioning_server_password" type="text" autocomplete="shut-up-google"
+                                                        :error="!!errors?.provisioning_server_password" class="password-field">
+                                        <template #icon>
+                                            <VisibilityIcon @click="togglePasswordVisibility"
+                                                            class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                                            aria-hidden="true" />
+                                        </template>
+                                    </InputFieldWithIcon>
                                     <div v-if="errors?.provisioning_server_password" class="mt-2 text-xs text-red-600">
                                         {{ errors.provisioning_server_password[0] }}
                                     </div>
@@ -197,6 +204,8 @@ import Spinner from "@generalComponents/Spinner.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { BuildingOfficeIcon, BarsArrowDownIcon } from '@heroicons/vue/24/outline';
 import LabelInputOptional from "../general/LabelInputOptional.vue";
+import InputFieldWithIcon from "../general/InputFieldWithIcon.vue";
+import VisibilityIcon from "../icons/VisibilityIcon.vue";
 
 
 const loadingModal = ref(false);
@@ -254,6 +263,18 @@ const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
 }
 
+const showPassword = ref(false);
+
+const togglePasswordVisibility = () => {
+    showPassword.value = !showPassword.value;
+    const passwordInput = document.getElementById("provisioning_server_password");
+    if (showPassword.value) {
+        passwordInput.style.webkitTextSecurity = "none"; // Show text
+    } else {
+        passwordInput.style.webkitTextSecurity = "disc"; // Mask text
+    }
+};
+
 const handleLoadDefaultValues = () => {
     form.provisioning_server_address = props.options.settings.polycom_provision_url;
     form.provisioning_server_username = props.options.settings.http_auth_username;
@@ -273,3 +294,12 @@ const handleUpdateBootServerOptionField = (selected) => {
 }
 
 </script>
+<style scoped>
+/* This will mask the text input to behave like a password field */
+.password-field {
+    -webkit-text-security: disc;
+    /* For Chrome and Safari */
+    -moz-text-security: disc;
+    /* For Firefox */
+}
+</style>
