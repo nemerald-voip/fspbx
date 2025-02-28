@@ -53,9 +53,18 @@
                 <div v-if="activeTab === 'provisioning'">
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                            <div class="r">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning</h3>
-                                <p class="mt-3 text-sm leading-6 text-gray-600">Configure a provisioning server.</p>
+                            <div class="flex justify-between">
+                                <div>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning</h3>
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">Configure a provisioning server.</p>
+                                </div>
+                                <ejs-tooltip :content="'Load Default Values'"
+                                             position='TopCenter' target="#load_default_values">
+                                    <div id="load_default_values">
+                                        <BarsArrowDownIcon @click="handleLoadDefaultValues"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-800 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
                             </div>
 
                             <div class="grid grid-cols-1 gap-6">
@@ -83,12 +92,11 @@
                                 <div class="col-span-3 sm:col-span-3">
                                     <LabelInputOptional target="version" label="Password"
                                                         class="truncate" />
-                                    <InputField v-model="form.provisioning_server_password" type="text" name="provisioning_server_password"
+                                    <InputField v-model="form.provisioning_server_password" type="password" name="provisioning_server_password"
                                                 id="provisioning_server_password" class="mt-2" :error="!!errors?.provisioning_server_password" />
                                     <div v-if="errors?.provisioning_server_password" class="mt-2 text-xs text-red-600">
                                         {{ errors.provisioning_server_password[0] }}
                                     </div>
-                                    <p class="mt-2 text-sm text-gray-500">Enter new password if you'd like to change it</p>
                                 </div>
                             </div>
 
@@ -178,7 +186,7 @@
 <script setup>
 import { reactive, ref, watch } from "vue";
 import { usePage } from '@inertiajs/vue3';
-
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
@@ -187,8 +195,9 @@ import Toggle from "@generalComponents/Toggle.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { BuildingOfficeIcon } from '@heroicons/vue/24/outline';
+import { BuildingOfficeIcon, BarsArrowDownIcon } from '@heroicons/vue/24/outline';
 import LabelInputOptional from "../general/LabelInputOptional.vue";
+
 
 const loadingModal = ref(false);
 
@@ -243,6 +252,12 @@ const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
+}
+
+const handleLoadDefaultValues = () => {
+    form.provisioning_server_address = props.options.settings.polycom_provision_url;
+    form.provisioning_server_username = props.options.settings.http_auth_username;
+    form.provisioning_server_password = props.options.settings.http_auth_password;
 }
 
 const handleUpdateLocalizationLanguageField = (selected) => {
