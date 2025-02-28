@@ -34,20 +34,6 @@ apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool
 
 print_success "All required dependencies installed."
 
-# Install dependencies based on OS version
-print_success "Installing OS version-specific dependencies..."
-if [ ."$os_codename" = ."stretch" ]; then
-    apt install -y libvpx4 swig3.0
-elif [ ."$os_codename" = ."buster" ]; then
-    apt install -y libvpx5 swig3.0
-elif [ ."$os_codename" = ."bullseye" ]; then
-    apt install -y libvpx6 swig4.0
-else
-    print_error "Unsupported OS version: $os_codename. Proceeding without version-specific dependencies."
-fi
-
-print_success "OS version-specific dependencies installed."
-
 # Install additional required libraries
 print_success "Installing required external libraries..."
 
