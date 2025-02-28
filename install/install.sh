@@ -172,14 +172,6 @@ else
     exit 1
 fi
 
-service php8.1-fpm restart
-if [ $? -eq 0 ]; then
-    print_success "PHP 8.1-fpm restarted successfully."
-else
-    print_error "Error occurred during PHP 8.1-fpm restart."
-    exit 1
-fi
-
 # Include the install_esl_extension.sh script
 sh /var/www/fspbx/install/install_esl_extension.sh 
 if [ $? -eq 0 ]; then
