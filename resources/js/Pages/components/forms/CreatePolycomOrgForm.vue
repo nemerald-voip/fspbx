@@ -83,7 +83,7 @@
                                 <div class="col-span-3 sm:col-span-3">
                                     <LabelInputOptional target="version" label="Password"
                                                         class="truncate" />
-                                    <InputField v-model="form.provisioning_server_password" type="text" name="provisioning_server_password"
+                                    <InputField v-model="form.provisioning_server_password" type="password" name="provisioning_server_password"
                                                 id="provisioning_server_password" class="mt-2" :error="!!errors?.provisioning_server_password" />
                                     <div v-if="errors?.provisioning_server_password" class="mt-2 text-xs text-red-600">
                                         {{ errors.provisioning_server_password[0] }}
