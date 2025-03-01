@@ -4,7 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\DefaultSettings;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Facades\Process;
+
 
 class RecommendedSettingsSeeder extends Seeder
 {
@@ -567,6 +568,143 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Send a T38 reinvite when a fax tone is detected.",
             ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'aws_upload_calls_' . $this->getMacAddress(),
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Executes upload job only on the server with MAC address " . $this->getMacAddress(),
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'clear_export_directory',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'horizon_snapshot',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'horizon_check_status',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'cache_prune_stale_tags',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'prune_old_webhook_requests',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'backup',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'backup_path',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "/var/backups/fspbx",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'check_fax_service_status',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Monitors pending faxes and identifies those exceeding the allowed threshold.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'fax_service_threshold',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "5",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Defines the maximum number of pending faxes allowed before exceeding the threshold.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'fax_wait_time_threshold',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "60", 
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Specifies the number of minutes a fax can remain in waiting status before being counted against the threshold.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'fax_service_notify_email',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Email address to receive notifications when pending faxes exceed the allowed wait time threshold.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'audit_stale_ringotel_users',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Enables checking for stale Ringotel users based on last active time.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'ringotel_audit_notify_email',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Email address to receive notifications for stale Ringotel users.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'stale_ringotel_users_threshold',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "180",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Defines the number of days after which a Ringotel user is considered stale.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'wake_up_calls',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable or disable the processing of scheduled wake-up calls. If set to 'false', scheduled calls will not be executed.",
+            ],
+            [
+                'default_setting_category'      => 'authentication',
+                'default_setting_subcategory'   => 'email_challenge',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
+            ],
+            
             // Add more settings here...
         ];
 
@@ -592,5 +730,16 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_description'   => $setting['default_setting_description'],
             ]);
         }
+    }
+
+    public function getMacAddress()
+    {
+        // Run the shell command using Process
+        $process = Process::run("ip link show | grep 'link/ether' | awk '{print $2}' | head -n 1");
+
+        // Get the output from the process
+        $macAddress = trim($process->output());
+
+        return $macAddress ?: null;
     }
 }

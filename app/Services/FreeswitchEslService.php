@@ -13,9 +13,11 @@ class FreeswitchEslService
     public function __construct()
     {
         try {
+
             // Check if the 'esl' extension is loaded
             if (!extension_loaded('esl')) {
                 throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact the administrator.");
+            } else {
             }
 
             // Create the event socket connection
@@ -50,7 +52,8 @@ class FreeswitchEslService
             // Convert response to XML
             return $this->convertEslResponse($eslEvent);
         } catch (Throwable $e) {
-            logger('error executing ESL command');
+            logger($e->getMessage());
+            return (null);
         } finally {
             // Disconnect only if the flag is set to true
             if ($disconnect) {
@@ -243,6 +246,11 @@ class FreeswitchEslService
         // Check for '+OK Job-UUID' pattern and extract the Job-UUID
         if (preg_match('/^\+OK Job-UUID: ([a-f0-9-]+)$/i', $response, $matches)) {
             return ['job_uuid' => $matches[1]];
+        }
+
+        // Check for '+OK <uuid>' format (response without 'Job-UUID')
+        if (preg_match('/^\+OK ([a-f0-9-]+)$/i', $response, $matches)) {
+            return $matches[1];
         }
 
         if ($response === '+OK') {

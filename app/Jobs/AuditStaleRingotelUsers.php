@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use App\Models\DefaultSettings;
-use Illuminate\Support\Facades\Log;
 use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;

@@ -118,7 +118,6 @@ class FaxQueueController extends Controller
     {
         $data =  $this->model::query();
         if (isset($filters['showGlobal']) && $filters['showGlobal']) {
-            logger('with domain');
             $data->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
             }]);
@@ -227,14 +226,12 @@ class FaxQueueController extends Controller
 
     protected function getTimezone()
     {
-
-        if (!Cache::has(auth()->user()->user_uuid . '_' . session('domain_uuid') . '_timeZone')) {
-            $timezone = get_local_time_zone(session('domain_uuid'));
-            Cache::put(auth()->user()->user_uuid . session('domain_uuid') .  '_timeZone', $timezone, 600);
-        } else {
-            $timezone = Cache::get(auth()->user()->user_uuid . '_' . session('domain_uuid') . '_timeZone');
-        }
-        return $timezone;
+        $domainUuid = session('domain_uuid');
+        $cacheKey = "{$domainUuid}_timeZone";
+    
+        return Cache::remember($cacheKey, 600, function () use ($domainUuid) {
+            return get_local_time_zone($domainUuid);
+        });
     }
 
     public function retry()

@@ -27,6 +27,7 @@ use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ProFeaturesController;
+use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
@@ -191,9 +192,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
     Route::post('/ivr/message/url', [GreetingsController::class, 'getIvrMessageUrl'])->name('ivr.message.url');
     Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
-    ->name('ivr.message.file.serve')
-    ->where('file_name', '(.*)');
-    
+        ->name('ivr.message.file.serve')
+        ->where('file_name', '(.*)');
+
     // SIP Credentials
     Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
 
@@ -216,11 +217,19 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
     Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
 
+    //Phone Numbers
     Route::resource('phone-numbers', PhoneNumbersController::class);
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
     Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+
+    //Wakeup Calls
+    Route::resource('wakeup-calls', WakeupCallsController::class);
+    // Route::post('/wakeup-calls/select-all', [WakeupCallsController::class, 'selectAll'])->name('wakeup-calls.select.all');
+    // Route::post('/wakeup-calls/bulk-update', [WakeupCallsController::class, 'bulkUpdate'])->name('wakeup-calls.bulk.update');
+    // Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
+    Route::post('wakeup-calls/item-options', [WakeupCallsController::class, 'getItemOptions'])->name('wakeup-calls.item.options');
 
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -390,9 +399,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
     Route::post('/whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
     Route::post('/whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
-
-
-
 });
 
 
