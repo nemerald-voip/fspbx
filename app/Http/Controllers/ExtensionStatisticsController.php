@@ -121,14 +121,12 @@ class ExtensionStatisticsController extends Controller
 
     protected function getTimezone()
     {
-
-        if (!Cache::has(auth()->user()->user_uuid . '_' . Session::get('domain_uuid') . '_timeZone')) {
-            $timezone = get_local_time_zone(Session::get('domain_uuid'));
-            Cache::put(auth()->user()->user_uuid . Session::get('domain_uuid') .  '_timeZone', $timezone, 600);
-        } else {
-            $timezone = Cache::get(auth()->user()->user_uuid . '_' . Session::get('domain_uuid') . '_timeZone');
-        }
-        return $timezone;
+        $domainUuid = session('domain_uuid');
+        $cacheKey = "{$domainUuid}_timeZone";
+    
+        return Cache::remember($cacheKey, 600, function () use ($domainUuid) {
+            return get_local_time_zone($domainUuid);
+        });
     }
 
 

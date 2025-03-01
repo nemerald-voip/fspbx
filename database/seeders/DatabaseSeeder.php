@@ -519,6 +519,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Defines the number of days after which a Ringotel user is considered stale.",
             ],
             [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'wake_up_calls',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable or disable the processing of scheduled wake-up calls. If set to 'false', scheduled calls will not be executed.",
+            ],
+            [
                 'default_setting_category'      => 'authentication',
                 'default_setting_subcategory'   => 'email_challenge',
                 'default_setting_name'          => 'boolean',
