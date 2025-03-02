@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\Faxes;
 use App\Models\Dialplans;
+use App\Models\Extensions;
 use App\Models\WakeupCall;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
@@ -15,9 +15,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
-use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StorePhoneNumberRequest;
-use App\Http\Requests\UpdatePhoneNumberRequest;
+use App\Http\Requests\UpdateWakeupCallRequest;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -28,7 +27,7 @@ class WakeupCallsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'WakeupCalls';
-    protected $searchable = ['status',];
+    protected $searchable = ['status','extension.extension', 'extension.effective_caller_id_name'];
 
     public function __construct()
     {
@@ -41,7 +40,7 @@ class WakeupCallsController extends Controller
      * @param  Request  $request
      * @return JsonResponse
      */
-    public function index() 
+    public function index()
     {
         // if (!userCheckPermission("")) {
         //     return redirect('/');
@@ -101,6 +100,38 @@ class WakeupCallsController extends Controller
 
             ];
 
+            $status_options = [
+                [
+                    'value' => 'scheduled',
+                    'name' => 'Scheduled',
+                ],
+                [
+                    'value' => 'snoozed',
+                    'name' => 'Snoozed',
+                ],
+                [
+                    'value' => 'completed',
+                    'name' => 'Completed',
+                ],
+                [
+                    'value' => 'failed',
+                    'name' => 'Failed',
+                ],
+
+            ];
+
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                ->orderBy('extension', 'asc')
+                ->get();
+
+            // Transform the collection into the desired array format
+            $extensionsOptions = $extensions->map(function ($extension) {
+                return [
+                    'value' => $extension->extension_uuid,
+                    'name' => $extension->name_formatted,
+                ];
+            })->toArray();
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
@@ -113,7 +144,7 @@ class WakeupCallsController extends Controller
                 }
 
                 // Define the update route
-                // $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
+                $updateRoute = route('wakeup-calls.update', ['wakeup_call' => $item_uuid]);
             } else {
                 // Create a new model if item_uuid is not provided
                 $wakeup_call = $this->model;
@@ -132,8 +163,11 @@ class WakeupCallsController extends Controller
             $itemOptions = [
                 'navigation' => $navigation,
                 'wakeup_call' => $wakeup_call,
+                'extensions' => $extensionsOptions,
                 'permissions' => $permissions,
+                'status_options' => $status_options,
                 'routes' => $routes,
+                'timezone' => get_local_time_zone($wakeup_call->domain_uuid)
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -165,7 +199,7 @@ class WakeupCallsController extends Controller
             $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
             $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
         }
-        
+
         $this->filters = [
             'startPeriod' => $startPeriod,
             'endPeriod' => $endPeriod,
@@ -180,8 +214,8 @@ class WakeupCallsController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'wake_up_time'); 
-        $this->sortOrder = request()->get('sortOrder', 'asc'); 
+        $this->sortField = request()->get('sortField', 'wake_up_time');
+        $this->sortOrder = request()->get('sortOrder', 'asc');
 
         $data = $this->builder($this->filters);
 
@@ -192,9 +226,9 @@ class WakeupCallsController extends Controller
                 return $wakeUpCall->append(['wake_up_time_formatted', 'next_attempt_at_formatted']);
             });
         } else {
-            $data = $data->get(); 
+            $data = $data->get();
         }
-    
+
         // logger($data);
 
         return $data;
@@ -262,10 +296,21 @@ class WakeupCallsController extends Controller
     protected function filterSearch($query, $value)
     {
         $searchable = $this->searchable;
+
         // Case-insensitive partial string search in the specified fields
         $query->where(function ($query) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
             }
         });
     }
@@ -448,50 +493,54 @@ class WakeupCallsController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  UpdatePhoneNumberRequest  $request
+     * @param  UpdateWakeupCallRequest  $request
      * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function update(UpdatePhoneNumberRequest $request, Destinations $phone_number)
+    public function update(UpdateWakeupCallRequest $request, WakeupCall $wakeup_call)
     {
-        if (!$phone_number) {
-            // If the model is not found, return an error response
+        if (!$wakeup_call) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Model not found']]
-            ], 404); // 404 Not Found if the model does not exist
+                'errors' => ['model' => ['Wake-up call not found']]
+            ], 404);
         }
-
+    
         try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
-
-            // logger($inputs);
-
-            // Process routing_options to form destination_actions
-            $destination_actions = [];
-            if (!empty($inputs['routing_options'])) {
-                foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
-                }
+            // Extract validated data
+            $validated = $request->validated();
+    
+            // Update fields
+            $wakeup_call->wake_up_time = Carbon::parse($validated['wake_up_time'])->setTimezone('UTC');
+            $wakeup_call->next_attempt_at = Carbon::parse($validated['wake_up_time'])->setTimezone('UTC');
+            $wakeup_call->extension_uuid = $validated['extension'];
+            $wakeup_call->recurring = $validated['recurring'];
+            $wakeup_call->status = $validated['status'];
+    
+            if ($validated['status'] === 'completed') {
+                $wakeup_call->next_attempt_at = null; // No next attempt needed
             }
 
-            // Assign the formatted actions to the destination_actions field
-            $inputs['destination_actions'] = json_encode($destination_actions);
-
-            $phone_number->update($inputs);
-
-            $this->generateDialPlanXML($phone_number);
+            if ($validated['status'] === 'scheduled') {
+                $wakeup_call->retry_count = 0; // resetting retry count
+            }
+    
+            // Save the updates
+            $wakeup_call->save();
+    
+            return response()->json([
+                'success' => true,
+                'messages' => ['success' =>['Wake-up call updated successfully']],
+            ], 200);
         } catch (\Exception $e) {
             logger($e);
-            // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to update this item']]
-            ], 500); // 500 Internal Server Error for any other errors
+            ], 500);
         }
     }
+    
 
 
     /**
