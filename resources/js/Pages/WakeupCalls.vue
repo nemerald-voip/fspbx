@@ -36,11 +36,11 @@
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
                             class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                            placeholder="Search" />
+                            placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
                             class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                            placeholder="Search" />
+                            placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
                     </div>
 
 
@@ -140,7 +140,7 @@
                         </TableField>
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <span v-if="row.reccuring">Yes</span>
+                            <span v-if="row.recurring">Yes</span>
                             <span v-else>No</span>
                         </TableField>
 
@@ -157,7 +157,7 @@
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit wakeup call'"
+                                    <ejs-tooltip :content="'Edit wakeup call'"
                                         position='TopLeft' target="#edit_tooltip_target">
                                         <div id="edit_tooltip_target">
                                             <PencilSquareIcon @click="handleEditRequest(row.uuid)"
@@ -315,7 +315,7 @@ const handleUpdateRequest = (form) => {
     updateFormSubmitting.value = true;
     formErrors.value = null;
 
-    axios.put(form.update_route, form)
+    axios.put(itemOptions.value.routes.update_route, form)
         .then((response) => {
             updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
@@ -337,7 +337,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -529,6 +529,7 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     showRetryConfirmationModal.value = false;
+    showEditModal.value = false;
 }
 
 const determineColor = (status) => {
@@ -565,6 +566,29 @@ const determineColor = (status) => {
             };
     }
 };
+
+const handleFormErrorResponse = (error) => {
+    if (error.request?.status === 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+
+}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
