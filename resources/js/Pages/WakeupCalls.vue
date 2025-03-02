@@ -117,11 +117,9 @@
                             <div class="flex items-center">
                                 <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                     :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                                <div class="ml-9"
-                                    :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                    @click="page.props.auth.can.voicemail_update && handleEditRequest(row.voicemail_uuid)">
+                                <div class="ml-9">
                                     <span class="flex items-center">
-                                        {{ row.wake_up_time }}
+                                        {{ row.wake_up_time_formatted }}
                                     </span>
 
                                 </div>
@@ -131,7 +129,7 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.extension.name_formatted" />
 
-                            <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.domain?.domain_description">
                             <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
                                 target="#domain_tooltip_target">
@@ -140,7 +138,7 @@
                                 </div>
                             </ejs-tooltip>
                         </TableField>
-                        
+
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                             <span v-if="row.reccuring">Yes</span>
                             <span v-else>No</span>
@@ -152,21 +150,20 @@
                                 :ringColor="determineColor(row.status).ringColor" />
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.next_attempt_at" />
+                            :text="row.next_attempt_at_formatted" />
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.retry_count" />
-  
+
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
-                                    </div>
-                                </ejs-tooltip> -->
+                                    <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit wakeup call'"
+                                        position='TopLeft' target="#edit_tooltip_target">
+                                        <div id="edit_tooltip_target">
+                                            <PencilSquareIcon @click="handleEditRequest(row.uuid)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        </div>
+                                    </ejs-tooltip>
 
                                     <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
                                         <div id="restart_tooltip_target">
@@ -206,6 +203,23 @@
         </div>
     </MainLayout>
 
+    <!-- <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-6xl'"
+        @close="handleModalClose">
+        <template #modal-body>
+            <CreatePhoneNumberForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmitting"
+                @submit="handleCreateRequest" @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal> -->
+
+    <AddEditItemModal :show="showEditModal"
+        :header="'Update Wakeup Call Settings'"
+        :loading="loadingModal" :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateWakeupCallForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal>
+
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -237,9 +251,9 @@ import RestartIcon from "./components/icons/RestartIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Badge from "./components/general/Badge.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
-
-
-
+import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+import UpdateWakeupCallForm from "./components/forms/UpdateWakeupCallForm.vue";
 import {
     startOfDay, endOfDay,
 } from 'date-fns';
@@ -257,6 +271,10 @@ const selectPageItems = ref(false);
 const selectAll = ref(false);
 const showRetryConfirmationModal = ref(false);
 const confirmRetryAction = ref(null);
+const showEditModal = ref(false);
+const formErrors = ref(null);
+const updateFormSubmitting = ref(null);
+
 
 const props = defineProps({
     data: Object,
@@ -267,6 +285,8 @@ const props = defineProps({
     statusOptions: Object,
 });
 
+const itemOptions = ref({})
+
 // onMounted(() => {
 //     //request list of entities
 //     // getEntities();
@@ -274,7 +294,6 @@ const props = defineProps({
 //         handleSearchButtonClick();
 //     }
 // })
-
 
 const filterData = ref({
     search: props.search,
@@ -284,6 +303,48 @@ const filterData = ref({
     timezone: props.timezone,
 
 });
+
+const handleEditRequest = (itemUuid) => {
+    showEditModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true;
+    getItemOptions(itemUuid);
+}
+
+const handleUpdateRequest = (form) => {
+    updateFormSubmitting.value = true;
+    formErrors.value = null;
+
+    axios.put(form.update_route, form)
+        .then((response) => {
+            updateFormSubmitting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            updateFormSubmitting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
+const getItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
