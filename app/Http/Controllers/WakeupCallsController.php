@@ -13,7 +13,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\CallRoutingOptionsService;
@@ -61,7 +60,7 @@ class WakeupCallsController extends Controller
                     return $this->filters['endPeriod'];
                 },
                 'timezone' => function () {
-                    return $this->getTimezone();
+                    return get_local_time_zone(session('domain_uuid'));
                 },
                 'routes' => [
                     'current_page' => route('wakeup-calls.index'),
@@ -69,7 +68,7 @@ class WakeupCallsController extends Controller
                     // 'select_all' => route('wakeup-calls.select.all'),
                     // 'bulk_update' => route('wakeup-calls.bulk.update'),
                     // 'bulk_delete' => route('wakeup-calls.bulk.delete'),
-                    // 'item_options' => route('wakeup-calls.item.options'),
+                    'item_options' => route('wakeup-calls.item.options'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
@@ -99,66 +98,32 @@ class WakeupCallsController extends Controller
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'settings',
                 ],
-                [
-                    'name' => 'Advanced',
-                    'icon' => 'AdjustmentsHorizontalIcon',
-                    'slug' => 'advanced',
-                ],
+
             ];
 
-            $routingOptionsService = new CallRoutingOptionsService;
-            $routingTypes = $routingOptionsService->routingTypes;
 
-            $faxes = [];
-            $faxesCollection = Faxes::query();
-            $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
-            $faxesCollection = $faxesCollection->orderBy('fax_name')->get([
-                'fax_extension',
-                'fax_name',
-                'fax_uuid'
-            ]);
-            foreach ($faxesCollection as $fax) {
-                $faxes[] = [
-                    'name' => $fax->fax_extension . ' ' . $fax->fax_name,
-                    'value' => $fax->fax_uuid
-                ];
-            }
-
-            $domains = [];
-            $domainsCollection = Session::get("domains");
-            if ($domainsCollection) {
-                foreach ($domainsCollection as $domain) {
-                    $domains[] = [
-                        'value' => $domain->domain_uuid,
-                        'name' => $domain->domain_description
-                    ];
-                }
-            }
-
-            // Check if item_uuid exists to find an existing voicemail
+            // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
                 // Find existing item by item_uuid
-                $phoneNumber = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
+                $wakeup_call = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
 
-                // logger($phoneNumber);
-
-                // If a voicemail exists, use it; otherwise, create a new one
-                if (!$phoneNumber) {
+                // If a model exists, use it; otherwise, create a new one
+                if (!$wakeup_call) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
                 // Define the update route
-                $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
+                // $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
             } else {
-                // Create a new voicemail if item_uuid is not provided
-                $phoneNumber = $this->model;
+                // Create a new model if item_uuid is not provided
+                $wakeup_call = $this->model;
             }
 
             $permissions = $this->getUserPermissions();
 
             $routes = [
                 'update_route' => $updateRoute ?? null,
-                'get_routing_options' => route('routing.options'),
+                // 'get_routing_options' => route('routing.options'),
 
             ];
 
@@ -166,12 +131,9 @@ class WakeupCallsController extends Controller
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
-                'phone_number' => $phoneNumber,
+                'wakeup_call' => $wakeup_call,
                 'permissions' => $permissions,
                 'routes' => $routes,
-                'routing_types' => $routingTypes,
-                'faxes' => $faxes,
-                'domains' => $domains,
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -199,8 +161,9 @@ class WakeupCallsController extends Controller
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
         } else {
-            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+            $domain_uuid = session('domain_uuid');
+            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
         }
         
         $this->filters = [
@@ -225,11 +188,14 @@ class WakeupCallsController extends Controller
         // Apply pagination if requested
         if ($paginate) {
             $data = $data->paginate($paginate);
+            $data->getCollection()->transform(function ($wakeUpCall) {
+                return $wakeUpCall->append(['wake_up_time_formatted', 'next_attempt_at_formatted']);
+            });
         } else {
-            $data = $data->get(); // This will return a collection
+            $data = $data->get(); 
         }
-
-        logger($data);
+    
+        // logger($data);
 
         return $data;
     }
@@ -302,6 +268,16 @@ class WakeupCallsController extends Controller
                 $query->orWhere($field, 'ilike', '%' . $value . '%');
             }
         });
+    }
+
+    protected function filterStartPeriod($query, $value)
+    {
+        $query->where('wake_up_time', '>=', $value->toIso8601String());
+    }
+
+    protected function filterEndPeriod($query, $value)
+    {
+        $query->where('wake_up_time', '<=', $value->toIso8601String());
     }
 
     /**
@@ -592,16 +568,6 @@ class WakeupCallsController extends Controller
     {
         $permissions = [];
         return $permissions;
-    }
-
-    protected function getTimezone()
-    {
-        $domainUuid = session('domain_uuid');
-        $cacheKey = "{$domainUuid}_timeZone";
-    
-        return Cache::remember($cacheKey, 600, function () use ($domainUuid) {
-            return get_local_time_zone($domainUuid);
-        });
     }
 
     /**

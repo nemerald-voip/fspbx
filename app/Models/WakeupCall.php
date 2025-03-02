@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class WakeupCall extends Model
 {
@@ -38,34 +39,34 @@ class WakeupCall extends Model
     ];
 
     /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
+     * Accessor: Get wake-up time formatted
      */
-    protected static function booted()
+    public function getWakeUpTimeFormattedAttribute()
     {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->fax_date_formatted);
-        });
+        return $this->formatTime($this->wake_up_time);
+    }
 
-        static::retrieved(function ($model) {
-            $time_zone = get_local_time_zone($model->domain_uuid);
-            if ($model->fax_date && $model->domain_uuid) {
-                $model->fax_date_formatted = Carbon::parse($model->fax_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
-            }
+    /**
+     * Accessor: Get next attempt formatted
+     */
+    public function getNextAttemptAtFormattedAttribute()
+    {
+        return $this->formatTime($this->next_attempt_at);
+    }
 
-            if ($model->fax_retry_date && $model->domain_uuid) {
-                $model->fax_retry_date_formatted = Carbon::parse($model->fax_retry_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
-            }
+    /**
+     * Helper function to format time with domain timezone
+     */
+    private function formatTime($timestamp)
+    {
+        if (!$timestamp || !$this->domain_uuid) {
+            return null;
+        }
 
-            if ($model->fax_notify_date && $model->domain_uuid) {
-                $model->fax_notify_date_formatted = Carbon::parse($model->fax_notify_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
-            }
-
-            return $model;
-        });
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::parse($timestamp)
+            ->setTimezone($timeZone)
+            ->format('g:i:s A M d, Y');
     }
 
 
