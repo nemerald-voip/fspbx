@@ -538,7 +538,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.fax_queue_uuid);
+        selectedItems.value = props.data.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }
