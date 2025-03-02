@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\WakeupCall;
-use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -16,9 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\CreateWakeupCallRequest;
-use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdateWakeupCallRequest;
-use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class WakeupCallsController extends Controller
@@ -65,7 +61,7 @@ class WakeupCallsController extends Controller
                 'routes' => [
                     'current_page' => route('wakeup-calls.index'),
                     'store' => route('wakeup-calls.store'),
-                    // 'select_all' => route('wakeup-calls.select.all'),
+                    'select_all' => route('wakeup-calls.select.all'),
                     'bulk_delete' => route('wakeup-calls.bulk.delete'),
                     'item_options' => route('wakeup-calls.item.options'),
                 ],
@@ -181,7 +177,7 @@ class WakeupCallsController extends Controller
     /**
      * @return LengthAwarePaginator
      */
-    public function getData($paginate = 50): LengthAwarePaginator
+    public function getData($paginate = 2): LengthAwarePaginator
     {
         if (!empty(request('filterData.dateRange'))) {
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
@@ -516,14 +512,28 @@ class WakeupCallsController extends Controller
      */
     public function selectAll(): JsonResponse
     {
+
+        // logger(request()->all());
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            $query = $this->model::query();
+
+            // Apply domain filtering unless showGlobal is enabled
+            if (!request()->get('showGlobal')) {
+                $query->where('domain_uuid', session('domain_uuid'));
             }
 
+            // Apply date range filter if provided
+            if (!empty(request('dateRange'))) {
+                $startPeriod = Carbon::parse(request('dateRange')[0])->setTimeZone('UTC');
+                $endPeriod = Carbon::parse(request('dateRange')[1])->setTimeZone('UTC');
+    
+                $query->whereBetween('wake_up_time', [$startPeriod, $endPeriod]);
+            }
+    
+            // Retrieve matching wake-up call UUIDs
+            $uuids = $query->pluck($this->model->getKeyName());
+
+            logger($uuids->count());
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
