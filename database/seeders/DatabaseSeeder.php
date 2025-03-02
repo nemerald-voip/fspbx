@@ -101,6 +101,31 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'whitelisted_numbers_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Wakeup Calls',
+                'permission_name'        => 'wakeup_calls_list_view', // View list of wake-up calls
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'  => 'Wakeup Calls',
+                'permission_name'   => 'wakeup_calls_create', // Create new wake-up calls
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'  => 'Wakeup Calls',
+                'permission_name'   => 'wakeup_calls_edit', // Edit/update wake-up calls
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'  => 'Wakeup Calls',
+                'permission_name'   => 'wakeup_calls_delete', // Delete wake-up calls
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'  => 'Wakeup Calls',
+                'permission_name'   => 'wakeup_calls_all', // Delete wake-up calls
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -169,6 +194,78 @@ class DatabaseSeeder extends Seeder
                 'group_name'            => "superadmin",
                 'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_list_view',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_edit',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_delete',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_all',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_list_view',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_edit',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_delete',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
             ],
 
 
@@ -482,7 +579,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 'fax_wait_time_threshold',
                 'default_setting_name'          => 'text',
-                'default_setting_value'         => "60", 
+                'default_setting_value'         => "60",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Specifies the number of minutes a fax can remain in waiting status before being counted against the threshold.",
             ],
@@ -534,7 +631,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
             ],
-            
+
 
         ];
 
@@ -582,7 +679,6 @@ class DatabaseSeeder extends Seeder
         } catch (\Exception $e) {
             logger("Error seeding ProFeatures");
         }
-
     }
 
 

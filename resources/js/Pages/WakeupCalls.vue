@@ -8,20 +8,20 @@
 
                 <template #action>
 
-                    <!-- <button v-if="page.props.auth.can.cdrs_export" type="button" @click.prevent="exportCsv"
-                        :disabled="isExporting"
-                        class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                        <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
-                        Export CSV
-                        <Spinner class="ml-1" :show="isExporting" />
-                    </button> -->
+                    <button v-if="page.props.auth.can.wakeup_calls_create" type="button"
+                        @click.prevent="handleCreateButtonClick()"
+                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        Create
+                    </button>
 
-                    <button v-if="!filterData.showGlobal" type="button" @click.prevent="handleShowGlobal()"
+                    <button v-if="!filterData.showGlobal && page.props.auth.can.wakeup_calls_view_global" type="button"
+                        @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Show global
                     </button>
 
-                    <button v-if="filterData.showGlobal" type="button" @click.prevent="handleShowLocal()"
+                    <button v-if="filterData.showGlobal && page.props.auth.can.wakeup_calls_view_global" type="button"
+                        @click.prevent="handleShowLocal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Show local
                     </button>
@@ -36,11 +36,11 @@
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
                             class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                            placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
                             class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                            placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     </div>
 
 
@@ -48,11 +48,6 @@
                         <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
                             @update:date-range="handleUpdateDateRange" />
                     </div>
-
-                    <!-- <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                        <SelectBox :options="callDirections" :selectedItem="filterData.direction"
-                            :placeholder="'Call Direction'" @update:model-value="handleUpdateCallDirectionFilter" />
-                    </div> -->
 
 
                 </template>
@@ -157,17 +152,18 @@
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <ejs-tooltip :content="'Edit wakeup call'"
-                                        position='TopLeft' target="#edit_tooltip_target">
+                                    <ejs-tooltip :content="'Edit wakeup call'" position='TopLeft'
+                                        target="#edit_tooltip_target">
                                         <div id="edit_tooltip_target">
                                             <PencilSquareIcon @click="handleEditRequest(row.uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
-                                        <div id="restart_tooltip_target">
-                                            <RestartIcon @click="handleRetry(row.fax_queue_uuid)"
+                                    <ejs-tooltip v-if="page.props.auth.can.wakeup_calls_delete" :content="'Delete'"
+                                        position='TopCenter' target="#delete_tooltip_target">
+                                        <div id="delete_tooltip_target">
+                                            <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
@@ -203,17 +199,16 @@
         </div>
     </MainLayout>
 
-    <!-- <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-6xl'"
-        @close="handleModalClose">
+    <AddEditItemModal :show="showCreateModal" :header="'Create a New Wakeup Call'" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
         <template #modal-body>
-            <CreatePhoneNumberForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmitting"
+            <CreateWakeupCallForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmitting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
-    </AddEditItemModal> -->
+    </AddEditItemModal>
 
-    <AddEditItemModal :show="showEditModal"
-        :header="'Update Wakeup Call Settings'"
-        :loading="loadingModal" :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+    <AddEditItemModal :show="showEditModal" :header="'Update Wakeup Call Settings'" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
         <template #modal-body>
             <UpdateWakeupCallForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
                 @submit="handleUpdateRequest" @cancel="handleModalClose" />
@@ -224,10 +219,10 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <ConfirmationModal :show="showRetryConfirmationModal" @close="showRetryConfirmationModal = false"
-        @confirm="confirmRetryAction" :header="'Are you sure?'"
-        :text="'Are you sure you want to retry sending the selected faxes? This action will attempt to resend them immediately.'"
-        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction"     :header="'Confirm Deletion'"
+    :text="'This action will permanently delete the selected wakup call(s). Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
@@ -243,9 +238,7 @@ import moment from 'moment-timezone';
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import Notification from "./components/notifications/Notification.vue";
-import {
-    MagnifyingGlassIcon,
-} from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
@@ -254,6 +247,7 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import UpdateWakeupCallForm from "./components/forms/UpdateWakeupCallForm.vue";
+import CreateWakeupCallForm from "./components/forms/CreateWakeupCallForm.vue";
 import {
     startOfDay, endOfDay,
 } from 'date-fns';
@@ -272,9 +266,12 @@ const selectAll = ref(false);
 const showRetryConfirmationModal = ref(false);
 const confirmRetryAction = ref(null);
 const showEditModal = ref(false);
+const showCreateModal = ref(false);
 const formErrors = ref(null);
 const updateFormSubmitting = ref(null);
-
+const createFormSubmitting = ref(null);
+const showDeleteConfirmationModal = ref(false);
+const confirmDeleteAction = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -303,6 +300,32 @@ const filterData = ref({
     timezone: props.timezone,
 
 });
+
+const handleCreateButtonClick = () => {
+    showCreateModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions();
+}
+
+const handleCreateRequest = (form) => {
+    createFormSubmitting.value = true;
+    formErrors.value = null;
+
+    axios.post(props.routes.store, form)
+        .then((response) => {
+            createFormSubmitting.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            createFormSubmitting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
 
 const handleEditRequest = (itemUuid) => {
     showEditModal.value = true
@@ -345,6 +368,32 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
+const handleSingleItemDeleteRequest = (url) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeSingleDelete(url);
+}
+
+const executeSingleDelete = (url) => {
+    router.delete(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            if (page.props.flash.error) {
+                showNotification('error', page.props.flash.error);
+            }
+            if (page.props.flash.message) {
+                showNotification('success', page.props.flash.message);
+            }
+            showDeleteConfirmationModal.value = false;
+        },
+        onFinish: () => {
+            showDeleteConfirmationModal.value = false;
+        },
+        onError: (errors) => {
+            console.log(errors);
+        },
+    });
+}
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
@@ -380,14 +429,8 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
-    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
-
-    filterData.value.search = null;
-    filterData.value.direction = null;
-    filterData.value.entity = null;
-    filterData.value.entityType = null;
-    filterData.value.statuses = [];
-
+    filterData.value.dateRange = [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
+        filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
@@ -412,9 +455,9 @@ const renderRequestedPage = (url) => {
 const bulkActions = computed(() => {
     const actions = [
         {
-            id: 'bulk_retry',
-            label: 'Retry',
-            icon: 'RestartIcon'
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
         }
     ];
 
@@ -422,43 +465,24 @@ const bulkActions = computed(() => {
 });
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_retry') {
-        showRetryConfirmationModal.value = true;
-        confirmRetryAction.value = () => executeBulkRetry();
+    if (action === 'bulk_delete') {
+        showDeleteConfirmationModal.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
     }
 
 }
 
-const handleRetry = (uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [uuid] },
-    )
+const executeBulkDelete = () => {
+    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
         .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        }).finally(() => {
-            handleSearchButtonClick();
-        });
-}
-
-const executeBulkRetry = () => {
-    axios.post(props.routes.retry,
-        { 'items': selectedItems.value },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
             handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
             handleClearSelection();
             handleModalClose();
-            handleFormErrorResponse(error);
-        }).finally(() => {
-            handleSearchButtonClick();
+            handleErrorResponse(error);
         });
 }
 
@@ -530,6 +554,8 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     showRetryConfirmationModal.value = false;
     showEditModal.value = false;
+    showCreateModal.value = false;
+    showDeleteConfirmationModal.value = false;
 }
 
 const determineColor = (status) => {
@@ -598,5 +624,4 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
+use App\Http\Requests\CreateWakeupCallRequest;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdateWakeupCallRequest;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
@@ -42,9 +43,9 @@ class WakeupCallsController extends Controller
      */
     public function index()
     {
-        // if (!userCheckPermission("")) {
-        //     return redirect('/');
-        // }
+        if (!userCheckPermission("wakeup_calls_list_view")) {
+            return redirect('/');
+        }
 
         return Inertia::render(
             $this->viewName,
@@ -65,19 +66,10 @@ class WakeupCallsController extends Controller
                     'current_page' => route('wakeup-calls.index'),
                     'store' => route('wakeup-calls.store'),
                     // 'select_all' => route('wakeup-calls.select.all'),
-                    // 'bulk_update' => route('wakeup-calls.bulk.update'),
-                    // 'bulk_delete' => route('wakeup-calls.bulk.delete'),
+                    'bulk_delete' => route('wakeup-calls.bulk.delete'),
                     'item_options' => route('wakeup-calls.item.options'),
-                    //'bulk_delete' => route('messages.settings.bulk.delete'),
-                    //'bulk_update' => route('devices.bulk.update'),
                 ],
-                // 'conditions' => [
-                //     [
-                //         'name' => 'Caller ID Number',
-                //         'value' => 'caller_id_number'
-                //     ]
-                // ],
-                // 'domain' => Session::get('domain_uuid')
+
             ]
         );
     }
@@ -223,7 +215,7 @@ class WakeupCallsController extends Controller
         if ($paginate) {
             $data = $data->paginate($paginate);
             $data->getCollection()->transform(function ($wakeUpCall) {
-                return $wakeUpCall->append(['wake_up_time_formatted', 'next_attempt_at_formatted']);
+                return $wakeUpCall->append(['wake_up_time_formatted', 'next_attempt_at_formatted', 'destroy_route']);
             });
         } else {
             $data = $data->get();
@@ -338,65 +330,39 @@ class WakeupCallsController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StorePhoneNumberRequest  $request
+     * @param  \App\Http\Requests\CreateWakeupCallRequest  $request
      * @return JsonResponse
      */
-    public function store(StorePhoneNumberRequest $request): JsonResponse
+    public function store(CreateWakeupCallRequest $request)
     {
         try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
-
-            // Process routing_options to form destination_actions
-            $destination_actions = [];
-            if (!empty($inputs['routing_options'])) {
-                foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
-                }
-            }
-
-            // Assign the formatted actions to the destination_actions field
-            $inputs['destination_actions'] = json_encode($destination_actions);
-
-            $instance = $this->model;
-            $instance->fill([
-                'domain_uuid' => $inputs['domain_uuid'],
-                'dialplan_uuid' => Str::uuid(),
-                'fax_uuid' => $inputs['fax_uuid'] ?? null,
-                'destination_type' => 'inbound',
-                'destination_prefix' => $inputs['destination_prefix'],
-                'destination_number' => $inputs['destination_number'],
-                'destination_actions' => $inputs['destination_actions'],
-                // 'destination_conditions' => $inputs['destination_conditions'],
-                'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
-                'destination_description' => $inputs['destination_description'] ?? null,
-                'destination_enabled' => $inputs['destination_enabled'] ?? true,
-                'destination_record' => $inputs['destination_record'] ?? false,
-                'destination_type_fax' => $inputs['destination_type_fax'] ?? false,
-                'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
-                'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
-                'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
-                'destination_context' => $inputs['destination_context'] ?? 'public',
+            // Extract validated data
+            $validated = $request->validated();
+    
+            // Create a new WakeupCall entry
+            $wakeupCall = WakeupCall::create([
+                'domain_uuid' => session('domain_uuid'), // Ensure domain is set
+                'extension_uuid' => $validated['extension'],
+                'wake_up_time' => Carbon::parse($validated['wake_up_time'])->setTimezone('UTC'),
+                'recurring' => $validated['recurring'] ?? false,
+                'status' => $validated['status'],
+                'next_attempt_at' => $validated['wake_up_time'], // Initially the same as wake_up_time
             ]);
-            $instance->save();
-
-            $this->generateDialPlanXML($instance);
-
+    
             return response()->json([
-                'messages' => ['success' => ['New item created']]
+                'success' => true,
+                'messages' => ['success' => ['Wake-up call scheduled successfully']],
+                'data' => $wakeupCall,
             ], 201);
         } catch (\Exception $e) {
-            // Log the error message
             logger($e);
-
-            // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create new item'], 'ss' => $e->getMessage()]
-            ], 500);  // 500 Internal Server Error for any other errors
+                'errors' => ['server' => ['Failed to schedule wake-up call']]
+            ], 500);
         }
     }
+    
 
     /**
      * Display the specified resource.
@@ -418,76 +384,6 @@ class WakeupCallsController extends Controller
     public function edit(Request $request, Destinations $phone_number)
     {
         //
-    }
-
-    /**
-     * Bulk update requested items
-     *
-     * @param  BulkUpdatePhoneNumberRequest  $request
-     * @return JsonResponse
-     */
-    public function bulkUpdate(BulkUpdatePhoneNumberRequest  $request): JsonResponse
-    {
-        // $request->items has items IDs that need to be updated
-        // $request->validated has the update data
-
-        try {
-            // Prepare the data for updating
-            $inputs = collect($request->validated())
-                ->filter(function ($value) {
-                    return $value !== null;
-                })->toArray();
-
-            $inputs = $this->processActionConditionInputs($inputs);
-
-            if ($inputs['destination_actions'] == null) {
-                unset($inputs['destination_actions']);
-            }
-
-            if ($inputs['destination_conditions'] == null) {
-                unset($inputs['destination_conditions']);
-            }
-
-            //var_dump($inputs);
-
-            /*if (isset($inputs['device_template'])) {
-                $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
-                if ($inputs['device_vendor'] === 'poly') {
-                    $inputs['device_vendor'] = 'polycom';
-                }
-            }
-
-            if (isset($inputs['extension'])) {
-                $extension = $inputs['extension'];
-                unset($inputs['extension']);
-            } else {
-                $extension = null;
-            }*/
-
-            if (sizeof($inputs) > 0) {
-                $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
-                    ->update($inputs);
-            }
-
-            /*if ($extension) {
-                // First, we are deleting all existing device lines
-                $this->deleteDeviceLines(request('items'));
-
-                // Create new lines
-                $this->createDeviceLines(request('items'), $extension);
-            }*/
-
-            return response()->json([
-                'messages' => ['success' => ['Selected items updated']],
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to update selected items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
     }
 
     /**
@@ -541,38 +437,32 @@ class WakeupCallsController extends Controller
         }
     }
     
-
-
     /**
      * Remove the specified resource from storage.
      *
-     * @param  Destinations  $phone_number
+     * @param  WakeupCall  $wakeup_call
      * @return RedirectResponse
      */
-    public function destroy(Destinations $phoneNumber)
+    public function destroy(WakeupCall $wakeup_call)
     {
         try {
-            //Get dialplan details
-            $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
-
-            // Delete dialplan
-            if ($dialPlan) {
-                $dialPlan->delete();
+            if (!$wakeup_call) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['message' => ['Wakeup call not found.']]
+                ], 404);
             }
-
-            // Delete Phone Number
-            $phoneNumber->delete();
-
-            //clear fusionpbx cache
-            $this->clearCache($phoneNumber);
-
+    
+            // Delete the record
+            $wakeup_call->delete();
+    
             return redirect()->back()->with('message', ['server' => ['Item deleted']]);
         } catch (\Exception $e) {
-            // Log the error message
             logger($e);
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
     }
+    
 
     /**
      * Remove the specified resource from storage.
@@ -585,8 +475,8 @@ class WakeupCallsController extends Controller
             DB::beginTransaction();
 
             // Retrieve all items at once
-            $items = $this->model::whereIn('destination_uuid', request('items'))
-                ->get(['destination_uuid']);
+            $items = $this->model::whereIn('uuid', request('items'))
+                ->get(['uuid']);
 
             foreach ($items as $item) {
                 // Delete the item itself

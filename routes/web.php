@@ -229,7 +229,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('wakeup-calls', WakeupCallsController::class);
     // Route::post('/wakeup-calls/select-all', [WakeupCallsController::class, 'selectAll'])->name('wakeup-calls.select.all');
     // Route::post('/wakeup-calls/bulk-update', [WakeupCallsController::class, 'bulkUpdate'])->name('wakeup-calls.bulk.update');
-    // Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
+    Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
     Route::post('wakeup-calls/item-options', [WakeupCallsController::class, 'getItemOptions'])->name('wakeup-calls.item.options');
 
 

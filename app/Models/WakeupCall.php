@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class WakeupCall extends Model
 {
     use HasFactory;
 
-    protected $table = 'wakeup_calls'; 
+    protected $table = 'wakeup_calls';
 
     protected $primaryKey = 'uuid';
 
@@ -22,7 +23,7 @@ class WakeupCall extends Model
         'uuid',
         'domain_uuid',
         'extension_uuid',
-        'wake_up_time', 
+        'wake_up_time',
         'next_attempt_at', // Next attempt, adjusted for snooze or failures
         'recurring', // Boolean flag for daily recurrence
         'status', // Call status: scheduled, in_progress, completed, failed
@@ -52,6 +53,14 @@ class WakeupCall extends Model
     public function getNextAttemptAtFormattedAttribute()
     {
         return $this->formatTime($this->next_attempt_at);
+    }
+
+    /**
+     * Accessor: Get destroy route
+     */
+    public function destroyRoute(): Attribute
+    {
+        return Attribute::get(fn() => route('wakeup-calls.destroy', ['wakeup_call' => $this->uuid]));
     }
 
     /**
