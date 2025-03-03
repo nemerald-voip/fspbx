@@ -118,6 +118,31 @@ class CheckFaxServiceStatus implements ShouldQueue
                     $this->notifyAdmin($params);
                 }
             }
+
+            // Get last $threshold faxes and check failure rate
+            $recentFaxes = FaxQueues::orderBy('fax_date', 'desc')
+                ->take($threshold)
+                ->pluck('fax_status');
+
+            if ($recentFaxes->count() > 0) {
+                $failedCount = $recentFaxes->filter(fn($status) => $status === 'failed')->count();
+                $failureRate = ($failedCount / $recentFaxes->count()) * 100;
+
+                if ($failureRate >= 80) {
+                    logger("Fax failure alert: {$failedCount} out of {$recentFaxes->count()} faxes have failed.");
+
+                    if ($notifyEmail) {
+                        $this->notifyAdmin([
+                            'notifyEmail' => $notifyEmail,
+                            'failedFaxes' => $failedCount,
+                            'totalChecked' => $recentFaxes->count(),
+                            'failureRate' => $failureRate,
+                            'email_subject' => config('app.name', 'Laravel') . ' fax failure alert'
+                        ]);
+                    }
+                }
+            }
+
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(30);
