@@ -133,7 +133,7 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 14: Set App version
         Artisan::call('version:set', ['version' => config('version.release'),'--force' => true]);
-        Artisan::call('config:cache',['--force' => true]);
+        Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
         // Step 15: Restart FreeSWITCH
