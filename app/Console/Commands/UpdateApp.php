@@ -82,7 +82,7 @@ class UpdateApp extends Command
 
         if (version_compare($currentVersion, $downloadedVersion, '<')) {
             // Call version:set to update the version to the latest one, even if no steps were needed
-            $this->call('version:set', ['version' => $downloadedVersion]);
+            $this->call('version:set', ['version' => $downloadedVersion,'--force' => true]);
             $this->info("Version successfully updated to $downloadedVersion.");
         }
 
