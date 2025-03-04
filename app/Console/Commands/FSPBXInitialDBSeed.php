@@ -107,7 +107,7 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 9: Run Recommended Settings Seeder
         $this->info("Seeding recommended settings...");
-        Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder']);
+        Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder', '--force' => true]);
         $this->info("Recommended settings seeded successfully.");
 
         // Step 10: Run Recommended Settings Seeder
