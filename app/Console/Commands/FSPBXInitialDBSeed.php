@@ -112,7 +112,7 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 10: Run Recommended Settings Seeder
         $this->info("Seeding settings...");
-        Artisan::call('db:seed');
+        Artisan::call('db:seed', ['--force' => true]);  // Add --force flag
         $this->info("Settings seeded successfully.");
 
         // Step 10: Create FS PBX menu

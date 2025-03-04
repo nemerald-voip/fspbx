@@ -89,15 +89,15 @@ class UpdateApp extends Command
         $this->executeCommand('composer dump-autoload --no-interaction --ignore-platform-reqs');
 
         // Cache config and routes
-        $this->runArtisanCommand('config:cache');
-        $this->runArtisanCommand('route:cache');
-        $this->runArtisanCommand('queue:restart');
+        $this->runArtisanCommand('config:cache', ['--force' => true]);
+        $this->runArtisanCommand('route:cache', ['--force' => true]);
+        $this->runArtisanCommand('queue:restart', ['--force' => true]);
 
         //Seed the db
         $this->runArtisanCommand('db:seed', ['--force' => true]);
 
         // Create storage link
-        $this->runArtisanCommand('storage:link');
+        $this->runArtisanCommand('storage:link', ['--force' => true]);
 
         // Update Vue files
         $this->executeCommand('npm install');
