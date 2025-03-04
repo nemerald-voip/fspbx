@@ -94,9 +94,13 @@ class WakeupCallsController extends Controller
                     'name' => 'Scheduled',
                 ],
                 [
+                    'value' => 'in_progress',
+                    'name' => 'In Progress',
+                ],
+                [
                     'value' => 'snoozed',
                     'name' => 'Snoozed',
-                ],
+                ],              
                 [
                     'value' => 'completed',
                     'name' => 'Completed',
@@ -177,7 +181,7 @@ class WakeupCallsController extends Controller
     /**
      * @return LengthAwarePaginator
      */
-    public function getData($paginate = 2): LengthAwarePaginator
+    public function getData($paginate = 50): LengthAwarePaginator
     {
         if (!empty(request('filterData.dateRange'))) {
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');

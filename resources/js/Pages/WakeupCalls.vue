@@ -572,11 +572,17 @@ const determineColor = (status) => {
                 textColor: 'text-blue-700',
                 ringColor: 'ring-blue-600/20'
             };
-        case 'trying':
+        case 'in_progress':
             return {
                 backgroundColor: 'bg-cyan-50',
                 textColor: 'text-cyan-700',
                 ringColor: 'ring-cyan-600/20'
+            };
+        case 'snoozed':
+            return {
+                backgroundColor: 'bg-indigo-50',
+                textColor: 'text-indigo-700',
+                ringColor: 'ring-indigo-600/20'
             };
         case 'failed':
             return {

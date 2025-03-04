@@ -3,7 +3,7 @@
 namespace App\Console;
 
 use App\Models\DefaultSettings;
-use App\Jobs\ProcessScheduledCalls;
+use App\Jobs\ProcessWakeupCalls;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Scheduling\Schedule;
@@ -83,7 +83,7 @@ class Kernel extends ConsoleKernel
 
         // Process scheduled jobs
         if (isset($jobSettings['wake_up_calls']) && $jobSettings['wake_up_calls'] === "true") {
-            // $schedule->job(new ProcessScheduledCalls())->everyMinute();
+            $schedule->job(new ProcessWakeupCalls())->everyMinute();
         }
     }
 
