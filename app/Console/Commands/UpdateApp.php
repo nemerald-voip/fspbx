@@ -93,7 +93,7 @@ class UpdateApp extends Command
         // Cache config and routes
         $this->runArtisanCommand('config:cache');
         $this->runArtisanCommand('route:cache');
-        $this->runArtisanCommand('queue:restart', ['--force' => true]);
+        $this->runArtisanCommand('queue:restart');
 
         //Seed the db
         $this->runArtisanCommand('db:seed', ['--force' => true]);
