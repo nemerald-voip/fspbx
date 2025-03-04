@@ -75,7 +75,7 @@ class UpdateApp extends Command
                 }
 
                 // If the update is successful, call the version:set command
-                $this->call('version:set', ['version' => $version]);
+                $this->call('version:set', ['version' => $version,'--force' => true]);
                 $this->info("Version successfully updated to $version.");
             }
         }
@@ -91,8 +91,8 @@ class UpdateApp extends Command
         $this->executeCommand('composer dump-autoload --no-interaction --ignore-platform-reqs');
 
         // Cache config and routes
-        $this->runArtisanCommand('config:cache', ['--force' => true]);
-        $this->runArtisanCommand('route:cache', ['--force' => true]);
+        $this->runArtisanCommand('config:cache');
+        $this->runArtisanCommand('route:cache');
         $this->runArtisanCommand('queue:restart', ['--force' => true]);
 
         //Seed the db
