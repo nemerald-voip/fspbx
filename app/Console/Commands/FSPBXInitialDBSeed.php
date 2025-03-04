@@ -132,8 +132,8 @@ class FSPBXInitialDBSeed extends Command
         $this->info("SQLite migration to RAM completed.");
 
         // Step 14: Set App version
-        Artisan::call('version:set', ['version' => config('version.release')]);
-        Artisan::call('config:cache');
+        Artisan::call('version:set', ['version' => config('version.release'),'--force' => true]);
+        Artisan::call('config:cache',['--force' => true]);
         $this->info("App version is " . config('version.release') . ".");
 
         // Step 15: Restart FreeSWITCH
