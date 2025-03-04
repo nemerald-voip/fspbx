@@ -51,7 +51,9 @@ apt-get install -y \
     libreoffice-common \
     libreoffice-java-common \
     supervisor \
-    redis-server
+    redis-server \
+    software-properties-common \
+    apt-transport-https
 if [ $? -eq 0 ]; then
     print_success "Essential dependencies installed successfully."
 else
@@ -756,6 +758,24 @@ if [ $? -eq 0 ]; then
     print_success "fax_queue service enabled successfully."
 else
     print_error "Error occurred while enabling fax_queue service."
+    exit 1
+fi
+
+# Enable email_queue service
+sudo systemctl enable email_queue
+if [ $? -eq 0 ]; then
+    print_success "email_queue service enabled successfully."
+else
+    print_error "Error occurred while enabling email_queue service."
+    exit 1
+fi
+
+# Enable event_guard service
+sudo systemctl enable event_guard
+if [ $? -eq 0 ]; then
+    print_success "event_guard service enabled successfully."
+else
+    print_error "Error occurred while enabling event_guard service."
     exit 1
 fi
 

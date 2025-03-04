@@ -48,6 +48,13 @@ class DatabaseSeeder extends Seeder
                 'group_description' => "Message Admin Group",
                 'insert_date'       => date("Y-m-d H:i:s"),
             ],
+            [
+                'group_name'        => 'multi-site admin',
+                'group_protected'   => 'true',
+                'group_level'       => 60,
+                'group_description' => "A multi-site admin can manages multiple domains using one login",
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
 
         ];
 
@@ -158,7 +165,14 @@ class DatabaseSeeder extends Seeder
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
 
-
+            [
+                'permission_name'        => 'domain_select',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "multi-site admin",
+                'group_uuid'            => Groups::where('group_name', "multi-site admin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
         ];
 
         foreach ($group_permissions as $permission) {

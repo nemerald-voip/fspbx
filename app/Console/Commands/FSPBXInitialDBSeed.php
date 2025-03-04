@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Models\UserSetting;
 use App\Models\Domain;
 use App\Models\Groups;
 use App\Models\UserGroup;
@@ -44,7 +45,12 @@ class FSPBXInitialDBSeed extends Command
 
         if ($user) {
             // Update existing user's password
-            $user->update(['password' => Hash::make($password)]);
+            $user->update(
+                [
+                    'password' => Hash::make($password),
+                    'user_enabled' => 'true'
+                ]
+            );
             $this->info("Superadmin user '$username' already exists. Password updated.");
         } else {
             // Create new Superadmin user
@@ -53,7 +59,7 @@ class FSPBXInitialDBSeed extends Command
                 'username' => 'admin',
                 'user_email' => $username,
                 'password' => Hash::make($password),
-                'user_enabled' => true,
+                'user_enabled' => 'true',
             ]);
             $this->info("Superadmin user '$username' created successfully.");
         }
@@ -78,6 +84,9 @@ class FSPBXInitialDBSeed extends Command
             $this->info("User is already assigned to the Superadmin group.");
         }
 
+        // Ensure default user settings are present
+        $this->createUserSettings($user, $domain->domain_uuid);
+
         // Step 6: Run Upgrade Defaults
         $this->runUpgradeDefaults();
 
@@ -101,26 +110,36 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder']);
         $this->info("Recommended settings seeded successfully.");
 
-        // Step 10: Install & Build Frontend (NPM)
+        // Step 10: Run Recommended Settings Seeder
+        $this->info("Seeding settings...");
+        Artisan::call('db:seed');
+        $this->info("Settings seeded successfully.");
+
+        // Step 10: Create FS PBX menu
+        $this->info("Creating FS PBX menu...");
+        Artisan::call('menu:create-fspbx');
+        $this->info("Created FS PBX menu...");
+
+        // Step 11: Install & Build Frontend (NPM)
         $this->installAndBuildNpm();
 
-        // Step 11: Set Correct Permissions
+        // Step 12: Set Correct Permissions
         $this->updatePermissions();
 
-        // Step 12: Migrate SQLite to RAM
+        // Step 13: Migrate SQLite to RAM
         $this->info("Migrating SQLite to RAM...");
         $this->call('fs:migrate-sqlite-to-ram');
         $this->info("SQLite migration to RAM completed.");
 
-        // Step 13: Set App version
+        // Step 14: Set App version
         Artisan::call('version:set', ['version' => config('version.release')]);
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
-        // Step 13: Restart FreeSWITCH
+        // Step 15: Restart FreeSWITCH
         $this->restartFreeSwitch();
 
-        // Step 14: Display Installation Summary
+        // Step 16: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
 
         return 0;
@@ -184,8 +203,6 @@ class FSPBXInitialDBSeed extends Command
         echo "\r✅ Frontend assets built successfully!          \n";
     }
 
-
-
     private function updatePermissions()
     {
         $directory = base_path();
@@ -204,6 +221,48 @@ class FSPBXInitialDBSeed extends Command
             throw new ProcessFailedException($process);
         }
         $this->info("FreeSWITCH restarted successfully.");
+    }
+
+        /**
+     * Ensure the user has the required settings.
+     */
+    private function createUserSettings(User $user, string $domainUuid)
+    {
+        $defaultSettings = [
+            [
+                'user_setting_uuid'  => Str::uuid(),
+                'domain_uuid'        => $domainUuid,
+                'user_uuid'          => $user->user_uuid,
+                'user_setting_category'    => 'domain',
+                'user_setting_subcategory' => 'language',
+                'user_setting_name'        => 'code',
+                'user_setting_value'       => 'en-us',
+                'user_setting_enabled'     => true,
+            ],
+            [
+                'user_setting_uuid'  => Str::uuid(),
+                'domain_uuid'        => $domainUuid,
+                'user_uuid'          => $user->user_uuid,
+                'user_setting_category'    => 'domain',
+                'user_setting_subcategory' => 'time_zone',
+                'user_setting_name'        => 'name',
+                'user_setting_value'       => 'America/Los_Angeles',
+                'user_setting_enabled'     => true,
+            ],
+        ];
+
+        foreach ($defaultSettings as $setting) {
+            UserSetting::firstOrCreate(
+                [
+                    'user_uuid'           => $user->user_uuid,
+                    'user_setting_category' => $setting['user_setting_category'],
+                    'user_setting_subcategory' => $setting['user_setting_subcategory'],
+                ],
+                $setting
+            );
+        }
+
+        $this->info("✅ User settings initialized (Language: en-us, Time Zone: America/Los_Angeles).");
     }
 
     private function displayCompletionMessage($username, $password)
