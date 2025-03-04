@@ -2,8 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Models\ScheduledCall;
+use App\Models\WakeupCall;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
 use App\Services\FreeswitchEslService;
 use Illuminate\Queue\SerializesModels;
@@ -63,7 +64,7 @@ class ExecuteWakeUpCall implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(ScheduledCall $call)
+    public function __construct(WakeupCall $call)
     {
         $this->call = $call;
     }
@@ -72,22 +73,25 @@ class ExecuteWakeUpCall implements ShouldQueue
      */
     public function handle(FreeswitchEslService $eslService)
     {
-        if ($this->call->status !== 'scheduled') {
-            logger("🚫 Call {$this->call->origination_number}@{$this->call->context} already processed. Skipping.");
+        if ($this->call->status !== 'scheduled' && $this->call->status !== 'snoozed') {
+            logger("🚫 Call {$this->call->extension->extension} already processed. Skipping.");
             return;
         }
 
         // 🚀 **Redis Throttling: Limit calls to 10 every 30 seconds**
         Redis::throttle('wakeup_calls')->allow(10)->every(30)->then(function () use ($eslService) {
             try {
-                logger("📞 Initiating Wake-Up Call to {$this->call->origination_number}@{$this->call->context}");
+                logger("📞 Initiating Wake-Up Call to {$this->call->extension->extension}");
 
                 // **Step 1: Originate Call to FreeSWITCH**
-                $response = $eslService->executeCommand("originate {origination_caller_id_number={$this->call->origination_number},origination_caller_id_name='Wakeup Call',hangup_after_bridge=true,originate_timeout=30}user/{$this->call->origination_number}@{$this->call->context} &lua wakeup.lua");
+                $response = $eslService->executeCommand(
+                    "originate {origination_caller_id_number={$this->call->extension->extension},origination_caller_id_name='Wakeup Call',hangup_after_bridge=true,originate_timeout=30,call_direction='local',wakeup_call_uuid={$this->call->uuid}}user/{$this->call->extension->extension}@{$this->call->extension->user_context} &lua(lua/wakeup_call.lua)"
+                );
 
-                logger("🛠 ESL Response: " . json_encode($response));
+                // logger("originate {origination_caller_id_number={$this->call->extension->extension},origination_caller_id_name='Wakeup Call',hangup_after_bridge=true,originate_timeout=30}user/{$this->call->extension->extension}@{$this->call->extension->user_context} &lua wakeup.lua");
+                // logger("🛠 ESL Response: " . json_encode($response));
 
-                if (!$response || $response['status'] === 'error') {
+                if (!$response) {
                     // ❌ Call was rejected or not answered → Retry with increasing delay
                     $this->retryCall();
                 } else {
@@ -111,18 +115,34 @@ class ExecuteWakeUpCall implements ShouldQueue
     private function retryCall()
     {
         if ($this->call->retry_count < 3) {
-            $delay = ($this->call->retry_count + 1) * 1; // 1st retry +1 min, 2nd +2 min, 3rd +3 min
+            // Calculate cumulative retry delay using summation formula
+            $delay = (($this->call->retry_count + 1) * ($this->call->retry_count + 2)) / 2;
+
+            // Apply the delay to the original wake-up time
+            $newAttemptTime = Carbon::parse($this->call->wake_up_time)->addMinutes($delay);
+
             $this->call->update([
                 'status' => 'scheduled',
                 'retry_count' => $this->call->retry_count + 1,
-                'scheduled_time' => now()->addMinutes($delay),
+                'next_attempt_at' => $newAttemptTime,
             ]);
 
-            logger("🔄 Rescheduling Wake-Up Call for {$this->call->origination_number}@{$this->call->context} in {$delay} minutes.");
+            logger("🔄 Rescheduling Wake-Up Call for {$this->call->extension->extension} at {$newAttemptTime->toDateTimeString()}.");
         } else {
             // ⛔ Stop retrying after 3 failed attempts
-            $this->call->update(['status' => 'failed']);
-            logger("⛔ Wake-Up Call failed permanently for {$this->call->origination_number}@{$this->call->context}.");
+            if ($this->call->recurring) {
+                // ✅ If recurring, schedule for the next day
+                $this->call->update([
+                    'status' => 'scheduled',
+                    'retry_count' => 0, // Reset retry count
+                    'next_attempt_at' => Carbon::parse($this->call->wake_up_time)->addDay(),
+                ]);
+
+                logger("🔁 Recurring wake-up call rescheduled for the next day: {$this->call->extension->extension}");
+            } else {
+                $this->call->update(['status' => 'failed']);
+                logger("⛔ Wake-Up Call failed permanently for {$this->call->extension->extension}.");
+            }
         }
     }
 }

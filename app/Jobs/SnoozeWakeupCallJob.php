@@ -2,20 +2,22 @@
 
 namespace App\Jobs;
 
-use App\Models\ScheduledCall;
+use App\Models\WakeupCall;
 use Illuminate\Bus\Queueable;
-use App\Jobs\ExecuteWakeUpCall;
-use App\Models\DefaultSettings;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class ProcessScheduledCalls implements ShouldQueue
+class SnoozeWakeupCallJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    protected string $uuid;
+    protected int $minutes;
 
 
     /**
@@ -60,31 +62,40 @@ class ProcessScheduledCalls implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
+
     /**
      * Create a new job instance.
      */
-    // public function __construct()
-    // {
-    // }
+    public function __construct(string $uuid, int $minutes)
+    {
+        $this->uuid = $uuid;
+        $this->minutes = $minutes;
+    }
 
     /**
      * Execute the job.
      */
     public function handle()
     {
-        // Allow only 1 tasks every 30 second
-        Redis::throttle('wakeup_calls')->allow(1)->every(30)->then(function () {
-            ScheduledCall::where('status', 'scheduled')
-                ->where('scheduled_time', '<=', now())
-                ->where('retry_count', '<=', 3)
-                ->chunk(10, function ($calls) { //Chunking prevents memory overload when handling large datasets.
-                    foreach ($calls as $call) {
-                        foreach ($calls as $call) {
-                            ExecuteWakeUpCall::dispatch($call);
-                            logger("✅ Dispatched Wake-Up Call: " . $call->origination_number . '@' . $call->context);
-                        }
-                    }
-                });
+        Redis::throttle('wakeup_calls')->allow(10)->every(30)->then(function () {
+
+            $wakeupCall = WakeupCall::where('uuid', $this->uuid)->first();
+
+            if (!$wakeupCall) {
+                Log::error("Wake-up call not found: {$this->uuid}");
+                return;
+            }
+
+            // Apply the snooze time to the original wake-up time instead of `now()`
+            $newAttemptTime = Carbon::parse($wakeupCall->next_attempt_at)->addMinutes($this->minutes);
+
+            // Update wake-up call next attempt time
+            $wakeupCall->update([
+                'next_attempt_at' => $newAttemptTime,
+                'status' => 'snoozed'
+            ]);
+
+            Log::info("🔕 Wake-up call snoozed: {$this->uuid} until {$newAttemptTime->toDateTimeString()}");
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds
         });
