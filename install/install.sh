@@ -770,15 +770,6 @@ else
     exit 1
 fi
 
-# Enable event_guard service
-sudo systemctl enable event_guard
-if [ $? -eq 0 ]; then
-    print_success "event_guard service enabled successfully."
-else
-    print_error "Error occurred while enabling event_guard service."
-    exit 1
-fi
-
 sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/fax_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated WorkingDirectory for fax_queue service successfully."
@@ -819,6 +810,15 @@ if [ $? -eq 0 ]; then
     print_success "Updated ExecStart for event_guard service successfully."
 else
     print_error "Error occurred while updating ExecStart for event_guard service."
+    exit 1
+fi
+
+# Enable event_guard service
+sudo systemctl enable event_guard
+if [ $? -eq 0 ]; then
+    print_success "event_guard service enabled successfully."
+else
+    print_error "Error occurred while enabling event_guard service."
     exit 1
 fi
 
