@@ -389,6 +389,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Cloud Provisioning
     Route::resource('cloud-provisioning', CloudProvisioningController::class);
+    Route::post('/cloud-provisioning/domains', [CloudProvisioningController::class, 'getAvailableDomains'])->name('cloud-provisioning.domains');
     Route::post('/cloud-provisioning/item-options', [CloudProvisioningController::class, 'getItemOptions'])->name('cloud-provisioning.item.options');
     Route::post('/cloud-provisioning/organization/create', [CloudProvisioningController::class, 'createOrganization'])->name('cloud-provisioning.organization.create');
     Route::put('/cloud-provisioning/organization/update', [CloudProvisioningController::class, 'updateOrganization'])->name('cloud-provisioning.organization.update');

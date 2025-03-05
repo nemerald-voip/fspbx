@@ -154,6 +154,13 @@ class CloudProvisioningController extends Controller
         });
     }
 
+    public function getAvailableDomains()
+    {
+        return [
+            'data' => $this->getData()
+            ];
+    }
+
     public function getItemOptions(PolycomZtpProvider $polycomZtpProvider)
     {
         $this->polycomZtpProvider = $polycomZtpProvider;
@@ -304,6 +311,11 @@ class CloudProvisioningController extends Controller
                 'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function show(Domain $domain)
+    {
+        //
     }
 
 
