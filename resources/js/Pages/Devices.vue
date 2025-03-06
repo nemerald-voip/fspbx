@@ -717,11 +717,15 @@ const getItemOptions = (domain_uuid) => {
         });
 }
 
-const getAvailableDomains = () => {
-    axios.post(props.routes.cloud_provisioning_domains, {}).then((response) => {
-        availableDomains.value = response
-    })
-}
+const getAvailableDomains = async () => {
+    try {
+        const response = await axios.post(props.routes.cloud_provisioning_domains, {});
+        availableDomains.value = response.data.data || [];
+    } catch (error) {
+        console.error(error);
+    }
+};
+
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {

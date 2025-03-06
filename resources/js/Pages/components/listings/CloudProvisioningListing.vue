@@ -13,9 +13,12 @@
             </nav>
 
         </aside>
-        <div v-if="activeTab === 'polycom'">
+        <div v-if="activeTab === 'polycom'" class="lg:col-span-9">
             <DataTable>
                 <template #table-header>
+                    <TableColumnHeader header="Tenant"
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    </TableColumnHeader>
                     <TableColumnHeader header="Tenant Domain"
                                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -23,18 +26,17 @@
                 </template>
 
                 <template #table-body>
-                    <tr v-for="row in availableDomains.data" :key="row.domain_uuid">
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                    <tr v-for="row in props.availableDomains" :key="row.domain_uuid">
+
+                        <!--
+                        <TableField class="whitespace-nowrap px-4 text-sm text-gray-500">
                             <div class="flex items-center">
-                                <div class="ml-9">
                                 <span v-if="row.domain_description" class="flex items-center">
                                     {{ row.domain_description }}
                                 </span>
-                                    <span v-else class="flex items-center">
+                                <span v-else class="flex items-center">
                                     {{ row.domain_name }}
                                 </span>
-
-                                </div>
                             </div>
                         </TableField>
 
@@ -79,11 +81,12 @@
                                 </div>
                             </template>
                         </TableField>
+                        -->
                     </tr>
                 </template>
                 <template #empty>
                     <!-- Conditional rendering for 'no records' message -->
-                    <div v-if="availableDomains.data.length === 0" class="text-center my-5 ">
+                    <div v-if="props.availableDomains.length === 0" class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                         <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                         <p class="mt-1 text-sm text-gray-500">
@@ -114,7 +117,7 @@ const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
-    availableDomains: Array
+    availableDomains: Object
 });
 
 const page = usePage();
@@ -124,8 +127,9 @@ const filterData = ref({
     showGlobal: props.showGlobal,
 });
 
-const activeTab = ref(props.options.cloud_providers.find(item => item.slug)?.slug || props.options.cloud_providers[0].slug);
-
+const activeTab = ref(
+    props?.options?.cloud_providers?.find(item => item?.slug)?.slug || ''
+);
 const iconComponents = {
     'CloudIcon': CloudIcon,
 };
@@ -153,12 +157,6 @@ const handleSearchButtonClick = () => {
     });
 };
 */
-const handleFiltersReset = () => {
-    filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
-}
-
 
 const handleActivateButtonClick = (itemUuid) => {
     showPolycomConfirmationModal.value = true;
@@ -316,36 +314,6 @@ const handleActivationFinish = () => {
     handleModalClose();
     handleSearchButtonClick();
 }
-
-const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
-        .then((response) => {
-            selectedItems.value = response.data.items;
-            selectAll.value = true;
-            showNotification('success', response.data.messages);
-
-        }).catch((error) => {
-        handleClearSelection();
-        handleErrorResponse(error);
-    });
-
-};
-
-const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
-};
-
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
