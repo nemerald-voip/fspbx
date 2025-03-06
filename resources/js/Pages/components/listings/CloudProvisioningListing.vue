@@ -26,9 +26,7 @@
                 </template>
 
                 <template #table-body>
-                    <tr v-for="row in props.availableDomains" :key="row.domain_uuid">
-
-                        <!--
+                    <tr v-for="row in props.availableDomains.data" :key="row.domain_uuid">
                         <TableField class="whitespace-nowrap px-4 text-sm text-gray-500">
                             <div class="flex items-center">
                                 <span v-if="row.domain_description" class="flex items-center">
@@ -81,7 +79,6 @@
                                 </div>
                             </template>
                         </TableField>
-                        -->
                     </tr>
                 </template>
                 <template #empty>
