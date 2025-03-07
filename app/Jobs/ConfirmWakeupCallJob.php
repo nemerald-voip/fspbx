@@ -77,7 +77,7 @@ class ConfirmWakeupCallJob implements ShouldQueue
             $wakeupCall = WakeupCall::where('uuid', $this->uuid)->first();
     
             if (!$wakeupCall) {
-                Log::error("Wake-up call not found: {$this->uuid}");
+                logger("Wake-up call not found: {$this->uuid}");
                 return;
             }
     
@@ -92,7 +92,7 @@ class ConfirmWakeupCallJob implements ShouldQueue
                     'retry_count' => 0, // Reset retry count
                 ]);
     
-                Log::info("🔁 Recurring wake-up call rescheduled for the next day: {$wakeupCall->uuid} at {$nextDayWakeUpTime->toDateTimeString()}");
+                // logger("🔁 Recurring wake-up call rescheduled for the next day: {$wakeupCall->uuid} at {$nextDayWakeUpTime->toDateTimeString()}");
             } else {
                 // Mark as completed
                 $wakeupCall->update([
@@ -100,7 +100,7 @@ class ConfirmWakeupCallJob implements ShouldQueue
                     'next_attempt_at' => null,
                 ]);
     
-                Log::info("✅ Wake-up call confirmed: {$wakeupCall->uuid}");
+                // logger("✅ Wake-up call confirmed: {$wakeupCall->uuid}");
             }
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds

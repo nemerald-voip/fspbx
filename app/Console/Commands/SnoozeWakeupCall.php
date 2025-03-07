@@ -18,7 +18,7 @@ class SnoozeWakeupCall extends Command
         // Dispatch the job to the queue
         SnoozeWakeupCallJob::dispatch($uuid, $minutes);
 
-        $this->info("Wake-up call snooze job for $minutes minutes is queued.");
+        // logger("Wake-up call snooze job for $minutes minutes is queued.");
         return 0;
     }
 }

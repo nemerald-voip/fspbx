@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\WakeupCall;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -82,7 +81,7 @@ class SnoozeWakeupCallJob implements ShouldQueue
             $wakeupCall = WakeupCall::where('uuid', $this->uuid)->first();
 
             if (!$wakeupCall) {
-                Log::error("Wake-up call not found: {$this->uuid}");
+                logger("Wake-up call not found: {$this->uuid}");
                 return;
             }
 
@@ -95,7 +94,7 @@ class SnoozeWakeupCallJob implements ShouldQueue
                 'status' => 'snoozed'
             ]);
 
-            Log::info("🔕 Wake-up call snoozed: {$this->uuid} until {$newAttemptTime->toDateTimeString()}");
+            // logger("🔕 Wake-up call snoozed: {$this->uuid} until {$newAttemptTime->toDateTimeString()}");
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds
         });

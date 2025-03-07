@@ -79,7 +79,7 @@ class ProcessWakeupCalls implements ShouldQueue
                 ->chunk(10, function ($calls) { // ✅ Prevent memory overload
                     foreach ($calls as $call) {
                         ExecuteWakeUpCall::dispatch($call);
-                        logger("✅ Dispatched Wake-Up Call: " . $call->extension->extension);
+                        // logger("✅ Dispatched Wake-Up Call: " . $call->extension->extension);
                     }
                 });
         }, function () {

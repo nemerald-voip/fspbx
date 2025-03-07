@@ -81,7 +81,7 @@ class ExecuteWakeUpCall implements ShouldQueue
         // 🚀 **Redis Throttling: Limit calls to 10 every 30 seconds**
         Redis::throttle('wakeup_calls')->allow(10)->every(30)->then(function () use ($eslService) {
             try {
-                logger("📞 Initiating Wake-Up Call to {$this->call->extension->extension}");
+                // logger("📞 Initiating Wake-Up Call to {$this->call->extension->extension}");
 
                 // **Step 1: Originate Call to FreeSWITCH**
                 $response = $eslService->executeCommand(
@@ -96,15 +96,15 @@ class ExecuteWakeUpCall implements ShouldQueue
                     $this->retryCall();
                 } else {
                     // ✅ Call was successfully placed → Lua will handle snooze or completion
-                    logger("✅ Wake-Up Call placed, awaiting Lua IVR decision.");
+                    // logger("✅ Wake-Up Call placed, awaiting Lua IVR decision.");
                     $this->call->update(['status' => 'in_progress']);
                 }
             } catch (\Exception $e) {
-                logger("❌ Error executing Wake-Up Call for {$this->call->origination_number}: " . $e->getMessage());
+                // logger("❌ Error executing Wake-Up Call for {$this->call->origination_number}: " . $e->getMessage());
                 $this->retryCall();
             }
         }, function () {
-            logger("⏳ Wake-Up Call rate limit reached. Retrying in 10 seconds.");
+            // logger("⏳ Wake-Up Call rate limit reached. Retrying in 10 seconds.");
             return $this->release(10);
         });
     }
@@ -127,7 +127,7 @@ class ExecuteWakeUpCall implements ShouldQueue
                 'next_attempt_at' => $newAttemptTime,
             ]);
 
-            logger("🔄 Rescheduling Wake-Up Call for {$this->call->extension->extension} at {$newAttemptTime->toDateTimeString()}.");
+            // logger("🔄 Rescheduling Wake-Up Call for {$this->call->extension->extension} at {$newAttemptTime->toDateTimeString()}.");
         } else {
             // ⛔ Stop retrying after 3 failed attempts
             if ($this->call->recurring) {
@@ -138,10 +138,10 @@ class ExecuteWakeUpCall implements ShouldQueue
                     'next_attempt_at' => Carbon::parse($this->call->wake_up_time)->addDay(),
                 ]);
 
-                logger("🔁 Recurring wake-up call rescheduled for the next day: {$this->call->extension->extension}");
+                // logger("🔁 Recurring wake-up call rescheduled for the next day: {$this->call->extension->extension}");
             } else {
                 $this->call->update(['status' => 'failed']);
-                logger("⛔ Wake-Up Call failed permanently for {$this->call->extension->extension}.");
+                // logger("⛔ Wake-Up Call failed permanently for {$this->call->extension->extension}.");
             }
         }
     }
