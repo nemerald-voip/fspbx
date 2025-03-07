@@ -106,6 +106,10 @@ class WakeupCallsController extends Controller
                     'name' => 'Completed',
                 ],
                 [
+                    'value' => 'canceled',
+                    'name' => 'Cancelled',
+                ],
+                [
                     'value' => 'failed',
                     'name' => 'Failed',
                 ],

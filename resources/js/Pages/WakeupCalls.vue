@@ -584,6 +584,12 @@ const determineColor = (status) => {
                 textColor: 'text-indigo-700',
                 ringColor: 'ring-indigo-600/20'
             };
+        case 'canceled':
+            return {
+                backgroundColor: 'bg-gray-50',
+                textColor: 'text-gray-700',
+                ringColor: 'ring-gray-600/20'
+            };    
         case 'failed':
             return {
                 backgroundColor: 'bg-rose-50',

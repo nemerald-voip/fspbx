@@ -17,7 +17,7 @@ class ConfirmWakeupCall extends Command
         // Dispatch the job to the queue
         ConfirmWakeupCallJob::dispatch($uuid);
 
-        logger("Wake-up call confirmation job is queued for UUID: $uuid.");
+        // logger("Wake-up call confirmation job is queued for UUID: $uuid.");
         return 0;
     }
 }
