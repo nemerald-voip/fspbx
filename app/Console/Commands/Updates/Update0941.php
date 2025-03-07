@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands\Updates;
 
+use App\Models\Menu;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Artisan;
 
 class Update0941
 {
@@ -21,6 +23,9 @@ class Update0941
 
         // Run the ESL extension install script
         $this->runInstallESLExtension();
+
+        // Update menu links if the FS PBX menu exists
+        $this->updateMenuLinks();
 
         return true;
     }
@@ -105,6 +110,24 @@ class Update0941
             echo "✅ install_esl_extension.sh executed successfully.\n";
         } else {
             echo "⚠️ install_esl_extension.sh encountered an issue.\n";
+        }
+    }
+
+    /**
+     * Update the FS PBX menu links by running the artisan command,
+     * but only if the menu exists.
+     */
+    protected function updateMenuLinks()
+    {
+        $menuName = 'fspbx';
+        $menuExists = Menu::where('menu_name', $menuName)->exists();
+
+        if ($menuExists) {
+            echo "✅ Menu '$menuName' exists. Updating menu links...\n";
+            Artisan::call('menu:create-fspbx');
+            echo "✅ Artisan command 'menu:create-fspbx' executed successfully.\n";
+        } else {
+            echo "ℹ️ Menu '$menuName' does not exist. Skipping menu links update.\n";
         }
     }
 }
