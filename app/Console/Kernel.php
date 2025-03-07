@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Models\DefaultSettings;
+use App\Jobs\ProcessWakeupCalls;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Scheduling\Schedule;
@@ -78,6 +79,11 @@ class Kernel extends ConsoleKernel
         // Find stale Ringotel users
         if (isset($jobSettings['audit_stale_ringotel_users']) && $jobSettings['audit_stale_ringotel_users'] === "true") {
             $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');
+        }
+
+        // Process scheduled jobs
+        if (isset($jobSettings['wake_up_calls']) && $jobSettings['wake_up_calls'] === "true") {
+            $schedule->job(new ProcessWakeupCalls())->everyMinute();
         }
     }
 

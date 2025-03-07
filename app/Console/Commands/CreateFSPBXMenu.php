@@ -115,6 +115,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Streams', 'link' => '/app/streams/streams.php', 'groups' => ['superadmin']],
                     ['title' => 'Time Conditions', 'link' => '/app/time_conditions/time_conditions.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Voicemails', 'link' => '/voicemails', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Wakeup Calls', 'link' => '/wakeup-calls', 'groups' => ['superadmin', 'admin']],
                 ],
             ],
             [

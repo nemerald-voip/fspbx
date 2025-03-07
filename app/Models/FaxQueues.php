@@ -33,6 +33,8 @@ class FaxQueues extends Model
         static::saving(function ($model) {
             // Remove attributes before saving to database
             unset($model->fax_date_formatted);
+            unset($model->fax_retry_date_formatted);
+            unset($model->fax_notify_date_formatted);
         });
 
         static::retrieved(function ($model) {
