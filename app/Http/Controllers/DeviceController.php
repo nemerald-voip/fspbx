@@ -72,7 +72,7 @@ class DeviceController extends Controller
                     'bulk_delete' => route('devices.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
                     'restart' => route('devices.restart'),
-                    'cloud_provisioning_domains' => route('cloud-provisioning.domains'),
+                    //'cloud_provisioning_domains' => route('cloud-provisioning.domains'),
                     //'cloud_provisioning' => route('cloud-provisioning.index'),
                     'cloud_provisioning_status' => route('cloud-provisioning.status'),
                     'cloud_provisioning_register' => route('cloud-provisioning.register'),
@@ -614,7 +614,6 @@ class DeviceController extends Controller
                 ],
             ];
 
-
             // Construct the itemOptions object
             $itemOptions = [
                 'templates' => getVendorTemplateCollection(),
@@ -622,10 +621,10 @@ class DeviceController extends Controller
                 'extensions' => $extensionOptions,
                 'domains' => $domainOptions,
                 'navigation' => $navigation,
-                'cloud_providers' => $cloudProviders,
                 'lines' => $lines,
                 'line_key_types' => $lineKeyTypes,
                 'sip_transport_types' => $sipTransportTypes,
+                'cloud_providers' => $cloudProviders
                 // Define options for other fields as needed
             ];
 

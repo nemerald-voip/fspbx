@@ -7,7 +7,7 @@
                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
                                :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
-                               aria-hidden="true" />
+                               aria-hidden="true"/>
                     <span class="truncate">{{ item.name }}</span>
                 </a>
             </nav>
@@ -15,23 +15,25 @@
         </aside>
         <div v-if="activeTab === 'polycom'" class="lg:col-span-10">
             <div class="shadow sm:rounded-md">
-                <div class="space-y-6 bg-gray-50 pb-6">
-                    <div class="flex justify-between items-center p-6 pb-0">
+                <div class="bg-gray-50 pb-6">
+                    <div class="flex justify-between items-center p-8 pb-0">
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Tenants List</h3>
                     </div>
                     <DataTable>
                         <template #table-header>
                             <TableColumnHeader header="Tenant"
-                                class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                                               class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                             </TableColumnHeader>
                             <TableColumnHeader header="Tenant Domain"
-                                               class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                            <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                            <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                                               class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                            <TableColumnHeader header="Status"
+                                               class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"/>
+                            <TableColumnHeader header=""
+                                               class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900"/>
                         </template>
 
-                        <template #table-body>
-                            <tr v-for="row in props.availableDomains.data" :key="row.domain_uuid">
+                        <template v-if="availableTenants" #table-body>
+                            <tr v-for="row in availableTenants.data" :key="row.domain_uuid">
                                 <TableField class="whitespace-nowrap px-4 text-sm text-gray-500">
                                     <div class="flex items-center">
                                         <span v-if="row.domain_description" class="flex items-center">
@@ -43,13 +45,16 @@
                                     </div>
                                 </TableField>
 
-                                <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
+                                <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                                            :text="row.domain_name"/>
 
-                                <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ztp_status">
-                                    <Badge v-if="row.ztp_status === 'true'" text="Activated" backgroundColor="bg-green-50"
-                                           textColor="text-green-700" ringColor="ring-green-600/20" />
+                                <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                                            :text="row.ztp_status">
+                                    <Badge v-if="row.ztp_status === 'true'" text="Activated"
+                                           backgroundColor="bg-green-50"
+                                           textColor="text-green-700" ringColor="ring-green-600/20"/>
                                     <Badge v-else text="Inactive" backgroundColor="bg-rose-50" textColor="text-rose-700"
-                                           ringColor="ring-rose-600/20" />
+                                           ringColor="ring-rose-600/20"/>
 
                                 </TableField>
 
@@ -57,11 +62,12 @@
                                 <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                                     <template #action-buttons>
                                         <div class="flex items-center whitespace-nowrap justify-end">
-                                            <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Edit'" position='TopCenter'
+                                            <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Edit'"
+                                                         position='TopCenter'
                                                          target="#destination_tooltip_target">
                                                 <div id="destination_tooltip_target">
                                                     <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
-                                                                      class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                                      class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
 
                                                 </div>
                                             </ejs-tooltip>
@@ -70,7 +76,7 @@
                                                          position='TopCenter' target="#restart_tooltip_target">
                                                 <div id="restart_tooltip_target">
                                                     <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
-                                                               class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                               class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
                                                 </div>
                                             </ejs-tooltip>
 
@@ -78,7 +84,7 @@
                                                          position='TopCenter' target="#delete_tooltip_target">
                                                 <div id="delete_tooltip_target">
                                                     <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
-                                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"/>
                                                 </div>
                                             </ejs-tooltip>
                                         </div>
@@ -86,10 +92,11 @@
                                 </TableField>
                             </tr>
                         </template>
-                        <template #empty>
+                        <template v-if="availableTenants" #empty>
                             <!-- Conditional rendering for 'no records' message -->
-                            <div v-if="props.availableDomains.data.length === 0" class="text-center my-5 ">
-                                <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                            <div v-if="availableTenants.data.length === 0"
+                                 class="text-center my-5 ">
+                                <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400"/>
                                 <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                                 <p class="mt-1 text-sm text-gray-500">
                                     Adjust your search and try again.
@@ -97,17 +104,23 @@
                             </div>
                         </template>
 
-                        <template #footer>
-                            <Paginator :previous="props.availableDomains.prev_page_url"
-                                       :next="props.availableDomains.next_page_url"
-                                       :from="props.availableDomains.from"
-                                       :to="props.availableDomains.to"
-                                       :total="props.availableDomains.total"
-                                       :currentPage="props.availableDomains.current_page"
-                                       :lastPage="props.availableDomains.last_page"
-                                       :links="props.availableDomains.links"
+                        <!--
+                        <template #loading>
+                            <Loading :show="loading" />
+                        </template>
+                        -->
+                        <template v-if="availableTenants" #footer>
+                            <Paginator :previous="availableTenants.prev_page_url"
+                                       :next="availableTenants.next_page_url"
+                                       :from="availableTenants.from"
+                                       :to="availableTenants.to"
+                                       :total="availableTenants.total"
+                                       :currentPage="availableTenants.current_page"
+                                       :lastPage="availableTenants.last_page"
+                                       :links="availableTenants.links"
                                        @pagination-change-page="renderRequestedPage" />
                         </template>
+
                     </DataTable>
                 </div>
             </div>
@@ -118,9 +131,10 @@
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
-                                  :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
+                                  :activeTab="activationActiveTab" @submit="handleCreateRequest"
+                                  @cancel="handleActivationFinish"
                                   @error="handleFormErrorResponse" @success="showNotification('success', $event)"
-                                  @clear-errors="handleClearErrors" />
+                                  @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
@@ -128,25 +142,43 @@
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
-                                  @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                  @submit="handleUpdateRequest" @cancel="handleModalClose"
+                                  @error="handleFormErrorResponse"
                                   @refresh-data="getItemOptions" @success="showNotification('success', $event)"
-                                  @clear-errors="handleClearErrors" />
+                                  @clear-errors="handleClearErrors"/>
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing ZTP Organization'"
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal"
+                      :header="'Connect to existing ZTP Organization'"
                       :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairZtpOrgSubmitting"
-                                         @submit="handlePairZtpOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount"
+                                         :errors="formErrors" :is-submitting="pairZtpOrgSubmitting"
+                                         @submit="handlePairZtpOrgRequest" @cancel="handleModalClose"
+                                         @error="handleFormErrorResponse"
                                          @success="showNotification('success', $event)"/>
         </template>
     </AddEditItemModal>
+
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmDeleteAction"
+                       :header="'Confirm Action'"
+                       :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
+                       confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
+
+    <ConfirmationModal :show="showPolycomConfirmationModal" @close="cancelPolycomAction"
+                       @confirm="confirmPolycomAction" :header="'Select a method to set up your Polycom organization.'"
+                       :text="'Would you like to connect to an existing Polycom organization or create a new one?'"
+                       confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
+                       :loading="showConnectSpinner || showCreateSpinner" :color="'blue'"/>
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+                  @update:show="hideNotification" />
 </template>
 
 <script setup>
 import {CloudIcon, PowerIcon, XCircleIcon} from "@heroicons/vue/24/outline/index.js";
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import {router, usePage} from "@inertiajs/vue3";
 import TableField from "../general/TableField.vue";
 import {MagnifyingGlassIcon, PencilSquareIcon} from "@heroicons/vue/24/solid/index.js";
@@ -154,24 +186,26 @@ import DataTable from "../general/DataTable.vue";
 import TableColumnHeader from "../general/TableColumnHeader.vue";
 import BulkActionButton from "../general/BulkActionButton.vue";
 import Paginator from "../general/Paginator.vue";
-import Loading from "../general/Loading.vue";
+//import Loading from "../general/Loading.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import {TooltipComponent as EjsTooltip} from "@syncfusion/ej2-vue-popups";
 import axios from "axios";
 import PairPolycomOrganizationForm from "../forms/PairPolycomOrganizationForm.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import UpdatePolycomOrgForm from "../forms/UpdatePolycomOrgForm.vue";
 import CreatePolycomOrgForm from "../forms/CreatePolycomOrgForm.vue";
+import ConfirmationModal from "../modal/ConfirmationModal.vue";
+import Notification from "../notifications/Notification.vue";
 
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
     routes: Object,
     errors: Object,
-    availableDomains: Object
+    //availableDomains: Object
 });
 
-const loading = ref(false)
+const loading = ref(true)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
@@ -199,8 +233,9 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const ztpOrganizations = ref({})
-const selectedAccount =  ref(null)
+const selectedAccount = ref(null)
 const itemOptions = ref({})
+const availableTenants = ref(null);
 
 const filterData = ref({
     search: null,
@@ -214,29 +249,26 @@ const iconComponents = {
     'CloudIcon': CloudIcon,
 };
 
+onMounted(() => {
+    handleRefreshTenantsClick();
+})
+
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
 
-/*
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.post(props.routes.cloud_provisioning_domains, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
+const handleRefreshTenantsClick = () => {
+    //loading.value = true;
+    axios.post(props.routes.cloud_provisioning_item_options, {})
+        .then((response) => {
+            availableTenants.value = response.data.tenants;
+            //loading.value = false;
+
+        }).catch((error) => {
+        handleModalClose();
+        handleErrorResponse(error);
     });
-};
-*/
+}
 
 const handleActivateButtonClick = (itemUuid) => {
     showPolycomConfirmationModal.value = true;
@@ -277,12 +309,12 @@ const handleCreateRequest = (form) => {
             activateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             //itemOptions.value.orgId = response.data.org_id;
-         //   handleSearchButtonClick();
+            //   handleSearchButtonClick();
             handleModalClose();
-            handleClearSelection();
+            handleRefreshTenantsClick();
         }).catch((error) => {
         activateFormSubmitting.value = false;
-        handleClearSelection();
+        handleRefreshTenantsClick();
         handleModalClose();
         handleFormErrorResponse(error);
     });
@@ -297,12 +329,12 @@ const handleUpdateRequest = (form) => {
         .then((response) => {
             updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-          //  handleSearchButtonClick();
+            //  handleSearchButtonClick();
             handleModalClose();
-            handleClearSelection();
+            handleRefreshTenantsClick();
         }).catch((error) => {
         updateFormSubmitting.value = false;
-        handleClearSelection();
+        handleRefreshTenantsClick();
         handleFormErrorResponse(error);
     });
 
@@ -316,12 +348,12 @@ const handleUpdateApiTokenRequest = (form) => {
         .then((response) => {
             updateApiTokenFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-          //  handleSearchButtonClick();
+            //  handleSearchButtonClick();
             handleModalClose();
-            handleClearSelection();
+            handleRefreshTenantsClick();
         }).catch((error) => {
         updateApiTokenFormSubmitting.value = false;
-        handleClearSelection();
+        handleRefreshTenantsClick();
         handleFormErrorResponse(error);
     });
 
@@ -335,12 +367,12 @@ const handlePairZtpOrgRequest = (form) => {
         .then((response) => {
             pairZtpOrgSubmitting.value = false;
             showNotification('success', response.data.messages);
-         //   handleSearchButtonClick();
+            //   handleSearchButtonClick();
             handleModalClose();
-            handleClearSelection();
+            handleRefreshTenantsClick();
         }).catch((error) => {
         pairZtpOrgSubmitting.value = false;
-        handleClearSelection();
+        handleRefreshTenantsClick();
         handleFormErrorResponse(error);
     });
 
@@ -354,22 +386,23 @@ const handleDeactivateButtonClick = (uuid) => {
 const executeSingleDelete = (uuid) => {
     showDeactivateSpinner.value = true;
 
-    axios.post(props.routes.cloud_provisioning_destroy_organization, { domain_uuid: uuid })
+    axios.post(props.routes.cloud_provisioning_destroy_organization, {domain_uuid: uuid})
         .then((response) => {
             showDeactivateSpinner.value = false;
             showNotification('success', response.data.messages);
-          //  handleSearchButtonClick();
+            //  handleSearchButtonClick();
             handleModalClose();
-            handleClearSelection();
+            handleRefreshTenantsClick();
         }).catch((error) => {
         showDeactivateSpinner.value = false;
-        handleClearSelection();
+        handleRefreshTenantsClick();
         handleModalClose();
-      //  handleSearchButtonClick();
+        //  handleSearchButtonClick();
         handleFormErrorResponse(error);
     });
 }
 
+/*
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
         showConfirmationModal.value = true;
@@ -377,12 +410,12 @@ const handleBulkActionRequest = (action) => {
     }
     if (action === 'bulk_update') {
         formErrors.value = [];
-      //  getItemOptions();
+        //  getItemOptions();
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
 
-}
+}*/
 
 const handleApiTokenButtonClick = () => {
     showApiTokenModal.value = true
@@ -392,26 +425,29 @@ const handleApiTokenButtonClick = () => {
 
 const handleActivationFinish = () => {
     handleModalClose();
-   // handleSearchButtonClick();
+    // handleSearchButtonClick();
 }
+
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    axios.post(props.routes.cloud_provisioning_item_options, {
+        filterData: filterData._rawValue,
+    })
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+        handleModalClose();
+        handleErrorResponse(error);
     });
+
 };
 
 const getItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+    const payload = itemUuid ? {item_uuid: itemUuid} : {}; // Conditionally add itemUuid to payload
     axios.post(props.routes.cloud_provisioning_item_options, payload)
         .then((response) => {
             loadingModal.value = false;
@@ -425,7 +461,7 @@ const getItemOptions = (itemUuid = null) => {
 }
 
 const getZtpOrganizations = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {};
+    const payload = itemUuid ? {item_uuid: itemUuid} : {};
 
     axios.post(props.routes.cloud_provisioning_get_all_orgs, payload)
         .then((response) => {
@@ -459,22 +495,22 @@ const getApiToken = () => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', {request: ["Session expired. Reload the page"]});
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || {request: [error.message]});
         formErrors.value = error.response.data.errors;
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
+        showNotification('error', {request: [error.request]});
         console.log(error.request);
     } else {
         // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
+        showNotification('error', {request: [error.message]});
         console.log(error.message);
     }
 
@@ -485,35 +521,35 @@ const handleErrorResponse = (error) => {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || {request: [error.message]});
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
+        showNotification('error', {request: [error.request]});
         console.log(error.request);
     } else {
         // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
+        showNotification('error', {request: [error.message]});
         console.log(error.message);
     }
 }
 
+/*
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
         selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
     } else {
         selectedItems.value = [];
     }
-};
+};*/
 
-
-
+/*
 const handleClearSelection = () => {
     selectedItems.value = [],
         selectPageItems.value = false;
     selectAll.value = false;
-}
+}*/
 
 const handleModalClose = () => {
     showActivateModal.value = false;

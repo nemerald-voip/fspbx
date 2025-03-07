@@ -55,7 +55,7 @@ class CloudProvisioningController extends Controller
         );
     }
 
-    public function getData($paginate = 50)
+    public function getData($paginate = 10)
     {
 
         // Check if search parameter is present and not empty
@@ -154,13 +154,6 @@ class CloudProvisioningController extends Controller
         });
     }
 
-    public function getAvailableDomains()
-    {
-        return [
-            'data' => $this->getData()
-            ];
-    }
-
     public function getItemOptions(PolycomZtpProvider $polycomZtpProvider)
     {
         $this->polycomZtpProvider = $polycomZtpProvider;
@@ -249,15 +242,19 @@ class CloudProvisioningController extends Controller
                 if (!$model) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
+            } else {
+                $model = null;
             }
 
             $settings = $this->getProvisioningSettings($model->domain_uuid ?? null);
 
             $permissions = $this->getUserPermissions();
 
-            if ($model->org_id) {
+            if ($model && $model->org_id) {
                 $organization = $this->polycomZtpProvider->getOrganization($model->org_id);
             }
+
+
 
             // Construct the itemOptions object
             return [
@@ -270,6 +267,8 @@ class CloudProvisioningController extends Controller
                 'settings' => $settings,
                 'locales' => $locales,
                 'permissions' => $permissions,
+                //'cloud_providers' => $cloudProviders,
+                'tenants' => $this->getData()
             ];
         } catch (\Exception $e) {
             // Log the error message

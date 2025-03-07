@@ -27,10 +27,10 @@
                     Create
                 </button>
 
-                <a v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" @click.prevent="handleCloudProvisioningButtonClick()"
+                <button v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" @click.prevent="handleCloudProvisioningButtonClick()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cloud
-                </a>
+                </button>
 
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -248,8 +248,7 @@
         <template #modal-body>
             <CloudProvisioningListing
                 :options="itemOptions"
-                :routes="props.routes"
-                :available-domains="availableDomains"
+                :routes="routes"
             />
         </template>
     </AddEditItemModal>
@@ -601,10 +600,23 @@ const handleSelectAll = () => {
 
 const handleCloudProvisioningButtonClick = () => {
     cloudProvisioningModalTrigger.value = true
-    formErrors.value = null;
     loadingModal.value = true
+    formErrors.value = null;
     getItemOptions();
-    getAvailableDomains();
+        /*axios.post(props.routes.cloud_provisioning_item_options, {}).then(response => {
+
+            availableDomains.value = response.data.tenants || [];
+            console.log(availableDomains.value)
+            loadingModal.value = false
+            //
+            //formErrors.value = null;
+            //
+            //getItemOptions();
+        }).catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+        });*/
+    //getAvailableDomains();
 }
 
 
@@ -719,13 +731,35 @@ const getItemOptions = (domain_uuid) => {
         });
 }
 
-const getAvailableDomains = async () => {
-    try {
+const getAvailableDomains = () => {
+    router.get(props.routes.cloud_provisioning_domains,
+        {
+
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'availableDomains',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+
+   /* try {
         const response = await axios.post(props.routes.cloud_provisioning_domains, {});
         availableDomains.value = response.data.data || [];
     } catch (error) {
         console.error(error);
-    }
+    }*/
 };
 
 
