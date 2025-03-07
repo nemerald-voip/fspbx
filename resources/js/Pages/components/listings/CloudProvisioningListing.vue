@@ -1,6 +1,6 @@
 <template>
     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-        <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+        <aside class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
             <nav class="space-y-1">
                 <a v-for="item in options.cloud_providers" :key="item.name" href="#"
                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
@@ -13,97 +13,104 @@
             </nav>
 
         </aside>
-        <div v-if="activeTab === 'polycom'" class="lg:col-span-9">
-            <DataTable>
-                <template #table-header>
-                    <TableColumnHeader header="Tenant"
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Tenant Domain"
-                                       class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
-                </template>
-
-                <template #table-body>
-                    <tr v-for="row in props.availableDomains.data" :key="row.domain_uuid">
-                        <TableField class="whitespace-nowrap px-4 text-sm text-gray-500">
-                            <div class="flex items-center">
-                                <span v-if="row.domain_description" class="flex items-center">
-                                    {{ row.domain_description }}
-                                </span>
-                                <span v-else class="flex items-center">
-                                    {{ row.domain_name }}
-                                </span>
-                            </div>
-                        </TableField>
-
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
-
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ztp_status">
-                            <Badge v-if="row.ztp_status === 'true'" text="Activated" backgroundColor="bg-green-50"
-                                   textColor="text-green-700" ringColor="ring-green-600/20" />
-                            <Badge v-else text="Inactive" backgroundColor="bg-rose-50" textColor="text-rose-700"
-                                   ringColor="ring-rose-600/20" />
-
-                        </TableField>
-
-
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                            <template #action-buttons>
-                                <div class="flex items-center whitespace-nowrap justify-end">
-                                    <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Edit'" position='TopCenter'
-                                                 target="#destination_tooltip_target">
-                                        <div id="destination_tooltip_target">
-                                            <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
-                                                              class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
-                                        </div>
-                                    </ejs-tooltip>
-
-                                    <ejs-tooltip v-if="row.ztp_status === 'false'" :content="'Activate'"
-                                                 position='TopCenter' target="#restart_tooltip_target">
-                                        <div id="restart_tooltip_target">
-                                            <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
-                                                       class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                        </div>
-                                    </ejs-tooltip>
-
-                                    <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Deactivate'"
-                                                 position='TopCenter' target="#delete_tooltip_target">
-                                        <div id="delete_tooltip_target">
-                                            <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
-                                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                        </div>
-                                    </ejs-tooltip>
-                                </div>
-                            </template>
-                        </TableField>
-                    </tr>
-                </template>
-                <template #empty>
-                    <!-- Conditional rendering for 'no records' message -->
-                    <div v-if="props.availableDomains.data.length === 0" class="text-center my-5 ">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <p class="mt-1 text-sm text-gray-500">
-                            Adjust your search and try again.
-                        </p>
+        <div v-if="activeTab === 'polycom'" class="lg:col-span-10">
+            <div class="shadow sm:rounded-md">
+                <div class="space-y-6 bg-gray-50 pb-6">
+                    <div class="flex justify-between items-center p-6 pb-0">
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">Tenants List</h3>
                     </div>
-                </template>
+                    <DataTable>
+                        <template #table-header>
+                            <TableColumnHeader header="Tenant"
+                                class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                            </TableColumnHeader>
+                            <TableColumnHeader header="Tenant Domain"
+                                               class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                            <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                            <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                        </template>
 
-                <template #footer>
-                    <Paginator :previous="props.availableDomains.prev_page_url"
-                               :next="props.availableDomains.next_page_url"
-                               :from="props.availableDomains.from"
-                               :to="props.availableDomains.to"
-                               :total="props.availableDomains.total"
-                               :currentPage="props.availableDomains.current_page"
-                               :lastPage="props.availableDomains.last_page"
-                               :links="props.availableDomains.links"
-                               @pagination-change-page="renderRequestedPage" />
-                </template>
-            </DataTable>
+                        <template #table-body>
+                            <tr v-for="row in props.availableDomains.data" :key="row.domain_uuid">
+                                <TableField class="whitespace-nowrap px-4 text-sm text-gray-500">
+                                    <div class="flex items-center">
+                                        <span v-if="row.domain_description" class="flex items-center">
+                                            {{ row.domain_description }}
+                                        </span>
+                                        <span v-else class="flex items-center">
+                                            {{ row.domain_name }}
+                                        </span>
+                                    </div>
+                                </TableField>
+
+                                <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
+
+                                <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ztp_status">
+                                    <Badge v-if="row.ztp_status === 'true'" text="Activated" backgroundColor="bg-green-50"
+                                           textColor="text-green-700" ringColor="ring-green-600/20" />
+                                    <Badge v-else text="Inactive" backgroundColor="bg-rose-50" textColor="text-rose-700"
+                                           ringColor="ring-rose-600/20" />
+
+                                </TableField>
+
+
+                                <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                                    <template #action-buttons>
+                                        <div class="flex items-center whitespace-nowrap justify-end">
+                                            <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Edit'" position='TopCenter'
+                                                         target="#destination_tooltip_target">
+                                                <div id="destination_tooltip_target">
+                                                    <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
+                                                                      class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                                </div>
+                                            </ejs-tooltip>
+
+                                            <ejs-tooltip v-if="row.ztp_status === 'false'" :content="'Activate'"
+                                                         position='TopCenter' target="#restart_tooltip_target">
+                                                <div id="restart_tooltip_target">
+                                                    <PowerIcon @click="handleActivateButtonClick(row.domain_uuid)"
+                                                               class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                </div>
+                                            </ejs-tooltip>
+
+                                            <ejs-tooltip v-if="row.ztp_status === 'true'" :content="'Deactivate'"
+                                                         position='TopCenter' target="#delete_tooltip_target">
+                                                <div id="delete_tooltip_target">
+                                                    <XCircleIcon @click="handleDeactivateButtonClick(row.domain_uuid)"
+                                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                </div>
+                                            </ejs-tooltip>
+                                        </div>
+                                    </template>
+                                </TableField>
+                            </tr>
+                        </template>
+                        <template #empty>
+                            <!-- Conditional rendering for 'no records' message -->
+                            <div v-if="props.availableDomains.data.length === 0" class="text-center my-5 ">
+                                <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                                <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Adjust your search and try again.
+                                </p>
+                            </div>
+                        </template>
+
+                        <template #footer>
+                            <Paginator :previous="props.availableDomains.prev_page_url"
+                                       :next="props.availableDomains.next_page_url"
+                                       :from="props.availableDomains.from"
+                                       :to="props.availableDomains.to"
+                                       :total="props.availableDomains.total"
+                                       :currentPage="props.availableDomains.current_page"
+                                       :lastPage="props.availableDomains.last_page"
+                                       :links="props.availableDomains.links"
+                                       @pagination-change-page="renderRequestedPage" />
+                        </template>
+                    </DataTable>
+                </div>
+            </div>
         </div>
     </div>
 
