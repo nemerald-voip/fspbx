@@ -202,7 +202,6 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-
     <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
         :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
     <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
@@ -247,7 +246,11 @@
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'" :loading="loadingModal"
                       @close="handleModalClose">
         <template #modal-body>
-            <CloudProvisioningListing :options="itemOptions" :available-domains="availableDomains" />
+            <CloudProvisioningListing
+                :options="itemOptions"
+                :routes="props.routes"
+                :available-domains="availableDomains"
+            />
         </template>
     </AddEditItemModal>
 
@@ -325,7 +328,6 @@ const props = defineProps({
     itemData: Object,
     itemOptions: Object,
 });
-
 
 const filterData = ref({
     search: null,

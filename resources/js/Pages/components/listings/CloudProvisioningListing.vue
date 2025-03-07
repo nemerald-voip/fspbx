@@ -83,7 +83,7 @@
                 </template>
                 <template #empty>
                     <!-- Conditional rendering for 'no records' message -->
-                    <div v-if="props.availableDomains.length === 0" class="text-center my-5 ">
+                    <div v-if="props.availableDomains.data.length === 0" class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                         <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                         <p class="mt-1 text-sm text-gray-500">
@@ -91,9 +91,50 @@
                         </p>
                     </div>
                 </template>
+
+                <template #footer>
+                    <Paginator :previous="props.availableDomains.prev_page_url"
+                               :next="props.availableDomains.next_page_url"
+                               :from="props.availableDomains.from"
+                               :to="props.availableDomains.to"
+                               :total="props.availableDomains.total"
+                               :currentPage="props.availableDomains.current_page"
+                               :lastPage="props.availableDomains.last_page"
+                               :links="props.availableDomains.links"
+                               @pagination-change-page="renderRequestedPage" />
+                </template>
             </DataTable>
         </div>
     </div>
+
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate Polycom Organization'"
+                      :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
+                                  :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
+                                  @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                                  @clear-errors="handleClearErrors" />
+        </template>
+    </AddEditItemModal>
+
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Polycom Organization'"
+                      :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
+                                  @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                  @refresh-data="getItemOptions" @success="showNotification('success', $event)"
+                                  @clear-errors="handleClearErrors" />
+        </template>
+    </AddEditItemModal>
+
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal" :header="'Connect to existing ZTP Organization'"
+                      :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount" :errors="formErrors" :is-submitting="pairZtpOrgSubmitting"
+                                         @submit="handlePairZtpOrgRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                         @success="showNotification('success', $event)"/>
+        </template>
+    </AddEditItemModal>
 </template>
 
 <script setup>
@@ -107,17 +148,52 @@ import TableColumnHeader from "../general/TableColumnHeader.vue";
 import BulkActionButton from "../general/BulkActionButton.vue";
 import Paginator from "../general/Paginator.vue";
 import Loading from "../general/Loading.vue";
+import Badge from "@generalComponents/Badge.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import axios from "axios";
+import PairPolycomOrganizationForm from "../forms/PairPolycomOrganizationForm.vue";
+import AddEditItemModal from "../modal/AddEditItemModal.vue";
+import UpdatePolycomOrgForm from "../forms/UpdatePolycomOrgForm.vue";
+import CreatePolycomOrgForm from "../forms/CreatePolycomOrgForm.vue";
 
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
+    routes: Object,
     errors: Object,
     availableDomains: Object
 });
 
-const page = usePage();
+const loading = ref(false)
+const loadingModal = ref(false)
+const selectAll = ref(false);
+const selectedItems = ref([]);
+const selectPageItems = ref(false);
+const showActivateModal = ref(false);
+const showEditModal = ref(false);
+const showApiTokenModal = ref(false);
+const showPairModal = ref(false);
+const bulkUpdateModalTrigger = ref(false);
+const showConfirmationModal = ref(false);
+const showPolycomConfirmationModal = ref(false);
+const activateFormSubmitting = ref(null);
+const activationActiveTab = ref('organization');
+const updateFormSubmitting = ref(null);
+const pairZtpOrgSubmitting = ref(null);
+const updateApiTokenFormSubmitting = ref(null);
+const confirmDeleteAction = ref(null);
+const showDeactivateSpinner = ref(null);
+const showConnectSpinner = ref(null);
+const showCreateSpinner = ref(null);
+const confirmPolycomAction = ref(null);
+const cancelPolycomAction = ref(null);
+const formErrors = ref(null);
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
+const ztpOrganizations = ref({})
+const selectedAccount =  ref(null)
+const itemOptions = ref({})
 
 const filterData = ref({
     search: null,
@@ -189,12 +265,12 @@ const handleCreateRequest = (form) => {
     activateFormSubmitting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.create_organization, form)
+    axios.post(props.routes.cloud_provisioning_create_organization, form)
         .then((response) => {
             activateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             //itemOptions.value.orgId = response.data.org_id;
-            handleSearchButtonClick();
+         //   handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
@@ -210,11 +286,11 @@ const handleUpdateRequest = (form) => {
     updateFormSubmitting.value = true;
     formErrors.value = null;
 
-    axios.put(props.routes.update_organization, form)
+    axios.put(props.routes.cloud_provisioning_update_organization, form)
         .then((response) => {
             updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+          //  handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
@@ -229,11 +305,11 @@ const handleUpdateApiTokenRequest = (form) => {
     updateApiTokenFormSubmitting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.update_api_token, form)
+    axios.post(props.routes.cloud_provisioning_update_api_token, form)
         .then((response) => {
             updateApiTokenFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+          //  handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
@@ -248,11 +324,11 @@ const handlePairZtpOrgRequest = (form) => {
     pairZtpOrgSubmitting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.pair_organization, form)
+    axios.post(props.routes.cloud_provisioning_pair_organization, form)
         .then((response) => {
             pairZtpOrgSubmitting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+         //   handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
@@ -271,18 +347,18 @@ const handleDeactivateButtonClick = (uuid) => {
 const executeSingleDelete = (uuid) => {
     showDeactivateSpinner.value = true;
 
-    axios.post(props.routes.destroy_organization, { domain_uuid: uuid })
+    axios.post(props.routes.cloud_provisioning_destroy_organization, { domain_uuid: uuid })
         .then((response) => {
             showDeactivateSpinner.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+          //  handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
         showDeactivateSpinner.value = false;
         handleClearSelection();
         handleModalClose();
-        handleSearchButtonClick();
+      //  handleSearchButtonClick();
         handleFormErrorResponse(error);
     });
 }
@@ -294,7 +370,7 @@ const handleBulkActionRequest = (action) => {
     }
     if (action === 'bulk_update') {
         formErrors.value = [];
-        getItemOptions();
+      //  getItemOptions();
         loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
@@ -309,12 +385,27 @@ const handleApiTokenButtonClick = () => {
 
 const handleActivationFinish = () => {
     handleModalClose();
-    handleSearchButtonClick();
+   // handleSearchButtonClick();
 }
+
+const renderRequestedPage = (url) => {
+    loading.value = true;
+    router.visit(url, {
+        data: {
+            filterData: filterData._rawValue,
+        },
+        preserveScroll: true,
+        preserveState: true,
+        only: ["data"],
+        onSuccess: (page) => {
+            loading.value = false;
+        }
+    });
+};
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-    axios.post(props.routes.item_options, payload)
+    axios.post(props.routes.cloud_provisioning_item_options, payload)
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
@@ -329,7 +420,7 @@ const getItemOptions = (itemUuid = null) => {
 const getZtpOrganizations = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {};
 
-    axios.post(props.routes.get_all_orgs, payload)
+    axios.post(props.routes.cloud_provisioning_get_all_orgs, payload)
         .then((response) => {
             loadingModal.value = false;
             ztpOrganizations.value = response.data;
@@ -346,7 +437,7 @@ const handleClearErrors = () => {
 }
 
 const getApiToken = () => {
-    axios.post(props.routes.get_api_token)
+    axios.post(props.routes.cloud_provisioning_get_api_token)
         .then((response) => {
             loadingModal.value = false;
             apiToken.value = response.data.token;
@@ -419,8 +510,8 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     showActivateModal.value = false;
-    showEditModal.value = false,
-        showApiTokenModal.value = false;
+    showEditModal.value = false;
+    showApiTokenModal.value = false;
     showPolycomConfirmationModal.value = false;
     showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;

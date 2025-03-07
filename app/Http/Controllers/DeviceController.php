@@ -77,6 +77,14 @@ class DeviceController extends Controller
                     'cloud_provisioning_status' => route('cloud-provisioning.status'),
                     'cloud_provisioning_register' => route('cloud-provisioning.register'),
                     'cloud_provisioning_deregister' => route('cloud-provisioning.deregister'),
+                    'cloud_provisioning_create_organization' => route('cloud-provisioning.organization.create'),
+                    'cloud_provisioning_update_organization' => route('cloud-provisioning.organization.update'),
+                    'cloud_provisioning_destroy_organization' => route('cloud-provisioning.organization.destroy'),
+                    'cloud_provisioning_pair_organization' => route('cloud-provisioning.organization.pair'),
+                    'cloud_provisioning_get_all_orgs' => route('cloud-provisioning.organization.all'),
+                    'cloud_provisioning_get_api_token' => route('cloud-provisioning.token.get'),
+                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+                    'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
                 ]
             ]
         );
