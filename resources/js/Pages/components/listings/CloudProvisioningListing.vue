@@ -18,7 +18,7 @@
                 <div class="bg-gray-50 pb-6">
                     <div class="flex justify-between items-center p-8 pb-0">
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Tenants List</h3>
-                        <button type="button" @click.prevent="handleApiTokenButtonClick()"
+                        <button type="button" @click.prevent="handlePolycomApiTokenButtonClick()"
                                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             API Token
                         </button>
@@ -401,7 +401,7 @@ const executeSingleDelete = (uuid) => {
     });
 }
 
-const handleApiTokenButtonClick = () => {
+const handlePolycomApiTokenButtonClick = () => {
     showApiTokenModal.value = true
     loadingModal.value = true
     getApiToken();

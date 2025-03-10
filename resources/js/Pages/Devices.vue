@@ -815,8 +815,8 @@ const handleSelectPageItems = () => {
 };
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
+    selectedItems.value = [];
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 
@@ -828,7 +828,6 @@ const handleModalClose = () => {
     bulkUpdateModalTrigger.value = false;
     cloudProvisioningModalTrigger.value = false;
     handleUpdateCloudProvisioningStatuses();
-    //setTimeout(() => handleUpdateCloudProvisioningStatuses(), 5000);
 }
 
 const hideNotification = () => {
