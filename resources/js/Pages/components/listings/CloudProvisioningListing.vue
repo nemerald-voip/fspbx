@@ -18,6 +18,10 @@
                 <div class="bg-gray-50 pb-6">
                     <div class="flex justify-between items-center p-8 pb-0">
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Tenants List</h3>
+                        <button type="button" @click.prevent="handleApiTokenButtonClick()"
+                                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            API Token
+                        </button>
                     </div>
                     <DataTable>
                         <template #table-header>
@@ -161,6 +165,16 @@
         </template>
     </AddEditItemModal>
 
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Polycom Api Token'"
+                      :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdatePolycomApiTokenForm :token="apiToken" :errors="formErrors" :is-submitting="updateApiTokenFormSubmitting"
+                                       @submit="handleUpdateApiTokenRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                                       @refresh-data="getItemOptions" @success="showNotification('success', $event)"
+                                       @clear-errors="handleClearErrors" />
+        </template>
+    </AddEditItemModal>
+
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmDeleteAction"
                        :header="'Confirm Action'"
                        :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
@@ -171,20 +185,15 @@
                        :text="'Would you like to connect to an existing Polycom organization or create a new one?'"
                        confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
                        :loading="showConnectSpinner || showCreateSpinner" :color="'blue'"/>
-
-    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
-                  @update:show="hideNotification" />
 </template>
 
 <script setup>
 import {CloudIcon, PowerIcon, XCircleIcon} from "@heroicons/vue/24/outline/index.js";
 import {onMounted, ref} from "vue";
-import {router, usePage} from "@inertiajs/vue3";
 import TableField from "../general/TableField.vue";
 import {MagnifyingGlassIcon, PencilSquareIcon} from "@heroicons/vue/24/solid/index.js";
 import DataTable from "../general/DataTable.vue";
 import TableColumnHeader from "../general/TableColumnHeader.vue";
-import BulkActionButton from "../general/BulkActionButton.vue";
 import Paginator from "../general/Paginator.vue";
 //import Loading from "../general/Loading.vue";
 import Badge from "@generalComponents/Badge.vue";
@@ -195,21 +204,17 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import UpdatePolycomOrgForm from "../forms/UpdatePolycomOrgForm.vue";
 import CreatePolycomOrgForm from "../forms/CreatePolycomOrgForm.vue";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
-import Notification from "../notifications/Notification.vue";
+import UpdatePolycomApiTokenForm from "../forms/UpdatePolycomApiTokenForm.vue";
 
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
     routes: Object,
     errors: Object,
-    //availableDomains: Object
 });
 
 const loading = ref(true)
 const loadingModal = ref(false)
-const selectAll = ref(false);
-const selectedItems = ref([]);
-const selectPageItems = ref(false);
 const showActivateModal = ref(false);
 const showEditModal = ref(false);
 const showApiTokenModal = ref(false);
@@ -229,18 +234,18 @@ const showCreateSpinner = ref(null);
 const confirmPolycomAction = ref(null);
 const cancelPolycomAction = ref(null);
 const formErrors = ref(null);
-const notificationType = ref(null);
-const notificationMessages = ref(null);
-const notificationShow = ref(null);
 const ztpOrganizations = ref({})
 const selectedAccount = ref(null)
 const itemOptions = ref({})
 const availableTenants = ref(null);
+const apiToken = ref(null)
 
 const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
 });
+
+const emit = defineEmits(["notification:show"]);
 
 const activeTab = ref(
     props?.options?.cloud_providers?.find(item => item?.slug)?.slug || ''
@@ -308,8 +313,6 @@ const handleCreateRequest = (form) => {
         .then((response) => {
             activateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-            //itemOptions.value.orgId = response.data.org_id;
-            //   handleSearchButtonClick();
             handleModalClose();
             handleRefreshTenantsClick();
         }).catch((error) => {
@@ -329,7 +332,6 @@ const handleUpdateRequest = (form) => {
         .then((response) => {
             updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-            //  handleSearchButtonClick();
             handleModalClose();
             handleRefreshTenantsClick();
         }).catch((error) => {
@@ -348,7 +350,6 @@ const handleUpdateApiTokenRequest = (form) => {
         .then((response) => {
             updateApiTokenFormSubmitting.value = false;
             showNotification('success', response.data.messages);
-            //  handleSearchButtonClick();
             handleModalClose();
             handleRefreshTenantsClick();
         }).catch((error) => {
@@ -390,32 +391,15 @@ const executeSingleDelete = (uuid) => {
         .then((response) => {
             showDeactivateSpinner.value = false;
             showNotification('success', response.data.messages);
-            //  handleSearchButtonClick();
             handleModalClose();
             handleRefreshTenantsClick();
         }).catch((error) => {
         showDeactivateSpinner.value = false;
         handleRefreshTenantsClick();
         handleModalClose();
-        //  handleSearchButtonClick();
         handleFormErrorResponse(error);
     });
 }
-
-/*
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_delete') {
-        showConfirmationModal.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
-    }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        //  getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
-
-}*/
 
 const handleApiTokenButtonClick = () => {
     showApiTokenModal.value = true
@@ -425,20 +409,16 @@ const handleApiTokenButtonClick = () => {
 
 const handleActivationFinish = () => {
     handleModalClose();
-    // handleSearchButtonClick();
 }
 
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    axios.post(props.routes.cloud_provisioning_item_options, {
+    axios.post(url, {
         filterData: filterData._rawValue,
     })
         .then((response) => {
-            loadingModal.value = false;
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-
+            availableTenants.value = response.data.tenants;
         }).catch((error) => {
         handleModalClose();
         handleErrorResponse(error);
@@ -452,8 +432,6 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-
         }).catch((error) => {
         handleModalClose();
         handleErrorResponse(error);
@@ -467,8 +445,6 @@ const getZtpOrganizations = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             ztpOrganizations.value = response.data;
-            // console.log(itemOptions.value);
-
         }).catch((error) => {
         handleModalClose();
         handleErrorResponse(error);
@@ -484,14 +460,11 @@ const getApiToken = () => {
         .then((response) => {
             loadingModal.value = false;
             apiToken.value = response.data.token;
-            // console.log(apiToken.value);
-
         }).catch((error) => {
         handleModalClose();
         handleErrorResponse(error);
     });
 }
-
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {
@@ -535,22 +508,6 @@ const handleErrorResponse = (error) => {
     }
 }
 
-/*
-const handleSelectPageItems = () => {
-    if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
-    } else {
-        selectedItems.value = [];
-    }
-};*/
-
-/*
-const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
-    selectAll.value = false;
-}*/
-
 const handleModalClose = () => {
     showActivateModal.value = false;
     showEditModal.value = false;
@@ -561,17 +518,8 @@ const handleModalClose = () => {
     showPairModal.value = false;
 }
 
-const hideNotification = () => {
-    notificationShow.value = false;
-    notificationType.value = null;
-    notificationMessages.value = null;
-}
-
 const showNotification = (type, messages = null) => {
-    notificationType.value = type;
-    notificationMessages.value = messages;
-    notificationShow.value = true;
+    emit("notification:show", type, messages);
 }
-
 
 </script>

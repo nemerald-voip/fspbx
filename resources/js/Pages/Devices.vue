@@ -249,6 +249,7 @@
             <CloudProvisioningListing
                 :options="itemOptions"
                 :routes="routes"
+                @notification:show="showNotification"
             />
         </template>
     </AddEditItemModal>
