@@ -32,27 +32,9 @@ class CloudProvisioningController extends Controller
         $this->model = new Domain();
     }
 
-    public function index(): \Inertia\Response
+    public function index(): void
     {
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'routes' => [
-                    'current_page' => route('cloud-provisioning.index'),
-                    'create_organization' => route('cloud-provisioning.organization.create'),
-                    'update_organization' => route('cloud-provisioning.organization.update'),
-                    'destroy_organization' => route('cloud-provisioning.organization.destroy'),
-                    'pair_organization' => route('cloud-provisioning.organization.pair'),
-                    'get_all_orgs' => route('cloud-provisioning.organization.all'),
-                    'get_api_token' => route('cloud-provisioning.token.get'),
-                    'update_api_token' => route('cloud-provisioning.token.update'),
-                    'item_options' => route('cloud-provisioning.item.options'),
-                ]
-            ]
-        );
+
     }
 
     public function getData($paginate = 50)
