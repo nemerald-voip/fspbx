@@ -4,7 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 
-class KeygenApiService
+class KeygenAPIService
 {
     protected $baseUrl;
     protected $accountId;

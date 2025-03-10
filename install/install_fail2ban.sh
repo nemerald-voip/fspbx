@@ -43,6 +43,10 @@ mkdir -p /etc/fail2ban/filter.d
 # ------------------------------
 print_success "Configuring Fail2Ban jails..."
 cat > /etc/fail2ban/jail.local <<EOL
+[DEFAULT]
+# Debian 12 has no log files, just journalctl
+backend = systemd
+
 [nginx-404]
 enabled  = true
 port     = 80,443
@@ -129,7 +133,7 @@ systemctl restart fail2ban
 
 # Wait for Fail2Ban to fully start
 print_success "Waiting for Fail2Ban to start..."
-sleep 5  # Waits 5 seconds (increase to 10 if needed)
+sleep 10  # Waits 5 seconds (increase to 10 if needed)
 
 # Check if Fail2Ban socket exists
 if [ -S /var/run/fail2ban/fail2ban.sock ]; then

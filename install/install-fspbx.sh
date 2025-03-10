@@ -19,6 +19,18 @@ if ! command -v git &> /dev/null; then
     print_success "Git installed successfully."
 fi
 
+# Ensure Curl is installed
+if ! command -v curl &> /dev/null; then
+    apt update && apt install -y curl
+    print_success "Curl installed successfully."
+fi
+
+# Ensure Sudo is installed
+if ! command -v sudo &> /dev/null; then
+    apt update && apt install -y sudo
+    print_success "Sudo installed successfully."
+fi
+
 # Define variables
 INSTALL_DIR="/var/www/fspbx"
 PUBLIC_DIR="$INSTALL_DIR/public"

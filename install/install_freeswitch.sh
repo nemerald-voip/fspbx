@@ -15,6 +15,11 @@ print_error() {
 
 print_success "Starting FreeSWITCH Installation (Version 1.10)..."
 
+# Detect OS version
+os_codename=$(lsb_release -c -s)
+
+print_success "Detected OS Codename: $os_codename"
+
 # Upgrade packages
 apt update
 
@@ -25,7 +30,7 @@ apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool
                libpcre3-dev devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
                libmemcached-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
                libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev python3-distutils \
-               sox libsox-fmt-all sqlite3 unzip cmake uuid-dev
+               sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev
 
 print_success "All required dependencies installed."
 
@@ -48,6 +53,7 @@ cd /usr/src
 rm -rf sofia-sip
 git clone https://github.com/freeswitch/sofia-sip.git
 cd sofia-sip
+git checkout v1.13.17
 sh autogen.sh
 ./configure --enable-debug
 make -j $(getconf _NPROCESSORS_ONLN)
@@ -122,12 +128,12 @@ if [ -d "/etc/freeswitch.orig" ]; then
     rm -rf /etc/freeswitch.orig
 fi
 
-# move config files
+# Move config files
 mv /etc/freeswitch /etc/freeswitch.orig
 mkdir /etc/freeswitch
 cp -R /var/www/fspbx/public/app/switch/resources/conf/* /etc/freeswitch
 
-#default permissions
+# Default permissions
 chown -R www-data:www-data /etc/freeswitch
 chown -R www-data:www-data /var/lib/freeswitch
 chown -R www-data:www-data /usr/share/freeswitch
@@ -140,7 +146,6 @@ print_success "FreeSWITCH $FREESWITCH_VERSION installed successfully!"
 print_success "Removing existing FreeSWITCH service..."
 
 # Remove existing FreeSWITCH systemd service if installed
-# Check if the package exists before trying to remove it
 if dpkg-query -W -f='${Status}' freeswitch-systemd 2>/dev/null | grep -q "install ok installed"; then
     apt-get remove -y freeswitch-systemd
     print_success "FreeSWITCH systemd package removed successfully."
@@ -166,14 +171,3 @@ if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
     sed -i -e "s/CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/g" /lib/systemd/system/freeswitch.service
 fi
 
-# Stop any existing FreeSWITCH service before enabling
-systemctl stop freeswitch 2>/dev/null || true
-systemctl disable freeswitch 2>/dev/null || true
-
-# Enable and start FreeSWITCH service
-systemctl enable freeswitch
-systemctl unmask freeswitch.service
-systemctl daemon-reload
-systemctl restart freeswitch  # Restart instead of start to apply changes
-
-print_success "FreeSWITCH service has been successfully configured and started!"

@@ -10,6 +10,14 @@ print_error() {
     echo "\033[31m$1 \033[0m"  # Red text
 }
 
+# Check if cron is installed, if not, install it
+if ! command -v crontab >/dev/null 2>&1; then
+    echo "Cron is not installed. Installing..."
+    apt update && apt install -y cron
+    systemctl enable cron
+    systemctl start cron
+fi
+
 # Define the cron job entries as a string
 CRON_JOBS="
 * * * * * cd /var/www/fspbx; /usr/bin/php /var/www/fspbx/public/app/xml_cdr/xml_cdr_import.php 100 abcdef >/dev/null 2>&1

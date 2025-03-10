@@ -13,22 +13,39 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"
 }
 
-print_success "Configuring IPTables Firewall Rules..."
+print_success "Checking and Installing IPTables..."
+
+# Ensure /usr/sbin is in PATH
+if ! echo "$PATH" | grep -q "/usr/sbin"; then
+    echo 'export PATH=$PATH:/usr/sbin' >> /etc/profile
+    echo 'export PATH=$PATH:/usr/sbin' >> /etc/bash.bashrc
+fi
+
+# Reload the profile immediately for the current session
+export PATH=$PATH:/usr/sbin
 
 # Detect OS version dynamically
 OS_VERSION=$(lsb_release -cs)
 
-# Install iptables and set alternatives for older versions
-if [[ "$OS_VERSION" == "buster" || "$OS_VERSION" == "bullseye" || "$OS_VERSION" == "bookworm" ]]; then
-    apt-get install -y iptables
-    update-alternatives --set iptables /usr/sbin/iptables-legacy
-    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+# Ensure iptables is installed
+if ! command -v iptables &>/dev/null; then
+    print_success "iptables not found, installing..."
+    apt-get update && apt-get install -y iptables
 fi
+
+# Confirm iptables is now available
+if ! command -v iptables &>/dev/null; then
+    print_error "iptables is still missing! Exiting."
+    exit 1
+fi
+
+print_success "iptables is installed and configured correctly."
+
 
 # Remove UFW if installed
 if command -v ufw &>/dev/null; then
     print_success "Removing UFW..."
-    ufw reset
+    echo "y" | sudo ufw reset
     ufw disable
     apt-get remove -y ufw
 else

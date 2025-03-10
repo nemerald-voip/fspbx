@@ -9,15 +9,15 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 - **Laravel Backend**: Robust and scalable backend infrastructure.
 - **Vue.js Front End**: Responsive and interactive user interface.
-- **Integration with FusionPBX**: Seamless integration with FusionPBX features.
+- **Integration with FusionPBX**: Integration with remaining FusionPBX features.
 - **Tailwind CSS**: Modern and utility-first CSS framework for styling.
 - **Modular Design**: Easy to extend and maintain.
 
 ## Video Installation tutorial in 10 minutes
 
-https://youtu.be/7v8sepsqnH4
+[https://youtu.be/7v8sepsqnH4](https://youtu.be/go6dUce0Nis)
 
-[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/7v8sepsqnH4/0.jpg)](https://www.youtube.com/watch?v=7v8sepsqnH4)
+[![VIDEO WALKTHOUGH](https://img.youtube.com/vi/go6dUce0Nis/0.jpg)](https://www.youtube.com/watch?v=go6dUce0Nis)
 
 
 ## Screenshots
