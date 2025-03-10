@@ -27,10 +27,10 @@
                     Create
                 </button>
 
-                <a v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" :href="routes.cloud_provisioning"
+                <button v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" @click.prevent="handleCloudProvisioningButtonClick()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cloud
-                </a>
+                </button>
 
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -202,7 +202,6 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-
     <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
         :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
     <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
@@ -214,7 +213,7 @@
             <CreateDeviceForm
                 :options="itemOptions"
                 :errors="formErrors"
-                :is-submitting="createFormSubmiting"
+                :is-submitting="createFormSubmitting"
                 @submit="handleCreateRequest"
                 @cancel="handleModalClose"
             />
@@ -227,7 +226,7 @@
                 :item="itemData"
                 :options="itemOptions"
                 :errors="formErrors"
-                :is-submitting="updateFormSubmiting"
+                :is-submitting="updateFormSubmitting"
                 @submit="handleUpdateRequest"
                 @cancel="handleModalClose"
                 @domain-selected="getItemOptions"
@@ -239,8 +238,19 @@
         @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
+                :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
                 @domain-selected="getItemOptions" />
+        </template>
+    </AddEditItemModal>
+
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'" :loading="loadingModal"
+                      @close="handleModalClose">
+        <template #modal-body>
+            <CloudProvisioningListing
+                :options="itemOptions"
+                :routes="routes"
+                @notification:show="showNotification"
+            />
         </template>
     </AddEditItemModal>
 
@@ -280,6 +290,7 @@ import RestartIcon from "./components/icons/RestartIcon.vue";
 import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import CloudProvisioningListing from "./components/listings/CloudProvisioningListing.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -295,17 +306,19 @@ const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
+const createFormSubmitting = ref(null);
+const updateFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const confirmRestartAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
+const bulkUpdateFormSubmitting = ref(null);
+const cloudProvisioningModalTrigger = ref(false);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const deviceProvisionStatus = ref({});
 const deviceProvisionStatusCheckInterval = ref(null);
+const availableDomains = ref([]);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
@@ -315,7 +328,6 @@ const props = defineProps({
     itemData: Object,
     itemOptions: Object,
 });
-
 
 const filterData = ref({
     search: null,
@@ -439,18 +451,18 @@ const handleEditRequest = (itemUuid) => {
 }
 
 const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
+    createFormSubmitting.value = true;
     formErrors.value = null;
 
     axios.post(props.routes.store, form)
         .then((response) => {
-            createFormSubmiting.value = false;
+            createFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-            createFormSubmiting.value = false;
+            createFormSubmitting.value = false;
             handleClearSelection();
             handleFormErrorResponse(error);
         });
@@ -458,18 +470,18 @@ const handleCreateRequest = (form) => {
 };
 
 const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
+    updateFormSubmitting.value = true;
     formErrors.value = null;
 
     axios.put(props.itemData.update_url, form)
         .then((response) => {
-            updateFormSubmiting.value = false;
+            updateFormSubmitting.value = false;
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
-            updateFormSubmiting.value = false;
+            updateFormSubmitting.value = false;
             handleClearSelection();
             handleFormErrorResponse(error);
         });
@@ -552,16 +564,16 @@ const executeBulkDelete = () => {
 }
 
 const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
+    bulkUpdateFormSubmitting.value = true
     axios.post(`${props.routes.bulk_update}`, form)
         .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
+            bulkUpdateFormSubmitting.value = false;
             handleModalClose();
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
         })
         .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
+            bulkUpdateFormSubmitting.value = false;
             handleFormErrorResponse(error);
         });
 }
@@ -586,6 +598,27 @@ const handleSelectAll = () => {
         });
 
 };
+
+const handleCloudProvisioningButtonClick = () => {
+    cloudProvisioningModalTrigger.value = true
+    loadingModal.value = true
+    formErrors.value = null;
+    getItemOptions();
+        /*axios.post(props.routes.cloud_provisioning_item_options, {}).then(response => {
+
+            availableDomains.value = response.data.tenants || [];
+            console.log(availableDomains.value)
+            loadingModal.value = false
+            //
+            //formErrors.value = null;
+            //
+            //getItemOptions();
+        }).catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+        });*/
+    //getAvailableDomains();
+}
 
 
 const handleCopyToClipboard = (macAddress) => {
@@ -699,6 +732,38 @@ const getItemOptions = (domain_uuid) => {
         });
 }
 
+const getAvailableDomains = () => {
+    router.get(props.routes.cloud_provisioning_domains,
+        {
+
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: [
+                'availableDomains',
+            ],
+            onSuccess: (page) => {
+                loadingModal.value = false;
+            },
+            onFinish: () => {
+                loadingModal.value = false;
+            },
+            onError: (errors) => {
+                console.log(errors);
+            },
+
+        });
+
+   /* try {
+        const response = await axios.post(props.routes.cloud_provisioning_domains, {});
+        availableDomains.value = response.data.data || [];
+    } catch (error) {
+        console.error(error);
+    }*/
+};
+
+
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
@@ -750,8 +815,8 @@ const handleSelectPageItems = () => {
 };
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
+    selectedItems.value = [];
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 
@@ -761,8 +826,8 @@ const handleModalClose = () => {
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
+    cloudProvisioningModalTrigger.value = false;
     handleUpdateCloudProvisioningStatuses();
-    //setTimeout(() => handleUpdateCloudProvisioningStatuses(), 5000);
 }
 
 const hideNotification = () => {

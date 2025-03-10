@@ -242,15 +242,19 @@ class CloudProvisioningController extends Controller
                 if (!$model) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
+            } else {
+                $model = null;
             }
 
             $settings = $this->getProvisioningSettings($model->domain_uuid ?? null);
 
             $permissions = $this->getUserPermissions();
 
-            if ($model->org_id) {
+            if ($model && $model->org_id) {
                 $organization = $this->polycomZtpProvider->getOrganization($model->org_id);
             }
+
+
 
             // Construct the itemOptions object
             return [
@@ -263,6 +267,8 @@ class CloudProvisioningController extends Controller
                 'settings' => $settings,
                 'locales' => $locales,
                 'permissions' => $permissions,
+                //'cloud_providers' => $cloudProviders,
+                'tenants' => $this->getData()
             ];
         } catch (\Exception $e) {
             // Log the error message
@@ -304,6 +310,11 @@ class CloudProvisioningController extends Controller
                 'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function show(Domain $domain)
+    {
+        //
     }
 
 

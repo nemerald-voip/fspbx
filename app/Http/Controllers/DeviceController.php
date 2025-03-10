@@ -72,10 +72,19 @@ class DeviceController extends Controller
                     'bulk_delete' => route('devices.bulk.delete'),
                     'bulk_update' => route('devices.bulk.update'),
                     'restart' => route('devices.restart'),
-                    'cloud_provisioning' => route('cloud-provisioning.index'),
+                    //'cloud_provisioning_domains' => route('cloud-provisioning.domains'),
+                    //'cloud_provisioning' => route('cloud-provisioning.index'),
                     'cloud_provisioning_status' => route('cloud-provisioning.status'),
                     'cloud_provisioning_register' => route('cloud-provisioning.register'),
                     'cloud_provisioning_deregister' => route('cloud-provisioning.deregister'),
+                    'cloud_provisioning_create_organization' => route('cloud-provisioning.organization.create'),
+                    'cloud_provisioning_update_organization' => route('cloud-provisioning.organization.update'),
+                    'cloud_provisioning_destroy_organization' => route('cloud-provisioning.organization.destroy'),
+                    'cloud_provisioning_pair_organization' => route('cloud-provisioning.organization.pair'),
+                    'cloud_provisioning_get_all_orgs' => route('cloud-provisioning.organization.all'),
+                    'cloud_provisioning_get_api_token' => route('cloud-provisioning.token.get'),
+                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+                    'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
                 ]
             ]
         );
@@ -597,6 +606,13 @@ class DeviceController extends Controller
                 ['value' => 'dns srv', 'name' => 'DNS SRV'],
             ];
 
+            $cloudProviders = [
+                [
+                    'name' => 'Polycom',
+                    'icon' => 'CloudIcon',
+                    'slug' => 'polycom',
+                ],
+            ];
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -608,6 +624,7 @@ class DeviceController extends Controller
                 'lines' => $lines,
                 'line_key_types' => $lineKeyTypes,
                 'sip_transport_types' => $sipTransportTypes,
+                'cloud_providers' => $cloudProviders
                 // Define options for other fields as needed
             ];
 
