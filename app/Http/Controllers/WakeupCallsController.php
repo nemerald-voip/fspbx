@@ -7,6 +7,7 @@ use App\Models\Extensions;
 use App\Models\WakeupCall;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
+use App\Models\WakeupAuthExt;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\CreateWakeupCallRequest;
 use App\Http\Requests\UpdateWakeupCallRequest;
+use App\Http\Requests\UpdateWakeupCallSettingsRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class WakeupCallsController extends Controller
@@ -24,7 +26,7 @@ class WakeupCallsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'WakeupCalls';
-    protected $searchable = ['status','extension.extension', 'extension.effective_caller_id_name'];
+    protected $searchable = ['status', 'extension.extension', 'extension.effective_caller_id_name'];
 
     public function __construct()
     {
@@ -64,6 +66,7 @@ class WakeupCallsController extends Controller
                     'select_all' => route('wakeup-calls.select.all'),
                     'bulk_delete' => route('wakeup-calls.bulk.delete'),
                     'item_options' => route('wakeup-calls.item.options'),
+                    'settings' => route('wakeup-calls.settings'),
                 ],
 
             ]
@@ -100,7 +103,7 @@ class WakeupCallsController extends Controller
                 [
                     'value' => 'snoozed',
                     'name' => 'Snoozed',
-                ],              
+                ],
                 [
                     'value' => 'completed',
                     'name' => 'Completed',
@@ -178,6 +181,78 @@ class WakeupCallsController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function getSettings()
+    {
+        try {
+
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+
+            // Base navigation array without Greetings
+            $navigation = [
+                [
+                    'name' => 'Remote Wakeup',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'remote_wakeup',
+                ],
+
+            ];
+
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                ->orderBy('extension', 'asc')
+                ->get();
+
+            // Transform the collection into the desired array format
+            $extensionsOptions = $extensions->map(function ($extension) {
+                return [
+                    'value' => $extension->extension_uuid,
+                    'name' => $extension->name_formatted,
+                ];
+            })->toArray();
+
+            $allowed_list = WakeupAuthExt::where('domain_uuid', $domain_uuid)
+                ->select('extension_uuid')
+                ->get();
+
+            // Transform the collection into the desired array format
+            $allowed_list = $allowed_list->map(function ($item) {
+                return [
+                    'value' => $item->extension_uuid,
+                ];
+            })->toArray();
+
+            $permissions = $this->getUserPermissions();
+
+            $routes = [
+                'update_route' => route('wakeup-calls.settings.update')
+            ];
+
+
+            // Construct the settings object
+            $settings = [
+                'navigation' => $navigation,
+                'allowed_list' => $allowed_list,
+                'extensions' => $extensionsOptions,
+                'permissions' => $permissions,
+                'routes' => $routes,
+                // Define options for other fields as needed
+            ];
+            // logger($settings);
+
+            return $settings;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch settings']]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -342,7 +417,7 @@ class WakeupCallsController extends Controller
         try {
             // Extract validated data
             $validated = $request->validated();
-    
+
             // Create a new WakeupCall entry
             $wakeupCall = WakeupCall::create([
                 'domain_uuid' => session('domain_uuid'), // Ensure domain is set
@@ -352,7 +427,7 @@ class WakeupCallsController extends Controller
                 'status' => $validated['status'],
                 'next_attempt_at' => $validated['wake_up_time'], // Initially the same as wake_up_time
             ]);
-    
+
             return response()->json([
                 'success' => true,
                 'messages' => ['success' => ['Wake-up call scheduled successfully']],
@@ -366,7 +441,7 @@ class WakeupCallsController extends Controller
             ], 500);
         }
     }
-    
+
 
     /**
      * Display the specified resource.
@@ -405,18 +480,18 @@ class WakeupCallsController extends Controller
                 'errors' => ['model' => ['Wake-up call not found']]
             ], 404);
         }
-    
+
         try {
             // Extract validated data
             $validated = $request->validated();
-    
+
             // Update fields
             $wakeup_call->wake_up_time = Carbon::parse($validated['wake_up_time'])->setTimezone('UTC');
             $wakeup_call->next_attempt_at = Carbon::parse($validated['wake_up_time'])->setTimezone('UTC');
             $wakeup_call->extension_uuid = $validated['extension'];
             $wakeup_call->recurring = $validated['recurring'];
             $wakeup_call->status = $validated['status'];
-    
+
             if ($validated['status'] === 'completed') {
                 $wakeup_call->next_attempt_at = null; // No next attempt needed
             }
@@ -424,13 +499,13 @@ class WakeupCallsController extends Controller
             if ($validated['status'] === 'scheduled') {
                 $wakeup_call->retry_count = 0; // resetting retry count
             }
-    
+
             // Save the updates
             $wakeup_call->save();
-    
+
             return response()->json([
                 'success' => true,
-                'messages' => ['success' =>['Wake-up call updated successfully']],
+                'messages' => ['success' => ['Wake-up call updated successfully']],
             ], 200);
         } catch (\Exception $e) {
             logger($e);
@@ -440,7 +515,7 @@ class WakeupCallsController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Remove the specified resource from storage.
      *
@@ -456,17 +531,17 @@ class WakeupCallsController extends Controller
                     'errors' => ['message' => ['Wakeup call not found.']]
                 ], 404);
             }
-    
+
             // Delete the record
             $wakeup_call->delete();
-    
+
             return redirect()->back()->with('message', ['server' => ['Item deleted']]);
         } catch (\Exception $e) {
             logger($e);
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
     }
-    
+
 
     /**
      * Remove the specified resource from storage.
@@ -506,6 +581,55 @@ class WakeupCallsController extends Controller
         }
     }
 
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  UpdateWakeupCallSettingsRequest  $request
+     * @param  Destinations  $phone_number
+     * @return JsonResponse
+     */
+    public function updateSettings(UpdateWakeupCallSettingsRequest $request)
+    {
+        try {
+            // Extract validated data
+            $validated = $request->validated();
+            $allowedList = $validated['allowed_list'] ?? [];
+            $domain_uuid = $validated['domain_uuid'];
+
+            // Start a transaction to ensure data integrity
+            DB::beginTransaction();
+
+            // Remove all existing allowed extensions for this domain
+            WakeupAuthExt::where('domain_uuid', $domain_uuid)->delete();
+
+            // Insert new allowed extensions if provided
+            if (!empty($allowedList)) {
+                foreach ($allowedList as $extension_uuid) {
+                    WakeupAuthExt::create([
+                        'domain_uuid'    => $domain_uuid,
+                        'extension_uuid' => $extension_uuid,
+                    ]);
+                }
+            }
+
+            // Commit the transaction
+            DB::commit();
+
+            return response()->json([
+                'success'  => true,
+                'messages' => ['success' => ['Wake-up call settings updated successfully']],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger($e);
+            return response()->json([
+                'success' => false,
+                'errors'  => ['server' => ['Failed to update this item']]
+            ], 500);
+        }
+    }
+
+
 
     public function getUserPermissions()
     {
@@ -534,10 +658,10 @@ class WakeupCallsController extends Controller
             if (!empty(request('dateRange'))) {
                 $startPeriod = Carbon::parse(request('dateRange')[0])->setTimeZone('UTC');
                 $endPeriod = Carbon::parse(request('dateRange')[1])->setTimeZone('UTC');
-    
+
                 $query->whereBetween('wake_up_time', [$startPeriod, $endPeriod]);
             }
-    
+
             // Retrieve matching wake-up call UUIDs
             $uuids = $query->pluck($this->model->getKeyName());
 
