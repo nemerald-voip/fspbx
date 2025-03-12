@@ -529,6 +529,7 @@ class DeviceController extends Controller
                         } else {
                             if ($device->device_vendor == 'yealink') $line->line_type_id = "15";
                             if ($device->device_vendor == 'polycom') $line->line_type_id = "line";
+                            if ($device->device_vendor == 'grandstream') $line->line_type_id = "line";
                         }
                         return $line;
                     });
@@ -555,6 +556,8 @@ class DeviceController extends Controller
                     $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
                 } else if ($device->device_vendor == 'polycom') {
                     $lineKeyTypes = LineKeyTypesService::getPolycomKeyTypes();
+                } else {
+                    $lineKeyTypes = LineKeyTypesService::getGenericKeyTypes();
                 }
             } else {
                 $lineKeyTypes = [
