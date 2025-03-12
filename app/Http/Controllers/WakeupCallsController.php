@@ -267,8 +267,8 @@ class WakeupCallsController extends Controller
             $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
         } else {
             $domain_uuid = session('domain_uuid');
-            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
+            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfMonth()->setTimeZone('UTC');
+            $endPeriod   = Carbon::now(get_local_time_zone($domain_uuid))->endOfMonth()->setTimeZone('UTC');            
         }
 
         $this->filters = [
