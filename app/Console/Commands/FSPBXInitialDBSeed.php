@@ -296,6 +296,23 @@ class FSPBXInitialDBSeed extends Command
     }
 
         /**
+     * Fix the ownership of the symlink.
+     *
+     * @param string $link
+     */
+    protected function fixSymlinkOwnership(string $link)
+    {
+        $chownProcess = new Process(['chown', '-h', 'www-data:www-data', $link]);
+        $chownProcess->run();
+
+        if ($chownProcess->isSuccessful()) {
+            echo "✅ Symlink ownership changed to www-data:www-data for $link\n";
+        } else {
+            echo "⚠️ Failed to change symlink ownership for $link\n";
+        }
+    }
+
+        /**
      * Change ownership and permissions of the given path.
      *
      * @param string $path
