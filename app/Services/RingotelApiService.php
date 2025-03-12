@@ -326,16 +326,16 @@ class RingotelApiService
                         'spref' => ''
                     ],
                     'dnd' => [
-                        'off' => $params['dnd_on_code'],
-                        'on' => $params['dnd_off_code']
+                        'off' => $params['dnd_on_code'] ?? '',
+                        'on' => $params['dnd_off_code'] ?? ''
                     ],
                     'forwarding' => [
                         'cfuon' => '',
                         'cfboff' => '',
-                        'cfon' => $params['cf_on_code'],
+                        'cfon' => $params['cf_on_code'] ?? '',
                         'cfbon' => '',
                         'cfuoff' => '',
-                        'cfoff' => $params['cf_off_code']
+                        'cfoff' => $params['cf_off_code'] ?? ''
                     ],
 
                     'codecs' => $codecs,
