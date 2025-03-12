@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\DefaultSettings;
 use App\Models\User;
 use App\Models\UserSetting;
 use App\Models\Domain;
@@ -92,6 +93,8 @@ class FSPBXInitialDBSeed extends Command
 
         // Set proper ownership and permissions
         $this->setOwnershipAndPermissions('/var/www/fspbx/resources/lua');
+
+        DefaultSettings::where('default_setting_category', 'switch')->delete();
 
         // Step 6: Run Upgrade Defaults
         $this->runUpgradeDefaults();
