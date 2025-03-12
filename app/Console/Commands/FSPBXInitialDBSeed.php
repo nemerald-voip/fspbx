@@ -94,8 +94,6 @@ class FSPBXInitialDBSeed extends Command
         // Set proper ownership and permissions
         $this->setOwnershipAndPermissions('/var/www/fspbx/resources/lua');
 
-        DefaultSettings::where('default_setting_category', 'switch')->delete();
-
         // Step 6: Run Upgrade Defaults
         $this->runUpgradeDefaults();
 
@@ -147,6 +145,9 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 15: Restart FreeSWITCH
         $this->restartFreeSwitch();
+
+        DefaultSettings::where('default_setting_category', 'switch')->delete();
+        $this->runUpgradeDefaults();
 
         // Step 16: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
