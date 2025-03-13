@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\FaxLogs;
 use App\Models\FaxFiles;
 use App\Models\FaxQueues;
-use App\Models\WakeupCall;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
@@ -98,7 +97,7 @@ class DeleteOldFaxes implements ShouldQueue
                     if ($lastModified < $cutoffTimestamp) {
                         try {
                             $disk->delete($file);
-                            logger("Deleted fax file: {$file}");
+                            // logger("Deleted fax file: {$file}");
                         } catch (\Exception $e) {
                             logger("Error deleting fax file {$file}: " . $e->getMessage());
                         }
@@ -109,7 +108,7 @@ class DeleteOldFaxes implements ShouldQueue
             // Delete fax records from the FaxFiles model (v_fax_files table)
             try {
                 FaxFiles::where('fax_date', '<', $cutoffDate)->delete();
-                logger("Deleted fax records older than {$days} days from FaxFiles.");
+                // logger("Deleted fax records older than {$days} days from FaxFiles.");
             } catch (\Exception $e) {
                 logger("Error deleting fax records from FaxFiles: " . $e->getMessage());
             }
@@ -117,7 +116,7 @@ class DeleteOldFaxes implements ShouldQueue
             // Delete fax logs using the FaxLogs model (v_fax_logs table)
             try {
                 FaxLogs::where('fax_date', '<', $cutoffDate)->delete();
-                logger("Deleted fax logs older than {$days} days from FaxLogs.");
+                // logger("Deleted fax logs older than {$days} days from FaxLogs.");
             } catch (\Exception $e) {
                 logger("Error deleting fax logs from FaxLogs: " . $e->getMessage());
             }
@@ -125,7 +124,7 @@ class DeleteOldFaxes implements ShouldQueue
             // Delete fax logs using the FaxLogs model (v_fax_logs table)
             try {
                 FaxQueues::where('fax_date', '<', $cutoffDate)->delete();
-                logger("Deleted fax queue items older than {$days} days from FaxLogs.");
+                // logger("Deleted fax queue items older than {$days} days from FaxLogs.");
             } catch (\Exception $e) {
                 logger("Error deleting fax queue items from FaxQueues: " . $e->getMessage());
             }
