@@ -704,6 +704,22 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
             ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'enabled',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable device provisioning service",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'http_domain_filter',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Filter by domain",
+            ],
             
             // Add more settings here...
         ];
