@@ -84,8 +84,11 @@ class DeleteOldVoicemails implements ShouldQueue
             // Access the 'voicemail' disk (root: /var/lib/freeswitch/storage/voicemail/default)
             $disk = Storage::disk('voicemail');
             // Retrieve the absolute path for the disk
-            $basePath = $disk->getDriver()->getAdapter()->getPathPrefix();
-            // Build a glob pattern to find voicemail files matching msg_*.wav and msg_*.mp3
+            $basePath = $disk->path('');
+
+            // Ensure the base path ends with a directory separator if needed
+            $basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+            
             $pattern = $basePath . 'msg_*.{wav,mp3}';
             $files = glob($pattern, GLOB_BRACE);
 

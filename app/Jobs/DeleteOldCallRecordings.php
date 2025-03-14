@@ -85,7 +85,10 @@ class DeleteOldCallRecordings implements ShouldQueue
             // Access the 'recordings' disk (root: /var/lib/freeswitch/recordings)
             $disk = Storage::disk('recordings');
             // Retrieve the absolute root path from the disk
-            $basePath = $disk->getDriver()->getAdapter()->getPathPrefix();
+            $basePath = $disk->path('');
+            // Ensure the base path ends with a directory separator
+            $basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
             // Build a glob pattern to find .wav and .mp3 files in any archive subfolder
             $pattern = $basePath . '*/archive/*.{wav,mp3}';
             $files = glob($pattern, GLOB_BRACE);
