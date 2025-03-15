@@ -22,10 +22,16 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.contact_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
+
+                <button v-if="page.props.auth.can.contact_upload" type="button" @click.prevent="handleImportButtonClick()"
+                        class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                        Import                        
+                    </button>
 
 
             </template>
@@ -80,8 +86,8 @@
                             <input v-if="row.contact_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.contact_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                @click="page.props.auth.can.voicemail_update && handleEditRequest(row.contact_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.contact_edit, }"
+                                @click="page.props.auth.can.contact_edit && handleEditRequest(row.contact_uuid)">
                                 {{ row.contact_organization }}
                             </div>
                         </div>
@@ -162,10 +168,10 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Voicemail Settings'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Contact Details'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+            <UpdateContactForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
                 @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
                 @success="showNotification('success', { request: [$event] })" />
         </template>
@@ -206,10 +212,10 @@ import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
-import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
+import UpdateContactForm from "./components/forms/UpdateContactForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
+import { DocumentArrowUpIcon } from "@heroicons/vue/24/outline";
 
 
 

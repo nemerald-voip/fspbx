@@ -6,11 +6,9 @@ use Throwable;
 use Inertia\Inertia;
 use App\Models\Contact;
 use Illuminate\Http\Request;
-use App\Models\ContactPhones;
 use App\Imports\ContactsImport;
-use Illuminate\Support\Facades\Session;
+use App\Models\User;
 use Maatwebsite\Excel\HeadingRowImport;
-use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
 class ContactsController extends Controller
 {
@@ -43,7 +41,8 @@ class ContactsController extends Controller
                     'current_page' => route('contacts.index'),
                     'store' => route('contacts.store'),
                     'select_all' => route('contacts.select.all'),
-                    'bulk_delete' => route('contacts.bulk.delete')
+                    'bulk_delete' => route('contacts.bulk.delete'),
+                    'item_options' => route('contacts.item.options')
                 ]
             ]
         );
@@ -67,7 +66,7 @@ class ContactsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
@@ -168,6 +167,95 @@ class ContactsController extends Controller
         }
     }
 
+
+    public function getItemOptions()
+    {
+        try {
+
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+
+            // Base navigation array without Greetings
+            $navigation = [
+                [
+                    'name' => 'General',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'general',
+                ],
+
+                [
+                    'name' => 'Advanced',
+                    'icon' => 'AdjustmentsHorizontalIcon',
+                    'slug' => 'advanced',
+                ],
+
+            ];
+
+
+            $users = User::where('domain_uuid', $domain_uuid)
+                ->select('user_uuid')
+                ->orderBy('username', 'asc')
+                ->get();
+
+            // Transform the collection into the desired array format
+            $userOptions = $users->map(function ($user) {
+                return [
+                    'value' => $user->user_uuid,
+                    'name' => $user->name_formatted,
+                ];
+            })->toArray();
+
+            // Check if item_uuid exists to find an existing model
+            if ($item_uuid) {
+                // Find existing item by item_uuid
+                $contact = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
+
+                // If a model exists, use it; otherwise, create a new one
+                if (!$contact) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+                // Define the update route
+                $updateRoute = route('wakeup-calls.update', ['wakeup_call' => $item_uuid]);
+            } else {
+                // Create a new model if item_uuid is not provided
+                $contact = $this->model;
+            }
+
+            $permissions = $this->getUserPermissions();
+
+            $routes = [
+                'update_route' => $updateRoute ?? null,
+                // 'get_routing_options' => route('routing.options'),
+
+            ];
+
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'navigation' => $navigation,
+                'contact' => $contact,
+                'users' => $userOptions,
+                'permissions' => $permissions,
+                'routes' => $routes,
+                // Define options for other fields as needed
+            ];
+            // logger($itemOptions);
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
     /**
      * Import the specified resource
      *
@@ -214,5 +302,12 @@ class ContactsController extends Controller
                 'message' => 'Extensions were successfully uploaded'
             ]
         ]);
+    }
+
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        return $permissions;
     }
 }

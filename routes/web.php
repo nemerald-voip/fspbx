@@ -278,7 +278,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Contacts
     Route::resource('contacts', ContactsController::class);
-    Route::post('contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
+    Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
     Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
     Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
     Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
