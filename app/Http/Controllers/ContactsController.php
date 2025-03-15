@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Throwable;
+use Inertia\Inertia;
 use App\Models\Contact;
 use Illuminate\Http\Request;
 use App\Models\ContactPhones;
@@ -13,126 +14,161 @@ use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
 class ContactsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'Contacts';
+    protected $searchable = ['contact_name', 'contact_organization', 'phone_number'];
+
+    public function __construct()
     {
-        // Check permissions
+        $this->model = new Contact();
+    }
+
+    public function index()
+    {
         if (!userCheckPermission("contact_view")) {
             return redirect('/');
         }
 
-        $searchString = $request->get('search');
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
+                'routes' => [
+                    'current_page' => route('contacts.index'),
+                    'store' => route('contacts.store'),
+                    'select_all' => route('contacts.select.all'),
+                    'bulk_delete' => route('contacts.bulk.delete')
+                ]
+            ]
+        );
+    }
 
-        // Get all contact phones
-        $contactPhones =  ContactPhones::select('contact_phone_uuid','v_contact_phones.contact_uuid', 'phone_number', 'phone_speed_dial')
-            ->where('v_contact_phones.domain_uuid', Session::get('domain_uuid'))
-            ->with(['contact' => function ($query) {
-                $query->select('contact_uuid', 'contact_organization');
-            }])
-            ->join('v_contacts', 'v_contact_phones.contact_uuid', '=', 'v_contacts.contact_uuid');
-
-        if ($searchString) {
-            $contactPhones->where(function ($query) use ($searchString) {
-                $query->where('v_contacts.contact_organization', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                        ->orWhere('v_contact_phones.phone_number', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                        ->orWhere('v_contact_phones.phone_speed_dial', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
-            });
+    public function getData($paginate = 5)
+    {
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
         }
-        $contactPhones = $contactPhones->orderBy('v_contacts.contact_organization')
-            ->paginate(50)
-            ->onEachSide(1);
 
+        $this->sortField = request()->get('sortField', 'contact_organization');
+        $this->sortOrder = request()->get('sortOrder', 'asc');
 
-        //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
+        $data = $this->builder($this->filters);
 
-        foreach ($contactPhones as $contactPhone) {
-            if ($contactPhone->phone_number) {
-                try {
-                    $phoneNumberObject = $phoneNumberUtil->parse($contactPhone->phone_number, 'US');
-                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                        $contactPhone->phone_number = $phoneNumberUtil
-                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
-                    }
-                } catch (NumberParseException $e) {
-                    // Do nothing and leave the numner as is
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
+
+        logger($data);
+
+        return $data;
+    }
+
+    public function builder(array $filters = [])
+    {
+        $data = $this->model::query();
+        $domainUuid = session('domain_uuid');
+        $data = $data->where('domain_uuid', $domainUuid);
+        $data->with(['primaryPhone' => function ($query) {
+            $query->select('contact_phone_uuid', 'contact_uuid', 'phone_number', 'phone_speed_dial');
+        }]);
+        $data->with(['contact_users' => function ($query) {
+            $query->select('contact_user_uuid', 'contact_uuid', 'user_uuid')->with(['user' => function ($query) {
+                $query->select('user_uuid', 'username');
+            }]);
+        }]);
+        
+        $data->select(
+            'contact_uuid',
+            'contact_organization',
+
+        );
+
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
                 }
             }
         }
 
+        return $data->orderBy($this->sortField, $this->sortOrder);
+    }
 
-        $data = array();
-        // $domain_uuid=Session::get('domain_uuid');
-        $data['searchString'] = $searchString;
-        $data['contactPhones'] = $contactPhones;
+    protected function filterSearch($query, $value)
+    {
+        $query->where(function ($query) use ($value) {
+            foreach ($this->searchable as $field) {
+                $query->orWhere($field, 'ilike', '%' . $value . '%');
+            }
+        });
+    }
 
-        //assign permissions
-        $permissions['add_new'] = userCheckPermission('contact_add');
-        $permissions['delete'] = userCheckPermission('contact_delete');
-        $permissions['import'] = userCheckPermission('contact_upload');
+    public function store(Request $request)
+    {
+        $inputs = $request->validate([
+            'contact_name' => 'required|string|max:255',
+            'contact_organization' => 'nullable|string|max:255',
+            'contact_enabled' => 'required|boolean'
+        ]);
 
-        $data['permissions'] = $permissions;
+        try {
+            $instance = $this->model;
+            $instance->fill($inputs);
+            $instance->domain_uuid = session('domain_uuid');
+            $instance->save();
 
-        return view('layouts.contacts.list')
-            ->with($data);
-        // ->with("conn_params", $conn_params);
+            return response()->json(['messages' => ['success' => ['Contact created']]], 201);
+        } catch (\Exception $e) {
+            logger($e);
+            return response()->json(['errors' => ['server' => ['Failed to create contact']]], 500);
+        }
+    }
+
+    public function update(Request $request)
+    {
+        $inputs = $request->validate([
+            'contact_uuid' => 'required|uuid',
+            'contact_name' => 'required|string|max:255',
+            'contact_organization' => 'nullable|string|max:255',
+            'contact_enabled' => 'required|boolean'
+        ]);
+
+        try {
+            $instance = $this->model::where('contact_uuid', $inputs['contact_uuid'])->firstOrFail();
+            $instance->fill($inputs);
+            $instance->save();
+
+            return response()->json(['messages' => ['success' => ['Contact updated']]], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            return response()->json(['errors' => ['server' => ['Failed to update contact']]], 500);
+        }
+    }
+
+    public function destroy(Contact $contact)
+    {
+        try {
+            DB::beginTransaction();
+            $contact->delete();
+            DB::commit();
+            return response()->json(['messages' => ['success' => ['Contact deleted']]], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger($e);
+            return response()->json(['errors' => ['server' => ['Failed to delete contact']]], 500);
+        }
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Models\ContactPhones $contact_phone_uuid
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($contact_phone_uuid)
-    {
-        $contactPhone = ContactPhones::findOrFail($contact_phone_uuid);
-
-
-        if (isset($contactPhone)) {
-            if (isset($contactPhone->contact)) {
-
-                // Delete all contact users assosiated with this contact
-                if (isset($contactPhone->contact->contact_users)) {
-                    $contactPhone->contact->contact_users->each(function($contactUser) {
-                        $contactUser->delete();
-                    });
-                }
-
-                // Delete contact
-                $contactPhone->contact->delete();
-            }
-
-            // Delete contact phone
-            $deleted =  $contactPhone->delete();
-
-
-            if ($deleted) {
-
-                return response()->json([
-                    'status' => 200,
-                    'id' => $contact_phone_uuid,
-                    'success' => [
-                        'message' => 'Selected contacts have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting selected contacts'
-                    ],
-
-                ]);
-            }
-        }
-    }
-
-        /**
      * Import the specified resource
      *
      * @param Request $request
@@ -179,5 +215,4 @@ class ContactsController extends Controller
             ]
         ]);
     }
-
 }
