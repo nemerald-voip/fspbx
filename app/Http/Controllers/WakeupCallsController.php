@@ -434,7 +434,7 @@ class WakeupCallsController extends Controller
                 'data' => $wakeupCall,
             ], 201);
         } catch (\Exception $e) {
-            logger($e);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to schedule wake-up call']]
@@ -508,7 +508,7 @@ class WakeupCallsController extends Controller
                 'messages' => ['success' => ['Wake-up call updated successfully']],
             ], 200);
         } catch (\Exception $e) {
-            logger($e);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to update this item']]
@@ -537,7 +537,7 @@ class WakeupCallsController extends Controller
 
             return redirect()->back()->with('message', ['server' => ['Item deleted']]);
         } catch (\Exception $e) {
-            logger($e);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
     }
@@ -573,7 +573,7 @@ class WakeupCallsController extends Controller
             DB::rollBack();
 
             // Log the error message
-            logger($e);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]

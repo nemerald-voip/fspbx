@@ -28,10 +28,10 @@
                 </button>
 
                 <button v-if="page.props.auth.can.contact_upload" type="button" @click.prevent="handleImportButtonClick()"
-                        class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
-                        Import                        
-                    </button>
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    Import
+                </button>
 
 
             </template>
@@ -93,7 +93,7 @@
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_mail_to">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <span v-if="row.primary_phone" class="flex items-center">
                             {{ row.primary_phone.phone_number_formatted }}
                         </span>
@@ -127,7 +127,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.contact_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -160,10 +160,10 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Voicemail Extension'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Contact'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateContactForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
@@ -191,6 +191,9 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'"
+        @confirm="confirmUploadAction" />
 </template>
 
 <script setup>
@@ -204,6 +207,7 @@ import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
+import UploadModal from "./components/modal/UploadModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -211,7 +215,7 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
+import CreateContactForm from "./components/forms/CreateContactForm.vue";
 import UpdateContactForm from "./components/forms/UpdateContactForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
@@ -229,10 +233,11 @@ const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const showUploadModal = ref(false);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
+const confirmUploadAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -308,7 +313,7 @@ const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.put(form.update_route, form)
+    axios.put(itemOptions.value.routes.update_route, form)
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
@@ -323,34 +328,15 @@ const handleUpdateRequest = (form) => {
 
 };
 
-const handleSingleItemDeleteRequest = (url) => {
+const handleSingleItemDeleteRequest = (uuid) => {
     confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
+const handleImportButtonClick = () => {
+    showUploadModal.value = true;
+    confirmUploadAction.value = () => executeBulkDelete([uuid]);
+};
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -367,9 +353,8 @@ const handleBulkActionRequest = (action) => {
 }
 
 
-
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(`${props.routes.bulk_delete}`, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -382,20 +367,6 @@ const executeBulkDelete = () => {
         });
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
 
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true
@@ -468,7 +439,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -539,6 +510,7 @@ const handleModalClose = () => {
     editModalTrigger.value = false;
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
+    showUploadModal.value = false;
 }
 
 const hideNotification = () => {
@@ -552,11 +524,6 @@ const showNotification = (type, messages = null) => {
     notificationMessages.value = messages;
     notificationShow.value = true;
 }
-
-const navigateToMessages = (messagesRoute) => {
-    // Use Inertia's router to visit the messages page
-    router.visit(messagesRoute);
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

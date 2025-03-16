@@ -343,8 +343,6 @@ import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Badge from "@generalComponents/Badge.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import VoicemailIcon from "../icons/VoicemailIcon.vue"
-import { Switch, SwitchDescription, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/20/solid'
