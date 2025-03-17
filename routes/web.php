@@ -282,6 +282,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
     Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
     Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
+    Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
+    Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
     
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);

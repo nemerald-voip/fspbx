@@ -80,12 +80,12 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             }
         }
     
-        if (isset($data['username'])) {
+        if (isset($data['assigned_user'])) {
             // If 'username' is a string (single column), convert it to an array
-            if (is_string($data['username'])) {
-                $data['username'] = [$data['username']];
+            if (is_string($data['assigned_user'])) {
+                $data['assigned_user'] = [$data['assigned_user']];
             }
-            foreach ($data['username'] as &$usernameVal) {
+            foreach ($data['assigned_user'] as &$usernameVal) {
                 $usernameVal = trim($usernameVal);
             }
         }
@@ -140,8 +140,8 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             // logger($contact->contactPhone);
 
             //Create contact users
-            if (isset($row['username']) && is_array($row['username'])) {
-                foreach ($row['username'] as $username) {
+            if (isset($row['assigned_user']) && is_array($row['assigned_user'])) {
+                foreach ($row['assigned_user'] as $username) {
                     $user = User::where('domain_uuid', $domain_uuid)
                         ->where('username', $username)
                         ->first();

@@ -10,11 +10,16 @@ use Illuminate\Support\Str;
 use App\Models\ContactUsers;
 use Illuminate\Http\Request;
 use App\Models\ContactPhones;
+use App\Exports\ContactsExport;
 use App\Imports\ContactsImport;
+use App\Exports\ContactTemplate;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
 use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
+use Maatwebsite\Excel\Excel as ExcelWriter;
+
 
 class ContactsController extends Controller
 {
@@ -49,7 +54,9 @@ class ContactsController extends Controller
                     'select_all' => route('contacts.select.all'),
                     'bulk_delete' => route('contacts.bulk.delete'),
                     'item_options' => route('contacts.item.options'),
-                    'import' => route('contacts.import')
+                    'import' => route('contacts.import'),
+                    'download_template' => route('contacts.download.template'),
+                    'export' => route('contacts.export'),
                 ]
             ]
         );
@@ -91,7 +98,7 @@ class ContactsController extends Controller
                 $query->select('user_uuid', 'username');
             }]);
         }]);
-        
+
         $data->select(
             'contact_uuid',
             'contact_organization',
@@ -135,10 +142,10 @@ class ContactsController extends Controller
     {
         try {
             DB::beginTransaction();
-            
+
             // Extract validated data
             $validated = $request->validated();
-            
+
             // Create new contact
             $contact = Contact::create([
                 'contact_uuid' => Str::uuid(),
@@ -166,7 +173,7 @@ class ContactsController extends Controller
             }
 
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'messages' => ['success' => ['Item created successfully']],
@@ -200,10 +207,10 @@ class ContactsController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             // Extract validated data
             $validated = $request->validated();
-            
+
             // Update contact details
             $contact->update([
                 'contact_organization' => $validated['contact_organization']
@@ -234,7 +241,7 @@ class ContactsController extends Controller
             }
 
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'messages' => ['success' => ['Item updated successfully']],
@@ -304,15 +311,15 @@ class ContactsController extends Controller
             if ($item_uuid) {
                 // Find existing item by item_uuid
                 $contact = $this->model::where($this->model->getKeyName(), $item_uuid)
-                ->with(['primaryPhone' => function ($query) {
-                    $query->select('contact_phone_uuid', 'contact_uuid', 'phone_number', 'phone_speed_dial');
-                }])
-                ->select(
-                    'contact_uuid',
-                    'contact_organization',
-        
-                )
-                ->first();
+                    ->with(['primaryPhone' => function ($query) {
+                        $query->select('contact_phone_uuid', 'contact_uuid', 'phone_number', 'phone_speed_dial');
+                    }])
+                    ->select(
+                        'contact_uuid',
+                        'contact_organization',
+
+                    )
+                    ->first();
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$contact) {
@@ -321,7 +328,6 @@ class ContactsController extends Controller
 
                 // Define the update route
                 $updateRoute = route('contacts.update', ['contact' => $item_uuid]);
-
             } else {
                 // Create a new model if item_uuid is not provided
                 $contact = $this->model;
@@ -393,10 +399,10 @@ class ContactsController extends Controller
             foreach ($contacts as $contact) {
                 // Delete related contact phones
                 ContactPhones::where('contact_uuid', $contact->contact_uuid)->delete();
-                
+
                 // Delete related contact users
                 ContactUsers::where('contact_uuid', $contact->contact_uuid)->delete();
-                
+
                 // Delete contact
                 $contact->delete();
             }
@@ -438,14 +444,12 @@ class ContactsController extends Controller
                     'success' => false,
                     'errors' => ['server' => ['Server returned an error while uploading this file.']]
                 ], 500);
-
             }
 
             return response()->json([
                 'success' => true,
                 'messages' => ['success' => ['Contacts have been successfully uploaded.']]
             ], 200);
-
         } catch (Throwable $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Send response in format that Dropzone understands
@@ -495,5 +499,16 @@ class ContactsController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function downloadTemplate()
+    {
+        // Download as CSV (third parameter sets the writer type)
+        return Excel::download(new ContactTemplate, 'template.csv', ExcelWriter::CSV);
+    }
+
+    public function export()
+    {
+        return Excel::download(new ContactsExport, 'contacts.csv', ExcelWriter::CSV);
     }
 }

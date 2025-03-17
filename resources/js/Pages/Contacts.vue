@@ -33,6 +33,12 @@
                     Upload CSV
                 </button>
 
+                <button type="button" @click.prevent="handleExportButtonClick()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                    Export
+                </button>
+
 
             </template>
 
@@ -192,8 +198,8 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'"
-        @upload="uploadFile" :is-submitting="isUploadingFile" :errors="uploadErrors"/>
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+        @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
 </template>
 
 <script setup>
@@ -219,7 +225,7 @@ import CreateContactForm from "./components/forms/CreateContactForm.vue";
 import UpdateContactForm from "./components/forms/UpdateContactForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { DocumentArrowUpIcon } from "@heroicons/vue/24/outline";
+import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 
 
 
@@ -455,7 +461,6 @@ const renderRequestedPage = (url) => {
     });
 };
 
-
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
 
@@ -470,6 +475,55 @@ const getItemOptions = (itemUuid = null) => {
             handleErrorResponse(error);
         });
 }
+
+function downloadTemplateFile() {
+    // Make a GET request to your Laravel route
+    axios.get(props.routes.download_template, {
+        responseType: 'blob' // Important: so we get back a Blob object
+    })
+        .then((response) => {
+            // Create a Blob from the response data
+            const fileBlob = new Blob([response.data], { type: 'text/csv' })
+            // Create a URL for the blob
+            const fileURL = window.URL.createObjectURL(fileBlob)
+
+            // Create a hidden link element, set it to the blob URL, and trigger a download
+            const link = document.createElement('a')
+            link.href = fileURL
+            link.setAttribute('download', 'template.csv') // The filename you want
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        })
+        .catch((error) => {
+            console.error('Error downloading template:', error)
+        })
+}
+
+const handleExportButtonClick = () => {
+    axios.get(props.routes.export, {
+        params: {
+            filterData: filterData.value
+        },
+        responseType: 'blob'
+    })
+    .then((response) => {
+        const blob = new Blob(
+            [response.data],
+            { type: 'text/csv' }
+        );
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'contacts.csv');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    })
+    .catch((error) => {
+        console.error('Error exporting contacts:', error);
+    });
+};
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {

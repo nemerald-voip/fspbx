@@ -31,6 +31,10 @@
                                 <DragDropUpload @file-selected="onFileSelected" />
                             </div>
 
+                            <div class=" pb-4">
+                                <button @click="downloadTemplate" type="link" class="font-medium text-sm text-blue-600 hover:text-blue-500">Download template.csv</button>
+                            </div>
+
                             <div v-if="localErrors && Object.keys(localErrors).length > 0"
                                 class="rounded-md bg-red-50 p-4">
                                 <div class="flex">
@@ -93,7 +97,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['close', 'upload'])
+const emit = defineEmits(['close', 'upload', 'download-template'])
 
 // Store the selected file from the DragDropUpload component
 const selectedFile = ref(null)
@@ -115,5 +119,9 @@ function onFileSelected(file) {
 
 function uploadFile() {
     emit('upload', selectedFile.value);
+}
+
+function downloadTemplate() {
+    emit('download-template');
 }
 </script>
