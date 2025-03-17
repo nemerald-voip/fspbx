@@ -27,29 +27,29 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
     public function rules(): array
     {
         return [
-            '*.contact_organization' => [
+            '*.contact_name' => [
                 'required',
                 'string',
                 Rule::unique('App\Models\Contact', 'contact_organization')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
-            '*.phone_number' => [
+            '*.destination_number' => [
                 'required',
                 'numeric',
                 Rule::unique('App\Models\ContactPhones', 'phone_number')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
-            '*.phone_speed_dial' => [
+            '*.speed_dial_code' => [
                 'nullable',
                 'numeric',
                 Rule::unique('App\Models\ContactPhones', 'phone_speed_dial')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
-            '*.phone_type_voice' => [
-                'nullable',
-                'numeric'
-            ],
-            '*.username' => [
+            // '*.phone_type_voice' => [
+            //     'nullable',
+            //     'numeric'
+            // ],
+            '*.assigned_user' => [
                 'array',
                 'nullable'
             ]
@@ -62,17 +62,17 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
     public function customValidationMessages()
     {
         return [
+            'contact_name.required' => 'Contact Name field is required',
+            'contact_name.string' => 'Contact Name must be a string',
             'phone_number.numeric' => 'Phone Number must only contain numeric values',
             'phone_speed_dial.numeric' => 'Speed Dial must only contain numeric values',
-            'phone_type_voice.numeric' => 'Phone Type Voice must only contain numeric values',
-            'contact_organization.unique' => 'Duplicate Organization Name has been found',
         ];
     }
 
 
     public function prepareForValidation($data, $index)
     {
-        $fieldsToTrim = ['contact_organization', 'phone_number', 'phone_speed_dial', 'phone_type_voice'];
+        $fieldsToTrim = ['contact_name', 'destination_number', 'speed_dial_code'];
     
         foreach ($fieldsToTrim as $field) {
             if (isset($data[$field])) {
@@ -80,9 +80,13 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             }
         }
     
-        if (isset($data['username'])) {
-            foreach ($data['username'] as &$username) {
-                $username = trim($username);
+        if (isset($data['assigned_user'])) {
+            // If 'username' is a string (single column), convert it to an array
+            if (is_string($data['assigned_user'])) {
+                $data['assigned_user'] = [$data['assigned_user']];
+            }
+            foreach ($data['assigned_user'] as &$usernameVal) {
+                $usernameVal = trim($usernameVal);
             }
         }
     
@@ -105,12 +109,15 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
 
         foreach ($rows as $row) {
 
+            $domain_uuid = session('domain_uuid');
+            $user_uuid = session('user_uuid');
+
             // Create contact
             $contact = Contact::create([
-                'contact_organization' => $row['contact_organization'],
-                'domain_uuid' => Session::get('domain_uuid'),
-                'insert_date' => date('Y-m-d H:i:s'),
-                'insert_user' => Session::get('user_uuid'),
+                'contact_organization' => $row['contact_name'],
+                'domain_uuid' => $domain_uuid,
+                'insert_date' => now(),
+                'insert_user' => $user_uuid,
             ]);
 
             // logger($contact);
@@ -120,12 +127,12 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
 
             $contact->contactPhone->fill([
                 'contact_uuid' => $contact->contact_uuid,
-                'domain_uuid' => Session::get('domain_uuid'),
-                'phone_type_voice' => is_numeric($row['phone_type_voice']) ? $row['phone_type_voice'] : null,
-                'phone_number' => $row['phone_number'],
-                'phone_speed_dial' => $row['phone_speed_dial'],
-                'insert_date' => date('Y-m-d H:i:s'),
-                'insert_user' => Session::get('user_uuid'),
+                'domain_uuid' => $domain_uuid,
+                'phone_type_voice' => null,
+                'phone_number' => $row['destination_number'],
+                'phone_speed_dial' => $row['speed_dial_code'] ?? null,
+                'insert_date' => now(),
+                'insert_user' => $user_uuid,
             ]);
             $contact->contactPhone->save();
 
@@ -133,9 +140,9 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             // logger($contact->contactPhone);
 
             //Create contact users
-            if (isset($row['username']) && is_array($row['username'])) {
-                foreach ($row['username'] as $username) {
-                    $user = User::where('domain_uuid', Session::get('domain_uuid'))
+            if (isset($row['assigned_user']) && is_array($row['assigned_user'])) {
+                foreach ($row['assigned_user'] as $username) {
+                    $user = User::where('domain_uuid', $domain_uuid)
                         ->where('username', $username)
                         ->first();
             
@@ -144,10 +151,10 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             
                         $contact->contactUser->fill([
                             'contact_uuid' => $contact->contact_uuid,
-                            'domain_uuid' => Session::get('domain_uuid'),
+                            'domain_uuid' => $domain_uuid,
                             'user_uuid' => $user->user_uuid,
-                            'insert_date' => date('Y-m-d H:i:s'),
-                            'insert_user' => Session::get('user_uuid'),
+                            'insert_date' => now(),
+                            'insert_user' => $user_uuid,
                         ]);
                         $contact->contactUser->save();
                     }
