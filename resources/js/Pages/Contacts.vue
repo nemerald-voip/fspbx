@@ -30,7 +30,7 @@
                 <button v-if="page.props.auth.can.contact_upload" type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
-                    Import
+                    Upload CSV
                 </button>
 
 
@@ -49,7 +49,7 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Contact</span>
+                    <span class="pl-4">Contact Name</span>
                 </TableColumnHeader>
 
                 <TableColumnHeader header="Destination Number"
@@ -193,7 +193,7 @@
         @update:show="hideNotification" />
 
     <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'"
-        @confirm="confirmUploadAction" />
+        @upload="uploadFile" :is-submitting="isUploadingFile" :errors="uploadErrors"/>
 </template>
 
 <script setup>
@@ -236,13 +236,14 @@ const confirmationModalTrigger = ref(false);
 const showUploadModal = ref(false);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
+const isUploadingFile = ref(null);
 const confirmDeleteAction = ref(null);
-const confirmUploadAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const uploadErrors = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -334,8 +335,8 @@ const handleSingleItemDeleteRequest = (uuid) => {
 };
 
 const handleImportButtonClick = () => {
+    uploadErrors.value = null;
     showUploadModal.value = true;
-    confirmUploadAction.value = () => executeBulkDelete([uuid]);
 };
 
 const handleBulkActionRequest = (action) => {
@@ -352,7 +353,6 @@ const handleBulkActionRequest = (action) => {
 
 }
 
-
 const executeBulkDelete = (items = selectedItems.value) => {
     axios.post(`${props.routes.bulk_delete}`, { items })
         .then((response) => {
@@ -367,6 +367,30 @@ const executeBulkDelete = (items = selectedItems.value) => {
         });
 }
 
+
+const uploadFile = (file) => {
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post(props.routes.import, formData)
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+            if (error.response) {
+                uploadErrors.value = error.response.data.errors;
+            }
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
+        });
+}
 
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true

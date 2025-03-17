@@ -48,7 +48,8 @@ class ContactsController extends Controller
                     'store' => route('contacts.store'),
                     'select_all' => route('contacts.select.all'),
                     'bulk_delete' => route('contacts.bulk.delete'),
-                    'item_options' => route('contacts.item.options')
+                    'item_options' => route('contacts.item.options'),
+                    'import' => route('contacts.import')
                 ]
             ]
         );
@@ -420,10 +421,9 @@ class ContactsController extends Controller
     /**
      * Import the specified resource
      *
-     * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function import(Request $request)
+    public function import()
     {
         try {
 
@@ -432,28 +432,27 @@ class ContactsController extends Controller
             $import = new ContactsImport;
             $import->import(request()->file('file'));
 
-            // Get array of failures and combine into html
             if ($import->failures()->isNotEmpty()) {
-                $errormessage = 'Some errors were detected. Please, check the details: <ul>';
-                foreach ($import->failures() as $failure) {
-                    foreach ($failure->errors() as $error) {
-                        $value = (isset($failure->values()[$failure->attribute()]) ? $failure->values()[$failure->attribute()] : "NULL");
-                        $errormessage .= "<li>Skipping row <strong>" . $failure->row() . "</strong>. Invalid value <strong>'" . $value . "'</strong> for field <strong>'" . $failure->attribute() . "'</strong>. " . $error . "</li>";
-                    }
-                }
-                $errormessage .= '</ul>';
 
-                // Send response in format that Dropzone understands
                 return response()->json([
-                    'error' => $errormessage,
-                ], 400);
+                    'success' => false,
+                    'errors' => ['server' => ['Server returned an error while uploading this file.']]
+                ], 500);
+
             }
+
+            return response()->json([
+                'success' => true,
+                'messages' => ['success' => ['Contacts have been successfully uploaded.']]
+            ], 200);
+
         } catch (Throwable $e) {
-            // Log::alert($e);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Send response in format that Dropzone understands
             return response()->json([
-                'error' => $e->getMessage(),
-            ], 400);
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
         }
 
 
