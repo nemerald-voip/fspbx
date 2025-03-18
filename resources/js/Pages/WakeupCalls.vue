@@ -14,6 +14,12 @@
                         Create
                     </button>
 
+                    <button v-if="page.props.auth.can.wakeup_calls_view_settings" type="button"
+                        @click.prevent="handleSettingsButtonClick()"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Settings
+                    </button>
+
                     <button v-if="!filterData.showGlobal && page.props.auth.can.wakeup_calls_view_global" type="button"
                         @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -215,6 +221,13 @@
         </template>
     </AddEditItemModal>
 
+    <AddEditItemModal :show="showSettingsModal" :header="'Update Wakeup Call Settings'" :loading="loadingModal"
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateWakeupCallSettingsForm :options="settings" :errors="formErrors" :is-submitting="updateFormSubmitting"
+                @submit="handleUpdateSettingsRequest" @cancel="handleModalClose" />
+        </template>
+    </AddEditItemModal>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -226,7 +239,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -240,21 +253,17 @@ import DatePicker from "./components/general/DatePicker.vue";
 import Notification from "./components/notifications/Notification.vue";
 import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Badge from "./components/general/Badge.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import UpdateWakeupCallForm from "./components/forms/UpdateWakeupCallForm.vue";
+import UpdateWakeupCallSettingsForm from "./components/forms/UpdateWakeupCallSettingsForm.vue";
 import CreateWakeupCallForm from "./components/forms/CreateWakeupCallForm.vue";
-import {
-    startOfDay, endOfDay,
-} from 'date-fns';
 import Loading from "./components/general/Loading.vue";
 
 const page = usePage()
-const today = new Date();
 const loading = ref(false)
 const loadingModal = ref(false)
 const notificationType = ref(null);
@@ -264,9 +273,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const selectAll = ref(false);
 const showRetryConfirmationModal = ref(false);
-const confirmRetryAction = ref(null);
 const showEditModal = ref(false);
 const showCreateModal = ref(false);
+const showSettingsModal = ref(false);
 const formErrors = ref(null);
 const updateFormSubmitting = ref(null);
 const createFormSubmitting = ref(null);
@@ -279,18 +288,11 @@ const props = defineProps({
     endPeriod: String,
     timezone: String,
     routes: Object,
-    statusOptions: Object,
 });
 
 const itemOptions = ref({})
+const settings = ref({})
 
-// onMounted(() => {
-//     //request list of entities
-//     // getEntities();
-//     if (props.data.data.length === 0) {
-//         handleSearchButtonClick();
-//     }
-// })
 
 const filterData = ref({
     search: props.search,
@@ -353,6 +355,32 @@ const handleUpdateRequest = (form) => {
 
 };
 
+const handleSettingsButtonClick = () => {
+    showSettingsModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getSettings();
+}
+
+const handleUpdateSettingsRequest = (form) => {
+    updateFormSubmitting.value = true;
+    formErrors.value = null;
+
+    axios.put(settings.value.routes.update_route, form)
+        .then((response) => {
+            updateFormSubmitting.value = false;
+            showNotification('success', response.data.messages);
+            // handleSearchButtonClick();
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            updateFormSubmitting.value = false;
+            handleClearSelection();
+            handleFormErrorResponse(error);
+        });
+
+};
+
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
 
@@ -361,6 +389,19 @@ const getItemOptions = (itemUuid = null) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
             // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+const getSettings = () => {
+    axios.post(props.routes.settings)
+        .then((response) => {
+            loadingModal.value = false;
+            settings.value = response.data;
+            // console.log(settings.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -555,6 +596,7 @@ const handleModalClose = () => {
     showRetryConfirmationModal.value = false;
     showEditModal.value = false;
     showCreateModal.value = false;
+    showSettingsModal.value = false;
     showDeleteConfirmationModal.value = false;
 }
 

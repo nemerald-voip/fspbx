@@ -107,7 +107,7 @@ class BackupApp extends Command
         $mainBackupFile = "$mainBackupDir/backup_$now.tgz";
 
         // Generate the tar command only for existing directories
-        $tarCommand = "tar --exclude='*/.git/*' --exclude='*/music/default/*' --exclude='*/june/*' --exclude='*/callie/*' --exclude='*/mario/*' --exclude='*/node_modules/*' --exclude='/var/www/freeswitchpbx/vendor' -zvcf $mainBackupFile $backupFile " . implode(' ', $existingDirs);
+        $tarCommand = "tar --exclude='*/.git/*' --exclude='*/music/default/*' --exclude='*/june/*' --exclude='*/callie/*' --exclude='*/mario/*' --exclude='*/node_modules/*' --exclude='/var/www/freeswitchpbx/vendor' --exclude='/var/www/fspbx/vendor' -zvcf $mainBackupFile $backupFile " . implode(' ', $existingDirs);
 
         $this->info("Packaging the backup into $mainBackupFile...");
         $this->executeCommand($tarCommand);
@@ -118,7 +118,7 @@ class BackupApp extends Command
     /**
      * Execute a shell command with optional timeout.
      */
-    protected function executeCommand($command, $timeout = 600)
+    protected function executeCommand($command, $timeout = 3600)
     {
         $process = Process::fromShellCommandline($command);
         $process->setTimeout($timeout);

@@ -33,8 +33,8 @@ class CdrsExport implements FromView, WithProperties
     public function properties(): array
     {
         return [
-            'creator'        => 'Nemerald',
-            'lastModifiedBy' => 'Nemerald',
+            'creator'        => config('app.name', 'Laravel'),
+            'lastModifiedBy' => config('app.name', 'Laravel'),
             'title'          => 'Call Record Export',
             'description'    => 'Exported call records',
             'subject'        => 'Call Records',

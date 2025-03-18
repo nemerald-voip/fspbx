@@ -157,6 +157,30 @@ local extension = session:getVariable("caller_id_number")
 local domain_uuid = session:getVariable("domain_uuid")
 local extension_uuid = session:getVariable("extension_uuid")
 
+-- Database connection
+local Database = require "resources.functions.database";
+dbh = Database.new('system');
+
+-- Determine if this is an internal call (caller’s own extension) or remote (for another extension)
+local call_type = argv[1] or "internal"
+debug_log("INFO", "[wakeup_service.lua] Call type: " .. (call_type or 'None') .. "\n")
+
+-- Check if user is authorized to set up remote wake up call. 
+if call_type == "remote" then
+    local authorized = false
+    local sql_auth = string.format("SELECT uuid FROM wakeup_auth_ext WHERE domain_uuid = '%s' AND extension_uuid = '%s'", domain_uuid, extension_uuid)
+    dbh:query(sql_auth, function(row)
+        authorized = true
+    end)
+
+    if not authorized then
+        debug_log("ERR", "[wakeup_service.lua] Unauthorized access attempt by extension " .. extension .. "\n")
+        return
+    else 
+        debug_log("INFO", "[wakeup_service.lua] User is authorized to access remote wake up service.\n")
+    end
+end
+
 -- Answer the call
 session:answer()
 session:sleep(1000) -- Short delay to prevent audio clipping
@@ -165,19 +189,16 @@ session:sleep(1000) -- Short delay to prevent audio clipping
 session:streamFile("wakeup_service_welcome.wav")
 session:sleep(500)
 
--- Determine if this is an internal call (caller’s own extension) or remote (for another extension)
-local call_type = argv[1] or "internal"
-debug_log("INFO", "[wakeup_service.lua] Call type: " .. (call_type or 'None') .. "\n")
-
--- Database connection
-local Database = require "resources.functions.database";
-dbh = Database.new('system');
-
 if call_type == "remote" then
     extension_uuid = nil
     local max_attempts = 3
     local attempt = 0
     while attempt < max_attempts do
+        -- If the session is no longer active, exit the function.
+        if not session:ready() then
+            return
+        end
+
         local extension = session:playAndGetDigits(3, 6, 1, 5000, "#", 
             "wakeup_service_enter_target_extension.wav", "wakeup_service_invalid_extension.wav", "^[0-9]+$")
         debug_log("INFO", "[wakeup_service.lua] User entered target extension: " .. (extension or "None") .. "\n")
@@ -207,6 +228,13 @@ if call_type == "remote" then
         session:streamFile("thank_you_for_using_wakeup_service.wav")
         session:hangup()
     end
+end
+
+
+if not session:ready() then
+    -- Release DB connection
+    dbh:release()
+    return
 end
 
 

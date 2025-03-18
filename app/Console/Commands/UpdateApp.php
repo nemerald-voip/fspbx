@@ -13,6 +13,7 @@ use App\Console\Commands\Updates\Update0925;
 use App\Console\Commands\Updates\Update0926;
 use App\Console\Commands\Updates\Update0940;
 use App\Console\Commands\Updates\Update0941;
+use App\Console\Commands\Updates\Update0942;
 
 
 class UpdateApp extends Command
@@ -62,6 +63,7 @@ class UpdateApp extends Command
             '0.9.26' => Update0926::class,
             '0.9.40' => Update0940::class,
             '0.9.41' => Update0941::class,
+            '0.9.42' => Update0942::class,
             // Add more versions as needed
         ];
 

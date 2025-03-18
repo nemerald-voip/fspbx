@@ -165,6 +165,9 @@ fi
 # Set correct permissions
 chmod 644 /lib/systemd/system/freeswitch.service 
 
+print_success "Enabling FreeSWITCH service to start at boot..."
+systemctl enable freeswitch
+
 # Detect OpenVZ and disable CPU scheduling if necessary
 if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
     print_success "Detected OpenVZ, disabling CPU scheduling for FreeSWITCH..."

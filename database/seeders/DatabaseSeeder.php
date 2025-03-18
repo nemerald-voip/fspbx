@@ -133,6 +133,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'   => 'wakeup_calls_all', // Delete wake-up calls
                 'insert_date'       => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'  => 'Wakeup Calls',
+                'permission_name'   => 'wakeup_calls_view_settings', 
+                'insert_date'       => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -353,6 +358,14 @@ class DatabaseSeeder extends Seeder
                 'permission_assigned'  => 'true',
                 'group_name'           => "admin",
                 'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_view_settings',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'          => date("Y-m-d H:i:s"),
             ],
 
@@ -710,6 +723,54 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => "false",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable or disable the processing of scheduled wake-up calls. If set to 'false', scheduled calls will not be executed.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_faxes',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enables automatic deletion of fax files (.tif and .pdf) and their corresponding database records older than the configured retention period.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_fax',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "90",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Specifies the number of days to retain fax files and logs before they are automatically deleted.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_call_recordings',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enables automatic deletion of call recordings (.wav and .mp3) and their corresponding database records older than the configured retention period.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_call_recordings',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "90",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Specifies the number of days to retain call recordings before they are automatically deleted.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_voicemails',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enables automatic deletion of voicemail messages (msg_*.wav and msg_*.mp3) older than the configured retention period.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_voicemails',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "90",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Specifies the number of days to retain voicemails before they are automatically deleted.",
             ],
             [
                 'default_setting_category'      => 'authentication',
