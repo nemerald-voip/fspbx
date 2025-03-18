@@ -135,8 +135,13 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_view_settings', 
+                'permission_name'   => 'wakeup_calls_view_settings',
                 'insert_date'       => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'cloud_provisioning_show_password',
+                'insert_date'           => date("Y-m-d H:i:s"),
             ],
             // Add more permissions as needed
         ];
