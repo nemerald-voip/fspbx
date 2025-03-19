@@ -89,7 +89,7 @@
                                         {{ errors.provisioning_server_username[0] }}
                                     </div>
                                 </div>
-                                <div class="col-span-3 sm:col-span-3">
+                                <div v-if="options.permissions.manage_cloud_provisioning_show_password" class="col-span-3 sm:col-span-3">
                                     <LabelInputOptional target="version" label="Password"
                                                         class="truncate" />
                                     <InputFieldWithIcon v-model="form.provisioning_server_password" id="provisioning_server_password"

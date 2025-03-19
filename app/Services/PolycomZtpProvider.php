@@ -229,8 +229,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 "provisioning" => [
                     "server" => [
                         "address" => $params['provisioning_server_address'],
-                        "username" => $params['provisioning_server_username'],
-                        "password" => $params['provisioning_server_password'],
+                        "username" => $params['provisioning_server_username']
                     ],
                     "polling" => $params['provisioning_polling'],
                     "quickSetup" => $params['provisioning_quick_setup'],
@@ -244,6 +243,10 @@ class PolycomZtpProvider implements ZtpProviderInterface
                 ],
             ],
         ];
+
+        if ($params['provisioning_server_password'] !== null) {
+            $payload['template']['provisioning']['server']['password'] = $params['provisioning_server_password'];
+        }
 
         $response = Http::polycom()
             ->timeout($this->timeout)

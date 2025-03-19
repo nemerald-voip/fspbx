@@ -236,7 +236,10 @@ class CloudProvisioningController extends Controller
                 $organization = $this->polycomZtpProvider->getOrganization($model->org_id);
             }
 
-
+            // We have to remove the password from the response if the user isn't permitted to see it
+            if (!$permissions['manage_cloud_provisioning_show_password']) {
+                $settings['http_auth_password'] = null;
+            }
 
             // Construct the itemOptions object
             return [
@@ -249,7 +252,6 @@ class CloudProvisioningController extends Controller
                 'settings' => $settings,
                 'locales' => $locales,
                 'permissions' => $permissions,
-                //'cloud_providers' => $cloudProviders,
                 'tenants' => $this->getData()
             ];
         } catch (\Exception $e) {
@@ -340,8 +342,9 @@ class CloudProvisioningController extends Controller
 
     public function getUserPermissions(): array
     {
-        //$permissions = [];
-        return [];
+        $permissions = [];
+        $permissions['manage_cloud_provisioning_show_password'] = userCheckPermission('cloud_provisioning_show_password');
+        return $permissions;
     }
 
     /**
@@ -362,6 +365,12 @@ class CloudProvisioningController extends Controller
         $inputs['enabled'] = true;
 
         try {
+            // Fill up the password from default settings, if it's not provided within the request payload
+            $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
+            if(!$inputs['provisioning_server_password']) {
+                $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
+            }
+
             // Send API request to create organization
             $organizationId = $this->polycomZtpProvider->createOrganization($inputs);
 
@@ -462,6 +471,12 @@ class CloudProvisioningController extends Controller
         $inputs['enabled'] = true;
 
         try {
+            // Fill up the password from default settings, if it's not provided within the request payload
+            $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
+            if(!$inputs['provisioning_server_password']) {
+                $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
+            }
+
             // Send API request to update organization
             $this->polycomZtpProvider->updateOrganization($inputs['organization_id'], $inputs);
 
@@ -762,9 +777,10 @@ class CloudProvisioningController extends Controller
     /**
      * Get provisioning default settings
      *
-     * @return array
+     * @param  string  $domain_uuid  Unique identifier for the domain to fetch provisioning settings.
+     * @return array  An array of provisioning settings, prioritizing domain-level values over defaults.
      */
-    private function getProvisioningSettings($domain_uuid)
+    private function getProvisioningSettings($domain_uuid): array
     {
         // Fetch all domain settings for the given domain_uuid
         $domainSettings = DomainSettings::where('domain_uuid', $domain_uuid)
@@ -781,6 +797,6 @@ class CloudProvisioningController extends Controller
             ->pluck('default_setting_value', 'default_setting_subcategory');
 
         // Merge settings, prioritizing domain-level settings
-        return $defaultSettings->merge($domainSettings);
+        return $defaultSettings->merge($domainSettings)->toArray();
     }
 }
