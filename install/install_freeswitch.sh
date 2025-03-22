@@ -100,6 +100,7 @@ sed -i modules.conf -e s:'#applications/mod_curl:applications/mod_curl:'
 sed -i modules.conf -e s:'#applications/mod_translate:applications/mod_translate:'
 sed -i modules.conf -e s:'#formats/mod_shout:formats/mod_shout:'
 sed -i modules.conf -e s:'#formats/mod_pgsql:formats/mod_pgsql:'
+sed -i modules.conf -e s:'#applications/mod_signalwire:applications/mod_signalwire:'
 
 # Disable unnecessary modules
 sed -i modules.conf -e s:'applications/mod_signalwire:#applications/mod_signalwire:'
