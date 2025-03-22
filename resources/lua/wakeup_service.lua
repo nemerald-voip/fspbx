@@ -2,7 +2,7 @@
 freeswitch.consoleLog("INFO", "[wakeup_service.lua] Executing Wakeup Call Service Lua Script...\n")
 
 -- Enable/Disable debug mode globally
-DEBUG_MODE = true  -- Set to false to disable debug logs
+DEBUG_MODE = false  -- Set to false to disable debug logs
 
 -- Debug logging function
 function debug_log(level, message)
@@ -112,15 +112,30 @@ end
 
 -- Function to handle new or modify wake-up call
 function handle_wakeup_call(session, domain_uuid, extension_uuid, action, existing_wakeup_uuid)
+    -- Prompt user for date option: today, tomorrow, or another date
+    local date_option = session:playAndGetDigits(1, 1, 3, 5000, "#", 
+        "wakeup_service_select_date_option.wav", "invalid_option.wav", "^[123]$", 'date_option')
+    debug_log("INFO", "[wakeup_service.lua] User selected date option: " .. (date_option or 'None') .. "\n")
+    
+    local entered_date = nil
+    if date_option == "1" then
+        -- For today, use the current date (formatted as MMDD)
+        entered_date = os.date("%m%d")
+    elseif date_option == "2" then
+        -- For tomorrow, add 24 hours (86400 seconds) to the current time
+        local tomorrow_epoch = os.time() + 86400
+        entered_date = os.date("%m%d", tomorrow_epoch)
+    elseif date_option == "3" then
+        -- For another date, prompt the user to enter the date in MMDD format
+        entered_date = session:playAndGetDigits(4, 4, 3, 5000, "#", 
+            "wakeup_service_enter_date.wav", "invalid_date.wav", "^(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$", 'entered_date')
+    end
+    debug_log("INFO", "[wakeup_service.lua] User entered wake-up date: " .. (entered_date or 'None') .. "\n")
+
     -- Prompt user for time
     local entered_time = session:playAndGetDigits(4, 4, 3, 5000, "#", 
         "wakeup_service_enter_time.wav", "invalid_time.wav", "^([01][0-9]|2[0-3])[0-5][0-9]$", 'entered_time')
     debug_log("INFO", "[wakeup_service.lua] User entered wake-up time: " .. (entered_time or 'None') .. "\n")
-
-    -- Prompt user for date
-    local entered_date = session:playAndGetDigits(4, 4, 3, 5000, "#", 
-        "wakeup_service_enter_date.wav", "invalid_date.wav", "^(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$", 'entered_date')
-    debug_log("INFO", "[wakeup_service.lua] User entered wake-up date: " .. (entered_date or 'None') .. "\n")
 
     -- Prompt user for repeat option
     local wakeup_recurring = session:playAndGetDigits(1, 1, 3, 5000, "#", 
