@@ -14,7 +14,6 @@ use Illuminate\Routing\Redirector;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
-use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use App\Models\Domain;
@@ -56,126 +55,21 @@ class AccountSettingsController extends Controller
                     return $this->getNavigation();
                 },
 
-                // 'routes' => [
-                //     'current_page' => route('phone-numbers.index'),
-                //     'store' => route('phone-numbers.store'),
-                //     'select_all' => route('phone-numbers.select.all'),
-                //     'bulk_update' => route('phone-numbers.bulk.update'),
-                //     'bulk_delete' => route('phone-numbers.bulk.delete'),
-                //     'item_options' => route('phone-numbers.item.options'),
-                //     //'bulk_delete' => route('messages.settings.bulk.delete'),
-                //     //'bulk_update' => route('devices.bulk.update'),
-                // ],
+                'routes' => [
+                    'update' => route('account-settings.update'),
+                    // 'store' => route('phone-numbers.store'),
+                    // 'select_all' => route('phone-numbers.select.all'),
+                    // 'bulk_update' => route('phone-numbers.bulk.update'),
+                    // 'bulk_delete' => route('phone-numbers.bulk.delete'),
+                    // 'item_options' => route('phone-numbers.item.options'),
+                    //'bulk_delete' => route('messages.settings.bulk.delete'),
+                    //'bulk_update' => route('devices.bulk.update'),
+                ],
 
             ]
         );
     }
 
-
-    public function getItemOptions()
-    {
-        try {
-
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
-            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
-
-            // Base navigation array without Greetings
-            $navigation = [
-                [
-                    'name' => 'Settings',
-                    'icon' => 'Cog6ToothIcon',
-                    'slug' => 'settings',
-                ],
-                [
-                    'name' => 'Advanced',
-                    'icon' => 'AdjustmentsHorizontalIcon',
-                    'slug' => 'advanced',
-                ],
-            ];
-
-            $routingOptionsService = new CallRoutingOptionsService;
-            $routingTypes = $routingOptionsService->routingTypes;
-
-            $faxes = [];
-            $faxesCollection = Faxes::query();
-            $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
-            $faxesCollection = $faxesCollection->orderBy('fax_name')->get([
-                'fax_extension',
-                'fax_name',
-                'fax_uuid'
-            ]);
-            foreach ($faxesCollection as $fax) {
-                $faxes[] = [
-                    'name' => $fax->fax_extension . ' ' . $fax->fax_name,
-                    'value' => $fax->fax_uuid
-                ];
-            }
-
-            $domains = [];
-            $domainsCollection = Session::get("domains");
-            if ($domainsCollection) {
-                foreach ($domainsCollection as $domain) {
-                    $domains[] = [
-                        'value' => $domain->domain_uuid,
-                        'name' => $domain->domain_description
-                    ];
-                }
-            }
-
-            // Check if item_uuid exists to find an existing voicemail
-            if ($item_uuid) {
-                // Find existing item by item_uuid
-                $phoneNumber = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
-
-                // logger($phoneNumber);
-
-                // If a voicemail exists, use it; otherwise, create a new one
-                if (!$phoneNumber) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
-                }
-
-                // Define the update route
-                $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
-            } else {
-                // Create a new voicemail if item_uuid is not provided
-                $phoneNumber = $this->model;
-            }
-
-            $permissions = $this->getUserPermissions();
-
-            $routes = [
-                'update_route' => $updateRoute ?? null,
-                'get_routing_options' => route('routing.options'),
-
-            ];
-
-
-            // Construct the itemOptions object
-            $itemOptions = [
-                'navigation' => $navigation,
-                'phone_number' => $phoneNumber,
-                'permissions' => $permissions,
-                'routes' => $routes,
-                'routing_types' => $routingTypes,
-                'faxes' => $faxes,
-                'domains' => $domains,
-                // Define options for other fields as needed
-            ];
-            // logger($itemOptions);
-
-            return $itemOptions;
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // report($e);
-
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
-            ], 500);  // 500 Internal Server Error for any other errors
-        }
-    }
 
     /**
      * @return Collection
@@ -195,7 +89,7 @@ class AccountSettingsController extends Controller
 
         $data = $data->first(); // This will return a collection
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
@@ -351,46 +245,30 @@ class AccountSettingsController extends Controller
      * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function update(UpdatePhoneNumberRequest $request, Destinations $phone_number)
+    public function update(Request $request)
     {
-        if (!$phone_number) {
-            // If the model is not found, return an error response
-            return response()->json([
-                'success' => false,
-                'errors' => ['model' => ['Model not found']]
-            ], 404); // 404 Not Found if the model does not exist
+        logger($request->all());
+        return;
+        // Update domain details
+        $domain = DomainSettings::where('domain_uuid', $request->domain_uuid)->first();
+    
+        if ($domain) {
+            $domain->update([
+                'domain_name' => $request->domain_name,
+                'domain_description' => $request->domain_description,
+                'domain_enabled' => $request->domain_enabled,
+            ]);
         }
-
-        try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
-
-            // logger($inputs);
-
-            // Process routing_options to form destination_actions
-            $destination_actions = [];
-            if (!empty($inputs['routing_options'])) {
-                foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
-                }
-            }
-
-            // Assign the formatted actions to the destination_actions field
-            $inputs['destination_actions'] = json_encode($destination_actions);
-
-            $phone_number->update($inputs);
-
-            $this->generateDialPlanXML($phone_number);
-        } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to update this item']]
-            ], 500); // 500 Internal Server Error for any other errors
+    
+        // Update settings
+        foreach ($request->input('settings', []) as $setting) {
+            DomainSettings::where('domain_setting_uuid', $setting['domain_setting_uuid'])
+                ->update(['domain_setting_value' => $setting['domain_setting_value']]);
         }
+    
+        return response()->json(['message' => 'Settings updated successfully']);
     }
+    
 
 
     /**

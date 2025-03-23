@@ -2,11 +2,11 @@
     <MainLayout>
 
         <main class="mx-auto max-w-full pb-10 lg:px-8 lg:py-12">
-            <div class=" rounded-lg bg-white px-4 pb-4 pt-10 text-left shadow-xl lg:grid lg:grid-cols-12 lg:gap-x-5">
+            <div class=" lg:grid lg:grid-cols-12 lg:gap-x-5">
                 <aside class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
                     <nav class="space-y-1">
                         <a v-for="item in navigation" :key="item.name" href="#"
-                            :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-600 hover:bg-gray-100' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
+                            :class="[activeTab === item.slug ? 'bg-gray-50 text-indigo-600 hover:bg-white' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
                             @click.prevent="setActiveTab(item.slug)"
                             :aria-current="activeTab === item.slug ? 'page' : undefined">
                             <component :is="iconComponents[item.icon]"
@@ -24,7 +24,7 @@
                     <section aria-labelledby="settings-heading">
                         <div class="shadow sm:overflow-hidden sm:rounded-md">
 
-                            <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
                                 <div class="flex justify-between items-center">
                                     <h3 id="settings-heading" class="text-base font-semibold leading-6 text-gray-900">
                                         Settings</h3>
@@ -57,7 +57,7 @@
                                 </div>
 
                             </div>
-                            <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+                            <div class="bg-white px-4 py-3 text-right sm:px-6">
 
                                 <button @click.prevent="saveSettings"
                                     class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
@@ -269,43 +269,25 @@
             </div>
         </main>
 
+        <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
+
     </MainLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { router } from "@inertiajs/vue3";
-import { usePage } from '@inertiajs/vue3'
 import MainLayout from '../Layouts/MainLayout.vue'
-import DashboardTile from './components/general/DashboardTile.vue'
-import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
-import DialpadIcon from "./components/icons/DialpadIcon.vue"
-import FaxIcon from "./components/icons/FaxIcon.vue"
-import {
-    ClockIcon,
-} from '@heroicons/vue/20/solid'
-
-import { TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon, CogIcon } from '@heroicons/vue/24/outline'
-import TopBanner from './components/notifications/TopBanner.vue';
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
 import InputField from "@generalComponents/InputField.vue";
 import Toggle from "@generalComponents/Toggle.vue";
+import Spinner from "@generalComponents/Spinner.vue";
+import Notification from "./components/notifications/Notification.vue";
 
 
-import {
-    Disclosure,
-    DisclosureButton,
-    DisclosurePanel,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-    Switch,
-    SwitchGroup,
-    SwitchLabel,
-} from '@headlessui/vue'
+
 import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import {
     Bars3Icon,
@@ -329,13 +311,15 @@ const props = defineProps({
 
 })
 
-const localData = ref(null);
+const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
 const localSettings = ref([]);
 
+const isSubmitting = ref(false);
+const notificationType = ref(null);
+const notificationShow = ref(null);
+const notificationMessages = ref(null);
 
 onMounted(() => {
-    localData.value = props.data; // Deep copy to prevent modifying props directly
-    console.log(localData);
     localSettings.value = props.data.settings.map(setting => ({
         uuid: setting.domain_setting_uuid,
         subcategory: setting.domain_setting_subcategory,
@@ -343,12 +327,26 @@ onMounted(() => {
     }));
 });
 
-
 const getSetting = (subcategory) => {
     return localSettings.value.find(setting => setting.subcategory === subcategory) || { uuid: null, value: '' };
 };
 
-const page = usePage()
+const saveSettings = () => {
+    axios.post(props.routes.update,
+        {
+            ...localData.value, // Send domain properties
+            settings: localSettings.value // Send modified settings
+        }
+    )
+        .then((response) => {
+            // selectedItems.value = response.data.items;
+            // selectAll.value = true;
+            showNotification('success', response.data.messages);
+
+        }).catch((error) => {
+            handleErrorResponse(error);
+        });
+};
 
 
 const user = {
@@ -365,7 +363,7 @@ const userNavigation = [
 ]
 const subNavigation = [
     { name: 'Profile', href: '#', icon: UserCircleIcon, current: false },
-    { name: 'Account', href: '#', icon: CogIcon, current: false },
+    { name: 'Account', href: '#', icon: SquaresPlusIcon, current: false },
     { name: 'Password', href: '#', icon: KeyIcon, current: false },
     { name: 'Notifications', href: '#', icon: BellIcon, current: false },
     { name: 'Plan & Billing', href: '#', icon: CreditCardIcon, current: true },
@@ -412,37 +410,69 @@ const iconComponents = {
     'CreditCardIcon': CreditCardIcon,
 };
 
-onMounted(() => {
-    //request list of entities
-    // getCounts();
-})
 
-const getData = () => {
-    router.visit("/dashboard", {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-        },
-        only: ["data"],
-        onSuccess: (page) => {
-            if (props.data.superadmin) {
-                open.value = true;
-            }
-            // console.log(props.data);
-            // console.log(props.data.billing_suspension);
-            // if (props.data.billing_suspension) {
-            //     showTopBanner.value = true;
-            // }
-
-        }
-
-    });
-
-}
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
+
+const handleFormErrorResponse = (error) => {
+    if (error.request?.status == 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+}
+
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
+
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
+}
+
+const handleClearErrors = () => {
+    formErrors.value = null;
+}
 
 
 </script>

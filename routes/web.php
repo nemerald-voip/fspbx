@@ -182,7 +182,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/virtual-receptionists/key/delete', [VirtualReceptionistController::class, 'destroyKey'])->name('virtual-receptionist.key.destroy');
 
     //Settings
-    Route::resource('account-settings', AccountSettingsController::class);
+    // Route::resource('account-settings', AccountSettingsController::class);
+    Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings.index');
+    Route::post('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
     // Greetings
     Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
