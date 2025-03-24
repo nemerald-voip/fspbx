@@ -10,9 +10,8 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"  # Red text
 }
 
-# Find the PHP extension directory
+# Find PHP extension directory
 EXTENSION_DIR=$(php -r "echo ini_get('extension_dir');")
-
 if [ -z "$EXTENSION_DIR" ]; then
     print_error "Failed to find PHP extension directory."
     exit 1
@@ -20,52 +19,49 @@ else
     print_success "PHP extension directory found: $EXTENSION_DIR"
 fi
 
-# Copy the esl.so extension to the found directory
+# Copy esl.so to the extension directory
 cp "$(dirname "$0")/esl.so" "$EXTENSION_DIR"
 if [ $? -eq 0 ]; then
     print_success "esl.so copied successfully to $EXTENSION_DIR"
 else
-    print_error "Error occurred while copying esl.so to $EXTENSION_DIR."
+    print_error "Error copying esl.so to $EXTENSION_DIR."
     exit 1
 fi
 
 # Get PHP version
-PHP_VERSION=$(php -v | grep -oP '^PHP \K[0-9]+\.[0-9]+')
+PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 if [ -z "$PHP_VERSION" ]; then
-    print_error "Failed to find PHP version."
+    print_error "Failed to detect PHP version."
     exit 1
 else
-    print_success "PHP version found: $PHP_VERSION"
+    print_success "PHP version detected: $PHP_VERSION"
 fi
 
-# Get PHP configuration file for FPM
-PHP_INI_PATH=$(php --ini | grep "Loaded Configuration File" | awk '{print $4}')
-if [ -z "$PHP_INI_PATH" ]; then
-    print_error "Failed to find PHP configuration file."
-    exit 1
-else
-    print_success "PHP configuration file found: $PHP_INI_PATH"
-fi
-
-# Determine the PHP-FPM configuration path based on the PHP version
-PHP_FPM_INI_PATH="/etc/php/$PHP_VERSION/fpm/php.ini"
+# Define PHP CLI and FPM ini paths
+PHP_CLI_INI="/etc/php/$PHP_VERSION/cli/php.ini"
+PHP_FPM_INI="/etc/php/$PHP_VERSION/fpm/php.ini"
 PHP_FPM_CONF_DIR="/etc/php/$PHP_VERSION/fpm/conf.d/"
+PHP_CLI_CONF_DIR="/etc/php/$PHP_VERSION/cli/conf.d/"
 
-if [ -f "$PHP_FPM_INI_PATH" ]; then
-    print_success "PHP-FPM configuration file for PHP $PHP_VERSION is located at: $PHP_FPM_INI_PATH"
-else
-    print_error "PHP-FPM configuration file not found for PHP $PHP_VERSION."
-fi
+# Function to add extension to a PHP ini file
+add_extension_once() {
+    INI_FILE=$1
+    if grep -q "extension=esl.so" "$INI_FILE"; then
+        print_success "esl.so is already added to $INI_FILE"
+    else
+        echo "extension=esl.so" | sudo tee -a "$INI_FILE" > /dev/null
+        if [ $? -eq 0 ]; then
+            print_success "Added esl.so to $INI_FILE"
+        else
+            print_error "Error adding esl.so to $INI_FILE"
+            exit 1
+        fi
+    fi
+}
 
-
-# Append the extension configuration to the specific ini file in the conf.d directory
-echo "extension=esl.so" | sudo tee -a "${PHP_FPM_CONF_DIR}30-esl.ini" > /dev/null
-if [ $? -eq 0 ]; then
-    print_success "esl extension added to PHP configuration successfully."
-else
-    print_error "Error occurred while adding esl extension to PHP configuration."
-    exit 1
-fi
+# Add esl.so to both CLI and FPM configurations
+add_extension_once "${PHP_CLI_CONF_DIR}30-esl.ini"
+add_extension_once "${PHP_FPM_CONF_DIR}30-esl.ini"
 
 # Restart PHP-FPM to load the new extension
 SERVICE_NAME="php$PHP_VERSION-fpm"
@@ -73,8 +69,8 @@ sudo systemctl restart $SERVICE_NAME
 if [ $? -eq 0 ]; then
     print_success "$SERVICE_NAME restarted successfully."
 else
-    print_error "Error occurred during $SERVICE_NAME restart."
+    print_error "Error restarting $SERVICE_NAME."
     exit 1
 fi
 
-echo "All tasks completed successfully!"
+echo -e "\e[32m🎉 Installation completed successfully! ESL is now enabled for both CLI and FPM. \e[0m"

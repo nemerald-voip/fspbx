@@ -1283,7 +1283,7 @@ class ExtensionsController extends Controller
 
         // dispatch the job to update app user
         $mobile_app = $extension->mobile_app;
-        if (isset($mobile_app)) {
+        if (isset($mobile_app) && isset($attributes['exclude_from_ringotel_stale_users'])) {
             if (Schema::hasColumn('mobile_app_users', 'exclude_from_stale_report')) {
                 $mobile_app->exclude_from_stale_report = $attributes['exclude_from_ringotel_stale_users'];
                 $mobile_app->save();

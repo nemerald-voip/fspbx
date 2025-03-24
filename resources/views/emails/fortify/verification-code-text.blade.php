@@ -4,7 +4,7 @@ Use the code below to complete your authentication:
 
 Your 2FA Code: {{ $attributes['code'] ?? '' }}
 
-Please use the above code to complete the sign-in process for your Nemerald account. 
+Please use the above code to complete the sign-in process for your {{ config('app.name', 'Laravel') }} account. 
 This extra step confirms it's really you trying to access your account.
 
 Why are you receiving this email?

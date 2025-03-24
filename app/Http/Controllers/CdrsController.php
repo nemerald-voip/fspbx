@@ -10,7 +10,6 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use App\Services\CdrDataService;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +64,7 @@ class CdrsController extends Controller
                     return $this->filters['endPeriod'];
                 },
                 'timezone' => function () {
-                    return $this->getTimezone();
+                    return get_local_time_zone(session('domain_uuid'));
                 },
                 'direction' => function () {
                     return isset($this->filters['direction']) ? $this->filters['direction'] : null;
@@ -807,8 +806,9 @@ class CdrsController extends Controller
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
         } else {
-            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+            $domain_uuid = session('domain_uuid');
+            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
         }
 
         $params['filterData']['startPeriod'] = $startPeriod;
@@ -847,18 +847,6 @@ class CdrsController extends Controller
     // {
     // }
 
-    protected function getTimezone()
-    {
-
-        if (!Cache::has(auth()->user()->user_uuid . '_' . Session::get('domain_uuid') . '_timeZone')) {
-            $timezone = get_local_time_zone(Session::get('domain_uuid'));
-            Cache::put(auth()->user()->user_uuid . Session::get('domain_uuid') .  '_timeZone', $timezone, 600);
-        } else {
-            $timezone = Cache::get(auth()->user()->user_uuid . '_' . Session::get('domain_uuid') . '_timeZone');
-        }
-        return $timezone;
-    }
-
 
     /**
      * Get all items
@@ -880,8 +868,9 @@ class CdrsController extends Controller
                 $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
                 $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
             } else {
-                $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
-                $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+                $domain_uuid = session('domain_uuid');
+                $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+                $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
             }
 
             $params['filterData']['startPeriod'] = $startPeriod;

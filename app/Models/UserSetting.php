@@ -26,6 +26,15 @@ class UserSetting extends Model
         'user_setting_uuid',
         'domain_uuid',
         'user_uuid',
+        'user_setting_category',
+        'user_setting_subcategory',
+        'user_setting_name',
+        'user_setting_value',
+        'user_setting_enabled',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user',
     ];
 
     public function user()

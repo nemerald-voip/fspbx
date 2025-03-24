@@ -149,34 +149,46 @@ class MigrateSQLiteToRAM extends Command
     private function insertSwitchVariables()
     {
         $this->info("Inserting Switch Variables...");
-
+    
         $variables = [
             [
-                'var_uuid' => 'eeb9db7f-ee49-4c80-81a3-3b4391a1c7f0',
                 'var_category' => 'DSN',
-                'var_name' => 'dsn',
-                'var_value' => 'sqlite:///dev/shm/core.db',
-                'var_command' => 'set',
+                'var_name'     => 'dsn',
+                'var_value'    => 'sqlite:///dev/shm/core.db',
+                'var_command'  => 'set',
                 'var_hostname' => null,
-                'var_enabled' => 'true',
+                'var_enabled'  => 'true',
             ],
             [
-                'var_uuid' => '7121e1ab-c41e-42ce-b5e6-e6c296767fd4',
                 'var_category' => 'DSN',
-                'var_name' => 'dsn_callcenter',
-                'var_value' => 'sqlite:///dev/shm/callcenter.db',
-                'var_command' => 'set',
+                'var_name'     => 'dsn_callcenter',
+                'var_value'    => 'sqlite:///dev/shm/callcenter.db',
+                'var_command'  => 'set',
                 'var_hostname' => null,
-                'var_enabled' => 'true',
+                'var_enabled'  => 'true',
             ],
         ];
-
+    
         foreach ($variables as $variable) {
-            SwitchVariable::updateOrCreate(
-                ['var_uuid' => $variable['var_uuid']],
-                $variable
-            );
-
+            // Define the lookup conditions
+            $conditions = [
+                'var_category' => $variable['var_category'],
+                'var_name'     => $variable['var_name'],
+            ];
+    
+            // Attempt to find an existing record
+            $existing = SwitchVariable::where($conditions)->first();
+    
+            // If the record doesn't exist, add a new UUID; if it does, keep the existing UUID.
+            if (!$existing) {
+                $variable['var_uuid'] = (string) Str::uuid();
+            } else {
+                $variable['var_uuid'] = $existing->var_uuid;
+            }
+    
+            // Now update or create based on var_category and var_name
+            SwitchVariable::updateOrCreate($conditions, $variable);
+    
             $this->info("Inserted/Updated variable: {$variable['var_name']}");
         }
     }

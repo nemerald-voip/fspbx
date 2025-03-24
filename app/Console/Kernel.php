@@ -2,7 +2,11 @@
 
 namespace App\Console;
 
+use App\Jobs\DeleteOldFaxes;
 use App\Models\DefaultSettings;
+use App\Jobs\ProcessWakeupCalls;
+use App\Jobs\DeleteOldVoicemails;
+use App\Jobs\DeleteOldCallRecordings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Scheduling\Schedule;
@@ -79,6 +83,30 @@ class Kernel extends ConsoleKernel
         if (isset($jobSettings['audit_stale_ringotel_users']) && $jobSettings['audit_stale_ringotel_users'] === "true") {
             $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');
         }
+
+        // Process scheduled jobs
+        if (isset($jobSettings['wake_up_calls']) && $jobSettings['wake_up_calls'] === "true") {
+            $schedule->job(new ProcessWakeupCalls())->everyMinute();
+        }
+
+        if (isset($jobSettings['delete_old_faxes']) && $jobSettings['delete_old_faxes'] === "true") {
+            // Optionally retrieve the days to keep faxes from settings or use default 90 days.
+            $daysKeepFax = $jobSettings['days_keep_fax'] ?? 90;
+            $schedule->job(new DeleteOldFaxes((int)$daysKeepFax))->daily();
+        }
+
+        if (isset($jobSettings['delete_old_call_recordings']) && $jobSettings['delete_old_call_recordings'] === "true") {
+            // Retrieve the retention days for recordings or default to 90 days.
+            $daysKeepRecordings = $jobSettings['days_keep_call_recordings'] ?? 90;
+            $schedule->job(new DeleteOldCallRecordings((int)$daysKeepRecordings))->daily();
+        }
+
+        if (isset($jobSettings['delete_old_voicemails']) && $jobSettings['delete_old_voicemails'] === "true") {
+            // Retrieve the retention days for voicemails or default to 90 days.
+            $daysKeepVoicemails = $jobSettings['days_keep_voicemails'] ?? 90;
+            $schedule->job(new DeleteOldVoicemails((int)$daysKeepVoicemails))->daily();
+        }
+
     }
 
     /**

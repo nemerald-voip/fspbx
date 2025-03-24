@@ -18,6 +18,7 @@ use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -1058,30 +1059,16 @@ if (!function_exists('get_local_time_zone')) {
      *
      * @return string
      */
-    function get_local_time_zone($domain_uuid)
+    function get_local_time_zone($domain_uuid = null)
     {
-        $local_time_zone_setting = DomainSettings::where('domain_uuid', $domain_uuid)
-            ->where('domain_setting_category', 'domain')
-            ->where('domain_setting_subcategory', 'time_zone')
-            ->where('domain_setting_enabled', 'true')
-            ->first();
-
-        if (!$local_time_zone_setting) {
-            $system_time_zone_setting = DefaultSettings::where('default_setting_category', 'domain')
-                ->where('default_setting_subcategory', 'time_zone')
-                ->where('default_setting_enabled', 'true')
-                ->first();
-
-            if ($system_time_zone_setting) {
-                $local_time_zone = $system_time_zone_setting->default_setting_value;
-            } else {
-                $local_time_zone = "UTC";
-            }
-        } else {
-            $local_time_zone = $local_time_zone_setting->domain_setting_value;
+        if (!$domain_uuid) {
+            $domain_uuid = session('domain_uuid');
         }
-
-        return $local_time_zone;
+        $cacheKey = "{$domain_uuid}_timeZone";
+    
+        return Cache::remember($cacheKey, 3600, function () use ($domain_uuid) {
+            return get_domain_setting('time_zone', $domain_uuid) ?? 'UTC';
+        });
     }
 }
 

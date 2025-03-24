@@ -51,7 +51,9 @@ apt-get install -y \
     libreoffice-common \
     libreoffice-java-common \
     supervisor \
-    redis-server
+    redis-server \
+    software-properties-common \
+    apt-transport-https
 if [ $? -eq 0 ]; then
     print_success "Essential dependencies installed successfully."
 else
@@ -169,14 +171,6 @@ if [ $? -eq 0 ]; then
     print_success "session.gc_maxlifetime updated to 7200 in php.ini."
 else
     print_error "Error occurred while updating session.gc_maxlifetime in php.ini."
-    exit 1
-fi
-
-service php8.1-fpm restart
-if [ $? -eq 0 ]; then
-    print_success "PHP 8.1-fpm restarted successfully."
-else
-    print_error "Error occurred during PHP 8.1-fpm restart."
     exit 1
 fi
 
@@ -767,6 +761,15 @@ else
     exit 1
 fi
 
+# Enable email_queue service
+sudo systemctl enable email_queue
+if [ $? -eq 0 ]; then
+    print_success "email_queue service enabled successfully."
+else
+    print_error "Error occurred while enabling email_queue service."
+    exit 1
+fi
+
 sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/fax_queue.service
 if [ $? -eq 0 ]; then
     print_success "Updated WorkingDirectory for fax_queue service successfully."
@@ -807,6 +810,15 @@ if [ $? -eq 0 ]; then
     print_success "Updated ExecStart for event_guard service successfully."
 else
     print_error "Error occurred while updating ExecStart for event_guard service."
+    exit 1
+fi
+
+# Enable event_guard service
+sudo systemctl enable event_guard
+if [ $? -eq 0 ]; then
+    print_success "event_guard service enabled successfully."
+else
+    print_error "Error occurred while enabling event_guard service."
     exit 1
 fi
 
