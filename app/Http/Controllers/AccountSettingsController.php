@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Faxes;
 use Inertia\Response;
+use App\Models\Domain;
 use App\Models\Dialplans;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
@@ -16,8 +17,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
-use App\Models\Domain;
 use Illuminate\Contracts\Foundation\Application;
+use App\Http\Requests\UpdateAccountSettingsRequest;
 
 class AccountSettingsController extends Controller
 {
@@ -241,11 +242,11 @@ class AccountSettingsController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  UpdatePhoneNumberRequest  $request
+     * @param  UpdateAccountSettingsRequest  $request
      * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function update(Request $request)
+    public function update(UpdateAccountSettingsRequest $request)
     {
         logger($request->all());
         return;
