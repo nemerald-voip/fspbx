@@ -22,7 +22,7 @@
 
                 <div v-if="activeTab === 'settings'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
                     <section aria-labelledby="settings-heading">
-                        <div class="shadow sm:overflow-hidden sm:rounded-md">
+                        <div class="shadow  sm:rounded-md">
 
                             <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
                                 <div class="flex justify-between items-center">
@@ -35,7 +35,7 @@
                                 </div>
 
                                 <div class="grid grid-cols-12 gap-6">
-                                    <div class="col-span-6">
+                                    <div class="col-span-12 sm:col-span-6">
                                         <LabelInputOptional :target="'domain_description'" :label="'Account Name'" />
                                         <div class="mt-2">
                                             <InputField v-model="localData.domain_description" type="text"
@@ -44,12 +44,19 @@
                                                 :error="errors?.domain_description && errors.domain_description.length > 0" />
                                         </div>
                                     </div>
-                                    <div class="col-span-6">
+                                    <div class="col-span-12 sm:col-span-6">
                                         <LabelInputOptional :target="'domain_name'" :label="'Domain'" />
                                         <div class="mt-2">
                                             <InputField v-model="localData.domain_name" type="text" :disabled="true"
                                                 id="domain_name" name="domain_name" placeholder="Enter caller prefix"
                                                 :error="errors?.domain_name && errors.domain_name.length > 0" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-12 sm:col-span-6">
+                                        <LabelInputOptional :target="'domain_name'" :label="'Time Zone'" />
+                                        <div class="mt-2">
+                                            <ListboxGroup v-model:="settingRefs['time_zone']" :options="timezones" />
                                         </div>
                                     </div>
 
@@ -68,6 +75,73 @@
                             </div>
                         </div>
                     </section>
+
+                    <!-- Voicemail Settings Section -->
+                    <section class="bg-white p-6 shadow rounded-md space-y-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Voicemail Settings</h3>
+
+                        <!-- Password Min Length -->
+                        <div v-if="getSetting('password_min_length').uuid">
+                            <LabelInputOptional target="password_min_length" label="Password Min Length" />
+                            <InputField v-model="getSetting('password_min_length').value" type="number"
+                                id="password_min_length" name="password_min_length" class="mt-2"
+                                placeholder="Enter minimum password length" />
+                        </div>
+
+                        <div>
+                            <LabelInputOptional target="password_min_length" label="Password Min Length" />
+
+                            <div class="relative mt-2">
+                                <InputField v-model="passwordMinLengthRef" type="number" id="password_min_length"
+                                    name="password_min_length" :disabled="passwordMinLengthDefault"
+                                    placeholder="Enter minimum password length" />
+                                <p v-if="passwordMinLengthDefault" class="text-sm text-gray-400 mt-1">
+                                    System default will be used
+                                </p>
+                            </div>
+
+                            <div class="mt-2 flex items-center gap-2">
+                                <input id="password_min_length_default" type="checkbox" v-model="passwordMinLengthDefault"
+                                    class="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                                <label for="password_min_length_default" class="text-sm text-gray-700">
+                                    Use system default
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Password Complexity -->
+                        <!-- <div v-if="getSetting('password_complexity').uuid">
+                            <Toggle label="Require Complex Passwords" v-model="getSetting('password_complexity').value"
+                                :true-value="'true'" :false-value="'false'" />
+                        </div> -->
+
+                        <!-- Keep Voicemails Locally -->
+                        <!-- <div v-if="getSetting('keep_local').uuid">
+                            <Toggle label="Keep Local Voicemail Copies" v-model="getSetting('keep_local').value"
+                                :true-value="'true'" :false-value="'false'" />
+                        </div> -->
+
+                        <!-- Transcription Enabled by Default -->
+                        <!-- <div v-if="getSetting('transcription_enabled_default').uuid">
+                            <Toggle label="Enable Transcription by Default"
+                                v-model="getSetting('transcription_enabled_default').value" :true-value="'true'"
+                                :false-value="'false'" />
+                        </div> -->
+
+                        <!-- Voicemail File Delivery -->
+                        <!-- <div v-if="getSetting('voicemail_file').uuid">
+                            <label for="voicemail_file" class="block text-sm font-medium text-gray-700">Voicemail File
+                                Delivery</label>
+                            <select id="voicemail_file" v-model="getSetting('voicemail_file').value"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                <option value="attach">Attach</option>
+                                <option value="link">Link</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div> -->
+                    </section>
+
+
                 </div>
 
                 <div v-if="activeTab === 'billing'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
@@ -270,13 +344,13 @@
         </main>
 
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
-        @update:show="hideNotification" />
+            @update:show="hideNotification" />
 
     </MainLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
@@ -285,18 +359,11 @@ import InputField from "@generalComponents/InputField.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import Notification from "./components/notifications/Notification.vue";
-
+import ListboxGroup from "@generalComponents/ListboxGroup.vue";
 
 
 import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import {
-    Bars3Icon,
-    BellIcon,
-    CreditCardIcon,
-    KeyIcon,
-    SquaresPlusIcon,
-    UserCircleIcon,
-} from '@heroicons/vue/24/outline'
+import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
 
 
@@ -306,6 +373,7 @@ const props = defineProps({
         default: () => ({}) // Providing an empty object as default
     },
     navigation: Object,
+    timezones: Object,
     routes: Object,
     errors: Object,
 
@@ -318,6 +386,17 @@ const isSubmitting = ref(false);
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
+const settingRefs = ref({});
+
+const initializeSettingRefs = () => {
+    for (const setting of localSettings.value) {
+        const refValue = ref(setting.value);
+        watch(refValue, (val) => {
+            setting.value = val;
+        });
+        settingRefs.value[setting.subcategory] = refValue;
+    }
+};
 
 onMounted(() => {
     localSettings.value = props.data.settings.map(setting => ({
@@ -325,11 +404,29 @@ onMounted(() => {
         subcategory: setting.domain_setting_subcategory,
         value: setting.domain_setting_value
     }));
+    initializeSettingRefs();
 });
 
 const getSetting = (subcategory) => {
     return localSettings.value.find(setting => setting.subcategory === subcategory) || { uuid: null, value: '' };
 };
+
+const useSettingRef = (subcategory) => {
+    const setting = getSetting(subcategory);
+    console.log(setting);
+    const settingRef = ref(setting.value);
+
+    watch(settingRef, (val) => {
+        setting.value = val;
+    });
+
+    return settingRef;
+};
+
+// const timezoneSetting = useSettingRef('time_zone');
+// const timezoneSetting = ref(getSetting('time_zone').value);
+
+
 
 const saveSettings = () => {
     axios.post(props.routes.update,
@@ -349,26 +446,6 @@ const saveSettings = () => {
 };
 
 
-const user = {
-    name: 'Lisa Marie',
-    email: 'lisamarie@example.com',
-    imageUrl:
-        'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=4&w=256&h=256&q=80',
-}
-
-const userNavigation = [
-    { name: 'Your Profile', href: '#' },
-    { name: 'Settings', href: '#' },
-    { name: 'Sign out', href: '#' },
-]
-const subNavigation = [
-    { name: 'Profile', href: '#', icon: UserCircleIcon, current: false },
-    { name: 'Account', href: '#', icon: SquaresPlusIcon, current: false },
-    { name: 'Password', href: '#', icon: KeyIcon, current: false },
-    { name: 'Notifications', href: '#', icon: BellIcon, current: false },
-    { name: 'Plan & Billing', href: '#', icon: CreditCardIcon, current: true },
-    { name: 'Integrations', href: '#', icon: SquaresPlusIcon, current: false },
-]
 const plans = [
     { name: 'Startup', priceMonthly: '$29', priceYearly: '$290', limit: 'Up to 5 active job postings', selected: true },
     {

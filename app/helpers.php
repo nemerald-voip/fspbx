@@ -12,7 +12,6 @@ use App\Models\SipProfiles;
 use Illuminate\Support\Str;
 use App\Models\DeviceVendor;
 use App\Models\MusicStreams;
-use Illuminate\Http\Request;
 use App\Models\DeviceProfile;
 use App\Models\DomainSettings;
 use App\Models\SwitchVariable;
@@ -1421,11 +1420,11 @@ if (!function_exists('getRingBackTonesCollection')) {
             ->where('default_setting_enabled', true)
             ->value('default_setting_value');
 
-            // logger($recordingsCollection);
+        // logger($recordingsCollection);
         foreach ($recordingsCollection as $item) {
             $recordings[] = [
                 'name' => $item->recording_name,
-                'value' => $recording_path . '/' . $item->domain->domain_name .'/'. $item->recording_filename
+                'value' => $recording_path . '/' . $item->domain->domain_name . '/' . $item->recording_filename
             ];
         }
         // logger($recordings);
@@ -1482,8 +1481,8 @@ if (!function_exists('getSoundsCollection')) {
             $recordingsCollection->where('domain_uuid', $domain);
         }
         $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
- 
-            // logger($recordingsCollection);
+
+        // logger($recordingsCollection);
         foreach ($recordingsCollection as $item) {
             $recordings[] = [
                 'name' => $item->recording_name,
@@ -1519,11 +1518,11 @@ if (!function_exists('getSoundsCollection')) {
         unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
         return [
             '' => [
-            [
-                'name' => 'None',
-                'value' => null,
+                [
+                    'name' => 'None',
+                    'value' => null,
+                ],
             ],
-        ],
             'Recordings' => $recordings,
             'Sounds' => $sounds,
         ];
@@ -1563,5 +1562,29 @@ if (!function_exists('formatMacAddress')) {
     {
         $macAddress = ($uppercase) ? strtoupper($macAddress) : strtolower($macAddress);
         return implode(":", str_split($macAddress, 2));
+    }
+}
+
+
+if (!function_exists('getGroupedTimezones')) {
+    function getGroupedTimezones()
+    {
+        $groupedTimezones = [];
+
+        foreach (DateTimeZone::listIdentifiers() as $tz) {
+            $parts = explode('/', $tz, 2);
+            $region = $parts[0];
+            $label = $tz;
+            $offset = (new DateTime('now', new DateTimeZone($tz)))->format('P');
+
+            $groupedTimezones[$region][] = [
+                'value' => $tz,
+                'name' => "(UTC $offset) $label"
+            ];
+        }
+
+        ksort($groupedTimezones); // Optional: sort regions alphabetically
+
+        return $groupedTimezones;
     }
 }

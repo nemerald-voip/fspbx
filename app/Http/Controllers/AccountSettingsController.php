@@ -10,13 +10,14 @@ use App\Models\Dialplans;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
+use App\Models\DomainSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\StorePhoneNumberRequest;
-use App\Http\Requests\UpdatePhoneNumberRequest;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
 
@@ -55,7 +56,9 @@ class AccountSettingsController extends Controller
                 'navigation' => function () {
                     return $this->getNavigation();
                 },
-
+                'timezones' => function () {
+                    return getGroupedTimezones();
+                },
                 'routes' => [
                     'update' => route('account-settings.update'),
                     // 'store' => route('phone-numbers.store'),
@@ -115,7 +118,7 @@ class AccountSettingsController extends Controller
         );
 
         $data->with(['settings' => function ($query) {
-            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled'); 
+            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled');
         }]);
 
         return $data;
@@ -243,33 +246,58 @@ class AccountSettingsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  UpdateAccountSettingsRequest  $request
-     * @param  Destinations  $phone_number
      * @return JsonResponse
      */
     public function update(UpdateAccountSettingsRequest $request)
     {
-        logger($request->all());
-        return;
-        // Update domain details
-        $domain = DomainSettings::where('domain_uuid', $request->domain_uuid)->first();
-    
-        if ($domain) {
+        try {
+            // Begin Transaction
+            DB::beginTransaction();
+            // Retrieve validated data
+            $data = $request->validated();
+
+            // Update domain details
+            $domain = Domain::where('domain_uuid', $data['domain_uuid'])->first();
+
+            if (!$domain) {
+                throw new \Exception('Domain not found.');
+            }
+
             $domain->update([
-                'domain_name' => $request->domain_name,
-                'domain_description' => $request->domain_description,
-                'domain_enabled' => $request->domain_enabled,
+                'domain_name'        => $data['domain_name'],
+                'domain_description' => $data['domain_description'],
+                'domain_enabled'     => $data['domain_enabled'],
             ]);
+
+
+            // Update settings if provided
+            if (!empty($data['settings'])) {
+                foreach ($data['settings'] as $setting) {
+                    DomainSettings::where('domain_setting_uuid', $setting['uuid'])
+                        ->update(['domain_setting_value' => $setting['value']]);
+                }
+            }
+
+            // Commit Transaction
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['server' => ['Settings updated successfully.']],
+            ], 200);
+        } catch (\Exception $e) {
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while processing your request.']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
-    
-        // Update settings
-        foreach ($request->input('settings', []) as $setting) {
-            DomainSettings::where('domain_setting_uuid', $setting['domain_setting_uuid'])
-                ->update(['domain_setting_value' => $setting['domain_setting_value']]);
-        }
-    
-        return response()->json(['message' => 'Settings updated successfully']);
     }
-    
+
 
 
     /**
