@@ -239,6 +239,41 @@ class FreeswitchEslService
     }
 
 
+    public function subscribeToEvents($eventType, $events)
+    {
+        try {
+            $this->conn->events($eventType, $events);
+            return true;
+        } catch (\Throwable $e) {
+            logger()->error("Failed to subscribe to events: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function listen(callable $callback)
+    {
+        try {
+            // Keep receiving events as long as connection is alive
+            while ($this->conn && $this->conn->connected()) {
+                $event = $this->conn->recvEvent();
+
+                logger('here');
+    
+                if (!$event) {
+                    logger('no event');
+                    usleep(100000); // 100ms pause to prevent CPU spinning
+                    continue;
+                }
+    
+                // Trigger your custom logic
+                $callback($event);
+            }
+        } catch (\Throwable $e) {
+            logger()->error("ESL Listener Error: " . $e->getMessage());
+        }
+    }
+
+
     function convertEslResponse($eslEvent)
     {
         $response = trim($eslEvent->getBody());
