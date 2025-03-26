@@ -309,7 +309,7 @@ class DashboardController extends Controller
         }
 
         $data['time_zone'] = get_domain_setting('time_zone');
-        $data['billing_suspension'] = get_domain_setting('billing_suspension');
+        $data['billing_suspension'] = filter_var(get_domain_setting('billing_suspension'), FILTER_VALIDATE_BOOLEAN);
 
         return $data;
     }
