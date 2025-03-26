@@ -348,7 +348,7 @@ class VirtualReceptionistController extends Controller
             DB::rollBack();
 
             // Log the error message
-            logger($e);
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
