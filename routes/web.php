@@ -27,6 +27,7 @@ use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ProFeaturesController;
+use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
@@ -221,11 +222,21 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
     Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
 
+    //Phone Numbers
     Route::resource('phone-numbers', PhoneNumbersController::class);
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
     Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+
+    //Wakeup Calls
+    Route::resource('wakeup-calls', WakeupCallsController::class);
+    Route::post('/wakeup-calls/select-all', [WakeupCallsController::class, 'selectAll'])->name('wakeup-calls.select.all');
+    // Route::post('/wakeup-calls/bulk-update', [WakeupCallsController::class, 'bulkUpdate'])->name('wakeup-calls.bulk.update');
+    Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
+    Route::post('wakeup-calls/item-options', [WakeupCallsController::class, 'getItemOptions'])->name('wakeup-calls.item.options');
+    Route::post('wakeup-calls/settings', [WakeupCallsController::class, 'getSettings'])->name('wakeup-calls.settings');
+    Route::put('wakeup-calls/settings/update', [WakeupCallsController::class, 'updateSettings'])->name('wakeup-calls.settings.update');
 
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -271,11 +282,14 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
 
     // Contacts
-    Route::get('/contacts', [ContactsController::class, 'index'])->name('contacts.list');
-    Route::delete('/contacts/{id}', [ContactsController::class, 'destroy'])->name('contacts.destroy');
+    Route::resource('contacts', ContactsController::class);
+    Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
+    Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
+    Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
     Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
-
-
+    Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
+    Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+    
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,14 +36,15 @@ class ContactPhones extends Model
         'update_user'
     ];
 
-    // public function __construct(array $attributes = [])
-    // {
-    //     parent::__construct();
-    //     $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-    //     $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-    //     $this->attributes['insert_user'] = Session::get('user_uuid');
-    //     $this->fill($attributes);
-    // }
+    protected $appends = ['phone_number_formatted'];
+
+    /**
+     * Accessor: Get phone number formatted
+     */
+    public function getPhoneNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->phone_number, "US", PhoneNumberFormat::NATIONAL);
+    }
 
     /**
      * Get the Device Lines objects associated with this device.

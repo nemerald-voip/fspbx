@@ -1287,8 +1287,6 @@ class AppsController extends Controller
 
     public function emailUser()
     {
-
-        //Mail::to("info@nemerald.com")->send(new AppCredentialsGenerated());
         SendAppCredentials::dispatch()->onQueue('emails');
 
         //Log::info('Dispatched email ');

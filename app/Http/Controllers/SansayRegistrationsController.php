@@ -71,8 +71,8 @@ class SansayRegistrationsController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request('filterData.sortedField', 'states'); // Default to 'created_at'
-        $this->sortOrder = request('filterData.sortOrder', 'desc'); // Default to descending
+        $this->sortField = request('filterData.sortedField', 'username'); 
+        $this->sortOrder = request('filterData.sortOrder', 'asc'); // Default to descending
 
         $data = $this->builder($this->filters);
 
@@ -92,35 +92,49 @@ class SansayRegistrationsController extends Controller
      */
     public function builder(array $filters = [])
     {
-        // Return an empty Collection if the request variable is empty
-        if (empty(request('filterData.server'))) return collect();
+        try {
 
-        // get a list of current registrations
-        $data = $this->sansayApiService->fetchStats(request('filterData.server'));
+            // Return an empty Collection if the request variable is empty
+            if (empty(request('filterData.server'))) return collect();
 
-        // logger($data);
+            // Prepare parameters array
+            $params = [
+                'server' => request('filterData.server'),
+                'userDomain' => $filters['showGlobal'] === false ? session('domain_name') : null,
+            ];
 
-        // Apply sorting using sortBy or sortByDesc depending on the sort order
-        if ($this->sortOrder === 'asc') {
-            $data = $data->sortBy($this->sortField);
-        } else {
-            $data = $data->sortByDesc($this->sortField);
-        }
+            // Remove null values to avoid unnecessary filters
+            $params = array_filter($params);
+
+            // get a list of current registrations
+            $data = $this->sansayApiService->fetchStats($params);
+
+            // logger($data);
+
+            // Apply sorting using sortBy or sortByDesc depending on the sort order
+            if ($this->sortOrder === 'asc') {
+                $data = $data->sortBy($this->sortField);
+            } else {
+                $data = $data->sortByDesc($this->sortField);
+            }
 
 
-        // Apply additional filters, if any
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    // Pass the collection by reference to modify it directly
-                    $data = $this->$method($data, $value);
+            // Apply additional filters, if any
+            if (is_array($filters)) {
+                foreach ($filters as $field => $value) {
+                    if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                        // Pass the collection by reference to modify it directly
+                        $data = $this->$method($data, $value);
+                    }
                 }
             }
+
+            // logger($data);
+
+            return $data->values(); // Ensure re-indexing of the collection
+        } catch (\Exception $e) {
+            return [];
         }
-
-        // logger($data);
-
-        return $data->values(); // Ensure re-indexing of the collection
     }
 
     /**

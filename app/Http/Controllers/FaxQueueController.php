@@ -52,7 +52,7 @@ class FaxQueueController extends Controller
                     return $this->filters['endPeriod'];
                 },
                 'timezone' => function () {
-                    return $this->getTimezone();
+                    return get_local_time_zone(session('domain_uuid'));
                 },
                 'routes' => [
                     'current_page' => route('faxqueue.index'),
@@ -74,8 +74,9 @@ class FaxQueueController extends Controller
             $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
         } else {
-            $startPeriod = Carbon::now($this->getTimezone())->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now($this->getTimezone())->endOfDay()->setTimeZone('UTC');
+            $domain_uuid = session('domain_uuid');
+            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
         }
 
         // Add sorting criteria
@@ -118,7 +119,6 @@ class FaxQueueController extends Controller
     {
         $data =  $this->model::query();
         if (isset($filters['showGlobal']) && $filters['showGlobal']) {
-            logger('with domain');
             $data->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
             }]);
@@ -223,18 +223,6 @@ class FaxQueueController extends Controller
                 ]);
             }
         }
-    }
-
-    protected function getTimezone()
-    {
-
-        if (!Cache::has(auth()->user()->user_uuid . '_' . session('domain_uuid') . '_timeZone')) {
-            $timezone = get_local_time_zone(session('domain_uuid'));
-            Cache::put(auth()->user()->user_uuid . session('domain_uuid') .  '_timeZone', $timezone, 600);
-        } else {
-            $timezone = Cache::get(auth()->user()->user_uuid . '_' . session('domain_uuid') . '_timeZone');
-        }
-        return $timezone;
     }
 
     public function retry()

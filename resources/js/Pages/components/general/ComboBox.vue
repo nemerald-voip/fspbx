@@ -236,7 +236,7 @@ const allSelected = computed(() => {
 const selectAll = () => {
     if (props.options) {
         currentSelection.value = [...props.options];
-        emit('update:model-value', currentSelection.value.map(item => item.value));
+        emit('update:model-value', currentSelection.value);
     }
 }
 

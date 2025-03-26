@@ -157,7 +157,7 @@ class ProFeaturesController extends Controller
      * @param  Destinations  $phone_number
      * @return JsonResponse
      */
-    public function update(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenApiService $keygenApiService)
+    public function update(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenAPIService $keygenApiService)
     {
 
         if (!$pro_feature) {
@@ -217,7 +217,7 @@ class ProFeaturesController extends Controller
 
 
 
-    public function install(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenApiService $keygenApiService)
+    public function install(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenAPIService $keygenApiService)
     {
 
         if (!$pro_feature) {
@@ -295,7 +295,7 @@ class ProFeaturesController extends Controller
         }
     }
 
-    public function uninstall(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenApiService $keygenApiService)
+    public function uninstall(UpdateProFeatureRequest $request, ProFeatures $pro_feature, KeygenAPIService $keygenApiService)
     {
 
         if (!$pro_feature) {
@@ -329,7 +329,7 @@ class ProFeaturesController extends Controller
     }
 
 
-    public function getItemOptions(KeygenApiService $keygenApiService)
+    public function getItemOptions(KeygenAPIService $keygenApiService)
     {
         try {
 
@@ -422,7 +422,7 @@ class ProFeaturesController extends Controller
      * @param  ProFeatures  $pro_feature
      * @return RedirectResponse
      */
-    public function destroy(ProFeatures $pro_feature, KeygenApiService $keygenApiService)
+    public function destroy(ProFeatures $pro_feature, KeygenAPIService $keygenApiService)
     {
         try {
             // Step 1: Validate the license to retrieve available machines link

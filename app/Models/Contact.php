@@ -39,38 +39,6 @@ class Contact extends Model
     ];
 
 
-    // public function __construct(array $attributes = [])
-    // {
-    //     parent::__construct();
-    //     $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-    //     $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-    //     $this->attributes['insert_user'] = Session::get('user_uuid');
-    //     $this->fill($attributes);
-    // }
-    
-    /**
-     * Get the settings for the domain.
-     */
-
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-
-    ];
-
-    /**
-     * Get the Contact Users objects associated with this contact.
-     *  returns Eloquent Object
-     */
-    // public function user()
-    // {
-    //     return $this->hasOne(User::class,'contact_uuid','contact_uuid');
-    // }
-
     /**
      * Get the Contact Phones objects associated with this contact.
      *  returns Eloquent Object
@@ -78,6 +46,11 @@ class Contact extends Model
     public function phones()
     {
         return $this->hasMany(ContactPhones::class, 'contact_uuid', 'contact_uuid');
+    }
+
+    public function primaryPhone()
+    {
+        return $this->hasOne(ContactPhones::class, 'contact_uuid', 'contact_uuid')->orderBy('insert_date', 'asc');
     }
 
     /**
@@ -88,6 +61,4 @@ class Contact extends Model
     {
         return $this->hasMany(ContactUsers::class, 'contact_uuid', 'contact_uuid');
     }
-
-
 }

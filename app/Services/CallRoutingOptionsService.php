@@ -223,7 +223,7 @@ class CallRoutingOptionsService
             if ($actionType != 'hangup') {
                 $destination = $parts[1]; // e.g., "201"
                 $context = $parts[2]; // e.g., "XML"
-                $domain = $parts[3] ?? null; // e.g., "api.us.nemerald.net"
+                $domain = $parts[3] ?? null; // e.g., "api.us.domain.net"
             }
 
             // Reverse engineer based on the action type

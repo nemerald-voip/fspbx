@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Throwable;
 use ESLconnection;
-use App\Models\Settings;
 use App\Models\SipProfiles;
 
 class FreeswitchEslService
@@ -13,27 +12,27 @@ class FreeswitchEslService
 
     public function __construct()
     {
-        // Check if the 'esl' extension is loaded
-        if (!extension_loaded('esl')) {
-            throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact the administrator.");
-        }
+        try {
 
-        // Get event socket credentials
-        $settings = Settings::first();
+            // Check if the 'esl' extension is loaded
+            if (!extension_loaded('esl')) {
+                throw new \Exception("Freeswitch PHP ESL module is not loaded. Contact the administrator.");
+            } else {
+            }
 
-        if (!$settings) {
-            throw new \Exception("Event socket settings are not configured.");
-        }
+            // Create the event socket connection
+            $this->conn = new ESLconnection(
+                config('eventsocket.ip'),
+                config('eventsocket.port'),
+                config('eventsocket.password')
+            );
 
-        // Create the event socket connection
-        $this->conn = new ESLconnection(
-            $settings->event_socket_ip_address,
-            $settings->event_socket_port,
-            $settings->event_socket_password
-        );
-
-        if (!$this->conn->connected()) {
-            throw new \Exception("Failed to connect to FreeSWITCH event socket.");
+            if (!$this->conn->connected()) {
+                throw new \Exception("Failed to connect to FreeSWITCH event socket.");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // throw new \Exception("Failed to connect to FreeSWITCH event socket.");
         }
     }
 
@@ -53,7 +52,8 @@ class FreeswitchEslService
             // Convert response to XML
             return $this->convertEslResponse($eslEvent);
         } catch (Throwable $e) {
-            logger('error executing ESL command');
+            logger($e->getMessage());
+            return (null);
         } finally {
             // Disconnect only if the flag is set to true
             if ($disconnect) {
@@ -246,6 +246,11 @@ class FreeswitchEslService
         // Check for '+OK Job-UUID' pattern and extract the Job-UUID
         if (preg_match('/^\+OK Job-UUID: ([a-f0-9-]+)$/i', $response, $matches)) {
             return ['job_uuid' => $matches[1]];
+        }
+
+        // Check for '+OK <uuid>' format (response without 'Job-UUID')
+        if (preg_match('/^\+OK ([a-f0-9-]+)$/i', $response, $matches)) {
+            return $matches[1];
         }
 
         if ($response === '+OK') {

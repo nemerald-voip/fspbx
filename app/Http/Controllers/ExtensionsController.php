@@ -30,6 +30,7 @@ use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
@@ -439,6 +440,7 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+            'exclude_from_ringotel_stale_users' => "nullable|string",
 
             'forward_all_enabled' => 'in:true,false',
             'forward.all.type' => [
@@ -543,6 +545,8 @@ class ExtensionsController extends Controller
         if (isset($attributes['directory_visible']) && $attributes['directory_visible'] == "on") $attributes['directory_visible'] = "true";
         if (isset($attributes['directory_exten_visible']) && $attributes['directory_exten_visible'] == "on") $attributes['directory_exten_visible'] = "true";
         if (isset($attributes['enabled']) && $attributes['enabled'] == "on") $attributes['enabled'] = "true";
+        if (isset($attributes['force_ping']) && $attributes['force_ping'] == "on") $attributes['force_ping'] = "true";
+        if (isset($attributes['exclude_from_ringotel_stale_users']) && $attributes['exclude_from_ringotel_stale_users'] == "on") $attributes['exclude_from_ringotel_stale_users'] = "true";
         $attributes['voicemail_enabled'] = "true";
         $attributes['voicemail_transcription_enabled'] = "true";
         $attributes['voicemail_file'] = "attach";
@@ -974,6 +978,7 @@ class ExtensionsController extends Controller
             'force_ping' => "nullable|string",
             'dial_string' => 'nullable|string',
             'hold_music' => 'nullable',
+            'exclude_from_ringotel_stale_users' => "nullable|string",
 
             'forward_all_enabled' => 'in:true,false',
             'forward.all.type' => [
@@ -1081,13 +1086,14 @@ class ExtensionsController extends Controller
         if (isset($attributes['enabled']) && $attributes['enabled'] == "on") $attributes['enabled'] = "true";
         if (isset($attributes['suspended']) && $attributes['suspended'] == "on") $attributes['suspended'] = true;
         else  $attributes['suspended'] = false;
+        if (isset($attributes['force_ping']) && $attributes['force_ping'] == "on") $attributes['force_ping'] = "true";
+        if (isset($attributes['exclude_from_ringotel_stale_users']) && $attributes['exclude_from_ringotel_stale_users'] == "on") $attributes['exclude_from_ringotel_stale_users'] = "true";
         if (isset($attributes['voicemail_enabled']) && $attributes['voicemail_enabled'] == "on") $attributes['voicemail_enabled'] = "true";
         if (isset($attributes['voicemail_transcription_enabled']) && $attributes['voicemail_transcription_enabled'] == "on") $attributes['voicemail_transcription_enabled'] = "true";
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "false") $attributes['voicemail_local_after_email'] = "true";
         if (isset($attributes['voicemail_local_after_email']) && $attributes['voicemail_local_after_email'] == "on") $attributes['voicemail_local_after_email'] = "false";
         if (isset($attributes['voicemail_tutorial']) && $attributes['voicemail_tutorial'] == "on") $attributes['voicemail_tutorial'] = "true";
         if (isset($attributes['call_screen_enabled']) && $attributes['call_screen_enabled'] == "on") $attributes['call_screen_enabled'] = "true";
-
         if (isset($attributes['forward_all_enabled']) && $attributes['forward_all_enabled'] == "true") $attributes['forward_all_enabled'] = "true";
 
         if ($attributes['forward']['all']['type'] == 'external') {
@@ -1277,7 +1283,11 @@ class ExtensionsController extends Controller
 
         // dispatch the job to update app user
         $mobile_app = $extension->mobile_app;
-        if (isset($mobile_app)) {
+        if (isset($mobile_app) && isset($attributes['exclude_from_ringotel_stale_users'])) {
+            if (Schema::hasColumn('mobile_app_users', 'exclude_from_stale_report')) {
+                $mobile_app->exclude_from_stale_report = $attributes['exclude_from_ringotel_stale_users'];
+                $mobile_app->save();
+            }          
             $mobile_app->name = $attributes['effective_caller_id_name'];
             $mobile_app->email = $attributes['voicemail_mail_to'] ?? "";
             $mobile_app->ext = $attributes['extension'];

@@ -7,9 +7,13 @@ use App\Services\GitHubApiService;
 use Symfony\Component\Process\Process;
 use App\Console\Commands\Updates\Update097;
 use App\Console\Commands\Updates\Update0917;
+use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
 use App\Console\Commands\Updates\Update0925;
 use App\Console\Commands\Updates\Update0926;
+use App\Console\Commands\Updates\Update0940;
+use App\Console\Commands\Updates\Update0941;
+use App\Console\Commands\Updates\Update0942;
 
 
 class UpdateApp extends Command
@@ -53,9 +57,13 @@ class UpdateApp extends Command
             '0.9.7' => Update097::class,
             '0.9.11' => Update097::class,
             '0.9.17' => Update0917::class,
+            '0.9.18' => Update0918::class,
             '0.9.24' => Update0924::class,
             '0.9.25' => Update0925::class,
             '0.9.26' => Update0926::class,
+            '0.9.40' => Update0940::class,
+            '0.9.41' => Update0941::class,
+            '0.9.42' => Update0942::class,
             // Add more versions as needed
         ];
 
@@ -71,14 +79,14 @@ class UpdateApp extends Command
                 }
 
                 // If the update is successful, call the version:set command
-                $this->call('version:set', ['version' => $version]);
+                $this->call('version:set', ['version' => $version,'--force' => true]);
                 $this->info("Version successfully updated to $version.");
             }
         }
 
         if (version_compare($currentVersion, $downloadedVersion, '<')) {
             // Call version:set to update the version to the latest one, even if no steps were needed
-            $this->call('version:set', ['version' => $downloadedVersion]);
+            $this->call('version:set', ['version' => $downloadedVersion,'--force' => true]);
             $this->info("Version successfully updated to $downloadedVersion.");
         }
 
@@ -95,7 +103,7 @@ class UpdateApp extends Command
         $this->runArtisanCommand('db:seed', ['--force' => true]);
 
         // Create storage link
-        $this->runArtisanCommand('storage:link');
+        $this->runArtisanCommand('storage:link', ['--force' => true]);
 
         // Update Vue files
         $this->executeCommand('npm install');

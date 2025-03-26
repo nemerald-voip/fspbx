@@ -52,17 +52,18 @@ class HandleInertiaRequests extends Middleware
             'csrf_token' => csrf_token(),
 
             'auth' => [
-                'can' => fn () => $this->getPermissions(),
+                'can' => fn() => $this->getPermissions(),
             ],
 
             'flash' => [
-                'message' => fn () => $request->session()->get('message'),
-                'error' =>  fn () => $request->session()->get('error'),
+                'message' => fn() => $request->session()->get('message'),
+                'error' =>  fn() => $request->session()->get('error'),
             ],
         ]);
     }
 
-    public function getPermissions() {
+    public function getPermissions()
+    {
         $permissions = [];
         $permissions['domain_select'] = session('domain_select');
         $permissions['device_create'] = userCheckPermission('device_add');
@@ -96,6 +97,18 @@ class HandleInertiaRequests extends Middleware
         $permissions['virtual_receptionist_create'] = userCheckPermission('ivr_menu_add');
         $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
         $permissions['virtual_receptionist_destroy'] = userCheckPermission('ivr_menu_delete');
+
+        $permissions['wakeup_calls_list_view'] = userCheckPermission('wakeup_calls_list_view');
+        $permissions['wakeup_calls_create'] = userCheckPermission('wakeup_calls_create');
+        $permissions['wakeup_calls_edit'] = userCheckPermission('wakeup_calls_edit');
+        $permissions['wakeup_calls_delete'] = userCheckPermission('wakeup_calls_delete');
+        $permissions['wakeup_calls_view_global'] = userCheckPermission('wakeup_calls_all');
+        $permissions['wakeup_calls_view_settings'] = userCheckPermission('wakeup_calls_view_settings');
+
+        $permissions['contact_create'] = userCheckPermission('contact_add');
+        $permissions['contact_edit'] = userCheckPermission('contact_edit');
+        $permissions['contact_delete'] = userCheckPermission('contact_delete');
+        $permissions['contact_upload'] = userCheckPermission('contact_upload');
 
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
 

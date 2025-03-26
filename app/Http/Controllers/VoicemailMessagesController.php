@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use Inertia\Inertia;
-use App\Models\Settings;
 use Illuminate\Http\Request;
 use App\Models\VoicemailMessages;
 use Illuminate\Support\Facades\DB;
@@ -442,11 +441,12 @@ class VoicemailMessagesController extends Controller
 
             $file = Storage::disk('voicemail')->delete($path);
 
-            // Get event socket credentials
-            $settings = Settings::first();
-
             // Send notifications to subscribes phones
-            $fp = event_socket_create($settings->event_socket_ip_address, $settings->event_socket_port, $settings->event_socket_password);
+            $fp = event_socket_create(
+                config('eventsocket.ip'),
+                config('eventsocket.port'),
+                config('eventsocket.password')
+            );
             if ($fp) {
                 $switch_cmd = "luarun app.lua voicemail mwi " . $message->voicemail->voicemail_id . "@" . Session::get('domain_name');
                 $switch_result = event_socket_request($fp, 'api ' . $switch_cmd);
