@@ -573,6 +573,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'grandstream_outbound_proxy',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'company',
+                'default_setting_subcategory'   => 'billing_suspension',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
                 'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 'aws_upload_calls_' . $this->getMacAddress(),
                 'default_setting_name'          => 'boolean',
