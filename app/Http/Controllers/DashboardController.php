@@ -22,6 +22,7 @@ use App\Services\CdrDataService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
+use App\Services\FreeswitchEslService;
 
 class DashboardController extends Controller
 {
@@ -166,25 +167,20 @@ class DashboardController extends Controller
             $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_id)->count();
         }
 
-        //if superuser get registration status
-        if (isSuperAdmin()) {
+        $eslService = new FreeswitchEslService();
 
-            $registrations = get_registrations("all");
-            $unique_regs = [];
-            foreach ($registrations as $registration) {
-                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
-            }
-            $counts['global_reg_count'] = count($unique_regs);
+        //Get all registrations
+        $regs = $eslService->getAllSipRegistrations();
 
-            // Count local unique registrations
-            $registrations = get_registrations();
-            $unique_regs = [];
-            foreach ($registrations as $registration) {
-                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
-            }
-            $counts['local_reg_count'] = count($unique_regs);
-            // }
-        }
+        // Get unique extensions online
+        $uniqueRegs = $regs->unique('user')->values();
+        $counts['global_reg_count'] = $uniqueRegs->count();
+
+        //Filter by domain
+        $filteredRegs = $uniqueRegs->where('sip_auth_realm', session('domain_name'))->values();
+
+        $counts['local_reg_count'] = $filteredRegs->count();
+
 
         return $counts;
     }
