@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Linfo\Linfo;
-use App\Models\CDR;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Faxes;
@@ -27,6 +26,8 @@ use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 class DashboardController extends Controller
 {
 
+    protected $viewName = 'Dashboard';
+
     /**
      * Display a listing of the resource.
      *
@@ -36,11 +37,8 @@ class DashboardController extends Controller
     {
         date_default_timezone_set('America/Los_Angeles');
 
-        // dd(Session::get('domain_name'));
-        // return view('layouts.dashboard.index')->with($data);
-
         return Inertia::render(
-            'Dashboard',
+            $this->viewName,
             [
                 'company_data' => function () {
                     return $this->getCompanyData();
@@ -56,6 +54,9 @@ class DashboardController extends Controller
                     fn() =>
                     $this->getCounts()
                 ),
+                'routes' => [
+                    'account_settings_page' => route('account-settings.index'),
+                ]
             ]
         );
     }
