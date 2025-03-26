@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Models\DefaultSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
@@ -132,15 +133,22 @@ class AccountSettingsController extends Controller
     {
         $navigation = [
             [
-                'name' => 'Settings',
+                'name' => 'General',
                 'icon' => 'Cog6ToothIcon',
-                'slug' => 'settings',
+                'slug' => 'general',
             ],
-            [
-                'name' => 'Billing',
-                'icon' => 'CreditCardIcon',
-                'slug' => 'billing',
-            ],
+
+            // [
+            //     'name' => 'Emergency Calls',
+            //     'icon' => 'BellIcon',
+            //     'slug' => 'emergency',
+            // ],
+
+            // [
+            //     'name' => 'Billing',
+            //     'icon' => 'CreditCardIcon',
+            //     'slug' => 'billing',
+            // ],
         ];
 
         return $navigation;
@@ -272,9 +280,41 @@ class AccountSettingsController extends Controller
 
             // Update settings if provided
             if (!empty($data['settings'])) {
+                // Extract all subcategories from the incoming settings
+                $subcategories = array_column($data['settings'], 'subcategory');
+
+                // Retrieve all default settings for these subcategories in one query
+                $defaultSettings = DefaultSettings::whereIn('default_setting_subcategory', $subcategories)
+                    ->get()
+                    ->keyBy('default_setting_subcategory');
+
+                // logger($defaultSettings);
+
                 foreach ($data['settings'] as $setting) {
-                    DomainSettings::where('domain_setting_uuid', $setting['uuid'])
-                        ->update(['domain_setting_value' => $setting['value']]);
+
+                    // If the category is empty, try to get it from the default settings collection
+                    if (empty($setting['category']) && isset($defaultSettings[$setting['subcategory']])) {
+                        $setting['category'] = $defaultSettings[$setting['subcategory']]->default_setting_category ?? "Other";
+                    }
+
+                    // Delete null values
+                    if (is_null($setting['value'])) {
+                        // Remove the custom setting if it exists
+                        DomainSettings::where('domain_setting_uuid', $setting['uuid'])->delete();
+                        continue;
+                    }
+
+                    DomainSettings::updateOrCreate(
+                        [
+                            'domain_uuid' => $data['domain_uuid'],
+                            'domain_setting_subcategory' => $setting['subcategory']
+                        ],
+                        [
+                            'domain_setting_value' => $setting['value'],
+                            'domain_setting_category' => $setting['category'],
+                            'domain_setting_enabled' => true,
+                        ]
+                    );
                 }
             }
 

@@ -20,16 +20,16 @@
                     </nav>
                 </aside>
 
-                <div v-if="activeTab === 'settings'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
+                <div v-if="activeTab === 'general'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
                     <section aria-labelledby="settings-heading">
                         <div class="shadow  sm:rounded-md">
 
                             <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
                                 <div class="flex justify-between items-center">
                                     <h3 id="settings-heading" class="text-base font-semibold leading-6 text-gray-900">
-                                        Settings</h3>
+                                        General</h3>
 
-                                    <Toggle label="Status" v-model="data.domain_enabled" />
+                                    <Toggle label="Status" v-model="localData.domain_enabled" />
 
                                     <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
                                 </div>
@@ -56,7 +56,7 @@
                                     <div class="col-span-12 sm:col-span-6">
                                         <LabelInputOptional :target="'domain_name'" :label="'Time Zone'" />
                                         <div class="mt-2">
-                                            <ListboxGroup v-model:="settingRefs['time_zone']" :options="timezones" />
+                                            <ListboxGroup v-model:="settingsMap['time_zone']" :options="timezones" />
                                         </div>
                                     </div>
 
@@ -77,37 +77,35 @@
                     </section>
 
                     <!-- Voicemail Settings Section -->
-                    <section class="bg-white p-6 shadow rounded-md space-y-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Voicemail Settings</h3>
+                    <!-- <section class="bg-white p-6 shadow rounded-md space-y-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Voicemail Settings</h3> -->
 
                         <!-- Password Min Length -->
-                        <div v-if="getSetting('password_min_length').uuid">
+                        <!-- <div v-if="getSetting('password_min_length').uuid">
                             <LabelInputOptional target="password_min_length" label="Password Min Length" />
                             <InputField v-model="getSetting('password_min_length').value" type="number"
                                 id="password_min_length" name="password_min_length" class="mt-2"
                                 placeholder="Enter minimum password length" />
-                        </div>
+                        </div> -->
 
-                        <div>
+                        <!-- <div>
                             <LabelInputOptional target="password_min_length" label="Password Min Length" />
 
                             <div class="relative mt-2">
-                                <InputField v-model="passwordMinLengthRef" type="number" id="password_min_length"
-                                    name="password_min_length" :disabled="passwordMinLengthDefault"
+                                <InputField v-model="settingsMap['password_min_length']" type="number"
+                                    id="password_min_length" name="password_min_length"
+                                    :disabled="!Object.prototype.hasOwnProperty.call(settingsMap, 'password_min_length') || settingsMap['password_min_length'] === null"
                                     placeholder="Enter minimum password length" />
-                                <p v-if="passwordMinLengthDefault" class="text-sm text-gray-400 mt-1">
-                                    System default will be used
-                                </p>
                             </div>
 
                             <div class="mt-2 flex items-center gap-2">
-                                <input id="password_min_length_default" type="checkbox" v-model="passwordMinLengthDefault"
-                                    class="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
-                                <label for="password_min_length_default" class="text-sm text-gray-700">
-                                    Use system default
-                                </label>
+                                <input type="checkbox"
+                                    :checked="!settingsMap['password_min_length'] || settingsMap['password_min_length'] === null"
+                                    @change="toggleDefault('password_min_length', $event.target.checked)" />
+                                <span class="text-sm text-gray-600">Use system default</span>
                             </div>
-                        </div>
+                        </div> -->
+
 
                         <!-- Password Complexity -->
                         <!-- <div v-if="getSetting('password_complexity').uuid">
@@ -139,7 +137,7 @@
                                 <option value="none">None</option>
                             </select>
                         </div> -->
-                    </section>
+                    <!-- </section> -->
 
 
                 </div>
@@ -350,10 +348,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon, BellIcon } from '@heroicons/vue/24/outline';
 import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
 import InputField from "@generalComponents/InputField.vue";
 import Toggle from "@generalComponents/Toggle.vue";
@@ -386,64 +384,124 @@ const isSubmitting = ref(false);
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
-const settingRefs = ref({});
 
-const initializeSettingRefs = () => {
-    for (const setting of localSettings.value) {
-        const refValue = ref(setting.value);
-        watch(refValue, (val) => {
-            setting.value = val;
+
+// Create a reactive object to hold our computed settings
+const settingsMap = reactive({});
+
+/**
+ * For each setting in the provided data,
+ * we create a computed property that:
+ * - Gets the value (if not marked as default)
+ * - Sets a new value (and toggles off default if not null)
+ */
+if (props.data.settings && props.data.settings.length > 0) {
+    props.data.settings.forEach((setting) => {
+        // Extract the initial value from the setting object.
+        // In this example, we consider a setting to be “default” if its value is null.
+        const initialValue = setting.domain_setting_value;
+        const valueRef = ref(initialValue);
+        // Determine default state: you might have different logic; here we assume null means default.
+        const isDefaultRef = ref(initialValue === null);
+
+        // Create a computed property for two-way binding
+        settingsMap[setting.domain_setting_subcategory] = computed({
+            get() {
+                // When marked as default, the getter returns null.
+                return isDefaultRef.value ? null : valueRef.value;
+            },
+            set(newValue) {
+                if (newValue === null) {
+                    // If new value is null, mark the setting as default
+                    isDefaultRef.value = true;
+                    valueRef.value = null;
+                } else {
+                    // Otherwise, use the new value and unset the default flag
+                    isDefaultRef.value = false;
+                    valueRef.value = newValue;
+                }
+            }
         });
-        settingRefs.value[setting.subcategory] = refValue;
+    });
+}
+
+/**
+ * If a user makes a change to a setting that doesn't yet exist,
+ * you can add a new computed property on the fly.
+ */
+const addSetting = (subcategory, defaultValue = null) => {
+    if (!settingsMap[subcategory]) {
+        const valueRef = ref(defaultValue);
+        const isDefaultRef = ref(defaultValue === null);
+        settingsMap[subcategory] = computed({
+            get() {
+                return isDefaultRef.value ? null : valueRef.value;
+            },
+            set(newValue) {
+                if (newValue === null) {
+                    isDefaultRef.value = true;
+                    valueRef.value = null;
+                } else {
+                    isDefaultRef.value = false;
+                    valueRef.value = newValue;
+                }
+            }
+        });
     }
 };
 
-onMounted(() => {
-    localSettings.value = props.data.settings.map(setting => ({
-        uuid: setting.domain_setting_uuid,
-        subcategory: setting.domain_setting_subcategory,
-        value: setting.domain_setting_value
-    }));
-    initializeSettingRefs();
-});
-
-const getSetting = (subcategory) => {
-    return localSettings.value.find(setting => setting.subcategory === subcategory) || { uuid: null, value: '' };
+/**
+ * toggle a setting to its default state.
+ */
+const toggleDefault = (key, isDefault) => {
+    // If the computed property already exists, update its value
+    if (settingsMap[key]) {
+        if (isDefault) {
+            // Mark the setting as default by setting its value to null
+            settingsMap[key] = null;
+        } else {
+            // Mark the setting as non-default.
+            // If you want to initialize it with a fallback value, use that; here we use an empty string.
+            settingsMap[key].value = '';
+        }
+    } else {
+        // If it doesn't exist yet, add it.
+        addSetting(key, isDefault ? null : '');
+    }
 };
-
-const useSettingRef = (subcategory) => {
-    const setting = getSetting(subcategory);
-    console.log(setting);
-    const settingRef = ref(setting.value);
-
-    watch(settingRef, (val) => {
-        setting.value = val;
-    });
-
-    return settingRef;
-};
-
-// const timezoneSetting = useSettingRef('time_zone');
-// const timezoneSetting = ref(getSetting('time_zone').value);
-
 
 
 const saveSettings = () => {
-    axios.post(props.routes.update,
-        {
-            ...localData.value, // Send domain properties
-            settings: localSettings.value // Send modified settings
-        }
-    )
-        .then((response) => {
-            // selectedItems.value = response.data.items;
-            // selectAll.value = true;
-            showNotification('success', response.data.messages);
+    // Build an updated settings array based on keys from settingsMap.
+    // For each setting, we merge in the original metadata (like uuid, category)
+    // with the current computed value (which will be null if "default" is active)
+    const updatedSettings = Object.keys(settingsMap).map(subcategory => {
+        // Look up the original setting to get its uuid if it exists
+        const original = props.data.settings.find(
+            s => s.domain_setting_subcategory === subcategory
+        );
+        return {
+            uuid: original ? original.domain_setting_uuid : null,
+            category: original ? original.domain_setting_category : null,
+            subcategory: subcategory,
+            value: settingsMap[subcategory] // computed property's getter returns the current value
+        };
+    });
 
-        }).catch((error) => {
+
+    axios
+        .post(props.routes.update, {
+            ...localData.value, // Domain properties
+            settings: updatedSettings,
+        })
+        .then((response) => {
+            showNotification('success', response.data.messages);
+        })
+        .catch((error) => {
             handleErrorResponse(error);
         });
 };
+
 
 
 const plans = [
@@ -485,6 +543,7 @@ const activeTab = ref(props.navigation.find(item => item.slug)?.slug || props.na
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
     'CreditCardIcon': CreditCardIcon,
+    'BellIcon': BellIcon,
 };
 
 

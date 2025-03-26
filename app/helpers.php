@@ -1585,6 +1585,10 @@ if (!function_exists('getGroupedTimezones')) {
 
         ksort($groupedTimezones); // Optional: sort regions alphabetically
 
+        // Prepend "System Default" with a null value at the very top
+        $groupedTimezones = ['System Default' => [['value' => null, 'name' => 'System Default']]] + $groupedTimezones;
+
+
         return $groupedTimezones;
     }
 }
