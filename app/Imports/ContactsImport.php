@@ -131,6 +131,7 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
                 'phone_type_voice' => null,
                 'phone_number' => $row['destination_number'],
                 'phone_speed_dial' => $row['speed_dial_code'] ?? null,
+                'phone_type_voice' => 1,
                 'insert_date' => now(),
                 'insert_user' => $user_uuid,
             ]);
