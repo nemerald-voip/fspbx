@@ -276,6 +276,11 @@ class CloudProvisioningController extends Controller
     public function getToken(): JsonResponse
     {
         try {
+            if (!userCheckPermission('polycom_api_token_edit')) {
+                return response()->json([
+                    'success' => false,
+                ], 403);
+            }
             // Retrieve the API token from DefaultSettings
             $token = DefaultSettings::where([
                 ['default_setting_category', '=', 'cloud provision'],
@@ -314,6 +319,11 @@ class CloudProvisioningController extends Controller
         $inputs = $request->validated();
 
         try {
+            if (!userCheckPermission('polycom_api_token_edit')) {
+                return response()->json([
+                    'success' => false,
+                ], 403);
+            }
             // Update or create the Polycom API token in DefaultSettings
             DefaultSettings::updateOrCreate(
                 [
@@ -345,7 +355,7 @@ class CloudProvisioningController extends Controller
     {
         $permissions = [];
         $permissions['manage_cloud_provisioning_show_credentials'] = userCheckPermission('cloud_provisioning_show_credentials');
-        $permissions['manage_polycom_api_token_edit'] = userCheckPermission('cloud_provisioning_show_credentials');
+        $permissions['manage_polycom_api_token_edit'] = userCheckPermission('polycom_api_token_edit');
         return $permissions;
     }
 

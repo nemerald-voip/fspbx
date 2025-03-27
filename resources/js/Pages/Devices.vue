@@ -249,6 +249,7 @@
             <CloudProvisioningListing
                 :options="itemOptions"
                 :routes="routes"
+                :canEditPolycomToken="page.props.auth.can.polycom_api_token_edit"
                 @notification:show="showNotification"
             />
         </template>
