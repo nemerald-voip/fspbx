@@ -276,7 +276,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.contact_delete) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
