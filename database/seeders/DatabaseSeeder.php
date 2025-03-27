@@ -140,7 +140,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'cloud_provisioning_show_password',
+                'permission_name'        => 'cloud_provisioning_show_credentials',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             // Add more permissions as needed

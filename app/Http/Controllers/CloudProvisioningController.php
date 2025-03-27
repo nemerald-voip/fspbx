@@ -237,7 +237,7 @@ class CloudProvisioningController extends Controller
             }
 
             // We have to remove the password from the response if the user isn't permitted to see it
-            if (!$permissions['manage_cloud_provisioning_show_password']) {
+            if (!$permissions['manage_cloud_provisioning_show_credentials']) {
                 $settings['http_auth_password'] = null;
             }
 
@@ -343,7 +343,7 @@ class CloudProvisioningController extends Controller
     public function getUserPermissions(): array
     {
         $permissions = [];
-        $permissions['manage_cloud_provisioning_show_password'] = userCheckPermission('cloud_provisioning_show_password');
+        $permissions['manage_cloud_provisioning_show_credentials'] = userCheckPermission('cloud_provisioning_show_credentials');
         return $permissions;
     }
 
