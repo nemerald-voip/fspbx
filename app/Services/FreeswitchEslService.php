@@ -256,11 +256,8 @@ class FreeswitchEslService
             // Keep receiving events as long as connection is alive
             while ($this->conn && $this->conn->connected()) {
                 $event = $this->conn->recvEvent();
-
-                logger('here');
     
                 if (!$event) {
-                    logger('no event');
                     usleep(100000); // 100ms pause to prevent CPU spinning
                     continue;
                 }

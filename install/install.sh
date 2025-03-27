@@ -45,6 +45,8 @@ apt-get install -y \
     ffmpeg \
     gnupg \
     ghostscript \
+    libtool-bin \
+    python3-systemd \
     libtiff-tools \
     libreoffice \
     libreoffice-base \
@@ -938,6 +940,15 @@ else
     exit 1
 fi
 
+# Copy FS ELS Emergency Listener configuration to Supervisor
+sudo cp install/fs-esl-listener-emergency.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "FS ELS Emergency Listener configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying FS ELS Emergency Listener configuration file to Supervisor."
+    exit 1
+fi
+
 # Reload Supervisor to read new configuration
 sudo supervisorctl reread
 if [ $? -eq 0 ]; then
@@ -975,6 +986,16 @@ if [ $? -eq 0 ]; then
     print_success "Horizon processes restarted successfully."
 else
     print_error "Error occurred while restarting Horizon processes."
+    exit 1
+fi
+
+# Restart FS ELS Emergency process under Supervisor
+sudo supervisorctl start fs-esl-listener-emergency
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "FS ELS Emergency process restarted successfully."
+else
+    print_error "Error occurred while restarting FS ELS Emergency process."
     exit 1
 fi
 

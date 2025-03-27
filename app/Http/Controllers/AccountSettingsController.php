@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Domain;
 use App\Models\Dialplans;
@@ -62,7 +61,7 @@ class AccountSettingsController extends Controller
                 },
                 'routes' => [
                     'update' => route('account-settings.update'),
-                    // 'store' => route('phone-numbers.store'),
+                    'emergency_calls' => route('emergency-calls.index'),
                     // 'select_all' => route('phone-numbers.select.all'),
                     // 'bulk_update' => route('phone-numbers.bulk.update'),
                     // 'bulk_delete' => route('phone-numbers.bulk.delete'),
@@ -138,11 +137,11 @@ class AccountSettingsController extends Controller
                 'slug' => 'general',
             ],
 
-            // [
-            //     'name' => 'Emergency Calls',
-            //     'icon' => 'BellIcon',
-            //     'slug' => 'emergency',
-            // ],
+            [
+                'name' => 'Emergency Calls',
+                'icon' => 'BellIcon',
+                'slug' => 'emergency',
+            ],
 
             // [
             //     'name' => 'Billing',

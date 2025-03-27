@@ -5,7 +5,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 // import { ZiggyVue } from 'ziggy-js';
 
 
-     
+
 import './bootstrap';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
@@ -33,11 +33,14 @@ function resolvePage(name) {
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => await resolvePage(name),
-        //.then((module) => module.default),
-    setup({el, App, props, plugin}) {
-        return createApp({ render: () => h(App, props) })
-        .use(plugin)
-        // .use(ZiggyVue)
-        .mount(el)
-    },
+    //.then((module) => module.default),
+    setup({ el, App, props, plugin }) {
+        axios.defaults.withCredentials = true;
+
+        axios.get('/sanctum/csrf-cookie').then(() => {
+            createApp({ render: () => h(App, props) })
+                .use(plugin)
+                .mount(el);
+        });
+    }
 });
