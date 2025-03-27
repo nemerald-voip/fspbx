@@ -236,9 +236,10 @@ class CloudProvisioningController extends Controller
                 $organization = $this->polycomZtpProvider->getOrganization($model->org_id);
             }
 
-            // We have to remove the password from the response if the user isn't permitted to see it
+            // We have to remove the credentials from the response if the user isn't permitted to see it
             if (!$permissions['manage_cloud_provisioning_show_credentials']) {
                 $settings['http_auth_password'] = null;
+                $settings['http_auth_username'] = null;
             }
 
             // Construct the itemOptions object
@@ -365,10 +366,14 @@ class CloudProvisioningController extends Controller
         $inputs['enabled'] = true;
 
         try {
-            // Fill up the password from default settings, if it's not provided within the request payload
+            // Populate the credentials from default settings, if it's not provided within the request payload
             $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
             if(!$inputs['provisioning_server_password']) {
                 $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
+            }
+
+            if(!$inputs['provisioning_server_username']) {
+                $inputs['provisioning_server_username'] = $defaultSettings['http_auth_username'];
             }
 
             // Send API request to create organization
@@ -471,10 +476,14 @@ class CloudProvisioningController extends Controller
         $inputs['enabled'] = true;
 
         try {
-            // Fill up the password from default settings, if it's not provided within the request payload
+            // Populate the credentials from default settings, if it's not provided within the request payload
             $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
             if(!$inputs['provisioning_server_password']) {
                 $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
+            }
+
+            if(!$inputs['provisioning_server_username']) {
+                $inputs['provisioning_server_username'] = $defaultSettings['http_auth_username'];
             }
 
             // Send API request to update organization
