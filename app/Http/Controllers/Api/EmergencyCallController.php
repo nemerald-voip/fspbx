@@ -16,6 +16,8 @@ class EmergencyCallController extends Controller
             ->where('domain_uuid', $domain_uuid)
             ->get();
 
+            logger($calls);
+
         return response()->json($calls);
     }
 
