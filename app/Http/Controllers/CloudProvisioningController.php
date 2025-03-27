@@ -345,6 +345,7 @@ class CloudProvisioningController extends Controller
     {
         $permissions = [];
         $permissions['manage_cloud_provisioning_show_credentials'] = userCheckPermission('cloud_provisioning_show_credentials');
+        $permissions['manage_polycom_api_token_edit'] = userCheckPermission('cloud_provisioning_show_credentials');
         return $permissions;
     }
 

@@ -143,6 +143,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'cloud_provisioning_show_credentials',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'polycom_api_token_edit',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
