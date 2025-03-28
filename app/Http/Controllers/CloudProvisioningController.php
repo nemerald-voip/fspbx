@@ -584,10 +584,9 @@ class CloudProvisioningController extends Controller
         } catch (\Exception $e) {
             logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
             return response()->json([
-                'error' => [
-                    'message' => $e->getMessage(),
-                ],
-            ], 404);
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500); // 500 Internal Server Error
         }
     }
 
