@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\EmergencyCall;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use App\Jobs\NotifyEmergencyCallJob;
 use App\Services\FreeswitchEslService;
 

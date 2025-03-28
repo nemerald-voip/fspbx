@@ -65,7 +65,7 @@ class AccountSettingsController extends Controller
                     // 'select_all' => route('phone-numbers.select.all'),
                     // 'bulk_update' => route('phone-numbers.bulk.update'),
                     // 'bulk_delete' => route('phone-numbers.bulk.delete'),
-                    // 'item_options' => route('phone-numbers.item.options'),
+                    'item_options' => route('emergency-calls.item.options'),
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],

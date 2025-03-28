@@ -22,6 +22,8 @@ Route::group(['middleware'=>['auth:sanctum']], function(){
     Route::post('/tokens', [TokenController::class,"index"]);
 
     Route::resource('/emergency-calls', EmergencyCallController::class);
+    Route::post('/emergency-calls/item-options', [EmergencyCallController::class, 'getItemOptions'])->name('emergency-calls.item.options');
+
 
 });
 

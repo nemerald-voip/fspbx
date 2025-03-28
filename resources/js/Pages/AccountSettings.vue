@@ -301,9 +301,6 @@
                                                         <th scope="col"
                                                             class="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                                                             Amount</th>
-                                                        <!--
-                              `relative` is added here due to a weird bug in Safari that causes `sr-only` headings to introduce overflow on the body on mobile.
-                            -->
                                                         <th scope="col"
                                                             class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
                                                             <span class="sr-only">View receipt</span>
