@@ -77,14 +77,24 @@ const props = defineProps({
 
 
 const form = reactive({
-    emergency_number: null,
+    uuid: props.options?.item?.uuid ?? null,
+    emergency_number: props.options?.item?.emergency_number ?? null,
     members: [],
-    description: null
+    description: props.options?.item?.description ?? null,
 });
 
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'clear-errors']);
 
+
+onMounted(() => {
+    // Prefill members from the item
+    if (props.options?.item?.members?.length) {
+        form.members = props.options.item.members.map(member => {
+            return props.options.extensions.find(ext => ext.value === member.extension_uuid);
+        }).filter(Boolean); // remove nulls in case of mismatch
+    }
+});
 
 const submitForm = () => {
     const payload = {

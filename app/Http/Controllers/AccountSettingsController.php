@@ -62,11 +62,12 @@ class AccountSettingsController extends Controller
                 'routes' => [
                     'update' => route('account-settings.update'),
                     'emergency_calls' => route('emergency-calls.index'),
+                    'emergency_calls_store' => route('emergency-calls.store'),
                     // 'select_all' => route('phone-numbers.select.all'),
                     // 'bulk_update' => route('phone-numbers.bulk.update'),
                     // 'bulk_delete' => route('phone-numbers.bulk.delete'),
-                    'item_options' => route('emergency-calls.item.options'),
-                    //'bulk_delete' => route('messages.settings.bulk.delete'),
+                    'emergency_calls_item_options' => route('emergency-calls.item.options'),
+                    'emergency_calls_bulk_delete' => route('emergency-calls.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
 

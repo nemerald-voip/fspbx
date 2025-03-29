@@ -8,6 +8,7 @@ use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreEmergencyCallRequest;
+use App\Http\Requests\UpdateEmergencyCallRequest;
 
 class EmergencyCallController extends Controller
 {
@@ -19,8 +20,6 @@ class EmergencyCallController extends Controller
             ->where('domain_uuid', $domain_uuid)
             ->get();
 
-        logger($calls);
-
         return response()->json($calls);
     }
 
@@ -29,16 +28,16 @@ class EmergencyCallController extends Controller
     {
         $domain_uuid = session('domain_uuid');
         $validated = $request->validated();
-    
+
         try {
             DB::beginTransaction();
-    
+
             $call = EmergencyCall::create([
                 'domain_uuid'       => $domain_uuid,
                 'emergency_number'  => $validated['emergency_number'],
                 'description'       => $validated['description'] ?? null,
             ]);
-    
+
             if (!empty($validated['members'])) {
                 foreach ($validated['members'] as $member) {
                     $call->members()->create([
@@ -47,16 +46,15 @@ class EmergencyCallController extends Controller
                     ]);
                 }
             }
-    
+
             DB::commit();
-    
+
             return response()->json([
                 'messages' => ['success' => ['New item created']]
             ], 201);
-    
         } catch (\Throwable $e) {
             DB::rollBack();
-    
+
             logger('EmergencyCall store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -64,33 +62,50 @@ class EmergencyCallController extends Controller
             ], 500);
         }
     }
-    
 
-    public function update(Request $request, $id)
+
+    public function update(UpdateEmergencyCallRequest $request, string $id)
     {
-        $call = EmergencyCall::with('members')->findOrFail($id);
+        $domain_uuid = session('domain_uuid');
+        $validated = $request->validated();
 
-        $data = $request->validate([
-            'emergency_number' => 'required|string|max:20',
-            'prompt' => 'nullable|string',
-            'description' => 'nullable|string',
-            'members' => 'array',
-            'members.*.extension_uuid' => 'required|uuid',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $call->update($data);
+            $call = EmergencyCall::with('members')
+                ->where('domain_uuid', $domain_uuid)
+                ->findOrFail($id);
 
-        // Sync members
-        $call->members()->delete();
-
-        foreach ($data['members'] ?? [] as $member) {
-            $call->members()->create([
-                'domain_uuid' => $call->domain_uuid,
-                'extension_uuid' => $member['extension_uuid'],
+            $call->update([
+                'emergency_number' => $validated['emergency_number'],
+                'description' => $validated['description'] ?? null,
             ]);
-        }
 
-        return response()->json($call->load('members'));
+            // Delete old members and insert new ones
+            $call->members()->delete();
+
+            if (!empty($validated['members'])) {
+                foreach ($validated['members'] as $member) {
+                    $call->members()->create([
+                        'domain_uuid' => $domain_uuid,
+                        'extension_uuid' => $member['extension_uuid'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Item updated']]
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('EmergencyCall update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while updating.']]
+            ], 500);
+        }
     }
 
     public function destroy($id)
@@ -101,17 +116,21 @@ class EmergencyCallController extends Controller
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function getItemOptions(Request $request)
+    public function getItemOptions()
     {
         try {
             $domain_uuid = session('domain_uuid');
 
             $call = null;
-            if ($request->has('item_uuid')) {
+            $routes = [];
+            if (request()->has('item_uuid')) {
                 $call = EmergencyCall::with('members')
                     ->where('domain_uuid', $domain_uuid)
-                    ->where('id', $request->item_uuid)
+                    ->where('uuid', request('item_uuid'))
                     ->first();
+
+                // Define the update route
+                $updateRoute = route('emergency-calls.update', $call);
             }
 
             $extensions = Extensions::where('domain_uuid', $domain_uuid)
@@ -125,9 +144,14 @@ class EmergencyCallController extends Controller
                     ];
                 });
 
+            $routes = [
+                'update_route' => $updateRoute ?? null,
+            ];
+
             return response()->json([
                 'item' => $call,
                 'extensions' => $extensions,
+                'routes' => $routes,
             ]);
         } catch (\Exception $e) {
             // Log the error message
@@ -138,6 +162,38 @@ class EmergencyCallController extends Controller
                 'success' => false,
                 'errors' => ['server' => ['Failed to fetch item details']]
             ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function bulkDelete()
+    {
+        try {
+            DB::beginTransaction();
+
+            $domain_uuid = auth()->user()->domain_uuid ?? session('domain_uuid');
+
+            $items = EmergencyCall::where('domain_uuid', $domain_uuid)
+                ->whereIn('uuid', request('items'))
+                ->get();
+
+            foreach ($items as $item) {
+                $item->members()->delete(); // 💥 Delete related members first
+                $item->delete();            // Then delete the parent call
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Selected item(s) were deleted successfully.']]
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger('EmergencyCall bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while deleting the selected item(s).']]
+            ], 500);
         }
     }
 }

@@ -469,7 +469,7 @@ class WakeupCallsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  UpdateWakeupCallRequest  $request
-     * @param  Destinations  $phone_number
+     * @param  WakeupCall $wakeup_call
      * @return JsonResponse
      */
     public function update(UpdateWakeupCallRequest $request, WakeupCall $wakeup_call)

@@ -17,8 +17,9 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Number</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extensions to Notify
+                                </th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Members</th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
                                     <span class="sr-only">Actions</span>
                                 </th>
@@ -29,14 +30,39 @@
                                 <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                                     {{ call.emergency_number }}
                                 </td>
+                                <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    {{ call.members.length }}
+                                </td> -->
+
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    {{ call.description || '-' }}
+                                        <Badge 
+                                            :text="call.members.length" backgroundColor="bg-indigo-100"
+                                            textColor="text-indigo-700" ringColor="ring-indigo-400/20"
+                                            class="px-2 py-1 text-xs font-semibold" />
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    {{ call.members.length }}
+                                    {{ call.description }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                    <a href="#" class="text-orange-600 hover:text-orange-900">View</a>
+                                    <div class="flex items-center whitespace-nowrap justify-end">
+                                        <ejs-tooltip :content="'Edit'" position='TopCenter'
+                                            target="#destination_tooltip_target">
+                                            <div id="destination_tooltip_target">
+                                                <PencilSquareIcon @click="handleEditButtonClick(call.uuid)"
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                            </div>
+                                        </ejs-tooltip>
+
+                                        <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                            target="#delete_tooltip_target">
+                                            <div id="delete_tooltip_target">
+                                                <TrashIcon @click="handleSingleItemDeleteRequest(call.uuid)"
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            </div>
+                                        </ejs-tooltip>
+                                    </div>
+
                                 </td>
                             </tr>
                         </tbody>
@@ -60,22 +86,41 @@
         </div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showCreateModal" :header="'Create New Emergency Call'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showCreateModal" :header="'Create New Emergency Call'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateEmergencyCallForm :options="itemOptions" :errors="formErrors" 
-                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
+            <CreateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+                @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
+
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showEditModal" :header="'Edit Emergency Call'"
+        :loading="loadingModal" @close="handleModalClose">
+        <template #modal-body>
+            <UpdateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
+                @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
+        </template>
+    </AddEditItemModal>
+
+    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
+        :text="'This action will permanently delete the selected emergency call(s). Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import AddEditItemModal from "./modal/AddEditItemModal.vue";
 import CreateEmergencyCallForm from "./forms/CreateEmergencyCallForm.vue";
-import TableField from "./general/TableField.vue";
+import UpdateEmergencyCallForm from "./forms/UpdateEmergencyCallForm.vue";
+import Notification from "./notifications/Notification.vue";
+import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
-import BulkActionButton from "./general/BulkActionButton.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Badge from "@generalComponents/Badge.vue";
@@ -89,17 +134,20 @@ const emergencyCalls = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const showCreateModal = ref(false);
+const showEditModal = ref(false);
 const loadingModal = ref(false)
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const showDeleteConfirmationModal = ref(false);
+const confirmDeleteAction = ref(null);
 const itemOptions = ref({})
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 
 
-onMounted(async () => {
+const loadData = async () => {
     loading.value = true;
     try {
         const response = await axios.get(props.routes.emergency_calls);
@@ -109,6 +157,10 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
+};
+
+onMounted(() => {
+    loadData();
 });
 
 const handleCreateButtonClick = () => {
@@ -121,25 +173,67 @@ const handleCreateButtonClick = () => {
 const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
-    
-    axios.post(props.routes.store, form)
+
+    axios.post(props.routes.emergency_calls_store, form)
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
             handleModalClose();
-
+            loadData();
         }).catch((error) => {
             createFormSubmiting.value = false;
-
             handleFormErrorResponse(error);
         });
 
 };
 
+const handleEditButtonClick = (uuid) => {
+    showEditModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions(uuid);
+}
+
+const handleUpdateRequest = (form) => {
+    updateFormSubmiting.value = true;
+    formErrors.value = null;
+
+    axios.put(itemOptions.value.routes.update_route, form)
+        .then((response) => {
+            updateFormSubmiting.value = false;
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            loadData();
+        })
+        .catch((error) => {
+            updateFormSubmiting.value = false;
+            handleFormErrorResponse(error);
+        });
+};
+
+const handleSingleItemDeleteRequest = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
+
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.emergency_calls_bulk_delete, { items })
+        .then((response) => {
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            loadData();
+        })
+        .catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+
 const handleModalClose = () => {
     showCreateModal.value = false;
-    // showEditModal.value = false;
-    // confirmationModalTrigger.value = false;
+    showEditModal.value = false;
+    showDeleteConfirmationModal.value = false;
     // bulkUpdateModalTrigger.value = false;
 }
 
@@ -149,11 +243,11 @@ const getItemOptions = (itemUuid = null) => {
 
     const payload = itemUuid ? { item_uuid: itemUuid } : {};
 
-    axios.post(props.routes.item_options, payload)
+    axios.post(props.routes.emergency_calls_item_options, payload)
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
         })
         .catch((error) => {
             handleModalClose();
@@ -219,4 +313,11 @@ const handleErrorResponse = (error) => {
     }
 }
 
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
+
+
 </script>
+
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>

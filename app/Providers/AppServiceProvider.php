@@ -8,16 +8,20 @@ use App\Models\RingGroups;
 use App\Models\Voicemails;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
+use App\Models\EmergencyCall;
+use App\Models\EmergencyCallMember;
 use App\Observers\ExtensionObserver;
 use App\Services\RingotelApiService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use App\Observers\EmergencyCallObserver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Sanctum\PersonalAccessToken;
+use App\Observers\EmergencyCallMemberObserver;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -75,6 +79,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Extensions::observe(ExtensionObserver::class);
+        EmergencyCall::observe(EmergencyCallObserver::class);
+        EmergencyCallMember::observe(EmergencyCallMemberObserver::class);
+
 
         Builder::macro('orWhereLike', function (string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');
