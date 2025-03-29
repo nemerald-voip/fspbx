@@ -33,4 +33,9 @@ class EmergencyCallMember extends Model
     {
         return $this->belongsTo(EmergencyCall::class);
     }
+
+    public function extension()
+    {
+        return $this->belongsTo(\App\Models\Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
 }

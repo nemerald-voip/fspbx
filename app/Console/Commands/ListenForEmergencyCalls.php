@@ -57,8 +57,9 @@ class ListenForEmergencyCalls extends Command
     
                     foreach ($match->members as $member) {
                         logger()->info("Notify extension_uuid: {$member->extension_uuid}");
-                        // dispatch(new NotifyEmergencyCallJob($match, $caller));
+                        dispatch(new NotifyEmergencyCallJob($member, $caller)); 
                     }
+
                 });
             } catch (\Throwable $e) {
                 logger('💥 Listener crashed: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

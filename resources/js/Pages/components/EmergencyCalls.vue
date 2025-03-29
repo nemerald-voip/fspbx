@@ -13,7 +13,7 @@
         <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                 <div class="overflow-hidden border-t border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Number</th>
@@ -35,10 +35,9 @@
                                 </td> -->
 
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                        <Badge 
-                                            :text="call.members.length" backgroundColor="bg-indigo-100"
-                                            textColor="text-indigo-700" ringColor="ring-indigo-400/20"
-                                            class="px-2 py-1 text-xs font-semibold" />
+                                    <Badge :text="call.members.length" backgroundColor="bg-indigo-100"
+                                        textColor="text-indigo-700" ringColor="ring-indigo-400/20"
+                                        class="px-2 py-1 text-xs font-semibold" />
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                     {{ call.description }}
@@ -320,4 +319,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

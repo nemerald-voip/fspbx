@@ -338,7 +338,25 @@
                     <section aria-labelledby="settings-heading">
                         <div class="shadow bg-white sm:rounded-md">
 
-                            <EmergencyCalls :routes="routes"/>
+                            <EmergencyCalls :routes="routes" />
+                        </div>
+                    </section>
+
+                    <section aria-labelledby="settings-heading">
+                        <div class="shadow bg-white sm:rounded-md">
+
+                            <div class="space-y-6 px-4 py-6 sm:p-6">
+                                <div class="flex justify-between items-center">
+                                    <h3 id="settings-heading" class="text-base font-semibold leading-6 text-gray-900">
+                                        Service Status</h3>
+
+                                    <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
+                                </div>
+                            </div>
+
+                            <EmergencyServiceStatus/>
+                            
+
                         </div>
                     </section>
 
@@ -358,9 +376,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, BellIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, BellIcon } from '@heroicons/vue/24/outline';
 import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
 import InputField from "@generalComponents/InputField.vue";
 import Toggle from "@generalComponents/Toggle.vue";
@@ -368,10 +386,12 @@ import Spinner from "@generalComponents/Spinner.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ListboxGroup from "@generalComponents/ListboxGroup.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
-
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
+import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
+
+
 
 
 const props = defineProps({
