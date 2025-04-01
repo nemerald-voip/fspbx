@@ -41,7 +41,6 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_destinations.*.target_external' => [
                 'required_if:ring_group_destinations.*.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'ring_group_destinations.*.target_internal' => [
                 'required_if:ring_group_destinations.*.type,==,internal',
@@ -78,7 +77,6 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_forward.all.target_external' => [
                 'required_if:ring_group_forward.all.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'ring_group_forward.all.target_internal' => [
                 'required_if:ring_group_forward_enabled,==,true,ring_group_forward.all.type,==,internal',
@@ -128,7 +126,6 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_caller_id_number' => [
                 'nullable',
                 'string',
-                'phone:US'
             ],
             'ring_group_distinctive_ring' => [
                 'nullable',

@@ -450,7 +450,6 @@ class ExtensionsController extends Controller
             'forward.all.target_external' => [
                 'required_if:forward.all.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.all.target_internal' => [
                 'required_if:forward_all_enabled,==,true,forward.all.type,==,internal',
@@ -467,7 +466,6 @@ class ExtensionsController extends Controller
             'forward.busy.target_external' => [
                 'required_if:forward.busy.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.busy.target_internal' => [
                 'required_if:forward_busy_enabled,==,true,forward.busy.type,==,internal',
@@ -484,7 +482,6 @@ class ExtensionsController extends Controller
             'forward.no_answer.target_external' => [
                 'required_if:forward.no_answer.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.no_answer.target_internal' => [
                 'required_if:forward_no_answer_enabled,==,true,forward.no_answer.type,==,internal',
@@ -501,7 +498,6 @@ class ExtensionsController extends Controller
             'forward.user_not_registered.target_external' => [
                 'required_if:forward.user_not_registered.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.user_not_registered.target_internal' => [
                 'required_if:forward_user_not_registered_enabled,==,true,forward.user_not_registered.type,==,internal',
@@ -517,7 +513,6 @@ class ExtensionsController extends Controller
             'follow_me_destinations.*.target_external' => [
                 'required_if:follow_me_destinations.*.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'follow_me_destinations.*.target_internal' => [
                 'required_if:follow_me_destinations.*.type,==,internal',
@@ -988,7 +983,6 @@ class ExtensionsController extends Controller
             'forward.all.target_external' => [
                 'required_if:forward.all.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.all.target_internal' => [
                 'required_if:forward_all_enabled,==,true,forward.all.type,==,internal',
@@ -1005,7 +999,6 @@ class ExtensionsController extends Controller
             'forward.busy.target_external' => [
                 'required_if:forward.busy.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.busy.target_internal' => [
                 'required_if:forward_busy_enabled,==,true,forward.busy.type,==,internal',
@@ -1022,7 +1015,6 @@ class ExtensionsController extends Controller
             'forward.no_answer.target_external' => [
                 'required_if:forward.no_answer.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.no_answer.target_internal' => [
                 'required_if:forward_no_answer_enabled,==,true,forward.no_answer.type,==,internal',
@@ -1039,7 +1031,6 @@ class ExtensionsController extends Controller
             'forward.user_not_registered.target_external' => [
                 'required_if:forward.user_not_registered.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'forward.user_not_registered.target_internal' => [
                 'required_if:forward_user_not_registered_enabled,==,true,forward.user_not_registered.type,==,internal',
@@ -1055,7 +1046,6 @@ class ExtensionsController extends Controller
             'follow_me_destinations.*.target_external' => [
                 'required_if:follow_me_destinations.*.type,==,external',
                 'nullable',
-                'phone:US',
             ],
             'follow_me_destinations.*.target_internal' => [
                 'required_if:follow_me_destinations.*.type,==,internal',
