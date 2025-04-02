@@ -84,36 +84,21 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return array The list of devices.
      * @throws \Exception If the API request fails.
      */
-    public function getDevices(array $addresses = []): array
+    public function getDevices(int $limit = 50, string $cursor = null): array
     {
         $this->ensureApiTokenExists();
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->get('/devices')
+            ->get('/devices?limit='.$limit.'&cursor='.$cursor)
             ->throw(function ($error) {
                 throw new \Exception("Unable to retrieve devices: ".json_encode($error));
             });
 
-        $allDevices = $this->handleResponse($response)['results'];
-
-        // Ensure ids and results are normalized and comparable
-        $indexedDevices = [];
-        foreach ($allDevices as $device) {
-            if (isset($device['id'])) {
-                $indexedDevices[strtolower($device['id'])] = $device;
-            }
-        }
-
-        if (empty($addresses)) {
-            return $indexedDevices;
-        }
-
-        // Filter devices based on provided ids
-        return array_filter($indexedDevices, function ($id) use ($addresses) {
-            return in_array($id, $addresses, true);
-        }, ARRAY_FILTER_USE_KEY);
+        return $this->handleResponse($response);
     }
+
+
 
     /**
      * Retrieve a single device by its ID.

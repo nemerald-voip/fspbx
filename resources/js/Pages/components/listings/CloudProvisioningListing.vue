@@ -15,7 +15,7 @@
         </aside>
         <div v-if="activeTab === 'polycom'" class="lg:col-span-10">
             <div class="shadow sm:rounded-md">
-                <div class="bg-gray-50 pb-6">
+                <div v-if="currentTenant" class="bg-gray-50 pb-6">
                     <div class="flex justify-between items-center p-8 pb-0">
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning Status</h3>
                         <button v-if="canEditPolycomToken" type="button" @click.prevent="handlePolycomApiTokenButtonClick()"
@@ -24,29 +24,60 @@
                         </button>
                     </div>
 
-                    <div v-if="currentTenant" class="space-y-6 p-8">
-                        <div class="">
-                            <div>Status:
-                                <span class="text-rose-600" v-if="currentTenant.ztp_status !== 'true'">Organization is not provisioned</span>
-                                <span class="text-emerald-600" v-if="currentTenant.ztp_status === 'true'">Organization is provisioned</span>
-                            </div>
-                            <div v-if="currentTenant.ztp_status === 'true'" class="flex gap-4 pt-4">
-                                <button type="button" @click.prevent="handleEditButtonClick(currentTenant.domain_uuid)"
-                                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                    Edit
-                                </button>
+                    <div class="space-y-6 p-8">
+                        <div>Status:
+                            <span class="text-rose-600" v-if="currentTenant.ztp_status !== 'true'">Organization is not provisioned</span>
+                            <span class="text-emerald-600" v-if="currentTenant.ztp_status === 'true'">Organization is provisioned</span>
+                        </div>
+                        <div v-if="currentTenant.ztp_status === 'true'" class="flex gap-4 pt-4">
+                            <button type="button" @click.prevent="handleEditButtonClick(currentTenant.domain_uuid)"
+                                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                Edit
+                            </button>
+                            <button type="button" @click.prevent="handleDeactivateButtonClick(currentTenant.domain_uuid)"
+                                    class="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                Deactivate
+                            </button>
+                        </div>
+                        <div v-else class="flex gap-4 pt-4">
+                            <button type="button" @click.prevent="handleActivateButtonClick(currentTenant.domain_uuid)"
+                                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                Activate
+                            </button>
+                        </div>
+                    </div>
 
-                                <button type="button" @click.prevent="handleDeactivateButtonClick(currentTenant.domain_uuid)"
-                                        class="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                    Deactivate
-                                </button>
+                    <div class="flex justify-between items-center p-8 pb-0">
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">Devices</h3>
+                    </div>
+
+                    <div class="space-y-6 p-8">
+                        <p class="text-sm text-gray-500">
+                            Sync devices from Polycom to ensure your local system stays up-to-date with the latest organizational data. Click the <strong>Sync Devices</strong> button to initiate the process.
+                        </p>
+                        <div class="rounded-md bg-yellow-100 p-4 mt-4">
+                            <div class="flex">
+                                <div class="shrink-0">
+                                    <ExclamationTriangleIcon class="size-5 text-yellow-500" aria-hidden="true" />
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <p>
+                                            Syncing will replace all current device data in your system with the latest
+                                            device data from the cloud.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <div v-else class="flex gap-4 pt-4">
-                                <button type="button" @click.prevent="handleActivateButtonClick(currentTenant.domain_uuid)"
-                                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                    Activate
-                                </button>
-                            </div>
+                        </div>
+                        <div class="px-4 py-3 text-center sm:px-6">
+                            <button @click.prevent="handleSyncButtonClick()"
+                                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                    :disabled="syncDevicesSubmitting">
+                                <Spinner :show="syncDevicesSubmitting" />
+                                Sync Devices
+                            </button>
                         </div>
                     </div>
                     <!--
@@ -223,6 +254,8 @@ import UpdatePolycomOrgForm from "../forms/UpdatePolycomOrgForm.vue";
 import CreatePolycomOrgForm from "../forms/CreatePolycomOrgForm.vue";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
 import UpdatePolycomApiTokenForm from "../forms/UpdatePolycomApiTokenForm.vue";
+import {ExclamationTriangleIcon} from "@heroicons/vue/20/solid/index.js";
+import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
     options: Object,
@@ -258,11 +291,7 @@ const selectedAccount = ref(null)
 const itemOptions = ref({})
 const currentTenant = ref(null);
 const apiToken = ref(null)
-
-const filterData = ref({
-    search: null,
-    showGlobal: props.showGlobal,
-});
+const syncDevicesSubmitting = ref(null);
 
 const emit = defineEmits(["notification:show"]);
 
@@ -361,6 +390,18 @@ const handleUpdateRequest = (form) => {
 
 };
 
+const handleSyncButtonClick = () => {
+    syncDevicesSubmitting.value = true;
+    axios.post(props.routes.cloud_provisioning_sync_devices)
+        .then((response) => {
+            syncDevicesSubmitting.value = false;
+            showNotification('success', response.data.messages);
+        }).catch((error) => {
+        syncDevicesSubmitting.value = false;
+        handleFormErrorResponse(error); // Emit the event with error
+    });
+};
+
 const handleUpdateApiTokenRequest = (form) => {
     updateApiTokenFormSubmitting.value = true;
     formErrors.value = null;
@@ -429,21 +470,6 @@ const handlePolycomApiTokenButtonClick = () => {
 const handleActivationFinish = () => {
     handleModalClose();
 }
-
-
-const renderRequestedPage = (url) => {
-    loading.value = true;
-    axios.post(url, {
-        filterData: filterData._rawValue,
-    })
-        .then((response) => {
-            currentTenant.value = response.data.tenant;
-        }).catch((error) => {
-        handleModalClose();
-        handleErrorResponse(error);
-    });
-
-};
 
 const getItemOptions = (provider = null, itemUuid = null) => {
     const payload = {

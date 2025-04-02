@@ -285,7 +285,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
     Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
     Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
-    
+
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
@@ -414,6 +414,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/cloud-provisioning/token/update', [CloudProvisioningController::class, 'updateToken'])->name('cloud-provisioning.token.update');
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+    Route::post('/cloud-provisioning/sync-devices', [CloudProvisioningController::class, 'syncDevices'])->name('cloud-provisioning.devices.sync');
     Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
     Route::post('/cloud-provisioning/register', [CloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
     Route::post('/cloud-provisioning/deregister', [CloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');

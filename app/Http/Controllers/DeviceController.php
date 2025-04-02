@@ -85,6 +85,7 @@ class DeviceController extends Controller
                     'cloud_provisioning_get_api_token' => route('cloud-provisioning.token.get'),
                     'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
                     'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
+                    'cloud_provisioning_sync_devices' => route('cloud-provisioning.devices.sync'),
                 ]
             ]
         );
