@@ -14,7 +14,7 @@ use App\Services\Interfaces\ZtpProviderInterface;
 use App\Services\PolycomZtpProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Session;
 
 class CloudProvisioningController extends Controller
 {
@@ -37,48 +37,28 @@ class CloudProvisioningController extends Controller
 
     }
 
-    public function getData($paginate = 50)
+    public function getData()
     {
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'domain_name'); // Default to 'voicemail_id'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        // Add `ztp_status` dynamically
-        $data->each(function ($domain) {
-            $domain->ztp_status = $domain->settings()
-                ->where('domain_setting_category', 'cloud provision')
-                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
-                ->where('domain_setting_enabled', true)
-                ->exists() ? 'true' : 'false';
-        });
-
-        return $data;
+        // TODO: When we have support for other ZTPs, we will need to refine this function to accept a ZTP key and return the status of provisioning
+        $domain = $this->builder()->first();
+        $domain->ztp_status = $domain->settings()
+            ->where('domain_setting_category', 'cloud provision')
+            ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
+            ->where('domain_setting_enabled', true)
+            ->exists() ? 'true' : 'false';
+        return $domain;
     }
 
     /**
      * @param  array  $filters
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function builder(array $filters = [])
+    public function builder()
     {
         $data = $this->model::query();
         // Get all domains with 'domain_enabled' set to 'true' and eager load settings
         $data->where('domain_enabled', 'true')
+            ->where('domain_uuid', Session::get('domain_uuid'))
             ->with([
                 'settings' => function ($query) {
                     $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category',
@@ -95,45 +75,7 @@ class CloudProvisioningController extends Controller
             'domain_description',
         );
 
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter".ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
         return $data;
-    }
-
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                if (strpos($field, '.') !== false) {
-                    // Nested field (e.g., 'extension.name_formatted')
-                    [$relation, $nestedField] = explode('.', $field, 2);
-
-                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
-                        $query->where($nestedField, 'ilike', '%'.$value.'%');
-                    });
-                } else {
-                    // Direct field
-                    $query->orWhere($field, 'ilike', '%'.$value.'%');
-                }
-            }
-        });
     }
 
     public function getItemOptions(PolycomZtpProvider $polycomZtpProvider)
@@ -253,7 +195,7 @@ class CloudProvisioningController extends Controller
                 'settings' => $settings,
                 'locales' => $locales,
                 'permissions' => $permissions,
-                'tenants' => $this->getData()
+                'tenant' => $this->getData()
             ];
         } catch (\Exception $e) {
             // Log the error message

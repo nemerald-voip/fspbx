@@ -17,12 +17,39 @@
             <div class="shadow sm:rounded-md">
                 <div class="bg-gray-50 pb-6">
                     <div class="flex justify-between items-center p-8 pb-0">
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Tenants List</h3>
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning Status</h3>
                         <button v-if="canEditPolycomToken" type="button" @click.prevent="handlePolycomApiTokenButtonClick()"
                                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             API Token
                         </button>
                     </div>
+
+                    <div v-if="currentTenant" class="space-y-6 p-8">
+                        <div class="">
+                            <div>Status:
+                                <span class="text-rose-600" v-if="currentTenant.ztp_status !== 'true'">Organization is not provisioned</span>
+                                <span class="text-emerald-600" v-if="currentTenant.ztp_status === 'true'">Organization is provisioned</span>
+                            </div>
+                            <div v-if="currentTenant.ztp_status === 'true'" class="flex gap-4 pt-4">
+                                <button type="button" @click.prevent="handleEditButtonClick(currentTenant.domain_uuid)"
+                                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                    Edit
+                                </button>
+
+                                <button type="button" @click.prevent="handleDeactivateButtonClick(currentTenant.domain_uuid)"
+                                        class="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                                    Deactivate
+                                </button>
+                            </div>
+                            <div v-else class="flex gap-4 pt-4">
+                                <button type="button" @click.prevent="handleActivateButtonClick(currentTenant.domain_uuid)"
+                                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                    Activate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!--
                     <DataTable>
                         <template #table-header>
                             <TableColumnHeader header="Tenant"
@@ -36,8 +63,12 @@
                                                class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900"/>
                         </template>
 
-                        <template v-if="availableTenants" #table-body>
-                            <tr v-for="row in availableTenants.data" :key="row.domain_uuid">
+                        <template v-if="currentTenant" #table-body>
+                            <div>
+                                sasdad
+                            </div>
+
+                            <tr v-for="row in currentTenant.data" :key="row.domain_uuid">
                                 <TableField class="whitespace-nowrap px-4 text-sm text-gray-500">
                                     <div class="flex items-center">
                                         <span v-if="row.domain_description" class="flex items-center">
@@ -95,10 +126,11 @@
                                     </template>
                                 </TableField>
                             </tr>
+
                         </template>
-                        <template v-if="availableTenants" #empty>
-                            <!-- Conditional rendering for 'no records' message -->
-                            <div v-if="availableTenants.data.length === 0"
+                        <template v-if="currentTenant" #empty>
+
+                            <div v-if="currentTenant.data.length === 0"
                                  class="text-center my-5 ">
                                 <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400"/>
                                 <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
@@ -108,24 +140,10 @@
                             </div>
                         </template>
 
-                        <!--
-                        <template #loading>
-                            <Loading :show="loading" />
-                        </template>
-                        -->
-                        <template v-if="availableTenants" #footer>
-                            <Paginator :previous="availableTenants.prev_page_url"
-                                       :next="availableTenants.next_page_url"
-                                       :from="availableTenants.from"
-                                       :to="availableTenants.to"
-                                       :total="availableTenants.total"
-                                       :currentPage="availableTenants.current_page"
-                                       :lastPage="availableTenants.last_page"
-                                       :links="availableTenants.links"
-                                       @pagination-change-page="renderRequestedPage" />
-                        </template>
+
 
                     </DataTable>
+-->
                 </div>
             </div>
         </div>
@@ -238,7 +256,7 @@ const formErrors = ref(null);
 const ztpOrganizations = ref({})
 const selectedAccount = ref(null)
 const itemOptions = ref({})
-const availableTenants = ref(null);
+const currentTenant = ref(null);
 const apiToken = ref(null)
 
 const filterData = ref({
@@ -267,7 +285,7 @@ const handleRefreshTenantsClick = () => {
     //loading.value = true;
     axios.post(props.routes.cloud_provisioning_item_options, {})
         .then((response) => {
-            availableTenants.value = response.data.tenants;
+            currentTenant.value = response.data.tenant;
             //loading.value = false;
 
         }).catch((error) => {
@@ -288,7 +306,7 @@ const executeNewZtpOrgAction = (itemUuid) => {
     showActivateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
-    getItemOptions(itemUuid);
+    getItemOptions(activeTab, itemUuid);
 }
 
 const executeExistingZtpOrgAction = (itemUuid) => {
@@ -296,14 +314,14 @@ const executeExistingZtpOrgAction = (itemUuid) => {
     showPairModal.value = true
     loadingModal.value = true
     selectedAccount.value = itemUuid;
-    getZtpOrganizations(itemUuid);
+    getZtpOrganizations(activeTab, itemUuid);
 }
 
 const handleEditButtonClick = (itemUuid) => {
     showEditModal.value = true
     formErrors.value = null;
     loadingModal.value = true
-    getItemOptions(itemUuid);
+    getItemOptions(activeTab, itemUuid);
 }
 
 const handleCreateRequest = (form) => {
@@ -419,7 +437,7 @@ const renderRequestedPage = (url) => {
         filterData: filterData._rawValue,
     })
         .then((response) => {
-            availableTenants.value = response.data.tenants;
+            currentTenant.value = response.data.tenant;
         }).catch((error) => {
         handleModalClose();
         handleErrorResponse(error);
@@ -427,8 +445,12 @@ const renderRequestedPage = (url) => {
 
 };
 
-const getItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? {item_uuid: itemUuid} : {}; // Conditionally add itemUuid to payload
+const getItemOptions = (provider = null, itemUuid = null) => {
+    const payload = {
+        ...(provider && {provider: provider}),
+        ...(itemUuid && {item_uuid: itemUuid})
+    };
+    console.log(provider)
     axios.post(props.routes.cloud_provisioning_item_options, payload)
         .then((response) => {
             loadingModal.value = false;
