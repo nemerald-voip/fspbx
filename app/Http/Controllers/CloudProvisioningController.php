@@ -544,34 +544,39 @@ class CloudProvisioningController extends Controller
             $requestedItems = request('items');
             $model = new Devices();
             $items = $model::whereIn($model->getKeyName(), $requestedItems)->get();
-            $supportedProviders = [];
-            $localStatuses = [];
+            $devicesData = [];
 
             // Group devices by their providers
             foreach ($items as $item) {
                 /** @var Devices $item */
                 if ($item->hasSupportedCloudProvider()) {
-                    $provider = get_class($item->getCloudProvider());
-                    $supportedProviders[$provider][] = $item->device_address;
+                    //$provider = get_class($item->getCloudProvider());
                     $localStatus = $item->cloudProvisioningStatus()->first();
-                    if ($localStatus) {
+
+                    $devicesData[] = [
+                        'device_uuid' => $item->device_uuid,
+                        'status' => $localStatus->status,
+                        'error' => $localStatus->error
+                    ];
+
+                    /*if ($localStatus) {
                         $localStatuses[$provider][$item->device_address] = [
                             'status' => $localStatus->status,
                             'error' => $localStatus->error
                         ];
                     } else {
                         $localStatuses[$provider][$item->device_address] = null;
-                    }
+                    }*/
                 }
             }
 
-            $devicesData = [];
+
 
             // Handle each provider
-            foreach ($supportedProviders as $providerClass => $ids) {
+            /*foreach ($supportedProviders as $providerClass => $ids) {
                 try {
                     // Initializing provider instance
-                    /** @var ZtpProviderInterface $providerInstance */
+
                     $providerInstance = new $providerClass();
                     // Get device list from ZTP
                     $cloudDevicesData = $providerInstance->getDevices()['results'];
@@ -615,7 +620,7 @@ class CloudProvisioningController extends Controller
                         ];
                     }
                 }
-            }
+            }*/
 
             return response()->json([
                 'status' => true,
