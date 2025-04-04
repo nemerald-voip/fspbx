@@ -550,78 +550,22 @@ class CloudProvisioningController extends Controller
             foreach ($items as $item) {
                 /** @var Devices $item */
                 if ($item->hasSupportedCloudProvider()) {
-                    //$provider = get_class($item->getCloudProvider());
                     $localStatus = $item->cloudProvisioningStatus()->first();
-
-                    $devicesData[] = [
-                        'device_uuid' => $item->device_uuid,
-                        'status' => $localStatus->status,
-                        'error' => $localStatus->error
-                    ];
-
-                    /*if ($localStatus) {
-                        $localStatuses[$provider][$item->device_address] = [
+                    if($localStatus) {
+                        $devicesData[] = [
+                            'device_uuid' => $item->device_uuid,
                             'status' => $localStatus->status,
                             'error' => $localStatus->error
                         ];
                     } else {
-                        $localStatuses[$provider][$item->device_address] = null;
-                    }*/
-                }
-            }
-
-
-
-            // Handle each provider
-            /*foreach ($supportedProviders as $providerClass => $ids) {
-                try {
-                    // Initializing provider instance
-
-                    $providerInstance = new $providerClass();
-                    // Get device list from ZTP
-                    $cloudDevicesData = $providerInstance->getDevices()['results'];
-
-                    foreach ($items as $item) {
-                        // Retrieve cloud device data for the current device
-                        $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
-
-                        // Determine if the device is provisioned
-                        $provisioned = $cloudDeviceData && !empty($cloudDeviceData['profileid']);
-
-                        if ($provisioned) {
-                            // If provisioned, add provisioned status and data without errors
-                            $devicesData[] = [
-                                'device_uuid' => $item->device_uuid,
-                                'status' => 'provisioned',
-                                'error' => null,
-                                'data' => $cloudDeviceData,
-                            ];
-                        } else {
-                            // If not provisioned, retrieve status and error from localStatuses
-                            $devicesData[] = [
-                                'device_uuid' => $item->device_uuid,
-                                'status' => $localStatuses[$providerClass][$item->device_address]['status'] ?? 'not_provisioned',
-                                'error' => $localStatuses[$providerClass][$item->device_address]['error'] ?? null,
-                                'data' => $cloudDeviceData,
-                            ];
-                        }
-                    }
-
-                } catch (\Exception $e) {
-                    logger($e);
-
-                    foreach ($ids as $id) {
-                        $matchedItem = $items->firstWhere('device_address', $id);
                         $devicesData[] = [
-                            'device_uuid' => $matchedItem ? $matchedItem->device_uuid : null,
-                            'status' => false,
-                            'error' => null, //$e->getMessage(),
-                            'data' => null,
+                            'device_uuid' => $item->device_uuid,
+                            'status' => 'not_provisioned',
+                            'error' => null
                         ];
                     }
                 }
-            }*/
-
+            }
             return response()->json([
                 'status' => true,
                 'devicesData' => $devicesData,
@@ -641,11 +585,8 @@ class CloudProvisioningController extends Controller
         try {
             $deviceModel = new Devices();
             $providerInstance = new PolycomZtpProvider();
-
-            // Sync devices
-            $next = null;   // Start with no next token
-            $limit = 50;    // Define the batch size
-            $i = 0;
+            $next = null; // Start with no next token
+            $limit = 50;  // Define the batch size
             do {
                 // Fetch the current batch of devices
                 $response = $providerInstance->getDevices($limit, $next);
