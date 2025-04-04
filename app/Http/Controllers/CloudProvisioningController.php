@@ -487,8 +487,23 @@ class CloudProvisioningController extends Controller
 
             // Delete the organization
             $deleteResponse = $this->polycomZtpProvider->deleteOrganization($org_id);
-
             if ($deleteResponse) {
+                $items = CloudProvisioningStatus::where(['ztp_profile_id' => $org_id])->get();
+                foreach ($items as $item) {
+                    /** @var CloudProvisioningStatus $item */
+                    /** @var Devices $device */
+                    $device = $item->device()->first();
+                    if ($device->hasSupportedCloudProvider()) {
+                        try {
+                            $cloudProvider = $device->getCloudProvider();
+                            $cloudProvider->deleteDevice($device->device_address);
+                            $device->delete();
+                        } catch (\Exception $e) {
+                            logger($e);
+                        }
+                    }
+                }
+
                 return response()->json([
                     'messages' => ['success' => ['Organization was successfully deleted.']]
                 ], 200); // 200 OK
@@ -593,7 +608,6 @@ class CloudProvisioningController extends Controller
                 // Check if results exist and iterate through each device
                 if (isset($response['results']) && is_array($response['results'])) {
                     foreach ($response['results'] as $device) {
-                        // Your logic for processing each device
                         /** @var Devices $existingDevice */
                         $existingDevice = $deviceModel
                             ->where('device_address', strtolower($device['id']))
@@ -601,12 +615,15 @@ class CloudProvisioningController extends Controller
                             ->where('domain_uuid', Session::get('domain_uuid'))
                             ->first();
                         if ($existingDevice) {
+                            // Check provisioning status
+                            $isProvisioned = (!empty($device['profileid']) && $device['profileid'] == $existingDevice->getCloudProviderOrganizationId());
                             $existingDevice->cloudProvisioningStatus()->updateOrInsert(
                                 ['device_uuid' => $existingDevice->device_uuid],
                                 [
                                     'provider' => 'polycom',
                                     'device_address' => $existingDevice->device_address,
-                                    'status' => ((!empty($device['profileid']) && $device['profileid'] == $existingDevice->getCloudProviderOrganizationId()) ? 'provisioned' : 'not_provisioned'),
+                                    'status' => ($isProvisioned) ? 'provisioned' : 'not_provisioned',
+                                    'ztp_profile_id' => ($isProvisioned) ? $device['profileid'] : null,
                                     'error' => '',
                                 ]
                             );

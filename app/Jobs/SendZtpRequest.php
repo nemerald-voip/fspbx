@@ -185,6 +185,7 @@ class SendZtpRequest implements ShouldQueue
             $statusPayload = [
                 'provider' => $this->provider,
                 'device_address' => $this->deviceMacAddress,
+                'ztp_profile_id' => ($this->action === self::ACTION_CREATE) ? $this->organizationId : null,
                 'status' => ($this->action === self::ACTION_CREATE) ? 'provisioned' : 'not_provisioned',
                 'error' => '',
             ];
