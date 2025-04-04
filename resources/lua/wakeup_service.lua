@@ -2,7 +2,7 @@
 freeswitch.consoleLog("INFO", "[wakeup_service.lua] Executing Wakeup Call Service Lua Script...\n")
 
 -- Enable/Disable debug mode globally
-DEBUG_MODE = false  -- Set to false to disable debug logs
+DEBUG_MODE = true  -- Set to false to disable debug logs
 
 -- Debug logging function
 function debug_log(level, message)
@@ -18,6 +18,24 @@ function determine_wakeup_year(current_year, current_month, requested_month)
     else
         return current_year
     end
+end
+
+-- Function to call the Laravel Artisan command and get the converted date directly
+function getConvertedDate(localDateTime, fromTZ, toTZ)
+    local artisanPath = "/var/www/fspbx/artisan"
+    local cmd = string.format('php %s date:convert "%s" %s %s', artisanPath, localDateTime, fromTZ, toTZ)
+    
+    local handle = io.popen(cmd)
+    if not handle then
+        error("Failed to run command: " .. cmd)
+    end
+
+    local convertedDate = handle:read("*a")
+    handle:close()
+
+    -- Trim any surrounding whitespace/newlines
+    convertedDate = convertedDate:gsub("^%s*(.-)%s*$", "%1")
+    return convertedDate
 end
 
 -- Function to schedule a wake-up call
@@ -55,28 +73,11 @@ function schedule_wake_up_call(domain_uuid, extension_uuid, wake_up_date, wake_u
     end
     local formatted_time = wake_up_hour .. ":" .. wake_up_min
 
-    -- Combine date and time into a full local timestamp
+    -- Combine date and time into a full local timestamp (assumed to be in the switch's local time zone)
     local local_datetime = string.format("%s %s:00", formatted_date, formatted_time)
 
-    -- Convert local time to UTC using os.date()
-    local year, month, day, hour, min = string.match(local_datetime, "(%d+)-(%d+)-(%d+) (%d+):(%d+):%d+")
-
-    if not year or not month or not day or not hour or not min then
-        debug_log("ERR", "[wakeup_service.lua] Failed to parse date-time: " .. local_datetime .. "\n")
-        return
-    end
-
-    local local_epoch = os.time({
-        year = tonumber(year),
-        month = tonumber(month),
-        day = tonumber(day),
-        hour = tonumber(hour),
-        min = tonumber(min)
-    })
-
-    -- Step 2: Adjust to UTC (account for system time zone offset)
-    local utc_epoch = local_epoch - os.difftime(os.time(), os.time(os.date("!*t", os.time())))
-    local utc_datetime = os.date("!%Y-%m-%d %H:%M:00", local_epoch)
+    -- Use Laravel Artisan command to convert local_datetime from the switch's timezone to UTC
+    local utc_datetime = getConvertedDate(local_datetime, switch_tz, "UTC")
 
     debug_log("INFO", "[wakeup_service.lua] Local Wake-Up Time: " .. local_datetime .. "\n")
     debug_log("INFO", "[wakeup_service.lua] UTC Wake-Up Time: " .. utc_datetime .. "\n")
@@ -95,7 +96,7 @@ function schedule_wake_up_call(domain_uuid, extension_uuid, wake_up_date, wake_u
         -- Insert new wake-up call
         local sql_insert = string.format([[
             INSERT INTO wakeup_calls ( domain_uuid, extension_uuid, wake_up_time, next_attempt_at, recurring, status, retry_count, created_at, updated_at)
-            VALUES ('%s', '%s', '%s', '%s', %s,'scheduled', 0, NOW(), NOW())
+            VALUES ('%s', '%s', '%s', '%s', %s, 'scheduled', 0, NOW(), NOW())
         ]], domain_uuid, extension_uuid, utc_datetime, utc_datetime, is_recurring and "TRUE" or "FALSE")
     
         debug_log("INFO", "[wakeup_service.lua] Inserting wake-up call: " .. sql_insert .. "\n")
