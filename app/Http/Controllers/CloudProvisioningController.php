@@ -630,17 +630,11 @@ class CloudProvisioningController extends Controller
         }
     }
 
-    public function syncDevices()
+    public function syncDevices(): JsonResponse
     {
         // Hardcode the provider for now
         try {
-            $cloudModel = new CloudProvisioningStatus();
             $deviceModel = new Devices();
-            /*$items = $model
-                ->where('domain_uuid', Session::get('domain_uuid'))
-                ->where('device_vendor', 'polycom')
-                ->get();*/
-
             $providerInstance = new PolycomZtpProvider();
 
             // Sync devices
@@ -650,150 +644,43 @@ class CloudProvisioningController extends Controller
             do {
                 // Fetch the current batch of devices
                 $response = $providerInstance->getDevices($limit, $next);
-
                 // Check if results exist and iterate through each device
                 if (isset($response['results']) && is_array($response['results'])) {
                     foreach ($response['results'] as $device) {
                         // Your logic for processing each device
-                        if (isset($device['serial']) && !empty($device['serial'])) {
-                            $existingDevice = $deviceModel
-                                ->where('device_address', strtolower($device['mac']))
-                                ->where('device_vendor', 'polycom')
-                                ->where('domain_uuid', Session::get('domain_uuid'))
-                                ->first();
-                            if($existingDevice) {
-                                $existingDevice->cloudProvisioningStatus()->updateOrInsert(
-                                    ['device_uuid' => $existingDevice->device_uuid],
-                                    [
-                                        'provider' => 'polycom',
-                                        'device_address' => $existingDevice->device_address,
-                                        'status' => ((!empty($device['profileid'])) ? 'provisioned' : 'not_provisioned'),
-                                        'error' => '',
-                                    ]
-                                );
-                            }
-
-                            //logger($deviceObject);
-
-                            $i++;
-                            /*$deviceModel = $cloudModel
-                                ->where('domain_uuid', Session::get('domain_uuid'))
-                                ->where('device_address', $device['mac'])
-                                ->where('device_vendor', 'polycom')
-                                ->first();
-                            logger($deviceModel);*/
-                            // Example logic: You can replace this with custom processing
-                            logger("$i  Processing device with serial: {$device['serial']}\n");
-
+                        /** @var Devices $existingDevice */
+                        $existingDevice = $deviceModel
+                            ->where('device_address', strtolower($device['id']))
+                            ->where('device_vendor', 'polycom')
+                            ->where('domain_uuid', Session::get('domain_uuid'))
+                            ->first();
+                        if ($existingDevice) {
+                            $existingDevice->cloudProvisioningStatus()->updateOrInsert(
+                                ['device_uuid' => $existingDevice->device_uuid],
+                                [
+                                    'provider' => 'polycom',
+                                    'device_address' => $existingDevice->device_address,
+                                    'status' => ((!empty($device['profileid']) && $device['profileid'] == $existingDevice->getCloudProviderOrganizationId()) ? 'provisioned' : 'not_provisioned'),
+                                    'error' => '',
+                                ]
+                            );
                         }
                     }
                 }
-                //logger($response['next']);
-                // Update the next token
                 $next = $response['next'] ?? null;
             } while ($next);
 
-
-
-            //$cloudDevicesData = $providerInstance->getDevices();
-
-
-            die;
-
-
-
-            // Group devices by their providers
-            foreach ($items as $item) {
-                /** @var Devices $item */
-                if ($item->hasSupportedCloudProvider()) {
-                    // Initializing provider instance
-                    /** @var ZtpProviderInterface $providerInstance */
-                    $providerClass = get_class($item->getCloudProvider());
-                    $providerInstance = new $providerClass();
-
-                    // Get device list from ZTP
-                    $cloudDevicesData = $providerInstance->getDevices();
-
-
-
-                    //$supportedProviders[$provider][] = $item->device_address;
-
-
-
-                    $localStatus = $item->cloudProvisioningStatus()->first();
-                    if ($localStatus) {
-                        $localStatuses[$provider][$item->device_address] = [
-                            'status' => $localStatus->status,
-                            'error' => $localStatus->error
-                        ];
-                    } else {
-                        $localStatuses[$provider][$item->device_address] = null;
-                    }
-                }
-            }
-
-            $devicesData = [];
-
-            // Handle each provider
-            foreach ($supportedProviders as $providerClass => $ids) {
-                try {
-                    // Initializing provider instance
-                    /** @var ZtpProviderInterface $providerInstance */
-                    $providerInstance = new $providerClass();
-                    // Get device list from ZTP
-                    $cloudDevicesData = $providerInstance->getDevices();
-
-                    foreach ($items as $item) {
-                        // Retrieve cloud device data for the current device
-                        $cloudDeviceData = $cloudDevicesData[$item->device_address] ?? null;
-
-                        // Determine if the device is provisioned
-                        $provisioned = $cloudDeviceData && !empty($cloudDeviceData['profileid']);
-
-                        if ($provisioned) {
-                            // If provisioned, add provisioned status and data without errors
-                            $devicesData[] = [
-                                'device_uuid' => $item->device_uuid,
-                                'status' => 'provisioned',
-                                'error' => null,
-                                'data' => $cloudDeviceData,
-                            ];
-                        } else {
-                            // If not provisioned, retrieve status and error from localStatuses
-                            $devicesData[] = [
-                                'device_uuid' => $item->device_uuid,
-                                'status' => $localStatuses[$providerClass][$item->device_address]['status'] ?? 'not_provisioned',
-                                'error' => $localStatuses[$providerClass][$item->device_address]['error'] ?? null,
-                                'data' => $cloudDeviceData,
-                            ];
-                        }
-                    }
-
-                } catch (\Exception $e) {
-                    logger($e);
-
-                    foreach ($ids as $id) {
-                        $matchedItem = $items->firstWhere('device_address', $id);
-                        $devicesData[] = [
-                            'device_uuid' => $matchedItem ? $matchedItem->device_uuid : null,
-                            'status' => false,
-                            'error' => null, //$e->getMessage(),
-                            'data' => null,
-                        ];
-                    }
-                }
-            }
-
             return response()->json([
-                'status' => true,
-                'devicesData' => $devicesData,
-            ], 201);
+                'messages' => ['success' => ['Devices are successfully synced']]
+            ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
             return response()->json([
-                'error' => $e->getMessage(),
-                'deviceData' => null,
-            ], 500);
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
         }
     }
 
