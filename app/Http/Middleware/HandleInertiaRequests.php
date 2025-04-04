@@ -113,6 +113,8 @@ class HandleInertiaRequests extends Middleware
         $permissions['contact_delete'] = userCheckPermission('contact_delete');
         $permissions['contact_upload'] = userCheckPermission('contact_upload');
 
+        $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
+
         // logger($permissions);
         return $permissions;
     }

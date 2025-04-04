@@ -148,6 +148,11 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'polycom_api_token_edit',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Account Settings',
+                'permission_name'        => 'account_settings_list_view',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -288,6 +293,14 @@ class DatabaseSeeder extends Seeder
                 'group_name'           => "admin",
                 'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
                 'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'account_settings_list_view',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
             ],
 
             [
@@ -544,6 +557,22 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_vvx_320x240_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_vvx_480x272_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'poly_e350_logo',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -552,7 +581,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
-                'default_setting_subcategory'   => 'poly_e550_logo',
+                'default_setting_subcategory'   => 'poly_e350_wallpaper',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
@@ -560,7 +589,39 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
-                'default_setting_subcategory'   => 'poly_e350_wallpaper',
+                'default_setting_subcategory'   => 'poly_e220_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e220_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e500_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e500_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e550_logo',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
@@ -603,6 +664,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_subcategory'   => 'yealink_t46u_wallpaper_filename',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'grandstream_outbound_proxy',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'company',
+                'default_setting_subcategory'   => 'billing_suspension',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "false",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
             ],

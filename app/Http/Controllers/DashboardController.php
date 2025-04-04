@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Linfo\Linfo;
-use App\Models\CDR;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Faxes;
@@ -23,9 +22,12 @@ use App\Services\CdrDataService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
+use App\Services\FreeswitchEslService;
 
 class DashboardController extends Controller
 {
+
+    protected $viewName = 'Dashboard';
 
     /**
      * Display a listing of the resource.
@@ -36,11 +38,8 @@ class DashboardController extends Controller
     {
         date_default_timezone_set('America/Los_Angeles');
 
-        // dd(Session::get('domain_name'));
-        // return view('layouts.dashboard.index')->with($data);
-
         return Inertia::render(
-            'Dashboard',
+            $this->viewName,
             [
                 'company_data' => function () {
                     return $this->getCompanyData();
@@ -56,6 +55,9 @@ class DashboardController extends Controller
                     fn() =>
                     $this->getCounts()
                 ),
+                'routes' => [
+                    'account_settings_page' => route('account-settings.index'),
+                ]
             ]
         );
     }
@@ -165,25 +167,20 @@ class DashboardController extends Controller
             $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_id)->count();
         }
 
-        //if superuser get registration status
-        if (isSuperAdmin()) {
+        $eslService = new FreeswitchEslService();
 
-            $registrations = get_registrations("all");
-            $unique_regs = [];
-            foreach ($registrations as $registration) {
-                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
-            }
-            $counts['global_reg_count'] = count($unique_regs);
+        //Get all registrations
+        $regs = $eslService->getAllSipRegistrations();
 
-            // Count local unique registrations
-            $registrations = get_registrations();
-            $unique_regs = [];
-            foreach ($registrations as $registration) {
-                if (!in_array($registration['user'], $unique_regs)) array_push($unique_regs, $registration['user']);
-            }
-            $counts['local_reg_count'] = count($unique_regs);
-            // }
-        }
+        // Get unique extensions online
+        $uniqueRegs = $regs->unique('user')->values();
+        $counts['global_reg_count'] = $uniqueRegs->count();
+
+        //Filter by domain
+        $filteredRegs = $uniqueRegs->where('sip_auth_realm', session('domain_name'))->values();
+
+        $counts['local_reg_count'] = $filteredRegs->count();
+
 
         return $counts;
     }
@@ -308,7 +305,7 @@ class DashboardController extends Controller
         }
 
         $data['time_zone'] = get_domain_setting('time_zone');
-        $data['billing_suspension'] = get_domain_setting('billing_suspension');
+        $data['billing_suspension'] = filter_var(get_domain_setting('billing_suspension'), FILTER_VALIDATE_BOOLEAN);
 
         return $data;
     }

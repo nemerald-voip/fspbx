@@ -8,7 +8,7 @@
 <p>Your 2FA Code: <b>{{ $attributes['code'] ?? '' }}</b></p>
 
 
-<p>Please use the above code to complete the sign-in process for your Nemerald account. 
+<p>Please use the above code to complete the sign-in process for your {{ config('app.name', 'Laravel') }} account. 
     This extra step confirms it's really you trying to access your account.</p>
 
 
