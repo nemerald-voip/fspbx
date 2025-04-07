@@ -24,6 +24,6 @@ Route::group(['middleware'=>['auth:sanctum']], function(){
     Route::resource('/emergency-calls', EmergencyCallController::class);
     Route::post('/emergency-calls/item-options', [EmergencyCallController::class, 'getItemOptions'])->name('emergency-calls.item.options');
     Route::post('/emergency-calls/bulk-delete', [EmergencyCallController::class, 'bulkDelete'])->name('emergency-calls.bulk.delete');
-
+    Route::post('/emergency-calls/check-service-status', [EmergencyCallController::class, 'checkServiceStatus'])->name('emergency-calls.check.service.status');
 });
 

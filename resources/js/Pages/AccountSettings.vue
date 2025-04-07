@@ -354,7 +354,7 @@
                                 </div>
                             </div>
 
-                            <EmergencyServiceStatus/>
+                            <EmergencyServiceStatus :routes="routes"/>
                             
 
                         </div>

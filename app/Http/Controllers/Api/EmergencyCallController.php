@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Process;
 use App\Http\Requests\StoreEmergencyCallRequest;
 use App\Http\Requests\UpdateEmergencyCallRequest;
 
@@ -196,4 +197,29 @@ class EmergencyCallController extends Controller
             ], 500);
         }
     }
+
+
+
+    function checkServiceStatus(string $processName = 'esl:listen-emergency')
+    {
+        try {
+            $result = Process::run('ps aux | grep "' . $processName . '" | grep -v "grep"');
+
+            $output = $result->output();
+
+            $isRunning = !empty(trim($output));
+
+            return response()->json([
+                'status' => $isRunning,
+                'raw' => $output,
+            ]);
+        } catch (\Throwable $e) {
+            logger('checkServiceStatus error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while checking service status.']]
+            ], 500);
+        }
+    }
+
 }

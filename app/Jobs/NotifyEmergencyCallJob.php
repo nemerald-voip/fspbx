@@ -86,10 +86,10 @@ class NotifyEmergencyCallJob implements ShouldQueue
 
                 // **Step 1: Originate Call to FreeSWITCH**
                 $response = $eslService->executeCommand(
-                    "originate {origination_caller_id_number={$this->caller},origination_caller_id_name='Emergency Call {$this->caller}',hangup_after_bridge=true,originate_timeout=30,call_direction='local'}user/{$this->member->extension->extension}@{$this->member->extension->domain->domain_name} &lua(lua/wakeup_call.lua)"
+                    "originate {origination_caller_id_number={$this->caller},origination_caller_id_name='Emergency Call {$this->caller}',hangup_after_bridge=true,originate_timeout=30,call_direction='local'}user/{$this->member->extension->extension}@{$this->member->extension->domain->domain_name} &lua(lua/emergency_notify.lua)"
                 );
 
-                // logger("originate {origination_caller_id_number={$this->caller},origination_caller_id_name='Emergency Call {$this->caller}',hangup_after_bridge=true,originate_timeout=30,call_direction='local'}user/{$this->member->extension->extension}@{$this->member->extension->domain->domain_name} &lua(lua/wakeup_call.lua)");
+                // logger("originate {origination_caller_id_number={$this->caller},origination_caller_id_name='Emergency Call {$this->caller}',hangup_after_bridge=true,originate_timeout=30,call_direction='local'}user/{$this->member->extension->extension}@{$this->member->extension->domain->domain_name} &lua(lua/emergency_notify.lua)");
                 logger("🛠 ESL Response: " . json_encode($response));
 
                 if (!$response) {
