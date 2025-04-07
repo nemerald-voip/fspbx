@@ -46,6 +46,7 @@
         "select2": "^4.1.0-rc.0",
         "simplebar": "^6.2.5",
         "vue": "^3.3.11",
-        "vue-chartjs": "^5.3.0"
+        "vue-chartjs": "^5.3.0",
+        "vue-multiselect": "^3.2.0"
     }
 }

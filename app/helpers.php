@@ -601,6 +601,7 @@ if (!function_exists('outbound_route_to_bridge')) {
     }
 }
 
+// * depreciated
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)
     {

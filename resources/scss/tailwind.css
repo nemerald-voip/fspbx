@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+.multiselect__tag {
+    background-color: #a5b4fc !important;
+}
+
+.multiselect__tag-icon:after {
+    color: #fff !important;
+    /* Base color */
+}
+
+.multiselect__tag-icon:hover:after,
+.multiselect__tag-icon:focus:after {
+    color: #312e81 !important;
+    /* Hover/Focus color */
+}
+
+.multiselect__input {
+    @apply focus:outline-none focus:ring-0 focus:shadow-none;
+    font-size: 0.9rem !important;
+}
+
+.multiselect__option {
+    font-size: 0.9rem !important;
+}
+
+.multiselect__option--highlight {
+    background-color: #e5e7eb !important;
+    color: #19129a !important;
+    font-size: 0.9rem !important;
+}
+
+.multiselect__option--highlight:after {
+    background-color: #e5e7eb !important;
+    color: #129a4b !important;
+}
+
+.multiselect__option--selected.multiselect__option--highlight {
+    background-color: #fef2f2 !important;
+    color: #ea8c8f !important;
+}
+
+.multiselect__option--selected.multiselect__option--highlight:after {
+    background-color: #fef2f2 !important;
+    /* Tailwind bg-red-50 */
+    color: #f87171 !important;
+    /* Tailwind text-red-200 */
+}

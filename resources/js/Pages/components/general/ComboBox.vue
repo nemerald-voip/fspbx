@@ -191,8 +191,17 @@ watch(() => props.selectedItem, (newValues) => {
         if (!newValues || newValues.length === 0 || !props.options) {
             currentSelection.value = [];
         } else {
-            const newValuesArray = newValues.map(item => item.value);
-            currentSelection.value = props.options.filter(option => newValuesArray.includes(option.value));
+            // Check if newValues are primitives (strings) or objects
+            if (typeof newValues[0] === 'string') {
+                currentSelection.value = props.options.filter(option =>
+                    newValues.includes(option.value)
+                );
+            } else {
+                const newValuesArray = newValues.map(item => item.value);
+                currentSelection.value = props.options.filter(option =>
+                    newValuesArray.includes(option.value)
+                );
+            }
         }
     } else {
         if (!newValues || newValues === "NULL" || !props.options) {

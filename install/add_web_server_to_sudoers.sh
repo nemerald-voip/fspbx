@@ -27,6 +27,8 @@ SUDOERS_TEMP=$(mktemp)
 IPTABLES_PERMISSION="www-data ALL=(ALL) NOPASSWD: /sbin/iptables"
 FAIL2BAN_PERMISSION="www-data ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client"
 IPTABLES_SAVE_PERMISSION="www-data ALL=(ALL) NOPASSWD: /sbin/iptables-save"
+SUPERVISORCTL_PERMISSION="www-data ALL=(ALL) NOPASSWD: /usr/bin/supervisorctl"
+
 
 if [ -f "$SUDOERS_FILE" ]; then
     sudo cp "$SUDOERS_FILE" "$BACKUP_SUDOERS"
@@ -64,8 +66,9 @@ add_permission() {
 add_permission "$IPTABLES_PERMISSION"
 add_permission "$FAIL2BAN_PERMISSION"
 add_permission "$IPTABLES_SAVE_PERMISSION"
+add_permission "$SUPERVISORCTL_PERMISSION"
 
 # Cleanup temporary files
 rm "$SUDOERS_TEMP"
 
-print_success "Web server user now allowed to execute iptables, iptables-save, and fail2ban-client commands without a password!"
+print_success "Web server user now allowed to execute iptables, iptables-save, fail2ban-client, and supervisorctl commands without a password!"
