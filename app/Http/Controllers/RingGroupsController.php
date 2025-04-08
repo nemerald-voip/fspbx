@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\IvrMenus;
 use App\Models\Dialplans;
 use App\Models\Extensions;
@@ -20,44 +21,294 @@ use App\Http\Requests\UpdateRingGroupRequest;
 
 class RingGroupsController extends Controller
 {
+
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'RingGroups';
+    protected $searchable = ['ring_group_name', 'ring_group_extension'];
+
+    public function __construct()
+    {
+        $this->model = new RingGroups();
+    }
+
     /**
-     * @param  Request  $request
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
+
     public function index(Request $request)
     {
-
+        // Check permissions
         if (!userCheckPermission("ring_group_view")) {
             return redirect('/');
         }
-        $searchString = $request->get('search');
 
-        //$timeZone = get_local_time_zone(Session::get('domain_uuid'));
-        $ringGroups = RingGroups::query();
-        $ringGroups
-            ->where('domain_uuid', Session::get('domain_uuid'));
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
 
-        if ($searchString) {
-            $ringGroups->where(function ($query) use ($searchString) {
-                $query->where('ring_group_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('ring_group_extension', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('ring_group_description', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
-            });
+                'routes' => [
+                    'current_page' => route('ring-groups.index'),
+                    'store' => route('ring-groups.store'),
+                    // 'update' => route('ring-groups.update', ['id' => 'id_placeholder']),
+                    'item_options' => route('ring-groups.item.options'),
+                    'bulk_delete' => route('ring-groups.bulk.delete'),
+                    'select_all' => route('ring-groups.select.all'),
+                ]
+            ]
+        );
+    }
+
+    /**
+     *  Get data
+     */
+    public function getData($paginate = 50)
+    {
+
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
         }
 
-        $ringGroups = $ringGroups->orderBy('ring_group_extension')->paginate(10)->onEachSide(1);
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'ring_group_extension');
+        $this->sortOrder = request()->get('sortOrder', 'asc');
 
-        $permissions['delete'] = userCheckPermission('ring_group_delete');
-        $permissions['view'] = userCheckPermission('ring_group_view');
-        $permissions['edit'] = userCheckPermission('ring_group_edit');
-        $permissions['add'] = userCheckPermission('ring_group_add');
-        $data = [];
-        $data['ringGroups'] = $ringGroups;
-        $data['searchString'] = $searchString;
+        $data = $this->builder($this->filters);
 
-        return view('layouts.ringgroups.list')
-            ->with($data)
-            ->with('permissions', $permissions);
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
+
+        logger($data);
+
+        return $data;
+    }
+
+    /**
+     * @param  array  $filters
+     * @return Builder
+     */
+    public function builder(array $filters = [])
+    {
+        $data =  $this->model::query();
+        $domainUuid = session('domain_uuid');
+        $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
+        $data->with(['destinations' => function ($query) {
+            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number');
+        }]);
+
+        $data->select(
+            'ring_group_uuid',
+            'ring_group_name',
+            'ring_group_extension',
+            'ring_group_enabled',
+            'ring_group_description'
+        );
+
+
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
+                }
+            }
+        }
+
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
+
+        return $data;
+    }
+
+
+    public function getItemOptions()
+    {
+        try {
+
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+
+            // Base navigation array without Greetings
+            $navigation = [
+                [
+                    'name' => 'Settings',
+                    'icon' => 'Cog6ToothIcon',
+                    'slug' => 'settings',
+                ],
+
+            ];
+
+            $status_options = [
+                [
+                    'value' => 'scheduled',
+                    'name' => 'Scheduled',
+                ],
+                [
+                    'value' => 'in_progress',
+                    'name' => 'In Progress',
+                ],
+                [
+                    'value' => 'snoozed',
+                    'name' => 'Snoozed',
+                ],
+                [
+                    'value' => 'completed',
+                    'name' => 'Completed',
+                ],
+                [
+                    'value' => 'canceled',
+                    'name' => 'Cancelled',
+                ],
+                [
+                    'value' => 'failed',
+                    'name' => 'Failed',
+                ],
+
+            ];
+
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                ->orderBy('extension', 'asc')
+                ->get();
+
+            // Transform the collection into the desired array format
+            $extensionsOptions = $extensions->map(function ($extension) {
+                return [
+                    'value' => $extension->extension_uuid,
+                    'name' => $extension->name_formatted,
+                ];
+            })->toArray();
+
+            // Check if item_uuid exists to find an existing model
+            if ($item_uuid) {
+                // Find existing item by item_uuid
+                $item = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
+
+                // If a model exists, use it; otherwise, create a new one
+                if (!$item) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+                // Define the update route
+                $updateRoute = route('ring-groups.update', ['ring_group' => $item_uuid]);
+            } else {
+                // Create a new model if item_uuid is not provided
+                $item = $this->model;
+            }
+
+            $permissions = $this->getUserPermissions();
+
+            $routes = [
+                'update_route' => $updateRoute ?? null,
+                // 'get_routing_options' => route('routing.options'),
+
+            ];
+
+            // Transform greetings into the desired array format
+            $greetingsArray = Recordings::where('domain_uuid', session('domain_uuid'))
+                ->orderBy('recording_name')
+                ->get()
+                ->map(function ($greeting) {
+                    return [
+                        'value' => $greeting->recording_filename,
+                        'name' => $greeting->recording_name,
+                        'description' => $greeting->recording_description,
+                    ];
+                })->toArray();
+
+
+            $routes = array_merge($routes, [
+                'text_to_speech_route' => route('greetings.textToSpeech'),
+                'greeting_route' => route('greeting.url'),
+                'delete_greeting_route' => route('greetings.file.delete'),
+                'update_greeting_route' => route('greetings.file.update'),
+                'upload_greeting_route' => route('greetings.file.upload'),
+                // 'update_route' => route('virtual-receptionists.update', $ivr),
+                'apply_greeting_route' => route('virtual-receptionist.greeting.apply'),
+
+            ]);
+
+            $openAiVoices = [
+                ['value' => 'alloy', 'name' => 'Alloy'],
+                ['value' => 'echo', 'name' => 'Echo'],
+                ['value' => 'fable', 'name' => 'Fable'],
+                ['value' => 'onyx', 'name' => 'Onyx'],
+                ['value' => 'nova', 'name' => 'Nova'],
+                ['value' => 'shimmer', 'name' => 'Shimmer'],
+            ];
+
+            $openAiSpeeds = [];
+
+            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
+                if (floor($i) == $i) {
+                    // Whole number, format with one decimal place
+                    $formattedValue = sprintf('%.1f', $i);
+                } else {
+                    // Fractional number, format with two decimal places
+                    $formattedValue = sprintf('%.2f', $i);
+                }
+                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
+            }
+
+
+
+            // Define the instructions for recording a voicemail greeting using a phone call
+            $phoneCallInstructions = [
+                'Dial <strong>*732</strong> from your phone.',
+                'Enter the ring group extension number when prompted and press <strong>#</strong>.',
+                'Follow the prompts to record your greeting.',
+            ];
+
+            $sampleMessage = 'Thank you for contacting the Sales Department. Please hold the line; a representative will be with you shortly.';
+
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'navigation' => $navigation,
+                'ring_group' => $item,
+                'extensions' => $extensionsOptions,
+                'permissions' => $permissions,
+                'status_options' => $status_options,
+                'routes' => $routes,
+                'voices' => $openAiVoices,
+                'speeds' => $openAiSpeeds,
+                'phone_call_instructions' => $phoneCallInstructions,
+                'sample_message' => $sampleMessage,
+                'greetings' => $greetingsArray,
+                // Define options for other fields as needed
+            ];
+            // logger($itemOptions);
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        return $permissions;
     }
 
     /**
@@ -109,16 +360,18 @@ class RingGroupsController extends Controller
             ->get();
 
         $timeoutDestinationsByCategory = [];
-        foreach ([
-            'ringgroup',
-            'dialplans',
-            'extensions',
-            'timeconditions',
-            'voicemails',
-            'ivrs',
-            'recordings',
-            'others'
-        ] as $category) {
+        foreach (
+            [
+                'ringgroup',
+                'dialplans',
+                'extensions',
+                'timeconditions',
+                'voicemails',
+                'ivrs',
+                'recordings',
+                'others'
+            ] as $category
+        ) {
             $timeoutDestinationsByCategory[$category] = getDestinationByCategory($category)['list'];
         }
 
@@ -211,7 +464,7 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
 
-                if(empty($groupsDestinations->destination_number) || in_array($groupsDestinations->destination_number, $destinationsAdded)) {
+                if (empty($groupsDestinations->destination_number) || in_array($groupsDestinations->destination_number, $destinationsAdded)) {
                     continue;
                 }
 
@@ -249,7 +502,7 @@ class RingGroupsController extends Controller
 
         $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
             'random', 'sequence', 'rollover' => $sumDestinationsTimeout,
-            'simultaneous','enterprise' => $longestDestinationsTimeout,
+            'simultaneous', 'enterprise' => $longestDestinationsTimeout,
             default => 0,
         };
 
@@ -352,15 +605,17 @@ class RingGroupsController extends Controller
 
         $destinationsByCategory = 'disabled';
         $timeoutDestinationsByCategory = [];
-        foreach ([
-            'ringgroup',
-            'extensions',
-            'timeconditions',
-            'voicemails',
-            'ivrs',
-            'recordings',
-            'others'
-        ] as $category) {
+        foreach (
+            [
+                'ringgroup',
+                'extensions',
+                'timeconditions',
+                'voicemails',
+                'ivrs',
+                'recordings',
+                'others'
+            ] as $category
+        ) {
             $c = getDestinationByCategory($category, $ringGroup->ring_group_timeout_data);
             if ($c['selectedCategory']) {
                 $destinationsByCategory = $c['selectedCategory'];
@@ -459,7 +714,7 @@ class RingGroupsController extends Controller
                     $groupsDestinations->destination_number = $destination['target_internal'];
                 }
 
-                if(empty($groupsDestinations->destination_number) || in_array($groupsDestinations->destination_number, $destinationsAdded)) {
+                if (empty($groupsDestinations->destination_number) || in_array($groupsDestinations->destination_number, $destinationsAdded)) {
                     continue;
                 }
 
@@ -498,7 +753,7 @@ class RingGroupsController extends Controller
 
         $ringGroup->ring_group_call_timeout = match ($attributes['ring_group_strategy']) {
             'random', 'sequence', 'rollover' => $sumDestinationsTimeout,
-            'simultaneous','enterprise' => $longestDestinationsTimeout,
+            'simultaneous', 'enterprise' => $longestDestinationsTimeout,
             default => 0,
         };
 

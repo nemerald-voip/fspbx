@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 
+.multiselect {
+    color: inherit !important;
+}
+
 .multiselect__tag {
     background-color: #a5b4fc !important;
+}
+
+.multiselect__tags {
+    border: 1px solid #d1d5db !important;
 }
 
 .multiselect__tag-icon:after {
@@ -48,4 +56,13 @@
     /* Tailwind bg-red-50 */
     color: #f87171 !important;
     /* Tailwind text-red-200 */
+}
+
+.multiselect__placeholder{
+    margin-bottom: 8px !important;
+    padding-top: 0px !important;
+}
+
+.multiselect__single {
+    font-size: 0.9rem !important;
 }

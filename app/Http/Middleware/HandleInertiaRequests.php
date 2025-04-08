@@ -92,6 +92,10 @@ class HandleInertiaRequests extends Middleware
         $permissions['voicemail_destroy'] = userCheckPermission('voicemail_delete');
         $permissions['voicemail_message_index'] = userCheckPermission('voicemail_message_view');
 
+        $permissions['ring_group_create'] = userCheckPermission('ring_group_add');
+        $permissions['ring_group_update'] = userCheckPermission('ring_group_edit');
+        $permissions['ring_group_destroy'] = userCheckPermission('ring_group_delete');
+
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
 
         $permissions['virtual_receptionist_create'] = userCheckPermission('ivr_menu_add');

@@ -58,27 +58,6 @@ class RingGroups extends Model
         'update_user'
     ];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
-     */
-    protected static function booted()
-    {
-        // static::saving(function ($model) {
-
-
-
-        // });
-
-        // static::retrieved(function ($model) {
-
-        //     $model->destroy_route = route('devices.destroy', $model);
-
-        //     return $model;
-        // });
-    }
 
     public function getId()
     {
@@ -95,7 +74,7 @@ class RingGroups extends Model
         return $this->belongsTo(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid')->orderBy('destination_delay')->get();
     }
 
-    public function groupDestinations()
+    public function destinations()
     {
         return $this->hasMany(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid');
     }
