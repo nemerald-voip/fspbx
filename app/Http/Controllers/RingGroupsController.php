@@ -91,7 +91,7 @@ class RingGroupsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
@@ -150,30 +150,26 @@ class RingGroupsController extends Controller
 
             ];
 
-            $status_options = [
+            $ring_patterns = [
                 [
-                    'value' => 'scheduled',
-                    'name' => 'Scheduled',
+                    'value' => 'enterprise',
+                    'name' => 'Advanced',
                 ],
                 [
-                    'value' => 'in_progress',
-                    'name' => 'In Progress',
+                    'value' => 'simultaneous',
+                    'name' => 'Simultaneous Ring',
                 ],
                 [
-                    'value' => 'snoozed',
-                    'name' => 'Snoozed',
+                    'value' => 'sequence',
+                    'name' => 'Sequential Ring',
                 ],
                 [
-                    'value' => 'completed',
-                    'name' => 'Completed',
+                    'value' => 'random',
+                    'name' => 'Random Ring',
                 ],
                 [
-                    'value' => 'canceled',
-                    'name' => 'Cancelled',
-                ],
-                [
-                    'value' => 'failed',
-                    'name' => 'Failed',
+                    'value' => 'rollover',
+                    'name' => 'Rollover',
                 ],
 
             ];
@@ -280,7 +276,7 @@ class RingGroupsController extends Controller
                 'ring_group' => $item,
                 'extensions' => $extensionsOptions,
                 'permissions' => $permissions,
-                'status_options' => $status_options,
+                'ring_patterns' => $ring_patterns,
                 'routes' => $routes,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,

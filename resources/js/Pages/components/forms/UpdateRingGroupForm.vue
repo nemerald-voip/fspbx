@@ -73,12 +73,7 @@
 
 
                         <div class="grid grid-cols-6 gap-6">
-
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-
-
-
-
                                 <div class="flex items-center gap-1">
                                     <LabelInputOptional target="greeting" label="Greeting" />
 
@@ -152,8 +147,62 @@
                         </div>
 
                         <div v-if="greetingDescription">
-                            <p class="mt-1 text-xs text-gray-500 italic"
+                            <p class="-mt-2 text-xs text-gray-500 italic"
                                 v-html="`&quot;${decodedGreetingDescription}&quot;`"></p>
+
+                        </div>
+
+
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
+                                <div class="flex items-center gap-1">
+                                    <LabelInputOptional target="ring_pattern" label="Ring Pattern" />
+
+                                    <Popover>
+                                        <template v-slot:popover-button>
+                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
+                                        </template>
+                                        <template v-slot:popover-panel>
+                                            <div>
+                                                <ul>
+                                                    <li><b>Advanced (default):</b> This option rings all phones at once, but
+                                                        each phone has its own thread. This is especially useful when there
+                                                        are multiple registrations for the same extension. </li>
+                                                    <li><b>Sequential Ring:</b> This option rings one phone at a time in a
+                                                        specific order.</li>
+                                                    <li><b>Simultaneous Ring:</b> This option rings all phones at once.</li>
+                                                    <li><b>Random Ring:</b> This option rings one phone at a time in a
+                                                        random order. </li>
+                                                    <li><b>Rollover:</b> This option rings each phone one at a time, but it
+                                                        skips busy phones.</li>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    </Popover>
+                                </div>
+
+                                <div class="mt-2 relative">
+                                    <Multiselect v-model="form.ring_pattern" :options="localOptions.ring_patterns"
+                                        :close-on-select="true" :clear-on-select="false" :preserve-search="true"
+                                        placeholder="Select Ring Pattern" label="name" track-by="value" :searchable="true"
+                                        :allowEmpty="false">
+
+                                        <!-- Custom tag slot to truncate labels to 15 characters -->
+                                        <template #singleLabel="{ option }">
+                                            <div class="truncate max-w-full">
+                                                {{ option.name }}
+                                            </div>
+                                        </template>
+                                    </Multiselect>
+
+                                </div>
+
+                                <div v-if="errors?.greeting" class="mt-2 text-xs text-red-600">
+                                    {{ errors.greeting[0] }}
+                                </div>
+                            </div>
+
+
 
                         </div>
 
@@ -268,7 +317,7 @@
         </form>
     </div>
 
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+    <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
 
     <UpdateGreetingModal :greeting="form.greeting" :show="showEditModal" :loading="isGreetingUpdating"
@@ -277,8 +326,8 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Greeting Message'" :voices="localOptions.voices"
-                :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+            <NewGreetingForm :title="'New Greeting Message'" :voices="localOptions.voices" :speeds="localOptions.speeds"
+                :phone_call_instructions="localOptions.phone_call_instructions"
                 :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
                 @greeting-saved="handleGreetingSaved" />
         </template>
@@ -326,7 +375,8 @@ const confirmationModalTrigger = ref(false);
 const loadingModal = ref(false);
 const isGreetingUpdating = ref(false);
 const showNewGreetingModal = ref(false);
-
+const showDeleteConfirmation = ref(false);
+const greetingSelectKey = ref(0);
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
@@ -370,7 +420,13 @@ watch(() => props.options, (newOptions) => {
 const form = reactive({
     name: props.options.ring_group.ring_group_name ?? null,
     extension: props.options.ring_group.ring_group_extension ?? null,
-    greeting: props.options.ring_group.ring_group_greeting ?? null,
+    greeting: props.options.ring_group.ring_group_greeting
+        ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting)
+        : null,
+
+    ring_pattern: props.options.ring_group.ring_pattern
+        ? props.options.ring_patterns.find(rp => rp.value === props.options.ring_group.ring_pattern)
+        : { value: 'enterprise', name: 'Advanced' },
     // voicemail_id: props.options.voicemail.voicemail_id,
     // voicemail_password: props.options.voicemail.voicemail_password,
     // voicemail_mail_to: props.options.voicemail.voicemail_mail_to,
@@ -389,9 +445,10 @@ const form = reactive({
 })
 
 const greetingDescription = computed(() => {
-    // Find the greeting object in the array whose value matches the selected greeting
+    if (!form.greeting) return null; // Handle case where no greeting is selected
+
     const selected = localOptions.greetings.find(
-        (greeting) => greeting.value === form.greeting
+        (greeting) => greeting.value === form.greeting.value
     );
     return selected ? selected.description : null;
 });
@@ -406,22 +463,13 @@ const decodedGreetingDescription = computed(() => {
 const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
 const submitForm = () => {
-    // Normalize voicemail_copies to an array of values
-    form.voicemail_copies = form.voicemail_copies.map(item => {
-        // If it's an object, return the 'value', otherwise, return the item itself
-        return typeof item === 'object' ? item.value : item;
-    });
+    const payload = {
+        ...form,
+        greeting: form.greeting ? form.greeting.value : null, // extract value
+        ring_pattern: form.ring_pattern ? form.ring_pattern.value : null, // extract value
+    };
 
-    emits('submit', form); // Emit the event with the form data
-}
-
-const handleUpdateCopyToField = (voicemails) => {
-    form.voicemail_copies = voicemails.map(voicemail => voicemail.value);
-}
-
-const handleUpdateGreetingField = (greeting) => {
-    form.greeting_id = greeting.value;
-    currentAudio.value = false;
+    emits('submit', payload); // Emit the event with the form data
 }
 
 // Handler for the greeting-saved event
@@ -440,6 +488,10 @@ const handleGreetingSaved = ({ greeting_id, greeting_name, description }) => {
     };
 
     currentAudio.value = null;
+
+    showNewGreetingModal.value = false;
+
+    emits('success', 'success', { message: ['New greeting has been successfully added.'] });
 };
 
 
@@ -562,10 +614,10 @@ const confirmDeleteAction = () => {
                 );
 
                 // Reset the selected greeting ID
-                form.greeting.value = null; // Or set it to another default if needed
+                form.greeting = null; // Or set it to another default if needed
 
                 // Notify the parent component or show a local success message
-                emits('success', response.data.messages);
+                emits('success', 'success', response.data.messages);
             }
         })
         .catch((error) => {
@@ -575,9 +627,6 @@ const confirmDeleteAction = () => {
             showDeleteConfirmation.value = false; // Close the confirmation modal
         });
 };
-
-
-const greetingSelectKey = ref(0);
 
 const handleGreetingUpdate = (updatedGreeting) => {
     isGreetingUpdating.value = true;
@@ -608,7 +657,7 @@ const handleGreetingUpdate = (updatedGreeting) => {
         .then((response) => {
             if (response.data.success) {
                 // Notify the parent component or show a local success message
-                emits('success', response.data.messages); // Or handle locally
+                emits('success', 'success', response.data.messages); // Or handle locally
             }
         })
         .catch((error) => {
