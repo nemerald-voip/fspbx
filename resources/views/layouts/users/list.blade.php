@@ -102,7 +102,7 @@
                                             <td>
                                                 @foreach ($user->groups() as $group)
                                                     <span
-                                                        class="badge bg-primary"></i>{{ ucfirst($group->group_name) }}</span>
+                                                        class="badge bg-primary"></i>{{ ucfirst($group->group_name ?? null) }}</span>
                                                 @endforeach
                                             </td>
                                             <td>
