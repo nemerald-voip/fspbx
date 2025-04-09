@@ -3,15 +3,14 @@
 namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\EmergencyCallMember;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class EmergencyCall extends Model
+class EmergencyCallEmail extends Model
 {
     use HasApiTokens, HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "emergency_calls";
+    protected $table = "emergency_call_emails";
 
     public $timestamps = false;
 
@@ -25,20 +24,13 @@ class EmergencyCall extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'domain_uuid',
-        'emergency_number',
-        'prompt',
-        'description',
+        'emergency_call_uuid',
+        'email',
     ];
 
-
-    public function members()
+    public function emergencyCall()
     {
-        return $this->hasMany(EmergencyCallMember::class);
+        return $this->belongsTo(EmergencyCall::class);
     }
 
-    public function emails()
-    {
-        return $this->hasMany(EmergencyCallEmail::class, 'emergency_call_uuid', 'uuid');
-    }
 }

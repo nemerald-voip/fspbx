@@ -33,6 +33,17 @@
             </div>
 
             <div>
+                <LabelInputOptional target="emails" label="Emails to Notify" />
+                <textarea v-model="form.emails" rows="3"
+                    placeholder="Enter emails separated by commas (e.g. admin@example.com, support@example.com)"
+                    class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-500 sm:text-sm"></textarea>
+                <div v-if="errors?.emails" class="mt-2 text-xs text-red-600">
+                    {{ errors.emails[0] }}
+                </div>
+            </div>
+
+
+            <div>
                 <LabelInputOptional target="description" label="Description" />
                 <div class="mt-2">
                     <InputField v-model="form.description" type="text" name="description" placeholder="Enter description" />
@@ -58,7 +69,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from "vue";
+import { reactive, onMounted } from "vue";
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import InputField from "../general/InputField.vue";
@@ -80,6 +91,7 @@ const form = reactive({
     uuid: props.options?.item?.uuid ?? null,
     emergency_number: props.options?.item?.emergency_number ?? null,
     members: [],
+    emails: '',
     description: props.options?.item?.description ?? null,
 });
 
@@ -94,13 +106,19 @@ onMounted(() => {
             return props.options.extensions.find(ext => ext.value === member.extension_uuid);
         }).filter(Boolean); // remove nulls in case of mismatch
     }
+
+    // Prefill emails from the item
+    if (props.options?.item?.emails?.length) {
+        form.emails = props.options.item.emails.map(email => email.email).join(', ');
+    }
 });
 
 const submitForm = () => {
     const payload = {
         emergency_number: form.emergency_number,
         description: form.description,
-        members: form.members.map(m => ({ extension_uuid: m.value }))
+        members: form.members.map(m => ({ extension_uuid: m.value })),
+        emails: form.emails.split(',').map(email => email.trim())
     };
 
     emits('submit', payload); // Emit the event with the form data

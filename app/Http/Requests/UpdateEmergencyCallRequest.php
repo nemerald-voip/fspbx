@@ -27,6 +27,8 @@ class UpdateEmergencyCallRequest extends FormRequest
             'description' => 'nullable|string|max:255',
             'members' => 'nullable|array',
             'members.*.extension_uuid' => 'required_with:members|uuid',
+            'emails' => 'nullable|array',
+            'emails.*' => 'email|max:255',
         ];
     }
 }

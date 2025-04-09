@@ -48,6 +48,15 @@ class EmergencyCallController extends Controller
                 }
             }
 
+            // Save Emails
+            if (!empty($validated['emails'])) {
+                foreach ($validated['emails'] as $email) {
+                    $call->emails()->create([
+                        'email' => $email,
+                    ]);
+                }
+            }
+
             DB::commit();
 
             return response()->json([
@@ -82,14 +91,25 @@ class EmergencyCallController extends Controller
                 'description' => $validated['description'] ?? null,
             ]);
 
-            // Delete old members and insert new ones
+
+            // Delete old members and emails
             $call->members()->delete();
+            $call->emails()->delete();
 
             if (!empty($validated['members'])) {
                 foreach ($validated['members'] as $member) {
                     $call->members()->create([
                         'domain_uuid' => $domain_uuid,
                         'extension_uuid' => $member['extension_uuid'],
+                    ]);
+                }
+            }
+
+            // Save new emails
+            if (!empty($validated['emails'])) {
+                foreach ($validated['emails'] as $email) {
+                    $call->emails()->create([
+                        'email' => $email,
                     ]);
                 }
             }
@@ -109,14 +129,6 @@ class EmergencyCallController extends Controller
         }
     }
 
-    public function destroy($id)
-    {
-        $call = EmergencyCall::findOrFail($id);
-        $call->delete();
-
-        return response()->json(['message' => 'Deleted']);
-    }
-
     public function getItemOptions()
     {
         try {
@@ -125,7 +137,7 @@ class EmergencyCallController extends Controller
             $call = null;
             $routes = [];
             if (request()->has('item_uuid')) {
-                $call = EmergencyCall::with('members')
+                $call = EmergencyCall::with('members', 'emails')
                     ->where('domain_uuid', $domain_uuid)
                     ->where('uuid', request('item_uuid'))
                     ->first();
@@ -178,8 +190,12 @@ class EmergencyCallController extends Controller
                 ->get();
 
             foreach ($items as $item) {
-                $item->members()->delete(); // 💥 Delete related members first
-                $item->delete();            // Then delete the parent call
+                // 💥 Delete related members and emails first
+                $item->members()->delete();
+                $item->emails()->delete();
+
+                // Delete the parent EmergencyCall
+                $item->delete();
             }
 
             DB::commit();
@@ -221,5 +237,4 @@ class EmergencyCallController extends Controller
             ], 500);
         }
     }
-
 }
