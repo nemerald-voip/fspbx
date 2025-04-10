@@ -206,7 +206,7 @@
 
                         </div>
 
-                        <div class="col-span-6">
+                        <!-- <div class="col-span-6">
                             <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
                             <div class="mt-2">
                                 <Textarea v-model="form.voicemail_description" id="voicemail_description"
@@ -233,12 +233,13 @@
                                 description="Remove voicemail from the cloud once the email is sent."
                                 v-model="form.voicemail_delete" customClass="py-4" />
 
-                        </div>
+                        </div> -->
 
 
                     </div>
 
                 </div>
+
                 <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
 
                     <button type="submit"
@@ -247,6 +248,183 @@
                         <Spinner :show="isSubmitting" />
                         Save
                     </button>
+                </div>
+
+                <div class="mt-6 shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                        <div class="">
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Members</h3>
+                            <!-- <p class="mt-1 text-sm text-gray-500">Desciption</p> -->
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 text-sm font-medium leading-6 text-gray-900">
+
+                                <LabelInputOptional target="members" label="Add Member(s)" />
+
+                                <div class="mt-2 relative">
+
+                                    <Multiselect v-model="selectedNewMembers" :options="availableExtensions"
+                                        :multiple="true" :close-on-select="false" :clear-on-select="false"
+                                        placeholder="Search by first name, last name or extension" label="name"
+                                        track-by="value" :searchable="true" />
+
+                                </div>
+
+                                <div v-if="errors?.members" class="mt-2 text-xs text-red-600">
+                                    {{ errors.members[0] }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6  -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                    <div class="overflow-hidden border border-gray-200">
+                                        <table class="min-w-full divide-y divide-gray-200 mb-4">
+                                            <thead class="bg-gray-100">
+                                                <tr>
+                                                    <th
+                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900">
+                                                        Member</th>
+                                                    <th
+                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900">
+
+                                                        <ejs-tooltip
+                                                            :content="'How many seconds to wait before starting to ring this member.'"
+                                                            position="TopLeft" target="#delay_tooltip_target">
+                                                            <div id="delay_tooltip_target"
+                                                                class="text-sm font-semibold text-gray-900">
+                                                                <!-- Mobile Label -->
+                                                                <span class="block lg:hidden">
+
+                                                                </span>
+
+                                                                <!-- Desktop Label -->
+                                                                <span class="hidden lg:block">
+                                                                    Delay
+                                                                </span>
+                                                            </div>
+                                                        </ejs-tooltip>
+                                                    </th>
+                                                    <th
+                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900 hidden lg:table-cell">
+
+                                                        <ejs-tooltip
+                                                            :content="'How many seconds to keep ringing this member before giving up.'"
+                                                            position="TopLeft" target="#rings_tooltip_target">
+                                                            <div id="rings_tooltip_target"
+                                                                class="text-sm font-semibold text-gray-900">
+                                                                Rings
+                                                            </div>
+                                                        </ejs-tooltip>
+                                                    </th>
+                                                    <th
+                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900">
+
+
+                                                        <ejs-tooltip
+                                                            :content="'Enable Answer confirmation to prevent voicemails and automated systems from ansvering a call.'"
+                                                            position='TopCenter' target="#destination_tooltip_target">
+                                                            <div id="destination_tooltip_target"
+                                                                class="text-sm font-semibold text-gray-900">
+                                                                Confirm answer
+                                                            </div>
+                                                        </ejs-tooltip>
+                                                    </th>
+                                                    <th
+                                                        class="relative px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-medium text-gray-500">
+                                                        <span class="sr-only">Actions</span>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody v-if="members.length" class="divide-y divide-gray-200 bg-white">
+                                                <tr v-for="member in members" :key="member.uuid || member.extension_uuid">
+                                                    <td
+                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm font-medium text-gray-900">
+                                                        {{ member.extension_name }}
+                                                    </td>
+
+                                                    <td
+                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm text-gray-500 w-56">
+                                                        <!-- Delay Select -->
+                                                        <div class="flex flex-col">
+                                                            <!-- Label only on mobile -->
+                                                            <label
+                                                                class="block mb-1 text-xs font-medium text-gray-700 lg:hidden">
+                                                                Delay
+                                                            </label>
+                                                            <select v-model="member.delay"
+                                                                class="block w-full min-w-[10rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                                <option v-for="option in delayOptions" :key="option.value"
+                                                                    :value="option.value">
+                                                                    {{ option.label }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Rings Select (only visible on mobile) -->
+                                                        <div class="flex flex-col mt-2 lg:hidden">
+                                                            <!-- Label only on mobile -->
+                                                            <label class="block mb-1 text-xs font-medium text-gray-700">
+                                                                Rings
+                                                            </label>
+                                                            <select v-model="member.timeout"
+                                                                class="block w-full min-w-[10rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                                <option v-for="option in timeoutOptions" :key="option.value"
+                                                                    :value="option.value">
+                                                                    {{ option.label }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+                                                    </td>
+                                                    <td
+                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm text-gray-500 w-56 hidden lg:table-cell">
+                                                        <select v-model="member.timeout"
+                                                            class="block w-full min-w-[10rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                            <option v-for="option in timeoutOptions" :key="option.value"
+                                                                :value="option.value">
+                                                                {{ option.label }}
+                                                            </option>
+                                                        </select>
+                                                    </td>
+
+                                                    <td
+                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm text-gray-500">
+                                                        <Toggle label="" v-model="member.destination_enabled" />
+                                                    </td>
+                                                    <td
+                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-right text-sm font-medium">
+                                                        <div class="flex items-center whitespace-nowrap justify-end">
+
+
+                                                            <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                                                target="#delete_tooltip_target">
+                                                                <div id="delete_tooltip_target">
+                                                                    <TrashIcon
+                                                                        @click="handleSingleItemDeleteRequest(call.uuid)"
+                                                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                                </div>
+                                                            </ejs-tooltip>
+                                                        </div>
+
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <div v-if="members.length === 0" class="text-center my-5">
+                                            <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                                            <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+
+                                        </div>
+
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -355,8 +533,14 @@ import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import { registerLicense } from '@syncfusion/ej2-base';
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
+// import Multiselect from '@vueform/multiselect'
+//  import '@vueform/multiselect/themes/default.css'
+
 
 
 const props = defineProps({
@@ -377,6 +561,68 @@ const isGreetingUpdating = ref(false);
 const showNewGreetingModal = ref(false);
 const showDeleteConfirmation = ref(false);
 const greetingSelectKey = ref(0);
+const members = ref([]);
+const selectedNewMembers = ref([]);
+
+const delayOptions = Array.from({ length: 21 }, (_, i) => {
+    const seconds = i * 5; // 0, 5, 10, ..., 100
+    const rings = Math.round(seconds / 5); // 1 ring = ~5 seconds
+    return {
+        value: String(seconds),
+        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} - ${seconds} Sec`
+    };
+});
+
+const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
+    const seconds = i * 5; // 0, 5, 10, ..., 100
+    const rings = Math.round(seconds / 5);
+    return {
+        value: String(seconds),
+        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} - ${seconds} Sec`
+    };
+});
+
+members.value = props.options.ring_group.destinations.map(destination => {
+    const extension = props.options.extensions.find(ext => ext.extension === destination.destination_number);
+
+    return {
+        uuid: destination.ring_group_destination_uuid,
+        extension_uuid: extension ? extension.value : null,
+        extension_name: extension ? extension.name : destination.destination_number,
+        destination_number: destination.destination_number,
+        // delay: delayOptions.find(option => option.value === String(destination.destination_delay ?? "0")), 
+        // timeout: timeoutOptions.find(option => option.value === String(destination.destination_timeout ?? "30")),
+        delay: String(destination.destination_delay),
+        timeout: String(destination.destination_timeout),
+        prompt: destination.destination_prompt,
+    };
+});
+
+const availableExtensions = computed(() => {
+    const selectedNumbers = members.value.map(m => m.destination_number);
+    return props.options.extensions.filter(
+        ext => !selectedNumbers.includes(ext.extension)
+    );
+});
+
+const addSelectedMembers = () => {
+    selectedNewMembers.value.forEach((ext) => {
+        members.value.push({
+            uuid: null, // New member won't have UUID yet
+            extension_uuid: ext.value,
+            extension_name: ext.name,
+            destination_number: ext.extension, 
+            delay: "0",
+            timeout: "30",
+            prompt: null,
+            destination_enabled: true, // or false, depending on your default
+        });
+    });
+
+    selectedNewMembers.value = []; // Clear selection after adding
+};
+
+
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
@@ -685,6 +931,7 @@ const handleModalClose = () => {
     showNewGreetingModal.value = false;
 }
 
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
 
@@ -695,5 +942,4 @@ const handleModalClose = () => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}
-</style>
+}</style>
